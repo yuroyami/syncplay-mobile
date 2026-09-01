@@ -21,6 +21,12 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** True while the track is being dragged; the HUD never hides mid-scrub. */
     val scrubbing = MutableStateFlow(false)
 
+    /** Brings the HUD back and restarts its idle timer. */
+    fun showHud() {
+        visibleHUD.value = true
+        noteHudActivity()
+    }
+
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)
     val popupCreateManagedRoom = MutableStateFlow(false)

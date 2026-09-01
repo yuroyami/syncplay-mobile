@@ -1,34 +1,34 @@
 package app.room.ui.misc
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemGestures
 import androidx.compose.foundation.layout.waterfall
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,20 +36,28 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.GESTURES
+import app.preferences.Preferences.SEEK_BACKWARD_JUMP
+import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.watchPref
+import app.theme.Motion
+import app.theme.palette
+import app.uicomponents.controls.Chevron
+import app.uicomponents.controls.ChevronDirection
+import app.uicomponents.controls.Feedback
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -57,295 +65,264 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private const val CHAIN_WINDOW_MS = 900L
+private const val LONG_PRESS_MS = 600L
+private const val LONG_PRESS_STEP_MS = 200L
+
+/** The mark drawn at a double tap: where, which way, and an id so each tap restarts the fade. */
+private class SeekMark(val at: Offset, val forward: Boolean, val id: Int)
+
+/**
+ * Double tap to seek, long press to seek continuously, swipe left for brightness and right for
+ * volume. Always composed; its pointer handlers attach only while the HUD is hidden, so with the
+ * HUD up every touch reaches the chrome. Double taps inside 900 ms accumulate into one seek and
+ * one announcement; a long press previews its landing point and commits once on release.
+ */
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope()
+    val p = palette
     val gesturesEnabled by GESTURES.watchPref()
     val doubletapEnabled by DOUBLETAP_SEEK.watchPref()
     val swipeEnabled by SWIPE_GESTURES.watchPref()
+    val forwardJump by SEEK_FORWARD_JUMP.watchPref()
+    val backwardJump by SEEK_BACKWARD_JUMP.watchPref()
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
+    val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
 
-    val seekLeftInteraction = remember { MutableInteractionSource() }
-    val seekRightInteraction = remember { MutableInteractionSource() }
-
-    /* Real system edge-guard sizes (quick-settings pull zone, nav-bar pull zone, waterfall
-     * screen edges, camera cutout). Wrapped in rememberUpdatedState because the pointerInput
-     * coroutines below are long-lived and would otherwise keep stale composition-time
-     * captures after a rotation (the activity handles configChanges itself, so nothing
-     * recreates them). Reading .value inside the handlers always yields current values. */
+    /* The system edge guards, read through rememberUpdatedState: the handlers below are long
+     * lived and would keep composition-time values across a rotation, which restarts nothing
+     * because the activity handles configChanges itself. */
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val topGestureGuardPx by rememberUpdatedState(
-        maxOf(
-            WindowInsets.systemGestures.getTop(density),
-            WindowInsets.displayCutout.getTop(density)
-        )
-    )
+    val topGestureGuardPx by rememberUpdatedState(maxOf(WindowInsets.systemGestures.getTop(density), WindowInsets.displayCutout.getTop(density)))
     val bottomGestureGuardPx by rememberUpdatedState(WindowInsets.systemGestures.getBottom(density))
     val leftGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getLeft(density, layoutDirection))
     val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
+    val edgeGuardFraction = 0.08f
 
-    /* Live swipe-gesture readout; null while no drag is in progress. */
-    var gestureValue by remember { mutableStateOf<GestureValue?>(null) }
+    var readout by remember { mutableStateOf<GestureReadout?>(null) }
 
-    // Track initial and last values for drag gestures
+    // The double-tap chain: origin captured on the first tap, committed once after the window.
+    var chainSteps by remember { mutableIntStateOf(0) }
+    var chainOriginMs by remember { mutableLongStateOf(0L) }
+    var chainVersion by remember { mutableIntStateOf(0) }
+    var seekMark by remember { mutableStateOf<SeekMark?>(null) }
+    var markId by remember { mutableIntStateOf(0) }
+
+    // The long press preview: the landing point moves while the finger stays down.
+    var previewMs by remember { mutableStateOf<Long?>(null) }
+    var pressOriginMs by remember { mutableLongStateOf(0L) }
+
+    // The zone wash shows on the first drag, and again after a gesture preference changes.
+    var washSeen by remember(gesturesEnabled, swipeEnabled) { mutableStateOf(false) }
+    var wash by remember { mutableStateOf<GestureValueKind?>(null) }
+    var washKind by remember { mutableStateOf(GestureValueKind.VOLUME) }
+
     var initialBrightness by remember { mutableFloatStateOf(0f) }
     var initialVolume by remember { mutableIntStateOf(0) }
     var dragDistance by remember { mutableFloatStateOf(0f) }
     var lastAppliedBrightness by remember { mutableFloatStateOf(0f) }
     var lastAppliedVolume by remember { mutableIntStateOf(0) }
 
-    Box(modifier) {
-        var fastForward by remember { mutableStateOf(false) }
-        var fastRewind by remember { mutableStateOf(false) }
+    fun chainDeltaSeconds(steps: Int) = if (steps >= 0) steps * forwardJump else steps * backwardJump
+    fun fractionOf(ms: Long): Float? = if (durationMs > 0L) (ms.toFloat() / durationMs).coerceIn(0f, 1f) else null
+    fun clampToMedia(ms: Long): Long = if (durationMs > 0L) ms.coerceIn(0L, durationMs) else ms.coerceAtLeast(0L)
 
-        if (gesturesEnabled && doubletapEnabled && !isHUDVisible) {
-            /** Seek back - visual-feedback left section */
-            Box(
-                modifier = Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(0.1f)
-                    .clickable(
-                        enabled = false,
-                        interactionSource = seekLeftInteraction,
-                        indication = ripple(bounded = false, color = Color(100, 100, 100, 190)),
-                        onClick = {}
-                    )
-            ) {
-                AnimatedVisibility(
-                    visible = fastRewind,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut(),
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FastRewind,
-                        contentDescription = "",
-                        tint = Color.White,
-                        modifier = Modifier.align(Alignment.Center).size(64.dp)
-                    )
-                }
-            }
-
-            /** Seek forward - visual-feedback right section */
-            Box(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.1f)
-                    .clickable(
-                        enabled = false,
-                        interactionSource = seekRightInteraction,
-                        indication = ripple(bounded = false, color = Color(100, 100, 100, 190)),
-                        onClick = {}
-                    )
-            ) {
-                AnimatedVisibility(
-                    visible = fastForward,
-                    enter = scaleIn() + fadeIn(),
-                    exit = scaleOut() + fadeOut(),
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FastForward,
-                        contentDescription = "",
-                        tint = Color.White,
-                        modifier = Modifier.align(Alignment.Center).size(64.dp)
-                    )
-                }
-            }
+    /* One engine seek and one announcement per chain, through the dispatcher's seek path, so the
+     * pending origin stays single use and the room never hears four seeks for four taps. */
+    LaunchedEffect(chainVersion) {
+        if (chainSteps == 0) return@LaunchedEffect
+        delay(CHAIN_WINDOW_MS)
+        val target = clampToMedia(chainOriginMs + chainDeltaSeconds(chainSteps) * 1000L)
+        chainSteps = 0
+        viewmodel.dispatcher.seek(target, fromMs = chainOriginMs)
+        Feedback.medium()
+        readout = null
+    }
+    LaunchedEffect(seekMark?.id) {
+        if (seekMark != null) {
+            delay(400)
+            seekMark = null
         }
+    }
 
-        /* Gesture-detection box, layered ON TOP of the HUD (see RoomScreenUI).
-         *
-         * HUD VISIBLE: no pointerInput modifiers attached, so touches fall through to the HUD
-         * beneath (chat input, buttons, scrollable lists).
-         * HUD HIDDEN: tap/drag handlers attached. They intercept touches that would otherwise hit
-         * the still-alive but invisible HUD elements (preventing ghost clicks) and route them to
-         * volume/brightness/seek/show-HUD.
-         *
-         * Edge gating: vertical drags starting inside the system gesture zones (quick-settings
-         * pull at the top, nav-bar pull at the bottom, waterfall side edges) are ignored so
-         * system gestures aren't swallowed by the volume/brightness handler. Uses the real
-         * inset values reported by the OS, with an 8%-of-height floor as a fallback for
-         * devices/platforms that report none.
-         */
-        val haptic = LocalHapticFeedback.current
+    Box(modifier) {
         val softwareKB = LocalSoftwareKeyboardController.current
-        val edgeGuardFraction = 0.08f // minimum guard when reported gesture insets are smaller/absent
+        val seekGestures = gesturesEnabled && doubletapEnabled && hasVideo
 
         Box(
             content = {},
             modifier = Modifier.fillMaxSize().then(
                 if (!isHUDVisible) {
                     Modifier
-                        .pointerInput(gesturesEnabled, doubletapEnabled, hasVideo) {
+                        .pointerInput(seekGestures) {
                             detectTapGestures(
                                 onPress = { offset ->
-                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > size.width * 0.5f) {
-                                        val press = PressInteraction.Press(offset)
-                                        val job = scope.launch {
-                                            delay(1000)
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            delay(1000)
-
-                                            fastForward = true
-                                            seekRightInteraction.emit(press)
-                                            while (isActive) {
-                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                                viewmodel.dispatcher.seekFrwrd()
-                                                seekRightInteraction.emit(press)
-                                                delay(200)
-                                                seekRightInteraction.emit(PressInteraction.Release(press))
-                                            }
+                                    if (!seekGestures) return@detectTapGestures
+                                    val forward = offset.x > size.width * 0.5f
+                                    val job = scope.launch {
+                                        delay(LONG_PRESS_MS)
+                                        Feedback.light()
+                                        pressOriginMs = viewmodel.player.currentPositionMs()
+                                        var target = pressOriginMs
+                                        val step = (if (forward) forwardJump else -backwardJump) * 1000L
+                                        while (isActive) {
+                                            target = clampToMedia(target + step)
+                                            previewMs = target
+                                            readout = GestureReadout.Seek(null, target, fractionOf(target))
+                                            delay(LONG_PRESS_STEP_MS)
                                         }
-                                        tryAwaitRelease()
-                                        job.cancel()
-                                        fastForward = false
-                                        seekRightInteraction.emit(PressInteraction.Release(press))
                                     }
-                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < size.width * 0.5f) {
-                                        val press = PressInteraction.Press(offset)
-                                        val job = scope.launch {
-                                            delay(1000)
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            delay(1000)
-                                            fastRewind = true
-                                            seekLeftInteraction.emit(press)
-                                            while (isActive) {
-                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                                viewmodel.dispatcher.seekBckwd()
-                                                seekLeftInteraction.emit(press)
-                                                delay(200)
-                                                seekLeftInteraction.emit(PressInteraction.Release(press))
-                                            }
-                                        }
-                                        tryAwaitRelease()
-                                        job.cancel()
-                                        fastRewind = false
-                                        seekLeftInteraction.emit(PressInteraction.Release(press))
+                                    tryAwaitRelease()
+                                    job.cancel()
+                                    val landing = previewMs
+                                    if (landing != null) {
+                                        previewMs = null
+                                        viewmodel.dispatcher.seek(landing, fromMs = pressOriginMs)
+                                        Feedback.medium()
+                                        readout = null
                                     }
                                 },
-                                onDoubleTap = if (gesturesEnabled && doubletapEnabled && hasVideo) {
+                                onDoubleTap = if (seekGestures) {
                                     { offset ->
-                                        scope.launch {
-                                            if (offset.x < size.width * 0.5f) {
-                                                viewmodel.dispatcher.seekBckwd()
-                                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-
-                                                val press = PressInteraction.Press(Offset.Zero)
-                                                seekLeftInteraction.emit(press)
-                                                delay(200)
-                                                seekLeftInteraction.emit(PressInteraction.Release(press))
-                                            }
-                                            if (offset.x > size.width * 0.5f) {
-                                                viewmodel.dispatcher.seekFrwrd()
-                                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-
-                                                val press = PressInteraction.Press(Offset.Zero)
-                                                seekRightInteraction.emit(press)
-                                                delay(150)
-                                                seekRightInteraction.emit(PressInteraction.Release(press))
-                                            }
-                                        }
+                                        val forward = offset.x > size.width * 0.5f
+                                        if (chainSteps == 0) chainOriginMs = viewmodel.player.currentPositionMs()
+                                        chainSteps += if (forward) 1 else -1
+                                        chainVersion++
+                                        Feedback.tick()
+                                        val delta = chainDeltaSeconds(chainSteps)
+                                        val target = clampToMedia(chainOriginMs + delta * 1000L)
+                                        readout = GestureReadout.Seek(delta, target, fractionOf(target))
+                                        seekMark = SeekMark(offset, forward, markId++)
                                     }
                                 } else null,
                                 onTap = {
-                                    /* HUD is currently hidden — single tap reveals it. */
-                                    viewmodel.uiState.visibleHUD.value = true
-                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                    // The HUD is hidden: a single tap brings it back and drops the keyboard.
+                                    viewmodel.uiState.showHud()
+                                    Feedback.tick()
                                     softwareKB?.hide()
                                 },
                             )
-                        }.pointerInput(gesturesEnabled, swipeEnabled, hasVideo) {
-                            if (gesturesEnabled && swipeEnabled && hasVideo) {
-                                detectVerticalDragGestures(
-                                    onDragStart = { startOffset ->
-                                        // Edge guard: ignore drags originating inside system gesture zones
-                                        // or on waterfall edges. size.* (not captured screen dims) so the
-                                        // values stay correct after an in-place rotation.
-                                        val guardTop = maxOf(size.height * edgeGuardFraction, topGestureGuardPx.toFloat())
-                                        val guardBottom = maxOf(size.height * edgeGuardFraction, bottomGestureGuardPx.toFloat())
-                                        if (startOffset.y < guardTop ||
-                                            startOffset.y > size.height - guardBottom ||
-                                            startOffset.x < leftGestureGuardPx ||
-                                            startOffset.x > size.width - rightGestureGuardPx
-                                        ) {
-                                            initialBrightness = -1f // sentinel: drag is ignored
-                                            return@detectVerticalDragGestures
+                        }
+                        .pointerInput(gesturesEnabled, swipeEnabled, hasVideo) {
+                            if (!(gesturesEnabled && swipeEnabled && hasVideo)) return@pointerInput
+                            detectVerticalDragGestures(
+                                onDragStart = { startOffset ->
+                                    /* Drags from the system gesture zones and the waterfall edges are
+                                     * ignored for their whole life; size.* stays right after rotation. */
+                                    val guardTop = maxOf(size.height * edgeGuardFraction, topGestureGuardPx.toFloat())
+                                    val guardBottom = maxOf(size.height * edgeGuardFraction, bottomGestureGuardPx.toFloat())
+                                    if (startOffset.y < guardTop || startOffset.y > size.height - guardBottom ||
+                                        startOffset.x < leftGestureGuardPx || startOffset.x > size.width - rightGestureGuardPx
+                                    ) {
+                                        initialBrightness = -1f
+                                        return@detectVerticalDragGestures
+                                    }
+                                    initialBrightness = platformCallback.getCurrentBrightness()
+                                    initialVolume = viewmodel.player.getCurrentVolume()
+                                    lastAppliedBrightness = initialBrightness
+                                    lastAppliedVolume = initialVolume
+                                    dragDistance = 0f
+                                    if (!washSeen) {
+                                        washSeen = true
+                                        washKind = if (startOffset.x >= size.width * 0.5f) GestureValueKind.VOLUME else GestureValueKind.BRIGHTNESS
+                                        wash = washKind
+                                    }
+                                },
+                                onDragEnd = {
+                                    dragDistance = 0f
+                                    readout = null
+                                    wash = null
+                                },
+                                onVerticalDrag = { pointer, delta ->
+                                    if (initialBrightness < 0f) return@detectVerticalDragGestures
+                                    dragDistance += delta
+                                    val height = size.height / 2f
+                                    if (pointer.position.x >= size.width * 0.5f) {
+                                        val maxVolume = viewmodel.player.getMaxVolume()
+                                        val newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt().coerceIn(0, maxVolume)
+                                        // Boosting engines (VLC to 200) show their raw value with a mark at 100.
+                                        val span = maxVolume.coerceAtLeast(1)
+                                        readout = GestureReadout.Level(
+                                            kind = GestureValueKind.VOLUME,
+                                            display = if (span > 100) newVolume else newVolume * 100 / span,
+                                            fraction = newVolume / span.toFloat(),
+                                            normalMark = if (span > 100) 100f / span else 1f,
+                                        )
+                                        if (newVolume != lastAppliedVolume) {
+                                            viewmodel.player.changeCurrentVolume(newVolume)
+                                            Feedback.tick()
+                                            lastAppliedVolume = newVolume
                                         }
-
-                                        initialBrightness = platformCallback.getCurrentBrightness()
-                                        initialVolume = viewmodel.player.getCurrentVolume()
-                                        lastAppliedBrightness = initialBrightness
-                                        lastAppliedVolume = initialVolume
-                                        dragDistance = 0f
-                                    },
-                                    onDragEnd = {
-                                        dragDistance = 0f
-                                        gestureValue = null
-                                    },
-                                    onVerticalDrag = { pntr, f ->
-                                        if (initialBrightness < 0f) return@detectVerticalDragGestures // edge-ignored drag
-                                        dragDistance += f
-
-                                        if (pntr.position.x >= size.width * 0.5f) {
-                                            // Volume adjusting
-                                            val height = size.height / 2f
-                                            val maxVolume = viewmodel.player.getMaxVolume()
-                                            var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
-                                            newVolume = newVolume.coerceIn(0, maxVolume)
-
-                                            /* Engines that boost past 100% (VLC: 0..200) show their raw
-                                             * value, so 150 reads as "150%"; the rest map onto 0..100. */
-                                            val volumeSpan = maxVolume.coerceAtLeast(1)
-                                            gestureValue = GestureValue(
-                                                kind = GestureValueKind.VOLUME,
-                                                display = if (volumeSpan > 100) newVolume else newVolume * 100 / volumeSpan,
-                                                fraction = newVolume / volumeSpan.toFloat(),
-                                                normalMark = if (volumeSpan > 100) 100f / volumeSpan else 1f
-                                            )
-
-                                            if (newVolume != lastAppliedVolume) {
-                                                viewmodel.player.changeCurrentVolume(newVolume)
-                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                                lastAppliedVolume = newVolume
-                                            }
-                                        } else {
-                                            // Brightness adjusting
-                                            val height = size.height / 2f
-                                            val maxBright = platformCallback.getMaxBrightness()
-                                            var newBright = initialBrightness + (-dragDistance * maxBright / height)
-
-                                            // Snap to 5% increments above 10%
-                                            if (newBright > 0.1f) {
-                                                newBright = (newBright / 0.05f).roundToInt() * 0.05f
-                                            }
-                                            newBright = newBright.coerceIn(0f, 1f)
-
-                                            gestureValue = GestureValue(
-                                                kind = GestureValueKind.BRIGHTNESS,
-                                                display = (newBright * 100f).roundToInt(),
-                                                fraction = newBright
-                                            )
-
-                                            // Only apply if changed significantly (avoid tiny fluctuations)
-                                            if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
-                                                platformCallback.changeCurrentBrightness(newBright)
-                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                                lastAppliedBrightness = newBright
-                                            }
+                                    } else {
+                                        val maxBright = platformCallback.getMaxBrightness()
+                                        var newBright = initialBrightness + (-dragDistance * maxBright / height)
+                                        if (newBright > 0.1f) newBright = (newBright / 0.05f).roundToInt() * 0.05f
+                                        newBright = newBright.coerceIn(0f, 1f)
+                                        readout = GestureReadout.Level(GestureValueKind.BRIGHTNESS, (newBright * 100f).roundToInt(), newBright)
+                                        if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
+                                            platformCallback.changeCurrentBrightness(newBright)
+                                            Feedback.tick()
+                                            lastAppliedBrightness = newBright
                                         }
                                     }
-                                )
-                            }
+                                    // The wash has done its teaching once the value readout is up.
+                                    wash = null
+                                },
+                            )
                         }
                 } else Modifier
-            )
+            ),
         )
 
-        /* Swipe readout: one centered pill at the top instead of two bubbles chasing the
-         * finger. Feeds it null on drag end so it fades itself out. */
-        RoomGestureValueHud(
-            active = gestureValue,
-            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-        )
+        /* The zone wash carries its own HUD gate: the interceptor is composed at all times, so a
+         * wash without it would draw under the visible chrome. */
+        val washAlpha by animateFloatAsState(if (wash != null && !isHUDVisible) 1f else 0f, Motion.quick(), label = "wash")
+        if (washAlpha > 0f) {
+            val onRight = washKind == GestureValueKind.VOLUME
+            Box(
+                modifier = Modifier
+                    .align(if (onRight) Alignment.CenterEnd else Alignment.CenterStart)
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.5f)
+                    .alpha(washAlpha)
+                    .background(
+                        Brush.horizontalGradient(
+                            if (onRight) listOf(Color.Transparent, p.ground.copy(alpha = 0.18f))
+                            else listOf(p.ground.copy(alpha = 0.18f), Color.Transparent)
+                        )
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (onRight) Icons.AutoMirrored.Filled.VolumeUp else Icons.Filled.Brightness6,
+                    contentDescription = null,
+                    tint = p.ink.copy(alpha = 0.3f),
+                    modifier = Modifier.size(48.dp),
+                )
+            }
+        }
+
+        // Two accent chevrons at the tap point, pointing the way the seek goes, fading over quick.
+        seekMark?.let { mark ->
+            key(mark.id) {
+                val fade = remember { Animatable(1f) }
+                LaunchedEffect(Unit) { fade.animateTo(0f, tween(400, easing = Motion.easing)) }
+                val direction = if (mark.forward) ChevronDirection.Right else ChevronDirection.Left
+                Row(
+                    modifier = Modifier
+                        .offset { IntOffset((mark.at.x - 18.dp.toPx()).roundToInt(), (mark.at.y - 9.dp.toPx()).roundToInt()) }
+                        .alpha(fade.value),
+                ) {
+                    Chevron(direction, color = p.accent, size = 18.dp)
+                    Chevron(direction, color = p.accent, size = 18.dp)
+                }
+            }
+        }
+
+        RoomGestureReadout(active = readout, modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth())
     }
 }
