@@ -408,7 +408,7 @@ private fun TextModal(
 }
 
 @Composable
-private fun ColorModal(
+internal fun ColorModal(
     open: MutableState<Boolean>,
     title: String,
     summary: String,

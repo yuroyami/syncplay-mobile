@@ -1,549 +1,115 @@
 package app.theme
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MotionPhotosOff
-import androidx.compose.material.icons.filled.WebStories
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.LocalTheme
-import app.home.HomeLeadingTitle
-import app.home.components.HomeTextField
-import app.uicomponents.controls.GlyphButton
-import app.uicomponents.FlexibleText
-import app.uicomponents.dropdownMenuMaxHeight
-import app.uicomponents.jostFont
-import app.uicomponents.lexendFont
-import app.utils.appName
-import app.utils.loggy
-import androidx.compose.runtime.mutableFloatStateOf
-import com.composeunstyled.UnstyledSlider
-import com.kborowy.colorpicker.KolorPicker
+import app.preferences.settings.ColorModal
+import app.uicomponents.controls.Field
+import app.uicomponents.controls.GroupHeading
+import app.uicomponents.controls.ListRow
+import app.uicomponents.controls.PrimaryAction
+import app.uicomponents.controls.Rocker
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.RowLabel
+import app.uicomponents.controls.RowValue
+import app.uicomponents.controls.ScrubTrack
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.Stepper
+import app.uicomponents.controls.Swatch
+import app.uicomponents.controls.hex
+import app.uicomponents.frames.NoticeHost
+import app.uicomponents.frames.NoticeQueue
+import app.uicomponents.frames.NoticeSeverity
+import app.uicomponents.frames.ScreenFrame
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.save
+import syncplaymobile.shared.generated.resources.theme_auto
 import syncplaymobile.shared.generated.resources.theme_customize_already_exists_warning
 import syncplaymobile.shared.generated.resources.theme_customize_contrast
+import syncplaymobile.shared.generated.resources.theme_customize_dark
 import syncplaymobile.shared.generated.resources.theme_customize_is_amoled
 import syncplaymobile.shared.generated.resources.theme_customize_name
 import syncplaymobile.shared.generated.resources.theme_customize_neutral_color
 import syncplaymobile.shared.generated.resources.theme_customize_neutral_variant_color
 import syncplaymobile.shared.generated.resources.theme_customize_palette_style
-import syncplaymobile.shared.generated.resources.theme_customize_preview
 import syncplaymobile.shared.generated.resources.theme_customize_primary_color
 import syncplaymobile.shared.generated.resources.theme_customize_secondary_color
 import syncplaymobile.shared.generated.resources.theme_customize_tertiary_color
 import syncplaymobile.shared.generated.resources.theme_customize_title
-import syncplaymobile.shared.generated.resources.theme_customize_use_syncplay_gradients
-import app.uicomponents.GlassExposedDropdownMenu
-import app.uicomponents.GlassDropdownMenu
+import syncplaymobile.shared.generated.resources.theme_save_as_new
+import kotlin.math.roundToInt
 
+/**
+ * The theme creator: controls on one side, the live miniature on the other, and the whole
+ * screen re-themed on every edit through the token layer. The scheme is resolved once per
+ * theme value. Saving an edit replaces the old copy in one write.
+ */
 @Composable
 fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
     val globalViewmodel = LocalGlobalViewmodel.current
+    var theme by remember { mutableStateOf(themeToEdit ?: globalViewmodel.currentTheme.value) }
+    val scheme = remember(theme) { theme.dynamicScheme }
+    val livePalette = remember(theme) { Palette.from(scheme, theme) }
+    val notices = remember { NoticeQueue() }
+    val exists = stringResource(Res.string.theme_customize_already_exists_warning)
 
-    var newTheme by remember { mutableStateOf(themeToEdit ?: globalViewmodel.currentTheme.value) }
+    fun close() = globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
 
-    LaunchedEffect(newTheme) {
-        loggy(newTheme.toString())
+    fun save(asNew: Boolean) {
+        globalViewmodel.viewModelScope.launch {
+            val saved = if (themeToEdit != null && !asNew) globalViewmodel.replaceTheme(themeToEdit, theme) else globalViewmodel.saveNewTheme(theme)
+            if (saved) close() else notices.post(exists, NoticeSeverity.Warn, holdMs = 3000L)
+        }
     }
 
-    val dynamicScheme by derivedStateOf { newTheme.dynamicScheme }
-    val useSPGrad by derivedStateOf { newTheme.syncplayGradients }
-
-    val snackState = remember { SnackbarHostState() }
-
-    CompositionLocalProvider(
-        LocalTheme provides newTheme
-    ) {
-        MaterialTheme(
-            colorScheme = dynamicScheme
-        ) {
-            Scaffold(
-                snackbarHost = { SnackbarHost(hostState = snackState) },
-                topBar = {
-                    TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        title = {
-                            FlexibleText(
-                                text = stringResource(Res.string.theme_customize_title),
-                                size = 18f,
-                                textAlign = TextAlign.Center,
-                                fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                                font = jostFont,
-                                strokeColors = listOf(MaterialTheme.colorScheme.scrim)
-                            )
-                        },
-                        actions = {
-                            Button(
-                                onClick = {
-                                    globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
-                                },
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            ) {
-                                Text(stringResource(Res.string.cancel))
-                            }
-
-                            val themeAlreadyExistsString = stringResource(Res.string.theme_customize_already_exists_warning)
-                            Button(
-                                onClick = {
-                                    globalViewmodel.viewModelScope.launch {
-                                        if (themeToEdit != null) {
-                                            globalViewmodel.deleteTheme(themeToEdit)
-                                        }
-                                        val isSaved = globalViewmodel.saveNewTheme(newTheme)
-
-                                        if (isSaved) {
-                                            globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
-                                        } else {
-                                            snackState.showSnackbar(
-                                                themeAlreadyExistsString
-                                            )
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            ) {
-                                Text(stringResource(Res.string.save))
-                            }
+    CompositionLocalProvider(LocalTheme provides theme, LocalPalette provides livePalette) {
+        MaterialTheme(colorScheme = scheme) {
+            ScreenFrame(title = stringResource(Res.string.theme_customize_title), onBack = { close() }) {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val wide = maxWidth >= 720.dp
+                    if (wide) {
+                        Row(Modifier.fillMaxSize()) {
+                            Controls(theme, onTheme = { theme = it }, editing = themeToEdit != null, onSave = ::save, modifier = Modifier.weight(1f).fillMaxHeight())
+                            ThemeMiniature(theme, Modifier.weight(1f).fillMaxHeight().padding(Space.gutter).clip(Radius.panelShape))
                         }
-                    )
-                }
-            ) { paddings ->
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier.padding(paddings).padding(8.dp).verticalScroll(scrollState),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_name),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        HomeTextField(
-                            modifier = Modifier.width(200.dp),
-                            label = stringResource(Res.string.theme_customize_name),
-                            value = newTheme.name,
-                            onValueChange = {
-                                newTheme = newTheme.copy(
-                                    name = it
-                                )
-                            },
-                            height = 48.dp
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_primary_color),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ThemeSingleColorPicker(
-                            initialColor = Color(newTheme.primaryColor),
-                            onColorChange = { color ->
-                                newTheme = newTheme.copy(
-                                    primaryColor = color.toArgb()
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_secondary_color),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ThemeSingleColorPicker(
-                            initialColor = newTheme.secondaryColor?.let { Color(it) },
-                            onColorChange = { color ->
-                                newTheme = newTheme.copy(
-                                    secondaryColor = color.toArgb()
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_tertiary_color),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ThemeSingleColorPicker(
-                            initialColor = newTheme.tertiaryColor?.let { Color(it) },
-                            onColorChange = { color ->
-                                newTheme = newTheme.copy(
-                                    tertiaryColor = color.toArgb()
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_neutral_color),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ThemeSingleColorPicker(
-                            initialColor = newTheme.neutralColor?.let { Color(it) },
-                            onColorChange = { color ->
-                                newTheme = newTheme.copy(
-                                    neutralColor = color.toArgb()
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_neutral_variant_color),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ThemeSingleColorPicker(
-                            initialColor = newTheme.neutralVariantColor?.let { Color(it) },
-                            onColorChange = { color ->
-                                newTheme = newTheme.copy(
-                                    neutralVariantColor = color.toArgb()
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_is_amoled),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        Checkbox(
-                            checked = newTheme.isAMOLED,
-                            onCheckedChange = { newTheme = newTheme.copy(isAMOLED = it) }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_use_syncplay_gradients, appName),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        Checkbox(
-                            checked = newTheme.syncplayGradients,
-                            onCheckedChange = { newTheme = newTheme.copy(syncplayGradients = it) }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_contrast),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        var contrast by remember { mutableFloatStateOf(0f) }
-
-                        LaunchedEffect(contrast) {
-                            newTheme = newTheme.copy(
-                                contrast = contrast.toDouble()
-                            )
-                        }
-
-                        UnstyledSlider(
-                            value = contrast,
-                            onValueChange = { contrast = it },
-                            valueRange = -1f..1f,
-                            track = {
-                                Box(
-                                    modifier = Modifier
-                                        .width(150.dp)
-                                        .height(4.dp)
-                                        .background(Color.Gray)
-                                )
-                            },
-                            thumb = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                )
-                            }
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                    ) {
-                        val paletteSelector = remember { mutableStateOf(false) }
-
-                        FlexibleText(
-                            text = stringResource(Res.string.theme_customize_palette_style),
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        ExposedDropdownMenuBox(
-                            expanded = paletteSelector.value,
-                            onExpandedChange = {
-                                paletteSelector.value = !paletteSelector.value
-                            }
-                        ) {
-                            HomeTextField(
-                                modifier = Modifier.fillMaxWidth(0.75f)
-                                    .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                                icon = Icons.Outlined.Palette,
-                                value = newTheme.style.name,
-                                dropdownState = paletteSelector,
-                                onValueChange = {},
-                                height = 48.dp
-                            )
-
-                            GlassExposedDropdownMenu(
-                                modifier = Modifier
-                                    .heightIn(max = dropdownMenuMaxHeight)
-                                    .background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                expanded = paletteSelector.value,
-                                onDismissRequest = {
-                                    paletteSelector.value = false
-                                }
-                            ) {
-                                PaletteStyle.entries.forEach { paletteStyle ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(paletteStyle.name, color = Color.White)
-                                        },
-                                        onClick = {
-                                            paletteSelector.value = false
-
-                                            newTheme = newTheme.copy(style = paletteStyle)
-                                        }
-                                    )
-                                }
-                            }
+                    } else {
+                        Column(Modifier.fillMaxSize()) {
+                            ThemeMiniature(theme, Modifier.fillMaxWidth().height(160.dp).padding(horizontal = Space.gutter, vertical = Space.gap).clip(Radius.panelShape))
+                            Controls(theme, onTheme = { theme = it }, editing = themeToEdit != null, onSave = ::save, modifier = Modifier.weight(1f).fillMaxWidth())
                         }
                     }
-
-
-                    HorizontalDivider()
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    ) {
-                        HomeLeadingTitle(
-                            string = stringResource(Res.string.theme_customize_preview),
-                        )
-
-                        HomeTextField(
-                            modifier = Modifier.width(200.dp),
-                            icon = Icons.Filled.WebStories,
-                            label = stringResource(Res.string.theme_customize_preview),
-                            value = stringResource(Res.string.theme_customize_preview),
-                            dropdownState = null,
-                            onValueChange = { },
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    ) {
-                        SplitButtonDefaults.LeadingButton(
-                            contentPadding = PaddingValues(vertical = 16.dp),
-                            modifier = Modifier.width(200.dp),
-                            onClick = {
-                            },
-                            content = {
-                                Icon(imageVector = Icons.Filled.WebStories, "")
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(Res.string.theme_customize_preview), fontSize = 18.sp)
-                            }
-                        )
-
-                        GlyphButton(icon = Icons.Filled.WebStories, name = stringResource(Res.string.theme_customize_preview)) {}
-                    }
+                    NoticeHost(notices, overVideo = false, modifier = Modifier.align(Alignment.BottomCenter).padding(Space.gutter))
                 }
             }
         }
@@ -551,43 +117,82 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 }
 
 @Composable
-fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -> Unit) {
-    var pickerVisible by remember { mutableStateOf(false) }
-
-    Box {
-        Surface(
-            color = initialColor ?: Color.Transparent,
-            modifier = Modifier.height(42.dp).width(96.dp).padding(2.dp),
-            shape = RoundedCornerShape(6.dp),
-            border = BorderStroke(width = Dp.Hairline, Color.Gray),
-            onClick = {
-                pickerVisible = !pickerVisible
-            }
-        ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (initialColor == null) {
-                    Icon(Icons.Filled.MotionPhotosOff, null, tint = Color.Gray)
-                }
-            }
-        }
-
-        GlassDropdownMenu(
-            shape = RoundedCornerShape(8.dp),
-            expanded = pickerVisible,
-            properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
-            onDismissRequest = {
-                pickerVisible = false
-            }
-        ) {
-            KolorPicker(
-                modifier = Modifier.width(200.dp).height(165.dp).padding(6.dp),
-                initialColor = initialColor ?: Color(22, 22, 22),
-                onColorSelected = { color ->
-                    if (color != Color(22, 22, 22)) {
-                        onColorChange(color)
-                    }
-                }
+private fun Controls(
+    theme: SaveableTheme,
+    onTheme: (SaveableTheme) -> Unit,
+    editing: Boolean,
+    onSave: (asNew: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val p = palette
+    Column(modifier.verticalScroll(rememberScrollState()).imePadding()) {
+        Box(Modifier.padding(horizontal = Space.gutter, vertical = Space.gap)) {
+            Field(
+                value = theme.name,
+                onValueChange = { onTheme(theme.copy(name = it)) },
+                placeholder = stringResource(Res.string.theme_customize_name),
+                name = stringResource(Res.string.theme_customize_name),
             )
         }
+
+        GroupHeading(stringResource(Res.string.theme_customize_palette_style))
+        ColorRow(stringResource(Res.string.theme_customize_primary_color), Color(theme.primaryColor), onColor = { onTheme(theme.copy(primaryColor = it.toArgb())) })
+        ColorRow(stringResource(Res.string.theme_customize_secondary_color), theme.secondaryColor?.let(::Color), onColor = { onTheme(theme.copy(secondaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(secondaryColor = null)) })
+        ColorRow(stringResource(Res.string.theme_customize_tertiary_color), theme.tertiaryColor?.let(::Color), onColor = { onTheme(theme.copy(tertiaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(tertiaryColor = null)) })
+        ColorRow(stringResource(Res.string.theme_customize_neutral_color), theme.neutralColor?.let(::Color), onColor = { onTheme(theme.copy(neutralColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralColor = null)) })
+        ColorRow(stringResource(Res.string.theme_customize_neutral_variant_color), theme.neutralVariantColor?.let(::Color), onColor = { onTheme(theme.copy(neutralVariantColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralVariantColor = null)) })
+
+        ListRow {
+            RowLabel(stringResource(Res.string.theme_customize_palette_style))
+            val styles = PaletteStyle.entries
+            Stepper(options = styles.map { it.name }, index = styles.indexOf(theme.style).coerceAtLeast(0), onIndex = { onTheme(theme.copy(style = styles[it])) }, wrap = true)
+        }
+        ListRow {
+            RowLabel(stringResource(Res.string.theme_customize_dark))
+            Rocker(on = theme.isDark, onChange = { onTheme(theme.copy(isDark = it)) }, name = stringResource(Res.string.theme_customize_dark))
+        }
+        ListRow(enabled = theme.isDark) {
+            RowLabel(stringResource(Res.string.theme_customize_is_amoled))
+            Rocker(on = theme.isAMOLED, onChange = { onTheme(theme.copy(isAMOLED = it)) }, enabled = theme.isDark, name = stringResource(Res.string.theme_customize_is_amoled))
+        }
+        // Contrast starts from the theme's stored value, never from zero.
+        Column(Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(Res.string.theme_customize_contrast), style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
+                Text(((theme.contrast * 10).roundToInt() / 10.0).toString(), style = Type.value, color = p.inkDim)
+            }
+            ScrubTrack(
+                value = ((theme.contrast + 1.0) / 2.0).toFloat().coerceIn(0f, 1f),
+                onValueChange = { onTheme(theme.copy(contrast = (it * 2.0 - 1.0))) },
+                name = stringResource(Res.string.theme_customize_contrast),
+            )
+        }
+
+        Column(Modifier.padding(Space.gutter), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
+            PrimaryAction(stringResource(Res.string.save), onClick = { onSave(false) }, modifier = Modifier.fillMaxWidth())
+            if (editing) SecondaryAction(stringResource(Res.string.theme_save_as_new), onClick = { onSave(true) }, modifier = Modifier.fillMaxWidth())
+        }
+        Spacer(Modifier.height(Space.gutter))
     }
+}
+
+/** A colour row: the hex in the value column, the swatch after it, the shared colour modal. */
+@Composable
+private fun ColorRow(label: String, color: Color?, onColor: (Color) -> Unit, onReset: (() -> Unit)? = null) {
+    val open = remember { mutableStateOf(false) }
+    val p = palette
+    ListRow(onClick = { open.value = true }) {
+        RowLabel(label)
+        RowValue(color?.hex() ?: stringResource(Res.string.theme_auto), width = 90.dp)
+        RowGap(Space.gapTight)
+        Swatch(color ?: p.panel, name = label)
+    }
+    ColorModal(
+        open = open,
+        title = label,
+        summary = "",
+        initial = color ?: p.accent,
+        onColor = onColor,
+        onReset = { onReset?.invoke() },
+    )
 }

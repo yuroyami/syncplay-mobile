@@ -113,10 +113,27 @@ class SyncplayViewmodel : ViewModel() {
             customThemes.remove(themeJson)
             CUSTOM_THEMES.set(customThemes)
 
-            if (currentTheme == theme) {
+            // Deleting the active theme falls back to the first remaining custom one, else the default.
+            if (currentTheme.value == theme) {
                 changeTheme(customThemes.firstOrNull()?.toTheme() ?: defaultTheme)
             }
         }
+    }
+
+    /**
+     * Replaces [old] with [new] in one datastore write, so a fast save cannot lose the theme
+     * between a delete and an add. Refused when [new] already exists as another theme.
+     */
+    suspend fun replaceTheme(old: SaveableTheme, new: SaveableTheme): Boolean = withContext(Dispatchers.IO) {
+        val oldJson = old.asString()
+        val newJson = new.asString()
+        val customThemes = CUSTOM_THEMES.value().toMutableSet()
+        if (newJson != oldJson && newJson in customThemes) return@withContext false
+        customThemes.remove(oldJson)
+        customThemes.add(newJson)
+        CUSTOM_THEMES.set(customThemes)
+        changeTheme(new)
+        true
     }
 
     init {

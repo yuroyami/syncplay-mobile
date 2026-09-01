@@ -8,17 +8,6 @@ import com.materialkolor.PaletteStyle
 val defaultTheme: SaveableTheme
     get() = TRINITY
 
-val BLANK_THEME = SaveableTheme(
-    name = "Untitled theme",
-    primaryColor = Color.Blue.toArgb(),
-    isDark = true,
-    isAMOLED = false,
-    secondaryColor = null,
-    tertiaryColor = Color.Cyan.toArgb(),
-    style = PaletteStyle.TonalSpot,
-    syncplayGradients = true
-)
-
 /** The flagship theme: the Trinity brand colors (ultraviolet/orchid/coral) seeded into a dark scheme. */
 val TRINITY = SaveableTheme(
     name = "Trinity",

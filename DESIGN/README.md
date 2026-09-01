@@ -158,8 +158,18 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
 - MEDIA_INTAKE: the route sheet, the link route with recognition and the explicit failure, the
   media folders editor. Not done: the indexed file count and the lost-access state (the registry
   has no API for either yet), and the Android chooser on persistable grants.
+- HOME: the form with one left edge on the hairline field, inline help and errors, the
+  segmented server choice with port tags, Join as the one gradient with the shortcut glyph
+  inside it, Watch alone beside it, the bar without a scaffold, notices instead of a snackbar,
+  the About and tips modals, and the shortcut bugs on both platforms.
+- THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
+  with a live canvas, token controls and a single-write save. Gradients stay reserved.
+- SERVER_HOST: the address block with copy and share (a new platform callback on all three
+  platforms), the status row with its evidence, persisted configuration rows, the log as a
+  severity list with the cap, the follow rule and the errors filter, the start guard and the
+  failed-start cleanup. Not done: the Android notification's client count.
 
-Still to do: HOME, THEMING, SERVER_HOST, the remaining
+Still to do: the remaining
 POPUPS and GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
 ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
 to those surfaces.
