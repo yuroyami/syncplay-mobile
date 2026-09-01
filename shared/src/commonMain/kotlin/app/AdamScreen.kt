@@ -31,10 +31,16 @@ import app.room.RoomViewmodel
 import app.room.models.MessagePalette
 import app.server.ServerViewmodel
 import app.server.ui.ServerHostScreenUI
+import androidx.compose.ui.text.font.FontFamily
+import app.theme.LocalPalette
+import app.theme.LocalType
+import app.theme.Palette
 import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
+import app.theme.TypeRoles
 import app.theme.appShapes
 import app.theme.appTypography
+import app.uicomponents.lexendFont
 
 /** Provides access to the global [SyncplayViewmodel] instance shared across the app. */
 val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
@@ -87,12 +93,19 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
     val currentTheme by globalviewmodel.currentTheme.collectAsState()
     val prefsState = datastoreStateFlow.collectAsState()
 
+    // The design tokens: one type binding per family, one palette per theme.
+    val lexend = FontFamily(lexendFont)
+    val typeRoles = remember(lexend) { TypeRoles.from(lexend) }
+    val designPalette = remember(currentTheme) { Palette.from(currentTheme.dynamicScheme, currentTheme) }
+
     CompositionLocalProvider(
         LocalPrefsState provides prefsState,
         LocalGlobalViewmodel provides globalviewmodel,
         LocalScreen provides currentScreen,
         LocalChatPalette provides messagePalette.value,
-        LocalTheme provides currentTheme
+        LocalTheme provides currentTheme,
+        LocalType provides typeRoles,
+        LocalPalette provides designPalette,
     ) {
         MaterialTheme(
             colorScheme = currentTheme.dynamicScheme,

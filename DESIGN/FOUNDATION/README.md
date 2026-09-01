@@ -196,8 +196,9 @@ Over video, motion competes with content. Rules:
 - Two durations only: `quick` 120ms for state changes, `move` 220ms for things that travel.
 - One easing for entrances and exits, the standard curve (0.2, 0, 0, 1). One spring for anything
   the finger is dragging: medium stiffness, no bounce.
-- Three hold times, each named once: a notice holds 2.8s, the HUD hides after 3.2s idle, and a
-  fading chat line holds for the user's fading duration preference (default 3s).
+- Three hold times, each named once: a notice holds for the notice duration preference
+  (default 2s), the HUD hides after 3.2s idle, and a fading chat line holds for the fading
+  duration preference (default 3s).
 - No ripple. Press feedback is an immediate opacity drop to 70 percent and a 1dp inset, which
   reads faster and does not paint a Material circle over a dark panel.
 - Everything respects reduced motion by collapsing to an instant state change or a crossfade.

@@ -62,7 +62,7 @@ Compile, in this order, because the first is the fastest and catches most of it:
 ```
 
 ```bash
-./gradlew :shared:compileFullDebugKotlinAndroid
+./gradlew :shared:compileAndroidMain
 ```
 
 ```bash
