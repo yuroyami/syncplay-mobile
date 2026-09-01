@@ -55,6 +55,27 @@ fun PrimaryAction(
     }
 }
 
+/** The confirming action of a panel or full modal: 42dp, filled with the accent, label in ground. */
+@Composable
+fun AccentAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    val p = palette
+    val source = remember { MutableInteractionSource() }
+    Box(
+        modifier = modifier
+            .height(Space.row)
+            .clip(Radius.controlShape)
+            .background(if (enabled) p.accent else p.disabled)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .hoverable(source, enabled)
+            .controlStates(source, Radius.controlShape, enabled = enabled)
+            .pressFeedback(source, enabled)
+            .padding(horizontal = Space.gutter),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = Type.label, color = p.ground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
 /** 42dp, a hairline border, label in ink. */
 @Composable
 fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {

@@ -36,6 +36,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.RectangleShape
+import app.theme.Radius
+import app.theme.Tier
+import app.theme.palette
 
 /**
  * The app-wide backdrop that every glass surface samples. Provided once at the composition root
@@ -279,6 +284,45 @@ private fun opaqueTintAlpha(material: GlassMaterial): Float = when (material) {
     GlassMaterial.Regular -> 0.80f
     GlassMaterial.Thick -> 0.90f
 }
+
+/** True inside a dialog window, where glass samples the undimmed app window and needs the heavier tint. */
+val LocalInDialogWindow = staticCompositionLocalOf { false }
+
+/**
+ * The surface tiers from DESIGN/GLASS_SURFACES. Callers say what kind of surface a thing is; the
+ * material, rim and fallback follow from the tier and from whether it sits in a dialog window.
+ * Shapes come from the caller's dock, never from Material's shape scale.
+ */
+@Composable
+fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge = GlassEdge.All): Modifier = when (tier) {
+    Tier.Flat -> clip(shape).background(palette.ground)
+    Tier.Panel -> glassSurface(
+        shape = shape,
+        material = if (LocalInDialogWindow.current) GlassMaterial.Regular else GlassMaterial.Thin,
+        edge = rim,
+    )
+    Tier.Chrome -> chromeSurface(shape)
+    Tier.Scrim -> background(glassScrim)
+}
+
+/**
+ * The chrome tier: the gesture pill's skin with its capsule taken off. No blur, so it is safe on
+ * chrome that stays composed while video plays. A near black gradient body, the top-lit rim, and
+ * the one shadow in the app, because this floats over moving video with no edge to anchor to.
+ */
+fun Modifier.chromeSurface(shape: Shape = Radius.panelShape): Modifier = this
+    .shadow(20.dp, shape)
+    .clip(shape)
+    .background(
+        Brush.verticalGradient(
+            listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))
+        )
+    )
+    .border(
+        width = 1.dp,
+        brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))),
+        shape = shape,
+    )
 
 /**
  * Asks the platform to blur whatever sits behind the dialog window this is called from.

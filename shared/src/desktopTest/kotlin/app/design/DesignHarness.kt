@@ -7,7 +7,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.ImageComposeScene
+import app.preferences.LocalPrefsState
+import app.preferences.createDataStore
+import app.preferences.datastore
+import app.preferences.datastoreStateFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Density
@@ -35,11 +40,25 @@ object DesignHarness {
     /** The measured height of the last render, in dp. */
     data class Result(val file: File, val contentHeightDp: Int)
 
+    private var datastoreReady = false
+
+    /** Surfaces read preferences (the glass switch, the settings rows), so the harness owns a throwaway datastore. */
+    @Synchronized
+    fun initDatastore() {
+        if (datastoreReady) return
+        val dir = File(System.getProperty("java.io.tmpdir"), "synkplay-design-harness").also { it.mkdirs() }
+        File(dir, "harness.preferences_pb").delete()
+        datastore = createDataStore { File(dir, "harness.preferences_pb").absolutePath }
+        datastoreStateFlow.value
+        datastoreReady = true
+    }
+
     @Composable
     fun Frame(theme: SaveableTheme, overVideo: Boolean = false, content: @Composable () -> Unit) {
         val base = Palette.from(theme.dynamicScheme, theme)
         val pal = if (overVideo) base.overVideo() else base
-        CompositionLocalProvider(LocalTheme provides theme, LocalPalette provides pal) {
+        val prefs = datastoreStateFlow.collectAsState()
+        CompositionLocalProvider(LocalTheme provides theme, LocalPalette provides pal, LocalPrefsState provides prefs) {
             MaterialTheme(colorScheme = theme.dynamicScheme, typography = appTypography, shapes = appShapes) {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }
             }
@@ -55,6 +74,7 @@ object DesignHarness {
         overVideo: Boolean = false,
         content: @Composable () -> Unit,
     ): Result {
+        initDatastore()
         val density = Density(2f, fontScale)
         var measuredPx = 0
         val scene = ImageComposeScene(
