@@ -11,14 +11,19 @@ sealed interface PrefExtraConfig {
         val onClick: () -> Unit
     ) : PrefExtraConfig
 
-    /** Boolean pref that also fires a side-effect callback on toggle. */
+    /** Boolean pref that also fires a side-effect callback on toggle, once, after the write. */
     data class BooleanCallback(
         val onBooleanChanged: (b: Boolean) -> Unit
     ) : PrefExtraConfig
 
+    /**
+     * A numeric range. [unit] is shown after the value ("10 s"). [onValueChanged] reaches a live
+     * subsystem: it fires on release and at most a few times a second while dragging.
+     */
     data class Slider(
         val maxValue: Int = 100,
         val minValue: Int = 0,
+        val unit: String = "",
         val onValueChanged: (suspend SyncplayViewmodel.(newValue: Int) -> Unit)? = null
     ) : PrefExtraConfig
 
@@ -33,10 +38,12 @@ sealed interface PrefExtraConfig {
 
     data object ColorPick : PrefExtraConfig
 
+    /** [destructive] draws the row and the confirming action in the destructive treatment. */
     data class YesNoDialog(
         val rationale: StringResource,
         val onYes: suspend CoroutineScope.() -> Unit,
-        val onNo: suspend CoroutineScope.() -> Unit = {}
+        val onNo: suspend CoroutineScope.() -> Unit = {},
+        val destructive: Boolean = false,
     ) : PrefExtraConfig
 
     data class TextField(

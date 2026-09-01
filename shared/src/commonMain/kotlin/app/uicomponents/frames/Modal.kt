@@ -78,6 +78,7 @@ fun Modal(
     title: String? = null,
     size: ModalSize = ModalSize.Panel,
     dismissable: Boolean = true,
+    inset: Boolean = true,
     actions: (@Composable RowScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -92,7 +93,7 @@ fun Modal(
     ) {
         DialogBackdropBlur()
         CompositionLocalProvider(LocalInDialogWindow provides true) {
-            ModalFrame(size, title, dismissable, onDismiss, actions, body)
+            ModalFrame(size, title, dismissable, onDismiss, actions, body, inset)
         }
     }
 }
@@ -106,6 +107,7 @@ internal fun ModalFrame(
     onDismiss: () -> Unit,
     actions: (@Composable RowScope.() -> Unit)?,
     body: @Composable ColumnScope.() -> Unit,
+    inset: Boolean = true,
 ) {
     val p = palette
     val density = LocalDensity.current
@@ -170,7 +172,7 @@ internal fun ModalFrame(
                     modifier = Modifier
                         .weight(1f, fill = size == ModalSize.Full)
                         .verticalScroll(scroll)
-                        .padding(horizontal = Space.gutter, vertical = Space.gap),
+                        .then(if (inset) Modifier.padding(horizontal = Space.gutter, vertical = Space.gap) else Modifier.padding(vertical = Space.gapTight)),
                     content = body,
                 )
                 if (actions != null) {

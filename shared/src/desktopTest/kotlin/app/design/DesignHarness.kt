@@ -8,7 +8,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ImageComposeScene
+import app.LocalGlobalViewmodel
+import app.SyncplayViewmodel
 import app.preferences.LocalPrefsState
 import app.preferences.createDataStore
 import app.preferences.datastore
@@ -58,7 +61,13 @@ object DesignHarness {
         val base = Palette.from(theme.dynamicScheme, theme)
         val pal = if (overVideo) base.overVideo() else base
         val prefs = datastoreStateFlow.collectAsState()
-        CompositionLocalProvider(LocalTheme provides theme, LocalPalette provides pal, LocalPrefsState provides prefs) {
+        val vm = remember { SyncplayViewmodel() }
+        CompositionLocalProvider(
+            LocalTheme provides theme,
+            LocalPalette provides pal,
+            LocalPrefsState provides prefs,
+            LocalGlobalViewmodel provides vm,
+        ) {
             MaterialTheme(colorScheme = theme.dynamicScheme, typography = appTypography, shapes = appShapes) {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }
             }

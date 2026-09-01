@@ -28,6 +28,7 @@ import app.preferences.Preferences.KITE_SUBTITLE_POS
 import app.preferences.Preferences.KITE_SUBTITLE_SCALE
 import app.preferences.PrefExtraConfig
 import app.preferences.settings.SettingCategory
+import app.preferences.settings.withControl
 import app.preferences.value
 import app.preferences.watchPref
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
@@ -318,23 +319,16 @@ internal class KiteImpl(
         // running player (KitePlayerVideo path change; the engine keeps position and play state).
         +KITE_COMPOSE_RENDERER
         // Runtime settings: the callbacks reach the live engine immediately.
-        +KITE_SUBTITLE_SCALE.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 25) { percent ->
+        +KITE_SUBTITLE_SCALE.withControl(PrefExtraConfig.Slider(maxValue = 300, minValue = 25) { percent ->
                 kite?.setSubtitleScale((percent / 100f).coerceAtLeast(0.05f))
-            }
-        }
-        +KITE_SUBTITLE_DELAY_MS.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
+            })
+        +KITE_SUBTITLE_DELAY_MS.withControl(PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
                 kite?.setSubtitleDelay(ms.milliseconds)
-            }
-        }
-        +KITE_AUDIO_DELAY_MS.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 1_000, minValue = -1_000) { ms ->
+            })
+        +KITE_AUDIO_DELAY_MS.withControl(PrefExtraConfig.Slider(maxValue = 1_000, minValue = -1_000) { ms ->
                 kite?.setAudioDelay(ms.milliseconds)
-            }
-        }
-        +KITE_PRESERVE_PITCH.apply {
-            config?.extraConfig = PrefExtraConfig.BooleanCallback { preserve ->
+            })
+        +KITE_PRESERVE_PITCH.withControl(PrefExtraConfig.BooleanCallback { preserve ->
                 // At 1.0x the two mechanisms are the same bypass; away from it the engine rides
                 // its internal precise seek and refuses typed on an unseekable source.
                 try {
@@ -342,41 +336,28 @@ internal class KiteImpl(
                 } catch (refused: UnsupportedOperationException) {
                     loggy("KitePlayer: pitch-law change refused: ${refused.message}")
                 }
-            }
-        }
-        +KITE_SUBTITLE_POS.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 10) { percent ->
+            })
+        +KITE_SUBTITLE_POS.withControl(PrefExtraConfig.Slider(maxValue = 100, minValue = 10) { percent ->
                 kite?.setSubtitlePosition(subtitlePositionFromPref(percent))
-            }
-        }
-        +KITE_EQ_BRIGHTNESS.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = -100) { _ ->
+            })
+        +KITE_EQ_BRIGHTNESS.withControl(PrefExtraConfig.Slider(maxValue = 100, minValue = -100) { _ ->
                 kite?.setVideoAdjustments(adjustmentsFromPrefs())
-            }
-        }
-        +KITE_EQ_CONTRAST.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
+            })
+        +KITE_EQ_CONTRAST.withControl(PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
                 kite?.setVideoAdjustments(adjustmentsFromPrefs())
-            }
-        }
-        +KITE_EQ_SATURATION.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
+            })
+        +KITE_EQ_SATURATION.withControl(PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
                 kite?.setVideoAdjustments(adjustmentsFromPrefs())
-            }
-        }
-        +KITE_EQ_HUE.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 180, minValue = -180) { _ ->
+            })
+        +KITE_EQ_HUE.withControl(PrefExtraConfig.Slider(maxValue = 180, minValue = -180) { _ ->
                 kite?.setVideoAdjustments(adjustmentsFromPrefs())
-            }
-        }
-        +KITE_DEBUG_STATS.apply {
-            config?.extraConfig = PrefExtraConfig.BooleanCallback { enabled ->
+            })
+        +KITE_DEBUG_STATS.withControl(PrefExtraConfig.BooleanCallback { enabled ->
                 if (enabled) watchEngineStats() else {
                     statsWatcher?.cancel()
                     statsWatcher = null
                 }
-            }
-        }
+            })
     }
 
     /**

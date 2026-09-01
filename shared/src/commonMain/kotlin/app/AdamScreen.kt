@@ -9,7 +9,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -19,12 +18,12 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.preferences.LocalPrefsState
 import app.preferences.datastoreStateFlow
+import app.preferences.settings.SettingsScreenUI
 import app.uicomponents.GlassBackdrop
 import app.uicomponents.messagePalette
 import app.utils.createWeakRef
 import app.home.HomeScreenUI
 import app.home.HomeViewmodel
-import app.preferences.settings.SettingStyling
 import app.room.RoomScreenUI
 import app.room.RoomUiStateManager
 import app.room.RoomViewmodel
@@ -53,9 +52,6 @@ val LocalTheme = compositionLocalOf<SaveableTheme> { error("No theme provided ye
 
 /** Provides access to the currently active [Screen] in the navigation back stack. */
 val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
-
-/** Provides access to the current [SettingStyling] configuration for the app. */
-val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 
 /** Provides access to the current [MessagePalette] for chat message color theming. */
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
@@ -155,6 +151,10 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                         ThemeCreatorScreenUI(
                             themeToEdit = themeCreator.themeToEdit
                         )
+                    }
+
+                    entry<Screen.Settings> { settings ->
+                        SettingsScreenUI(settings.categoryKey)
                     }
 
                     entry<Screen.ServerHost> {

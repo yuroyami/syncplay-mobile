@@ -129,6 +129,11 @@ import syncplaymobile.shared.generated.resources.setting_network_engine_swift_ni
 import syncplaymobile.shared.generated.resources.setting_network_engine_title
 import syncplaymobile.shared.generated.resources.setting_never_show_tips_summary
 import syncplaymobile.shared.generated.resources.setting_never_show_tips_title
+import syncplaymobile.shared.generated.resources.settings_show_descriptions_summary
+import syncplaymobile.shared.generated.resources.settings_show_descriptions_title
+import syncplaymobile.shared.generated.resources.settings_haptics_controls_summary
+import syncplaymobile.shared.generated.resources.settings_haptics_controls_title
+import app.preferences.settings.SETTINGS_GLOBAL
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_summary
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_title
 import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
@@ -373,6 +378,18 @@ object Preferences {
         summary = Res.string.setting_never_show_tips_summary
         icon = Icons.Filled.Lightbulb
     }
+    /** Prints every row's explanation under it, for people who liked the old manuals. */
+    val SHOW_SETTING_DESCRIPTIONS = Pref("pref_show_setting_descriptions", false) {
+        title = Res.string.settings_show_descriptions_title
+        summary = Res.string.settings_show_descriptions_summary
+        icon = Icons.Filled.Lightbulb
+    }
+    /** The control haptics (a rocker flip, a seek landing), separate from the room event pulses. */
+    val HAPTICS_ON_CONTROLS = Pref("pref_haptics_on_controls", true) {
+        title = Res.string.settings_haptics_controls_title
+        summary = Res.string.settings_haptics_controls_summary
+        icon = Icons.Filled.Vibration
+    }
     val ERASE_SHORTCUTS = Pref("pref_erase_shortcuts", "") {
         title = Res.string.setting_erase_shortcuts_title
         summary = Res.string.setting_erase_shortcuts_summary
@@ -380,6 +397,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_erase_shortcuts_dialog,
+            destructive = true,
             onYes = {
                 platformCallback.onEraseConfigShortcuts()
             }
@@ -695,7 +713,7 @@ object Preferences {
         summary = Res.string.uisetting_msglife_summary
         icon = Icons.Filled.Timer
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 1, unit = "s")
     }
     val MSG_BOX_ACTION = Pref("pref_inroom_msg_box_action", true) {
         title = Res.string.uisetting_msgboxaction_title
@@ -708,7 +726,7 @@ object Preferences {
         summary = Res.string.uisetting_osd_duration_summary
         icon = Icons.Filled.Timer
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 0)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 0, unit = "s")
     }
 
     /** ------------ OSD Notification Filters -------------
@@ -762,14 +780,14 @@ object Preferences {
         summary = Res.string.uisetting_audio_delay_summary
         icon = Icons.AutoMirrored.Filled.CompareArrows
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000, unit = "ms")
     }
     val SUBTITLE_DELAY = Pref("pref_inroom_subtitle_delay", 0) {
         title = Res.string.uisetting_subtitle_delay_title
         summary = Res.string.uisetting_subtitle_delay_summary
         icon = Icons.AutoMirrored.Filled.CompareArrows
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000, unit = "ms")
     }
 
     val CUSTOM_SEEK_AMOUNT = Pref("pref_inroom_custom_seek_amount", 90) {
@@ -777,7 +795,7 @@ object Preferences {
         summary = Res.string.uisetting_custom_seek_amount_summary
         icon = Icons.Filled.Update
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30, unit = "s")
     }
     val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
         title = Res.string.uisetting_custom_seek_front_title
@@ -790,7 +808,7 @@ object Preferences {
         summary = Res.string.uisetting_seek_forward_jump_summary
         icon = Icons.Filled.FastForward
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1, unit = "s")
 
     }
     val SEEK_BACKWARD_JUMP = Pref("pref_inroom_seek_backward_jump", 10) {
@@ -798,7 +816,7 @@ object Preferences {
         summary = Res.string.uisetting_seek_backward_jump_summary
         icon = Icons.Filled.FastRewind
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1, unit = "s")
     }
 
     val SHOW_CHAPTER_DOTS = Pref("pref_inroom_show_chapter_dots", true) {
@@ -932,21 +950,21 @@ object Preferences {
         summary = Res.string.setting_max_buffer_summary
         icon = Icons.Filled.HourglassTop
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 60, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 60, minValue = 1, unit = "s")
     }
     val EXO_MIN_BUFFER = Pref("pref_min_buffer_size", 15) {
         title = Res.string.setting_min_buffer_title
         summary = Res.string.setting_min_buffer_summary
         icon = Icons.Filled.HourglassBottom
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 1, unit = "s")
     }
     val EXO_SEEK_BUFFER = Pref("pref_seek_buffer_size", 5000) {
         title = Res.string.setting_playback_buffer_title
         summary = Res.string.setting_playback_buffer_summary
         icon = Icons.Filled.HourglassEmpty
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 15000, minValue = 100)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 15000, minValue = 100, unit = "ms")
     }
 
     /** ------------ Haptics -------------*/
@@ -1009,7 +1027,7 @@ object Preferences {
         summary = Res.string.uisetting_ui_opacity_summary
         icon = Icons.Filled.Opacity
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0, unit = "%")
     }
 
     val RECONNECTION_INTERVAL = Pref("pref_inroom_reconnection_interval", 2) {
@@ -1017,38 +1035,51 @@ object Preferences {
         summary = Res.string.uisetting_reconnect_interval_summary
         icon = Icons.Filled.Web
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 15, minValue = 0)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 15, minValue = 0, unit = "s")
     }
 
-    val GLOBAL_RESET_DEFAULTS = Pref("global_reset_defaults", "") {
+    val GLOBAL_RESET_DEFAULTS: Pref<String> = Pref("global_reset_defaults", "") {
         title = Res.string.setting_resetdefault_title
         summary = Res.string.setting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
         extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_resetdefault_dialog,
+            destructive = true,
             onYes = {
+                // Only the global categories' keys. Identity, themes, favourites and the saved
+                // join config are not settings and survive a reset.
                 datastore.edit { preferences ->
-                    preferences.clear()
+                    SETTINGS_GLOBAL.flatMap { it.settings }.forEach { preferences.remove(it.anyKey) }
                 }
             }
         )
     }
 
-    val INROOM_RESET_DEFAULTS = Pref("inroom_reset_defaults", "") {
+    val INROOM_RESET_DEFAULTS: Pref<String> = Pref("inroom_reset_defaults", "") {
         title = Res.string.uisetting_resetdefault_title
         summary = Res.string.uisetting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
         extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_resetdefault_dialog,
+            destructive = true,
             onYes = {
+                // Every in-room and engine key, by prefix; nothing else.
                 datastore.edit { preferences ->
-                    preferences.clear()
+                    preferences.asMap().keys
+                        .filter { key -> IN_ROOM_KEY_PREFIXES.any { key.name.startsWith(it) } || key.name in IN_ROOM_EXTRA_KEYS }
+                        .forEach { preferences.remove(it) }
                 }
             }
         )
     }
+
+    private val IN_ROOM_KEY_PREFIXES = listOf("pref_inroom_", "pref_kite_", "pref_mpv_", "pref_haptic_", "pref_vlc_", "vlc_")
+    private val IN_ROOM_EXTRA_KEYS = setOf(
+        "pref_max_buffer_size", "pref_min_buffer_size", "pref_seek_buffer_size",
+        "pref_video_background_color", "pref_room_ui_opacity",
+    )
 
     val CLEAR_LOGS = Pref("log_clear", "") {
         title = Res.string.setting_clear_logs_title
@@ -1057,6 +1088,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_clear_logs_dialog,
+            destructive = true,
             onYes = { clearLogs() }
         )
     }

@@ -36,4 +36,8 @@ sealed interface Screen : NavKey {
      */
     @Serializable
     data object ServerHost : Screen
+
+    /** Global settings. [categoryKey] opens one category directly (a deep link). */
+    @Serializable
+    data class Settings(val categoryKey: String? = null) : Screen
 }

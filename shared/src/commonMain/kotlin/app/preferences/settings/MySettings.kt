@@ -21,6 +21,7 @@ import app.preferences.Preferences.DISABLE_FROSTED_GLASS
 import app.preferences.Preferences.EXPORT_LOGS
 import app.preferences.Preferences.FILE_MISMATCH_WARNING
 import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
+import app.preferences.Preferences.HAPTICS_ON_CONTROLS
 import app.preferences.Preferences.HAPTIC_ON_CHAT
 import app.preferences.Preferences.HAPTIC_ON_CONNECTION
 import app.preferences.Preferences.HAPTIC_ON_JOINED
@@ -29,7 +30,12 @@ import app.preferences.Preferences.HAPTIC_ON_PAUSED
 import app.preferences.Preferences.HAPTIC_ON_PLAYED
 import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
+import app.preferences.Preferences.OSD_DURATION
+import app.preferences.Preferences.OSD_NON_OPERATOR
 import app.preferences.Preferences.OSD_OTHER_ROOM
+import app.preferences.Preferences.OSD_SAME_ROOM
+import app.preferences.Preferences.OSD_SLOWDOWN
+import app.preferences.Preferences.OSD_WARNINGS
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.Preferences.HASH_FILENAME
@@ -42,6 +48,7 @@ import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.Preferences.MSG_FONTSIZE
+import app.preferences.Preferences.MSG_MAXCOUNT
 import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
@@ -54,6 +61,7 @@ import app.preferences.Preferences.REMEMBER_INFO
 import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
+import app.preferences.Preferences.SHOW_SETTING_DESCRIPTIONS
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
@@ -69,21 +77,21 @@ import syncplaymobile.shared.generated.resources.settings_categ_general
 import syncplaymobile.shared.generated.resources.settings_categ_language
 import syncplaymobile.shared.generated.resources.settings_categ_network
 import syncplaymobile.shared.generated.resources.settings_categ_syncing
+import syncplaymobile.shared.generated.resources.settings_group_chapters
+import syncplaymobile.shared.generated.resources.settings_group_connection
+import syncplaymobile.shared.generated.resources.settings_group_links
+import syncplaymobile.shared.generated.resources.settings_group_logs
+import syncplaymobile.shared.generated.resources.settings_group_messages
+import syncplaymobile.shared.generated.resources.settings_group_notices
+import syncplaymobile.shared.generated.resources.settings_group_picture
+import syncplaymobile.shared.generated.resources.settings_group_privacy
+import syncplaymobile.shared.generated.resources.settings_group_readiness
+import syncplaymobile.shared.generated.resources.settings_group_seeking
+import syncplaymobile.shared.generated.resources.settings_group_subtitles
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
 import syncplaymobile.shared.generated.resources.uisetting_categ_haptics
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
-
-val settingGLOBALstyle = SettingStyling(
-    iconSize = 26
-)
-
-val settingROOMstyle = SettingStyling(
-    titleSize = 13f,
-    summarySize = 11f,
-    iconSize = 22,
-    paddingUsed = 8f
-)
 
 val GLOBAL_GENERAL = SettingCategory(
     title = Res.string.settings_categ_general,
@@ -91,6 +99,8 @@ val GLOBAL_GENERAL = SettingCategory(
 ) {
     +REMEMBER_INFO
     +NEVER_SHOW_TIPS
+    +SHOW_SETTING_DESCRIPTIONS
+    +HAPTICS_ON_CONTROLS
     +ERASE_SHORTCUTS
     +MEDIA_DIRECTORIES
 }
@@ -108,22 +118,30 @@ val GLOBAL_SYNCING = SettingCategory(
     title = Res.string.settings_categ_syncing,
     icon = Icons.Filled.ConnectWithoutContact
 ) {
-    +READY_FIRST_HAND
-    +UNPAUSE_ACTION
-    +PAUSE_ON_SOMEONE_LEAVE
-    +FILE_MISMATCH_WARNING
-    +HASH_FILENAME
-    +HASH_FILESIZE
+    group(Res.string.settings_group_readiness) {
+        +READY_FIRST_HAND
+        +UNPAUSE_ACTION
+        +PAUSE_ON_SOMEONE_LEAVE
+    }
+    group(Res.string.settings_group_privacy) {
+        +FILE_MISMATCH_WARNING
+        +HASH_FILENAME
+        +HASH_FILESIZE
+    }
 }
 
 val GLOBAL_NETWORK = SettingCategory(
     title = Res.string.settings_categ_network,
     icon = Icons.Filled.Hub
 ) {
-    +TLS_ENABLE
-    +NETWORK_ENGINE
-    +MEDIA_RESOLVER_ENABLED
-    +TRUSTED_DOMAINS
+    group(Res.string.settings_group_connection) {
+        +TLS_ENABLE
+        +NETWORK_ENGINE
+    }
+    group(Res.string.settings_group_links) {
+        +MEDIA_RESOLVER_ENABLED
+        +TRUSTED_DOMAINS
+    }
 }
 
 val GLOBAL_ADVANCED = SettingCategory(
@@ -131,8 +149,10 @@ val GLOBAL_ADVANCED = SettingCategory(
     icon = Icons.Filled.Stream
 ) {
     +DISABLE_FROSTED_GLASS
-    +EXPORT_LOGS
-    +CLEAR_LOGS
+    group(Res.string.settings_group_logs) {
+        +EXPORT_LOGS
+        +CLEAR_LOGS
+    }
     +GLOBAL_RESET_DEFAULTS
 }
 
@@ -150,37 +170,53 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
     title = Res.string.uisetting_categ_chat_properties,
     icon = Icons.AutoMirrored.Filled.Chat
 ) {
-    +CHAT_COLORS_ENTRY
-    +MSG_ACTIVATE_STAMP
-    +MSG_OUTLINE_ACTIVATE
-    +MSG_OUTLINE_THICKNESS
-    +MSG_SHADOW_ACTIVATE
-    +MSG_BOX_ACTION
-    +MSG_BG_OPACITY
-    +MSG_FONTSIZE
-    +MSG_FADING_DURATION
-    /* Sole survivor of the old OSD category: chat is already an on-screen display, so the only
-     * OSD toggle worth keeping is whether events from OTHER rooms surface here. */
-    +OSD_OTHER_ROOM
+    group(Res.string.settings_group_messages) {
+        +CHAT_COLORS_ENTRY
+        +MSG_ACTIVATE_STAMP
+        +MSG_OUTLINE_ACTIVATE
+        +MSG_OUTLINE_THICKNESS
+        +MSG_SHADOW_ACTIVATE
+        +MSG_BOX_ACTION
+        +MSG_BG_OPACITY
+        +MSG_FONTSIZE
+        +MSG_FADING_DURATION
+        +MSG_MAXCOUNT
+    }
+    /* The notice switches the room reads; they had no row anywhere until now. */
+    group(Res.string.settings_group_notices) {
+        +OSD_DURATION
+        +OSD_SAME_ROOM
+        +OSD_NON_OPERATOR
+        +OSD_OTHER_ROOM
+        +OSD_SLOWDOWN
+        +OSD_WARNINGS
+    }
 }
 
 val INROOM_PLAYER_SETTINGS = SettingCategory(
     title = Res.string.uisetting_categ_player_settings,
     icon = Icons.Filled.VideoLabel,
 ) {
-    +CUSTOM_SEEK_FRONT
-    +CUSTOM_SEEK_AMOUNT
-    +SUBTITLE_SIZE
-    +SEEK_FORWARD_JUMP
-    +SEEK_BACKWARD_JUMP
-    +SHOW_CHAPTER_DOTS
-    +CHAPTER_DOTS_CLICKABLE
-    +VIDEO_BACKGROUND_COLOR
-    /* Preferred track languages, mirrored from the global Language category so they are
-     * reachable mid-session too. */
-    +AUDIO_LANG
-    +CC_LANG
-    /* DOUBLETAP_SEEK and SWIPE_GESTURES moved to the in-room quick control panel. */
+    group(Res.string.settings_group_seeking) {
+        +SEEK_FORWARD_JUMP
+        +SEEK_BACKWARD_JUMP
+        +CUSTOM_SEEK_FRONT
+        +CUSTOM_SEEK_AMOUNT
+    }
+    group(Res.string.settings_group_subtitles) {
+        +SUBTITLE_SIZE
+        /* Preferred track languages, mirrored from the global Language category so they are
+         * reachable mid-session too. */
+        +CC_LANG
+        +AUDIO_LANG
+    }
+    group(Res.string.settings_group_chapters) {
+        +SHOW_CHAPTER_DOTS
+        +CHAPTER_DOTS_CLICKABLE
+    }
+    group(Res.string.settings_group_picture) {
+        +VIDEO_BACKGROUND_COLOR
+    }
 }
 
 val INROOM_HAPTICS = SettingCategory(
@@ -207,20 +243,25 @@ val INROOM_ADVANCED = SettingCategory(
 }
 
 
-val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
+val SETTINGS_GLOBAL: List<SettingCategory> = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
 
 /**
  * Engine-agnostic in-room settings.
  *
- * Engine-specific categories (VLCKit flags, mpv config import/export, mpv hardware/profile
- * knobs) are intentionally absent: each [app.player.PlayerImpl] returns its own via
- * [app.player.PlayerImpl.configurableSettings], and CardRoomPrefs injects only the active
- * engine's settings into this list at runtime. This keeps in-room prefs adapted to the
- * selected player rather than exposing every engine's knobs to all users.
+ * Engine-specific categories are intentionally absent: each [app.player.PlayerImpl] returns its
+ * own via [app.player.PlayerImpl.configurableSettings], and the in-room panel inserts only the
+ * active engine's category, right after the player category.
  */
 val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_SYNC,
     INROOM_CHAT_PROPERTIES,
     INROOM_PLAYER_SETTINGS,
+    INROOM_HAPTICS,
     INROOM_ADVANCED,
 )
+
+/** The room's categories with the active engine's inserted after the player category. */
+fun roomSettings(engine: SettingCategory?): List<SettingCategory> =
+    SETTINGS_ROOM.toMutableList().apply {
+        if (engine != null) add(indexOf(INROOM_PLAYER_SETTINGS) + 1, engine)
+    }

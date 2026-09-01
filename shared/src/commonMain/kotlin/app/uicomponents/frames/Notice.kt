@@ -10,8 +10,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -94,6 +96,7 @@ fun Notice(
     Row(
         modifier = modifier
             .widthIn(max = 420.dp)
+            .height(IntrinsicSize.Min)
             .heightIn(min = Space.rowCompact)
             .then(
                 if (overVideo) Modifier.chromeSurface(Radius.panelShape)
@@ -102,7 +105,7 @@ fun Notice(
             .semantics { liveRegion = if (severity == NoticeSeverity.Warn) LiveRegionMode.Assertive else LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(2.dp).fillMaxHeight().heightIn(min = Space.rowCompact).background(stub))
+        Box(Modifier.width(2.dp).fillMaxHeight().background(stub))
         Text(
             text = text,
             style = Type.note,

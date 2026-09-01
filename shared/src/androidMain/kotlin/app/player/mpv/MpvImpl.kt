@@ -29,6 +29,8 @@ import app.preferences.Preferences.MPV_INTERPOLATION
 import app.preferences.Preferences.MPV_PROFILE
 import app.preferences.Preferences.MPV_VIDSYNC
 import app.preferences.settings.SettingCategory
+import app.preferences.settings.enabledWhen
+import app.preferences.settings.withControl
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.playableUri
@@ -108,45 +110,32 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         title = Res.string.uisetting_categ_mpv,
         icon = Icons.Filled.SettingsInputComponent
     ) {
-        +MPV_HARDWARE_ACCELERATION.apply {
-            config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
-                MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
-            }
+        +MPV_HARDWARE_ACCELERATION.withControl(PrefExtraConfig.BooleanCallback { b ->
+            MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
+        })
+        +MPV_GPU_NEXT.withControl(PrefExtraConfig.BooleanCallback { b ->
+            MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
+        })
+        +MPV_VIDSYNC.withControl(PrefExtraConfig.MultiChoice(
+            entries = { MPVView.vidsyncEntries.zip(MPVView.vidsyncEntries).toMap() },
+            onItemChosen = { videoSync -> MPVLib.setOptionString("video-sync", videoSync) }
+        ))
+        +MPV_INTERPOLATION.withControl(PrefExtraConfig.BooleanCallback { b ->
+            MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
+        }).enabledWhen {
+            val currentVidSyncMode = MPV_VIDSYNC.value()
+            currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
         }
-        +MPV_GPU_NEXT.apply {
-            config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
-                MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
-            }
-        }
-        +MPV_VIDSYNC.apply {
-            config?.extraConfig = PrefExtraConfig.MultiChoice(
-                entries = { MPVView.vidsyncEntries.zip(MPVView.vidsyncEntries).toMap() },
-                onItemChosen = { videoSync -> MPVLib.setOptionString("video-sync", videoSync) }
-            )
-        }
-        +MPV_INTERPOLATION.apply {
-            config?.dependencyEnable = booleanMet@{
-                val currentVidSyncMode = MPV_VIDSYNC.value()
-                return@booleanMet currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
-            }
-            config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
-                MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
-            }
-        }
-        +MPV_PROFILE.apply {
-            config?.extraConfig = PrefExtraConfig.MultiChoice(
-                entries = { MPVView.profileEntries.zip(MPVView.profileEntries).toMap() },
-                onItemChosen = { profile -> MPVLib.setOptionString("profile", profile) }
-            )
-        }
-        +MPV_DEBUG_MODE.apply {
-            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
-                MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
-            }
-        }
-        // mpv.conf import/export — Android-only because iOS mpv doesn't read a user config
+        +MPV_PROFILE.withControl(PrefExtraConfig.MultiChoice(
+            entries = { MPVView.profileEntries.zip(MPVView.profileEntries).toMap() },
+            onItemChosen = { profile -> MPVLib.setOptionString("profile", profile) }
+        ))
+        +MPV_DEBUG_MODE.withControl(PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
+            MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
+        })
+        // mpv.conf import/export: Android-only because iOS mpv does not read a user config
         // file (getMpvConfFilePath() returns null there). Attached to the engine-specific
-        // category so it only appears when the MPV engine is active.
+        // category so it only appears when the mpv engine is active.
         +MPV_IMPORT_CONF
         +MPV_EXPORT_CONF
     }

@@ -566,4 +566,27 @@
     <string name="room_gestures_panel_title">Gestures</string>
     <string name="uisetting_chat_colors_entry_summary">Set the color of each part of chat messages</string>
     <string name="server_host_background_note">The server keeps running in the background until you stop it here.</string>
+    <!-- Settings console (design overhaul) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_value_on">On</string>
+    <string name="settings_value_off">Off</string>
+    <string name="settings_value_none">None</string>
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_search_no_results">Nothing matches</string>
+    <string name="settings_show_descriptions_title">Show descriptions</string>
+    <string name="settings_show_descriptions_summary">Explain every setting under its row.</string>
+    <string name="settings_haptics_controls_title">Haptics on controls</string>
+    <string name="settings_haptics_controls_summary">A small pulse when a switch flips or a seek lands.</string>
+    <string name="settings_group_connection">Connection</string>
+    <string name="settings_group_links">Links</string>
+    <string name="settings_group_messages">Messages</string>
+    <string name="settings_group_notices">Notices</string>
+    <string name="settings_group_seeking">Seeking</string>
+    <string name="settings_group_subtitles">Subtitles</string>
+    <string name="settings_group_chapters">Chapters</string>
+    <string name="settings_group_picture">Picture</string>
+    <string name="settings_group_privacy">Privacy</string>
+    <string name="settings_group_readiness">Readiness</string>
+    <string name="settings_group_display">Display</string>
+    <string name="settings_group_logs">Logs</string>
 </resources>

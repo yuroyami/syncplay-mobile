@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.preferences.Preferences
-import app.preferences.SettingComposable
+import app.preferences.settings.SettingRow
 import app.uicomponents.SyncplayPopup
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -41,12 +41,12 @@ fun ChatColorsPopup(visibilityState: MutableState<Boolean>) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
         ) {
-            Preferences.COLOR_TIMESTAMP.SettingComposable()
-            Preferences.COLOR_SELFTAG.SettingComposable()
-            Preferences.COLOR_FRIENDTAG.SettingComposable()
-            Preferences.COLOR_SYSTEMMSG.SettingComposable()
-            Preferences.COLOR_USERMSG.SettingComposable()
-            Preferences.COLOR_ERRORMSG.SettingComposable()
+            Preferences.COLOR_TIMESTAMP.SettingRow()
+            Preferences.COLOR_SELFTAG.SettingRow()
+            Preferences.COLOR_FRIENDTAG.SettingRow()
+            Preferences.COLOR_SYSTEMMSG.SettingRow()
+            Preferences.COLOR_USERMSG.SettingRow()
+            Preferences.COLOR_ERRORMSG.SettingRow()
         }
     }
 }

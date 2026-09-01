@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.theme.Motion
 import app.theme.Space
+import app.preferences.Preferences
+import app.preferences.value
 import app.theme.palette
 import app.utils.platformCallback
 
@@ -116,6 +118,8 @@ object Feedback {
     fun medium() = pulse()
 
     private fun pulse() {
-        runCatching { platformCallback.performHapticFeedback() }
+        runCatching {
+            if (Preferences.HAPTICS_ON_CONTROLS.value()) platformCallback.performHapticFeedback()
+        }
     }
 }
