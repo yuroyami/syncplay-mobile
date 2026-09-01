@@ -401,6 +401,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     @UiThread
     abstract fun currentPositionMs(): Long
 
+    /** How far playback is buffered, or null when the engine cannot say. The seekbar draws no band for null. */
+    @UiThread
+    open fun bufferedPositionMs(): Long? = null
+
     abstract suspend fun switchAspectRatio(): String
 
     /** Takes a screenshot of the current video frame. Returns true if supported and successful. */
@@ -472,6 +476,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             while (isActive) {
                 if (isSeekable()) {
                     playerManager.timeCurrentMillis.value = currentPositionMs()
+                    playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
                 }
                 delay(trackerJobInterval)
             }

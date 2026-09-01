@@ -460,6 +460,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         return exoplayer?.currentPosition ?: 0L
     }
 
+    @UiThread
+    override fun bufferedPositionMs(): Long? {
+        if (!isInitialized) return null
+        return exoplayer?.bufferedPosition
+    }
+
     @SuppressLint("WrongConstant")
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"

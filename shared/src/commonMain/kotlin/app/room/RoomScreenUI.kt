@@ -59,6 +59,7 @@ import app.room.ui.tabs.ManagedRoomPopup
 import app.room.ui.tabs.ManagedRoomPopupPurpose
 import app.room.ui.tabs.RoomTabSection
 import app.room.ui.tabs.RoomUnlockableLayout
+import app.theme.LocalPalette
 import app.utils.EnterRoomMode
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
@@ -104,10 +105,15 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
      * blurs this scoped capture instead; the swap of LocalHazeState below routes it here. */
     val roomHazeState = rememberHazeState()
 
+    /* Over video the palette is pinned dark: video is the ground here and the theme supplies only
+     * its accent, gradient and status colours. */
+    val videoPalette = LocalPalette.current.overVideo()
+
     CompositionLocalProvider(
         LocalRoomUiState provides viewmodel.uiState,
         LocalRoomInitialFocus provides initialFocusRequester,
         LocalHazeState provides roomHazeState,
+        LocalPalette provides videoPalette,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {

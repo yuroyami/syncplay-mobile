@@ -589,4 +589,10 @@
     <string name="settings_group_readiness">Readiness</string>
     <string name="settings_group_display">Display</string>
     <string name="settings_group_logs">Logs</string>
+    <!-- Transport (design overhaul) -->
+    <string name="room_play">Play</string>
+    <string name="room_pause">Pause</string>
+    <string name="room_seekbar_name">Position</string>
+    <string name="room_jump_back">Back %1$d seconds</string>
+    <string name="room_jump_forward">Forward %1$d seconds</string>
 </resources>

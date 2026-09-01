@@ -36,6 +36,9 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     //TODO Remove in favor of media.fileTimePos
     val timeCurrentMillis = MutableStateFlow<Long>(0L)
 
+    /** Buffered position in ms, or -1 when the engine cannot say. */
+    val timeBufferedMillis = MutableStateFlow(-1L)
+
     /**
      * Preserved across media changes so user's preferred tracks (e.g. Japanese audio)
      * carry over to the next playlist item without reverting to defaults.
@@ -58,6 +61,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         isNowPlaying.value = false
         timeFullMillis.value = 0L
         timeCurrentMillis.value = 0L
+        timeBufferedMillis.value = -1L
         currentTrackChoices = TrackChoices()
     }
 }
