@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_set_as_ready
+import kotlin.math.abs
 
 /**
  * Handles user-initiated actions and outbound protocol messages for playback control,
@@ -213,22 +214,57 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             ?.isController != true
     }
 
+    /**
+     * The one seek path. Every user seek goes through here, in this order and nowhere else:
+     * record the origin, announce it (a no-op in solo mode), move the engine, and in solo mode
+     * record the pair for undo (online, the inbound echo records it). [fromMs] is the position
+     * before the user's gesture; the seekbar captures it on the first drag event, because by
+     * the time the finger lifts the preview has moved even though the engine has not.
+     */
+    fun seek(targetMs: Long, fromMs: Long? = null, recordUndo: Boolean = true) {
+        viewmodel.player.playerScopeMain.launch { seekNow(targetMs, fromMs, recordUndo) }
+    }
+
+    /** Announces and records a seek whose move the engine makes on its own (a chapter jump). */
+    fun announceSeek(targetMs: Long, fromMs: Long) {
+        pendingSeekFromMs = fromMs
+        sendSeek(targetMs)
+        rememberForUndo(fromMs, targetMs)
+    }
+
     fun seekBckwd() = seekBy(-Preferences.SEEK_BACKWARD_JUMP.value())
     fun seekFrwrd() = seekBy(Preferences.SEEK_FORWARD_JUMP.value())
 
-    private fun seekBy(deltaSeconds: Int) {
+    fun seekBy(deltaSeconds: Int) {
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
-            val dur = viewmodel.playerManager.timeFullMillis.value
-            val newPos = (currentMs + deltaSeconds * 1000L).let {
-                if (dur > 0L) it.coerceIn(0, dur) else it.coerceAtLeast(0)
-            }
-
-            pendingSeekFromMs = currentMs
-            sendSeek(newPos)
-            viewmodel.player.seekTo(newPos)
-            if (viewmodel.isSoloMode) viewmodel.seeks.add(Pair(currentMs, newPos))
+            seekNow(currentMs + deltaSeconds * 1000L, currentMs, recordUndo = true)
         }
+    }
+
+    /** Undoes a recorded seek: back to where it started, announced like any other seek. */
+    fun undoSeek(seek: Pair<Long, Long>) {
+        viewmodel.seeks.remove(seek)
+        seek(targetMs = seek.first, fromMs = seek.second, recordUndo = false)
+    }
+
+    private suspend fun seekNow(targetMs: Long, fromMs: Long?, recordUndo: Boolean) {
+        // Nothing to seek without media, and VLCKit 4 crashes on a seek with no media loaded.
+        if (viewmodel.media == null) return
+        val origin = fromMs ?: viewmodel.player.currentPositionMs()
+        val duration = viewmodel.playerManager.timeFullMillis.value
+        val target = if (duration > 0L) targetMs.coerceIn(0L, duration) else targetMs.coerceAtLeast(0L)
+        pendingSeekFromMs = origin
+        sendSeek(target)
+        viewmodel.player.seekTo(target)
+        if (recordUndo) rememberForUndo(origin, target)
+    }
+
+    /** Online the inbound echo records the seek; solo mode has no echo, so it is recorded here. */
+    private fun rememberForUndo(fromMs: Long, toMs: Long) {
+        if (!viewmodel.isSoloMode) return
+        if (abs(toMs - fromMs) < RoomCallback.SEEK_NOOP_THRESHOLD_MS) return
+        viewmodel.seeks.add(Pair(fromMs, toMs))
     }
 
     fun broadcastMessage(isChat: Boolean, chatter: String = "", isError: Boolean = false, message: suspend () -> String) {

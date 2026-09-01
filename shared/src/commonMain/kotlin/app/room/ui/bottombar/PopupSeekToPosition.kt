@@ -59,8 +59,6 @@ import syncplaymobile.shared.generated.resources.room_custom_skip_button
 import syncplaymobile.shared.generated.resources.room_seek_toposition_success
 import syncplaymobile.shared.generated.resources.room_seek_toposition_timeformat
 import syncplaymobile.shared.generated.resources.room_seek_toposition_title
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 object PopupSeekToPosition {
 
@@ -214,25 +212,10 @@ object PopupSeekToPosition {
                         if (ss >= 60) ss = 59
                         if (mm >= 60) mm = 59
 
-                        viewmodel.player.playerScopeMain.launch {
-                            val ssMs = ss * 1000
-                            val mmMs = mm * 60 * 1000
-                            val hhMs = hh * 3600 * 1000
-                            val result = ssMs + mmMs + hhMs
-
-                            // Announce the seek to the room so peers follow and SYNC_REWIND does not
-                            // yank the local player back. sendSeek is a no-op in solo mode.
-                            val fromMs = viewmodel.player.currentPositionMs()
-                            viewmodel.dispatcher.pendingSeekFromMs = fromMs
-                            viewmodel.dispatcher.sendSeek(result)
-                            viewmodel.player.seekTo(result)
-
-                            if (viewmodel.isSoloMode) {
-                                viewmodel.seeks.add(Pair(fromMs, result))
-                            }
-
-                            viewmodel.dispatchOSD { getString(Res.string.room_seek_toposition_success, timestampFromMillis(result)) }
-                        }
+                        val result = ss * 1000 + mm * 60 * 1000 + hh * 3600 * 1000
+                        // The one seek path: announce first so SYNC_REWIND does not yank us back.
+                        viewmodel.dispatcher.seek(result)
+                        viewmodel.dispatchOSD { getString(Res.string.room_seek_toposition_success, timestampFromMillis(result)) }
 
                     },
                 ) {
@@ -245,22 +228,12 @@ object PopupSeekToPosition {
     }
 }
 
-fun RoomViewmodel.customSkip()  {
+fun RoomViewmodel.customSkip() {
     player.playerScopeMain.launch {
-        val customSkipAmount = CUSTOM_SEEK_AMOUNT.value()
-
         val currentMs = player.currentPositionMs()
-        val newPos = (currentMs) + (customSkipAmount * 1000L)
-
-        dispatcher.pendingSeekFromMs = currentMs
-        dispatcher.sendSeek(newPos)
-        player.seekTo(newPos)
-
-        if (isSoloMode) {
-            seeks.add(Pair(currentMs, newPos))
-        }
-
-        val timeDiff = abs(newPos - currentMs).div(1000.0).roundToInt()
-        dispatchOSD { getString(Res.string.room_seek_toposition_success, timeDiff.toString()) }
+        val newPos = currentMs + CUSTOM_SEEK_AMOUNT.value() * 1000L
+        dispatcher.seek(newPos, fromMs = currentMs)
+        // The same notice as seek-to, so it gets the same timecode shape, not a bare count.
+        dispatchOSD { getString(Res.string.room_seek_toposition_success, timestampFromMillis(newPos)) }
     }
 }

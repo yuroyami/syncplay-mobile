@@ -69,7 +69,7 @@ fun Stepper(
 
     Row(
         modifier = modifier
-            .width(Space.valueCol + 18.dp * 2)
+            .width(Space.valueCol + 32.dp * 2)
             .height(Space.row)
             .progressSemantics(current.toFloat(), 0f..maxOf(0, last).toFloat(), maxOf(0, last - 1))
             .semantics {

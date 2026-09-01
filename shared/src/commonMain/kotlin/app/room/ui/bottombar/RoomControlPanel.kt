@@ -922,12 +922,8 @@ private fun performUndoSeek(
     seek: Pair<Long, Long>,
     scope: kotlinx.coroutines.CoroutineScope
 ) {
-    viewmodel.dispatcher.pendingSeekFromMs = seek.second
-    scope.launch(Dispatchers.Main.immediate) {
-        viewmodel.player.seekTo(seek.first)
-    }
-    viewmodel.dispatcher.sendSeek(seek.first)
-    viewmodel.seeks.remove(seek)
+    // The one seek path: announce, then move, through the dispatcher like every other seek.
+    viewmodel.dispatcher.undoSeek(seek)
     viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
 }
 

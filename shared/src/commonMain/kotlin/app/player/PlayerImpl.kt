@@ -176,12 +176,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     @CallSuper
     open suspend fun jumpToChapter(chapter: Chapter) {
         if (!supportsChapters) return
-        val currentPos = currentPositionMs()
-
-        if (!viewmodel.isSoloMode) {
-            viewmodel.dispatcher.pendingSeekFromMs = currentPos
-            viewmodel.dispatcher.sendSeek(newPosMs = chapter.timeOffsetMillis)
-        }
+        // The engine moves itself (by chapter index, not position), so only the announcement
+        // and the undo record go through the dispatcher.
+        viewmodel.dispatcher.announceSeek(chapter.timeOffsetMillis, fromMs = currentPositionMs())
     }
 
     fun skipChapter() {
@@ -192,13 +189,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         viewmodel.media?.chapters
             ?.filter { it.timeOffsetMillis > currentMs }
             ?.minByOrNull { it.timeOffsetMillis }
-            ?.let { nextChapter ->
-                if (!viewmodel.isSoloMode) {
-                    viewmodel.dispatcher.pendingSeekFromMs = currentMs
-                    viewmodel.dispatcher.sendSeek(newPosMs = nextChapter.timeOffsetMillis)
-                }
-                viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
-            }
+            ?.let { nextChapter -> viewmodel.dispatcher.seek(nextChapter.timeOffsetMillis, fromMs = currentMs) }
     }
 
     abstract suspend fun reapplyTrackChoices()

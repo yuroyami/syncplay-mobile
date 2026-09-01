@@ -28,6 +28,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -99,6 +100,7 @@ fun RoomSeekbar(modifier: Modifier) {
     var trackWidthPx by remember { mutableIntStateOf(0) }
 
     var isSliding by remember { mutableStateOf(false) }
+    var dragFromMs by remember { mutableLongStateOf(0L) }
 
     /* D-pad LEFT/RIGHT on the seekbar performs a configured-amount seek and broadcasts it
      * to the room (instead of the Slider's default tiny-step change). UP/DOWN falls through
@@ -125,7 +127,8 @@ fun RoomSeekbar(modifier: Modifier) {
             onValueChange = { newVal ->
                 if (!isSliding) {
                     isSliding = true
-                    viewmodel.dispatcher.pendingSeekFromMs = viewmodel.player.currentPositionMs()
+                    // The origin is captured on the first drag event, before the engine moves.
+                    dragFromMs = viewmodel.player.currentPositionMs()
                 }
                 // Visual preview only while scrubbing; the engine seek happens once, on release,
                 // instead of spamming per-frame seeks (expensive on mpv/VLC).
@@ -134,11 +137,7 @@ fun RoomSeekbar(modifier: Modifier) {
             onValueChangeFinished = {
                 if (isSliding) {
                     isSliding = false
-                    val target = sliderValue.roundToLong()
-                    if (!viewmodel.isSoloMode) {
-                        viewmodel.dispatcher.sendSeek(target)
-                    }
-                    viewmodel.player.seekTo(target)
+                    viewmodel.dispatcher.seek(targetMs = sliderValue.roundToLong(), fromMs = dragFromMs)
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
