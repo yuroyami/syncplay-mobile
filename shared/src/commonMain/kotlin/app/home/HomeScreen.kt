@@ -1,72 +1,49 @@
 package app.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Widgets
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
-import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.Screen
 import app.home.components.HomeEngineWheel
-import app.home.components.HomeTextField
 import app.home.components.HomeTopBar
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.preferences.Preferences.NEVER_SHOW_TIPS
@@ -74,12 +51,16 @@ import app.preferences.Preferences.PLAYER_ENGINE
 import app.preferences.set
 import app.preferences.value
 import app.preferences.watchPref
-import app.theme.Theming
-import app.uicomponents.FlexibleText
-import app.uicomponents.dropdownMenuMaxHeight
-import app.uicomponents.sairaFont
-import app.uicomponents.tvFocusable
-import app.utils.appName
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.Field
+import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.PrimaryAction
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.Segmented
+import app.uicomponents.controls.Tag
+import app.uicomponents.frames.NoticeHost
 import app.utils.ExitRoomMode
 import app.utils.availablePlatformPlayerEngines
 import app.utils.consumePendingShortcut
@@ -96,8 +77,13 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.connect_address_empty_error
 import syncplaymobile.shared.generated.resources.connect_button_join
+import syncplaymobile.shared.generated.resources.connect_button_saveshortcut
 import syncplaymobile.shared.generated.resources.connect_choose_video_engine
-import syncplaymobile.shared.generated.resources.connect_enter_custom_server
+import syncplaymobile.shared.generated.resources.connect_custom
+import syncplaymobile.shared.generated.resources.connect_custom_help
+import syncplaymobile.shared.generated.resources.connect_host_own_server
+import syncplaymobile.shared.generated.resources.connect_official
+import syncplaymobile.shared.generated.resources.connect_password_help
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
 import syncplaymobile.shared.generated.resources.connect_roomname
 import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
@@ -107,561 +93,308 @@ import syncplaymobile.shared.generated.resources.connect_server_tooltip
 import syncplaymobile.shared.generated.resources.connect_username
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
 import syncplaymobile.shared.generated.resources.connect_username_tooltip
+import syncplaymobile.shared.generated.resources.connect_watch_alone
 import syncplaymobile.shared.generated.resources.home_engine_unavailable_error
 import syncplaymobile.shared.generated.resources.home_ip_address
 import syncplaymobile.shared.generated.resources.home_password_if_any
-import syncplaymobile.shared.generated.resources.connect_host_own_server
 import syncplaymobile.shared.generated.resources.home_port
-import app.uicomponents.GlassExposedDropdownMenu
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Dns
-import androidx.compose.material.icons.outlined.Check
-import syncplaymobile.shared.generated.resources.connect_official_server_desc
-import syncplaymobile.shared.generated.resources.connect_official_server
-import androidx.compose.material3.ripple
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
+import syncplaymobile.shared.generated.resources.home_shortcut_saved
+import app.utils.appName
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
 /** The official server is one host; only the port varies, so the picker offers just these. */
 val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val OFFICIAL_HOST = "syncplay.pl"
+private val FORM_MAX_WIDTH = 420.dp
+
+/**
+ * The join form with one left edge: label over field, help under it while empty or focused,
+ * inline errors, the server as a segmented choice, the engine wheel, then Join and Watch alone.
+ */
 @Composable
 fun HomeScreenUI(viewmodel: HomeViewmodel) {
     ExitRoomMode()
+    val p = palette
+    val globalViewmodel = LocalGlobalViewmodel.current
+    val focusManager = LocalFocusManager.current
 
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
-
     LaunchedEffect(null) {
-        withContext(Dispatchers.IO) {
-            savedConfig = JoinConfig.savedConfig()
-        }
+        withContext(Dispatchers.IO) { savedConfig = JoinConfig.savedConfig() }
     }
 
-    // Consume any pending shortcut (iOS cold-start Quick Actions)
+    // A pending shortcut joins once, on arrival, through the same caps as the form.
     LaunchedEffect(Unit) {
-        consumePendingShortcut()?.let { joinConfig ->
-            viewmodel.joinRoom(joinConfig)
-        }
+        consumePendingShortcut()?.let { viewmodel.joinRoom(it.sanitised()) }
     }
 
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
-
-    val globalViewmodel = LocalGlobalViewmodel.current
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            val neverShowTips = NEVER_SHOW_TIPS.value()
-            if (!globalViewmodel.hasEnteredRoomOnce && !neverShowTips) {
-                didYaKnowPopup.value = true
-            }
+            if (!globalViewmodel.hasEnteredRoomOnce && !NEVER_SHOW_TIPS.value()) didYaKnowPopup.value = true
         }
     }
 
-    // The bar's height when the settings grid is CLOSED. The page is spaced by this, not by the
-    // Scaffold's live top padding, so opening the grid overlays the page instead of re-laying it
-    // out (which on a short screen squeezed every field into the next).
-    var topBarRestingHeight by remember { mutableStateOf(0.dp) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            HomeTopBar(viewmodel)
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(viewmodel.snack) },
-        topBar = {
-            HomeTopBar(viewmodel, onRestingHeight = { topBarRestingHeight = it })
-        },
-        content = { _ ->
-            val focusManager = LocalFocusManager.current
-
-            // Render the form immediately with defaults; re-key the field states once the
-            // saved config finishes loading (sub-250ms) instead of flashing a blank screen.
+            /* The form renders with defaults at once and re-keys on the saved config when it
+             * arrives. imePadding before verticalScroll, so the keyboard scrolls the form. */
             val config = savedConfig ?: remember { JoinConfig() }
-            run {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxSize()
-                        .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                        .imePadding() //Prevents textfields from getting hidden by software keyboard
-                        .verticalScroll(rememberScrollState())
-                        .clickable(
-                            interactionSource = null,
-                            indication = null
-                        ) {
-                            //Clicking outside a text field should dismiss the keyboard
-                            focusManager.clearFocus(force = true)
-                        },
-                    horizontalAlignment = CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceAround
+                    modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.gutter),
+                    verticalArrangement = Arrangement.spacedBy(Space.gap),
                 ) {
-                    /* Spacer instead of consuming paddingValues, and deliberately keyed to the
-                     * bar's RESTING height so the settings grid opening over it changes nothing
-                     * down here. */
-                    Spacer(modifier = Modifier.height(topBarRestingHeight))
-
-                    /* higher-level variables which are needed for logging in */
-                    val roomFocusRequester = remember { FocusRequester() }
-                    var textUsername by remember(savedConfig) { mutableStateOf(config.user) }
-                    var textRoomname by remember(savedConfig) { mutableStateOf(config.room) }
-
-                    var serverIsPublic by remember(savedConfig) {
-                        mutableStateOf(officialServers.contains("${config.ip.replace("151.80.32.178", "syncplay.pl")}:${config.port}"))
+                    var username by remember(savedConfig) { mutableStateOf(config.user) }
+                    var room by remember(savedConfig) { mutableStateOf(config.room) }
+                    var official by remember(savedConfig) {
+                        mutableStateOf(officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}"))
                     }
+                    var address by remember(savedConfig) { mutableStateOf(config.ip) }
+                    var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
+                    var password by remember(savedConfig) { mutableStateOf(config.pw) }
+                    var error by remember { mutableStateOf<StringResource?>(null) }
 
-                    var selectedServer by remember(savedConfig) { mutableStateOf("${config.ip}:${config.port}") }
+                    val usernameFocus = remember { FocusRequester() }
+                    val roomFocus = remember { FocusRequester() }
+                    val portFocus = remember { FocusRequester() }
+                    val passwordFocus = remember { FocusRequester() }
 
-                    var serverAddress by remember(savedConfig) { mutableStateOf(config.ip) }
-                    var serverPort by remember(savedConfig) { mutableStateOf(config.port.toString()) }
-                    var serverPassword by remember(savedConfig) { mutableStateOf(config.pw) }
-
-                    /* Username — first focusable on the screen; grabs initial focus for D-pad/TV
-                     * users. Skipped under touch input mode so the soft keyboard doesn't pop on
-                     * phone/tablet entry. */
-                    val usernameFocusRequester = remember { FocusRequester() }
+                    // Initial focus only under keyboard input, so touch users get no keyboard on arrival.
                     val inputModeManager = LocalInputModeManager.current
                     LaunchedEffect(Unit) {
                         if (inputModeManager.inputMode == InputMode.Keyboard) {
-                            kotlinx.coroutines.delay(150)
-                            runCatching { usernameFocusRequester.requestFocus() }
+                            delay(150)
+                            runCatching { usernameFocus.requestFocus() }
                         }
                     }
 
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
-                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_username),
-                            tooltip = stringResource(Res.string.connect_username_tooltip)
-                        )
+                    FormField(
+                        label = stringResource(Res.string.connect_username),
+                        help = stringResource(Res.string.connect_username_tooltip),
+                        error = error?.takeIf { it == Res.string.connect_username_empty_error }?.let { stringResource(it) },
+                        value = username,
+                        onValueChange = { username = it; error = null },
+                        icon = Icons.Outlined.PersonPin,
+                        focusRequester = usernameFocus,
+                        imeAction = ImeAction.Next,
+                        onImeAction = { roomFocus.requestFocus() },
+                    )
+                    FormField(
+                        label = stringResource(Res.string.connect_roomname),
+                        help = stringResource(Res.string.connect_roomname_tooltip),
+                        error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
+                        value = room,
+                        onValueChange = { room = it; error = null },
+                        icon = Icons.Outlined.MeetingRoom,
+                        focusRequester = roomFocus,
+                        imeAction = ImeAction.Done,
+                        onImeAction = { focusManager.clearFocus(true) },
+                    )
 
-                        HomeTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = Icons.Outlined.PersonPin,
-                            value = textUsername,
-                            onValueChange = { textUsername = it },
-                            focusRequester = usernameFocusRequester,
-                            onNext = { roomFocusRequester.requestFocus() }
-                        )
-                    }
-
-                    /* Roomname */
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
-                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_roomname),
-                            tooltip = stringResource(Res.string.connect_roomname_tooltip)
-                        )
-
-                        HomeTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = Icons.Outlined.MeetingRoom,
-                            value = textRoomname,
-                            onValueChange = { textRoomname = it },
-                            focusRequester = roomFocusRequester,
-                            clearFocusWhenDone = true
-                        )
-                    }
-
-                    /* Server */
-                    val expanded = remember { mutableStateOf(false) }
-
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_server, appName),
-                            tooltip = stringResource(Res.string.connect_server_tooltip)
-                        )
-
-                        ExposedDropdownMenuBox(
-                            expanded = expanded.value,
-                            onExpandedChange = {
-                                expanded.value = !expanded.value
-                            }
-                        ) {
-                            HomeTextField(
-                                modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                                icon = Icons.Outlined.Lan,
-                                value = if (serverIsPublic) {
-                                    stringResource(Res.string.connect_official_server)
+                    /* Server: Official or Custom. Official keeps a non-official port from
+                     * leaking through and clears the password; Custom blanks both. */
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                        FormLabel(stringResource(Res.string.connect_server, appName))
+                        Segmented(
+                            options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom)),
+                            selected = if (official) 0 else 1,
+                            onSelect = { index ->
+                                val toOfficial = index == 0
+                                if (toOfficial == official) return@Segmented
+                                official = toOfficial
+                                if (toOfficial) {
+                                    address = OFFICIAL_HOST
+                                    if (port !in officialPorts) port = "8997"
+                                    password = ""
                                 } else {
-                                    stringResource(Res.string.connect_enter_custom_server)
-                                },
-                                dropdownState = expanded,
-                                onValueChange = {}
+                                    address = ""
+                                    port = ""
+                                }
+                                error = null
+                            },
+                        )
+                        if (official) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                                officialPorts.forEach { candidate ->
+                                    Tag(candidate, filled = port == candidate, onToggle = { port = candidate; address = OFFICIAL_HOST })
+                                }
+                            }
+                            Text(stringResource(Res.string.connect_server_tooltip), style = Type.note, color = p.inkDim)
+                        } else {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                                Field(
+                                    value = address,
+                                    onValueChange = { address = it.trim(); error = null },
+                                    modifier = Modifier.weight(2f),
+                                    placeholder = stringResource(Res.string.home_ip_address),
+                                    leading = Icons.Outlined.Lan,
+                                    keyboardType = KeyboardType.Uri,
+                                    imeAction = ImeAction.Next,
+                                    onImeAction = { portFocus.requestFocus() },
+                                    name = stringResource(Res.string.home_ip_address),
+                                )
+                                Field(
+                                    value = port,
+                                    onValueChange = { port = it.trim(); error = null },
+                                    modifier = Modifier.weight(1f),
+                                    placeholder = stringResource(Res.string.home_port),
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Next,
+                                    onImeAction = { passwordFocus.requestFocus() },
+                                    focusRequester = portFocus,
+                                    name = stringResource(Res.string.home_port),
+                                )
+                            }
+                            val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
+                            Text(
+                                text = serverError?.let { stringResource(it) } ?: stringResource(Res.string.connect_custom_help),
+                                style = Type.note,
+                                color = if (serverError != null) p.bad else p.inkDim,
                             )
-
-                            val customServerLabel = stringResource(Res.string.connect_enter_custom_server)
-                            val hostServerLabel = stringResource(Res.string.connect_host_own_server)
-                            val officialLabel = stringResource(Res.string.connect_official_server)
-
-                            /* Three rows, not seven. The five official entries differed only by
-                             * port, so they collapse into one row with the port chosen beside it;
-                             * that also stops the list outgrowing the screen and hiding the two
-                             * rows that actually go somewhere. */
-                            GlassExposedDropdownMenu(
-                                modifier = Modifier.heightIn(max = dropdownMenuMaxHeight),
-                                expanded = expanded.value,
-                                // Square top meets the anchor's squared bottom: field and menu
-                                // read as one panel that split open.
-                                shape = RoundedCornerShape(
-                                    topStart = 0.dp, topEnd = 0.dp,
-                                    bottomStart = 16.dp, bottomEnd = 16.dp
-                                ),
-                                onDismissRequest = { expanded.value = false }
-                            ) {
-                                ServerMenuRow(
-                                    icon = Icons.Outlined.Lan,
-                                    label = officialLabel,
-                                    supporting = stringResource(
-                                        Res.string.connect_official_server_desc,
-                                        serverPort.ifBlank { "8997" }
-                                    ),
-                                    selected = serverIsPublic,
-                                    onClick = {
-                                        expanded.value = false
-                                        serverIsPublic = true
-                                        serverAddress = "syncplay.pl"
-                                        if (serverPort !in officialPorts) serverPort = "8997"
-                                        selectedServer = "syncplay.pl:$serverPort"
-                                        serverPassword = ""
-                                    }
-                                )
-
-                                ServerMenuRow(
-                                    icon = Icons.Outlined.Edit,
-                                    label = customServerLabel,
-                                    selected = !serverIsPublic,
-                                    onClick = {
-                                        expanded.value = false
-                                        serverIsPublic = false
-                                        selectedServer = customServerLabel
-                                        serverAddress = ""
-                                        serverPort = ""
-                                    }
-                                )
-
-                                ServerMenuRow(
-                                    icon = Icons.Outlined.Dns,
-                                    label = hostServerLabel,
-                                    onClick = {
-                                        expanded.value = false
-                                        globalViewmodel.backstack.add(Screen.ServerHost)
-                                    }
-                                )
-                            }
+                            FormField(
+                                label = stringResource(Res.string.home_password_if_any),
+                                help = stringResource(Res.string.connect_password_help),
+                                error = null,
+                                value = password,
+                                onValueChange = { password = it.trim() },
+                                icon = null,
+                                focusRequester = passwordFocus,
+                                imeAction = ImeAction.Done,
+                                onImeAction = { focusManager.clearFocus(true) },
+                            )
                         }
-
-                        /* Port picker: only meaningful for the official server, where it is the
-                         * only thing that varied between the old five rows. */
-                        AnimatedVisibility(
-                            visible = serverIsPublic,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                officialPorts.forEach { port ->
-                                    val active = serverPort == port
-                                    Text(
-                                        text = port,
-                                        fontSize = 12.sp,
-                                        maxLines = 1,
-                                        textAlign = TextAlign.Center,
-                                        color = if (active) MaterialTheme.colorScheme.onPrimaryContainer
-                                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(
-                                                if (active) MaterialTheme.colorScheme.primaryContainer
-                                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                                            )
-                                            .clickable(interactionSource = null, indication = ripple()) {
-                                                serverPort = port
-                                                serverAddress = "syncplay.pl"
-                                                selectedServer = "syncplay.pl:$port"
-                                            }
-                                            .padding(vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        AnimatedVisibility(
-                            visible = !serverIsPublic,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                val portFocusRequester = remember { FocusRequester() }
-                                val passwordFocusRequester = remember { FocusRequester() }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    HomeTextField(
-                                        modifier = Modifier.weight(2.25f).padding(end = 4.dp),
-                                        value = serverAddress,
-                                        onValueChange = { serverAddress = it.trim() },
-                                        label = stringResource(Res.string.home_ip_address),
-                                        cornerRadius = 16.dp,
-                                        onNext = { portFocusRequester.requestFocus() }
-                                    )
-
-                                    HomeTextField(
-                                        modifier = Modifier.weight(1f).padding(start = 4.dp),
-                                        value = serverPort,
-                                        onValueChange = { serverPort = it.trim() },
-                                        type = KeyboardType.Number,
-                                        label = stringResource(Res.string.home_port),
-                                        cornerRadius = 16.dp,
-                                        focusRequester = portFocusRequester,
-                                        onNext = { passwordFocusRequester.requestFocus() }
-                                    )
-                                }
-
-                                HomeTextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    value = serverPassword,
-                                    onValueChange = { serverPassword = it.trim() },
-                                    type = KeyboardType.Password,
-                                    label = stringResource(Res.string.home_password_if_any),
-                                    clearFocusWhenDone = true,
-                                    focusRequester = passwordFocusRequester
-                                )
-                            }
-                        }
+                        SecondaryAction(stringResource(Res.string.connect_host_own_server), onClick = { globalViewmodel.backstack.add(Screen.ServerHost) }, modifier = Modifier.fillMaxWidth())
                     }
 
-                    //TODO There should be no default video engine, force user to choose at first launch
-                    //TODO Anchor a tooltip next to our engine selection that explains each engine for better selection
-
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
-                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_choose_video_engine)
-                        )
-
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                        FormLabel(stringResource(Res.string.connect_choose_video_engine))
                         val selectedEngine by PLAYER_ENGINE.watchPref()
-
-                        // A saved engine that this build no longer has is not a selection, it is a
-                        // leftover. Engines do get dropped between releases, so an existing install
-                        // can open with PLAYER_ENGINE naming a dead one; the wheel then sits on
-                        // whatever is at index 0 while the preference still says otherwise.
-                        // Write the platform default over it once instead.
+                        // A saved engine this build no longer ships is replaced once with the platform default.
                         LaunchedEffect(selectedEngine, availablePlatformPlayerEngines) {
                             if (availablePlatformPlayerEngines.none { it.name == selectedEngine }) {
-                                availablePlatformPlayerEngines
-                                    .firstOrNull { it.isDefault }
-                                    ?.let { PLAYER_ENGINE.set(it.name) }
+                                availablePlatformPlayerEngines.firstOrNull { it.isDefault }?.let { PLAYER_ENGINE.set(it.name) }
                             }
                         }
-
-                        val errorString = stringResource(Res.string.home_engine_unavailable_error)
+                        val unavailable = stringResource(Res.string.home_engine_unavailable_error)
                         HomeEngineWheel(
                             modifier = Modifier.fillMaxWidth(),
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
                                 viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                    if (engine.isAvailable) {
-                                        PLAYER_ENGINE.set(engine.name)
-                                    } else {
-                                        viewmodel.snackIt(errorString)
-                                    }
+                                    if (engine.isAvailable) PLAYER_ENGINE.set(engine.name) else viewmodel.snackIt(unavailable)
                                 }
-                            }
+                            },
                         )
                     }
 
-                    /* join button + shortcut saver. A plain Row with a weighted leading button
-                     * instead of SplitButtonLayout: the pair then always spans exactly the same
-                     * 0.75-fraction width as the text fields above, keeping the button symmetric
-                     * within the screen on any width (tablets included). */
-                    Row(
-                        modifier = Modifier.fillMaxWidth(0.75f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(SplitButtonDefaults.Spacing)
-                    ) {
-                            SplitButtonDefaults.LeadingButton(
-                                contentPadding = PaddingValues(vertical = 16.dp),
-                                modifier = Modifier.weight(1f).tvFocusable(addFocusable = false),
-                                onClick = {
-                                    globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
-                                        val errorMessage: StringResource? = when {
-                                            textUsername.isBlank() -> Res.string.connect_username_empty_error
-                                            textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
-                                            serverAddress.isBlank() -> Res.string.connect_address_empty_error
-                                            serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
-                                            else -> null
-                                        }
-
-                                        if (errorMessage != null) {
-                                            viewmodel.snackIt(getString(errorMessage))
-                                            return@launch
-                                        }
-
-                                        viewmodel.joinRoom(
-                                            JoinConfig(
-                                                textUsername.replace("\\", "").trim().substringSafely(0, 149),
-                                                textRoomname.replace("\\", "").trim().substringSafely(0, 34),
-                                                serverAddress,
-                                                serverPort.toInt(),
-                                                serverPassword
-                                            )
-                                        )
-                                    }
-                                },
-                                content = {
-                                    Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
-                                }
-                            )
-
-                            SplitButtonDefaults.TrailingButton(
-                                modifier = Modifier.tvFocusable(addFocusable = false),
-                                contentPadding = PaddingValues(vertical = 16.dp),
-                                checked = false,
-                                onCheckedChange = {
-                                    // Same validation as the Join path: a blank/garbage port must
-                                    // not crash the shortcut saver with a NumberFormatException.
-                                    globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
-                                        val errorMessage: StringResource? = when {
-                                            textUsername.isBlank() -> Res.string.connect_username_empty_error
-                                            textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
-                                            serverAddress.isBlank() -> Res.string.connect_address_empty_error
-                                            serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
-                                            else -> null
-                                        }
-
-                                        if (errorMessage != null) {
-                                            viewmodel.snackIt(getString(errorMessage))
-                                            return@launch
-                                        }
-
-                                        with(platformCallback) {
-                                            viewmodel.onSaveConfigShortcut(
-                                                JoinConfig(
-                                                    textUsername.replace("\\", "").trim(),
-                                                    textRoomname.replace("\\", "").trim(),
-                                                    serverAddress,
-                                                    serverPort.toInt(),
-                                                    serverPassword
-                                                )
-                                            )
-                                        }
-                                    }
-                                },
-                                content = {
-                                    Icon(imageVector = Icons.Filled.Widgets, null)
-                                }
-                            )
+                    /* One validation for both paths, so the shortcut saver cannot crash on a
+                     * blank port either. */
+                    fun validate(): StringResource? = when {
+                        username.isBlank() -> Res.string.connect_username_empty_error
+                        room.isBlank() -> Res.string.connect_roomname_empty_error
+                        address.isBlank() -> Res.string.connect_address_empty_error
+                        port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                        else -> null
                     }
+                    fun currentConfig() = JoinConfig(username, room, address, port.toInt(), password).sanitised()
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
+                    PrimaryAction(
+                        text = stringResource(Res.string.connect_button_join),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            error = validate()
+                            if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
+                        },
+                        trailing = {
+                            GlyphButton(Icons.Filled.Widgets, name = stringResource(Res.string.connect_button_saveshortcut), tint = p.ground) {
+                                error = validate()
+                                if (error == null) {
+                                    with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
+                                    viewmodel.snackItAsync(shortcutSaved)
+                                }
+                            }
+                        },
+                    )
+                    SecondaryAction(
+                        text = stringResource(Res.string.connect_watch_alone),
+                        onClick = { globalViewmodel.viewModelScope.launch { viewmodel.joinRoom(null) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(Space.gap))
                 }
             }
         }
-    )
 
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-/** One row of the server menu: icon, label, optional second line, and a check when it is current. */
-@Composable
-private fun ServerMenuRow(
-    icon: ImageVector,
-    label: String,
-    supporting: String? = null,
-    selected: Boolean = false,
-    onClick: () -> Unit,
-) {
-    DropdownMenuItem(
-        leadingIcon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        text = {
-            Column {
-                Text(label, color = MaterialTheme.colorScheme.onSurface)
-                if (supporting != null) {
-                    Text(
-                        supporting,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        },
-        trailingIcon = if (!selected) null else {
-            {
-                Icon(
-                    imageVector = Icons.Outlined.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        onClick = onClick
-    )
-}
-
-@Composable
-fun HomeLeadingTitle(string: String, tooltip: String? = null) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = string,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+        NoticeHost(
+            queue = viewmodel.notices,
+            overVideo = false,
+            modifier = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(Space.gutter),
         )
+    }
+}
 
-        if (tooltip != null) {
-            val tooltipState = rememberTooltipState(isPersistent = true)
-            val scope = rememberCoroutineScope()
+/** Backslashes out, trimmed, capped: the same on the form and on a shortcut. */
+private fun JoinConfig.sanitised() = copy(
+    user = user.replace("\\", "").trim().substringSafely(0, 149),
+    room = room.replace("\\", "").trim().substringSafely(0, 34),
+)
 
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                state = tooltipState,
-                tooltip = {
-                    PlainTooltip { Text(tooltip) }
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = tooltip,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier
-                        .padding(start = 4.dp)
-                        .size(15.dp)
-                        .clickable(interactionSource = null, indication = null) {
-                            scope.launch {
-                                if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
-                            }
-                        }
-                )
-            }
+@Composable
+private fun FormLabel(text: String) {
+    Text(text, style = Type.label, color = palette.inkDim, modifier = Modifier.height(Space.gutter))
+}
+
+/**
+ * Label over the hairline field, and one note line under it: help while the field is empty or
+ * focused, the error in `bad` when validation failed. Filled fields show nothing under them.
+ */
+@Composable
+private fun FormField(
+    label: String,
+    help: String,
+    error: String?,
+    value: String,
+    onValueChange: (String) -> Unit,
+    icon: ImageVector?,
+    focusRequester: FocusRequester,
+    imeAction: ImeAction,
+    onImeAction: () -> Unit,
+) {
+    val p = palette
+    var focused by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+        FormLabel(label)
+        Field(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
+            leading = icon,
+            imeAction = imeAction,
+            onImeAction = onImeAction,
+            focusRequester = focusRequester,
+            name = label,
+        )
+        when {
+            error != null -> Text(error, style = Type.note, color = p.bad)
+            value.isEmpty() || focused -> Text(help, style = Type.note, color = p.inkDim)
         }
     }
 }

@@ -19,8 +19,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.Tag
+import app.uicomponents.controls.Tone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +52,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -235,7 +237,7 @@ fun HomeEngineWheel(
         // visible extent: without it the strip floated with no indication of how far it ran or
         // where it ended. Its fade uses the same FadeWidth as the item mask below, so the surface
         // and the items disappear together instead of at two different points.
-        val track = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.22f)
+        val track = palette.ink.copy(alpha = 0.06f)
         val trackStop = (fadePx / with(LocalDensity.current) { maxWidth.toPx() }).coerceIn(0.01f, 0.49f)
         Box(
             modifier = Modifier
@@ -256,7 +258,7 @@ fun HomeEngineWheel(
         // The SLOT sits brighter on top of the track and still marks the one position that IS the
         // selection. Dropping it would leave the track reading as the selection, which is exactly
         // the wrong thing for a control whose whole premise is "whatever is centered is chosen".
-        val capsule = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f)
+        val capsule = palette.ink.copy(alpha = 0.10f)
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -353,9 +355,8 @@ private fun EngineWheelItem(engine: PlayerEngine, modifier: Modifier = Modifier)
         )
         Text(
             text = engine.name,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = Type.label,
+            color = palette.ink,
             maxLines = 1,
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
@@ -367,30 +368,14 @@ private fun EngineWheelItem(engine: PlayerEngine, modifier: Modifier = Modifier)
         // choose) beats system (the platform's own player). The ladder only ever matters for an
         // engine that is two things at once, e.g. ExoPlayer in the exoOnly flavor, which is both
         // the system player and the default; "Default" is the more useful of the two there.
-        val badge: Pair<String, Color>? = when {
-            !engine.isAvailable ->
-                stringResource(Res.string.connect_engine_badge_unavailable) to MaterialTheme.colorScheme.error
-            engine.isExperimental ->
-                stringResource(Res.string.connect_engine_badge_experimental) to MaterialTheme.colorScheme.error
-            engine.isDefault ->
-                stringResource(Res.string.connect_engine_badge_default) to MaterialTheme.colorScheme.primary
-            engine.isSystem ->
-                stringResource(Res.string.connect_engine_badge_system) to MaterialTheme.colorScheme.tertiary
+        val badge: Pair<String, Tone>? = when {
+            !engine.isAvailable -> stringResource(Res.string.connect_engine_badge_unavailable) to Tone.Bad
+            engine.isExperimental -> stringResource(Res.string.connect_engine_badge_experimental) to Tone.Warn
+            engine.isDefault -> stringResource(Res.string.connect_engine_badge_default) to Tone.Accent
+            engine.isSystem -> stringResource(Res.string.connect_engine_badge_system) to Tone.Neutral
             else -> null
         }
-        if (badge != null) {
-            Text(
-                text = badge.first,
-                style = MaterialTheme.typography.labelSmall,
-                color = badge.second,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .background(color = badge.second.copy(alpha = 0.12f), shape = BadgeShape)
-                    .padding(horizontal = 5.dp, vertical = 1.dp),
-            )
-        }
+        if (badge != null) Tag(badge.first, tone = badge.second)
     }
 }
 
@@ -415,7 +400,6 @@ private fun LazyListState.signedDistanceFromCenter(index: Int): Float {
 }
 
 private val WheelShape = RoundedCornerShape(24.dp)
-private val BadgeShape = RoundedCornerShape(6.dp)
 private val CapsuleShape = RoundedCornerShape(22.dp)
 /**
  * Wide enough for the longest engine name over the longest badge, which is "Kite Compose" over

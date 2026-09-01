@@ -1,11 +1,6 @@
 package app.home.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -18,10 +13,16 @@ import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.preferences.Preferences
 import app.preferences.set
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.AccentAction
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.frames.Modal
+import app.uicomponents.frames.ModalSize
+import app.utils.appName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import app.utils.appName
 import org.jetbrains.compose.resources.getStringArray
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -29,61 +30,37 @@ import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.tips
 import syncplaymobile.shared.generated.resources.tips_did_ya_know
 import syncplaymobile.shared.generated.resources.tips_dontshowmetips
-import app.uicomponents.GlassAlertDialog
+import syncplaymobile.shared.generated.resources.tips_next
 
 object PopupDidYaKnow {
 
-    /** First-launch tips dialog. Declare once (in AdamScreen). */
+    /** First-launch tips, one at a time, with a Next that advances instead of showing one forever. */
     @Composable
     fun DidYaKnowPopup(state: MutableState<Boolean>) {
         val viewmodel = LocalGlobalViewmodel.current
-        val visible by remember { state }
         val tips = remember { mutableStateListOf<String>() }
+        var tipIndex by remember { mutableIntStateOf(0) }
+        if (!state.value) return
 
-        if (visible) {
-            var tipIndex by remember { mutableIntStateOf(0) }
+        LaunchedEffect(Unit) {
+            if (tips.isEmpty()) tips.addAll(getStringArray(Res.array.tips).map { it.replace("%1\$s", appName) }.shuffled())
+        }
 
-            LaunchedEffect(null) {
-                tips.addAll(getStringArray(Res.array.tips).map { it.replace("%1\$s", appName) }.shuffled())
-            }
-
-            GlassAlertDialog(
-                onDismissRequest = {
+        Modal(
+            open = true,
+            onDismiss = { state.value = false },
+            title = stringResource(Res.string.tips_did_ya_know),
+            size = ModalSize.Ask,
+            actions = {
+                SecondaryAction(stringResource(Res.string.tips_dontshowmetips), onClick = {
+                    viewmodel.viewModelScope.launch(Dispatchers.IO) { Preferences.NEVER_SHOW_TIPS.set(true) }
                     state.value = false
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            state.value = false
-                        }
-                    ) {
-                        Text(stringResource(Res.string.okay))
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                Preferences.NEVER_SHOW_TIPS.set(true)
-                            }
-                            state.value = false
-                        }
-                    ) {
-                        Text(stringResource(Res.string.tips_dontshowmetips))
-                    }
-                },
-                icon = {
-                    Icon(imageVector = Icons.Filled.Lightbulb, null)
-                },
-                title = {
-                    Text(stringResource(Res.string.tips_did_ya_know))
-                },
-                text = {
-                    tips.getOrNull(tipIndex)?.let { tip ->
-                        Text(tip)
-                    }
-                }
-            )
+                })
+                SecondaryAction(stringResource(Res.string.tips_next), onClick = { if (tips.isNotEmpty()) tipIndex = (tipIndex + 1) % tips.size })
+                AccentAction(stringResource(Res.string.okay), onClick = { state.value = false })
+            },
+        ) {
+            Text(tips.getOrNull(tipIndex) ?: "", style = Type.note, color = palette.ink)
         }
     }
 }
