@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Web
+import androidx.compose.material.icons.filled.BlurOff
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.toArgb
@@ -116,6 +117,8 @@ import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size
 import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_max_buffer_title
 import syncplaymobile.shared.generated.resources.setting_media_resolver_summary
+import syncplaymobile.shared.generated.resources.setting_disable_glass_title
+import syncplaymobile.shared.generated.resources.setting_disable_glass_summary
 import syncplaymobile.shared.generated.resources.setting_media_resolver_title
 import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_min_buffer_title
@@ -543,6 +546,21 @@ object Preferences {
         title = Res.string.setting_media_resolver_title
         summary = Res.string.setting_media_resolver_summary
         icon = Icons.Filled.Language
+    }
+
+    /** Master off-switch for the frosted glass system, end to end.
+     *
+     *  When true: no Haze capture or blur anywhere, panels fall back to a solid tonal surface,
+     *  no platform window blur, and the Android players go back to SurfaceView, which can use a
+     *  hardware overlay plane (lower power, HDR passthrough) but cannot be captured for blur.
+     *  Glass and the overlay fast path are mutually exclusive, so this is one switch, not two.
+     *
+     *  Surface type is fixed when the player view is inflated, so a change lands on the next
+     *  room entry, matching how the other engine options behave. */
+    val DISABLE_FROSTED_GLASS = Pref("pref_disable_frosted_glass", false) {
+        title = Res.string.setting_disable_glass_title
+        summary = Res.string.setting_disable_glass_summary
+        icon = Icons.Filled.BlurOff
     }
 
     /** ------------ Security -------------*/
@@ -1069,10 +1087,10 @@ object Preferences {
     }
 
     /**
-     * Extra command-line flags forwarded verbatim to LibVLC on Android (`LibVLC(ctx, args)`) and
-     * iOS (`VLCLibrary(args)`). Tokenized by [tokenizeVlcFlags], which splits on whitespace but
-     * honours `"`/`'` quoted runs so values with spaces work (e.g. `--sub-text-scale="1.5"`).
-     * Takes effect on the next VLC engine (re)initialization.
+     * Extra command-line flags forwarded verbatim to LibVLC on iOS (`VLCLibrary(args)`).
+     * Tokenized by [tokenizeVlcFlags], which splits on whitespace but honours `"`/`'` quoted runs
+     * so values with spaces work (e.g. `--sub-text-scale="1.5"`). Takes effect on the next VLCKit
+     * (re)initialization.
      */
     val VLC_CUSTOM_FLAGS = Pref("pref_vlc_custom_flags", "") {
         title = Res.string.uisetting_vlc_custom_flags_title
@@ -1083,8 +1101,8 @@ object Preferences {
 
     /**
      * Import an mpv.conf from the user's storage, overwriting the one mpv reads from at
-     * `{filesDir}/mpv.conf`. Android-only — on iOS [getMpvConfFilePath] returns null and this
-     * pref is hidden from the settings list.
+     * `{filesDir}/mpv.conf`. Only shown by the mpv engine's own settings category, so platforms
+     * without mpv never see it; there [getMpvConfFilePath] returns null and this is a no-op.
      *
      * The new config takes effect the next time mpv is initialized (e.g. after loading a video
      * fresh) because `MPVLib.setOptionString("config-dir", ...)` is read at init() time.
@@ -1122,7 +1140,7 @@ object Preferences {
     /**
      * Export the currently active mpv.conf (if any) to a user-chosen location. On Android this
      * reads from `{filesDir}/mpv.conf`; if the file does not exist yet the pref is effectively a
-     * no-op (user is informed via logs). Hidden on iOS.
+     * no-op (user is informed via logs).
      */
     val MPV_EXPORT_CONF = Pref<String>("mpv_export_conf", "") {
         title = Res.string.uisetting_mpv_export_conf_title

@@ -4,22 +4,14 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Project-wide build constants and helpers. The app identity below is the single source
- * the root kiteSsot { } block and every module read from — subprojects never touch the
- * plugin extension directly. Toolchain versions (compileSdk/minSdk/ndkVersion) live in
- * gradle.properties. Details: CLAUDE.md "Module & Build Structure".
+ * Build helpers that are not app identity. App identity (name, version, bundle ids) is
+ * declared once in the root kiteConfig { } block and read back through the kiteConfig
+ * accessor; nothing here duplicates it. What lives here: the flavor flag, signing-secret
+ * loading, native build data, brand colors, and the custom propagators.
  */
 object AppConfig {
-    /* ── App identity (fed into kiteSsot { } at the root; read directly by modules) ─────────────── */
-    const val APP_NAME = "Synkplay"
-    const val VERSION_NAME = "0.23.2"
-    const val BUNDLE_ID_BASE = "com.yuroyami.syncplay"
-    const val BUNDLE_ID_BASE_EXO = "com.reddnek.syncplay"
+    /* ── Shared framework name (not app identity; kiteConfig does not expose it) ─────────────────── */
     const val SHARED_MODULE_NAME = "shared"
-
-    /** macOS CFBundleVersion must start at 1 — jpackage rejects 0.x.y. Only feeds Info.plist. */
-    val macosPackageVersion: String
-        get() = if (VERSION_NAME.startsWith("0.")) "1." + VERSION_NAME.removePrefix("0.") else VERSION_NAME
 
     /**
      * Reads `<rootDir>/local.properties` (signing secrets) and returns the parsed [Properties].
@@ -40,7 +32,7 @@ object AppConfig {
      * Resolves the [exoOnly] flavor flag, letting it be overridden from the command line
      * or gradle.properties (`-PexoOnly=true`) without editing source. This is what lets a
      * reproducible-build setup (e.g. IzzyOnDroid) select the exo-only variant — which skips
-     * the mpv/VLC native build scripts entirely — via a plain Gradle invocation. Both the
+     * the mpv native build scripts entirely — via a plain Gradle invocation. Both the
      * build logic (androidApp) and the EXOPLAYER_ONLY BuildConfig field (shared) must read
      * through here so the build and the app code never disagree. Falls back to [exoOnly].
      */
@@ -48,9 +40,12 @@ object AppConfig {
         providers.gradleProperty("exoOnly").orNull?.toBooleanStrictOrNull() ?: exoOnly
 
     /* ── Trinity brand colors (SSOT for the logo gradient) ──────────────────────────────────────── */
-    const val TRINITY_1 = 0xFF4FD1FF  // Cyan
-    const val TRINITY_2 = 0xFF5A7CFF  // Blue
-    const val TRINITY_3 = 0xFF7A3CFF  // Purple
+    // The three stops that cover most of the logo's visible sail area, so the wordmark, the
+    // launcher icon and the default theme all read as one object. The full five-stop field lives
+    // in art/synkplay_logo_palette.md; change the logo art and these move with it.
+    const val TRINITY_1 = 0xFF9879EF  // Gentle ultraviolet (logo stop 25%)
+    const val TRINITY_2 = 0xFFC331D8  // Softened orchid-magenta (logo stop 55%)
+    const val TRINITY_3 = 0xFFD86B75  // Dusty coral (logo stop 88%)
 
     val abiCodes = mapOf(
         "armeabi-v7a" to "armv7l",

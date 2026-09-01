@@ -1,3 +1,4 @@
+import io.github.yuroyami.kiteconfig.kiteConfig
 import NativeBuildConfig.registerExoOnlyLibcxxPrune
 import NativeBuildConfig.registerMpvLibcxxGuards
 import NativeBuildConfig.registerNativeBuildTask
@@ -12,7 +13,7 @@ plugins {
 // Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
 val exoOnly = AppConfig.resolveExoOnly(providers)
 
-val ndkRequired = providers.gradleProperty("android.ndkVersion").get()
+val ndkRequired = kiteConfig.ndk.get()
 
 kotlin {
     jvmToolchain(21)
@@ -20,7 +21,7 @@ kotlin {
 
 android {
     namespace = "androidApp"
-    compileSdk = providers.gradleProperty("android.compileSdk").get().toInt()
+    compileSdk = kiteConfig.compileSdk.get()
     // Pinned for reproducible builds (issue #105) — AGP's default build-tools can resolve
     // differently on a clean CI checkout.
     buildToolsVersion = providers.gradleProperty("android.buildToolsVersion").get()
@@ -41,10 +42,10 @@ android {
 
     defaultConfig {
         // applicationId / versionCode / versionName / manifestPlaceholders[appName] are applied
-        // by KiteSSOT in AGP finalizeDsl (AFTER this block) from the root kiteSsot { } config;
+        // by KiteConfig in AGP finalizeDsl (AFTER this block) from the root kiteConfig { } config;
         // the exoOnly applicationId swap lives THERE, a module-level override here cannot win.
-        minSdk = providers.gradleProperty("android.minSdk").get().toInt()
-        targetSdk = providers.gradleProperty("android.targetSdk").get().toInt()
+        minSdk = kiteConfig.minSdk.get()
+        targetSdk = kiteConfig.targetSdk.get()
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
@@ -68,7 +69,8 @@ android {
 
     packaging {
         jniLibs.useLegacyPackaging = true
-        // Pick our local libc++_shared only, not the VLC AAR's older one (crashes mpv).
+        // Always package our own NDK-matched libc++_shared (src/main/libs), never a copy that
+        // arrives inside some dependency's AAR — a mismatched one crashes mpv at load.
         jniLibs.pickFirsts += "**/libc++_shared.so"
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -90,10 +92,9 @@ android {
                 for (mpvLib in AppConfig.mpvLibs) {
                     excludes += ("**/$mpvLib")
                 }
-                excludes += ("**/libvlc.so")
                 // KitePlayer's FFmpeg backend, the single largest native library here: it carries
                 // a whole statically linked FFmpeg, so leaving it in would cost this flavor more
-                // than mpv and VLC together and defeat the point of shipping no native players.
+                // than mpv does and defeat the point of shipping no native players.
                 // KitePlayerPlatform.isAvailable detects that this payload is absent.
                 excludes += ("**/libkitecodec_jni.so")
             }
@@ -160,12 +161,12 @@ androidComponents {
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
-                val v = AppConfig.VERSION_NAME
+                val v = kiteConfig.version.get()
                 val fileName = if (exoOnly) {
                     "syncplay-$v-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
-                    "${AppConfig.APP_NAME.lowercase()}-$v-full-${abiName}.apk"
+                    "${kiteConfig.appName.get().lowercase()}-$v-full-${abiName}.apk"
                 }
                 output.outputFileName = fileName
             }

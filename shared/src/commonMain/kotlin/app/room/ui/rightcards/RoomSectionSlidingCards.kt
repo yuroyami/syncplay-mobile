@@ -29,6 +29,9 @@ import app.room.ui.bottombar.RoomControlPanelCard
 import app.uicomponents.FreeAnimatedVisibility
 import app.uicomponents.screenHeightPx
 import app.uicomponents.screenWidthPx
+import app.uicomponents.GlassMaterial
+import androidx.compose.ui.graphics.Color
+import app.uicomponents.glassSurface
 
 @Composable
 fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
@@ -100,11 +103,9 @@ fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
         ) {
             Surface(
                 modifier = Modifier.height(46.dp)
-                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(10.dp)),
+                    .glassSurface(shape = RoundedCornerShape(10.dp), material = GlassMaterial.Thin),
                 shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 2.dp,
-                shadowElevation = 2.dp,
+                color = Color.Transparent,
             ) {
                 RoomControlPanelCard(modifier = Modifier.height(45.dp))
             }

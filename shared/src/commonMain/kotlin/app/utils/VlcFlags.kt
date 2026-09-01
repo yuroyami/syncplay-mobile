@@ -5,7 +5,7 @@ import app.preferences.value
 
 /**
  * Splits a user-provided VLC flags string into individual argument tokens suitable for handing to
- * `LibVLC(ctx, args)` (Android) or `VLCLibrary(args)` (iOS).
+ * `VLCLibrary(args)` on iOS.
  *
  * The splitter respects single- and double-quoted runs so values containing whitespace can be
  * passed, e.g. `--foo="a b c"` becomes one token. Quote characters are stripped from the token.

@@ -58,12 +58,12 @@ internal object NewPipeMediaResolver : MediaResolver {
     }
 
     private fun pickDirectUrl(info: StreamInfo): String? {
-        // Livestreams: HLS manifest. ExoPlayer/MPV/VLC all parse HLS natively.
+        // Livestreams: HLS manifest. ExoPlayer, mpv and KitePlayer all parse HLS natively.
         if (info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM) {
             info.hlsUrl?.takeIf { it.isNotBlank() }?.let { return it }
         }
         // Combined audio+video streams — non-DASH-aware players (ExoPlayer w/o DASH module on
-        // some flavors, AVPlayer, VLC) need a single muxed source. videoOnlyStreams + audio are
+        // some flavors, AVPlayer, VLCKit) need a single muxed source. videoOnlyStreams + audio are
         // intentionally skipped to avoid having to mux.
         return info.videoStreams.orEmpty().bestPick()?.content
     }

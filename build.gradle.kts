@@ -1,5 +1,6 @@
+import io.github.yuroyami.kiteconfig.kiteConfig
 plugins {
-    alias(libs.plugins.kitessot)
+    alias(libs.plugins.kiteconfig)
 
     alias(libs.plugins.kotlin.multiplatform).apply(false)
     alias(libs.plugins.kotlin.android).apply(false)
@@ -18,17 +19,20 @@ plugins {
     alias(libs.plugins.ktorfit).apply(false)
 }
 
-// KiteSSOT applies app identity in AGP finalizeDsl (AFTER module DSL blocks), so the
+// KiteConfig applies app identity in AGP finalizeDsl (AFTER module DSL blocks), so the
 // exoOnly applicationId swap must happen here, not inside androidApp's defaultConfig.
 val exoOnly = AppConfig.resolveExoOnly(providers)
 val localProperties = AppConfig.localProperties(rootDir)
 
-kiteSsot {
-    appName = AppConfig.APP_NAME
-    version = AppConfig.VERSION_NAME
-    appId = if (exoOnly) AppConfig.BUNDLE_ID_BASE_EXO else AppConfig.BUNDLE_ID_BASE
-
+kiteConfig {
+    appName = "Synkplay"
+    version = "0.24.0"
     jvmTarget = 21
+
+    id(if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay") {
+        ios { suffix = ".iosApp" }
+        desktop { suffix = ".desktop" }
+    }
 
     modules {
         shared = ":shared"
@@ -46,35 +50,32 @@ kiteSsot {
     }
 
     ios {
-        bundleIdSuffix = ".iosApp"
-
         // Compatibility assertion for the universal AppIcon installer only (matches the
         // cocoapods deploymentTarget in :shared); it does not configure Xcode.
         deploymentTarget = "14.0"
 
-        // Mutation stays on-demand in KiteSSOT: configuring this block only ENABLES the
-        // explicit kiteSsotSyncIosConfig / kiteSsotSyncIosLogo tasks; normal builds never
-        // rewrite sources. Run the iOS config sync after every version bump.
-        sync { }
+        // Mutation stays on-demand in KiteConfig: this block only ARMS kiteRewriteXcode;
+        // normal builds never rewrite sources. Run it after every version bump.
+        rewrite { }
     }
 
-    // Same rule as ios { sync }: this block authorizes kiteSsotSyncAndroidLogo and
-    // kiteSsotSyncIosLogo, it does not run them.
+    // Same rule as ios { rewrite }: this arms kiteRewriteLogo, it does not run it.
     logo {
-        foreground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_fg.png")
-        background = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_bg.png")
-        androidSafeZone = 0.5
-        takeOverLegacyIcons = true
+        foreground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/synkplay_fg.png")
+        background = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/synkplay_bg.png")
+        android { safeZone = 0.5 }
+        rewrite { replaceOld = true }
     }
 
     buildConfig {
         includeIdentity = false
+        // className is left at its default, KiteBuildConfig, since 1.0.0: no clash
+        // with the BuildConfig that AGP generates.
         packageName = "SyncplayMobile.shared"
-        className = "BuildConfig"
 
-        stringField("APP_NAME", AppConfig.APP_NAME)
-        stringField("APP_VERSION", AppConfig.VERSION_NAME)
-        // NOT "DEBUG": KiteSSOT generates a PUBLIC object, so every field becomes a property on the
+        stringField("APP_NAME", kiteConfig.appName.get())
+        stringField("APP_VERSION", kiteConfig.version.get())
+        // NOT "DEBUG": KiteConfig generates a PUBLIC object, so every field becomes a property on the
         // exported ObjC header, and Xcode defines DEBUG=1 in Debug configs, so "BOOL DEBUG"
         // preprocesses to "BOOL 1" and every iOS Debug build fails to precompile the module.
         //
@@ -112,4 +113,4 @@ kiteSsot {
     }
 }
 
-registerAndroidReleaseAllTask()
+registerAndroidReleaseAllTask(kiteConfig.version.get())

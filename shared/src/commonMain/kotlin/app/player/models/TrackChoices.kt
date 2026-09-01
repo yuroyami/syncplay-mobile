@@ -10,7 +10,7 @@ class TrackChoices {
     var audioSelectionIndexMpv: Int? = null
     var subtitleSelectionIndexMpv: Int? = null
 
-    /* vlc */
+    /* VLCKit (iOS) */
     var audioSelectionIdVlc: String? = null
     var subtitleSelectionIdVlc: String? = null
 }

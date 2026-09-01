@@ -56,6 +56,7 @@ import syncplaymobile.shared.generated.resources.room_overflow_leave_room
 import syncplaymobile.shared.generated.resources.room_overflow_pip
 import syncplaymobile.shared.generated.resources.room_overflow_portrait_mode
 import syncplaymobile.shared.generated.resources.room_overflow_title
+import app.uicomponents.GlassDropdownMenu
 
 @Composable
 fun RoomTabSection(modifier: Modifier) {
@@ -136,8 +137,7 @@ fun RoomTabSection(modifier: Modifier) {
                 overflowMenuState.value = !overflowMenuState.value
             }
 
-            DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            GlassDropdownMenu(
                 shape = RoundedCornerShape(12.dp),
                 expanded = overflowMenuState.value,
                 properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),

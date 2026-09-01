@@ -69,7 +69,7 @@
 <summary>Notes on downloads</summary>
 
 - **Android (GitHub):** Each release ships per-ABI APKs plus a `universal` one. Most modern phones want `arm64-v8a`; pick `universal` if unsure.
-- **Android (IzzyOnDroid):** A smaller APK built from the `exoOnly` flavor, carrying only the ExoPlayer engine (no bundled mpv/VLC native libraries). It uses package id `com.reddnek.syncplay`, so it installs **alongside** the GitHub / Play Store build (`com.yuroyami.syncplay`) rather than updating it. Keep one or the other to avoid two copies.
+- **Android (IzzyOnDroid):** A smaller APK built from the `exoOnly` flavor, carrying only the ExoPlayer engine (no bundled mpv native libraries). It uses package id `com.reddnek.syncplay`, so it installs **alongside** the GitHub / Play Store build (`com.yuroyami.syncplay`) rather than updating it. Keep one or the other to avoid two copies.
 - **Android (Play Store):** Same build as GitHub, but a new version can appear here a little later because of store review.
 - **iOS:** The "Download IPA" button always points to the latest release. No App Store access? Sideload via [AltStore](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) with no jailbreak, or install the `.ipa` directly. See the [iOS install guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) for both paths.
 </details>
@@ -90,7 +90,7 @@
 
 - **Syncplay compatible.** Connects to the same servers and works alongside the official PC client. Position, pause, seek, and speed stay in sync.
 - **Protocol rewritten** from Python to Kotlin, covering every core feature.
-- **Multiple video engines, including mpv on both platforms.** Switch player at runtime to suit your device and format.
+- **Multiple video engines.** Three per platform, switchable at runtime to suit your device and format.
 - **Real-time chat** with emoji and inline GIFs.
 - **Shared playlists** for sequential group viewing, with auto-advance.
 - **Managed rooms** and a readiness system.
@@ -124,16 +124,16 @@ Switch engines at runtime in the room settings. `✔` in **Default** marks the e
 | Engine | Default | Formats | Subtitles | Chapters | Notes |
 |:---|:---:|:---|:---:|:---:|:---|
 | **mpv** (libmpv) | ✔ | Broad (HEVC, mkv, …) | Best (libass) | ✔ | Recommended: best subtitles and performance |
-| **VLC** (libVLC) | ✗ | Broad | ✔ | ✔ | Experimental |
 | **ExoPlayer** (Media3) | ✗ | Device codecs | Basic | ✗ | Lightweight; the only engine in the `exoOnly` / IzzyOnDroid build |
+| **KitePlayer** (FFmpeg) | ✗ | Broad (HEVC, mkv, …) | ✔ | ✔ | Experimental; not bundled in the `exoOnly` build |
 
 **iOS**
 
 | Engine | Default | Formats | Subtitles | Chapters | Notes |
 |:---|:---:|:---|:---:|:---:|:---|
-| **MPVKit** (libmpv) | ✔ | Broad (HEVC, mkv, …) | Best (libass) | ✔ | New in v0.22.2; recommended |
-| **VLCKit 4** | ✗ | Broad | ✔ | ✔ | Good fallback; supports external subtitles and chapters |
+| **VLCKit 4** | ✔ | Broad | ✔ | ✔ | Recommended: external subtitles, chapters and Picture-in-Picture |
 | **AVPlayer** (AVFoundation) | ✗ | Device codecs | ✗ | ✗ | Native Apple player; no external subtitles or chapters |
+| **KitePlayer** (FFmpeg) | ✗ | Broad (HEVC, mkv, …) | ✔ | ✔ | Experimental |
 
 ---
 
@@ -187,7 +187,7 @@ Thanks to **[@Zhaodaidai](https://github.com/Zhaodaidai)** (Chinese), **[@Doncan
 **Requirements:** a recent Android Studio (Narwhal / 2025.2+), and Xcode 16.3+ for iOS.
 
 **Android:** clone the repo and open it in Android Studio. No extra configuration needed. Two product flavors are available:
-- `full` (default): ExoPlayer + mpv + VLC.
+- `full` (default): ExoPlayer + mpv + KitePlayer.
 - `exoOnly`: ExoPlayer only, used for the IzzyOnDroid build. Select it with `-PexoOnly=true` or the matching Gradle variant.
 
 **iOS:** run `pod install` in `iosApp/`, then open `iosApp.xcworkspace` (not the `.xcodeproj`) in Xcode and build for `arm64`.

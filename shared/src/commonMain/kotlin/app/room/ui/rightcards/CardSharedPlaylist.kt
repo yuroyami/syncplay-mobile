@@ -119,6 +119,9 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shu
 import syncplaymobile.shared.generated.resources.room_shared_playlist_item_actions
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
 import kotlin.time.Clock
+import app.uicomponents.GlassDropdownMenu
+import app.uicomponents.GlassMaterial
+import app.uicomponents.glassSurface
 
 object CardSharedPlaylist {
 
@@ -167,12 +170,11 @@ object CardSharedPlaylist {
         val mediaDirsPopupState = remember { mutableStateOf(false) }
         val addUrlsPopupState = remember { mutableStateOf(false) }
 
-        val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
         Card(
+            modifier = Modifier.glassSurface(shape = RoundedCornerShape(12.dp), material = GlassMaterial.Thin),
             shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceEvenly,
@@ -222,8 +224,7 @@ object CardSharedPlaylist {
                                 )
                             }
 
-                            DropdownMenu(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            GlassDropdownMenu(
                                 shape = RoundedCornerShape(12.dp),
                                 expanded = itempopup.value,
                                 properties = PopupProperties(
@@ -299,8 +300,7 @@ object CardSharedPlaylist {
                             onClick = { addMenuState.value = true }
                         )
 
-                        DropdownMenu(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        GlassDropdownMenu(
                             shape = RoundedCornerShape(12.dp),
                             expanded = addMenuState.value,
                             properties = PopupProperties(
@@ -348,8 +348,7 @@ object CardSharedPlaylist {
                             onClick = { shuffleMenuState.value = true }
                         )
 
-                        DropdownMenu(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        GlassDropdownMenu(
                             shape = RoundedCornerShape(12.dp),
                             expanded = shuffleMenuState.value,
                             properties = PopupProperties(
@@ -406,8 +405,7 @@ object CardSharedPlaylist {
                             }
                         )
 
-                        DropdownMenu(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        GlassDropdownMenu(
                             shape = RoundedCornerShape(12.dp),
                             expanded = sharedplaylistOverflowState.value,
                             properties = PopupProperties(

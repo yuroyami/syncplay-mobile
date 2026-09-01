@@ -57,44 +57,71 @@ import app.preferences.settings.SETTINGS_GLOBAL
 import app.preferences.settings.SettingsUI
 import app.theme.ThemeMenu
 import app.theme.Theming
-import app.theme.Theming.SP_GRADIENT
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
+import app.uicomponents.SynkplayLogo
 import app.uicomponents.SyncplayishText
 import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
+import syncplaymobile.shared.generated.resources.synkplay_logo
+import app.uicomponents.GlassMaterial
+import app.uicomponents.glassSurface
+import app.uicomponents.GlassEdge
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onGloballyPositioned
 
 enum class SettingGridState {
     COLLAPSED, NAVIGATING_CATEGORIES, INSIDE_CATEGORY
 }
 
+/**
+ * @param onRestingHeight reports the height of the bar's ALWAYS-PRESENT row (title + actions,
+ *   plus the status-bar inset). The settings grid expands inside the same bar, and the page below
+ *   must not be re-padded every time it opens, so the content spacer tracks this instead of the
+ *   Scaffold's live top padding.
+ */
 @Composable
-fun HomeTopBar(viewmodel: HomeViewmodel) {
+fun HomeTopBar(viewmodel: HomeViewmodel, onRestingHeight: (Dp) -> Unit = {}) {
     val aboutpopupState = remember { mutableStateOf(false) }
 
     PopupAPropos.AProposPopup(aboutpopupState, viewmodel)
 
+    // Square top and sides: this is a bar welded to the top of the screen, not a floating card,
+    // so only the bottom corners round and only the bottom edge draws a rim.
+    val topBarShape = RoundedCornerShape(
+        topEnd = 0.dp, topStart = 0.dp, bottomEnd = 20.dp, bottomStart = 20.dp
+    )
+    val density = LocalDensity.current
     Card(
         modifier = Modifier.fillMaxWidth()
-            .background(color = Color.Transparent),
-        shape = RoundedCornerShape(
-            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 16.dp, bottomStart = 16.dp
-        ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+            .glassSurface(shape = topBarShape, material = GlassMaterial.Thin, edge = GlassEdge.BottomOnly),
+        shape = topBarShape,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         val settingState = remember { mutableStateOf(SettingGridState.COLLAPSED) }
 
         Column(
             horizontalAlignment = CenterHorizontally,
-            modifier = Modifier.animateContentSize()
+            modifier = Modifier
+                .animateContentSize()
+                // The expanded settings sit OVER the page (the page keeps its resting spacing),
+                // and the bar's glass is translucent, so without this wash the grid and the form
+                // print through each other. Near-opaque only while open; glass at rest.
+                .background(
+                    if (settingState.value != SettingGridState.COLLAPSED)
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+                    else Color.Transparent
+                )
         ) {
             ListItem(
-                modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
+                modifier = Modifier.fillMaxWidth()
+                    .onGloballyPositioned { onRestingHeight(with(density) { it.size.height.toDp() }) }
+                    .padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = {
                     Row(
@@ -105,19 +132,14 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                             indication = ripple(bounded = false)
                         ) { aboutpopupState.value = true }.padding(16.dp)
                     ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
-                            contentDescription = null,
-                            modifier = Modifier.height(32.dp).aspectRatio(1f)
-                        )
+                        SynkplayLogo(modifier = Modifier.height(32.dp).aspectRatio(1f))
 
                         Spacer(modifier = Modifier.width(12.dp))
 
                         SyncplayishText(
                             modifier = Modifier.padding(bottom = 4.dp),
                             string = appName,
-                            size = 24f,
-                            colorStops = SP_GRADIENT
+                            size = 24f
                         )
                     }
                 },
@@ -171,4 +193,3 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
         }
     }
 }
-

@@ -14,17 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 /** Shows a popup with the given content.
  *
- * Design convention (applies to every popup in the app): there is NO card and NO container
- * color. The content is drawn directly on a full-screen dim layer, gathered around the middle
- * of the screen. Popups should keep their content compact and centered instead of scattering
- * elements towards the screen edges.
+ * Design convention (applies to every popup in the app): the content sits on a frosted glass
+ * panel (see [glassSurface]) over a light dim layer, gathered around the middle of the screen.
+ * Popups should keep their content compact and centered instead of scattering elements towards
+ * the screen edges.
  *
  * @param dialogOpen Controls whether the popup dialog is shown or not.
  * When this is false, the dialog is not rendered at all.
@@ -54,12 +53,12 @@ fun SyncplayPopup(
                 dismissOnBackPress = dismissable
             )
         ) {
+            DialogBackdropBlur()
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    // Heavy scrim on top of the platform dialog dim: with no card behind the
-                    // content, the dim layer alone must guarantee readability over any video.
-                    .background(Color.Black.copy(alpha = 0.55f))
+                    .background(glassScrim)
                     // Keep the centered content above the soft keyboard for input popups.
                     .imePadding()
                     .then(
@@ -75,11 +74,15 @@ fun SyncplayPopup(
                     modifier = Modifier
                         .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
                         .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
-                        .padding(24.dp)
+                        // Vertical only: horizontal margin is already the caller's widthPercent,
+                        // and taking more would re-wrap content that used to fit.
+                        .padding(vertical = 12.dp)
+                        .glassSurface()
                         .clickable(
                             interactionSource = null,
                             indication = null
-                        ) { /* Consume clicks on the content area to prevent scrim dismiss */ },
+                        ) { /* Consume clicks on the content area to prevent scrim dismiss */ }
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
                     content = content

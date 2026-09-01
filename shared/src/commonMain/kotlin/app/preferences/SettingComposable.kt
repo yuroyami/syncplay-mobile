@@ -54,6 +54,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.no
 import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
+import app.uicomponents.GlassAlertDialog
 
 @Composable
 internal inline fun <reified T> Pref<T>.SettingComposable() {
@@ -271,7 +272,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
             }
 
             showYesNoPopup != null -> {
-                AlertDialog(
+                GlassAlertDialog(
                     onDismissRequest = { renderableComposableState.value = false },
                     confirmButton = {
                         TextButton(onClick = {

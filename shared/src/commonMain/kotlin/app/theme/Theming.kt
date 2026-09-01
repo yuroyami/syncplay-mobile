@@ -4,29 +4,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.LocalTheme
 
 object Theming {
 
-    val useSyncplayGradient: Boolean
-        @Composable get() = LocalTheme.current.syncplayGradients
-
-    /** The brand gradient when the active theme opts in, otherwise the theme's own trio.
-     * Gradient policy: reserved for identity moments (wordmark, join button, TV focus ring,
-     * seekbar progress). Regular chrome uses plain scheme roles. */
+    /** The active theme's trinity: its three RAW seed colors, in declared order. Every identity
+     * moment (logo, wordmark, join button, TV focus ring, seekbar fill) draws from this, so the
+     * theme and the brand always agree. Raw seeds, not scheme roles, because MaterialKolor's
+     * tonal mapping mutes seeds into chrome colors and the identity moments want them vivid. */
     val flexibleGradient: List<Color>
-        @Composable get() = if (useSyncplayGradient) {
-            SP_GRADIENT
-        } else {
-            val cs = MaterialTheme.colorScheme
-            listOf(cs.primary, cs.secondary, cs.tertiary)
+        @Composable get() = LocalTheme.current.let {
+            listOf(
+                it.primaryColor?.let(::Color) ?: NeoSP1,
+                it.secondaryColor?.let(::Color) ?: NeoSP2,
+                it.tertiaryColor?.let(::Color) ?: NeoSP3,
+            )
         }
 
     /* ── Brand gradient (SSOT: AppConfig.TRINITY_*) ────────────────── */
-    val NeoSP1 = Color(BuildConfig.TRINITY_COLOR_1)
-    val NeoSP2 = Color(BuildConfig.TRINITY_COLOR_2)
-    val NeoSP3 = Color(BuildConfig.TRINITY_COLOR_3)
+    val NeoSP1 = Color(KiteBuildConfig.TRINITY_COLOR_1)
+    val NeoSP2 = Color(KiteBuildConfig.TRINITY_COLOR_2)
+    val NeoSP3 = Color(KiteBuildConfig.TRINITY_COLOR_3)
     val SP_GRADIENT = listOf(NeoSP1, NeoSP2, NeoSP3)
 
     /* ── Semantic: chat message color defaults (user-overridable prefs) ── */

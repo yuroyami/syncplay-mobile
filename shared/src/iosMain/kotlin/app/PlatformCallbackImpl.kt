@@ -41,7 +41,6 @@ object ApplePlatformCallback : PlatformCallback {
      *   (the iOS-native path, gated by [AVPictureInPictureController.isPictureInPictureSupported]).
      * - **VLCKit** (≥ 4.0) runs PiP via its own `VLCPictureInPictureWindowControlling`
      *   protocol (see [VlcKitImpl.enterPictureInPicture]).
-     * - MPV has no native iOS PiP and is excluded by `supportsPictureInPicture = false`.
      *
      * @param enable True to enter PiP mode, false to exit it.
      */

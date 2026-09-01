@@ -1,6 +1,6 @@
 package app.subtitles
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.utils.getLogDirectoryPath
 import app.utils.httpClient
 import app.utils.loggy
@@ -26,7 +26,7 @@ object SubtitleSearch {
     private const val BASE_URL = "https://api.opensubtitles.com/api/v1/"
 
     /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`). */
-    private val API_KEY = BuildConfig.OPENSUBTITLES_API_KEY
+    private val API_KEY = KiteBuildConfig.OPENSUBTITLES_API_KEY
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -48,7 +48,7 @@ object SubtitleSearch {
              * (set) runs after the base block and overwrites its UA with the exact "Name vX.Y.Z"
              * form OpenSubtitles requires. */
             defaultRequest {
-                headers[HttpHeaders.UserAgent] = "Synkplay v${BuildConfig.APP_VERSION}"
+                headers[HttpHeaders.UserAgent] = "Synkplay v${KiteBuildConfig.APP_VERSION}"
                 header("Api-Key", API_KEY)
                 header(HttpHeaders.Accept, "application/json")
             }

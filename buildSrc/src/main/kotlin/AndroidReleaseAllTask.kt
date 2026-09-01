@@ -90,8 +90,10 @@ abstract class AndroidReleaseAllTask @Inject constructor(
     }
 }
 
-/** Registers `androidReleaseAll` on the root project. */
-fun Project.registerAndroidReleaseAllTask() {
+/** Registers `androidReleaseAll` on the root project. [version] comes from the
+ *  root kiteConfig { } block: buildSrc compiles before plugins apply, so it
+ *  cannot read the accessor itself. */
+fun Project.registerAndroidReleaseAllTask(version: String) {
     tasks.register<AndroidReleaseAllTask>("androidReleaseAll") {
         group = "syncplay"
         description = "Build all release APKs (full ABI-split + exoOnly) plus the full-flavor AAB into AndroidAppOutput/."
@@ -100,7 +102,7 @@ fun Project.registerAndroidReleaseAllTask() {
         outputs.upToDateWhen { false }
 
         val isWindows = System.getProperty("os.name").lowercase().contains("windows")
-        versionName.set(AppConfig.VERSION_NAME)
+        versionName.set(version)
         gradlewScript.set(layout.projectDirectory.file(if (isWindows) "gradlew.bat" else "gradlew"))
         repoRoot.set(layout.projectDirectory)
         fullApkDir.set(layout.projectDirectory.dir("androidApp/build/outputs/apk/full/release"))

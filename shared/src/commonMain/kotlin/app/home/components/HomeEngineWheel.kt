@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import app.player.PlayerEngine
 import app.uicomponents.tvFocusable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -63,6 +66,8 @@ import syncplaymobile.shared.generated.resources.connect_engine_badge_experiment
 import syncplaymobile.shared.generated.resources.connect_engine_badge_system
 import syncplaymobile.shared.generated.resources.connect_engine_badge_unavailable
 import kotlin.math.abs
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.animation.core.animateFloatAsState
 
 /**
  * The engine chooser as a horizontal wheel, in place.
@@ -100,16 +105,43 @@ fun HomeEngineWheel(
 
     // Set around every scroll this composable issues itself, so the settle collector can tell a
     // user's gesture (which selects) from a correction (which must not re-select).
+    //
+    // Corrections are cancel-previous jobs, nothing more. The earlier mutex that also waited for
+    // isScrollInProgress to clear was the flakiness: when a user grabbed the wheel MID-correction,
+    // the wait rode through their whole gesture with `programmatic` still true, so their settle
+    // was swallowed - no snap, no click, no selection. Cancelling instead means a user touch
+    // kills the correction and clears the flag on the spot. A correction's own settle needs no
+    // guard at all: it lands centered on the already-selected engine, so every branch below
+    // no-ops on it anyway.
+    val currentEngines by rememberUpdatedState(engines)
+    val currentSelected by rememberUpdatedState(selectedEngine)
+    val currentOnSelect by rememberUpdatedState(onSelectEngine)
+
     var programmatic by remember { mutableStateOf(false) }
+    var correction by remember { mutableStateOf<Job?>(null) }
+
+    fun requestCorrection(index: Int, animate: Boolean = true, thenSelect: Boolean = false) {
+        correction?.cancel()
+        correction = scope.launch {
+            programmatic = true
+            try {
+                if (animate) listState.animateScrollToItem(index) else listState.scrollToItem(index)
+                if (thenSelect) {
+                    currentEngines.getOrNull(index)
+                        ?.takeIf { it.name != currentSelected }
+                        ?.let { currentOnSelect(it) }
+                }
+            } finally {
+                programmatic = false
+            }
+        }
+    }
 
     // Bumped on every settle so the centering effect below re-runs even when the preference did
     // NOT change. That is the unavailable-engine path: the caller refuses the selection, the
     // pref keeps its old value, and without this tick nothing would pull the wheel back.
     var settleTick by remember { mutableIntStateOf(0) }
 
-    val currentEngines by rememberUpdatedState(engines)
-    val currentSelected by rememberUpdatedState(selectedEngine)
-    val currentOnSelect by rememberUpdatedState(onSelectEngine)
 
     LaunchedEffect(listState) {
         // Only a real settle counts: a scroll that ended. snapshotFlow emits its current value
@@ -129,12 +161,7 @@ fun HomeEngineWheel(
             // dead center, close the remaining gap here before anything reads the selection.
             val index = listState.centeredIndex()
             if (abs(listState.signedDistanceFromCenter(index)) > CenteredTolerance) {
-                programmatic = true
-                try {
-                    listState.animateScrollToItem(index)
-                } finally {
-                    programmatic = false
-                }
+                requestCorrection(index)
             }
 
             val landed = currentEngines.getOrNull(index) ?: return@collect
@@ -165,14 +192,9 @@ fun HomeEngineWheel(
         // believed it had nothing to do and stayed visibly crooked. Ask about the offset instead.
         val offBy = abs(listState.signedDistanceFromCenter(target))
         if (listState.centeredIndex() == target && offBy <= CenteredTolerance) return@LaunchedEffect
-        programmatic = true
-        try {
-            // Instant on the very first pass so the wheel never renders off-target, animated
-            // afterwards so a refused selection visibly springs back rather than teleporting.
-            if (settleTick == 0) listState.scrollToItem(target) else listState.animateScrollToItem(target)
-        } finally {
-            programmatic = false
-        }
+        // Instant on the very first pass so the wheel never renders off-target, animated
+        // afterwards so a refused selection visibly springs back rather than teleporting.
+        requestCorrection(target, animate = settleTick != 0)
     }
 
     BoxWithConstraints(
@@ -190,17 +212,51 @@ fun HomeEngineWheel(
                     else -> return@onPreviewKeyEvent false
                 }
                 val next = (listState.centeredIndex() + step).coerceIn(0, engines.lastIndex)
-                scope.launch { listState.animateScrollToItem(next) }
+                requestCorrection(next, thenSelect = true)
                 true
             },
     ) {
         val sidePadding = ((maxWidth - ItemWidth) / 2).coerceAtLeast(0.dp)
         val fadePx = with(LocalDensity.current) { FadeWidth.toPx() }
 
-        // The selection slot. Behind the items on purpose: the wheel scrolls THROUGH it, and a
-        // plain surface role keeps it chrome, not content. Its sides dissolve to nothing, so it
-        // reads as light on the slot rather than a box drawn around one item.
-        val capsule = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f)
+        // A fade means "more this way". At the first or last engine there is nothing that way,
+        // so the fade would be claiming hidden content that does not exist; the wheel is supposed
+        // to read as ENDED there. Both flags are derived so they recompose only when they flip,
+        // not on every scroll frame, and both are animated so the edge resolves instead of
+        // snapping the instant the list bottoms out.
+        val canScrollLeft by remember { derivedStateOf { listState.canScrollBackward } }
+        val canScrollRight by remember { derivedStateOf { listState.canScrollForward } }
+        val fadeLeft by animateFloatAsState(if (canScrollLeft) 1f else 0f, label = "wheelFadeLeft")
+        val fadeRight by animateFloatAsState(if (canScrollRight) 1f else 0f, label = "wheelFadeRight")
+
+        // Two layers, both behind the items, because they answer different questions.
+        //
+        // The TRACK spans the whole control and dissolves at the real edges, so the wheel has a
+        // visible extent: without it the strip floated with no indication of how far it ran or
+        // where it ended. Its fade uses the same FadeWidth as the item mask below, so the surface
+        // and the items disappear together instead of at two different points.
+        val track = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.22f)
+        val trackStop = (fadePx / with(LocalDensity.current) { maxWidth.toPx() }).coerceIn(0.01f, 0.49f)
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .height(CapsuleHeight)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        0f to track.copy(alpha = track.alpha * (1f - fadeLeft)),
+                        trackStop to track,
+                        1f - trackStop to track,
+                        1f to track.copy(alpha = track.alpha * (1f - fadeRight)),
+                    ),
+                    shape = CapsuleShape,
+                ),
+        )
+
+        // The SLOT sits brighter on top of the track and still marks the one position that IS the
+        // selection. Dropping it would leave the track reading as the selection, which is exactly
+        // the wrong thing for a control whose whole premise is "whatever is centered is chosen".
+        val capsule = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f)
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -230,10 +286,10 @@ fun HomeEngineWheel(
                     val stop = (fadePx / size.width).coerceIn(0.01f, 0.49f)
                     drawRect(
                         brush = Brush.horizontalGradient(
-                            0f to Color.Transparent,
+                            0f to Color.Black.copy(alpha = 1f - fadeLeft),
                             stop to Color.Black,
                             1f - stop to Color.Black,
-                            1f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = 1f - fadeRight),
                         ),
                         blendMode = BlendMode.DstIn,
                     )
@@ -270,7 +326,7 @@ fun HomeEngineWheel(
                             cameraDistance = CameraDistanceDp * density
                         }
                         .clickable(interactionSource = null, indication = null) {
-                            scope.launch { listState.animateScrollToItem(index) }
+                            requestCorrection(index, thenSelect = true)
                         },
                 )
             }
@@ -289,6 +345,11 @@ private fun EngineWheelItem(engine: PlayerEngine, modifier: Modifier = Modifier)
             painter = painterResource(engine.img),
             modifier = Modifier.size(IconSize),
             contentDescription = null,
+            // An engine that cannot be picked loses its color, not just its badge.
+            colorFilter = if (engine.isAvailable) null else {
+                ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+            },
+            alpha = if (engine.isAvailable) 1f else 0.6f,
         )
         Text(
             text = engine.name,

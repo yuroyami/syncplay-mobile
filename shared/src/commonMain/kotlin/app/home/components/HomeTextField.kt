@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.theme.Theming
 import app.uicomponents.tvFocusable
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.focusProperties
 
 // Uses BasicTextField directly rather than compose-unstyled's UnstyledTextField + TextInput
 // (innerTextField is internal there, which blocks custom decoration).
@@ -73,6 +75,7 @@ fun HomeTextField(
     clearFocusWhenDone: Boolean = false,
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
+    onNext: (() -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val state = rememberTextFieldState(value)
@@ -100,15 +103,27 @@ fun HomeTextField(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    val cornerRadiusAnimated by animateDpAsState(
-        targetValue = if (dropdownState?.value == true) 0.dp else cornerRadius,
+    /* Open = the field becomes the menu's header: bottom corners square off to meet it while
+     * the top keeps its radius, and the border hands over to the same rim the glass menu wears,
+     * so the pair reads as one object splitting, not two stacked boxes. */
+    val menuOpen = dropdownState?.value == true
+    val bottomRadius by animateDpAsState(
+        targetValue = if (menuOpen) 0.dp else cornerRadius,
         animationSpec = spring()
     )
 
-    val shape = RoundedCornerShape(cornerRadiusAnimated)
+    val shape = RoundedCornerShape(
+        topStart = cornerRadius, topEnd = cornerRadius,
+        bottomStart = bottomRadius, bottomEnd = bottomRadius
+    )
     val textColor = MaterialTheme.colorScheme.onSurface
     val borderColor by animateColorAsState(
-        targetValue = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+        targetValue = when {
+            menuOpen -> Color.White.copy(alpha = 0.22f)
+            isFocused -> MaterialTheme.colorScheme.primary
+            // Resting fields whisper; a full-strength outline on every field was the harshness.
+            else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        }
     )
 
     BasicTextField(
@@ -124,12 +139,20 @@ fun HomeTextField(
         enabled = enabled,
         readOnly = dropdownState != null,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text),
+        // Next moves focus WITHOUT tearing the keyboard down, so hopping username -> room no
+        // longer flashes it closed and open (which yanks the ime-padded form up and back).
+        keyboardOptions = KeyboardOptions(
+            keyboardType = type ?: KeyboardType.Text,
+            imeAction = if (clearFocusWhenDone) ImeAction.Done else ImeAction.Next,
+        ),
         onKeyboardAction = KeyboardActionHandler {
-            if (clearFocusWhenDone) {
-                focusManager.clearFocus(true)
-            } else {
-                focusManager.moveFocus(focusDirection = FocusDirection.Next)
+            when {
+                clearFocusWhenDone -> focusManager.clearFocus(true)
+                // Jump straight to the next FIELD. Traversal order walks through every focusable
+                // in between (the clear X, buttons), and focus landing on a non-text target is
+                // what tore the keyboard down for a beat.
+                onNext != null -> onNext.invoke()
+                else -> focusManager.moveFocus(focusDirection = FocusDirection.Next)
             }
         },
         decorator = { innerTextField ->
@@ -140,7 +163,7 @@ fun HomeTextField(
                 modifier = Modifier.fillMaxWidth().height(height)
                     .clip(shape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .border(width = if (isFocused) 2.dp else 1.dp, color = borderColor, shape = shape)
+                    .border(width = if (isFocused && !menuOpen) 1.5.dp else 1.dp, color = borderColor, shape = shape)
                     .padding(PaddingValues(horizontal = Theming.SpaceLG, vertical = Theming.SpaceSM)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -186,6 +209,7 @@ fun HomeTextField(
                             .padding(start = Theming.SpaceMD)
                             .size(24.dp)
                             .clip(CircleShape)
+                            .focusProperties { canFocus = false }
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = ripple(bounded = false, radius = 16.dp)

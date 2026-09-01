@@ -19,11 +19,11 @@ val BLANK_THEME = SaveableTheme(
     syncplayGradients = true
 )
 
-/** The flagship theme: the Trinity brand colors (cyan/blue/purple) seeded into a dark scheme. */
+/** The flagship theme: the Trinity brand colors (ultraviolet/orchid/coral) seeded into a dark scheme. */
 val TRINITY = SaveableTheme(
     name = "Trinity",
-    primaryColor = Theming.NeoSP2.toArgb(),
-    secondaryColor = Theming.NeoSP1.toArgb(),
+    primaryColor = Theming.NeoSP1.toArgb(),
+    secondaryColor = Theming.NeoSP2.toArgb(),
     tertiaryColor = Theming.NeoSP3.toArgb(),
     contrast = 0.0,
     isDark = true,
@@ -35,8 +35,8 @@ val TRINITY = SaveableTheme(
 /** Light counterpart of Trinity: same brand seeds on a light scheme. */
 val DAYLIGHT = SaveableTheme(
     name = "Daylight",
-    primaryColor = Theming.NeoSP2.toArgb(),
-    secondaryColor = Theming.NeoSP1.toArgb(),
+    primaryColor = Theming.NeoSP1.toArgb(),
+    secondaryColor = Theming.NeoSP2.toArgb(),
     tertiaryColor = Theming.NeoSP3.toArgb(),
     contrast = 0.0,
     isDark = false,

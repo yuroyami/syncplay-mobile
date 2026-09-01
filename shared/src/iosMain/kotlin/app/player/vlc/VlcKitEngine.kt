@@ -17,12 +17,11 @@ import syncplaymobile.shared.generated.resources.vlc
  * - Larger app size due to bundled codecs
  *
  * **Best for:** Users who need to play various file formats and subtitle types.
- * The iOS version is more stable than its Android counterpart.
  */
 object VlcKitEngine : PlayerEngine {
     override val isAvailable: Boolean = true
     override val isDefault: Boolean = true
-    override val name: String = "VLCKit" //We name this one VLCKit to differentiate it from Android's VLC when saving to datastore
+    override val name: String = "VLCKit"
     override val img: DrawableResource = Res.drawable.vlc
 
     override fun createImpl(viewmodel: RoomViewmodel): PlayerImpl = VlcKitImpl(viewmodel)

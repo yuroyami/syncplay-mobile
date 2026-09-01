@@ -75,7 +75,6 @@ import app.preferences.set
 import app.preferences.value
 import app.preferences.watchPref
 import app.theme.Theming
-import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.dropdownMenuMaxHeight
 import app.uicomponents.sairaFont
@@ -113,8 +112,21 @@ import syncplaymobile.shared.generated.resources.home_ip_address
 import syncplaymobile.shared.generated.resources.home_password_if_any
 import syncplaymobile.shared.generated.resources.connect_host_own_server
 import syncplaymobile.shared.generated.resources.home_port
+import app.uicomponents.GlassExposedDropdownMenu
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Check
+import syncplaymobile.shared.generated.resources.connect_official_server_desc
+import syncplaymobile.shared.generated.resources.connect_official_server
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
+
+/** The official server is one host; only the port varies, so the picker offers just these. */
+val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,12 +162,17 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         }
     }
 
+    // The bar's height when the settings grid is CLOSED. The page is spaced by this, not by the
+    // Scaffold's live top padding, so opening the grid overlays the page instead of re-laying it
+    // out (which on a short screen squeezed every field into the next).
+    var topBarRestingHeight by remember { mutableStateOf(0.dp) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(viewmodel.snack) },
         topBar = {
-            HomeTopBar(viewmodel)
+            HomeTopBar(viewmodel, onRestingHeight = { topBarRestingHeight = it })
         },
-        content = { paddingValues ->
+        content = { _ ->
             val focusManager = LocalFocusManager.current
 
             // Render the form immediately with defaults; re-key the field states once the
@@ -177,10 +194,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     horizontalAlignment = CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceAround
                 ) {
-                    /* Instead of consuming paddingValues, we create a spacer with that height */
-                    Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
+                    /* Spacer instead of consuming paddingValues, and deliberately keyed to the
+                     * bar's RESTING height so the settings grid opening over it changes nothing
+                     * down here. */
+                    Spacer(modifier = Modifier.height(topBarRestingHeight))
 
                     /* higher-level variables which are needed for logging in */
+                    val roomFocusRequester = remember { FocusRequester() }
                     var textUsername by remember(savedConfig) { mutableStateOf(config.user) }
                     var textRoomname by remember(savedConfig) { mutableStateOf(config.room) }
 
@@ -220,7 +240,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             icon = Icons.Outlined.PersonPin,
                             value = textUsername,
                             onValueChange = { textUsername = it },
-                            focusRequester = usernameFocusRequester
+                            focusRequester = usernameFocusRequester,
+                            onNext = { roomFocusRequester.requestFocus() }
                         )
                     }
 
@@ -238,7 +259,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             modifier = Modifier.fillMaxWidth(),
                             icon = Icons.Outlined.MeetingRoom,
                             value = textRoomname,
-                            onValueChange = { textRoomname = it }
+                            onValueChange = { textRoomname = it },
+                            focusRequester = roomFocusRequester,
+                            clearFocusWhenDone = true
                         )
                     }
 
@@ -264,66 +287,111 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             HomeTextField(
                                 modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                 icon = Icons.Outlined.Lan,
-                                value = selectedServer.replace("151.80.32.178", "syncplay.pl"),
+                                value = if (serverIsPublic) {
+                                    stringResource(Res.string.connect_official_server)
+                                } else {
+                                    stringResource(Res.string.connect_enter_custom_server)
+                                },
                                 dropdownState = expanded,
                                 onValueChange = {}
                             )
 
                             val customServerLabel = stringResource(Res.string.connect_enter_custom_server)
                             val hostServerLabel = stringResource(Res.string.connect_host_own_server)
-                            val servers = officialServers + customServerLabel
-                            ExposedDropdownMenu(
-                                modifier = Modifier
-                                    .heightIn(max = dropdownMenuMaxHeight)
-                                    .background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            val officialLabel = stringResource(Res.string.connect_official_server)
+
+                            /* Three rows, not seven. The five official entries differed only by
+                             * port, so they collapse into one row with the port chosen beside it;
+                             * that also stops the list outgrowing the screen and hiding the two
+                             * rows that actually go somewhere. */
+                            GlassExposedDropdownMenu(
+                                modifier = Modifier.heightIn(max = dropdownMenuMaxHeight),
                                 expanded = expanded.value,
-                                onDismissRequest = {
-                                    expanded.value = false
-                                }) {
-                                servers.forEach { server ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                server.replace("151.80.32.178", "syncplay.pl"),
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        },
-                                        onClick = {
-                                            selectedServer = server
-                                            expanded.value = false
+                                // Square top meets the anchor's squared bottom: field and menu
+                                // read as one panel that split open.
+                                shape = RoundedCornerShape(
+                                    topStart = 0.dp, topEnd = 0.dp,
+                                    bottomStart = 16.dp, bottomEnd = 16.dp
+                                ),
+                                onDismissRequest = { expanded.value = false }
+                            ) {
+                                ServerMenuRow(
+                                    icon = Icons.Outlined.Lan,
+                                    label = officialLabel,
+                                    supporting = stringResource(
+                                        Res.string.connect_official_server_desc,
+                                        serverPort.ifBlank { "8997" }
+                                    ),
+                                    selected = serverIsPublic,
+                                    onClick = {
+                                        expanded.value = false
+                                        serverIsPublic = true
+                                        serverAddress = "syncplay.pl"
+                                        if (serverPort !in officialPorts) serverPort = "8997"
+                                        selectedServer = "syncplay.pl:$serverPort"
+                                        serverPassword = ""
+                                    }
+                                )
 
-                                            if (server != customServerLabel) {
-                                                serverAddress = "syncplay.pl"
-                                                serverPort =
-                                                    selectedServer.substringAfter("syncplay.pl:")
-                                                serverIsPublic = true
-                                                serverPassword = ""
-                                            } else {
-                                                serverIsPublic = false
-                                                serverAddress = ""
-                                                serverPort = ""
-                                            }
-                                        }
-                                    )
-                                }
+                                ServerMenuRow(
+                                    icon = Icons.Outlined.Edit,
+                                    label = customServerLabel,
+                                    selected = !serverIsPublic,
+                                    onClick = {
+                                        expanded.value = false
+                                        serverIsPublic = false
+                                        selectedServer = customServerLabel
+                                        serverAddress = ""
+                                        serverPort = ""
+                                    }
+                                )
 
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Lan,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.padding(end = 8.dp)
-                                            )
-                                            Text(hostServerLabel, color = MaterialTheme.colorScheme.onSurface)
-                                        }
-                                    },
+                                ServerMenuRow(
+                                    icon = Icons.Outlined.Dns,
+                                    label = hostServerLabel,
                                     onClick = {
                                         expanded.value = false
                                         globalViewmodel.backstack.add(Screen.ServerHost)
                                     }
                                 )
+                            }
+                        }
+
+                        /* Port picker: only meaningful for the official server, where it is the
+                         * only thing that varied between the old five rows. */
+                        AnimatedVisibility(
+                            visible = serverIsPublic,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                officialPorts.forEach { port ->
+                                    val active = serverPort == port
+                                    Text(
+                                        text = port,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        textAlign = TextAlign.Center,
+                                        color = if (active) MaterialTheme.colorScheme.onPrimaryContainer
+                                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(
+                                                if (active) MaterialTheme.colorScheme.primaryContainer
+                                                else MaterialTheme.colorScheme.surfaceContainerHigh
+                                            )
+                                            .clickable(interactionSource = null, indication = ripple()) {
+                                                serverPort = port
+                                                serverAddress = "syncplay.pl"
+                                                selectedServer = "syncplay.pl:$port"
+                                            }
+                                            .padding(vertical = 8.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -336,6 +404,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 horizontalAlignment = CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
+                                val portFocusRequester = remember { FocusRequester() }
+                                val passwordFocusRequester = remember { FocusRequester() }
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -345,7 +415,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         value = serverAddress,
                                         onValueChange = { serverAddress = it.trim() },
                                         label = stringResource(Res.string.home_ip_address),
-                                        cornerRadius = 16.dp
+                                        cornerRadius = 16.dp,
+                                        onNext = { portFocusRequester.requestFocus() }
                                     )
 
                                     HomeTextField(
@@ -354,7 +425,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         onValueChange = { serverPort = it.trim() },
                                         type = KeyboardType.Number,
                                         label = stringResource(Res.string.home_port),
-                                        cornerRadius = 16.dp
+                                        cornerRadius = 16.dp,
+                                        focusRequester = portFocusRequester,
+                                        onNext = { passwordFocusRequester.requestFocus() }
                                     )
                                 }
 
@@ -364,7 +437,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     onValueChange = { serverPassword = it.trim() },
                                     type = KeyboardType.Password,
                                     label = stringResource(Res.string.home_password_if_any),
-                                    clearFocusWhenDone = true
+                                    clearFocusWhenDone = true,
+                                    focusRequester = passwordFocusRequester
                                 )
                             }
                         }
@@ -384,9 +458,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val selectedEngine by PLAYER_ENGINE.watchPref()
 
                         // A saved engine that this build no longer has is not a selection, it is a
-                        // leftover. Desktop dropped VLC and mpv, so an existing install opens with
-                        // PLAYER_ENGINE = "VLC" and the wheel, finding no such engine, sits on
-                        // whatever is at index 0 while the preference still names the dead one.
+                        // leftover. Engines do get dropped between releases, so an existing install
+                        // can open with PLAYER_ENGINE naming a dead one; the wheel then sits on
+                        // whatever is at index 0 while the preference still says otherwise.
                         // Write the platform default over it once instead.
                         LaunchedEffect(selectedEngine, availablePlatformPlayerEngines) {
                             if (availablePlatformPlayerEngines.none { it.name == selectedEngine }) {
@@ -507,6 +581,48 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+/** One row of the server menu: icon, label, optional second line, and a check when it is current. */
+@Composable
+private fun ServerMenuRow(
+    icon: ImageVector,
+    label: String,
+    supporting: String? = null,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        text = {
+            Column {
+                Text(label, color = MaterialTheme.colorScheme.onSurface)
+                if (supporting != null) {
+                    Text(
+                        supporting,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        },
+        trailingIcon = if (!selected) null else {
+            {
+                Icon(
+                    imageVector = Icons.Outlined.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        onClick = onClick
+    )
+}
+
 @Composable
 fun HomeLeadingTitle(string: String, tooltip: String? = null) {
     Row(

@@ -29,6 +29,7 @@ import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.tips
 import syncplaymobile.shared.generated.resources.tips_did_ya_know
 import syncplaymobile.shared.generated.resources.tips_dontshowmetips
+import app.uicomponents.GlassAlertDialog
 
 object PopupDidYaKnow {
 
@@ -46,7 +47,7 @@ object PopupDidYaKnow {
                 tips.addAll(getStringArray(Res.array.tips).map { it.replace("%1\$s", appName) }.shuffled())
             }
 
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = {
                     state.value = false
                 },

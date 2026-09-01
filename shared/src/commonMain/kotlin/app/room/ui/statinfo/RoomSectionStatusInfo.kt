@@ -2,7 +2,6 @@ package app.room.ui.statinfo
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,6 +21,12 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_details_current_room
 import syncplaymobile.shared.generated.resources.room_details_user_count
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
+import app.uicomponents.darkGlassPill
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 
 
 @Composable
@@ -32,6 +37,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
     // TODO: suppress while in PiP mode.
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
     ) {
         if (!viewmodel.isSoloMode) {
@@ -56,11 +62,15 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 stringResource(Res.string.room_ping_disconnected)
             }
 
+            /* Over-video chrome rule: fixed white-on-dark-glass, not theme roles. */
             Text(
                 text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom) +
                         " ($parenthesized)",
                 fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier
+                    .darkGlassPill(RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
             )
 
             /* No manual reconnect button: NetworkManager.reconnect() already retries on its own
@@ -68,10 +78,13 @@ fun RoomStatusInfoSection(modifier: Modifier) {
 
             val osd by remember { viewmodel.osdMsg }
             if (osd.isNotEmpty()) Text(
-                modifier = Modifier.fillMaxWidth(0.95f),
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .darkGlassPill(RoundedCornerShape(16.dp))
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
                 fontSize = 11.sp,
                 lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
-                color = MaterialTheme.colorScheme.primary,
+                color = Color.White,
                 text = osd,
                 fontFamily = FontFamily(sairaFont),
                 textAlign = TextAlign.Center,
@@ -89,7 +102,11 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                         )?.toInt() ?: 0
                     Text(
                         text = "S${season}E${episode}",
-                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 11.sp,
+                        color = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier
+                            .darkGlassPill(RoundedCornerShape(16.dp))
+                            .padding(horizontal = 12.dp, vertical = 5.dp),
                     )
                 }
             }

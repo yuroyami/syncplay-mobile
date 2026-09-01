@@ -168,7 +168,7 @@ val PlatformFile.uri: Uri
  * a `file://` Uri. Unlike [uri], this never routes through FileProvider, so it also works for
  * app-internal paths (filesDir/logs) that aren't declared in provider_paths.xml — which is where
  * downloaded subtitles land. A bare filesystem path (no scheme) makes ExoPlayer's content
- * resolver, mpv's resolveUri, and VLC's addSlave all reject the file silently.
+ * resolver and mpv's resolveUri both reject the file silently.
  */
 val PlatformFile.playableUri: Uri
     get() = when (val af = androidFile) {

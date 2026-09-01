@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -68,9 +67,12 @@ import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.delete
 import syncplaymobile.shared.generated.resources.edit
 import syncplaymobile.shared.generated.resources.theme_popup_builtin_themes
+import syncplaymobile.shared.generated.resources.theme_popup_subtitle
 import syncplaymobile.shared.generated.resources.theme_popup_custom_themes
 import syncplaymobile.shared.generated.resources.theme_popup_customize_button
 import syncplaymobile.shared.generated.resources.theme_popup_select_a_theme
+import app.uicomponents.DialogBackdropBlur
+import app.uicomponents.glassSurface
 
 val availableThemes = listOf(TRINITY, DAYLIGHT, SILVER_LAKE, PYNCSLAY, GrayOLED, ALLEY_LAMP)
 
@@ -85,6 +87,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
             onDismissRequest = onDismiss,
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
+            DialogBackdropBlur()
+
             val viewmodel = LocalGlobalViewmodel.current
             val currentTheme = LocalTheme.current
             val allCustomThemes by viewmodel.customThemes.collectAsStateWithLifecycle()
@@ -94,20 +98,24 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = Theming.SpaceLG)
-                    .clip(MaterialTheme.shapes.extraLarge)
-                    .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .glassSurface()
                     .padding(Theming.SpaceLG),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(Res.string.theme_popup_select_a_theme),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-
-                Spacer(Modifier.height(Theming.SpaceMD))
+                Text(
+                    text = stringResource(Res.string.theme_popup_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 2.dp, bottom = Theming.SpaceMD)
+                )
 
                 ThemeSection(title = stringResource(Res.string.theme_popup_builtin_themes)) {
                     LazyRow(
@@ -347,7 +355,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
             }
         }
         Text(
-            modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
+            modifier = Modifier.width(themeCardSize).padding(top = 2.dp),
             text = stringResource(Res.string.theme_popup_customize_button),
             autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 14.sp),
             style = MaterialTheme.typography.labelMedium,

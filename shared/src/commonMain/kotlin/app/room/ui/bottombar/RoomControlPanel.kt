@@ -144,6 +144,9 @@ import syncplaymobile.shared.generated.resources.room_undo_seek_cancel
 import syncplaymobile.shared.generated.resources.room_undo_seek_confirm
 import syncplaymobile.shared.generated.resources.room_undo_seek_message
 import syncplaymobile.shared.generated.resources.room_undo_seek_title
+import app.uicomponents.GlassModalBottomSheet
+import app.uicomponents.GlassDropdownMenu
+import app.uicomponents.GlassAlertDialog
 
 @Composable
 fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<Boolean>) {
@@ -374,9 +377,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
     /* ===== Undo Seek Confirmation Dialog ===== */
     pendingUndoSeek?.let { seekToUndo ->
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = { pendingUndoSeek = null },
-            containerColor = sheetContainerColor,
             title = {
                 Text(
                     text = stringResource(Res.string.room_undo_seek_title),
@@ -433,10 +435,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
         val audioListState = rememberLazyListState()
         val subtitleListState = rememberLazyListState()
 
-        ModalBottomSheet(
+        GlassModalBottomSheet(
             onDismissRequest = { showTrackSheet = false },
             sheetState = sheetState,
-            containerColor = sheetContainerColor,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
             /* No sheet-level title: the two columns are already labeled "Audio" / "Subtitles". */
@@ -625,10 +626,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        ModalBottomSheet(
+        GlassModalBottomSheet(
             onDismissRequest = { showSubtitleSearch = false },
             sheetState = searchSheetState,
-            containerColor = sheetContainerColor,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
             Column(
@@ -705,7 +705,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                         )
                     }
 
-                    DropdownMenu(
+                    GlassDropdownMenu(
                         expanded = langMenuExpanded,
                         onDismissRequest = { langMenuExpanded = false },
                         modifier = Modifier.heightIn(max = 320.dp)
@@ -961,11 +961,7 @@ fun ControlPanelDropdownButton(
             }
         )
 
-        DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-            border = BorderStroke(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant),
+        GlassDropdownMenu(
             shape = MaterialTheme.shapes.small,
             expanded = popupVisibility.value,
             properties = PopupProperties(

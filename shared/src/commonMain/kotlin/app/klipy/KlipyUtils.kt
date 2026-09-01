@@ -1,6 +1,6 @@
 package app.klipy
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.klipy.KlipyUtils.trending
 import app.preferences.Preferences.USER_ID
 import app.preferences.value
@@ -25,7 +25,7 @@ import kotlin.uuid.Uuid
  * Supports searching, trending, and recent items for both GIFs and stickers.
  */
 object KlipyUtils {
-    private val BASE_URL = "https://api.klipy.com/api/v1/${BuildConfig.KLIPY_API_KEY}/"
+    private val BASE_URL = "https://api.klipy.com/api/v1/${KiteBuildConfig.KLIPY_API_KEY}/"
     private val klipyHttpClient by lazy { httpClient.config(additionalHttpConfig) }
     private val ktorfit by lazy { Ktorfit.Builder().baseUrl(BASE_URL).httpClient(klipyHttpClient).build() }
     private val klipy by lazy { ktorfit.createKlipyAPI() }

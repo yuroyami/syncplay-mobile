@@ -19,6 +19,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.preferences.LocalPrefsState
 import app.preferences.datastoreStateFlow
+import app.uicomponents.GlassBackdrop
 import app.uicomponents.messagePalette
 import app.utils.createWeakRef
 import app.home.HomeScreenUI
@@ -98,7 +99,8 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
             typography = appTypography,
             shapes = appShapes
         ) {
-            NavDisplay(
+            GlassBackdrop {
+                NavDisplay(
                 backStack = backstack,
                 onBack = {},
                 entryDecorators = listOf(
@@ -153,7 +155,8 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                         ServerHostScreenUI(viewmodel)
                     }
                 }
-            )
+                )
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.R
 
 /**
@@ -35,7 +35,7 @@ class SyncplayServerService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "${BuildConfig.APP_NAME} Server",
+            "${KiteBuildConfig.APP_NAME} Server",
             NotificationManager.IMPORTANCE_LOW
         )
         channel.description = "Shows when a Syncplay server is running"
@@ -44,7 +44,7 @@ class SyncplayServerService : Service() {
 
     private fun buildNotification(port: Int, clients: Int) = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
-        .setContentTitle("${BuildConfig.APP_NAME} Server")
+        .setContentTitle("${KiteBuildConfig.APP_NAME} Server")
         .setContentText("Running on port $port - $clients client(s)")
         .setSilent(true)
         .setOngoing(true)

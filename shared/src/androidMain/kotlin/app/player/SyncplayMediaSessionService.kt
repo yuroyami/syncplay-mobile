@@ -5,7 +5,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.R
 
 class SyncplayMediaSessionService : Service() {
@@ -21,7 +21,7 @@ class SyncplayMediaSessionService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "${BuildConfig.APP_NAME} Playback",
+            "${KiteBuildConfig.APP_NAME} Playback",
             NotificationManager.IMPORTANCE_LOW // LOW = no sound, no heads-up, just tray presence
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
@@ -29,7 +29,7 @@ class SyncplayMediaSessionService : Service() {
 
     private fun buildNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
-        .setContentTitle(BuildConfig.APP_NAME)
+        .setContentTitle(KiteBuildConfig.APP_NAME)
         .setContentText("Room active")
         .setSilent(true)
         .setOngoing(true)

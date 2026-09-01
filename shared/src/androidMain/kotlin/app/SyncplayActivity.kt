@@ -51,6 +51,11 @@ import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 
 /**
  * Main Activity for the Syncplay Android application.
@@ -262,8 +267,13 @@ class SyncplayActivity : ComponentActivity() {
                     .build()
             }
 
-            LaunchedEffect(null) {
-                WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+            /* Status bar icon color follows the theme: a light theme gets dark icons and the
+             * reverse. The old hardcoded `false` left white-on-white icons on Daylight. */
+            var composedViewmodel by remember { mutableStateOf<SyncplayViewmodel?>(null) }
+            val activeTheme = composedViewmodel?.currentTheme?.collectAsState()?.value
+            LaunchedEffect(activeTheme?.isDark) {
+                WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars =
+                    activeTheme?.isDark == false
             }
 
             //MainUI
@@ -271,6 +281,7 @@ class SyncplayActivity : ComponentActivity() {
                 AdamScreen(
                     onGlobalViewmodel = {
                         globalViewmodel = it
+                        composedViewmodel = it
                     }
                 )
 

@@ -86,7 +86,7 @@ object PopupSeekToPosition {
                 FlexibleText(
                     text = stringResource(Res.string.room_seek_toposition_title),
                     strokeColors = listOf(Color.Black),
-                    fillingColors = Theming.SP_GRADIENT,
+                    fillingColors = Theming.flexibleGradient,
                     size = 18f,
                     font = syncplayFont
                 )

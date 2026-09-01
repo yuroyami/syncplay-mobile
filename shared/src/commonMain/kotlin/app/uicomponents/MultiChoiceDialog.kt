@@ -20,14 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.theme.Theming
 
 /** Creates a multi-choice dialog which is populated by the given list.
- *  Follows the app popup convention (see [SyncplayPopup]): no card, no container color, the
- *  choices are drawn directly on a full-screen dim layer and centered. */
+ *  Follows the app popup convention (see [SyncplayPopup]): the choices sit on a frosted glass
+ *  panel over a light dim layer, centered. */
 @Composable
 fun MultiChoiceDialog(
     title: String = "",
@@ -40,10 +39,12 @@ fun MultiChoiceDialog(
         onDismissRequest = { onDismiss() },
         properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
     ) {
+        DialogBackdropBlur()
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.55f))
+                .background(glassScrim)
                 .imePadding()
                 .clickable(interactionSource = null, indication = null) { onDismiss() },
             contentAlignment = Alignment.Center
@@ -52,7 +53,9 @@ fun MultiChoiceDialog(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .padding(vertical = Theming.SpaceLG)
-                    .clickable(interactionSource = null, indication = null) { /* consume */ },
+                    .glassSurface()
+                    .clickable(interactionSource = null, indication = null) { /* consume */ }
+                    .padding(vertical = Theming.SpaceLG),
                 horizontalAlignment = Alignment.Start
             ) {
                 if (title != "") {

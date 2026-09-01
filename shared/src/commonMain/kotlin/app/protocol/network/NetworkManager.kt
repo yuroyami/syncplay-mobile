@@ -1,6 +1,6 @@
 package app.protocol.network
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.RECONNECTION_INTERVAL
@@ -173,7 +173,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * server handler. Same serialization plumbing as the server's mirror-image pipeline.
      */
     private suspend fun processPacket(jsonString: String) {
-        if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
+        if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
         try {
             val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
@@ -235,7 +235,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             try {
                 withTimeout(10.seconds) {
                     val finalOut = json + "\r\n"
-                    if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
+                    if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
             } catch (e: Exception) {

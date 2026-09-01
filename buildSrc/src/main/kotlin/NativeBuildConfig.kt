@@ -178,9 +178,8 @@ object NativeBuildConfig {
 
     /**
      * Full flavor: keep the mpv-matching NDK r29 libc++_shared.so next to the mpv libs and
-     * refuse to package without it. libVLC's AAR ships an older libc++ that lacks
-     * __from_chars_floating_point — packaging that one crashes mpv at load. Full story:
-     * CLAUDE.md "Android-only native gotchas".
+     * refuse to package without it. An older libc++ (one lacking __from_chars_floating_point)
+     * crashes mpv at load. Full story: CLAUDE.md "Android-only native gotchas".
      */
     fun Project.registerMpvLibcxxGuards(ndkDirProvider: Provider<Directory>) {
         // Restores libc++ straight from the NDK (exact file ndk-build would emit) so an
@@ -212,7 +211,7 @@ object NativeBuildConfig {
         }
 
         // The marker is a fragment of __from_chars_floating_point's mangled name — present
-        // verbatim in any correct NDK r29 libc++ and absent from VLC's older one.
+        // verbatim in any correct NDK r29 libc++ and absent from older ones.
         val verifyMpvLibcxx = tasks.register("verifyMpvLibcxx") {
             dependsOn(restoreMpvLibcxx)
             doLast {
@@ -225,9 +224,9 @@ object NativeBuildConfig {
                             "Delete src/main/libs and rebuild so the native build regenerates it from NDK r29."
                     )
                     if (!lib.readBytes().toString(Charsets.ISO_8859_1).contains(marker)) throw GradleException(
-                        "$lib does not contain '$marker'. This looks like libVLC's older libc++, not " +
-                            "the NDK r29 one mpv needs; the APK would crash on mpv load. Regenerate the " +
-                            "local libc++ from NDK r29 before packaging."
+                        "$lib does not contain '$marker'. This is an older libc++, not the NDK r29 one " +
+                            "mpv needs; the APK would crash on mpv load. Regenerate the local libc++ " +
+                            "from NDK r29 before packaging."
                     )
                 }
             }
@@ -237,9 +236,9 @@ object NativeBuildConfig {
     }
 
     /**
-     * exoOnly flavor: prune the full-flavor native build's libc++ byproduct so the APK
-     * deterministically packages the VLC AAR's libc++, identical to a clean checkout —
-     * a reproducible-builds requirement (issue #105). See CLAUDE.md.
+     * exoOnly flavor: prune the full-flavor native build's libc++ byproduct so the APK matches
+     * a clean checkout, which ships no native player libs at all — a reproducible-builds
+     * requirement (issue #105). See CLAUDE.md.
      */
     fun Project.registerExoOnlyLibcxxPrune() {
         val prune = tasks.register("pruneStaleExoOnlyLibcxx", Delete::class.java) {

@@ -34,6 +34,9 @@ import app.uicomponents.FlexibleIcon
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
+import app.uicomponents.GlassMaterial
+import androidx.compose.ui.graphics.Color
+import app.uicomponents.glassSurface
 
 object CardRoomPrefs {
 
@@ -53,12 +56,11 @@ object CardRoomPrefs {
         }
 
         roomSettings?.let { settings ->
-            val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
             Card(
+                modifier = Modifier.glassSurface(shape = RoundedCornerShape(12.dp), material = GlassMaterial.Thin),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(

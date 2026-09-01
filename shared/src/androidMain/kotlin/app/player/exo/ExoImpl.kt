@@ -62,6 +62,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import app.uicomponents.glassEnabledNow
 
 class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     lateinit var audioManager: AudioManager
@@ -216,7 +217,11 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                exoView = LayoutInflater.from(context).inflate(R.layout.exoview, null) as PlayerView
+                // TextureView so Haze can capture the frames (glass over video); SurfaceView when
+                // glass is off, which can take the hardware overlay plane instead. Surface type is
+                // fixed at inflation, so this is read once here rather than observed.
+                val layout = if (glassEnabledNow()) R.layout.exoview else R.layout.exoview_surface
+                exoView = LayoutInflater.from(context).inflate(layout, null) as PlayerView
                 initialize()
                 onPlayerReady()
                 return@AndroidView exoView

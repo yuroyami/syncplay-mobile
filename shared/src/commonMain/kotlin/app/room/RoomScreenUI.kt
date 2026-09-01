@@ -62,6 +62,9 @@ import app.room.ui.tabs.RoomUnlockableLayout
 import app.utils.EnterRoomMode
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
+import dev.chrisbanes.haze.rememberHazeState
+import app.uicomponents.glassBackdropLayer
+import app.uicomponents.LocalHazeState
 
 /** Primary focus target for D-pad/TV navigation in the Room. Bound by either RoomPlayButton
  * (when a video is loaded) or AddVideoButton (when no video yet). RoomScreenUI calls
@@ -96,34 +99,42 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val initialFocusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
+    /* The room's own glass backdrop: just the video layer (and the no-video artwork). Glass in
+     * the SAME window cannot sample the app-wide backdrop it lives inside, so in-room chrome
+     * blurs this scoped capture instead; the swap of LocalHazeState below routes it here. */
+    val roomHazeState = rememberHazeState()
+
     CompositionLocalProvider(
         LocalRoomUiState provides viewmodel.uiState,
         LocalRoomInitialFocus provides initialFocusRequester,
+        LocalHazeState provides roomHazeState,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            /* Room Background Artwork */
-            if (!hasVideo) {
-                RoomBackgroundArtwork()
-            }
+            Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {
+                /* Room Background Artwork */
+                if (!hasVideo) {
+                    RoomBackgroundArtwork()
+                }
 
-            /* Video Surface */
-            val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
-            if (playerIsReady) {
-                /* The backdrop behind the picture (the letterbox bars). KiteVideo's letterbox is
-                 * transparent by design, so without this the app theme (gray) showed through.
-                 * Black by default, user-colorable. Placed AFTER alpha in the chain so the
-                 * no-video state stays fully invisible. */
-                val videoBackground by remember { VIDEO_BACKGROUND_COLOR.flow() }
-                    .collectAsState(initial = 0xFF000000.toInt())
-                viewmodel.player.VideoPlayer(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(if (hasVideo) 1f else 0f) // Keeps composable alive even if hidden
-                        .background(Color(videoBackground)),
-                    onPlayerReady = {
-                        platformCallback.mediaSessionInitialize()
-                    }
-                )
+                /* Video Surface */
+                val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
+                if (playerIsReady) {
+                    /* The backdrop behind the picture (the letterbox bars). KiteVideo's letterbox is
+                     * transparent by design, so without this the app theme (gray) showed through.
+                     * Black by default, user-colorable. Placed AFTER alpha in the chain so the
+                     * no-video state stays fully invisible. */
+                    val videoBackground by remember { VIDEO_BACKGROUND_COLOR.flow() }
+                        .collectAsState(initial = 0xFF000000.toInt())
+                    viewmodel.player.VideoPlayer(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(if (hasVideo) 1f else 0f) // Keeps composable alive even if hidden
+                            .background(Color(videoBackground)),
+                        onPlayerReady = {
+                            platformCallback.mediaSessionInitialize()
+                        }
+                    )
+                }
             }
 
             if (lockedMode) {

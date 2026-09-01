@@ -166,7 +166,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Destroy contract shared with the Android engines (ExoImpl/MpvImpl/VlcImpl): flip the
+        // Destroy contract shared with the Android engines (ExoImpl/MpvImpl): flip the
         // guard first so per-method `isInitialized` checks bail, then cancel the supervisor so
         // the 250ms position tracker stops. Without the cancel the tracker job outlives the
         // room, keeps polling a torn-down player, and retains the whole RoomViewmodel graph.

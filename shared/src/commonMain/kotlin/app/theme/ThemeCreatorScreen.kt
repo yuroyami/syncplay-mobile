@@ -93,6 +93,8 @@ import syncplaymobile.shared.generated.resources.theme_customize_secondary_color
 import syncplaymobile.shared.generated.resources.theme_customize_tertiary_color
 import syncplaymobile.shared.generated.resources.theme_customize_title
 import syncplaymobile.shared.generated.resources.theme_customize_use_syncplay_gradients
+import app.uicomponents.GlassExposedDropdownMenu
+import app.uicomponents.GlassDropdownMenu
 
 @Composable
 fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
@@ -476,7 +478,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                                 height = 48.dp
                             )
 
-                            ExposedDropdownMenu(
+                            GlassExposedDropdownMenu(
                                 modifier = Modifier
                                     .heightIn(max = dropdownMenuMaxHeight)
                                     .background(color = MaterialTheme.colorScheme.tertiaryContainer),
@@ -574,9 +576,7 @@ fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -
             }
         }
 
-        DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+        GlassDropdownMenu(
             shape = RoundedCornerShape(8.dp),
             expanded = pickerVisible,
             properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),

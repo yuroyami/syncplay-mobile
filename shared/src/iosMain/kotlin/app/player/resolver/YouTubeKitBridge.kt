@@ -5,8 +5,8 @@ package app.player.resolver
  * (`YouTubeKitBridgeKt.instantiateYouTubeKitBridge = { YouTubeKitBridgeImpl() }`).
  *
  * [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit) is a pure-Swift package (no `@objc`),
- * so it isn't visible to Kotlin/Native via cinterop. Following the MPVKit pattern, the abstract
- * class is declared here and subclassed in Swift (`iosApp/iosApp/YouTubeKitBridge.swift`).
+ * so it isn't visible to Kotlin/Native via cinterop. Same pattern as the SwiftNIO bridge: the
+ * abstract class is declared here and subclassed in Swift (`iosApp/iosApp/YouTubeKitBridge.swift`).
  *
  * Resolution is async (network fetch + cipher solving). The bridge uses a callback signature to
  * stay JVM-free in commonMain; [YouTubeKitMediaResolver] wraps it in `suspendCancellableCoroutine`

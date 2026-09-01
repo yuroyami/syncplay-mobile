@@ -76,6 +76,7 @@ import syncplaymobile.shared.generated.resources.room_gif_tab_gifs
 import syncplaymobile.shared.generated.resources.room_gif_tab_recents
 import syncplaymobile.shared.generated.resources.room_gif_tab_stickers
 import syncplaymobile.shared.generated.resources.room_gif_tab_trending
+import app.uicomponents.GlassDropdownMenu
 
 /** Source shown when the chat input is empty. Non-empty input is treated as a search query that
  *  overrides the source (no chip switching). */
@@ -307,10 +308,9 @@ fun GifPanel(
                                         )
                                 )
 
-                                DropdownMenu(
+                                GlassDropdownMenu(
                                     expanded = contextMenuMedia == media,
                                     onDismissRequest = { contextMenuMedia = null },
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                                     shape = RoundedCornerShape(10.dp)
                                 ) {
                                     DropdownMenuItem(

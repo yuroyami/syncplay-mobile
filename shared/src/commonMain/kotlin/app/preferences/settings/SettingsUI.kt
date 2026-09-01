@@ -60,6 +60,9 @@ import com.composeunstyled.UnstyledVerticalScrollbar
 import com.composeunstyled.rememberScrollbarState
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
+import app.uicomponents.GlassMaterial
+import androidx.compose.ui.graphics.Color
+import app.uicomponents.glassSurface
 
 /** Composables that render setting categories: a navigable grid plus the per-category detail screen. */
 object SettingsUI {
@@ -168,16 +171,16 @@ object SettingsUI {
             modifier = modifier.width(cardSize.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                modifier = Modifier.width(cardSize.dp).aspectRatio(1f).clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple()
-                ) {
-                    onClick()
-                }.tvFocusable(addFocusable = false),
+                modifier = Modifier.width(cardSize.dp).aspectRatio(1f)
+                    .glassSurface(shape = MaterialTheme.shapes.small, material = GlassMaterial.UltraThin)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple()
+                    ) {
+                        onClick()
+                    }.tvFocusable(addFocusable = false),
                 shape = MaterialTheme.shapes.small,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                ),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Icon(
@@ -209,9 +212,7 @@ object SettingsUI {
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
                 .fillMaxWidth()
-                .clip(shape = MaterialTheme.shapes.small)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .border(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant, shape = MaterialTheme.shapes.small)
+                .glassSurface(shape = MaterialTheme.shapes.small, material = GlassMaterial.UltraThin)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(),

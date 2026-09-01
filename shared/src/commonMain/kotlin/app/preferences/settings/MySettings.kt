@@ -17,6 +17,7 @@ import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.ERASE_SHORTCUTS
+import app.preferences.Preferences.DISABLE_FROSTED_GLASS
 import app.preferences.Preferences.EXPORT_LOGS
 import app.preferences.Preferences.FILE_MISMATCH_WARNING
 import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
@@ -129,6 +130,7 @@ val GLOBAL_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
 ) {
+    +DISABLE_FROSTED_GLASS
     +EXPORT_LOGS
     +CLEAR_LOGS
     +GLOBAL_RESET_DEFAULTS
@@ -210,7 +212,7 @@ val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GL
 /**
  * Engine-agnostic in-room settings.
  *
- * Engine-specific categories (VLC flags, MPV config import/export, MPV hardware/profile
+ * Engine-specific categories (VLCKit flags, mpv config import/export, mpv hardware/profile
  * knobs) are intentionally absent: each [app.player.PlayerImpl] returns its own via
  * [app.player.PlayerImpl.configurableSettings], and CardRoomPrefs injects only the active
  * engine's settings into this list at runtime. This keeps in-room prefs adapted to the

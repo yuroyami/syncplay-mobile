@@ -1,3 +1,4 @@
+import io.github.yuroyami.kiteconfig.kiteConfig
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -24,8 +25,8 @@ kotlin {
 
     android {
         namespace = "app"
-        compileSdk { version = release(providers.gradleProperty("android.compileSdk").get().toInt()) }
-        minSdk = providers.gradleProperty("android.minSdk").get().toInt()
+        compileSdk { version = release(kiteConfig.compileSdk.get()) }
+        minSdk = kiteConfig.minSdk.get()
         androidResources { enable = true }
     }
 
@@ -49,7 +50,7 @@ kotlin {
 
     // iOS configuration
     cocoapods {
-        summary = "${AppConfig.APP_NAME} Common Code (Platform-agnostic)"
+        summary = "${kiteConfig.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
         ios.deploymentTarget = "14.0"
@@ -115,6 +116,11 @@ kotlin {
             /* ComposableHorizons' unstyled composables for more granularly-controlled components */
             implementation(libs.bundles.compose.unstyled)
 
+            /* Haze: backdrop blur for the glass popup/chrome surfaces. Only samples pixels that
+             * Compose itself draws, so it blurs the whole UI everywhere but reaches video only on
+             * KitePlayer's Compose-canvas path (see GlassSurface.kt). */
+            implementation(libs.bundles.haze)
+
             /* MaterialKolor generates Material3 themes from seed colors */
             implementation(libs.materialKolor)
 
@@ -169,9 +175,6 @@ kotlin {
             /* ExoPlayer's FFmpeg-powered audio renderer extension (this does not need to be updated with every media3 release)  */
             implementation(files(File(projectDir, "libs/libffmpeg_media3exo_1.8.0.aar")))
 
-            /* Video player engine: VLC (via libVLC) */
-            implementation(libs.libvlc.android)
-
             /* YouTube/SoundCloud/PeerTube stream URL extractor (no Python, pure JVM) */
             implementation(libs.newpipe.extractor)
 
@@ -209,6 +212,14 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
+        }
+
+        val desktopTest by getting {
+            dependencies {
+                /* Headless Compose rendering (ImageComposeScene) needs the host's Skiko native
+                 * binary, which compose.desktop.common does not carry. Test-only. */
+                implementation(compose.desktop.currentOs)
+            }
         }
     }
 }

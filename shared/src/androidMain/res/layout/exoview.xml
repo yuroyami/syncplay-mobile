@@ -9,6 +9,6 @@
     app:show_buffering="never"
     app:show_shuffle_button="false"
     app:shutter_background_color="#000000"
-    app:surface_type="surface_view"
+    app:surface_type="texture_view"
     app:use_artwork="false"
     app:use_controller="false" />

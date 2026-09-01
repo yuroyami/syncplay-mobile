@@ -6,16 +6,6 @@
 -keep class is.xyz.mpv.MPVLib$* { *; }
 
 # =============================================================================
-# libVLC (full build only) — every public class under org.videolan.libvlc is a
-# JNI bridge. The native code resolves field/method IDs by name, so any rename
-# or removal triggers a NoSuchFieldError / UnsatisfiedLinkError at runtime that
-# does NOT show up at build time. Keep the whole tree wholesale.
-# =============================================================================
--keep class org.videolan.libvlc.** { *; }
--keepclassmembers class org.videolan.libvlc.** { *; }
--dontwarn org.videolan.libvlc.**
-
-# =============================================================================
 # NewPipe Extractor — pulls in Mozilla Rhino for embedded JS (YouTube cipher
 # extraction). Rhino's JavaToJSONConverters references java.beans.* APIs that
 # don't exist on Android; they're only used when Rhino runs on a JVM with the

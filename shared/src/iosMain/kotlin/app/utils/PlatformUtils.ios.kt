@@ -1,6 +1,6 @@
 package app.utils
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ClipEntry
@@ -9,7 +9,6 @@ import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
 import app.player.kite.IosKiteMediaResolver
 import app.player.kite.KiteEngine
-import app.player.mpv.MpvKitEngine
 import app.player.vlc.VlcKitEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
@@ -120,17 +119,14 @@ actual val httpClient: HttpClient by lazy {
             filter { request -> request.url.host.startsWith("api.") }
         }
         defaultRequest {
-            header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
+            header(HttpHeaders.UserAgent, "SynkplayMobile/${KiteBuildConfig.APP_VERSION}")
         }
     }
 }
 
+/** Media player engines on iOS: AVPlayer, VLCKit and KitePlayer. */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)
-    // MPVKit (libmpv) sits second in the home-screen picker. Listing it is safe even when MPVKit
-    // isn't linked: the picker gates selection on engine.isAvailable, and MpvKitEngine.isAvailable
-    // is true only once the Swift MpvKitBridge factory is registered at app startup.
-    add(MpvKitEngine)
     add(VlcKitEngine)
     // KitePlayer, the same KiteImpl the Android list ends with: one implementation, two phones.
     // The renderer (native view or pure Compose) is an in-room toggle now, not a second engine.
@@ -325,16 +321,10 @@ actual fun readFileBytes(path: String): ByteArray? {
 }
 
 /**
- * Path to the user-editable `mpv.conf` on iOS: `<Documents>/mpv.conf`. MPVKit reads it because
- * [app.player.mpv.MpvKitImpl] points mpv's `config-dir` at the Documents directory at init. Living
- * in Documents also means a user can drop in / edit the file via the Files app. Returns null only
- * if the Documents directory can't be resolved.
+ * Always null on iOS: no engine here runs mpv, so there is no config dir to point at. The
+ * mpv.conf import/export prefs and the libass subfont install both check for null and skip.
  */
-actual fun getMpvConfFilePath(): String? {
-    val docs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
-        .firstOrNull() as? String ?: return null
-    return "$docs/mpv.conf"
-}
+actual fun getMpvConfFilePath(): String? = null
 
 actual fun consumePendingShortcut(): app.home.JoinConfig? {
     return app.pendingShortcutJoinConfig.value?.also {

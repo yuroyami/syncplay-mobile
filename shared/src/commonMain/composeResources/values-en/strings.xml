@@ -44,7 +44,6 @@
     <string name="connect_port_empty_error">Enter port!</string>
     <string name="connect_enter_custom_server">Enter Custom Server</string>
     <string name="connect_custom_server_password">Password (Empty if not required)</string>
-    <string name="connect_port">Port</string>
     <string name="connect_solomode">Offline mode</string>
 
     <string name="home_ip_address">IP Address</string>
@@ -464,6 +463,8 @@
     <string name="room_subs_quota_reached">Daily subtitle download limit reached. Resets in %1$s.</string>
     <string name="room_subs_download_failed">Subtitle download failed. Check your connection and try again.</string>
 
+    <string name="setting_disable_glass_title">Disable frosted glass (performance)</string>
+    <string name="setting_disable_glass_summary">Turns off the blurred glass surfaces app-wide and puts video back on the efficient hardware path. Use this if playback stutters, drains battery, or you want HDR passthrough. Panels stay readable, just solid instead of blurred. Applies the next time you enter a room.</string>
     <string name="setting_media_resolver_title">Resolve streaming URLs</string>
     <string name="setting_media_resolver_summary">Extract direct video URLs from supported sites (YouTube, SoundCloud, PeerTube on Android; YouTube on iOS) so you can paste a page link and have it play. Native extraction, no yt-dlp or Python.</string>
     <string name="room_msg_resolving_url">Resolving stream URL…</string>
@@ -495,7 +496,7 @@
     <string name="uisetting_mpv_conf_import_failed">Failed to import mpv.conf.</string>
     <string name="uisetting_mpv_conf_missing">No mpv.conf to export yet — import one first or start mpv at least once.</string>
 
-    <!-- VLC custom flags (appended to LibVLC init args on both platforms) -->
+    <!-- VLC custom flags (appended to LibVLC init args on iOS) -->
     <string name="uisetting_categ_vlc">VLC</string>
     <string name="uisetting_vlc_custom_flags_title">Custom VLC flags</string>
     <string name="uisetting_vlc_custom_flags_summary">Extra command-line flags passed to LibVLC on init. Separate flags with spaces (e.g. --file-caching=5000 --network-caching=3000). Takes effect next time the VLC engine initializes.</string>
@@ -507,6 +508,7 @@
 
     <string name="theme_popup_select_a_theme">Select a Theme</string>
     <string name="theme_popup_builtin_themes">Built-in themes</string>
+    <string name="theme_popup_subtitle">Pick a look. Your choice applies everywhere, instantly.</string>
     <string name="theme_popup_custom_themes">Custom themes</string>
     <string name="theme_popup_customize_button">Customize</string>
 
@@ -536,11 +538,18 @@
     <string name="media_directories_going_for_pick_rationale">Select directory to save playlist to as a file</string>
 
 
-    <string name="about_version">• Version: %1$s</string>
-    <string name="about_developed_by">• Developed by: yuroyami</string>
-    <string name="about_client_is_unofficial_disclaimer">• This client is a third-party client implementation for the Syncplay protocol. Thanks to its maintainers for their amazing work.</string>
-    <string name="about_client_platforms">• Report bugs on our GitHub repository below.</string>
-    <string name="about_official_website">• www.syncplay.pl</string>
+    <string name="connect_official_server">Official server</string>
+    <string name="connect_official_server_desc">syncplay.pl, port %1$s</string>
+    <string name="connect_port">Port</string>
+    <string name="about_tagline">a Syncplay client for %1$s</string>
+    <string name="about_source_button">Source code</string>
+    <string name="about_report_button">Report a bug</string>
+    <string name="connect_solomode_tooltip">Turns Synkplay into a regular video player. Fully offline: no server, no room, no syncing. Just you and your file.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_developed_by">Built by yuroyami</string>
+    <string name="about_client_is_unofficial_disclaimer">Watch anything in sync with friends, wherever they are. Synkplay keeps everyone\u2019s playback lined up to the moment, so a pause here is a pause there.</string>
+    <string name="about_client_platforms">An independent client for the Syncplay protocol, with thanks to the maintainers who made it open.</string>
+    <string name="about_official_website">syncplay.pl</string>
 
     <string name="tips_dontshowmetips">Don't show me tips</string>
     <string name="tips_did_ya_know">Did ya know?</string>

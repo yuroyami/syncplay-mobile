@@ -205,25 +205,12 @@ fun FlexibleText(
 }
 
 /**
- * Renders a stylized Syncplay-branded text with gradient fill, stroke, and shadow.
- *
- * This composable produces the signature “Syncplay” text look using pre-defined
- * theme gradients and stroke/shadow colors. It’s primarily used for headers and
- * branding elements in the Syncplay UI.
- *
- * Example:
- * ```
- * SyncplayishText(
- *     string = "SYNCPLAY",
- *     size = 32f
- * )
- * ```
+ * The brand wordmark: one clean gradient-filled line in the Directive4 face. No stroke and no
+ * glow; the old stroked-and-shadowed twin layer read as a blurry double image at UI sizes.
  *
  * @param string The text content to display.
  * @param size Font size in sp.
- * @param colorStops List of gradient colors for text fill.
- * @param stroke Color of the stroke outline.
- * @param shadow Color of the drop shadow.
+ * @param colorStops Gradient colors for the fill; brand gradient when null.
  * @param textAlign Text alignment within its bounds.
  */
 @Composable
@@ -232,48 +219,20 @@ fun SyncplayishText(
     string: String,
     size: Float,
     colorStops: List<Color>? = null,
-    stroke: Color? = null,
-    shadow: Color? = null,
     textAlign: TextAlign = TextAlign.Start,
 ) {
     val resolvedColors = colorStops ?: Theming.flexibleGradient
-    val resolvedStroke = stroke ?: MaterialTheme.colorScheme.outlineVariant
-    val resolvedShadow = shadow ?: MaterialTheme.colorScheme.primary
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Stroke + shadow layer
-        Text(
-            modifier = Modifier.wrapContentWidth(),
-            text = string,
-            textAlign = textAlign,
-            maxLines = 1,
-            style = TextStyle(
-                color = resolvedStroke,
-                drawStyle = Stroke(
-                    miter = 10f,
-                    width = 2f,
-                    join = StrokeJoin.Round
-                ),
-                shadow = Shadow(
-                    color = resolvedShadow,
-                    offset = Offset(0f, 10f),
-                    blurRadius = 5f
-                ),
-                fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                fontSize = size.sp,
-            )
+    Text(
+        modifier = modifier.wrapContentWidth(),
+        text = string,
+        textAlign = textAlign,
+        maxLines = 1,
+        style = TextStyle(
+            brush = Brush.linearGradient(colors = resolvedColors),
+            fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+            fontSize = size.sp,
+            letterSpacing = (size * 0.02f).sp,
         )
-        // Foreground gradient layer
-        Text(
-            modifier = Modifier.wrapContentWidth(),
-            text = string,
-            textAlign = textAlign,
-            maxLines = 1,
-            style = TextStyle(
-                brush = Brush.linearGradient(colors = resolvedColors),
-                fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                fontSize = size.sp,
-            )
-        )
-    }
+    )
 }

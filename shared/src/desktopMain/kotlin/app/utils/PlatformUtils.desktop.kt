@@ -24,7 +24,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import java.lang.ref.WeakReference
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 
 actual val platform: Platform = Platform.Desktop
 
@@ -44,7 +44,7 @@ actual val httpClient: HttpClient by lazy {
             filter { request -> request.url.host.startsWith("api.") }
         }
         defaultRequest {
-            header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
+            header(HttpHeaders.UserAgent, "SynkplayMobile/${KiteBuildConfig.APP_VERSION}")
         }
     }
 }

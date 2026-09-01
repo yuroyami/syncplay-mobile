@@ -26,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
 import app.theme.Theming
+import app.uicomponents.SynkplayLogo
 import app.uicomponents.SyncplayishText
 import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
+import syncplaymobile.shared.generated.resources.synkplay_logo
 
 /** The Syncplay artwork that is displayed in the video frame when no video is loaded */
 @Composable
@@ -52,18 +53,14 @@ fun RoomBackgroundArtwork() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Image(
-                painter = painterResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
-                modifier = Modifier.height(if (isInPipMode) 40.dp else 84.dp).aspectRatio(1f)
-            )
+            SynkplayLogo(modifier = Modifier.height(if (isInPipMode) 40.dp else 84.dp).aspectRatio(1f))
 
             Spacer(modifier = Modifier.width(14.dp))
 
             SyncplayishText(
                 modifier = Modifier.padding(bottom = 6.dp),
                 string = appName,
-                size = if (isInPipMode) 10f else 26f,
-                colorStops = Theming.SP_GRADIENT
+                size = if (isInPipMode) 10f else 26f
             )
         }
     }

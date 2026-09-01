@@ -88,6 +88,7 @@ import syncplaymobile.shared.generated.resources.room_addmedia_online_details
 import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
 import syncplaymobile.shared.generated.resources.room_addmedia_online_url
 import syncplaymobile.shared.generated.resources.room_button_desc_add
+import app.uicomponents.GlassDropdownMenu
 
 @Composable
 fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
@@ -135,10 +136,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         )
 
         val scope = rememberCoroutineScope()
-        DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 0.dp, shadowElevation = 0.dp,
-            border = BorderStroke(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant),
+        GlassDropdownMenu(
             shape = MaterialTheme.shapes.small,
             expanded = showPopup,
             onDismissRequest = {

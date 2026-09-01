@@ -1,6 +1,6 @@
 package app.server
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import app.protocol.ProtocolManager.Companion.SYNCPLAY_PROTOCOL_VERSION
 import app.protocol.WireMessage
 import app.protocol.WireMessageDeserializer
@@ -83,7 +83,7 @@ class ClientConnection(
      * matching `on…` method through [WireMessage.dispatch].
      */
     suspend fun handlePacket(jsonString: String) {
-        if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
+        if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
         // All inbound dispatch and the shared-state mutations it triggers are confined to the
         // server's single thread, matching PC's single-reactor model.
         server.onServerThread {

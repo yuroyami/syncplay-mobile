@@ -59,7 +59,7 @@ private const val PLAYLIST_ADVANCE_MIN_DURATION_MS = 10_000L
 private const val PLAYLIST_ADVANCE_NEAR_END_MS = 5_000L
 
 /** The actual platform-agnostic interface for video/audio playback in Syncplay.
- * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
+ * Engines: ExoPlayer/mpv/KitePlayer (Android), AVPlayer/VLCKit/KitePlayer (iOS)*/
 abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine) {
 
     val playerManager: PlayerManager = viewmodel.playerManager

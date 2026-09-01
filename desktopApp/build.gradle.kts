@@ -1,3 +1,4 @@
+import io.github.yuroyami.kiteconfig.kiteConfig
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -19,7 +20,6 @@ dependencies {
      * API (ViewModel supertypes) must be redeclared here. */
     implementation(libs.compose.viewmodel)
 
-    /* For the vlcSmokeTest entry point. */
 }
 
 /* Same explicit Skiko pin as :shared — see the comment there. */
@@ -34,8 +34,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
-            packageName = AppConfig.APP_NAME
-            packageVersion = AppConfig.VERSION_NAME
+            // packageName / packageVersion come from the root kiteConfig { } block.
             description = "Synchronized media playback with Syncplay"
             vendor = "yuroyami"
 
@@ -44,23 +43,26 @@ compose.desktop {
             includeAllModules = true
 
             macOS {
-                bundleID = "${AppConfig.BUNDLE_ID_BASE}.desktop"
-                packageVersion = AppConfig.macosPackageVersion // jpackage rejects 0.x.y
+                // bundleID comes from kiteConfig { id { desktop { suffix } } }.
+                // jpackage rejects 0.x.y: macOS CFBundleVersion must start at 1.
+                packageVersion = kiteConfig.version.map {
+                    if (it.startsWith("0.")) "1." + it.removePrefix("0.") else it
+                }.get()
             }
             windows {
-                menuGroup = AppConfig.APP_NAME
+                menuGroup = kiteConfig.appName.get()
                 // Stable GUID so MSI upgrades replace the previous install instead of duplicating it.
                 upgradeUuid = "9E2B62D1-5C3A-4A8F-9C41-3B7E2B0C11D7"
                 perUserInstall = true
             }
             linux {
-                packageName = AppConfig.APP_NAME.lowercase()
+                packageName = kiteConfig.appName.get().lowercase()
             }
         }
     }
 }
 
-/* No bundled player natives any more. libVLC and libmpv used to be downloaded into
+/* No bundled player natives any more. Native players used to be downloaded into
  * desktopApp/resources/<os>-<arch>/ and packaged into the app image, 277 MB of it on macOS alone.
  * The desktop build runs one engine now, KitePlayer, and its decoder rides inside the KiteCodec
  * jar, so there is nothing left to bundle and no appResourcesRootDir to point at. */

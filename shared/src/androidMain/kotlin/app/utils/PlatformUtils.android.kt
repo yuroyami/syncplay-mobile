@@ -21,7 +21,6 @@ import app.player.exo.ExoEngine
 import app.player.kite.AndroidKiteMediaResolver
 import app.player.kite.KiteEngine
 import app.player.mpv.MpvEngine
-import app.player.vlc.VlcEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
@@ -40,7 +39,7 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import java.io.File
 import java.lang.ref.WeakReference
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 
 
 actual val platform: Platform = Platform.Android
@@ -63,19 +62,15 @@ actual val httpClient: HttpClient by lazy {
             filter { request -> request.url.host.startsWith("api.") }
         }
         defaultRequest {
-            header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
+            header(HttpHeaders.UserAgent, "SynkplayMobile/${KiteBuildConfig.APP_VERSION}")
         }
     }
 }
 
-/**
- * Media player engines on Android. The existing native-view KitePlayer path ships normally;
- * its experimental pure-Compose sibling is exposed only by a debug, non-exo build.
- */
+/** Media player engines on Android: ExoPlayer, mpv and KitePlayer. */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(ExoEngine)
     add(MpvEngine)
-    add(VlcEngine)
     // One KitePlayer entry: the renderer (native view or pure Compose) is an in-room toggle now.
     add(KiteEngine(AndroidKiteMediaResolver))
 }

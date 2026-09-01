@@ -1,6 +1,6 @@
 package app.utils
 
-import SyncplayMobile.shared.BuildConfig
+import SyncplayMobile.shared.KiteBuildConfig
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -11,7 +11,7 @@ import kotlin.time.Clock
 /** Platform-agnostic utility functions (no expect/actual). */
 
 /** App name sourced from BuildConfig (defined in AppConfig.kt in buildSrc). */
-val appName: String = BuildConfig.APP_NAME
+val appName: String = KiteBuildConfig.APP_NAME
 
 /** Marker annotation for protocol-related builders and scopes. */
 annotation class ProtocolApi

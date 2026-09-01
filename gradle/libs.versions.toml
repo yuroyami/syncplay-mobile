@@ -3,7 +3,7 @@
 # 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
 kotlin = "2.4.10"
 agp = "9.3.2"
-kitessot = "3.0.2"
+kiteconfig = "1.0.0"
 compose-multiplatform = "1.12.0"
 kSerialization = "1.11.0"
 ksp = "2.3.11"
@@ -16,6 +16,10 @@ lifecycleViewmodelCompose = "2.11.0"
 navigation3Runtime = "1.2.0-alpha04"
 navigation3Ui = "1.2.0-alpha02"
 compose-unstyled = "2.9.0"
+# Backdrop blur. Built against Kotlin 2.4.10 + Compose Multiplatform 1.12.0, both of which
+# this project already runs, and publishes exactly our four targets (no iosX64, which we
+# don't declare either).
+haze = "2.0.0-beta02"
 kermit = "2.1.0"
 krypto = "0.8.0"
 datastore = "1.3.0-alpha10"
@@ -45,13 +49,12 @@ desugaring = "2.1.5"
 media3 = "1.11.0"
 netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.6.2"
-libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
 kiteplayer = "0.0.20"
 
-#iOS
+#iOS (VLCKit pod)
 libvlc-ios = "4.0.0a19"
 
 #Desktop
@@ -85,6 +88,8 @@ compose-unstyled-text-field = { module = "com.composables:composeunstyled-text-f
 compose-unstyled-icon = { module = "com.composables:composeunstyled-icon", version.ref = "compose-unstyled" }
 compose-unstyled-slider = { module = "com.composables:composeunstyled-slider", version.ref = "compose-unstyled" }
 compose-unstyled-scrollbars = { module = "com.composables:composeunstyled-scrollbars", version.ref = "compose-unstyled" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
@@ -123,7 +128,6 @@ m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "m
 m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
-libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
 kiteplayer-compose-ui = { module = "io.github.yuroyami:kiteplayer-compose-ui", version.ref = "kiteplayer" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
@@ -144,6 +148,7 @@ compose-unstyled = [
     "compose-unstyled-text-field", "compose-unstyled-icon",
     "compose-unstyled-slider", "compose-unstyled-scrollbars"
 ]
+haze = ["haze", "haze-blur"]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]
@@ -162,7 +167,7 @@ compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multipla
 # Supplies the FFmpeg libraries required by KitePlayer's iOS link.
 
 # Root-applied single source of truth for app identity, version, and SDK levels.
-kitessot = { id = "io.github.yuroyami.kitessot", version.ref = "kitessot" }
+kiteconfig = { id = "io.github.yuroyami.kiteconfig", version.ref = "kiteconfig" }
 
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp"}

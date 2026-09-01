@@ -168,7 +168,7 @@ object PopupMediaDirs {
                                     )
                                 }
 
-                                DropdownMenu(
+                                GlassDropdownMenu(
                                     modifier = Modifier.background(color = Color.DarkGray.copy(0.5f)),
                                     expanded = itemMenuState.value,
                                     properties = PopupProperties(
@@ -278,7 +278,7 @@ object PopupMediaDirs {
 
 
         if (cleardialog) {
-            AlertDialog(onDismissRequest = { cleardialog = false }, confirmButton = {
+            GlassAlertDialog(onDismissRequest = { cleardialog = false }, confirmButton = {
                 TextButton(onClick = {
                     cleardialog = false
                     scope.launch {

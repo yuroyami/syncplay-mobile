@@ -14,7 +14,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
@@ -50,8 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -74,6 +70,8 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_brightness
 import syncplaymobile.shared.generated.resources.room_volume
+import app.uicomponents.PillIconBadge
+import app.uicomponents.darkGlassPill
 
 /** Which knob a swipe gesture is currently moving. */
 enum class GestureValueKind { VOLUME, BRIGHTNESS }
@@ -147,30 +145,12 @@ private fun GestureValuePill(value: GestureValue) {
 
     Row(
         modifier = Modifier
-            .shadow(20.dp, RoundedCornerShape(26.dp))
-            .clip(RoundedCornerShape(26.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))
-                )
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))
-                ),
-                shape = RoundedCornerShape(26.dp)
-            )
+            .darkGlassPill()
             .padding(start = 12.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         /* Icon badge: swaps between tiers (mute → low → high) as the value moves. */
-        Box(
-            modifier = Modifier.size(34.dp).clip(CircleShape).background(
-                Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.05f)))
-            ),
-            contentAlignment = Alignment.Center
-        ) {
+        PillIconBadge {
             Crossfade(targetState = value.iconFor(), animationSpec = tween(160)) { icon ->
                 Icon(
                     imageVector = icon,

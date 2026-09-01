@@ -31,8 +31,8 @@ fun RoomPlayButton(modifier: Modifier) {
     val playing by viewmodel.playerManager.isNowPlaying.collectAsState()
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),
-        targetValue = if (playing) Theming.SP_GRADIENT.last().copy(alpha = 0.1f)
-        else Theming.SP_GRADIENT.first().copy(alpha = 0.1f)
+        targetValue = if (playing) Theming.flexibleGradient.last().copy(alpha = 0.1f)
+        else Theming.flexibleGradient.first().copy(alpha = 0.1f)
     )
     if (hasVideo) {
         FlexibleIcon(

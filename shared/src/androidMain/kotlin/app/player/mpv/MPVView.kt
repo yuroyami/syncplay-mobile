@@ -1,12 +1,18 @@
 package app.player.mpv
 
 import android.content.Context
+import android.graphics.SurfaceTexture
 import android.os.Build
 import android.os.Environment
 import android.util.AttributeSet
+import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.TextureView
+import android.view.View
 import android.view.WindowManager
+import android.widget.FrameLayout
+import app.uicomponents.glassEnabledNow
 import app.player.models.PlayerOptions
 import app.preferences.Preferences.MPV_GPU_NEXT
 import app.preferences.Preferences.MPV_HARDWARE_ACCELERATION
@@ -21,7 +27,23 @@ import `is`.xyz.mpv.MPVLib.MpvFormat.MPV_FORMAT_INT64
 import `is`.xyz.mpv.MPVLib.MpvFormat.MPV_FORMAT_NONE
 import `is`.xyz.mpv.MPVLib.MpvFormat.MPV_FORMAT_STRING
 
-class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+/**
+ * Hosts mpv's output in whichever surface the user's glass setting calls for; mpv itself only
+ * wants an ANativeWindow either way.
+ *
+ * TextureView keeps the video pixels inside the view hierarchy, so Haze can capture them for glass
+ * over video and the SurfaceView hole-punch cannot flicker under an overlay. SurfaceView can take
+ * a hardware overlay plane instead (less power, no GPU copy) but is invisible to any in-app
+ * effect. They are mutually exclusive, so this is a container with one child of the chosen type
+ * rather than two engine classes; everything mpv-facing below is identical for both.
+ */
+class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attrs) {
+
+    /** The Surface handed to mpv; owned here, released when its backing view goes away. */
+    private var mpvSurface: Surface? = null
+
+    /** The SurfaceView or TextureView actually showing the video. */
+    private var surfaceChild: View? = null
 
     fun initialize(configDir: String, cacheDir: String) {
         MPVLib.create(contextObtainer.invoke())
@@ -42,7 +64,7 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
         MPVLib.setPropertyBoolean("pause", true)
 
-        holder.addCallback(this)
+        installSurfaceChild()
         observeProperties()
     }
 
@@ -136,13 +158,18 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
     fun playFile(filePath: String) {
         this.filePath = filePath
-        surfaceCreated(holder)
+        // Re-assert the surface, matching the original's surfaceCreated(holder) call here.
+        mpvSurface?.takeIf { it.isValid }?.let { attachSurface(it) }
     }
 
     // Called when back button is pressed, or app is shutting down
     fun destroy() {
         // Disable surface callbacks to avoid using unintialized mpv state
-        holder.removeCallback(this)
+        (surfaceChild as? TextureView)?.surfaceTextureListener = null
+        removeAllViews()
+        surfaceChild = null
+        mpvSurface?.release()
+        mpvSurface = null
 
         MPVLib.destroy()
     }
@@ -192,24 +219,70 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
         get() = MPVLib.getPropertyDouble("speed")
         set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
 
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+    /** Builds the video child for the current glass setting and wires its surface callbacks. */
+    private fun installSurfaceChild() {
+        removeAllViews()
+        val lp = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+
+        surfaceChild = if (glassEnabledNow()) {
+            TextureView(context).also { tv ->
+                tv.layoutParams = lp
+                tv.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                    override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
+                        attachSurface(Surface(st))
+                        setSurfaceSize(w, h)
+                    }
+
+                    override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) =
+                        setSurfaceSize(w, h)
+
+                    override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean {
+                        detachSurface()
+                        return true
+                    }
+
+                    override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
+                }
+                addView(tv)
+            }
+        } else {
+            SurfaceView(context).also { sv ->
+                sv.layoutParams = lp
+                sv.holder.addCallback(object : SurfaceHolder.Callback {
+                    override fun surfaceCreated(holder: SurfaceHolder) = attachSurface(holder.surface)
+
+                    override fun surfaceChanged(holder: SurfaceHolder, f: Int, w: Int, h: Int) =
+                        setSurfaceSize(w, h)
+
+                    override fun surfaceDestroyed(holder: SurfaceHolder) = detachSurface()
+                })
+                addView(sv)
+            }
+        }
+    }
+
+    private fun setSurfaceSize(width: Int, height: Int) {
         MPVLib.setPropertyString("android-surface-size", "${width}x$height")
     }
 
-    override fun surfaceCreated(holder: SurfaceHolder) {
+    private fun attachSurface(surface: Surface) {
         loggy("mpv: attaching surface")
-        MPVLib.attachSurface(holder.surface)
+        mpvSurface = surface
+        MPVLib.attachSurface(surface)
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
         MPVLib.setOptionString("force-window", "yes")
-        // Restore video output (surfaceDestroyed sets it to "null")
+        // Restore video output (detachSurface sets it to "null")
         MPVLib.setPropertyString("vo", voInUse)
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder) {
+    private fun detachSurface() {
         loggy("mpv: detaching surface")
         MPVLib.setPropertyString("vo", "null")
         MPVLib.setOptionString("force-window", "no")
         MPVLib.detachSurface()
+        // A SurfaceView's Surface is owned by its holder; only release the one we constructed.
+        (surfaceChild as? TextureView)?.let { mpvSurface?.release() }
+        mpvSurface = null
     }
 
     companion object {
