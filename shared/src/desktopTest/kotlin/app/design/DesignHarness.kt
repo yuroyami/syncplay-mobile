@@ -26,7 +26,6 @@ import app.theme.Palette
 import app.theme.SaveableTheme
 import app.theme.TRINITY
 import app.theme.DAYLIGHT
-import app.theme.appShapes
 import app.theme.appTypography
 import org.jetbrains.skia.EncodedImageFormat
 import java.io.File
@@ -68,7 +67,7 @@ object DesignHarness {
             LocalPrefsState provides prefs,
             LocalGlobalViewmodel provides vm,
         ) {
-            MaterialTheme(colorScheme = theme.dynamicScheme, typography = appTypography, shapes = appShapes) {
+            MaterialTheme(colorScheme = theme.dynamicScheme, typography = appTypography) {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }
             }
         }

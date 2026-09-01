@@ -171,7 +171,11 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
 - POPUPS: every popup and menu is on the modal frame; seek-to, managed room, chat colours,
   trusted domains, the playlist card's actions and URL entry, the unlock key. The old popup,
   menu, alert and multi-choice wrappers and the menu height cap are deleted.
+- GLASS_SURFACES and TEXT_AND_ICONS: the tier API is the only glass entry, the panel colour
+  comes from the palette, the dark pill, overlays, flexible icon and text helpers, the free
+  visibility helper, the Material shape bridge and the Jost, Saira and Helvetica fonts are gone.
+  The wordmark keeps its own face.
 
-Still to do: the remaining GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
+Still to do: NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
 ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
 to those surfaces.

@@ -37,7 +37,6 @@ import app.theme.Palette
 import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
 import app.theme.TypeRoles
-import app.theme.appShapes
 import app.theme.appTypography
 import app.uicomponents.lexendFont
 
@@ -106,7 +105,6 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         MaterialTheme(
             colorScheme = currentTheme.dynamicScheme,
             typography = appTypography,
-            shapes = appShapes
         ) {
             GlassBackdrop {
                 NavDisplay(
