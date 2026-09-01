@@ -684,4 +684,7 @@
     <string name="room_seek_minutes">Minutes</string>
     <string name="room_seek_seconds">Seconds</string>
     <string name="room_unlock">Unlock</string>
+    <!-- Motion and back (design overhaul) -->
+    <string name="setting_reduce_motion_title">Reduce motion</string>
+    <string name="setting_reduce_motion_summary">Every transition becomes a crossfade. On by itself when the system asks for it.</string>
 </resources>

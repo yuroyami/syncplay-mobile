@@ -23,6 +23,7 @@ import app.preferences.Preferences.EXPORT_LOGS
 import app.preferences.Preferences.FILE_MISMATCH_WARNING
 import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
 import app.preferences.Preferences.HAPTICS_ON_CONTROLS
+import app.preferences.Preferences.REDUCE_MOTION
 import app.preferences.Preferences.HAPTIC_ON_CHAT
 import app.preferences.Preferences.HAPTIC_ON_CONNECTION
 import app.preferences.Preferences.HAPTIC_ON_JOINED
@@ -102,6 +103,7 @@ val GLOBAL_GENERAL = SettingCategory(
     +NEVER_SHOW_TIPS
     +SHOW_SETTING_DESCRIPTIONS
     +HAPTICS_ON_CONTROLS
+        +REDUCE_MOTION
     +ERASE_SHORTCUTS
     +MEDIA_DIRECTORIES
 }

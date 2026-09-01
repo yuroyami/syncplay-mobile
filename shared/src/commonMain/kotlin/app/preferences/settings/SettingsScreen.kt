@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import app.LocalGlobalViewmodel
+import app.uicomponents.LocalWidthClass
+import app.uicomponents.WidthClass
 import app.theme.Space
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.SearchGlyph
@@ -43,8 +45,9 @@ fun SettingsScreenUI(categoryKey: String?) {
     val backstack = LocalGlobalViewmodel.current.backstack
     val categories = SETTINGS_GLOBAL
     val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
-    val expanded = windowWidth >= 840.dp
-    val density = SettingsDensity(showRowIcons = windowWidth >= 480.dp)
+    val widthClass = LocalWidthClass.current
+    val expanded = widthClass == WidthClass.Expanded
+    val density = SettingsDensity(showRowIcons = widthClass != WidthClass.Compact)
 
     var open by remember { mutableStateOf(categories.firstOrNull { it.key == categoryKey }) }
     var highlight by remember { mutableStateOf<String?>(null) }

@@ -66,8 +66,12 @@ object Motion {
 
     val easing: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-    fun <T> quick(): TweenSpec<T> = tween(quickMs, easing = easing)
-    fun <T> move(): TweenSpec<T> = tween(moveMs, easing = easing)
+    /** Set at the root from the platform setting or the Reduce motion switch; tweens collapse to instant. */
+    @kotlin.concurrent.Volatile
+    var reduced: Boolean = false
+
+    fun <T> quick(): TweenSpec<T> = tween(if (reduced) 0 else quickMs, easing = easing)
+    fun <T> move(): TweenSpec<T> = tween(if (reduced) 0 else moveMs, easing = easing)
     fun <T> drag(): SpringSpec<T> = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
 }
 

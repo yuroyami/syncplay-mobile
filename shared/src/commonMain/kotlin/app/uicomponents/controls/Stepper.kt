@@ -16,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -114,6 +116,7 @@ private fun StepperArrow(direction: ChevronDirection, enabled: Boolean, onClick:
             .height(Space.row)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = if (direction == ChevronDirection.Left) "Previous" else "Next" }
+            .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         contentAlignment = Alignment.Center,
     ) {

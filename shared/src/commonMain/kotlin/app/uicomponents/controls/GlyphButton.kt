@@ -6,10 +6,28 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import app.theme.Type
+import app.uicomponents.chromeSurface
+import app.utils.Platform
+import app.utils.platform
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -40,6 +58,17 @@ fun GlyphButton(
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
+    // Desktop only: the name under the glyph after 600 ms of hover. Touch never hovers.
+    val hovered by source.collectIsHoveredAsState()
+    var tooltip by remember { mutableStateOf(false) }
+    LaunchedEffect(hovered) {
+        tooltip = false
+        if (hovered && platform == Platform.Desktop) {
+            delay(600)
+            tooltip = true
+        }
+    }
+    val targetPx = with(LocalDensity.current) { target.roundToPx() }
     Box(
         modifier = modifier
             .size(target)
@@ -48,9 +77,15 @@ fun GlyphButton(
             .hoverable(source, enabled)
             .semantics { contentDescription = name }
             .controlStates(source, Radius.controlShape, enabled = enabled)
+            .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = if (enabled) tint else p.disabled, modifier = Modifier.size(size))
+        if (tooltip) {
+            Popup(alignment = Alignment.TopCenter, offset = IntOffset(0, targetPx + 4)) {
+                Text(name, style = Type.note, color = Color.White, modifier = Modifier.chromeSurface(Radius.controlShape).padding(horizontal = Space.gapTight + 2.dp, vertical = 2.dp))
+            }
+        }
     }
 }

@@ -190,3 +190,5 @@ actual fun getMpvConfFilePath(): String? = try {
 /** Desktop "shortcut" = command-line join args parsed in Main.kt (--user/--room/--host/...). */
 actual fun consumePendingShortcut(): app.home.JoinConfig? =
     pendingDesktopJoin.also { pendingDesktopJoin = null }
+
+actual fun reducedMotion(): Boolean = false

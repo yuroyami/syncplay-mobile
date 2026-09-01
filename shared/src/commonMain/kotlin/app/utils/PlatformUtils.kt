@@ -141,3 +141,6 @@ expect fun getMpvConfFilePath(): String?
  * On Android, this always returns null (shortcuts are handled via Intents).
  */
 expect fun consumePendingShortcut(): app.home.JoinConfig?
+
+/** True when the system asks for less motion: iOS Reduce Motion, Android's animator scale at zero, never on desktop. */
+expect fun reducedMotion(): Boolean

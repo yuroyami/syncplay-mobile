@@ -16,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -81,6 +83,7 @@ private fun SegmentedCell(label: String, active: Boolean, enabled: Boolean, modi
                 drawRect(edge, Offset(0f, size.height - w), Size(size.width, w))
             }
             .controlStates(source, Radius.controlShape, enabled = enabled)
+            .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         contentAlignment = Alignment.Center,
     ) {

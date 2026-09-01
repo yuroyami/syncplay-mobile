@@ -89,6 +89,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.setting_reduce_motion_summary
+import syncplaymobile.shared.generated.resources.setting_reduce_motion_title
 import syncplaymobile.shared.generated.resources.server_host_disable_ready
 import syncplaymobile.shared.generated.resources.server_host_disable_chat
 import syncplaymobile.shared.generated.resources.server_host_isolate_rooms
@@ -394,6 +396,16 @@ object Preferences {
         icon = Icons.Filled.Lightbulb
     }
     /** The control haptics (a rocker flip, a seek landing), separate from the room event pulses. */
+    /** Forces every transition to a crossfade; the platform setting does the same on its own. */
+    /** The desktop window's last size, position and placement, as "x,y,w,h,placement". Never shown as a row. */
+    val DESKTOP_WINDOW = Pref("pref_desktop_window", "")
+
+    val REDUCE_MOTION = Pref("pref_reduce_motion", false) {
+        title = Res.string.setting_reduce_motion_title
+        summary = Res.string.setting_reduce_motion_summary
+        icon = Icons.Filled.Timer
+    }
+
     val HAPTICS_ON_CONTROLS = Pref("pref_haptics_on_controls", true) {
         title = Res.string.settings_haptics_controls_title
         summary = Res.string.settings_haptics_controls_summary

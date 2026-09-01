@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -42,7 +44,8 @@ fun Swatch(
                     .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
                     .hoverable(source, enabled)
                     .controlStates(source, Radius.controlShape, enabled = enabled)
-                    .pressFeedback(source, enabled)
+                    .pointerHoverIcon(PointerIcon.Hand)
+            .pressFeedback(source, enabled)
                 else Modifier
             )
             .semantics { contentDescription = spoken },

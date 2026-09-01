@@ -62,6 +62,15 @@ import app.utils.EnterRoomMode
 import app.utils.platformCallback
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
+import app.preferences.settings.AskModal
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_leave_question
+import syncplaymobile.shared.generated.resources.room_overflow_leave_room
 
 /**
  * Primary focus target for D-pad and TV use: the play key, or the add button before a file
@@ -133,6 +142,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         }
 
         SeekToPositionPopup()
+        LeaveRoomAsk(viewmodel)
         ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
         ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
 
@@ -143,6 +153,26 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             globalViewmodel.hasEnteredRoomOnce = true
         }
     }
+}
+
+/** The leave question, raised by the rail, system back or desktop Escape. */
+@Composable
+private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
+    val ui = viewmodel.uiState
+    val asking by ui.askLeave.collectAsState()
+    if (!asking) return
+    val open = remember { mutableStateOf(true) }
+    AskModal(
+        open = open,
+        title = stringResource(Res.string.room_overflow_leave_room),
+        text = stringResource(Res.string.room_leave_question),
+        destructive = true,
+        onYes = {
+            ui.askLeave.value = false
+            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.goHome() }
+        },
+        onNo = { ui.askLeave.value = false },
+    )
 }
 
 /** The HUD: everything that fades, on the frame's docks, with the gesture layer above it. */

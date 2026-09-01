@@ -1,5 +1,6 @@
 package app.room
 
+import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.ROOM_UI_OPACITY
@@ -17,6 +18,12 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** Bumped on any pointer or key activity in the room; the HUD idle timer restarts on it. */
     val hudActivity = MutableStateFlow(0L)
     fun noteHudActivity() { hudActivity.value = hudActivity.value + 1 }
+
+    /** Set by the rail, by system back and by desktop Escape; the room shows the leave question. */
+    val askLeave = MutableStateFlow(false)
+
+    /** The chat composer's focus target, so a key can jump to it. */
+    val chatFocus = FocusRequester()
 
     /** True while the track is being dragged; the HUD never hides mid-scrub. */
     val scrubbing = MutableStateFlow(false)

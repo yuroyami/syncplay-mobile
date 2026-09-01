@@ -175,7 +175,13 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   comes from the palette, the dark pill, overlays, flexible icon and text helpers, the free
   visibility helper, the Material shape bridge and the Jost, Saira and Helvetica fonts are gone.
   The wordmark keeps its own face.
+- NAVIGATION, DESKTOP_AND_KEYBOARD, TV_AND_DPAD, ACCESSIBILITY: back pops a page and asks in
+  the room, pushes slide and the room crossfades, reduced motion collapses every tween from the
+  platform setting or the switch, the width classes are one local, the desktop has the full key
+  map with fullscreen, window memory and a minimum size, the hand cursor and hover tooltips,
+  chat selection, the focus ring no longer scales, docks are focus groups, and the swipes have
+  scrub rows in the gestures panel. Not done: desktop scrollbars through the frames, drop, the
+  cursor hiding in fullscreen, the TV density flag.
 
-Still to do: NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
-ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
-to those surfaces.
+Still to do: the COPY pass, the icon set, the desktop scrollbars and drop, the TV density flag,
+and the items in [BUGS](BUGS.md) that belong to those surfaces.

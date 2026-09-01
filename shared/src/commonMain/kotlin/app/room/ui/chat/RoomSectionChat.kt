@@ -52,6 +52,9 @@ import app.theme.palette
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.SendGlyph
+import app.utils.Platform
+import app.utils.platform
+import androidx.compose.foundation.text.selection.SelectionContainer
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_chat_input
@@ -159,6 +162,7 @@ fun ChatComposer(
                 if (keyboardSends) send()
             },
             textStyle = Type.note,
+            focusRequester = viewmodel.uiState.chatFocus,
             name = stringResource(Res.string.room_chat_input),
         )
         GlyphButton(
@@ -195,6 +199,7 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
             previousSize = messages.size
         }
 
+        Selectable {
         LazyColumn(state = listState, contentPadding = PaddingValues(Space.gapTight), modifier = Modifier.fillMaxSize()) {
             itemsIndexed(messages) { index, message ->
                 /* Seen only while the HUD shows: it stays composed at alpha 0 when hidden, and
@@ -209,5 +214,12 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
                 )
             }
         }
+        }
     }
+}
+
+/** Chat text can be selected and copied on desktop; touch keeps its long press for the rows. */
+@Composable
+private fun Selectable(content: @Composable () -> Unit) {
+    if (platform == Platform.Desktop) SelectionContainer(content = content) else content()
 }

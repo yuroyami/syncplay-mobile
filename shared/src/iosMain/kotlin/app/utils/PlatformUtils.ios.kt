@@ -52,6 +52,7 @@ import platform.Foundation.seekToEndOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.Foundation.writeToFile
+import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
 import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
@@ -331,3 +332,5 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? {
         app.pendingShortcutJoinConfig.value = null
     }
 }
+
+actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()

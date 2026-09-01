@@ -1,52 +1,119 @@
 package app.desktop
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import app.AdamScreen
+import app.Screen
 import app.SyncplayViewmodel
 import app.player.Playback
+import app.preferences.Preferences
 import app.preferences.set
+import app.preferences.value
+import app.protocol.WireMessage
 import app.utils.initializeDatastore
 import app.utils.platformCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.awt.Dimension
+import java.awt.Toolkit
+import kotlin.math.roundToInt
 
 /** Global viewmodel handle, mirroring the Android Activity / iOS controller pattern. */
-var globalViewmodel: SyncplayViewmodel? = null
+var globalViewmodel: SyncplayViewmodel? by mutableStateOf(null)
 
 /** Process-lifetime scope for fire-and-forget UI work (keyboard shortcuts). */
 private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+/** Where the volume was before M muted it, so M again brings it back. */
+private var mutedFrom: Int? = null
+
 fun main(args: Array<String>) {
     initializeDatastore()
     platformCallback = DesktopPlatformCallback
-
-    // --engine is gone with the engines it switched between. Desktop runs KitePlayer and only
-    // KitePlayer, so there is nothing for a launch flag to choose.
-
     parseJoinArgs(args)
 
     application {
+        val restored = restoreWindow()
+        val windowState = rememberWindowState(placement = restored.placement, position = restored.position, size = restored.size)
+
         Window(
             onCloseRequest = ::exitApplication,
             title = "Synkplay",
-            state = rememberWindowState(width = 1280.dp, height = 800.dp),
-            onKeyEvent = { event -> handleGlobalKey(event.type == KeyEventType.KeyDown, event.key) },
+            state = windowState,
+            onKeyEvent = { event -> handleGlobalKey(event, windowState) },
         ) {
-            AdamScreen(
-                onGlobalViewmodel = { globalViewmodel = it }
-            )
+            // A 320dp side dock beside a 16:9 picture that is 480dp tall.
+            LaunchedEffect(Unit) { window.minimumSize = Dimension(800, 480) }
+
+            // Size, position and placement are remembered; the write waits for the drag to settle.
+            LaunchedEffect(windowState.size, windowState.position, windowState.placement) {
+                delay(400)
+                saveWindow(windowState)
+            }
+
+            // Leaving the room always returns to the floating placement, or home inherits fullscreen.
+            val vm = globalViewmodel
+            LaunchedEffect(vm) {
+                vm ?: return@LaunchedEffect
+                snapshotFlow { vm.backstack.lastOrNull() is Screen.Room }.collect { inRoom ->
+                    if (!inRoom && windowState.placement == WindowPlacement.Fullscreen) windowState.placement = WindowPlacement.Floating
+                }
+            }
+
+            AdamScreen(onGlobalViewmodel = { globalViewmodel = it })
         }
     }
+}
+
+private class RestoredWindow(val placement: WindowPlacement, val position: WindowPosition, val size: DpSize)
+
+/** The saved window, clamped to the display that exists now; fullscreen is never restored. */
+private fun restoreWindow(): RestoredWindow {
+    val fallback = RestoredWindow(WindowPlacement.Floating, WindowPosition.PlatformDefault, DpSize(1280.dp, 800.dp))
+    val parts = Preferences.DESKTOP_WINDOW.value().split(",")
+    if (parts.size < 5) return fallback
+    val x = parts[0].toIntOrNull() ?: return fallback
+    val y = parts[1].toIntOrNull() ?: return fallback
+    val w = parts[2].toIntOrNull() ?: return fallback
+    val h = parts[3].toIntOrNull() ?: return fallback
+    val screen = runCatching { Toolkit.getDefaultToolkit().screenSize }.getOrNull()
+    val width = (if (screen != null) w.coerceAtMost(screen.width) else w).coerceAtLeast(800)
+    val height = (if (screen != null) h.coerceAtMost(screen.height) else h).coerceAtLeast(480)
+    val left = if (screen != null) x.coerceIn(0, (screen.width - width).coerceAtLeast(0)) else x
+    val top = if (screen != null) y.coerceIn(0, (screen.height - height).coerceAtLeast(0)) else y
+    val placement = if (parts[4] == "Maximized") WindowPlacement.Maximized else WindowPlacement.Floating
+    return RestoredWindow(placement, WindowPosition.Absolute(left.dp, top.dp), DpSize(width.dp, height.dp))
+}
+
+private suspend fun saveWindow(state: WindowState) {
+    if (state.placement == WindowPlacement.Fullscreen) return
+    val position = state.position
+    val x = if (position is WindowPosition.Absolute) position.x.value.roundToInt() else return
+    val y = position.y.value.roundToInt()
+    val record = listOf(x, y, state.size.width.value.roundToInt(), state.size.height.value.roundToInt(), state.placement.name).joinToString(",")
+    Preferences.DESKTOP_WINDOW.set(record)
 }
 
 /**
@@ -73,13 +140,13 @@ private fun parseJoinArgs(args: Array<String>) {
         mainScope.launch {
             var vm = globalViewmodel?.roomWeakRef?.get()
             while (vm == null || !vm.playerManager.isPlayerReady.value) {
-                kotlinx.coroutines.delay(500)
+                delay(500)
                 vm = globalViewmodel?.roomWeakRef?.get()
             }
             vm.player.injectVideoURL(url)
 
             if (autoplay) {
-                kotlinx.coroutines.delay(8000)
+                delay(8000)
                 vm.dispatcher.controlPlayback(Playback.PLAY, true)
             }
         }
@@ -87,16 +154,76 @@ private fun parseJoinArgs(args: Array<String>) {
 }
 
 /**
- * Window-level media keys. This runs AFTER focus dispatch (onKeyEvent, not onPreviewKeyEvent),
- * so typing a space into the chat field never toggles playback — only unconsumed keys land here.
- * Mirrors the Android TV key handling: space/enter toggle, left/right seek.
+ * The window-level key map, run after focus dispatch (onKeyEvent, not onPreviewKeyEvent) so a
+ * space typed into the chat field never toggles playback. Escape is the one key that acts
+ * anywhere: leave fullscreen, else close the open panels, else hide the HUD, else pop a page.
  */
-private fun handleGlobalKey(isDown: Boolean, key: Key): Boolean {
-    if (!isDown) return false
-    val vm = globalViewmodel?.roomWeakRef?.get() ?: return false
-    if (!vm.playerManager.hasVideo.value) return false
+private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    val global = globalViewmodel ?: return false
+    val vm = global.roomWeakRef?.get()
+    val inRoom = global.backstack.lastOrNull() is Screen.Room && vm != null
 
-    return when (key) {
+    if ((event.isMetaPressed || event.isCtrlPressed) && event.key == Key.Comma) {
+        global.backstack.add(Screen.Settings())
+        return true
+    }
+
+    if (event.key == Key.Escape) {
+        if (windowState.placement == WindowPlacement.Fullscreen) {
+            windowState.placement = WindowPlacement.Floating
+            return true
+        }
+        if (inRoom && vm != null) {
+            val ui = vm.uiState
+            val panelOpen = ui.tabCardUserInfo.value || ui.tabCardSharedPlaylist.value || ui.tabCardRoomPreferences.value || ui.controlPanel.value
+            when {
+                panelOpen -> {
+                    ui.toggleUserInfo(false)
+                    ui.toggleSharedPlaylist(false)
+                    ui.toggleRoomPreferences(false)
+                    ui.controlPanel.value = false
+                }
+                ui.visibleHUD.value -> ui.visibleHUD.value = false
+                else -> ui.askLeave.value = true
+            }
+            return true
+        }
+        if (global.backstack.size > 1) {
+            global.backstack.removeAt(global.backstack.lastIndex)
+            return true
+        }
+        return false
+    }
+
+    if (!inRoom || vm == null) return false
+
+    when (event.key) {
+        Key.F -> {
+            windowState.placement = if (windowState.placement == WindowPlacement.Fullscreen) WindowPlacement.Floating else WindowPlacement.Fullscreen
+            return true
+        }
+        Key.C -> {
+            vm.uiState.showHud()
+            runCatching { vm.uiState.chatFocus.requestFocus() }
+            return true
+        }
+        Key.R -> {
+            if (vm.isSoloMode) return false
+            val next = !vm.session.ready.value
+            vm.session.ready.value = next
+            vm.networkManager.sendAsync(WireMessage.readiness(isReady = next, manuallyInitiated = true))
+            return true
+        }
+        else -> Unit
+    }
+
+    if (!vm.playerManager.hasVideo.value) return false
+    val times = if (event.isShiftPressed) 5 else 1
+    val maxVolume = vm.player.getMaxVolume().coerceAtLeast(1)
+    val volumeStep = (maxVolume * 0.05).roundToInt().coerceAtLeast(1)
+
+    return when (event.key) {
         Key.Spacebar -> {
             mainScope.launch {
                 val isPlaying = vm.player.isPlaying()
@@ -104,17 +231,22 @@ private fun handleGlobalKey(isDown: Boolean, key: Key): Boolean {
             }
             true
         }
-
-        Key.DirectionLeft -> {
-            vm.dispatcher.seekBckwd()
+        Key.DirectionLeft -> { vm.dispatcher.seekBy(-Preferences.SEEK_BACKWARD_JUMP.value() * times); true }
+        Key.DirectionRight -> { vm.dispatcher.seekBy(Preferences.SEEK_FORWARD_JUMP.value() * times); true }
+        Key.DirectionUp -> { vm.player.changeCurrentVolume((vm.player.getCurrentVolume() + volumeStep).coerceAtMost(maxVolume)); true }
+        Key.DirectionDown -> { vm.player.changeCurrentVolume((vm.player.getCurrentVolume() - volumeStep).coerceAtLeast(0)); true }
+        Key.M -> {
+            val current = vm.player.getCurrentVolume()
+            val restore = mutedFrom
+            if (current == 0 && restore != null) {
+                vm.player.changeCurrentVolume(restore)
+                mutedFrom = null
+            } else {
+                mutedFrom = current
+                vm.player.changeCurrentVolume(0)
+            }
             true
         }
-
-        Key.DirectionRight -> {
-            vm.dispatcher.seekFrwrd()
-            true
-        }
-
         else -> false
     }
 }

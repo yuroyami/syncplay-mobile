@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.theme.Motion
+import app.uicomponents.LocalWidthClass
+import app.uicomponents.WidthClass
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Tier
@@ -114,7 +116,7 @@ internal fun ModalFrame(
     val window = LocalWindowInfo.current.containerSize
     val windowWidth = with(density) { window.width.toDp() }
     val windowHeight = with(density) { window.height.toDp() }
-    val sheet = size != ModalSize.Ask && windowWidth < 480.dp
+    val sheet = size != ModalSize.Ask && LocalWidthClass.current == WidthClass.Compact
     val visible = remember { MutableTransitionState(false) }.apply { targetState = true }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }

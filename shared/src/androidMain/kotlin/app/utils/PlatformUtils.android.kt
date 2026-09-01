@@ -263,3 +263,7 @@ actual fun getMpvConfFilePath(): String? {
 }
 
 actual fun consumePendingShortcut(): app.home.JoinConfig? = null
+
+actual fun reducedMotion(): Boolean = runCatching {
+    android.provider.Settings.Global.getFloat(contextObtainer().contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+}.getOrDefault(false)

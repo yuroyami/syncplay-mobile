@@ -36,10 +36,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
-import app.preferences.settings.AskModal
 import app.theme.Radius
 import app.theme.Space
 import app.theme.palette
@@ -55,13 +53,10 @@ import app.uicomponents.controls.pressFeedback
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.utils.platformCallback
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
 import syncplaymobile.shared.generated.resources.room_card_title_user_info
-import syncplaymobile.shared.generated.resources.room_leave_question
 import syncplaymobile.shared.generated.resources.room_lock
 import syncplaymobile.shared.generated.resources.room_managed_room
 import syncplaymobile.shared.generated.resources.room_overflow_create_managed_room
@@ -89,7 +84,6 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val managedRooms by viewmodel.protocol.supportsManagedRooms.collectAsState()
 
-    val askLeave = remember { mutableStateOf(false) }
     var managedChooser by remember { mutableStateOf(false) }
     var moreOpen by remember { mutableStateOf(false) }
 
@@ -111,7 +105,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         if (!solo && managedRooms) {
             add(RailCell(Icons.Filled.SupervisedUserCircle, stringResource(Res.string.room_managed_room)) { managedChooser = true })
         }
-        add(RailCell(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.room_overflow_leave_room)) { askLeave.value = true })
+        add(RailCell(Icons.AutoMirrored.Filled.Logout, stringResource(Res.string.room_overflow_leave_room)) { ui.askLeave.value = true })
     }
 
     // Fold the actions behind More when the window cannot hold every cell beside the transport.
@@ -159,13 +153,6 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         }
     }
 
-    AskModal(
-        open = askLeave,
-        title = stringResource(Res.string.room_overflow_leave_room),
-        text = stringResource(Res.string.room_leave_question),
-        destructive = true,
-        onYes = { viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.goHome() } },
-    )
 }
 
 /** One cell: a glyph in a 42dp square, accent when its panel is open, the shared control states. */

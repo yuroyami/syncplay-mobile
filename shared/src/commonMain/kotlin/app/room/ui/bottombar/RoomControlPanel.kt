@@ -25,14 +25,23 @@ import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.DOUBLETAP_SEEK
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.ScrubTrack
+import app.utils.platformCallback
+import syncplaymobile.shared.generated.resources.room_brightness
+import syncplaymobile.shared.generated.resources.room_volume
+import kotlin.math.roundToInt
 import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
 import app.preferences.settings.SettingRow
 import app.preferences.watchPref
 import app.theme.Space
-import app.theme.Type
-import app.theme.palette
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.GlyphButton
@@ -185,6 +194,18 @@ fun RoomControlPanelCard(modifier: Modifier) {
     ) {
         DOUBLETAP_SEEK.SettingRow()
         SWIPE_GESTURES.SettingRow()
+        // The swipes' equivalents, for anyone who cannot swipe: two tracks that set the same values.
+        val maxVolume = viewmodel.player.getMaxVolume().coerceAtLeast(1)
+        var volume by remember { mutableIntStateOf(viewmodel.player.getCurrentVolume()) }
+        var brightness by remember { mutableFloatStateOf(platformCallback.getCurrentBrightness()) }
+        LevelRow(stringResource(Res.string.room_volume), volume.toFloat() / maxVolume, "${volume * 100 / maxVolume}%") { f ->
+            volume = (f * maxVolume).roundToInt()
+            viewmodel.player.changeCurrentVolume(volume)
+        }
+        LevelRow(stringResource(Res.string.room_brightness), brightness, "${(brightness * 100).roundToInt()}%") { f ->
+            brightness = f
+            platformCallback.changeCurrentBrightness(f)
+        }
     }
 
     TracksModal(
@@ -201,6 +222,18 @@ fun RoomControlPanelCard(modifier: Modifier) {
     )
 
     SubtitleSearchModal(open = showSubtitleSearch, onDismiss = { showSubtitleSearch = false })
+}
+
+@Composable
+private fun LevelRow(label: String, value: Float, shown: String, onValue: (Float) -> Unit) {
+    val p = palette
+    Column(Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
+            Text(shown, style = Type.value, color = p.inkDim)
+        }
+        ScrubTrack(value = value.coerceIn(0f, 1f), onValueChange = onValue, describe = { "${(it * 100).roundToInt()} percent" }, name = label)
+    }
 }
 
 @Composable

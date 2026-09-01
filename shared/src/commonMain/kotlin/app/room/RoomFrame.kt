@@ -1,5 +1,6 @@
 package app.room
 
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -53,7 +54,7 @@ fun RoomFrame(
     Box(modifier.fillMaxSize()) {
         if (topStart != null) {
             Box(
-                Modifier.align(Alignment.TopStart)
+                Modifier.align(Alignment.TopStart).focusGroup()
                     .windowInsetsPadding(topInsets)
                     .windowInsetsPadding(sideInsets)
                     .padding(start = Space.gapTight, top = Space.gapTight)
@@ -62,7 +63,7 @@ fun RoomFrame(
         }
         if (rail != null) {
             Box(
-                Modifier.align(Alignment.TopEnd)
+                Modifier.align(Alignment.TopEnd).focusGroup()
                     .zIndex(12f)
                     .windowInsetsPadding(topInsets)
                     .windowInsetsPadding(sideInsets)
@@ -71,7 +72,7 @@ fun RoomFrame(
         }
         if (chat != null) {
             Box(
-                Modifier.align(Alignment.TopStart)
+                Modifier.align(Alignment.TopStart).focusGroup()
                     .then(if (tall) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.44f))
                     .fillMaxHeight()
                     .windowInsetsPadding(topInsets)
@@ -81,7 +82,7 @@ fun RoomFrame(
         }
         if (side != null) {
             Box(
-                Modifier.align(Alignment.CenterEnd)
+                Modifier.align(Alignment.CenterEnd).focusGroup()
                     .then(if (tall) Modifier.fillMaxWidth() else Modifier)
                     .fillMaxHeight()
                     .zIndex(10f)
@@ -96,10 +97,10 @@ fun RoomFrame(
             ) { side() }
         }
         if (bottom != null) {
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { bottom() }
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().focusGroup()) { bottom() }
         }
         if (center != null) {
-            Box(Modifier.align(Alignment.Center)) { center() }
+            Box(Modifier.align(Alignment.Center).focusGroup()) { center() }
         }
     }
 }

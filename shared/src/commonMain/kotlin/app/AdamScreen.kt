@@ -38,6 +38,24 @@ import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
 import app.theme.TypeRoles
 import app.theme.appTypography
+import app.theme.Motion
+import app.uicomponents.LocalWidthClass
+import app.uicomponents.currentWidthClass
+import app.utils.reducedMotion
+import app.utils.get
+import app.preferences.Preferences.REDUCE_MOTION
+import app.preferences.flow
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.navigation3.scene.Scene
 import app.uicomponents.lexendFont
 
 /** Provides access to the global [SyncplayViewmodel] instance shared across the app. */
@@ -101,15 +119,30 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalTheme provides currentTheme,
         LocalType provides typeRoles,
         LocalPalette provides designPalette,
+        LocalWidthClass provides currentWidthClass(),
     ) {
         MaterialTheme(
             colorScheme = currentTheme.dynamicScheme,
             typography = appTypography,
         ) {
             GlassBackdrop {
+                // Reduced motion: the platform setting or the switch, read once per change.
+                LaunchedEffect(Unit) {
+                    REDUCE_MOTION.flow().collect { Motion.reduced = it || reducedMotion() }
+                }
+                val slidePx = with(LocalDensity.current) { 24.dp.roundToPx() }
+
                 NavDisplay(
                 backStack = backstack,
-                onBack = {},
+                onBack = {
+                    // In the room a back press asks first; anywhere else it pops.
+                    val room = globalviewmodel.roomWeakRef?.get()
+                    if (backstack.lastOrNull() is Screen.Room && room != null) room.uiState.askLeave.value = true
+                    else if (backstack.size > 1) backstack.removeAt(backstack.lastIndex)
+                },
+                transitionSpec = { pageTransition(pop = false, slidePx) },
+                popTransitionSpec = { pageTransition(pop = true, slidePx) },
+                predictivePopTransitionSpec = { pageTransition(pop = true, slidePx) },
                 entryDecorators = listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator()
@@ -170,4 +203,17 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
             }
         }
     }
+}
+
+/**
+ * A push slides 24dp in from the trailing edge and fades; a pop is the reverse. Entering or
+ * leaving the room is a mode change, so it crossfades. Reduced motion collapses all of it.
+ */
+private fun AnimatedContentTransitionScope<Scene<Screen>>.pageTransition(pop: Boolean, slidePx: Int): ContentTransform {
+    val toRoom = targetState.entries.lastOrNull()?.contentKey is Screen.Room
+    val fromRoom = initialState.entries.lastOrNull()?.contentKey is Screen.Room
+    if (Motion.reduced || toRoom || fromRoom) return fadeIn(Motion.move()) togetherWith fadeOut(Motion.move())
+    val direction = if (pop) -1 else 1
+    return (fadeIn(Motion.move()) + slideInHorizontally(Motion.move()) { direction * slidePx }) togetherWith
+        (fadeOut(Motion.move()) + slideOutHorizontally(Motion.move()) { -direction * slidePx })
 }

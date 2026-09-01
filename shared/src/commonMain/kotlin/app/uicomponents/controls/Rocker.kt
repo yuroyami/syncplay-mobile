@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -59,6 +61,7 @@ fun Rocker(
             .hoverable(source, enabled)
             .semantics { if (name != null) contentDescription = name }
             .controlStates(source, Radius.controlShape, enabled = enabled)
+            .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         contentAlignment = Alignment.Center,
     ) {
