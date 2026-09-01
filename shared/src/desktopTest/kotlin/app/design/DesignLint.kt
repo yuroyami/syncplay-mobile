@@ -21,10 +21,10 @@ class DesignLint {
     private val bridgeFiles = setOf("Tokens.kt", "AppTypography.kt", "SaveableTheme.kt")
 
     private val baseline = mapOf(
-        "material3 component imports" to 121,
-        "sp literals outside Tokens.kt" to 81,
-        "MaterialTheme.typography or ripple" to 32,
-        "text sizes under 11sp" to 19,
+        "material3 component imports" to 96,
+        "sp literals outside Tokens.kt" to 54,
+        "MaterialTheme.typography or ripple" to 25,
+        "text sizes under 11sp" to 6,
     )
 
     private fun sources(): List<File> = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()

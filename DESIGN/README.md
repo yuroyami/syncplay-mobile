@@ -147,10 +147,19 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   modals for tracks, subtitle search and chapters.
 - ROOM_SHELL: `RoomFrame` docks, the rail, the side panels at a real width, HUD auto-hide behind
   its switch, PiP and solo resolved in the frame, the artwork.
-- STATUS_AND_OSD: the notice queue in the room, the status line.
+- STATUS_AND_OSD: the notice queue in the room, the status line, the gesture readout in the
+  notice shape.
 - ROOM_CARDS: the roster rows and the panel chrome.
+- CHAT: the two message shapes with grouping and the time gutter, the composer on the hairline
+  field, the size floor, the fading layout on the same rows, the GIF drawer with its failure
+  state.
+- GESTURES: double taps accumulate into one seek, long press previews and commits once, the
+  directional mark and the first-drag zone wash.
+- MEDIA_INTAKE: the route sheet, the link route with recognition and the explicit failure, the
+  media folders editor. Not done: the indexed file count and the lost-access state (the registry
+  has no API for either yet), and the Android chooser on persistable grants.
 
-Still to do: CHAT, GESTURES 3 and 4, MEDIA_INTAKE, HOME, THEMING, SERVER_HOST, the remaining
+Still to do: HOME, THEMING, SERVER_HOST, the remaining
 POPUPS and GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
 ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
 to those surfaces.
