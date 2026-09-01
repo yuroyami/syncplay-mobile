@@ -89,6 +89,13 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.server_host_disable_ready
+import syncplaymobile.shared.generated.resources.server_host_disable_chat
+import syncplaymobile.shared.generated.resources.server_host_isolate_rooms
+import syncplaymobile.shared.generated.resources.server_host_motd
+import syncplaymobile.shared.generated.resources.server_host_password_detail
+import syncplaymobile.shared.generated.resources.server_host_password
+import syncplaymobile.shared.generated.resources.server_host_port
 import syncplaymobile.shared.generated.resources.room_hud_auto_hide_summary
 import syncplaymobile.shared.generated.resources.room_hud_auto_hide_title
 import syncplaymobile.shared.generated.resources.language_codes
@@ -664,6 +671,36 @@ object Preferences {
         summary = Res.string.uisetting_error_color_summary
         icon = Icons.Filled.Brush
         extraConfig = PrefExtraConfig.ColorPick
+    }
+
+    /** ------------ Hosted server (persisted so a host does not retype them) ------------ */
+    val SERVER_PORT = Pref("pref_server_port", "8999") {
+        title = Res.string.server_host_port
+        icon = Icons.Filled.Keyboard
+        extraConfig = PrefExtraConfig.TextField(keyboardType = 1)
+    }
+    val SERVER_PASSWORD = Pref("pref_server_password", "") {
+        title = Res.string.server_host_password
+        summary = Res.string.server_host_password_detail
+        icon = Icons.Filled.Keyboard
+        extraConfig = PrefExtraConfig.TextField()
+    }
+    val SERVER_MOTD = Pref("pref_server_motd", "") {
+        title = Res.string.server_host_motd
+        icon = Icons.Filled.Keyboard
+        extraConfig = PrefExtraConfig.TextField()
+    }
+    val SERVER_ISOLATE_ROOMS = Pref("pref_server_isolate_rooms", true) {
+        title = Res.string.server_host_isolate_rooms
+        icon = Icons.Filled.Pin
+    }
+    val SERVER_DISABLE_CHAT = Pref("pref_server_disable_chat", false) {
+        title = Res.string.server_host_disable_chat
+        icon = Icons.Filled.Pin
+    }
+    val SERVER_DISABLE_READY = Pref("pref_server_disable_ready", false) {
+        title = Res.string.server_host_disable_ready
+        icon = Icons.Filled.Pin
     }
 
     /** ------------ Chat Properties -------------*/

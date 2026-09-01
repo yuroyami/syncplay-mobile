@@ -15,6 +15,9 @@ import platform.UIKit.UIImpactFeedbackGenerator
 import platform.UIKit.UIImpactFeedbackStyle
 import platform.UIKit.UIScreen
 import platform.UIKit.shortcutItems
+import platform.UIKit.UIActivityViewController
+import platform.UIKit.UIPasteboard
+import kotlinx.serialization.json.Json
 
 /**
  * iOS-specific implementation of platform callbacks for system-level operations.
@@ -111,11 +114,11 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     /**
-     * Adds a Home Screen Quick Action for joining a room. The [JoinConfig] is encoded into the
-     * shortcut's `type` string (joined by `','#'`) so it can be parsed back when tapped.
+     * Adds a Home Screen Quick Action for joining a room. The [JoinConfig] rides in the
+     * shortcut's `type` string as JSON, which is what [handleShortcut] decodes.
      */
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
-        val type = with(joinInfo) { listOf(user, room, ip, port.toString(), pw) }.joinToString("','#'")
+        val type = Json.encodeToString(joinInfo)
 
         val shortcutItem = UIApplicationShortcutItem(
             type = type,
@@ -126,9 +129,6 @@ object ApplePlatformCallback : PlatformCallback {
         )
 
         UIApplication.sharedApplication.shortcutItems = UIApplication.sharedApplication.shortcutItems?.plus(shortcutItem)
-
-        //TODO: Localize
-        snackItAsync("Shortcut added: ${joinInfo.room}")
     }
 
     /** Removes all room-join Quick Actions from the Home Screen. */
@@ -149,5 +149,14 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
         onResult(null)
+    }
+
+    override fun copyText(text: String) {
+        UIPasteboard.generalPasteboard.string = text
+    }
+
+    override fun shareText(text: String) {
+        val sheet = UIActivityViewController(activityItems = listOf(text), applicationActivities = null)
+        UIApplication.sharedApplication.keyWindow?.rootViewController?.presentViewController(sheet, animated = true, completion = null)
     }
 }

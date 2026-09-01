@@ -3,6 +3,8 @@ package app.desktop
 import app.PlatformCallback
 import app.home.HomeViewmodel
 import app.home.JoinConfig
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 
 /**
  * Desktop implementation of the platform callback surface. Most operations are inherently
@@ -47,4 +49,10 @@ object DesktopPlatformCallback : PlatformCallback {
         // FileKit's own picker is the desktop path; the no-filter fallback is Android-only.
         onResult(null)
     }
+
+    override fun copyText(text: String) {
+        runCatching { Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null) }
+    }
+
+    override fun shareText(text: String) = copyText(text)
 }

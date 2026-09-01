@@ -100,4 +100,10 @@ interface PlatformCallback {
      *                 with persistable read permission; iOS returns a `file://` path.
      */
     fun launchSystemFilePicker(onResult: (String?) -> Unit)
+
+    /** Puts [text] on the system clipboard. */
+    fun copyText(text: String)
+
+    /** Opens the system share sheet with [text]; desktop copies instead. */
+    fun shareText(text: String)
 }

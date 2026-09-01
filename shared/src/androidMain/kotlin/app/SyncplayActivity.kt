@@ -8,6 +8,8 @@ import android.app.PictureInPictureParams
 import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
@@ -242,6 +244,18 @@ class SyncplayActivity : ComponentActivity() {
              * through [pendingSystemFilePickerCallback] back to the caller. Helpful for mpv to
              * play SMB-backed files that are hidden by FileKit's extension-based filter.
              */
+            override fun copyText(text: String) {
+                getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(app.utils.appName, text))
+            }
+
+            override fun shareText(text: String) {
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+                startActivity(Intent.createChooser(send, null))
+            }
+
             override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
                 pendingSystemFilePickerCallback = onResult
                 runCatching {
@@ -296,7 +310,7 @@ class SyncplayActivity : ComponentActivity() {
                     user = getStringExtra("name") ?: "",
                     room = getStringExtra("room") ?: "",
                     ip = getStringExtra("serverip") ?: "",
-                    port = getIntExtra("serverport", 80),
+                    port = getIntExtra("serverport", 8997),
                     pw = getStringExtra("serverpw") ?: ""
                 )
 

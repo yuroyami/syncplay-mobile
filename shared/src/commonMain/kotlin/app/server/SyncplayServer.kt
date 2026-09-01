@@ -367,7 +367,24 @@ class SyncplayServer(
     }
 }
 
+/** How a log line is drawn: a join is good news, an error is red, the rest is quiet. */
+enum class ServerLogLevel {
+    Info, Ok, Error;
+
+    companion object {
+        fun of(message: String): ServerLogLevel {
+            val m = message.lowercase()
+            return when {
+                listOf("fail", "error", "invalid", "taken").any { it in m } -> Error
+                "joined" in m || "started" in m -> Ok
+                else -> Info
+            }
+        }
+    }
+}
+
 data class ServerLogEntry(
     val timestamp: Long,
-    val message: String
+    val message: String,
+    val level: ServerLogLevel = ServerLogLevel.of(message),
 )

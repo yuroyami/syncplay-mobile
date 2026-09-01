@@ -644,4 +644,30 @@
     <string name="media_folders">Media folders</string>
     <string name="media_folders_brief">%1$s looks in these folders for a file a shared playlist names. Small folders are faster.</string>
     <string name="media_folders_empty">No folders yet.</string>
+    <!-- Server host (design overhaul) -->
+    <string name="server_host_on_network">On this network</string>
+    <string name="server_host_over_internet">Over the internet</string>
+    <string name="server_host_copy">Copy</string>
+    <string name="server_host_share">Share</string>
+    <string name="server_host_port_taken">Port %1$d is taken</string>
+    <string name="server_host_log_errors_only">Errors only</string>
+    <string name="server_host_ios_paused">Hosting pauses while the app is in the background.</string>
+    <string name="server_host_config">Configuration</string>
+    <string name="server_host_password_detail">Stored as typed, like the join password.</string>
+    <!-- Home (design overhaul) -->
+    <string name="connect_watch_alone">Watch alone</string>
+    <string name="connect_official">Official</string>
+    <string name="connect_custom">Custom</string>
+    <string name="connect_custom_help">The address and port your host gave you.</string>
+    <string name="connect_password_help">Only if the server asks for one.</string>
+    <string name="home_shortcut_saved">Shortcut saved: %1$s</string>
+    <string name="tips_next">Next tip</string>
+    <!-- Theming (design overhaul) -->
+    <string name="theme_delete_question">Delete this theme?</string>
+    <string name="theme_save_as_new">Save as new</string>
+    <string name="theme_value_dark">dark</string>
+    <string name="theme_value_light">light</string>
+    <string name="theme_value_amoled">amoled</string>
+    <string name="theme_auto">Auto</string>
+    <string name="theme_customize_dark">Dark</string>
 </resources>
