@@ -63,6 +63,7 @@ fun ScrubTrack(
     describe: (Float) -> String = { "${(it * 100).roundToInt()} percent" },
     name: String? = null,
     hitHeight: Dp = Space.touchMin,
+    onLongPress: (() -> Unit)? = null,
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
@@ -126,13 +127,16 @@ fun ScrubTrack(
                 },
                 onDragStopped = { latestFinished?.invoke() },
             )
-            .pointerInput(enabled) {
+            .pointerInput(enabled, onLongPress != null) {
                 if (!enabled) return@pointerInput
-                detectTapGestures { tap ->
-                    raw = fractionAt(tap.x)
-                    latestChange(raw)
-                    latestFinished?.invoke()
-                }
+                detectTapGestures(
+                    onLongPress = onLongPress?.let { hold -> { _ -> hold() } },
+                    onTap = { tap ->
+                        raw = fractionAt(tap.x)
+                        latestChange(raw)
+                        latestFinished?.invoke()
+                    },
+                )
             }
             .controlStates(source, Radius.controlShape, enabled = enabled),
     ) {

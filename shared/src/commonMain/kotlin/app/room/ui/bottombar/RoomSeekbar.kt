@@ -77,6 +77,8 @@ fun RoomSeekbar(modifier: Modifier) {
     var preview by remember { mutableFloatStateOf(0f) }
     var dragFromMs by remember { mutableLongStateOf(0L) }
     var trackWidthPx by remember { mutableIntStateOf(0) }
+    var showChapters by remember { mutableStateOf(false) }
+    val hasChapterList = viewmodel.player.supportsChapters && chapters.isNotEmpty()
 
     val known = durationMs > 0L
     val fraction = when {
@@ -121,6 +123,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 keyStep = 0f,
                 describe = { f -> formatTimecode((f * durationMs).roundToLong()) },
                 name = stringResource(Res.string.room_seekbar_name),
+                onLongPress = if (hasChapterList) ({ showChapters = true }) else null,
                 onValueChange = { f ->
                     if (!dragging) {
                         dragging = true
@@ -157,6 +160,8 @@ fun RoomSeekbar(modifier: Modifier) {
         }
         Timecode(if (known) durationMs else null, dim = true)
     }
+
+    ChaptersModal(open = showChapters, onDismiss = { showChapters = false })
 }
 
 /** The target timecode above the finger, on the chrome tier, clamped inside the track. */

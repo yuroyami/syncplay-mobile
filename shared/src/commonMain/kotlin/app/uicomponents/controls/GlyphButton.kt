@@ -30,13 +30,13 @@ import app.theme.palette
 fun GlyphButton(
     icon: ImageVector,
     name: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     size: Dp = Space.glyph,
     tint: Color = palette.ink,
     target: Dp = Space.touchMin,
     focusRequester: FocusRequester? = null,
+    onClick: () -> Unit,
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }

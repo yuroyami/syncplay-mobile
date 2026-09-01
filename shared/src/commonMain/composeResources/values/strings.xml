@@ -222,7 +222,7 @@
     <string name="room_undo_seek_message">This will rewind everyone in the room back to where you were before your last seek (%1$s → %2$s).</string>
     <string name="room_undo_seek_confirm">Undo seek</string>
     <string name="room_undo_seek_cancel">Cancel</string>
-    <string name="room_undo_seek_always">Always do — don't ask again</string>
+    <string name="room_undo_seek_always">Always</string>
     <string name="room_seek_toposition_title">Seek to precise position</string>
     <string name="room_seek_toposition_timeformat">Hour:Minute:Second</string>
     <string name="room_seek_toposition_timediff">Skipping %1$sseconds of time</string>
@@ -595,4 +595,13 @@
     <string name="room_seekbar_name">Position</string>
     <string name="room_jump_back">Back %1$d seconds</string>
     <string name="room_jump_forward">Forward %1$d seconds</string>
+    <!-- Control panel (design overhaul) -->
+    <string name="room_control_panel">Controls</string>
+    <string name="room_aspect_ratio">Aspect ratio</string>
+    <string name="room_seek_to">Seek to</string>
+    <string name="room_undo_seek">Undo seek</string>
+    <string name="room_tracks">Audio and subtitles</string>
+    <string name="room_audio_track_selected">Audio: %1$s</string>
+    <string name="room_subtitle_track_selected">Subtitles: %1$s</string>
+    <string name="room_sub_search_language">Language</string>
 </resources>

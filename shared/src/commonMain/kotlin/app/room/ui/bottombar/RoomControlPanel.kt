@@ -1,59 +1,15 @@
 package app.room.ui.bottombar
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardTab
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ClosedCaptionDisabled
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.HearingDisabled
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.RecordVoiceOver
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Theaters
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Switch
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -64,944 +20,209 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
-import app.player.PlayerImpl
 import app.preferences.Preferences.DOUBLETAP_SEEK
-import app.preferences.Preferences.SUBTITLE_SEARCH_LANG
 import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
+import app.preferences.settings.SettingRow
 import app.preferences.watchPref
-import app.subtitles.SubtitleDownloadResult
-import app.subtitles.SubtitleSearch
-import app.subtitles.subtitleSearchLanguages
-import syncplaymobile.shared.generated.resources.room_gestures_panel_title
-import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
-import syncplaymobile.shared.generated.resources.room_sub_search_downloads
-import syncplaymobile.shared.generated.resources.room_sub_search_hint
-import syncplaymobile.shared.generated.resources.room_sub_search_no_results
-import syncplaymobile.shared.generated.resources.room_sub_search_title
-import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_title
-import syncplaymobile.shared.generated.resources.uisetting_swipe_gestures_title
-import app.theme.Theming.READY_GREEN
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleIcon
-import app.uicomponents.FlexibleText
-import app.uicomponents.jostFont
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.AccentAction
+import app.uicomponents.controls.Feedback
+import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.frames.Modal
+import app.uicomponents.frames.ModalSize
 import app.utils.ccExs
 import app.utils.timestampFromMillis
-import com.composeunstyled.Thumb
-import com.composeunstyled.ThumbVisibility
-import com.composeunstyled.UnstyledVerticalScrollbar
-import com.composeunstyled.rememberScrollbarState
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_button_desc_audio_tracks
-import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks
-import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks_import_from_file
-import syncplaymobile.shared.generated.resources.room_subs_download_failed
-import syncplaymobile.shared.generated.resources.room_subs_downloaded_remaining
-import syncplaymobile.shared.generated.resources.room_subs_quota_reached
-import syncplaymobile.shared.generated.resources.room_chapters
-import syncplaymobile.shared.generated.resources.room_chapters_jump
-import syncplaymobile.shared.generated.resources.room_chapters_skip
+import syncplaymobile.shared.generated.resources.room_aspect_ratio
+import syncplaymobile.shared.generated.resources.room_control_panel
+import syncplaymobile.shared.generated.resources.room_gestures_panel_title
 import syncplaymobile.shared.generated.resources.room_no_recent_seek
+import syncplaymobile.shared.generated.resources.room_seek_to
 import syncplaymobile.shared.generated.resources.room_seek_undone
-import syncplaymobile.shared.generated.resources.room_selected_sub_error
-import syncplaymobile.shared.generated.resources.room_sub_track_disable
+import syncplaymobile.shared.generated.resources.room_tracks
+import syncplaymobile.shared.generated.resources.room_undo_seek
 import syncplaymobile.shared.generated.resources.room_undo_seek_always
 import syncplaymobile.shared.generated.resources.room_undo_seek_cancel
 import syncplaymobile.shared.generated.resources.room_undo_seek_confirm
 import syncplaymobile.shared.generated.resources.room_undo_seek_message
 import syncplaymobile.shared.generated.resources.room_undo_seek_title
-import app.uicomponents.GlassModalBottomSheet
-import app.uicomponents.GlassDropdownMenu
-import app.uicomponents.GlassAlertDialog
 
+/*
+ * The control panel: a row of glyph buttons, each opening one modal. The audio and subtitle
+ * list, the subtitle search and the chapter list live in their own files.
+ */
+
+/** The entry glyph in the transport bar. */
 @Composable
 fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<Boolean>) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
-
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     if (hasVideo) {
-        FlexibleIcon(
-            modifier = modifier,
+        GlyphButton(
             icon = Icons.Filled.VideoSettings,
-            size = 47,
-            shadowColors = listOf(Color.Black),
+            name = stringResource(Res.string.room_control_panel),
+            size = Space.glyphLarge,
+            modifier = modifier,
             onClick = {
                 popupStateAddMedia.value = false
                 cardController.controlPanel.value = !cardController.controlPanel.value
-            }
+            },
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomControlPanelCard(modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
-    val hapticFeedback = LocalHapticFeedback.current
-
-    fun haptic() {
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
-    }
-
-    val composeScope = rememberCoroutineScope()
 
     val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
-        file?.let {
-            scope.launch(Dispatchers.IO) {
-                viewmodel.player.loadExternalSub(it)
-            }
-        }
+        file?.let { scope.launch(Dispatchers.IO) { viewmodel.player.loadExternalSub(it) } }
     }
 
-    /* Track sheet state */
-    var showTrackSheet by remember { mutableStateOf(false) }
+    var showTracks by remember { mutableStateOf(false) }
     var showSubtitleSearch by remember { mutableStateOf(false) }
+    var showGestures by remember { mutableStateOf(false) }
 
-    // iOS FileKit picker race (FileKit #575): launching a picker while a Compose modal
-    // (this ModalBottomSheet) is closing fires the native delegate twice -> "Already resumed"
-    // crash. Dismiss the sheet first, then launch once the dismissal settles.
+    // iOS FileKit picker race (FileKit #575): launching a picker while a modal is closing fires
+    // the native delegate twice ("Already resumed"). Dismiss first, launch once it has settled.
     var launchSubtitlePickerAfterDismiss by remember { mutableStateOf(false) }
-    LaunchedEffect(showTrackSheet, launchSubtitlePickerAfterDismiss) {
-        if (!showTrackSheet && launchSubtitlePickerAfterDismiss) {
+    LaunchedEffect(showTracks, launchSubtitlePickerAfterDismiss) {
+        if (!showTracks && launchSubtitlePickerAfterDismiss) {
             launchSubtitlePickerAfterDismiss = false
             subtitlePicker.launch()
         }
     }
-    /* Undo-seek confirmation dialog state — null while dismissed; non-null carries the seek pair to undo. */
+
     var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
     val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
 
-    val iconSize = 44
+    fun undo(seek: Pair<Long, Long>) {
+        cardController.controlPanel.value = false
+        viewmodel.dispatcher.undoSeek(seek)
+        viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
+    }
+
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        /* Aspect Ratio */
-        FlexibleIcon(
-            icon = Icons.Filled.AspectRatio,
-            size = iconSize,
-            shadowColors = listOf(Color.Black)
-        ) {
-            composeScope.launch(Dispatchers.IO) {
-                val newAspectRatio = viewmodel.player.switchAspectRatio()
-                viewmodel.dispatchOSD { newAspectRatio }
+        GlyphButton(Icons.Filled.AspectRatio, name = stringResource(Res.string.room_aspect_ratio), size = Space.glyphLarge) {
+            scope.launch(Dispatchers.IO) {
+                val label = viewmodel.player.switchAspectRatio()
+                viewmodel.dispatchOSD { label }
             }
         }
 
-        /* Screenshot button removed for now: it did nothing perceivable on most engines.
-         * PlayerImpl.takeScreenshot() stays available for a future, working implementation. */
-
-        /* Seek To */
-        FlexibleIcon(
-            icon = Icons.Filled.BrowseGallery,
-            size = iconSize,
-            shadowColors = listOf(Color.Black)
-        ) {
+        GlyphButton(Icons.Filled.BrowseGallery, name = stringResource(Res.string.room_seek_to), size = Space.glyphLarge) {
             cardController.controlPanel.value = false
             viewmodel.uiState.popupSeekToPosition.value = true
         }
 
-        /* Undo Last Seek — only user-initiated seeks are tracked (see RoomCallback.onSomeoneSeeked).
-         * Shows a confirmation dialog unless the user has opted out via "Always do". */
-        FlexibleIcon(
-            icon = Icons.Filled.History,
-            size = iconSize,
-            shadowColors = listOf(Color.Black)
-        ) {
-            if (viewmodel.seeks.isEmpty()) {
-                viewmodel.dispatchOSD { getString(Res.string.room_no_recent_seek) }
-                return@FlexibleIcon
-            }
-
-            val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FlexibleIcon
-
-            if (undoNoConfirm) {
-                cardController.controlPanel.value = false
-                performUndoSeek(viewmodel, lastSeek, scope)
-            } else {
-                pendingUndoSeek = lastSeek
+        /* Only the local user's seeks are undoable (see RoomCallback.onSomeoneSeeked). */
+        GlyphButton(Icons.Filled.History, name = stringResource(Res.string.room_undo_seek), size = Space.glyphLarge) {
+            val last = viewmodel.seeks.lastOrNull()
+            when {
+                last == null -> viewmodel.dispatchOSD { getString(Res.string.room_no_recent_seek) }
+                undoNoConfirm -> undo(last)
+                else -> pendingUndoSeek = last
             }
         }
 
-        /* Touch gestures: quick toggles for double-tap seek and swipe brightness/volume.
-         * Lives here (not in the settings card) so gestures can be flipped mid-playback. */
-        run {
-            val gesturesPopup = remember { mutableStateOf(false) }
-            val doubletapSeek by DOUBLETAP_SEEK.watchPref()
-            val swipeGestures by SWIPE_GESTURES.watchPref()
-
-            ControlPanelDropdownButton(
-                icon = Icons.Filled.TouchApp,
-                onClick = { haptic() },
-                popupVisibility = gesturesPopup,
-                popupTitle = stringResource(Res.string.room_gestures_panel_title),
-                popupItems = listOf(
-                    ControlPanelDropdownAction(
-                        text = stringResource(Res.string.uisetting_doubletap_seek_title),
-                        isChecked = doubletapSeek,
-                        dismissOnClick = false,
-                        action = {
-                            scope.launch { DOUBLETAP_SEEK.set(!doubletapSeek) }
-                        }
-                    ),
-                    ControlPanelDropdownAction(
-                        text = stringResource(Res.string.uisetting_swipe_gestures_title),
-                        isChecked = swipeGestures,
-                        dismissOnClick = false,
-                        action = {
-                            scope.launch { SWIPE_GESTURES.set(!swipeGestures) }
-                        }
-                    )
-                )
-            )
+        /* Gesture switches live here, not in settings, so they can be flipped mid-playback. */
+        GlyphButton(Icons.Filled.TouchApp, name = stringResource(Res.string.room_gestures_panel_title), size = Space.glyphLarge) {
+            Feedback.tick()
+            showGestures = true
         }
 
-        /* Unified Audio & Subtitles button */
-        FlexibleIcon(
-            icon = Icons.Filled.Subtitles,
-            size = iconSize,
-            shadowColors = listOf(Color.Black)
-        ) {
-            haptic()
+        GlyphButton(Icons.Filled.Subtitles, name = stringResource(Res.string.room_tracks), size = Space.glyphLarge) {
+            Feedback.tick()
             viewmodel.viewModelScope.launch {
+                // The list never opens without media; the engine needs one to list tracks.
                 viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
-                showTrackSheet = true
+                showTracks = true
             }
-        }
-
-        /* Chapters */
-        if (viewmodel.player.supportsChapters && viewmodel.media?.chapters?.isNotEmpty() == true) {
-            val chaptersPopup = remember { mutableStateOf(false) }
-            val skipStr = stringResource(Res.string.room_chapters_skip)
-            val items by remember(chaptersPopup.value) {
-                mutableStateOf(
-                    buildList {
-                        add(
-                            ControlPanelDropdownAction(
-                                text = skipStr,
-                                icon = Icons.AutoMirrored.Filled.KeyboardTab,
-                                action = {
-                                    haptic()
-
-                                    viewmodel.viewModelScope.launch {
-                                        viewmodel.player.skipChapter()
-                                        viewmodel.dispatchOSD {
-                                            getString(Res.string.room_chapters_skip)
-                                        }
-                                    }
-                                }
-                            )
-                        )
-
-                        for (chapter in (viewmodel.media?.chapters) ?: listOf()) {
-                            add(
-                                ControlPanelDropdownAction(
-                                    text = "${chapter.name} [${timestampFromMillis(chapter.timeOffsetMillis)}]",
-                                    icon = Icons.Filled.Theaters,
-                                    action = {
-                                        haptic()
-
-                                        viewmodel.viewModelScope.launch {
-                                            viewmodel.player.jumpToChapter(chapter)
-                                            viewmodel.dispatchOSD {
-                                                getString(Res.string.room_chapters_jump, chapter.name)
-                                            }
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                    }
-                )
-            }
-            ControlPanelDropdownButton(
-                icon = Icons.Filled.Theaters,
-                onClick = {
-                    haptic()
-                    // No analyzeChapters() here: chapters are immutable file metadata already
-                    // populated by the seekbar's LaunchedEffect(media.fileName), and this button
-                    // only renders when media.chapters is non-empty. Re-analyzing on VLCKit
-                    // clear()s + delay(500)s the shared chapter list, blanking the seekbar dots.
-                    chaptersPopup.value = true
-                },
-                popupVisibility = chaptersPopup,
-                popupTitle = stringResource(Res.string.room_chapters),
-                popupItems = items
-            )
         }
     }
 
-    /* Background opacity for modal sheets — follows the in-room UI transparency preference.
-     * Clamped to a sane minimum so the sheet remains readable even at low opacity values. */
-    val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
-    val sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        .copy(alpha = uiOpacity.coerceIn(0.55f, 1f))
+    UndoSeekModal(
+        seek = pendingUndoSeek,
+        onDismiss = { pendingUndoSeek = null },
+        onUndo = { always ->
+            val seek = pendingUndoSeek ?: return@UndoSeekModal
+            pendingUndoSeek = null
+            if (always) scope.launch { UNDO_SEEK_NO_CONFIRM.set(true) }
+            undo(seek)
+        },
+    )
 
-    /* ===== Undo Seek Confirmation Dialog ===== */
-    pendingUndoSeek?.let { seekToUndo ->
-        GlassAlertDialog(
-            onDismissRequest = { pendingUndoSeek = null },
-            title = {
-                Text(
-                    text = stringResource(Res.string.room_undo_seek_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(
-                        Res.string.room_undo_seek_message,
-                        timestampFromMillis(seekToUndo.second), // "from" position (where we are now)
-                        timestampFromMillis(seekToUndo.first)   // "to" position (where we want to go back to)
-                    ),
-                    fontSize = 13.sp
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    pendingUndoSeek = null
-                    cardController.controlPanel.value = false
-                    performUndoSeek(viewmodel, seekToUndo, scope)
-                }) {
-                    Text(stringResource(Res.string.room_undo_seek_confirm))
-                }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = {
-                        // "Always do" — persist the preference, then perform the undo immediately.
-                        scope.launch { UNDO_SEEK_NO_CONFIRM.set(true) }
-                        pendingUndoSeek = null
-                        cardController.controlPanel.value = false
-                        performUndoSeek(viewmodel, seekToUndo, scope)
-                    }) {
-                        Text(
-                            stringResource(Res.string.room_undo_seek_always),
-                            fontSize = 11.sp
-                        )
-                    }
-                    TextButton(onClick = { pendingUndoSeek = null }) {
-                        Text(stringResource(Res.string.room_undo_seek_cancel))
-                    }
-                }
-            }
-        )
-    }
-
-    /* ===== Audio & Subtitles Bottom Sheet ===== */
-    if (showTrackSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        val audioTracks = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.AUDIO } ?: emptyList()
-        val subtitleTracks = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.SUBTITLE } ?: emptyList()
-        val audioListState = rememberLazyListState()
-        val subtitleListState = rememberLazyListState()
-
-        GlassModalBottomSheet(
-            onDismissRequest = { showTrackSheet = false },
-            sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-        ) {
-            /* No sheet-level title: the two columns are already labeled "Audio" / "Subtitles". */
-
-            /* Split view: Audio (left) | Subtitles (right) */
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).height(320.dp)
-            ) {
-                /* Audio column */
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        verticalAlignment = CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Icon(Icons.Filled.RecordVoiceOver, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            stringResource(Res.string.room_button_desc_audio_tracks),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
-
-                    Box(modifier = Modifier.weight(1f)) {
-                        LazyColumn(
-                            state = audioListState,
-                            contentPadding = PaddingValues(vertical = 4.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            itemsIndexed(audioTracks) { i, track ->
-                                TrackRow(
-                                    label = "${i + 1}. ${track.name}",
-                                    selected = track.selected,
-                                    onClick = {
-                                        haptic()
-                                        showTrackSheet = false
-                                        viewmodel.viewModelScope.launch {
-                                            viewmodel.player.selectTrack(track, PlayerImpl.TrackType.AUDIO)
-                                        }
-                                        viewmodel.dispatchOSD { "Audio: ${track.name}" }
-                                    }
-                                )
-                            }
-                        }
-                        ListScrollbar(audioListState)
-                    }
-                }
-
-                /* Divider */
-                androidx.compose.material3.VerticalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                /* Subtitle column */
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        verticalAlignment = CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Icon(Icons.Filled.Subtitles, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            stringResource(Res.string.room_button_desc_subtitle_tracks),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
-
-                    Box(modifier = Modifier.weight(1f)) {
-                        LazyColumn(
-                            state = subtitleListState,
-                            contentPadding = PaddingValues(vertical = 4.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            /* Import from file */
-                            item {
-                                TrackRow(
-                                    label = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file),
-                                    icon = Icons.AutoMirrored.Filled.NoteAdd,
-                                    onClick = {
-                                        haptic()
-                                        launchSubtitlePickerAfterDismiss = true
-                                        showTrackSheet = false
-                                    }
-                                )
-                            }
-                            /* Search online */
-                            item {
-                                TrackRow(
-                                    label = stringResource(Res.string.room_sub_search_download_from_web),
-                                    icon = Icons.Filled.Search,
-                                    onClick = {
-                                        haptic()
-                                        showTrackSheet = false
-                                        showSubtitleSearch = true
-                                    }
-                                )
-                            }
-                            /* Disable subtitles */
-                            item {
-                                TrackRow(
-                                    label = stringResource(Res.string.room_sub_track_disable),
-                                    icon = Icons.Filled.ClosedCaptionDisabled,
-                                    onClick = {
-                                        haptic()
-                                        showTrackSheet = false
-                                        viewmodel.viewModelScope.launch {
-                                            viewmodel.player.selectTrack(null, PlayerImpl.TrackType.SUBTITLE)
-                                        }
-                                        viewmodel.dispatchOSD {
-                                            getString(Res.string.room_sub_track_disable)
-                                        }
-                                    }
-                                )
-                            }
-                            /* Available subtitle tracks */
-                            itemsIndexed(subtitleTracks) { i, track ->
-                                TrackRow(
-                                    label = "${i + 1}. ${track.name}",
-                                    selected = track.selected,
-                                    onClick = {
-                                        haptic()
-                                        showTrackSheet = false
-                                        viewmodel.viewModelScope.launch {
-                                            viewmodel.player.selectTrack(track, PlayerImpl.TrackType.SUBTITLE)
-                                        }
-                                        viewmodel.dispatchOSD { "Subtitle: ${track.name}" }
-                                    }
-                                )
-                            }
-                        }
-                        ListScrollbar(subtitleListState)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-
-    /* ===== Subtitle Search Bottom Sheet ===== */
-    if (showSubtitleSearch) {
-        val searchSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        val searchFocusManager = LocalFocusManager.current
-        val initialQuery = remember {
-            viewmodel.media?.fileName?.let { SubtitleSearch.cleanMediaName(it) } ?: ""
-        }
-        var searchQuery by remember { mutableStateOf(initialQuery) }
-        var searchResults by remember { mutableStateOf<List<app.subtitles.SubtitleResult>>(emptyList()) }
-        var isSearching by remember { mutableStateOf(false) }
-        var isDownloading by remember { mutableStateOf<Int?>(null) }
-        var downloadedOk by remember { mutableStateOf<Int?>(null) }
-        var downloadError by remember { mutableStateOf<String?>(null) }
-        val searchListState = rememberLazyListState()
-
-        /* Language filter — persisted (defaults to English); "all" drops the filter entirely. */
-        val selectedLangCode by SUBTITLE_SEARCH_LANG.watchPref()
-        var langMenuExpanded by remember { mutableStateOf(false) }
-        val selectedLangName = remember(selectedLangCode) {
-            subtitleSearchLanguages.firstOrNull { it.second == selectedLangCode }?.first
-                ?: selectedLangCode.uppercase()
-        }
-
-        fun doSearch() {
-            if (searchQuery.isBlank()) return
-            searchFocusManager.clearFocus() // dismiss keyboard so the results list isn't covered
-            scope.launch(Dispatchers.IO) {
-                isSearching = true
-                searchResults = SubtitleSearch.search(searchQuery, selectedLangCode)
-                isSearching = false
-            }
-        }
-
-        /* Auto-search on open and re-run whenever the language changes (keeps the current query). */
-        LaunchedEffect(selectedLangCode) {
-            if (searchQuery.isNotBlank()) {
-                isSearching = true
-                searchResults = SubtitleSearch.search(searchQuery, selectedLangCode)
-                isSearching = false
-            }
-        }
-
-        GlassModalBottomSheet(
-            onDismissRequest = { showSubtitleSearch = false },
-            sheetState = searchSheetState,
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-        ) {
-            Column(
-                /* No fixed height: cap at 400dp but shrink with the keyboard (imePadding), so the
-                 * query field keeps its full height while typing instead of getting crushed,
-                 * especially in landscape where the keyboard eats half the screen. */
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .imePadding()
-                    .heightIn(max = 400.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.room_sub_search_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    singleLine = true,
-                    label = { Text(stringResource(Res.string.room_sub_search_hint), fontSize = 12.sp) },
-                    trailingIcon = {
-                        Row(verticalAlignment = CenterVertically) {
-                            /* Clear (X): wipes the query so a fresh title can be typed at once. */
-                            if (searchQuery.isNotEmpty()) {
-                                Icon(
-                                    Icons.Filled.Close, null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.clickable { searchQuery = "" }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                            }
-                            Icon(
-                                Icons.Filled.Search, null,
-                                modifier = Modifier.clickable { doSearch() }
-                            )
-                            Spacer(Modifier.width(4.dp))
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { doSearch() },
-                        onDone = { doSearch() }
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                /* Language filter selector — anchors a dropdown of OpenSubtitles languages. */
-                Box(modifier = Modifier.align(Alignment.Start)) {
-                    Row(
-                        verticalAlignment = CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { langMenuExpanded = true }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Language, null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            selectedLangName,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Icon(
-                            Icons.Filled.ArrowDropDown, null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    GlassDropdownMenu(
-                        expanded = langMenuExpanded,
-                        onDismissRequest = { langMenuExpanded = false },
-                        modifier = Modifier.heightIn(max = 320.dp)
-                    ) {
-                        subtitleSearchLanguages.forEach { (name, code) ->
-                            DropdownMenuItem(
-                                text = { Text(name, fontSize = 13.sp) },
-                                trailingIcon = {
-                                    if (code == selectedLangCode) {
-                                        Icon(
-                                            Icons.Filled.Check, null,
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    langMenuExpanded = false
-                                    scope.launch { SUBTITLE_SEARCH_LANG.set(code) }
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                /* Download/injection failure surfaces INSIDE the sheet (an OSD would be hidden
-                 * behind it); the sheet stays open so the user can retry another result. */
-                downloadError?.let { err ->
-                    Text(
-                        text = err,
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
-                    )
-                }
-
-                when {
-                    isSearching -> {
-                        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        }
-                    }
-                    searchResults.isEmpty() -> {
-                        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                            Text(
-                                stringResource(Res.string.room_sub_search_no_results),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp
-                            )
-                        }
-                    }
-                    else -> {
-                        Box(modifier = Modifier.weight(1f)) {
-                            LazyColumn(
-                                state = searchListState,
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(vertical = 4.dp)
-                            ) {
-                                itemsIndexed(searchResults) { _, result ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable(enabled = isDownloading == null && downloadedOk == null) {
-                                                downloadError = null
-                                                isDownloading = result.fileId
-                                                scope.launch(Dispatchers.IO) {
-                                                    when (val outcome = SubtitleSearch.download(result.fileId)) {
-                                                        is SubtitleDownloadResult.Success -> {
-                                                            val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
-                                                            isDownloading = null
-                                                            if (injected) {
-                                                                // Free-plan keys allow only a handful of downloads per
-                                                                // day (searches are unlimited) — keep the user aware.
-                                                                viewmodel.dispatchOSD {
-                                                                    getString(Res.string.room_subs_downloaded_remaining, outcome.remaining)
-                                                                }
-                                                                // Let the checkmark land before the sheet leaves.
-                                                                downloadedOk = result.fileId
-                                                                delay(1000)
-                                                                showSubtitleSearch = false
-                                                            } else {
-                                                                downloadError = getString(Res.string.room_selected_sub_error)
-                                                            }
-                                                        }
-                                                        is SubtitleDownloadResult.QuotaExceeded -> {
-                                                            isDownloading = null
-                                                            downloadError = getString(Res.string.room_subs_quota_reached, outcome.resetTime)
-                                                        }
-                                                        SubtitleDownloadResult.Failed -> {
-                                                            isDownloading = null
-                                                            downloadError = getString(Res.string.room_subs_download_failed)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            .padding(horizontal = 8.dp, vertical = 10.dp),
-                                        verticalAlignment = CenterVertically
-                                    ) {
-                                        when {
-                                            isDownloading == result.fileId -> CircularProgressIndicator(
-                                                modifier = Modifier.size(16.dp).padding(end = 4.dp),
-                                                strokeWidth = 2.dp
-                                            )
-                                            downloadedOk == result.fileId -> Icon(
-                                                Icons.Filled.Check, null,
-                                                modifier = Modifier.padding(end = 8.dp),
-                                                tint = READY_GREEN
-                                            )
-                                            else -> Icon(
-                                                Icons.Filled.Download, null,
-                                                modifier = Modifier.padding(end = 8.dp),
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = result.releaseInfo.ifBlank { result.filename },
-                                                fontSize = 12.sp,
-                                                maxLines = 1,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Row {
-                                                Text(
-                                                    text = "${result.language.uppercase()} · ${result.downloadCount} ${stringResource(Res.string.room_sub_search_downloads)}",
-                                                    fontSize = 10.sp,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                if (result.hearingImpaired) {
-                                                    Spacer(Modifier.width(4.dp))
-                                                    Icon(
-                                                        Icons.Filled.HearingDisabled, null,
-                                                        modifier = Modifier.size(12.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            ListScrollbar(searchListState)
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun TrackRow(
-    label: String,
-    selected: Boolean = false,
-    icon: ImageVector? = null,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+    Modal(
+        open = showGestures,
+        onDismiss = { showGestures = false },
+        title = stringResource(Res.string.room_gestures_panel_title),
+        size = ModalSize.Panel,
+        inset = false,
     ) {
-        if (icon != null) {
-            Icon(icon, null, modifier = Modifier.padding(end = 8.dp))
-        } else if (selected) {
-            Icon(
-                Icons.Filled.Check, null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-        } else {
-            Spacer(Modifier.width(32.dp))
-        }
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-        )
+        DOUBLETAP_SEEK.SettingRow()
+        SWIPE_GESTURES.SettingRow()
     }
-}
 
-/** Thin overlay scrollbar pinned to the trailing edge of its [Box]. Rendered only while the list
- * can actually scroll, so an overflowing track list reads as scrollable instead of a clipped block,
- * while a list that fits stays free of a stray bar. */
-@Composable
-private fun BoxScope.ListScrollbar(listState: LazyListState) {
-    val scrollbarState = rememberScrollbarState(listState)
-    if (listState.canScrollForward || listState.canScrollBackward) {
-        UnstyledVerticalScrollbar(
-            scrollbarState = scrollbarState,
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(4.dp)
-        ) {
-            Thumb(
-                modifier = Modifier.background(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-                    shape = RoundedCornerShape(2.dp)
-                ),
-                thumbVisibility = ThumbVisibility.AlwaysVisible
-            )
-        }
-    }
-}
+    TracksModal(
+        open = showTracks,
+        onDismiss = { showTracks = false },
+        onImportSubtitle = {
+            launchSubtitlePickerAfterDismiss = true
+            showTracks = false
+        },
+        onSearchOnline = {
+            showTracks = false
+            showSubtitleSearch = true
+        },
+    )
 
-/** Performs the actual undo: seeks the local player back to the recorded position, broadcasts
- * that seek to the room, and removes the entry from the local seek history. Extracted so the
- * same flow runs whether the confirmation dialog was shown or skipped via "Always do". */
-private fun performUndoSeek(
-    viewmodel: app.room.RoomViewmodel,
-    seek: Pair<Long, Long>,
-    scope: kotlinx.coroutines.CoroutineScope
-) {
-    // The one seek path: announce, then move, through the dispatcher like every other seek.
-    viewmodel.dispatcher.undoSeek(seek)
-    viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
+    SubtitleSearchModal(open = showSubtitleSearch, onDismiss = { showSubtitleSearch = false })
 }
-
-data class ControlPanelDropdownAction(
-    val text: String,
-    val icon: ImageVector? = null,
-    /** Non-null renders a trailing Switch reflecting this state (toggle row). */
-    val isChecked: Boolean? = null,
-    /** When false, the dropdown stays open after the action fires (toggle rows that the user
-     *  may want to flip several times in a row). */
-    val dismissOnClick: Boolean = true,
-    val action: () -> Unit
-)
 
 @Composable
-fun ControlPanelDropdownButton(
-    icon: ImageVector,
-    onClick: () -> Unit = {},
-    popupTitle: String,
-    popupVisibility: MutableState<Boolean>,
-    popupItems: List<ControlPanelDropdownAction>
-) {
-    Box {
-        FlexibleIcon(
-            icon = icon,
-            size = 44,
-            shadowColors = listOf(Color.Black),
-            onClick = {
-                onClick()
-                popupVisibility.value = true
-            }
-        )
-
-        GlassDropdownMenu(
-            shape = MaterialTheme.shapes.small,
-            expanded = popupVisibility.value,
-            properties = PopupProperties(
-                dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
-            ),
-            onDismissRequest = { popupVisibility.value = false }
-        ) {
+private fun UndoSeekModal(seek: Pair<Long, Long>?, onDismiss: () -> Unit, onUndo: (always: Boolean) -> Unit) {
+    Modal(
+        open = seek != null,
+        onDismiss = onDismiss,
+        title = stringResource(Res.string.room_undo_seek_title),
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(stringResource(Res.string.room_undo_seek_always), onClick = { onUndo(true) })
+            SecondaryAction(stringResource(Res.string.room_undo_seek_cancel), onClick = onDismiss)
+            AccentAction(stringResource(Res.string.room_undo_seek_confirm), onClick = { onUndo(false) })
+        },
+    ) {
+        if (seek != null) {
             Text(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                text = popupTitle,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                // second is where we are now, first is where the seek started.
+                text = stringResource(Res.string.room_undo_seek_message, timestampFromMillis(seek.second), timestampFromMillis(seek.first)),
+                style = Type.note,
+                color = palette.inkDim,
             )
-
-            popupItems.forEach { item ->
-                fun fire() {
-                    item.action()
-                    if (item.dismissOnClick) popupVisibility.value = false
-                }
-
-                DropdownMenuItem(
-                    leadingIcon = item.icon?.let { icon ->
-                        { Icon(icon, null, tint = MaterialTheme.colorScheme.primary) }
-                    },
-                    trailingIcon = item.isChecked?.let { checked ->
-                        {
-                            Switch(
-                                checked = checked,
-                                onCheckedChange = { fire() }
-                            )
-                        }
-                    },
-                    text = {
-                        Row(verticalAlignment = CenterVertically) {
-                            Text(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                text = item.text
-                            )
-                        }
-                    }, onClick = {
-                        fire()
-                    }
-                )
-            }
         }
     }
 }
