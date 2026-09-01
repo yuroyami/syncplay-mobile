@@ -618,4 +618,30 @@
     <string name="room_file_different">Different file</string>
     <string name="room_file_none">No file</string>
     <string name="room_file_has">Has a file</string>
+    <!-- Chat (design overhaul) -->
+    <string name="room_gif_open">GIFs and stickers</string>
+    <string name="room_send">Send</string>
+    <string name="room_gif_failed">Could not load. Check the connection.</string>
+    <string name="room_gif_retry">Retry</string>
+    <string name="room_chat_input">Message</string>
+    <!-- Media intake (design overhaul) -->
+    <string name="room_route_device">From this device</string>
+    <string name="room_route_device_note">Pick a video or audio file</string>
+    <string name="room_route_link">From a link</string>
+    <string name="room_route_share">From a network share</string>
+    <string name="room_route_share_note">SMB, cloud and other providers</string>
+    <string name="room_route_playlist">Import a playlist</string>
+    <string name="room_route_playlist_note">m3u and txt</string>
+    <string name="room_link_sites_full">YouTube, SoundCloud, PeerTube, Bandcamp and media.ccc.de, resolved on this device. Direct links play as they are.</string>
+    <string name="room_link_sites_youtube">YouTube, resolved on this device. Direct links play as they are.</string>
+    <string name="room_link_direct">A direct media link. It will play as it is.</string>
+    <string name="room_link_resolving">Looking it up</string>
+    <string name="room_link_failed">Could not resolve this link. You can still try it as it is.</string>
+    <string name="room_link_resolver_off">This link needs the link resolver, which is off in Settings.</string>
+    <string name="room_link_unknown">Not a direct media link. Playback may fail.</string>
+    <string name="room_link_play_anyway">Play anyway</string>
+    <string name="room_link_paste">Paste</string>
+    <string name="media_folders">Media folders</string>
+    <string name="media_folders_brief">%1$s looks in these folders for a file a shared playlist names. Small folders are faster.</string>
+    <string name="media_folders_empty">No folders yet.</string>
 </resources>

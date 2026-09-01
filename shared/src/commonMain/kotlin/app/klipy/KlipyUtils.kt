@@ -61,7 +61,7 @@ object KlipyUtils {
         } catch (e: Exception) {
             loggy("KlipyUtils.search ← FAIL ${e::class.simpleName}: ${e.message}")
             loggy(e)
-            KlipyPagedResult(emptyList(), false)
+            KlipyPagedResult(emptyList(), false, failed = true)
         }
     }
 
@@ -87,7 +87,7 @@ object KlipyUtils {
         } catch (e: Exception) {
             loggy("KlipyUtils.trending ← FAIL ${e::class.simpleName}: ${e.message}")
             loggy(e)
-            KlipyPagedResult(emptyList(), false)
+            KlipyPagedResult(emptyList(), false, failed = true)
         }
     }
 
@@ -113,7 +113,7 @@ object KlipyUtils {
         } catch (e: Exception) {
             loggy("KlipyUtils.recents ← FAIL ${e::class.simpleName}: ${e.message}")
             loggy(e)
-            KlipyPagedResult(emptyList(), false)
+            KlipyPagedResult(emptyList(), false, failed = true)
         }
     }
 
@@ -201,5 +201,7 @@ enum class KlipyMediaType {
 
 data class KlipyPagedResult(
     val items: List<KlipyMedia>,
-    val hasNext: Boolean
+    val hasNext: Boolean,
+    /** True when the request itself failed; the drawer then offers a retry instead of "no results". */
+    val failed: Boolean = false,
 )

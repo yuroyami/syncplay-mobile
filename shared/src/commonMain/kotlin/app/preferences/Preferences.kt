@@ -696,19 +696,21 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 255, minValue = 0)
     }
-    val MSG_FONTSIZE = Pref("pref_inroom_msg_fontsize", 9) {
+    /** 11 to 24; a stored value under 11 is read as 11 (see MessageRow), nothing is rewritten. */
+    val MSG_FONTSIZE = Pref("pref_inroom_msg_fontsize", 13) {
         title = Res.string.uisetting_msgsize_title
         summary = Res.string.uisetting_msgsize_summary
         icon = Icons.Filled.FormatSize
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 28, minValue = 6)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 24, minValue = 11)
     }
-    val MSG_MAXCOUNT = Pref("pref_inroom_msg_maxcount", 10) {
+    /** How many recent unseen lines the fading layout shows over the video. */
+    val MSG_MAXCOUNT = Pref("pref_inroom_msg_maxcount", 3) {
         title = Res.string.uisetting_msgcount_title
         summary = Res.string.uisetting_msgcount_summary
         icon = Icons.Filled.FormatListNumbered
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 1)
     }
     val MSG_FADING_DURATION = Pref("pref_inroom_fading_msg_duration", 3) {
         title = Res.string.uisetting_msglife_title

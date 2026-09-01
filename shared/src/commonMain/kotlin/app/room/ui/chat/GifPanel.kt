@@ -2,8 +2,6 @@ package app.room.ui.chat
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,22 +20,15 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.HeartBroken
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,17 +38,32 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.klipy.KlipyMedia
 import app.klipy.KlipyMediaType
 import app.klipy.KlipyUtils
 import app.preferences.Preferences.KLIPY_FAVORITES
 import app.preferences.set
 import app.preferences.value
+import app.theme.Radius
+import app.theme.Space
+import app.theme.Tier
+import app.theme.Type
+import app.theme.palette
 import app.uicomponents.AnimatedImage
+import app.uicomponents.controls.ListRow
+import app.uicomponents.controls.ProgressBar
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.RowLabel
+import app.uicomponents.controls.Rule
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.SendGlyph
+import app.uicomponents.controls.Tag
+import app.uicomponents.controls.VerticalRule
+import app.uicomponents.frames.Modal
+import app.uicomponents.frames.ModalSize
+import app.uicomponents.surface
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -70,28 +76,22 @@ import syncplaymobile.shared.generated.resources.powered_by_klipy
 import syncplaymobile.shared.generated.resources.room_gif_action_favorite
 import syncplaymobile.shared.generated.resources.room_gif_action_send
 import syncplaymobile.shared.generated.resources.room_gif_action_unfavorite
+import syncplaymobile.shared.generated.resources.room_gif_failed
 import syncplaymobile.shared.generated.resources.room_gif_no_results
+import syncplaymobile.shared.generated.resources.room_gif_retry
 import syncplaymobile.shared.generated.resources.room_gif_tab_favorites
 import syncplaymobile.shared.generated.resources.room_gif_tab_gifs
 import syncplaymobile.shared.generated.resources.room_gif_tab_recents
 import syncplaymobile.shared.generated.resources.room_gif_tab_stickers
 import syncplaymobile.shared.generated.resources.room_gif_tab_trending
-import app.uicomponents.GlassDropdownMenu
 
-/** Source shown when the chat input is empty. Non-empty input is treated as a search query that
- *  overrides the source (no chip switching). */
+/** Source shown while the composer is empty; typed text becomes a search over the chosen type. */
 private enum class GifSource { TRENDING, RECENTS, FAVORITES }
 
 /**
- * GIF/Sticker search panel that overlays the chat message area.
- *
- * Shows a grid of GIF/Sticker results from the Klipy API. The search query
- * is driven by the chat input box text. When a GIF is tapped, its URL is
- * sent as a chat message.
- *
- * @param query The current text in the chat input field used as a search query
- * @param onGifSelected Called when a GIF/sticker is tapped, with the full URL
- * @param modifier Layout modifier
+ * The GIF drawer: two tag groups (type and source), a square tile grid with 4dp gaps, and a
+ * failure state that is not an empty one. The composer text is the query, debounced 400 ms on
+ * typing only. Selecting sends at once and closes; a long press offers send or favourite.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -99,38 +99,36 @@ fun GifPanel(
     query: String,
     onGifSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isHUDVisible: Boolean = true
+    isHUDVisible: Boolean = true,
 ) {
+    val p = palette
     var selectedType by remember { mutableStateOf(KlipyMediaType.GIF) }
     var selectedSource by remember { mutableStateOf(GifSource.TRENDING) }
     val results = remember { mutableStateListOf<KlipyMedia>() }
     var isLoading by remember { mutableStateOf(true) }
-    var currentPage by remember { mutableStateOf(1) }
+    var failed by remember { mutableStateOf(false) }
+    var retry by remember { mutableIntStateOf(0) }
+    var currentPage by remember { mutableIntStateOf(1) }
     var hasNextPage by remember { mutableStateOf(false) }
     var isLoadingMore by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
-
-    var contextMenuMedia by remember { mutableStateOf<KlipyMedia?>(null) }
-
-    /* Favorites stored as JSON-serialized KlipyMedia in a Set<String>. */
+    var longPressed by remember { mutableStateOf<KlipyMedia?>(null) }
     var favoriteIds by remember { mutableStateOf(loadFavoriteIds()) }
 
-    LaunchedEffect(query, selectedType, selectedSource) {
-        /* Favorites are client-side: the chat input filters them by slug, it does not switch tabs. */
+    LaunchedEffect(query, selectedType, selectedSource, retry) {
+        failed = false
+        // Favourites never touch the network: the composer text filters them by slug.
         if (selectedSource == GifSource.FAVORITES) {
             isLoading = true
             results.clear()
             val favorites = loadFavorites().filter { it.type == selectedType }
-            val filtered = if (query.isBlank()) favorites
-                else favorites.filter { it.slug.contains(query, ignoreCase = true) }
-            results.addAll(filtered)
+            results.addAll(if (query.isBlank()) favorites else favorites.filter { it.slug.contains(query, ignoreCase = true) })
             hasNextPage = false
             isLoading = false
             return@LaunchedEffect
         }
 
-        /* Fetches one page: non-empty input searches; empty input pulls the selected source. */
         suspend fun fetchPage(page: Int) = if (query.isNotBlank()) {
             KlipyUtils.search(query = query, type = selectedType, page = page)
         } else when (selectedSource) {
@@ -142,8 +140,6 @@ fun GifPanel(
         currentPage = 1
         hasNextPage = false
         isLoadingMore = false
-
-        /* Debounce only search requests so chip taps stay snappy. */
         if (query.isNotBlank()) delay(400)
 
         isLoading = true
@@ -151,17 +147,15 @@ fun GifPanel(
         val first = fetchPage(1)
         results.addAll(first.items)
         hasNextPage = first.hasNext
+        failed = first.failed
         isLoading = false
 
-        /* Infinite scroll: load the next page when the grid nears its end. */
+        // Pages de-duplicate by id: Klipy repeats items across page boundaries.
         snapshotFlow {
             val info = gridState.layoutInfo
             val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
             lastVisible >= info.totalItemsCount - 6 && info.totalItemsCount > 0 && hasNextPage && !isLoadingMore
-        }
-        .distinctUntilChanged()
-        .filter { it }
-        .collect {
+        }.distinctUntilChanged().filter { it }.collect {
             isLoadingMore = true
             val nextPage = currentPage + 1
             val response = fetchPage(nextPage)
@@ -173,240 +167,122 @@ fun GifPanel(
         }
     }
 
-    Column(
-        modifier = modifier
-            .background(
-                color = Color(30, 30, 30, 220),
-                shape = RoundedCornerShape(6.dp)
-            )
-    ) {
-        /* Row 1: Media type chips (GIFs | Stickers) + Klipy logo */
+    fun send(media: KlipyMedia) {
+        onGifSelected(media.fullUrl)
+        // Fire and forget; the share only feeds the recents tab.
+        scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
+    }
+
+    Column(modifier.surface(Tier.Panel, Radius.panelShape)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
+            horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterChip(
-                selected = selectedType == KlipyMediaType.GIF,
-                onClick = { selectedType = KlipyMediaType.GIF },
-                label = { Text(stringResource(Res.string.room_gif_tab_gifs), fontSize = 10.sp) }
-            )
-
-            FilterChip(
-                selected = selectedType == KlipyMediaType.STICKER,
-                onClick = { selectedType = KlipyMediaType.STICKER },
-                label = { Text(stringResource(Res.string.room_gif_tab_stickers), fontSize = 10.sp) }
-            )
-
+            Tag(stringResource(Res.string.room_gif_tab_gifs), filled = selectedType == KlipyMediaType.GIF, onToggle = { selectedType = KlipyMediaType.GIF })
+            Tag(stringResource(Res.string.room_gif_tab_stickers), filled = selectedType == KlipyMediaType.STICKER, onToggle = { selectedType = KlipyMediaType.STICKER })
+            VerticalRule(Modifier.height(16.dp))
+            Tag(stringResource(Res.string.room_gif_tab_trending), filled = selectedSource == GifSource.TRENDING, onToggle = { selectedSource = GifSource.TRENDING })
+            Tag(stringResource(Res.string.room_gif_tab_recents), filled = selectedSource == GifSource.RECENTS, onToggle = { selectedSource = GifSource.RECENTS })
+            Tag(stringResource(Res.string.room_gif_tab_favorites), filled = selectedSource == GifSource.FAVORITES, onToggle = { selectedSource = GifSource.FAVORITES })
             Spacer(Modifier.weight(1f))
-
             Image(
                 imageVector = vectorResource(Res.drawable.powered_by_klipy),
                 contentDescription = "Powered by Klipy",
-                modifier = Modifier.height(16.dp).aspectRatio(640 / 107f)
+                modifier = Modifier.height(14.dp).aspectRatio(640 / 107f),
             )
         }
+        Rule()
 
-        /* Row 2: Source chips (Trending | Recents | Favorites) */
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilterChip(
-                selected = selectedSource == GifSource.TRENDING,
-                onClick = { selectedSource = GifSource.TRENDING },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.tertiary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onTertiary
-                ),
-                label = { Text(stringResource(Res.string.room_gif_tab_trending), fontSize = 10.sp) }
-            )
-
-            FilterChip(
-                selected = selectedSource == GifSource.RECENTS,
-                onClick = { selectedSource = GifSource.RECENTS },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.tertiary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onTertiary
-                ),
-                label = { Text(stringResource(Res.string.room_gif_tab_recents), fontSize = 10.sp) }
-            )
-
-            FilterChip(
-                selected = selectedSource == GifSource.FAVORITES,
-                onClick = { selectedSource = GifSource.FAVORITES },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.tertiary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onTertiary
-                ),
-                label = { Text(stringResource(Res.string.room_gif_tab_favorites), fontSize = 10.sp) }
-            )
-        }
-
-        /* Results Grid */
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
             when {
-                isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center).size(24.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 2.dp
-                    )
+                isLoading -> ProgressBar(null, Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                failed -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(Res.string.room_gif_failed), style = Type.note, color = p.inkDim)
+                    Spacer(Modifier.height(Space.gapTight))
+                    SecondaryAction(stringResource(Res.string.room_gif_retry), onClick = { retry++ })
                 }
-
-                results.isEmpty() -> {
-                    Text(
-                        text = stringResource(Res.string.room_gif_no_results),
-                        modifier = Modifier.align(Alignment.Center),
-                        fontSize = 10.sp,
-                        color = Color.Gray
-                    )
-                }
-
-                else -> {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = GridCells.Adaptive(minSize = 80.dp),
-                        contentPadding = PaddingValues(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(results, key = { it.id }) { media ->
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                /* Alpha is passed to AnimatedImage as a parameter (not via
-                                 * Modifier.alpha) so the iOS UIImageView fades natively: Compose's
-                                 * Modifier.alpha does not propagate into UIKit interop layers.
-                                 *
-                                 * fillMaxWidth() on both the Box and the AnimatedImage modifier is
-                                 * required for iOS. AnimatedImage there wraps a UIImageView via
-                                 * UIKitView, which derives its size from the wrapped view's
-                                 * intrinsicContentSize. An empty UIImageView reports (0, 0), so an
-                                 * unconstrained-width modifier collapses the tile to width=0; Compose
-                                 * never re-measures UIKit interop when the image later loads and the
-                                 * intrinsic size becomes non-zero. Constraining width explicitly (the
-                                 * cell already has a max-width upper bound from GridCells.Adaptive)
-                                 * bypasses the intrinsic-size path so the tile lays out at the cell's
-                                 * width regardless of load state. Android's Coil AsyncImage is unaffected. */
-                                AnimatedImage(
-                                    url = media.previewUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    alpha = if (isHUDVisible) 1f else 0f,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(80.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .combinedClickable(
-                                            onClick = {
-                                                onGifSelected(media.fullUrl)
-                                                scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
-                                            },
-                                            onLongClick = {
-                                                contextMenuMedia = media
-                                            }
-                                        )
-                                )
-
-                                GlassDropdownMenu(
-                                    expanded = contextMenuMedia == media,
-                                    onDismissRequest = { contextMenuMedia = null },
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    DropdownMenuItem(
-                                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Send, null) },
-                                        text = { Text(stringResource(Res.string.room_gif_action_send)) },
-                                        onClick = {
-                                            contextMenuMedia = null
-                                            onGifSelected(media.fullUrl)
-                                            scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
-                                        }
-                                    )
-                                    val isFav = media.id in favoriteIds
-                                    DropdownMenuItem(
-                                        leadingIcon = {
-                                            Icon(
-                                                if (isFav) Icons.Filled.HeartBroken else Icons.Filled.Favorite,
-                                                null
-                                            )
-                                        },
-                                        text = {
-                                            Text(
-                                                stringResource(
-                                                    if (isFav) Res.string.room_gif_action_unfavorite
-                                                    else Res.string.room_gif_action_favorite
-                                                )
-                                            )
-                                        },
-                                        onClick = {
-                                            contextMenuMedia = null
-                                            scope.launch {
-                                                if (isFav) {
-                                                    removeFavorite(media)
-                                                    favoriteIds = loadFavoriteIds()
-                                                    if (selectedSource == GifSource.FAVORITES) {
-                                                        results.removeAll { it.id == media.id }
-                                                    }
-                                                } else {
-                                                    addFavorite(media)
-                                                    favoriteIds = loadFavoriteIds()
-                                                }
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        if (isLoadingMore) {
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        strokeWidth = 2.dp
-                                    )
-                                }
-                            }
+                results.isEmpty() -> Text(
+                    text = stringResource(Res.string.room_gif_no_results),
+                    style = Type.note,
+                    color = p.inkDim,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                else -> LazyVerticalGrid(
+                    state = gridState,
+                    columns = GridCells.Adaptive(minSize = 80.dp),
+                    contentPadding = PaddingValues(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    items(results, key = { it.id }) { media ->
+                        /* Fixed width and height on the tile: an empty UIImageView reports zero
+                         * size and Compose never re-measures UIKit interop after the image loads.
+                         * Alpha is a parameter for the same interop reason. */
+                        AnimatedImage(
+                            url = media.previewUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            alpha = if (isHUDVisible) 1f else 0f,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(Radius.tightShape)
+                                .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
+                        )
+                    }
+                    if (isLoadingMore) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            ProgressBar(null, Modifier.fillMaxWidth().padding(Space.gapTight))
                         }
                     }
                 }
             }
         }
     }
-}
 
-private fun loadFavorites(): List<KlipyMedia> {
-    return KLIPY_FAVORITES.value().mapNotNull { json ->
-        try {
-            Json.decodeFromString<KlipyMedia>(json)
-        } catch (_: Exception) {
-            null
+    val target = longPressed
+    Modal(open = target != null, onDismiss = { longPressed = null }, size = ModalSize.Ask, inset = false) {
+        if (target != null) {
+            val isFav = target.id in favoriteIds
+            ListRow(onClick = { longPressed = null; send(target) }) {
+                Icon(SendGlyph, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
+                RowGap()
+                RowLabel(stringResource(Res.string.room_gif_action_send))
+            }
+            ListRow(onClick = {
+                longPressed = null
+                scope.launch {
+                    if (isFav) {
+                        removeFavorite(target)
+                        if (selectedSource == GifSource.FAVORITES) results.removeAll { it.id == target.id }
+                    } else {
+                        addFavorite(target)
+                    }
+                    favoriteIds = loadFavoriteIds()
+                }
+            }) {
+                Icon(if (isFav) Icons.Filled.HeartBroken else Icons.Filled.Favorite, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
+                RowGap()
+                RowLabel(stringResource(if (isFav) Res.string.room_gif_action_unfavorite else Res.string.room_gif_action_favorite))
+            }
         }
     }
 }
 
-private fun loadFavoriteIds(): Set<Long> {
-    return loadFavorites().map { it.id }.toHashSet()
+private fun loadFavorites(): List<KlipyMedia> = KLIPY_FAVORITES.value().mapNotNull { json ->
+    runCatching { Json.decodeFromString<KlipyMedia>(json) }.getOrNull()
 }
 
+private fun loadFavoriteIds(): Set<Long> = loadFavorites().map { it.id }.toHashSet()
+
 private suspend fun addFavorite(media: KlipyMedia) {
-    val current = KLIPY_FAVORITES.value().toMutableSet()
-    current.add(Json.encodeToString(media))
-    KLIPY_FAVORITES.set(current)
+    KLIPY_FAVORITES.set(KLIPY_FAVORITES.value() + Json.encodeToString(media))
 }
 
 private suspend fun removeFavorite(media: KlipyMedia) {
-    val current = KLIPY_FAVORITES.value()
-    val updated = current.filter { json ->
-        try {
-            Json.decodeFromString<KlipyMedia>(json).id != media.id
-        } catch (_: Exception) {
-            true
-        }
+    val updated = KLIPY_FAVORITES.value().filter { json ->
+        runCatching { Json.decodeFromString<KlipyMedia>(json).id != media.id }.getOrDefault(true)
     }.toSet()
     KLIPY_FAVORITES.set(updated)
 }

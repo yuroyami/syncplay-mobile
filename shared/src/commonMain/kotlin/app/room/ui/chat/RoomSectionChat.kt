@@ -1,8 +1,6 @@
 package app.room.ui.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,53 +9,32 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.GifBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.GifBox
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.LocalChatPalette
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_BG_OPACITY
@@ -68,16 +45,20 @@ import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.watchPref
 import app.room.RoomViewmodel
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleAnnotatedText
-import app.uicomponents.gradientOverlay
-import app.utils.isEmoji
-import androidx.compose.ui.layout.ContentScale
-import app.uicomponents.AnimatedImage
+import app.theme.Radius
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.Field
+import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.SendGlyph
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_type_message
+import syncplaymobile.shared.generated.resources.room_chat_input
+import syncplaymobile.shared.generated.resources.room_gif_open
+import syncplaymobile.shared.generated.resources.room_send
 
+/** The chat dock: the composer on top, then either the message list or the GIF drawer. */
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
@@ -87,26 +68,21 @@ fun RoomChatSection(modifier: Modifier) {
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
     if (isChatSupported) {
-        /* The horizontal display-cutout inset + side margins are applied per row, NOT on the
-         * column: each row's hit area then spans the full section width, so the dead strip a
-         * camera notch would otherwise leave beside the content belongs to the row in front
-         * of it instead of falling through to the HUD-dismiss handler underneath. */
+        /* The cutout inset and side margins go on each child, not the column, so the strip beside
+         * a camera notch belongs to the row in front of it instead of the HUD dismiss underneath. */
         val cutoutInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
 
         Column(modifier = modifier) {
-            ChatTextField(
+            ChatComposer(
                 viewmodel = viewmodel,
                 modifier = Modifier
                     .fillMaxWidth()
-                    /* Tap shield: consume stray taps landing around the input row (the notch
-                     * strip and the side margins). A fat-finger miss while typing must be a
-                     * no-op, never a keyboard/HUD dismissal. Real targets inside the row
-                     * (text field, buttons) sit deeper and keep consuming their own taps. */
+                    // Tap shield first, then the insets: a fat-finger miss around the input is a no-op.
                     .pointerInput(Unit) { detectTapGestures { } }
                     .windowInsetsPadding(cutoutInsets)
                     .padding(horizontal = 8.dp),
                 gifPanelVisible = gifPanelVisible,
-                isHUDVisible = isHUDVisible
+                isHUDVisible = isHUDVisible,
             )
 
             if (gifPanelVisible) {
@@ -116,238 +92,121 @@ fun RoomChatSection(modifier: Modifier) {
                         viewmodel.dispatcher.sendMessage(gifUrl)
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
-                    modifier = Modifier.weight(1f).fillMaxWidth()
-                        .windowInsetsPadding(cutoutInsets)
-                        .padding(horizontal = 8.dp),
-                    isHUDVisible = isHUDVisible
+                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp),
+                    isHUDVisible = isHUDVisible,
                 )
             } else {
                 ChatBox(
                     viewmodel = viewmodel,
-                    modifier = Modifier.weight(1f).fillMaxWidth()
-                        .windowInsetsPadding(cutoutInsets)
-                        .padding(horizontal = 8.dp),
-                    isHUDVisible = isHUDVisible
+                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp),
+                    isHUDVisible = isHUDVisible,
                 )
             }
         }
     }
 }
 
+/**
+ * The composer: a GIF glyph, the hairline field, and a send glyph that turns accent once there
+ * is text. The keyboard's send action keeps its switch and is suppressed while the drawer is
+ * open, because the text is then a search query. A blank send changes nothing.
+ */
 @Composable
-fun ChatTextField(
-    modifier: Modifier = Modifier,
+fun ChatComposer(
     viewmodel: RoomViewmodel,
+    modifier: Modifier = Modifier,
     gifPanelVisible: Boolean,
-    isHUDVisible: Boolean
+    isHUDVisible: Boolean,
 ) {
+    val p = palette
     val focusManager = LocalFocusManager.current
     val msg by viewmodel.uiState.msg.collectAsState()
-    val canSendWithKeyboardOK by MSG_BOX_ACTION.watchPref()
-    val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
-    val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
+    val canSendWithKeyboard by MSG_BOX_ACTION.watchPref()
+    val hasText = msg.isNotBlank()
+    val keyboardSends = canSendWithKeyboard && !gifPanelVisible
 
-    /* Drop chat focus and the soft keyboard when the HUD hides, so the input is not left
-     * focused behind an invisible overlay. */
+    // The input must not stay focused behind an invisible overlay with the keyboard up.
     LaunchedEffect(isHUDVisible) {
         if (!isHUDVisible) focusManager.clearFocus(force = true)
     }
 
     fun send() {
-        // Cap at the server-declared limit from Hello (officially 150; third-party servers may
-        // differ). Do not strip characters: kotlinx-serialization escapes JSON on its own, so
-        // backslashes in paths/emoticons must reach the wire intact.
+        /* The cap is the server's own limit, floored at 1 so a hostile zero cannot eat every
+         * message. Nothing is stripped: the JSON layer escapes backslashes itself. */
         val maxLen = viewmodel.session.roomFeatures.maxChatMessageLength.coerceAtLeast(1)
-        val msgToSend = msg.take(maxLen)
-        if (msgToSend.isNotBlank()) {
-            viewmodel.dispatcher.sendMessage(msgToSend)
-        }
-
+        val text = msg.take(maxLen)
+        if (text.isBlank()) return
+        viewmodel.dispatcher.sendMessage(text)
         viewmodel.uiState.msg.value = ""
         viewmodel.uiState.gifPanelVisible.value = false
     }
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedTextField(
-            /* Deliberately NOT the outer `modifier`: reusing it here would re-apply the
-             * row-level tap shield and inset padding onto the field itself. */
-            modifier = Modifier.alpha(0.75f).weight(1f),
-            singleLine = true,
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                    if (canSendWithKeyboardOK && !gifPanelVisible) {
-                        send()
-                    }
-                }
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                cursorColor = MaterialTheme.colorScheme.primary
-            ),
-            label = {
-                Text(
-                    text = stringResource(Res.string.room_type_message),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    style = TextStyle(brush = gradientBrush)
-                )
-            },
-            trailingIcon = {
-                Row {
-                    /* GIF button — always visible */
-                    IconButton(onClick = {
-                        viewmodel.uiState.gifPanelVisible.value = !viewmodel.uiState.gifPanelVisible.value
-                    }) {
-                        Icon(
-                            imageVector = Icons.Outlined.GifBox,
-                            contentDescription = null,
-                            modifier = Modifier.gradientOverlay()
-                        )
-                    }
-
-                    /* Send button — only when there is text and GIF panel is closed */
-                    if (msg.isNotBlank() && !gifPanelVisible) {
-                        IconButton(
-                            onClick = {
-                                focusManager.clearFocus()
-                                send()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = null,
-                                modifier = Modifier.gradientOverlay()
-                            )
-                        }
-                    }
-                }
-            },
+    Row(modifier.heightIn(min = Space.row), verticalAlignment = Alignment.CenterVertically) {
+        GlyphButton(
+            icon = Icons.Outlined.GifBox,
+            name = stringResource(Res.string.room_gif_open),
+            tint = if (gifPanelVisible) p.accent else p.inkDim,
+        ) { viewmodel.uiState.gifPanelVisible.value = !gifPanelVisible }
+        Field(
             value = msg,
             onValueChange = { viewmodel.uiState.msg.value = it },
-            visualTransformation = VisualTransformation { text ->
-                val annotatedString = buildAnnotatedString {
-                    text.text.forEach { char ->
-                        if (!char.isEmoji()) {
-                            withStyle(style = SpanStyle(brush = gradientBrush)) {
-                                append(char)
-                            }
-                        } else {
-                            append(char)
-                        }
-                    }
-                }
-                TransformedText(annotatedString, OffsetMapping.Identity)
-            }
-        )
-
-        /* Clear (X) button */
-        IconButton(
-            modifier = Modifier.padding(start = 6.dp, top = 4.dp),
-            enabled = msgIsNotEmpty,
-            onClick = {
-                viewmodel.uiState.msg.value = ""
-                viewmodel.uiState.gifPanelVisible.value = false
+            // Not the outer modifier: that would re-apply the shield and the insets to the field.
+            modifier = Modifier.weight(1f),
+            placeholder = stringResource(Res.string.room_chat_input),
+            imeAction = if (keyboardSends) ImeAction.Send else ImeAction.Done,
+            onImeAction = {
+                focusManager.clearFocus()
+                if (keyboardSends) send()
             },
+            textStyle = Type.note,
+            name = stringResource(Res.string.room_chat_input),
+        )
+        GlyphButton(
+            icon = SendGlyph,
+            name = stringResource(Res.string.room_send),
+            tint = if (hasText && !gifPanelVisible) p.accent else p.inkFaint,
         ) {
-            if (msgIsNotEmpty) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = null,
-                    modifier = Modifier.gradientOverlay()
-                )
-            }
+            if (gifPanelVisible) return@GlyphButton
+            focusManager.clearFocus()
+            send()
         }
     }
 }
 
+/** The message list, opening at its last line and animating only on growth. */
 @Composable
-fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel, isHUDVisible: Boolean) {
+fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
+    val messages by viewmodel.session.messageSequence.collectAsState()
+    val chatPalette = LocalChatPalette.current
 
-    val chatMessages by viewmodel.session.messageSequence.collectAsState()
+    val bgOpacity by MSG_BG_OPACITY.watchPref()
+    val outlineOn by MSG_OUTLINE_ACTIVATE.watchPref()
+    val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
+    val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
+    val fontSize by MSG_FONTSIZE.watchPref()
+    val style = MessageStyle(fontSize, if (outlineOn) outlineThickness.toFloat() else null, shadowOn, chatPalette.includeTimestamp)
 
-    val msgBoxOpacity = MSG_BG_OPACITY.watchPref()
-    val msgOutlineActivate by MSG_OUTLINE_ACTIVATE.watchPref()
-    val msgOutlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
-    val msgShadowActivate by MSG_SHADOW_ACTIVATE.watchPref()
-    val msgFontSize = MSG_FONTSIZE.watchPref()
-
-    Box(
-        modifier = modifier
-            .background(
-                color = if (hasVideo) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent,
-                shape = RoundedCornerShape(4.dp)
-            )
-    ) {
-        val chatListState = rememberLazyListState(
-            initialFirstVisibleItemIndex = maxOf(0, chatMessages.size - 1)
-        )
-        var previousSize by remember { mutableStateOf(chatMessages.size) }
-        LaunchedEffect(chatMessages.size) {
-            if (chatMessages.size > previousSize) {
-                chatListState.animateScrollToItem(chatMessages.lastIndex)
-            }
-            previousSize = chatMessages.size
+    Box(modifier.background(if (hasVideo) Color(50, 50, 50, bgOpacity) else Color.Transparent, Radius.panelShape)) {
+        val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))
+        var previousSize by remember { mutableStateOf(messages.size) }
+        LaunchedEffect(messages.size) {
+            if (messages.size > previousSize) listState.animateScrollToItem(messages.lastIndex)
+            previousSize = messages.size
         }
 
-        LazyColumn(
-            state = chatListState,
-            contentPadding = PaddingValues(8.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(chatMessages) { chatMessage ->
-                /* Mark as seen only when the HUD is visible. The HUD stays composed (alpha-0)
-                 * when hidden, so marking unconditionally would defeat FadingMessageLayout,
-                 * which only shows unseen messages. */
-                if (isHUDVisible) {
-                    SideEffect {
-                        chatMessage.seen = true
-                    }
-                }
-
-                if (chatMessage.isImageUrl) {
-                    /* Render GIF/image inline beside sender tag */
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FlexibleAnnotatedText(
-                            modifier = Modifier.weight(1f, fill = false).focusable(enabled = false),
-                            text = chatMessage.factorizeSenderTag(LocalChatPalette.current),
-                            size = (msgFontSize.value.toFloat()),
-                            shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
-                            strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
-                            strokeWidth = msgOutlineThickness.toFloat()
-                        )
-                        /* Alpha is passed to AnimatedImage as a parameter (not via Modifier.alpha)
-                         * so the iOS UIImageView fades natively: Compose's Modifier.alpha does not
-                         * propagate into UIKit interop layers. */
-                        AnimatedImage(
-                            url = chatMessage.content,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            alpha = if (isHUDVisible) 1f else 0f,
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                        )
-                    }
-                } else {
-                    FlexibleAnnotatedText(
-                        modifier = Modifier.fillMaxWidth().focusable(enabled = false).clickable(enabled = false) {},
-                        text = chatMessage.factorize(LocalChatPalette.current),
-                        size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
-                        shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
-                        strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
-                        strokeWidth = msgOutlineThickness.toFloat()
-                    )
-                }
+        LazyColumn(state = listState, contentPadding = PaddingValues(Space.gapTight), modifier = Modifier.fillMaxSize()) {
+            itemsIndexed(messages) { index, message ->
+                /* Seen only while the HUD shows: it stays composed at alpha 0 when hidden, and
+                 * marking then would defeat the fading layout. */
+                if (isHUDVisible) SideEffect { message.seen = true }
+                MessageRow(
+                    message = message,
+                    previous = messages.getOrNull(index - 1),
+                    chatPalette = chatPalette,
+                    style = style,
+                    imageAlpha = if (isHUDVisible) 1f else 0f,
+                )
             }
         }
     }
