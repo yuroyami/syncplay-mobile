@@ -1,92 +1,62 @@
 package app.room.ui.rightcards
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Shape
-import app.theme.Radius
-import app.uicomponents.frames.PanelFrame
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
-import app.theme.Theming
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleIcon
-import app.uicomponents.FlexibleText
+import app.theme.Radius
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
-import app.uicomponents.SyncplayPopup
-import app.uicomponents.gradientOverlay
-import app.uicomponents.helveticaFont
-import app.uicomponents.jostFont
-import app.uicomponents.tvFocusable
+import app.uicomponents.controls.AccentAction
+import app.uicomponents.controls.AddGlyph
+import app.uicomponents.controls.Field
+import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.ListRow
+import app.uicomponents.controls.MoreGlyph
+import app.uicomponents.controls.PlayGlyph
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.RowLabel
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.frames.Modal
+import app.uicomponents.frames.ModalSize
+import app.uicomponents.frames.PanelFrame
 import app.utils.appName
+import app.utils.getText
 import app.utils.playlistExs
 import app.utils.videoFileKitType
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
@@ -97,17 +67,17 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.delete
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.play
 import syncplaymobile.shared.generated.resources.room_shared_playlist
-import syncplaymobile.shared.generated.resources.room_shared_playlist_actions
+import syncplaymobile.shared.generated.resources.room_shared_playlist_add
 import syncplaymobile.shared.generated.resources.room_shared_playlist_add_url
 import syncplaymobile.shared.generated.resources.room_shared_playlist_add_url_subtext
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_file
@@ -119,434 +89,186 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_pla
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set_media_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
-import syncplaymobile.shared.generated.resources.room_shared_playlist_item_actions
+import syncplaymobile.shared.generated.resources.room_shared_playlist_clear_playlist
+import syncplaymobile.shared.generated.resources.room_shared_playlist_empty
+import syncplaymobile.shared.generated.resources.room_shared_playlist_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
+import syncplaymobile.shared.generated.resources.room_shared_playlist_urls
+import syncplaymobile.shared.generated.resources.room_link_paste
 import kotlin.time.Clock
-import app.uicomponents.GlassDropdownMenu
-import app.uicomponents.GlassMaterial
-import app.uicomponents.glassSurface
 
 object CardSharedPlaylist {
 
+    /**
+     * The shared playlist panel: rows with a play mark on the current entry, and three glyphs in
+     * the header (add, shuffle, more) that open short action lists. Every picker launches only
+     * after its list has dismissed, the iOS rule.
+     */
     @Composable
     fun SharedPlaylistCard(shape: Shape = Radius.panelShape) {
         val viewmodel = LocalRoomViewmodel.current
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val playlist = viewmodel.playlistManager
+        val p = palette
 
-        val mediaFilePicker  = rememberFilePickerLauncher(
-            type = videoFileKitType,
-            mode = FileKitMode.Multiple(),
-            //title = stringResource(Res.string.room_shared_playlist_filepick_rationale1)
-        ) { files ->
-            if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
-
-            viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                playlist.addFiles(files)
-            }
+        val mediaFilePicker = rememberFilePickerLauncher(type = videoFileKitType, mode = FileKitMode.Multiple()) { files ->
+            if (files.isNullOrEmpty()) return@rememberFilePickerLauncher
+            viewmodel.viewModelScope.launch(Dispatchers.IO) { playlist.addFiles(files) }
         }
-
-        val mediaDirectoryPicker =rememberDirectoryPickerLauncher() { directoryUri ->
-            if (directoryUri == null) return@rememberDirectoryPickerLauncher
-            scope.launch {
-                playlist.addFolderToPlaylist(directoryUri)
-            }
+        val mediaDirectoryPicker = rememberDirectoryPickerLauncher { directory ->
+            directory ?: return@rememberDirectoryPickerLauncher
+            scope.launch { playlist.addFolderToPlaylist(directory) }
         }
-
         var shouldShuffle by remember { mutableStateOf(false) }
-        val playlistLoadPicker = rememberFilePickerLauncher(
-            type = FileKitType.File(extensions = playlistExs)
-        ) { playlistFile ->
-            if (playlistFile != null) {
-                playlist.loadPlaylistLocally(playlistFile, alsoShuffle = shouldShuffle)
-            }
+        val playlistLoadPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = playlistExs)) { file ->
+            if (file != null) playlist.loadPlaylistLocally(file, alsoShuffle = shouldShuffle)
             shouldShuffle = false
         }
-
-        val playlistSaver = rememberFileSaverLauncher(
-            dialogSettings = FileKitDialogSettings.createDefault()
-        ) { savedFile ->
-            if (savedFile == null) return@rememberFileSaverLauncher
-            playlist.savePlaylistLocally(savedFile)
+        val playlistSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
+            file ?: return@rememberFileSaverLauncher
+            playlist.savePlaylistLocally(file)
         }
 
-        val mediaDirsPopupState = remember { mutableStateOf(false) }
-        val addUrlsPopupState = remember { mutableStateOf(false) }
-
-        PanelFrame(title = stringResource(Res.string.room_shared_playlist), modifier = Modifier.fillMaxSize(), shape = shape, scrollable = false) {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(8.dp)
-                ) {
-                    itemsIndexed(viewmodel.session.sharedPlaylist) { index, item ->
-
-                        val itempopup = remember { mutableStateOf(false) }
-
-                        Box {
-                            Row(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 5.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(color = MaterialTheme.colorScheme.primary)
-                                ) { itempopup.value = true }
-                                .tvFocusable(addFocusable = false),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val spi by remember { viewmodel.session.spIndex }
-                                if (index == spi) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.PlayArrow, "",
-                                        tint = Color.Green,
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .padding(2.dp)
-                                    )
-                                }
-
-                                Text(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    text = item, maxLines = 1, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            GlassDropdownMenu(
-                                shape = RoundedCornerShape(12.dp),
-                                expanded = itempopup.value,
-                                properties = PopupProperties(
-                                    dismissOnBackPress = true,
-                                    focusable = true,
-                                    dismissOnClickOutside = true
-                                ),
-                                onDismissRequest = { itempopup.value = false }) {
-
-                                Text(
-                                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
-                                    text = stringResource(Res.string.room_shared_playlist_item_actions),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-
-                                DropdownMenuItem(
-                                    text = { Text(text = stringResource(Res.string.play)) },
-                                    leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "") },
-                                    onClick = {
-                                        playlist.sendPlaylistSelection(index)
-                                        itempopup.value = false
-                                    }
-                                )
-
-                                DropdownMenuItem(
-                                    text = { Text(text = stringResource(Res.string.delete)) },
-                                    leadingIcon = { Icon(imageVector = Icons.Default.Delete, "") },
-                                    onClick = {
-                                        playlist.deleteItemFromPlaylist(index)
-                                        itempopup.value = false
-                                    }
-                                )
-                            }
-
-                        }
-
-                        if (index < viewmodel.session.sharedPlaylist.lastIndex)
-                            HorizontalDivider(
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                    }
-                }
-
-                /* Bottom buttons: Add-from / Shuffle / Clear / More ops */
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val menuItemFontSize = 11f
-
-                    /* "Add from" dropdown: file / folder / link */
-                    Box {
-                        val addMenuState = remember { mutableStateOf(false) }
-
-                        // On iOS, launching a FileKit picker while this Compose dropdown is
-                        // still closing fires the native delegate twice ("Already resumed"
-                        // crash in DocumentPickerDelegate). Capture the action, dismiss the
-                        // dropdown, and let LaunchedEffect run it once dismissal settles.
-                        // See FileKit #575.
-                        var pendingAddAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-                        LaunchedEffect(addMenuState.value, pendingAddAction) {
-                            val action = pendingAddAction
-                            if (!addMenuState.value && action != null) {
-                                pendingAddAction = null
-                                action()
-                            }
-                        }
-
-                        FlexibleIcon(
-                            icon = Icons.Filled.Add, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
-                            onClick = { addMenuState.value = true }
-                        )
-
-                        GlassDropdownMenu(
-                            shape = RoundedCornerShape(12.dp),
-                            expanded = addMenuState.value,
-                            properties = PopupProperties(
-                                dismissOnBackPress = true,
-                                focusable = true,
-                                dismissOnClickOutside = true
-                            ),
-                            onDismissRequest = { addMenuState.value = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_add_file)) },
-                                leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "") },
-                                onClick = {
-                                    pendingAddAction = { mediaFilePicker.launch() }
-                                    addMenuState.value = false
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_add_folder)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "") },
-                                onClick = {
-                                    pendingAddAction = { mediaDirectoryPicker.launch() }
-                                    addMenuState.value = false
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_add_url)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "") },
-                                onClick = {
-                                    addMenuState.value = false
-                                    addUrlsPopupState.value = true
-                                }
-                            )
-                        }
-                    }
-
-                    /* "Shuffle" dropdown: whole playlist / rest of playlist */
-                    Box {
-                        val shuffleMenuState = remember { mutableStateOf(false) }
-
-                        FlexibleIcon(
-                            icon = Icons.Filled.Shuffle, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
-                            onClick = { shuffleMenuState.value = true }
-                        )
-
-                        GlassDropdownMenu(
-                            shape = RoundedCornerShape(12.dp),
-                            expanded = shuffleMenuState.value,
-                            properties = PopupProperties(
-                                dismissOnBackPress = true,
-                                focusable = true,
-                                dismissOnClickOutside = true
-                            ),
-                            onDismissRequest = { shuffleMenuState.value = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_shuffle)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "") },
-                                onClick = {
-                                    shuffleMenuState.value = false
-                                    scope.launch { playlist.shuffle(false) }
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_shuffle_rest)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "") },
-                                onClick = {
-                                    shuffleMenuState.value = false
-                                    scope.launch { playlist.shuffle(true) }
-                                }
-                            )
-                        }
-                    }
-
-                    /* Clear playlist: direct action, no dropdown */
-                    FlexibleIcon(
-                        icon = Icons.Filled.ClearAll, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
-                        onClick = { playlist.clearPlaylist() }
-                    )
-
-                    /* "More ops" dropdown: import / import+shuffle / export / media directories */
-                    Box {
-                        val sharedplaylistOverflowState = remember { mutableStateOf(false) }
-
-                        // Same FileKit #575 dance as the Add-from dropdown above.
-                        var pendingOverflowAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-                        LaunchedEffect(sharedplaylistOverflowState.value, pendingOverflowAction) {
-                            val action = pendingOverflowAction
-                            if (!sharedplaylistOverflowState.value && action != null) {
-                                pendingOverflowAction = null
-                                action()
-                            }
-                        }
-
-                        FlexibleIcon(
-                            icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
-                            onClick = {
-                                sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value
-                            }
-                        )
-
-                        GlassDropdownMenu(
-                            shape = RoundedCornerShape(12.dp),
-                            expanded = sharedplaylistOverflowState.value,
-                            properties = PopupProperties(
-                                dismissOnBackPress = true,
-                                focusable = true,
-                                dismissOnClickOutside = true
-                            ),
-                            onDismissRequest = { sharedplaylistOverflowState.value = false }
-                        ) {
-                            Text(
-                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
-                                text = stringResource(Res.string.room_shared_playlist_actions),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_playlist_import)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
-                                onClick = {
-                                    pendingOverflowAction = { playlistLoadPicker.launch() }
-                                    sharedplaylistOverflowState.value = false
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
-                                onClick = {
-                                    // shouldShuffle has to be set BEFORE the picker fires
-                                    // since the picker callback consumes it.
-                                    shouldShuffle = true
-                                    pendingOverflowAction = { playlistLoadPicker.launch() }
-                                    sharedplaylistOverflowState.value = false
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_playlist_export)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Save, "") },
-                                onClick = {
-                                    if (viewmodel.session.sharedPlaylist.isEmpty()) {
-                                        viewmodel.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
-                                        sharedplaylistOverflowState.value = false
-                                        return@DropdownMenuItem
-                                    }
-
-                                    val suggestedName = "SharedPlaylist_${Clock.System.now()}"
-                                    pendingOverflowAction = {
-                                        playlistSaver.launch(
-                                            suggestedName = suggestedName,
-                                            extension = "txt"
-                                        )
-                                    }
-                                    sharedplaylistOverflowState.value = false
-                                }
-                            )
-
-                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
-
-                            DropdownMenuItem(
-                                text = { Text(fontSize = menuItemFontSize.sp, text = stringResource(Res.string.room_shared_playlist_button_set_media_directories)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Folder, "") },
-                                onClick = {
-                                    sharedplaylistOverflowState.value = false
-                                    mediaDirsPopupState.value = true
-                                }
-                            )
-                        }
-                    }
-                }
+        val mediaDirsOpen = remember { mutableStateOf(false) }
+        var urlsOpen by remember { mutableStateOf(false) }
+        var addOpen by remember { mutableStateOf(false) }
+        var shuffleOpen by remember { mutableStateOf(false) }
+        var moreOpen by remember { mutableStateOf(false) }
+        var itemActions by remember { mutableStateOf<Int?>(null) }
+        var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
+        LaunchedEffect(addOpen, moreOpen, pending) {
+            val action = pending ?: return@LaunchedEffect
+            if (addOpen || moreOpen) return@LaunchedEffect
+            pending = null
+            delay(50)
+            action()
         }
 
-        MediaDirsPopup(mediaDirsPopupState)
-        AddSPUrlsPopup(addUrlsPopupState)
+        val items = viewmodel.session.sharedPlaylist
+        val current by remember { viewmodel.session.spIndex }
+
+        PanelFrame(
+            title = stringResource(Res.string.room_shared_playlist),
+            modifier = Modifier.fillMaxSize(),
+            shape = shape,
+            scrollable = false,
+            actions = {
+                GlyphButton(AddGlyph, name = stringResource(Res.string.room_shared_playlist_add), target = Space.row) { addOpen = true }
+                GlyphButton(Icons.Filled.Shuffle, name = stringResource(Res.string.room_shared_playlist_button_shuffle), target = Space.row) { shuffleOpen = true }
+                GlyphButton(MoreGlyph, name = stringResource(Res.string.room_shared_playlist_more), target = Space.row) { moreOpen = true }
+            },
+        ) {
+            if (items.isEmpty()) {
+                Text(
+                    text = stringResource(Res.string.room_shared_playlist_empty),
+                    style = Type.note,
+                    color = p.inkDim,
+                    modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gap),
+                )
+            }
+            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+                itemsIndexed(items) { index, item ->
+                    ListRow(onClick = { itemActions = index }, selected = index == current) {
+                        if (index == current) {
+                            Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
+                        } else {
+                            Spacer(Modifier.size(Space.glyph))
+                        }
+                        RowGap()
+                        Text(item, style = Type.note, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        val target = itemActions
+        Modal(open = target != null, onDismiss = { itemActions = null }, title = target?.let { items.getOrNull(it) }, size = ModalSize.Ask, inset = false) {
+            if (target != null) {
+                ActionRow(PlayGlyph, stringResource(Res.string.play)) { itemActions = null; playlist.sendPlaylistSelection(target) }
+                ActionRow(Icons.Filled.Delete, stringResource(Res.string.delete)) { itemActions = null; playlist.deleteItemFromPlaylist(target) }
+            }
+        }
+
+        Modal(open = addOpen, onDismiss = { addOpen = false }, title = stringResource(Res.string.room_shared_playlist_add), size = ModalSize.Ask, inset = false) {
+            ActionRow(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_shared_playlist_button_add_file)) { pending = { mediaFilePicker.launch() }; addOpen = false }
+            ActionRow(Icons.Filled.CreateNewFolder, stringResource(Res.string.room_shared_playlist_button_add_folder)) { pending = { mediaDirectoryPicker.launch() }; addOpen = false }
+            ActionRow(Icons.Filled.AddLink, stringResource(Res.string.room_shared_playlist_button_add_url)) { addOpen = false; urlsOpen = true }
+        }
+
+        Modal(open = shuffleOpen, onDismiss = { shuffleOpen = false }, title = stringResource(Res.string.room_shared_playlist_button_shuffle), size = ModalSize.Ask, inset = false) {
+            ActionRow(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle)) { shuffleOpen = false; scope.launch { playlist.shuffle(false) } }
+            ActionRow(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle_rest)) { shuffleOpen = false; scope.launch { playlist.shuffle(true) } }
+        }
+
+        Modal(open = moreOpen, onDismiss = { moreOpen = false }, title = stringResource(Res.string.room_shared_playlist_more), size = ModalSize.Ask, inset = false) {
+            ActionRow(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import)) { pending = { playlistLoadPicker.launch() }; moreOpen = false }
+            ActionRow(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)) {
+                // The flag is read by the picker's callback, so it is set before the launch.
+                shouldShuffle = true
+                pending = { playlistLoadPicker.launch() }
+                moreOpen = false
+            }
+            ActionRow(Icons.Filled.Save, stringResource(Res.string.room_shared_playlist_button_playlist_export)) {
+                moreOpen = false
+                if (items.isEmpty()) {
+                    viewmodel.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
+                } else {
+                    val suggestedName = "SharedPlaylist_${Clock.System.now()}"
+                    pending = { playlistSaver.launch(suggestedName = suggestedName, extension = "txt") }
+                }
+            }
+            ActionRow(Icons.Filled.Folder, stringResource(Res.string.room_shared_playlist_button_set_media_directories)) { moreOpen = false; mediaDirsOpen.value = true }
+            ActionRow(Icons.Filled.ClearAll, stringResource(Res.string.room_shared_playlist_clear_playlist)) { moreOpen = false; playlist.clearPlaylist() }
+        }
+
+        MediaDirsPopup(mediaDirsOpen)
+        AddUrlsModal(open = urlsOpen, onDismiss = { urlsOpen = false })
     }
 
-    // TODO: migrate from deprecated ClipboardManager to the suspend-based Clipboard API
-    // (LocalClipboard + ClipEntry). Requires rememberCoroutineScope() for setClipEntry/getClipEntry.
-    @Suppress("DEPRECATION")
     @Composable
-    fun AddSPUrlsPopup(visibilityState: MutableState<Boolean>) {
-        return SyncplayPopup(
-            dialogOpen = visibilityState.value,
-            widthPercent = 0.8f,
-            onDismiss = { visibilityState.value = false }
+    private fun ActionRow(icon: ImageVector, label: String, onClick: () -> Unit) {
+        ListRow(onClick = onClick) {
+            Icon(icon, contentDescription = null, tint = palette.inkDim, modifier = Modifier.size(Space.glyph))
+            RowGap()
+            RowLabel(label)
+        }
+    }
+
+    /** URLs for the playlist, one per line, with paste. */
+    @Composable
+    private fun AddUrlsModal(open: Boolean, onDismiss: () -> Unit) {
+        if (!open) return
+        val playlist = LocalRoomViewmodel.current.playlistManager
+        val clipboard = LocalClipboard.current
+        val scope = rememberCoroutineScope()
+        var urls by remember { mutableStateOf("") }
+
+        Modal(
+            open = true,
+            onDismiss = onDismiss,
+            title = stringResource(Res.string.room_shared_playlist_add_url),
+            size = ModalSize.Ask,
+            actions = {
+                SecondaryAction(stringResource(Res.string.cancel), onClick = onDismiss)
+                AccentAction(stringResource(Res.string.done), onClick = {
+                    onDismiss()
+                    playlist.addURLs(urls.split("\n"))
+                }, enabled = urls.isNotBlank())
+            },
         ) {
-            val playlist = LocalRoomViewmodel.current.playlistManager
-            val clipboardManager = LocalClipboardManager.current
-
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(6.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(Res.string.room_shared_playlist_add_url),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+            Text(stringResource(Res.string.room_shared_playlist_add_url_subtext, appName), style = Type.note, color = palette.inkDim)
+            Row(Modifier.fillMaxWidth().padding(top = Space.gap), verticalAlignment = Alignment.CenterVertically) {
+                Field(
+                    value = urls,
+                    onValueChange = { urls = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = stringResource(Res.string.room_shared_playlist_urls),
+                    keyboardType = KeyboardType.Uri,
+                    singleLine = false,
+                    name = stringResource(Res.string.room_shared_playlist_urls),
                 )
-
-                Text(
-                    text = stringResource(Res.string.room_shared_playlist_add_url_subtext, appName),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily(helveticaFont),
-                    textAlign = TextAlign.Center,
-                    lineHeight = 14.sp
-                )
-
-                val urls = remember { mutableStateOf("") }
-                TextField(
-                    modifier = Modifier.fillMaxWidth(0.9f),
-                    shape = RoundedCornerShape(16.dp),
-                    value = urls.value,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            urls.value = clipboardManager.getText().toString()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
-                        }
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
-                    },
-                    onValueChange = { urls.value = it },
-                    textStyle = TextStyle(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = FontFamily(helveticaFont),
-                        fontSize = 16.sp,
-                    ),
-                    singleLine = true,
-                    label = {
-                        Text("URLs", color = Color.Gray)
-                    }
-                )
-
-                Button(
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    onClick = {
-                        visibilityState.value = false
-
-                        playlist.addURLs(urls.value.split("\n"))
-                    },
-                ) {
-                    Icon(imageVector = Icons.Filled.Done, "")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.done), fontSize = 14.sp)
+                GlyphButton(Icons.Filled.ContentPaste, name = stringResource(Res.string.room_link_paste)) {
+                    scope.launch { clipboard.getClipEntry()?.getText()?.let { urls = it } }
                 }
             }
         }

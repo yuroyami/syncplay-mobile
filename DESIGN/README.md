@@ -168,8 +168,10 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   platforms), the status row with its evidence, persisted configuration rows, the log as a
   severity list with the cap, the follow rule and the errors filter, the start guard and the
   failed-start cleanup. Not done: the Android notification's client count.
+- POPUPS: every popup and menu is on the modal frame; seek-to, managed room, chat colours,
+  trusted domains, the playlist card's actions and URL entry, the unlock key. The old popup,
+  menu, alert and multi-choice wrappers and the menu height cap are deleted.
 
-Still to do: the remaining
-POPUPS and GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
+Still to do: the remaining GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
 ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
 to those surfaces.

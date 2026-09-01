@@ -1,42 +1,26 @@
 package app.room.ui.tabs
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.input.ImeAction
 import app.LocalRoomViewmodel
 import app.protocol.WireMessage
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleText
-import app.uicomponents.SyncplayPopup
-import app.uicomponents.jostFont
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.controls.AccentAction
+import app.uicomponents.controls.Field
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.frames.Modal
+import app.uicomponents.frames.ModalSize
 import app.utils.generateRoomPassword
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -51,114 +35,51 @@ enum class ManagedRoomPopupPurpose {
     CREATE_MANAGED_ROOM, IDENTIFY_AS_OPERATOR
 }
 
+/** One question, one field: the managed room's name, or the operator password. */
 @Composable
 fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
     val viewmodel = LocalRoomViewmodel.current
-
     val state = when (purpose) {
         ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> viewmodel.uiState.popupCreateManagedRoom
         ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> viewmodel.uiState.popupIdentifyAsRoomOperator
     }
-
     val visible by state.collectAsState()
+    if (!visible) return
 
-    return SyncplayPopup(
-        dialogOpen = visible,
-        widthPercent = 0.7f,
-        onDismiss = {
-            state.value = false
+    var input by remember {
+        mutableStateOf(if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) viewmodel.session.currentRoom else "")
+    }
+    val title = stringResource(
+        if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) Res.string.room_overflow_create_managed_room
+        else Res.string.room_overflow_identify_as_operator
+    )
+    val note = stringResource(
+        if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) Res.string.room_managed_room_popup_create
+        else Res.string.room_managed_room_popup_pw_identify_as_operator
+    )
+
+    fun send() {
+        state.value = false
+        viewmodel.protocol.isRoomChanging = true
+        val auth = when (purpose) {
+            ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> WireMessage.controllerAuth(room = input, password = generateRoomPassword())
+            ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> WireMessage.controllerAuth(password = input)
         }
+        viewmodel.networkManager.sendAsync(auth)
+    }
+
+    Modal(
+        open = true,
+        onDismiss = { state.value = false },
+        title = title,
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(stringResource(Res.string.cancel), onClick = { state.value = false })
+            AccentAction(stringResource(Res.string.okay), onClick = ::send, enabled = input.isNotBlank())
+        },
     ) {
-        var inputValue by remember {
-            mutableStateOf(
-                value = when (purpose) {
-                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> viewmodel.session.currentRoom
-                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> ""
-                }
-            )
-        }
-
-        val focusManager = LocalFocusManager.current
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-
-            FlexibleText(
-                modifier = Modifier.padding(6.dp), text = when (purpose) {
-                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> stringResource(Res.string.room_overflow_create_managed_room)
-                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> stringResource(Res.string.room_overflow_identify_as_operator)
-                }, shadowColors = listOf(Color.Black), fillingColors = flexibleGradient, size = 17f, font = jostFont
-            )
-
-            Text(
-                when (purpose) {
-                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> stringResource(Res.string.room_managed_room_popup_create)
-                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> stringResource(Res.string.room_managed_room_popup_pw_identify_as_operator)
-                },
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 11.sp
-            )
-
-            TextField(
-                modifier = Modifier.fillMaxWidth().padding(6.dp), singleLine = true, value = inputValue, keyboardActions = KeyboardActions(onDone = {
-                    focusManager.clearFocus(true)
-                }), colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.DarkGray,
-                    unfocusedContainerColor = Color.DarkGray,
-                    disabledContainerColor = Color.DarkGray,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                ), onValueChange = { inputValue = it }, textStyle = TextStyle(
-                    brush = Brush.linearGradient(colors = flexibleGradient),
-                    fontSize = 16.sp,
-                )
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Spacer(Modifier.weight(1f))
-
-                Button(
-                    modifier = Modifier.padding(vertical = 8.dp).weight(3f),
-                    onClick = {
-                        state.value = false
-                    },
-                ) {
-                    Icon(imageVector = Icons.Filled.Close, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.cancel), fontSize = 14.sp, maxLines = 1)
-                }
-                Spacer(Modifier.weight(1f))
-
-                Button(
-                    modifier = Modifier.padding(vertical = 8.dp).weight(3f),
-                    onClick = {
-                        state.value = false
-
-                        viewmodel.protocol.isRoomChanging = true
-
-                        val authMsg = when (purpose) {
-                            ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM ->
-                                WireMessage.controllerAuth(room = inputValue, password = generateRoomPassword())
-
-                            ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR ->
-                                WireMessage.controllerAuth(password = inputValue)
-                        }
-                        viewmodel.networkManager.sendAsync(authMsg)
-                    },
-                ) {
-                    Icon(imageVector = Icons.Filled.Done, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.okay), fontSize = 14.sp, maxLines = 1)
-                }
-
-                Spacer(Modifier.weight(1f))
-            }
-        }
+        Text(note, style = Type.note, color = palette.inkDim)
+        Spacer(Modifier.height(Space.gap))
+        Field(value = input, onValueChange = { input = it }, imeAction = ImeAction.Done, onImeAction = { if (input.isNotBlank()) send() }, name = title)
     }
 }
