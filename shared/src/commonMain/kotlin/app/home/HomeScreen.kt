@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.Screen
-import app.home.components.HomeEngineWheel
+import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.preferences.Preferences.NEVER_SHOW_TIPS
@@ -292,7 +292,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
                         val unavailable = stringResource(Res.string.home_engine_unavailable_error)
-                        HomeEngineWheel(
+                        HomeEnginePicker(
                             modifier = Modifier.fillMaxWidth(),
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,

@@ -161,7 +161,9 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
 - HOME: the form with one left edge on the hairline field, inline help and errors, the
   segmented server choice with port tags, Join as the one gradient with the shortcut glyph
   inside it, Watch alone beside it, the bar without a scaffold, notices instead of a snackbar,
-  the About and tips modals, and the shortcut bugs on both platforms.
+  the About and tips modals, and the shortcut bugs on both platforms. The engine wheel is
+  gone: every engine sits in one segmented frame with a badge square on its mark and a note
+  line naming the selected one, and the TV focus helper went with the wheel, its last caller.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

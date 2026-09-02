@@ -700,4 +700,9 @@
     <string name="action_back">Back</string>
     <string name="action_close">Close</string>
     <string name="action_clear">Clear</string>
+    <!-- Engine picker (design overhaul) -->
+    <string name="connect_engine_note_default">The default on this platform.</string>
+    <string name="connect_engine_note_experimental">Experimental. It can misbehave.</string>
+    <string name="connect_engine_note_system">The platform's own player.</string>
+    <string name="connect_engine_note_unavailable">Not in this build.</string>
 </resources>
