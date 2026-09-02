@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.preferences.Preferences.SERVER_DISABLE_CHAT
 import app.preferences.Preferences.SERVER_DISABLE_READY
@@ -86,7 +87,7 @@ private const val LOG_LINES_SHOWN = 60
  * Hosting, inline under the home form's third server tab: the joinable address with copy and
  * share, the status with its evidence, the start or stop action, the configuration rows and the
  * tail of the log as a severity list. Bound straight to [ServerHostSession], which outlives
- * every screen. Its rows carry their own gutters, so it bleeds past the form's.
+ * every screen. One hairline region holds all of it; its rows carry their own gutters.
  */
 @Composable
 fun ServerHostPanel(modifier: Modifier = Modifier) {
@@ -101,7 +102,7 @@ fun ServerHostPanel(modifier: Modifier = Modifier) {
     val logs = ServerHostSession.serverLogs
     val shown = (if (errorsOnly) logs.filter { it.level == ServerLogLevel.Error } else logs.toList()).takeLast(LOG_LINES_SHOWN)
 
-    Column(modifier.fillMaxWidth().bleed(Space.gutter)) {
+    Column(modifier.fillMaxWidth().clip(Radius.panelShape).border(Space.hair, p.rule, Radius.panelShape).padding(vertical = Space.gapTight)) {
         if (running) {
             AddressBlock(
                 localIp = ServerHostSession.deviceIpAddress.value,
@@ -143,18 +144,6 @@ fun ServerHostPanel(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(Space.gapTight))
         }
     }
-}
-
-/** Lets a block wider than its padded parent draw out to the parent's edges. */
-private fun Modifier.bleed(horizontal: Dp): Modifier = layout { measurable, constraints ->
-    val extra = (horizontal * 2).roundToPx()
-    val placeable = measurable.measure(
-        constraints.copy(
-            minWidth = (constraints.minWidth + extra).coerceAtMost(constraints.maxWidth + extra),
-            maxWidth = constraints.maxWidth + extra,
-        )
-    )
-    layout(placeable.width - extra, placeable.height) { placeable.placeRelative(-horizontal.roundToPx(), 0) }
 }
 
 @Composable

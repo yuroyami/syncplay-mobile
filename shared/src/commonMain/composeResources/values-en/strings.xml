@@ -37,7 +37,8 @@
     <string name="connect_roomname_tooltip">Any name works. Friends who enter the same room name get synced together.</string>
     <string name="connect_server_tooltip">All official servers work the same. Everyone must join the same server and port.</string>
     <string name="connect_button_join">Join room</string>
-    <string name="connect_button_saveshortcut">Shortcut</string>
+    <string name="connect_button_saveshortcut">Save as home shortcut</string>
+    <string name="home_shortcut_explain">Save this setup as a home screen shortcut</string>
     <string name="connect_username_empty_error">Username shouldn't be empty</string>
     <string name="connect_roomname_empty_error">Roomname shouldn't be empty</string>
     <string name="connect_address_empty_error">Server Address shouldn't be empty</string>
@@ -713,9 +714,9 @@
     <string name="connect_host_mine">Host mine</string>
     <string name="connect_host_join_note">Join lands on your own server at %1$s.</string>
     <string name="connect_custom_tip">The address and port the host gave you. Official servers are syncplay.pl on ports 8995 to 8999; a friend hosting from this app shares an address like 192.168.1.20:8999. Add the password only if the host set one.</string>
-    <string name="engine_info_exoplayer">Google's Media3 player, built into Android. Decodes on the device's hardware through MediaCodec. Plays MP4, MKV, WebM, HLS and DASH with the common codecs; ASS subtitles show as plain text. The stable choice for ordinary files.</string>
-    <string name="engine_info_mpv">libmpv with FFmpeg, the same engine as the desktop mpv. Plays nearly every container and codec, draws styled ASS subtitles, supports chapters and precise seeking. The best fit for anime and MKV releases. Only in the full build.</string>
-    <string name="engine_info_kiteplayer">Made by Synkplay's own developer on top of FFmpeg, and tuned for Synkplay. Still experimental: playback can misbehave, so switch engines if something looks off.</string>
-    <string name="engine_info_avplayer">Apple's system player. Very stable and battery friendly, but narrow: MP4, MOV and HLS with the codecs iOS ships, no external subtitles, no chapters.</string>
-    <string name="engine_info_vlckit">VideoLAN's libVLC 4 for iOS. Plays nearly every container and codec, external subtitles, chapters, picture in picture. The stable default on iOS.</string>
+    <string name="engine_info_exoplayer">Google's Media3 player, built into Android. Decodes on the device's hardware through MediaCodec. Plays MP4, MKV, WebM, HLS and DASH with the common codecs; ASS subtitles show as plain text. The stable choice for ordinary files. Built into Synkplay: nothing extra to install.</string>
+    <string name="engine_info_mpv">libmpv with FFmpeg, the same engine as the desktop mpv. Plays nearly every container and codec, draws styled ASS subtitles, supports chapters and precise seeking. The best fit for anime and MKV releases. Only in the full build. Built into Synkplay: nothing extra to install.</string>
+    <string name="engine_info_kiteplayer">Made by Synkplay's own developer on top of FFmpeg, and tuned for Synkplay. Still experimental: playback can misbehave, so switch engines if something looks off. Built into Synkplay: nothing extra to install.</string>
+    <string name="engine_info_avplayer">Apple's system player. Very stable and battery friendly, but narrow: MP4, MOV and HLS with the codecs iOS ships, no external subtitles, no chapters. Built into Synkplay: nothing extra to install.</string>
+    <string name="engine_info_vlckit">VideoLAN's libVLC 4 for iOS. Plays nearly every container and codec, external subtitles, chapters, picture in picture. The stable default on iOS. Built into Synkplay: nothing extra to install.</string>
 </resources>

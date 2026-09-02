@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.runtime.Composable
+import SyncplayMobile.shared.KiteBuildConfig
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +66,11 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             ) {
                 SynkplayLogo(modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(Space.gap))
-                SyncplayishText(string = appName, size = 20f)
+                Column(horizontalAlignment = Alignment.End) {
+                    // The version rides the wordmark as a tiny overscore, same brush, no pull on the eye.
+                    SyncplayishText(string = KiteBuildConfig.APP_VERSION, size = 8f, modifier = Modifier.offset(y = 3.dp))
+                    SyncplayishText(string = appName, size = 20f)
+                }
             }
             Spacer(Modifier.weight(1f))
             GlyphButton(Icons.Outlined.Palette, name = stringResource(Res.string.theme_popup_select_a_theme)) { themeOpen = true }

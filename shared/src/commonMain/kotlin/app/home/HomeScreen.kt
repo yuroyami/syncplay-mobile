@@ -24,6 +24,27 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import syncplaymobile.shared.generated.resources.home_shortcut_explain
+import app.uicomponents.controls.pressFeedback
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.Icon
+import app.uicomponents.controls.Feedback
+import app.theme.Radius
+import app.theme.Motion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +78,6 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.PrimaryAction
-import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Segmented
 import app.uicomponents.controls.HelpTip
 import app.server.ui.ServerHostPanel
@@ -360,19 +380,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
                         Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             // The shortcut saver is its own key, a third of the width, over the join key's end.
-                            Row(Modifier.fillMaxWidth()) {
-                                Spacer(Modifier.weight(2f))
-                                SecondaryAction(
-                                    text = stringResource(Res.string.connect_button_saveshortcut),
-                                    modifier = Modifier.weight(1f),
-                                    onClick = {
-                                        error = validate()
-                                        if (error == null) {
-                                            with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
-                                            viewmodel.snackItAsync(shortcutSaved)
-                                        }
-                                    },
-                                )
+                            ShortcutKey {
+                                error = validate()
+                                if (error == null) {
+                                    with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
+                                    viewmodel.snackItAsync(shortcutSaved)
+                                }
                             }
                             PrimaryAction(
                                 text = stringResource(Res.string.connect_button_join),
@@ -403,6 +416,59 @@ private fun JoinConfig.sanitised() = copy(
 )
 
 /** A section label; with a [tip] it carries the help glyph, the only place the long words live. */
+/**
+ * The shortcut saver: a glyph key at the end of its row. The first tap unfolds it across the
+ * row to say what it does; the second tap does it and folds it back.
+ */
+@Composable
+private fun ShortcutKey(onSave: () -> Unit) {
+    val p = palette
+    var expanded by remember { mutableStateOf(false) }
+    val source = remember { MutableInteractionSource() }
+    val name = stringResource(Res.string.connect_button_saveshortcut)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val width by animateDpAsState(if (expanded) maxWidth else Space.row, Motion.move(), label = "shortcutWidth")
+        val textAlpha by animateFloatAsState(if (expanded) 1f else 0f, Motion.move(), label = "shortcutText")
+        Row(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width(width)
+                .height(Space.row)
+                .clip(Radius.controlShape)
+                .border(Space.hair, if (expanded) p.accent else p.rule, Radius.controlShape)
+                .clickable(interactionSource = source, indication = null, role = Role.Button) {
+                    Feedback.tick()
+                    if (expanded) {
+                        expanded = false
+                        onSave()
+                    } else {
+                        expanded = true
+                    }
+                }
+                .hoverable(source)
+                .semantics { contentDescription = name }
+                .controlStates(source, Radius.controlShape)
+                .pointerHoverIcon(PointerIcon.Hand)
+                .pressFeedback(source),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(Space.row), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.Widgets, contentDescription = null, tint = if (expanded) p.accent else p.ink, modifier = Modifier.size(Space.glyph))
+            }
+            if (textAlpha > 0f) {
+                Text(
+                    text = stringResource(Res.string.home_shortcut_explain),
+                    style = Type.label,
+                    color = p.ink,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.weight(1f).alpha(textAlpha).padding(end = Space.gap),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun FormLabel(text: String, tip: String? = null) {
     Row(Modifier.height(Space.glyph), verticalAlignment = Alignment.CenterVertically) {
