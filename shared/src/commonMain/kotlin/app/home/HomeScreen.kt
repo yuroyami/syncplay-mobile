@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,8 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.Layout
 import syncplaymobile.shared.generated.resources.connect_server_pick_note
 import syncplaymobile.shared.generated.resources.connect_server_pick_error
 import app.preferences.Preferences
@@ -198,20 +201,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     .imePadding(),
             ) {
                 val viewport = maxHeight
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Column(
-                        modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().heightIn(min = viewport).padding(horizontal = Space.gutter, vertical = Space.gutter),
-                        // Identity at the top, join at the bottom, the rest spread between; the
-                        // padding keeps a floor between groups when there is no free height.
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
                         var username by remember(savedConfig) { mutableStateOf(config.user) }
                         var room by remember(savedConfig) { mutableStateOf(config.room) }
                         var mode by remember(savedConfig) {
@@ -245,6 +234,27 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
 
+                        /* One validation for both paths, so the shortcut saver cannot crash on a
+                         * blank port either. */
+                        fun validate(): StringResource? = when {
+                            username.isBlank() -> Res.string.connect_username_empty_error
+                            room.isBlank() -> Res.string.connect_roomname_empty_error
+                            mode == null -> Res.string.connect_server_pick_error
+                            mode == ServerMode.Host -> null
+                            address.isBlank() -> Res.string.connect_address_empty_error
+                            port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                            else -> null
+                        }
+                        fun currentConfig() = when (mode) {
+                            ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
+                            else -> JoinConfig(username, room, address, port.toInt(), password)
+                        }.sanitised()
+
+
+                /* The four blocks of the form, placed by the window: one spread column when the
+                 * window is narrow, two columns when it is wide, and two columns on a short wide
+                 * window too, where one column would have to scroll to reach the join key. */
+                val identityBlock: @Composable () -> Unit = {
                         Column(Modifier.fillMaxWidth(0.82f).padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
                             FormField(
                                 label = stringResource(Res.string.connect_username),
@@ -273,6 +283,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                              * non-official port from leaking through and clears the password; Custom blanks
                              * both; Host points the join at the local server. */
                         }
+                }
+                val serverBlock: @Composable () -> Unit = {
                         Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(
                                 text = stringResource(Res.string.connect_server, appName),
@@ -382,6 +394,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
 
+                }
+                val engineBlock: @Composable () -> Unit = {
                         Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(stringResource(Res.string.connect_choose_video_engine))
                             val selectedEngine by PLAYER_ENGINE.watchPref()
@@ -404,22 +418,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             )
                         }
 
-                        /* One validation for both paths, so the shortcut saver cannot crash on a
-                         * blank port either. */
-                        fun validate(): StringResource? = when {
-                            username.isBlank() -> Res.string.connect_username_empty_error
-                            room.isBlank() -> Res.string.connect_roomname_empty_error
-                            mode == null -> Res.string.connect_server_pick_error
-                            mode == ServerMode.Host -> null
-                            address.isBlank() -> Res.string.connect_address_empty_error
-                            port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
-                            else -> null
-                        }
-                        fun currentConfig() = when (mode) {
-                            ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
-                            else -> JoinConfig(username, room, address, port.toInt(), password)
-                        }.sanitised()
-
+                }
+                val joinBlock: @Composable () -> Unit = {
                         val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
                         Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             // The shortcut saver is its own key, a third of the width, over the join key's end.
@@ -438,6 +438,93 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
                                 },
                             )
+                        }
+                }
+
+                val twoColumns = maxWidth >= 600.dp && (maxHeight < 620.dp || maxWidth >= 840.dp)
+                // Roughly what the two columns need; above it the block sits centred as one unit.
+                val blockFits = maxHeight >= 560.dp
+                val clearFocus = Modifier.clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) }
+                if (twoColumns && blockFits) {
+                    /* Wide and tall (a tablet, a desktop window): the two columns are one block,
+                     * centred in the window, the join key on the block's foot level with the end of
+                     * the left column. A block taller than the window (the host panel open) scrolls
+                     * as a whole. */
+                    Column(
+                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(clearFocus),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box(Modifier.fillMaxWidth().heightIn(min = viewport), contentAlignment = Alignment.Center) {
+                            TwoColumnBlock(
+                                modifier = Modifier.widthIn(max = FORM_MAX_WIDTH * 2 + Space.gutter).padding(horizontal = Space.gutter, vertical = Space.gutter),
+                                left = {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(Space.gap),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                    ) {
+                                        identityBlock()
+                                        serverBlock()
+                                    }
+                                },
+                                right = {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.SpaceBetween,
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                    ) {
+                                        engineBlock()
+                                        joinBlock()
+                                    }
+                                },
+                            )
+                        }
+                    }
+                } else if (twoColumns) {
+                    /* Wide and short (a phone on its side): each column scrolls on its own and the
+                     * join key stays pinned to the window's foot, never below the fold. */
+                    Box(Modifier.fillMaxSize().then(clearFocus), contentAlignment = Alignment.TopCenter) {
+                        Row(Modifier.widthIn(max = FORM_MAX_WIDTH * 2 + Space.gutter).fillMaxSize().padding(horizontal = Space.gutter)) {
+                            Column(
+                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = Space.gutter),
+                                verticalArrangement = Arrangement.spacedBy(Space.gap),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                identityBlock()
+                                serverBlock()
+                            }
+                            Spacer(Modifier.width(Space.gutter * 2))
+                            Column(
+                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = viewport).padding(vertical = Space.gutter),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    engineBlock()
+                                    joinBlock()
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).then(clearFocus),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Column(
+                            modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().heightIn(min = viewport).padding(horizontal = Space.gutter, vertical = Space.gutter),
+                            // Identity at the top, join at the bottom, the rest spread between; the
+                            // padding keeps a floor between groups when there is no free height.
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            identityBlock()
+                            serverBlock()
+                            engineBlock()
+                            joinBlock()
                         }
                     }
                 }
@@ -508,6 +595,35 @@ private fun ShortcutKey(onSave: () -> Unit) {
                     modifier = Modifier.weight(1f).alpha(textAlpha).padding(end = Space.gap),
                 )
             }
+        }
+    }
+}
+
+/**
+ * Two columns of equal width with a double gutter between. The left column is measured first
+ * and its height becomes the right column's minimum, so a right column that spreads its content
+ * ends level with the left one. No intrinsic measurement, so subcompose children are fine.
+ */
+@Composable
+private fun TwoColumnBlock(modifier: Modifier, left: @Composable () -> Unit, right: @Composable () -> Unit) {
+    val gap = Space.gutter * 2
+    // propagateMinConstraints: the right column must receive the left column's height as its minimum.
+    Layout(
+        modifier = modifier,
+        content = {
+            Box(propagateMinConstraints = true) { left() }
+            Box(propagateMinConstraints = true) { right() }
+        },
+    ) { measurables, constraints ->
+        val gapPx = gap.roundToPx()
+        val column = ((constraints.maxWidth - gapPx) / 2).coerceAtLeast(0)
+        val loose = Constraints(minWidth = column, maxWidth = column, minHeight = 0, maxHeight = Constraints.Infinity)
+        val leftPlaceable = measurables[0].measure(loose)
+        val rightPlaceable = measurables[1].measure(loose.copy(minHeight = leftPlaceable.height))
+        val height = maxOf(leftPlaceable.height, rightPlaceable.height)
+        layout(constraints.maxWidth, height) {
+            leftPlaceable.placeRelative(0, 0)
+            rightPlaceable.placeRelative(column + gapPx, 0)
         }
     }
 }

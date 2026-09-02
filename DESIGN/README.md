@@ -220,6 +220,12 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   the dock again with numbered rows; a centred field style centres its text; the readiness word
   sits on the cell's centre; the playlist's header keys unfold their options in a strip under
   the header; the roster has compact, standard and by-file views behind a persisted choice.
+  Adaptive home: the form is four blocks (identity, server, engine, join) placed by the window.
+  Narrow: one spread column. Wide and tall (tablet, desktop): a centred two-column block with
+  the join key level with the left column's foot, built on a small custom layout that hands the
+  left column's height to the right one as its minimum. Wide and short (a phone on its side):
+  two columns that scroll on their own with the join key pinned to the window's foot. The help
+  lines are one line of copy each, and the tips dialog's labels fit three keys at 360dp.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three
