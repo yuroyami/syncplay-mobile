@@ -74,6 +74,9 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         }
     }
 
+    /** Closes whatever side panel is open, for a control that needs the room's right side. */
+    fun closeSidePanels() = sidePanels.forEach { it.value = false }
+
     fun toggleControlPanel(forcedState: Boolean? = null) {
         controlPanel.value = forcedState ?: !controlPanel.value
         if (controlPanel.value) toolPanels.forEach { it.value = false }

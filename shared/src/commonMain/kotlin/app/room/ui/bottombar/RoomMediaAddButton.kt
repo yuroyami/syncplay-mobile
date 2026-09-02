@@ -5,14 +5,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import app.theme.LocalPalette
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.AnimatedContent
 import syncplaymobile.shared.generated.resources.room_route_link
@@ -72,17 +72,22 @@ fun RoomMediaAddButton() {
     // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.
     val initialFocus = LocalRoomInitialFocus.current
     val expanded = !hasVideo && open
-    /* One block that is the key and the card. Its size animates between the two, the contents
-     * crossfade inside it, and the brand gradient it always carries thins to a tint as it grows,
-     * so the violet key becomes the card instead of being swapped for one. */
-    val progress by animateFloatAsState(if (expanded) 1f else 0f, Motion.move(), label = "addMorph")
+    /* One block that is the key and the card: the brand gradient stays on it at full strength,
+     * its size animates between the two, and the contents crossfade inside it, so the violet
+     * key becomes a violet card. The card's rows take dark ink, the way the key's label does. */
+    val onBrand = p.copy(
+        ink = p.ground,
+        inkDim = p.ground.copy(alpha = 0.72f),
+        inkFaint = p.ground.copy(alpha = 0.45f),
+        rule = p.ground.copy(alpha = 0.25f),
+        accent = p.ground,
+    )
     AnimatedContent(
         targetState = expanded,
         modifier = Modifier
             .padding(Space.gapTight)
             .clip(Radius.panelShape)
-            .background(Color(0xFF0E0E12).copy(alpha = 0.94f * progress))
-            .background(Brush.horizontalGradient(p.brandField.map { it.copy(alpha = 1f - 0.84f * progress) })),
+            .background(Brush.horizontalGradient(p.brandField)),
         transitionSpec = {
             (fadeIn(Motion.move()) togetherWith fadeOut(Motion.quick()))
                 .using(SizeTransform(clip = true) { _, _ -> Motion.move() })
@@ -90,31 +95,41 @@ fun RoomMediaAddButton() {
         label = "addKey",
     ) { showCard ->
         if (showCard) {
-            Column(Modifier.width(MorphWidth)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (linkMode) GlyphButton(BackGlyph, name = stringResource(Res.string.action_back)) { linkMode = false }
-                    else Spacer(Modifier.width(Space.touchMin))
-                    Text(
-                        text = stringResource(if (linkMode) Res.string.room_route_link else Res.string.room_button_desc_add),
-                        style = Type.label,
-                        color = p.ink,
-                        maxLines = 1,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f),
-                    )
-                    GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { open = false; linkMode = false }
+            CompositionLocalProvider(LocalPalette provides onBrand) {
+                Column(Modifier.width(MorphWidth)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (linkMode) GlyphButton(BackGlyph, name = stringResource(Res.string.action_back)) { linkMode = false }
+                        else Spacer(Modifier.width(Space.touchMin))
+                        Text(
+                            text = stringResource(if (linkMode) Res.string.room_route_link else Res.string.room_button_desc_add),
+                            style = Type.label,
+                            color = onBrand.ink,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f),
+                        )
+                        GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { open = false; linkMode = false }
+                    }
+                    Rule()
+                    CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { open = false; linkMode = false })
                 }
-                Rule()
-                CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { open = false; linkMode = false })
             }
         } else {
             AddVideoButton(
                 modifier = Modifier.then(if (!hasVideo && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
                 expanded = !hasVideo,
-                onClick = { if (hasVideo) ui.toggleAddMedia() else open = true },
+                onClick = {
+                    if (hasVideo) {
+                        ui.toggleAddMedia()
+                    } else {
+                        // The card needs the room's right side to itself.
+                        ui.closeSidePanels()
+                        open = true
+                    }
+                },
             )
         }
     }
