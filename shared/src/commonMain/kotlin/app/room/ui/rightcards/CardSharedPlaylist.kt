@@ -136,12 +136,13 @@ object CardSharedPlaylist {
         var moreOpen by remember { mutableStateOf(false) }
         var itemActions by remember { mutableStateOf<Int?>(null) }
         var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
+        // Cleared after it ran: clearing first restarted this effect and cancelled the launch.
         LaunchedEffect(addOpen, moreOpen, pending) {
             val action = pending ?: return@LaunchedEffect
             if (addOpen || moreOpen) return@LaunchedEffect
-            pending = null
             delay(50)
             action()
+            pending = null
         }
 
         val items = viewmodel.session.sharedPlaylist

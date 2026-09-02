@@ -113,10 +113,11 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         viewmodel.playlistManager.loadPlaylistLocally(file, alsoShuffle = false)
     }
 
+    /* The route runs once the sheet has dismissed. It is cleared only after it ran: clearing it
+     * first changed this effect's key and cancelled the launch mid-delay. */
     LaunchedEffect(showSheet, pendingRoute) {
         if (showSheet) return@LaunchedEffect
         val route = pendingRoute ?: return@LaunchedEffect
-        pendingRoute = null
         delay(50)
         when (route) {
             MediaRoute.Device -> videoPicker.launch()
@@ -127,6 +128,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(PlatformFile(uri)) }
             }
         }
+        pendingRoute = null
     }
 
     // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.

@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.progressSemantics
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
@@ -71,8 +74,8 @@ fun Stepper(
 
     Row(
         modifier = modifier
-            .width(Space.valueCol + 32.dp * 2)
-            .height(Space.row)
+            .widthIn(min = Space.valueCol + 32.dp * 2, max = Space.valueMax + 32.dp * 2)
+            .heightIn(min = Space.row)
             .progressSemantics(current.toFloat(), 0f..maxOf(0, last).toFloat(), maxOf(0, last - 1))
             .semantics {
                 stateDescription = options.getOrNull(current) ?: ""
@@ -98,9 +101,9 @@ fun Stepper(
             style = Type.value,
             color = if (enabled) p.accent else p.disabled,
             textAlign = TextAlign.Center,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(vertical = Space.gapTight),
         )
         StepperArrow(ChevronDirection.Right, canForward) { step(1) }
     }

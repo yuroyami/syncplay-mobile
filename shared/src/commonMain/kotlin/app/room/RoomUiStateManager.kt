@@ -36,8 +36,8 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)
-    val popupCreateManagedRoom = MutableStateFlow(false)
-    val popupIdentifyAsRoomOperator = MutableStateFlow(false)
+    /** The managed room modal, with create or identify chosen inside it. */
+    val managedRoom = MutableStateFlow(false)
     val popupSeekToPosition = MutableStateFlow(false)
 
     val tabCardUserInfo = MutableStateFlow(false)

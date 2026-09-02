@@ -171,6 +171,12 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   only in About on its own row, the Join label is centred on the whole bar, the engine picker
   lost its dots and gained a tip per engine, and Material3 components, theme and typography are
   gone from the app: only MaterialKolor's scheme class remains, as a value holder.
+  Second review: the value column has a 160dp cap instead of a weight, so the chevron stays at
+  the edge when a label wraps; the stepper grows with its longest option; the media routes and
+  the playlist actions fire again (their effect used to clear its own key before the launch);
+  the rail runs horizontally on windows under 480dp tall instead of folding behind More; the
+  status line sits beside the rail so the chat owns its corner; managed rooms are one modal
+  with a segmented create-or-identify choice.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

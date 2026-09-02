@@ -1,11 +1,12 @@
 package app.room.ui.tabs
 
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,6 +20,8 @@ import app.theme.palette
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.Segmented
+import app.uicomponents.controls.Text
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.utils.generateRoomPassword
@@ -26,60 +29,64 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.okay
+import syncplaymobile.shared.generated.resources.room_managed_room
 import syncplaymobile.shared.generated.resources.room_managed_room_popup_create
 import syncplaymobile.shared.generated.resources.room_managed_room_popup_pw_identify_as_operator
 import syncplaymobile.shared.generated.resources.room_overflow_create_managed_room
 import syncplaymobile.shared.generated.resources.room_overflow_identify_as_operator
 
-enum class ManagedRoomPopupPurpose {
-    CREATE_MANAGED_ROOM, IDENTIFY_AS_OPERATOR
-}
-
-/** One question, one field: the managed room's name, or the operator password. */
+/**
+ * Managed rooms in one modal: a segmented choice between creating a room and identifying as
+ * its operator, then the one field that choice needs. No chooser in front of it.
+ */
 @Composable
-fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
+fun ManagedRoomModal() {
     val viewmodel = LocalRoomViewmodel.current
-    val state = when (purpose) {
-        ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> viewmodel.uiState.popupCreateManagedRoom
-        ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> viewmodel.uiState.popupIdentifyAsRoomOperator
-    }
-    val visible by state.collectAsState()
-    if (!visible) return
+    val ui = viewmodel.uiState
+    val open by ui.managedRoom.collectAsState()
+    if (!open) return
 
-    var input by remember {
-        mutableStateOf(if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) viewmodel.session.currentRoom else "")
-    }
-    val title = stringResource(
-        if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) Res.string.room_overflow_create_managed_room
-        else Res.string.room_overflow_identify_as_operator
-    )
-    val note = stringResource(
-        if (purpose == ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM) Res.string.room_managed_room_popup_create
-        else Res.string.room_managed_room_popup_pw_identify_as_operator
-    )
+    var create by remember { mutableStateOf(true) }
+    var roomName by remember { mutableStateOf(viewmodel.session.currentRoom) }
+    var password by remember { mutableStateOf("") }
+    val input = if (create) roomName else password
 
+    fun close() { ui.managedRoom.value = false }
     fun send() {
-        state.value = false
+        close()
         viewmodel.protocol.isRoomChanging = true
-        val auth = when (purpose) {
-            ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> WireMessage.controllerAuth(room = input, password = generateRoomPassword())
-            ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> WireMessage.controllerAuth(password = input)
-        }
+        val auth = if (create) WireMessage.controllerAuth(room = roomName, password = generateRoomPassword())
+        else WireMessage.controllerAuth(password = password)
         viewmodel.networkManager.sendAsync(auth)
     }
 
     Modal(
         open = true,
-        onDismiss = { state.value = false },
-        title = title,
+        onDismiss = ::close,
+        title = stringResource(Res.string.room_managed_room),
         size = ModalSize.Ask,
         actions = {
-            SecondaryAction(stringResource(Res.string.cancel), onClick = { state.value = false })
+            SecondaryAction(stringResource(Res.string.cancel), onClick = ::close)
             AccentAction(stringResource(Res.string.okay), onClick = ::send, enabled = input.isNotBlank())
         },
     ) {
-        Text(note, style = Type.note, color = palette.inkDim)
+        Segmented(
+            options = listOf(stringResource(Res.string.room_overflow_create_managed_room), stringResource(Res.string.room_overflow_identify_as_operator)),
+            selected = if (create) 0 else 1,
+            onSelect = { create = it == 0 },
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(Space.gap))
-        Field(value = input, onValueChange = { input = it }, imeAction = ImeAction.Done, onImeAction = { if (input.isNotBlank()) send() }, name = title)
+        Text(
+            text = stringResource(if (create) Res.string.room_managed_room_popup_create else Res.string.room_managed_room_popup_pw_identify_as_operator),
+            style = Type.note,
+            color = palette.inkDim,
+        )
+        Spacer(Modifier.height(Space.gap))
+        if (create) {
+            Field(value = roomName, onValueChange = { roomName = it }, imeAction = ImeAction.Done, onImeAction = { if (roomName.isNotBlank()) send() }, name = stringResource(Res.string.room_overflow_create_managed_room))
+        } else {
+            Field(value = password, onValueChange = { password = it }, imeAction = ImeAction.Done, onImeAction = { if (password.isNotBlank()) send() }, name = stringResource(Res.string.room_overflow_identify_as_operator))
+        }
     }
 }

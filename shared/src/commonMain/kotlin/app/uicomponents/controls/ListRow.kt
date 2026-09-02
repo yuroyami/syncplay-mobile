@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -90,8 +91,9 @@ fun RowScope.RowLabel(text: String, modifier: Modifier = Modifier, color: Color 
 }
 
 /**
- * The current value, end aligned, `value` type. With no [width] it takes what its text needs, up
- * to half the row, so a long choice label is never cut off; a fixed width pins a short column.
+ * The current value, end aligned, `value` type. With no [width] it takes what its text needs up
+ * to 160dp and wraps past that, so a long choice is never cut off and whatever follows it still
+ * sits at the row's edge; a fixed width pins a short column.
  */
 @Composable
 fun RowScope.RowValue(text: String, modifier: Modifier = Modifier, accent: Boolean = false, width: Dp? = null) {
@@ -103,7 +105,7 @@ fun RowScope.RowValue(text: String, modifier: Modifier = Modifier, accent: Boole
         textAlign = TextAlign.End,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
-        modifier = if (width != null) modifier.width(width) else modifier.weight(1f, fill = false),
+        modifier = if (width != null) modifier.width(width) else modifier.widthIn(max = Space.valueMax),
     )
 }
 

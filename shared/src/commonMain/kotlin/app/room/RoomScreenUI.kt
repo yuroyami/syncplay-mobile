@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
 import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
 import app.preferences.Preferences.HUD_AUTO_HIDE
@@ -48,8 +49,7 @@ import app.room.ui.misc.RoomGestureInterceptor
 import app.room.ui.misc.RoomPlayButton
 import app.room.ui.rightcards.RoomSidePanels
 import app.room.ui.statinfo.RoomStatusInfoSection
-import app.room.ui.tabs.ManagedRoomPopup
-import app.room.ui.tabs.ManagedRoomPopupPurpose
+import app.room.ui.tabs.ManagedRoomModal
 import app.room.ui.tabs.RoomRail
 import app.room.ui.tabs.RoomUnlockableLayout
 import app.theme.LocalPalette
@@ -91,6 +91,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val initialFocusRequester = remember { FocusRequester() }
     val window = LocalWindowInfo.current.containerSize
     val tall = window.height > window.width
+    // A window under 480dp tall cannot hold the rail as a column beside the transport.
+    val railHorizontal = tall || with(LocalDensity.current) { window.height.toDp() } < 480.dp
 
     /* The room's own glass backdrop: only the video layer and the artwork. Glass in the same
      * window cannot sample the backdrop it lives inside, so in-room chrome blurs this capture. */
@@ -125,17 +127,19 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             when {
                 isInPipMode -> Unit // PiP shows the video and nothing else.
                 lockedMode -> RoomUnlockableLayout()
-                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, initialFocusRequester)
+                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, initialFocusRequester)
             }
 
             if (!isInPipMode) {
                 // Notices sit above the HUD and outside its alpha: they show while it is hidden.
+                // Notices sit under the status line, in the strip between the chat and the rail.
+                val chatWidth = if (tall) 0.dp else with(LocalDensity.current) { (window.width * 0.44f).toDp() }
                 NoticeHost(
                     queue = viewmodel.notices,
                     modifier = Modifier.align(Alignment.TopCenter)
                         .windowInsetsPadding(roomTopInsets())
-                        .padding(top = Space.rowCompact + Space.gap)
-                        .padding(horizontal = Space.gutter),
+                        .padding(top = Space.row + Space.gap)
+                        .padding(start = chatWidth + Space.gap, end = Space.gutter),
                 )
                 if (!soloMode) FadingMessageLayout()
             }
@@ -143,8 +147,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
         SeekToPositionPopup()
         LeaveRoomAsk(viewmodel)
-        ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
-        ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
+        ManagedRoomModal()
 
         val globalViewmodel = LocalGlobalViewmodel.current
         LaunchedEffect(null) {
@@ -182,6 +185,7 @@ private fun RoomHud(
     soloMode: Boolean,
     hasVideo: Boolean,
     tall: Boolean,
+    railHorizontal: Boolean,
     initialFocusRequester: FocusRequester,
 ) {
     val ui = viewmodel.uiState
@@ -235,8 +239,9 @@ private fun RoomHud(
         if (hasVideo) BlackContrastUnderlay()
         RoomFrame(
             tall = tall,
-            topStart = if (soloMode) null else ({ RoomStatusInfoSection() }),
-            rail = { RoomRail(horizontal = tall) },
+            railHorizontal = railHorizontal,
+            status = if (soloMode) null else ({ RoomStatusInfoSection() }),
+            rail = { RoomRail(horizontal = railHorizontal) },
             chat = if (soloMode) null else ({ RoomChatSection(modifier = Modifier.fillMaxSize()) }),
             side = { RoomSidePanels(Modifier.fillMaxSize(), tall = tall) },
             bottom = { RoomBottomBarSection(modifier = Modifier.fillMaxWidth()) },

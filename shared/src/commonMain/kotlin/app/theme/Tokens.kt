@@ -39,6 +39,7 @@ object Space {
     val gap = 12.dp
     val gapTight = 6.dp
     val valueCol = 90.dp
+    val valueMax = 160.dp
     val groupHead = 30.dp
     val glyph = 20.dp
     val glyphLarge = 24.dp
