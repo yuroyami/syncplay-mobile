@@ -173,7 +173,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 ) {
                     Column(
                         modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().heightIn(min = viewport).padding(horizontal = Space.gutter, vertical = Space.gutter),
-                        verticalArrangement = Arrangement.spacedBy(Space.gutter, Alignment.CenterVertically),
+                        // Four groups spread over whatever height is free; the padding keeps a
+                        // floor between them when there is none (short window, keyboard up).
+                        verticalArrangement = Arrangement.SpaceEvenly,
                     ) {
                         var username by remember(savedConfig) { mutableStateOf(config.user) }
                         var room by remember(savedConfig) { mutableStateOf(config.room) }
@@ -207,33 +209,35 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
 
-                        FormField(
-                            label = stringResource(Res.string.connect_username),
-                            help = stringResource(Res.string.connect_username_tooltip),
-                            error = error?.takeIf { it == Res.string.connect_username_empty_error }?.let { stringResource(it) },
-                            value = username,
-                            onValueChange = { username = it; error = null },
-                            icon = Icons.Outlined.PersonPin,
-                            focusRequester = usernameFocus,
-                            imeAction = ImeAction.Next,
-                            onImeAction = { roomFocus.requestFocus() },
-                        )
-                        FormField(
-                            label = stringResource(Res.string.connect_roomname),
-                            help = stringResource(Res.string.connect_roomname_tooltip),
-                            error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
-                            value = room,
-                            onValueChange = { room = it; error = null },
-                            icon = Icons.Outlined.MeetingRoom,
-                            focusRequester = roomFocus,
-                            imeAction = ImeAction.Done,
-                            onImeAction = { focusManager.clearFocus(true) },
-                        )
+                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                            FormField(
+                                label = stringResource(Res.string.connect_username),
+                                help = stringResource(Res.string.connect_username_tooltip),
+                                error = error?.takeIf { it == Res.string.connect_username_empty_error }?.let { stringResource(it) },
+                                value = username,
+                                onValueChange = { username = it; error = null },
+                                icon = Icons.Outlined.PersonPin,
+                                focusRequester = usernameFocus,
+                                imeAction = ImeAction.Next,
+                                onImeAction = { roomFocus.requestFocus() },
+                            )
+                            FormField(
+                                label = stringResource(Res.string.connect_roomname),
+                                help = stringResource(Res.string.connect_roomname_tooltip),
+                                error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
+                                value = room,
+                                onValueChange = { room = it; error = null },
+                                icon = Icons.Outlined.MeetingRoom,
+                                focusRequester = roomFocus,
+                                imeAction = ImeAction.Done,
+                                onImeAction = { focusManager.clearFocus(true) },
+                            )
 
-                        /* Server: official, someone else's, or the one this app hosts. Official keeps a
-                         * non-official port from leaking through and clears the password; Custom blanks
-                         * both; Host points the join at the local server. */
-                        Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                            /* Server: official, someone else's, or the one this app hosts. Official keeps a
+                             * non-official port from leaking through and clears the password; Custom blanks
+                             * both; Host points the join at the local server. */
+                        }
+                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(
                                 text = stringResource(Res.string.connect_server, appName),
                                 tip = if (mode == ServerMode.Custom) stringResource(Res.string.connect_custom_tip) else null,
@@ -317,7 +321,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
 
-                        Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(stringResource(Res.string.connect_choose_video_engine))
                             val selectedEngine by PLAYER_ENGINE.watchPref()
                             // A saved engine this build no longer ships is replaced once with the platform default.
@@ -357,7 +361,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
                         PrimaryAction(
                             text = stringResource(Res.string.connect_button_join),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = Space.gap),
                             onClick = {
                                 error = validate()
                                 if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
