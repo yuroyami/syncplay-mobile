@@ -1092,9 +1092,15 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     private val MAX_VLC_VOLUME = 200
 
-    override fun getMaxVolume() = 200
-    override fun getCurrentVolume(): Int = vlcPlayer?.audio?.volume ?: 0
-    override fun changeCurrentVolume(v: Int) {
-        vlcPlayer?.audio?.volume = v.coerceIn(0, MAX_VLC_VOLUME)
+    /* libVLC's volume runs 0 to 200: the first hundred is output, the second is amplification. */
+    override fun getEngineVolume(): Int = (vlcPlayer?.audio?.volume ?: 0).coerceIn(0, 100)
+    override fun setEngineVolume(percent: Int) {
+        vlcPlayer?.audio?.volume = percent.coerceIn(0, 100)
+    }
+
+    override val gainMax: Int = MAX_VLC_VOLUME
+    override fun getGain(): Int = (vlcPlayer?.audio?.volume ?: 100).coerceIn(100, MAX_VLC_VOLUME)
+    override fun setGain(percent: Int) {
+        vlcPlayer?.audio?.volume = percent.coerceIn(100, MAX_VLC_VOLUME)
     }
 }

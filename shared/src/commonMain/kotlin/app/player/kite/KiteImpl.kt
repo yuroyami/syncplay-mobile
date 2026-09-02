@@ -639,18 +639,11 @@ internal class KiteImpl(
         )
     }
 
-    /** KitePlayer owns its own output volume; there is no system stream to read here. */
-    override fun getMaxVolume(): Int = MAX_VOLUME
+    /** KitePlayer's gain stage stops at unity: above it is refused, not clipped, so there is no gain rung. */
+    override fun getEngineVolume(): Int =
+        ((kite?.state?.value?.volume ?: 1f) * 100).toInt().coerceIn(0, 100)
 
-    override fun getCurrentVolume(): Int =
-        ((kite?.state?.value?.volume ?: 1f) * MAX_VOLUME).toInt().coerceIn(0, MAX_VOLUME)
-
-    override fun changeCurrentVolume(v: Int) {
-        kite?.setVolume(v.coerceIn(0, MAX_VOLUME) / MAX_VOLUME.toFloat())
-    }
-
-    private companion object {
-        /** A 0..100 scale, so the shared volume slider has the resolution it expects. */
-        const val MAX_VOLUME = 100
+    override fun setEngineVolume(percent: Int) {
+        kite?.setVolume(percent.coerceIn(0, 100) / 100f)
     }
 }

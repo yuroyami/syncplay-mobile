@@ -64,6 +64,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         copyAssets(ctx)
 
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+        // The gain rung: mpv clamps volume at 130 by default.
+        runCatching { MPVLib.setPropertyInt("volume-max", gainMax) }
         isInitialized = true
         mpvObserverAttach()
     }
@@ -475,11 +477,16 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         }
     }
 
-    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
-    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
-    override fun changeCurrentVolume(v: Int) {
-        if (!audioManager.isVolumeFixed) {
-            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
-        }
+    /* mpv's own volume property is the whole ladder: 0 to 100 is its output, 100 to 200 is
+     * amplification once volume-max has been raised at init. */
+    override fun getEngineVolume(): Int = (MPVLib.getPropertyInt("volume") ?: 100).coerceIn(0, 100)
+    override fun setEngineVolume(percent: Int) {
+        MPVLib.setPropertyInt("volume", percent.coerceIn(0, 100))
+    }
+
+    override val gainMax: Int = 200
+    override fun getGain(): Int = (MPVLib.getPropertyInt("volume") ?: 100).coerceIn(100, gainMax)
+    override fun setGain(percent: Int) {
+        MPVLib.setPropertyInt("volume", percent.coerceIn(100, gainMax))
     }
 }

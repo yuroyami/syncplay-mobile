@@ -467,13 +467,10 @@ object AVPlayerEngine: PlayerEngine {
         }
 
 
-        /** Volume is exposed on a 0-100 scale; AVPlayer's native range is 0.0-1.0. */
-        private val MAX_VOLUME = 100f
-        override fun getMaxVolume() = MAX_VOLUME.toInt()
-        override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(100))?.roundToInt() ?: 0
-        override fun changeCurrentVolume(v: Int) {
-            val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME) / MAX_VOLUME
-            avPlayer?.setVolume(clampedVolume)
+        /** AVPlayer's volume is 0.0 to 1.0 and stops there: no gain rung. */
+        override fun getEngineVolume(): Int = (avPlayer?.volume?.times(100))?.roundToInt() ?: 0
+        override fun setEngineVolume(percent: Int) {
+            avPlayer?.setVolume(percent.coerceIn(0, 100) / 100f)
         }
     }
 }

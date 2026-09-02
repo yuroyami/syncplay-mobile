@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
+import app.player.VolumeLadder
 import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.GESTURES
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
@@ -222,7 +223,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         return@detectVerticalDragGestures
                                     }
                                     initialBrightness = platformCallback.getCurrentBrightness()
-                                    initialVolume = viewmodel.player.getCurrentVolume()
+                                    initialVolume = viewmodel.player.volume.current()
                                     lastAppliedBrightness = initialBrightness
                                     lastAppliedVolume = initialVolume
                                     dragDistance = 0f
@@ -242,18 +243,19 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     dragDistance += delta
                                     val height = size.height / 2f
                                     if (pointer.position.x >= size.width * 0.5f) {
-                                        val maxVolume = viewmodel.player.getMaxVolume()
-                                        val newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt().coerceIn(0, maxVolume)
-                                        // Boosting engines (VLC to 200) show their raw value with a mark at 100.
-                                        val span = maxVolume.coerceAtLeast(1)
+                                        /* Half the screen height is the base hundred; a swipe that keeps going
+                                         * climbs into the gain rung at the same rate, where the engine has one. */
+                                        val ladder = viewmodel.player.volume.ladder
+                                        val newVolume = (initialVolume + (-dragDistance * VolumeLadder.BASE_MAX / height)).roundToInt().coerceIn(0, ladder.max)
+                                        val gainSpan = (ladder.gainMax - VolumeLadder.BASE_MAX).coerceAtLeast(1)
                                         readout = GestureReadout.Level(
                                             kind = GestureValueKind.VOLUME,
-                                            display = if (span > 100) newVolume else newVolume * 100 / span,
-                                            fraction = newVolume / span.toFloat(),
-                                            normalMark = if (span > 100) 100f / span else 1f,
+                                            display = newVolume,
+                                            fraction = newVolume.coerceAtMost(VolumeLadder.BASE_MAX) / VolumeLadder.BASE_MAX.toFloat(),
+                                            gain = if (ladder.hasGain) (newVolume - VolumeLadder.BASE_MAX).coerceAtLeast(0) / gainSpan.toFloat() else null,
                                         )
                                         if (newVolume != lastAppliedVolume) {
-                                            viewmodel.player.changeCurrentVolume(newVolume)
+                                            viewmodel.player.volume.set(newVolume)
                                             Feedback.tick()
                                             lastAppliedVolume = newVolume
                                         }

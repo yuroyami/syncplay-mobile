@@ -415,11 +415,19 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     @Composable
     abstract fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit)
 
-    abstract fun getMaxVolume(): Int
+    /** The engine's own output, 0 to 100. Where the platform owns the base this stays at 100. */
+    abstract fun getEngineVolume(): Int
+    abstract fun setEngineVolume(percent: Int)
 
-    abstract fun getCurrentVolume(): Int
+    /** The engine's gain ceiling in percent; 100 means it cannot amplify. */
+    open val gainMax: Int = VolumeLadder.BASE_MAX
 
-    abstract fun changeCurrentVolume(v: Int)
+    /** Amplification, 100 to [gainMax]. Only consulted when [gainMax] is above 100. */
+    open fun getGain(): Int = VolumeLadder.BASE_MAX
+    open fun setGain(percent: Int) {}
+
+    /** The one ladder the room moves: base first, then gain where the engine has any. */
+    val volume: VolumeController by lazy { VolumeController(this) }
 
     fun announceFileLoaded() {
         if (viewmodel.isSoloMode) return

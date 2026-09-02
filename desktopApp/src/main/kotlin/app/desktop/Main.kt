@@ -220,8 +220,8 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
 
     if (!vm.playerManager.hasVideo.value) return false
     val times = if (event.isShiftPressed) 5 else 1
-    val maxVolume = vm.player.getMaxVolume().coerceAtLeast(1)
-    val volumeStep = (maxVolume * 0.05).roundToInt().coerceAtLeast(1)
+    val volume = vm.player.volume
+    val volumeStep = 5
 
     return when (event.key) {
         Key.Spacebar -> {
@@ -233,17 +233,17 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
         }
         Key.DirectionLeft -> { vm.dispatcher.seekBy(-Preferences.SEEK_BACKWARD_JUMP.value() * times); true }
         Key.DirectionRight -> { vm.dispatcher.seekBy(Preferences.SEEK_FORWARD_JUMP.value() * times); true }
-        Key.DirectionUp -> { vm.player.changeCurrentVolume((vm.player.getCurrentVolume() + volumeStep).coerceAtMost(maxVolume)); true }
-        Key.DirectionDown -> { vm.player.changeCurrentVolume((vm.player.getCurrentVolume() - volumeStep).coerceAtLeast(0)); true }
+        Key.DirectionUp -> { volume.set(volume.current() + volumeStep); true }
+        Key.DirectionDown -> { volume.set(volume.current() - volumeStep); true }
         Key.M -> {
-            val current = vm.player.getCurrentVolume()
+            val current = volume.current()
             val restore = mutedFrom
             if (current == 0 && restore != null) {
-                vm.player.changeCurrentVolume(restore)
+                volume.set(restore)
                 mutedFrom = null
             } else {
                 mutedFrom = current
-                vm.player.changeCurrentVolume(0)
+                volume.set(0)
             }
             true
         }

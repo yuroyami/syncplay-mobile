@@ -55,6 +55,14 @@ interface PlatformCallback {
      */
     fun changeCurrentBrightness(v: Float)
 
+    /**
+     * The device's own music volume. [deviceVolumeSteps] is its step count, 0 where the platform
+     * gives no way to set it (iOS, desktop); the other two are only called when it is above 0.
+     */
+    fun deviceVolumeSteps(): Int = 0
+    fun getDeviceVolume(): Int = 0
+    fun setDeviceVolume(step: Int) {}
+
 
     fun mediaSessionInitialize()
     fun mediaSessionFinalize()

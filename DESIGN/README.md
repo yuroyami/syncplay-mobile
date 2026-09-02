@@ -228,6 +228,13 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   height at rest, spread their blocks over the leftover height, and scroll only once something
   grows (the host panel). The help lines are one line of copy each, and the tips dialog's
   labels fit three keys at 360dp.
+  Volume ladder (player/Volume.kt): one ladder with two rungs. 0 to 100 is the base, the
+  device's music stream where the platform can set it (Android, through PlatformCallback's
+  deviceVolume hooks) and the engine's own output elsewhere (iOS has no public system-volume
+  API; desktop has none either). Above 100 is engine gain where the engine can amplify: VLCKit
+  and mpv to 200 natively (mpv's volume-max is raised at init), ExoPlayer to 200 through a
+  LoudnessEnhancer on its audio session (+6 dB at 200), KitePlayer and AVPlayer none. The swipe
+  readout draws an ink bar for the base and, only on engines with gain, an amber bar under it.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

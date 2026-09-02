@@ -26,6 +26,7 @@ import androidx.media3.decoder.ffmpeg.FfmpegLibrary
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import android.media.audiofx.LoudnessEnhancer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
@@ -206,6 +207,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         withContext(Dispatchers.Main.immediate) {
             exoplayer?.stop()
+            runCatching { loudness?.release() }
+            loudness = null
             exoplayer?.release()
             exoplayer = null
         }
@@ -236,11 +239,28 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         +EXO_MAX_BUFFER; +EXO_MIN_BUFFER; +EXO_SEEK_BUFFER
     }
 
-    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
-    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
-    override fun changeCurrentVolume(v: Int) {
-        if (!audioManager.isVolumeFixed) {
-            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
+    override fun getEngineVolume(): Int = ((exoplayer?.volume ?: 1f) * 100).roundToInt().coerceIn(0, 100)
+    override fun setEngineVolume(percent: Int) {
+        exoplayer?.volume = percent.coerceIn(0, 100) / 100f
+    }
+
+    /* Amplification rides a LoudnessEnhancer on the player's audio session: 200 percent is +6 dB,
+     * the point where a doubled amplitude starts to clip on most material. The effect is built on
+     * first use and torn down with the player. */
+    override val gainMax: Int = 200
+    private var loudness: LoudnessEnhancer? = null
+    private var gainPercent: Int = 100
+
+    override fun getGain(): Int = gainPercent
+    override fun setGain(percent: Int) {
+        val target = percent.coerceIn(100, gainMax)
+        gainPercent = target
+        val session = exoplayer?.audioSessionId ?: C.AUDIO_SESSION_ID_UNSET
+        if (session == C.AUDIO_SESSION_ID_UNSET) return
+        val effect = loudness ?: runCatching { LoudnessEnhancer(session) }.getOrNull()?.also { loudness = it } ?: return
+        runCatching {
+            effect.setTargetGain((target - 100) * 6)
+            effect.enabled = target > 100
         }
     }
 

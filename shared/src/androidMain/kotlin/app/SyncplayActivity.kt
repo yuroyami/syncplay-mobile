@@ -8,6 +8,7 @@ import android.app.PictureInPictureParams
 import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.media.AudioManager
 import android.content.ClipboardManager
 import android.content.ClipData
 import android.content.Intent
@@ -173,6 +174,13 @@ class SyncplayActivity : ComponentActivity() {
             /**
              * Gets the maximum brightness value (1.0 on Android).
              */
+            private val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+            override fun deviceVolumeSteps(): Int = if (audioManager.isVolumeFixed) 0 else audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            override fun getDeviceVolume(): Int = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            override fun setDeviceVolume(step: Int) {
+                if (!audioManager.isVolumeFixed) audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, step, 0)
+            }
+
             override fun getMaxBrightness() = 1f
 
             /**

@@ -42,8 +42,12 @@ enum class GestureValueKind { VOLUME, BRIGHTNESS }
 
 /** What the gesture readout shows: a level while swiping, or where a seek will land. */
 sealed interface GestureReadout {
-    /** [display] is the number shown; [normalMark] is where 100 percent sits on a boosting engine. */
-    class Level(val kind: GestureValueKind, val display: Int, val fraction: Float, val normalMark: Float = 1f) : GestureReadout
+    /**
+     * [display] is the number shown and [fraction] fills the base bar. [gain] fills the second bar,
+     * 0 to 1 across the engine's gain range; null where the engine cannot amplify, and then there
+     * is no second bar at all.
+     */
+    class Level(val kind: GestureValueKind, val display: Int, val fraction: Float, val gain: Float? = null) : GestureReadout
 
     /** [deltaSeconds] is the accumulated double-tap chain, null for a long press preview. */
     class Seek(val deltaSeconds: Int?, val targetMs: Long, val fraction: Float?) : GestureReadout
@@ -89,7 +93,7 @@ private fun ReadoutNotice(readout: GestureReadout) {
             Notice(
                 text = "$label ${readout.display}%",
                 severity = NoticeSeverity.Quiet,
-                trailing = { LevelBar(readout.fraction, readout.normalMark, Modifier.width(72.dp)) },
+                trailing = { LevelBars(readout.fraction, readout.gain, Modifier.width(72.dp)) },
             )
         }
         is GestureReadout.Seek -> {
@@ -103,17 +107,24 @@ private fun ReadoutNotice(readout: GestureReadout) {
     }
 }
 
-/** A 4dp level bar; past the 100 percent mark the fill turns to the warning colour. */
+/**
+ * The base as a 4dp ink bar; under it, only when the engine has a gain rung, a second 4dp bar in
+ * the warning colour that fills as the ladder climbs past 100.
+ */
 @Composable
-private fun LevelBar(fraction: Float, normalMark: Float, modifier: Modifier = Modifier) {
+private fun LevelBars(fraction: Float, gain: Float?, modifier: Modifier = Modifier) {
     val p = palette
-    val fill by animateFloatAsState(fraction.coerceIn(0f, 1f), Motion.quick(), label = "level")
-    Canvas(modifier.height(4.dp)) {
+    val base by animateFloatAsState(fraction.coerceIn(0f, 1f), Motion.quick(), label = "level")
+    val boost by animateFloatAsState((gain ?: 0f).coerceIn(0f, 1f), Motion.quick(), label = "gain")
+    Canvas(modifier.height(if (gain != null) 11.dp else 4.dp)) {
         val r = CornerRadius(1.dp.toPx())
-        drawRoundRect(p.trackOff, Offset.Zero, Size(size.width, size.height), r)
-        val normalW = size.width * normalMark.coerceIn(0f, 1f)
-        drawRoundRect(p.accent, Offset.Zero, Size(minOf(fill, normalMark) * size.width, size.height), r)
-        if (fill > normalMark) drawRect(p.warn, Offset(normalW, 0f), Size((fill - normalMark) * size.width, size.height))
-        if (normalMark < 1f) drawRect(p.ink, Offset(normalW, 0f), Size(1.dp.toPx(), size.height))
+        val bar = 4.dp.toPx()
+        drawRoundRect(p.trackOff, Offset.Zero, Size(size.width, bar), r)
+        drawRoundRect(p.ink, Offset.Zero, Size(base * size.width, bar), r)
+        if (gain != null) {
+            val y = size.height - bar
+            drawRoundRect(p.trackOff, Offset(0f, y), Size(size.width, bar), r)
+            drawRoundRect(p.warn, Offset(0f, y), Size(boost * size.width, bar), r)
+        }
     }
 }
