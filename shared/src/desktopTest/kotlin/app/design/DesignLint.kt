@@ -12,18 +12,16 @@ class DesignLint {
 
     private val root = File("src/commonMain/kotlin/app")
 
-    private val allowedMaterialImports = setOf(
-        "MaterialTheme", "Text", "Icon", "ColorScheme", "Typography", "Shapes",
-        "darkColorScheme", "lightColorScheme", "ExperimentalMaterial3Api", "ExperimentalMaterial3ExpressiveApi",
-    )
+    /** MaterialKolor hands the app its scheme as this Material class; it is a value holder, nothing more. */
+    private val allowedMaterialImports = setOf("ColorScheme")
 
-    /** Files that may read the colour scheme or build the Material bridge. */
-    private val bridgeFiles = setOf("Tokens.kt", "AppTypography.kt", "SaveableTheme.kt")
+    /** The two files that read that scheme to build the palette. */
+    private val bridgeFiles = setOf("Tokens.kt", "SaveableTheme.kt")
 
     private val baseline = mapOf(
         "material3 component imports" to 0,
         "sp literals outside Tokens.kt" to 0,
-        "MaterialTheme.typography or ripple" to 0,
+        "MaterialTheme or ripple" to 0,
         "text sizes under 11sp" to 0,
     )
 
@@ -48,8 +46,8 @@ class DesignLint {
                         if (m.groupValues[1].toFloat() < 11f && !line.contains("letterSpacing")) hit("text sizes under 11sp", file, n, line)
                     }
                 }
-                if (line.contains("MaterialTheme.typography") || line.contains("ripple(")) {
-                    if (file.name !in bridgeFiles) hit("MaterialTheme.typography or ripple", file, n, line)
+                if (line.contains("MaterialTheme") || line.contains("ripple(")) {
+                    if (file.name !in bridgeFiles) hit("MaterialTheme or ripple", file, n, line)
                 }
             }
         }

@@ -30,6 +30,10 @@ import syncplaymobile.shared.generated.resources.server_host_port_taken
  * the process dies, and the Android foreground service keeps the process alive. Configuration
  * comes from the six server preferences, read once at start.
  */
+enum class ServerStatus {
+    Stopped, Starting, Running, Error
+}
+
 object ServerHostSession {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

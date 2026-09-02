@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +23,7 @@ import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,7 +43,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
-import app.Screen
 import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
@@ -57,9 +57,11 @@ import app.theme.palette
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.PrimaryAction
-import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Segmented
-import app.uicomponents.controls.Tag
+import app.uicomponents.controls.HelpTip
+import app.server.ui.ServerHostPanel
+import app.preferences.Preferences.SERVER_PASSWORD
+import app.preferences.Preferences.SERVER_PORT
 import app.uicomponents.frames.NoticeHost
 import app.utils.ExitRoomMode
 import app.utils.availablePlatformPlayerEngines
@@ -81,7 +83,9 @@ import syncplaymobile.shared.generated.resources.connect_button_saveshortcut
 import syncplaymobile.shared.generated.resources.connect_choose_video_engine
 import syncplaymobile.shared.generated.resources.connect_custom
 import syncplaymobile.shared.generated.resources.connect_custom_help
-import syncplaymobile.shared.generated.resources.connect_host_own_server
+import syncplaymobile.shared.generated.resources.connect_host_mine
+import syncplaymobile.shared.generated.resources.connect_host_join_note
+import syncplaymobile.shared.generated.resources.connect_custom_tip
 import syncplaymobile.shared.generated.resources.connect_official
 import syncplaymobile.shared.generated.resources.connect_password_help
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
@@ -89,11 +93,9 @@ import syncplaymobile.shared.generated.resources.connect_roomname
 import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
 import syncplaymobile.shared.generated.resources.connect_roomname_tooltip
 import syncplaymobile.shared.generated.resources.connect_server
-import syncplaymobile.shared.generated.resources.connect_server_tooltip
 import syncplaymobile.shared.generated.resources.connect_username
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
 import syncplaymobile.shared.generated.resources.connect_username_tooltip
-import syncplaymobile.shared.generated.resources.connect_watch_alone
 import syncplaymobile.shared.generated.resources.home_engine_unavailable_error
 import syncplaymobile.shared.generated.resources.home_ip_address
 import syncplaymobile.shared.generated.resources.home_password_if_any
@@ -107,6 +109,10 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
 private const val OFFICIAL_HOST = "syncplay.pl"
+private const val LOCAL_HOST = "127.0.0.1"
+
+/** Where the join goes: the official server, someone else's, or the one this app hosts. */
+private enum class ServerMode { Official, Custom, Host }
 private val FORM_MAX_WIDTH = 420.dp
 
 /**
@@ -162,9 +168,17 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 ) {
                     var username by remember(savedConfig) { mutableStateOf(config.user) }
                     var room by remember(savedConfig) { mutableStateOf(config.room) }
-                    var official by remember(savedConfig) {
-                        mutableStateOf(officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}"))
+                    var mode by remember(savedConfig) {
+                        mutableStateOf(
+                            when {
+                                officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
+                                config.ip == LOCAL_HOST || config.ip == "localhost" -> ServerMode.Host
+                                else -> ServerMode.Custom
+                            }
+                        )
                     }
+                    val hostPort by SERVER_PORT.watchPref()
+                    val hostPassword by SERVER_PASSWORD.watchPref()
                     var address by remember(savedConfig) { mutableStateOf(config.ip) }
                     var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
                     var password by remember(savedConfig) { mutableStateOf(config.pw) }
@@ -207,79 +221,91 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         onImeAction = { focusManager.clearFocus(true) },
                     )
 
-                    /* Server: Official or Custom. Official keeps a non-official port from
-                     * leaking through and clears the password; Custom blanks both. */
+                    /* Server: official, someone else's, or the one this app hosts. Official keeps a
+                     * non-official port from leaking through and clears the password; Custom blanks
+                     * both; Host points the join at the local server. */
                     Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
-                        FormLabel(stringResource(Res.string.connect_server, appName))
+                        FormLabel(
+                            text = stringResource(Res.string.connect_server, appName),
+                            tip = if (mode == ServerMode.Custom) stringResource(Res.string.connect_custom_tip) else null,
+                        )
                         Segmented(
-                            options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom)),
-                            selected = if (official) 0 else 1,
+                            options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom), stringResource(Res.string.connect_host_mine)),
+                            selected = mode.ordinal,
                             onSelect = { index ->
-                                val toOfficial = index == 0
-                                if (toOfficial == official) return@Segmented
-                                official = toOfficial
-                                if (toOfficial) {
-                                    address = OFFICIAL_HOST
-                                    if (port !in officialPorts) port = "8997"
-                                    password = ""
-                                } else {
-                                    address = ""
-                                    port = ""
+                                val next = ServerMode.entries[index]
+                                if (next == mode) return@Segmented
+                                mode = next
+                                when (next) {
+                                    ServerMode.Official -> {
+                                        address = OFFICIAL_HOST
+                                        if (port !in officialPorts) port = "8997"
+                                        password = ""
+                                    }
+                                    ServerMode.Custom -> {
+                                        address = ""
+                                        port = ""
+                                        password = ""
+                                    }
+                                    ServerMode.Host -> {
+                                        address = LOCAL_HOST
+                                        port = hostPort
+                                        password = hostPassword
+                                    }
                                 }
                                 error = null
                             },
                         )
-                        if (official) {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
-                                officialPorts.forEach { candidate ->
-                                    Tag(candidate, filled = port == candidate, onToggle = { port = candidate; address = OFFICIAL_HOST })
+                        when (mode) {
+                            ServerMode.Official -> Segmented(
+                                options = officialPorts,
+                                selected = officialPorts.indexOf(port).coerceAtLeast(0),
+                                onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
+                                height = Space.row,
+                            )
+                            ServerMode.Custom -> {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                                    Field(
+                                        value = address,
+                                        onValueChange = { address = it.trim(); error = null },
+                                        modifier = Modifier.weight(2f),
+                                        placeholder = stringResource(Res.string.home_ip_address),
+                                        leading = Icons.Outlined.Lan,
+                                        keyboardType = KeyboardType.Uri,
+                                        imeAction = ImeAction.Next,
+                                        onImeAction = { portFocus.requestFocus() },
+                                        name = stringResource(Res.string.home_ip_address),
+                                    )
+                                    Field(
+                                        value = port,
+                                        onValueChange = { port = it.trim(); error = null },
+                                        modifier = Modifier.weight(1f),
+                                        placeholder = stringResource(Res.string.home_port),
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Next,
+                                        onImeAction = { passwordFocus.requestFocus() },
+                                        focusRequester = portFocus,
+                                        name = stringResource(Res.string.home_port),
+                                    )
                                 }
-                            }
-                            Text(stringResource(Res.string.connect_server_tooltip), style = Type.note, color = p.inkDim)
-                        } else {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
                                 Field(
-                                    value = address,
-                                    onValueChange = { address = it.trim(); error = null },
-                                    modifier = Modifier.weight(2f),
-                                    placeholder = stringResource(Res.string.home_ip_address),
-                                    leading = Icons.Outlined.Lan,
-                                    keyboardType = KeyboardType.Uri,
-                                    imeAction = ImeAction.Next,
-                                    onImeAction = { portFocus.requestFocus() },
-                                    name = stringResource(Res.string.home_ip_address),
+                                    value = password,
+                                    onValueChange = { password = it.trim() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = stringResource(Res.string.home_password_if_any),
+                                    imeAction = ImeAction.Done,
+                                    onImeAction = { focusManager.clearFocus(true) },
+                                    focusRequester = passwordFocus,
+                                    name = stringResource(Res.string.home_password_if_any),
                                 )
-                                Field(
-                                    value = port,
-                                    onValueChange = { port = it.trim(); error = null },
-                                    modifier = Modifier.weight(1f),
-                                    placeholder = stringResource(Res.string.home_port),
-                                    keyboardType = KeyboardType.Number,
-                                    imeAction = ImeAction.Next,
-                                    onImeAction = { passwordFocus.requestFocus() },
-                                    focusRequester = portFocus,
-                                    name = stringResource(Res.string.home_port),
-                                )
+                                val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
+                                if (serverError != null) Text(stringResource(serverError), style = Type.note, color = p.bad)
                             }
-                            val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
-                            Text(
-                                text = serverError?.let { stringResource(it) } ?: stringResource(Res.string.connect_custom_help),
-                                style = Type.note,
-                                color = if (serverError != null) p.bad else p.inkDim,
-                            )
-                            FormField(
-                                label = stringResource(Res.string.home_password_if_any),
-                                help = stringResource(Res.string.connect_password_help),
-                                error = null,
-                                value = password,
-                                onValueChange = { password = it.trim() },
-                                icon = null,
-                                focusRequester = passwordFocus,
-                                imeAction = ImeAction.Done,
-                                onImeAction = { focusManager.clearFocus(true) },
-                            )
+                            ServerMode.Host -> {
+                                Text(stringResource(Res.string.connect_host_join_note, "$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
+                                ServerHostPanel(Modifier.fillMaxWidth())
+                            }
                         }
-                        SecondaryAction(stringResource(Res.string.connect_host_own_server), onClick = { globalViewmodel.backstack.add(Screen.ServerHost) }, modifier = Modifier.fillMaxWidth())
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
@@ -309,11 +335,15 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     fun validate(): StringResource? = when {
                         username.isBlank() -> Res.string.connect_username_empty_error
                         room.isBlank() -> Res.string.connect_roomname_empty_error
+                        mode == ServerMode.Host -> null
                         address.isBlank() -> Res.string.connect_address_empty_error
                         port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
                         else -> null
                     }
-                    fun currentConfig() = JoinConfig(username, room, address, port.toInt(), password).sanitised()
+                    fun currentConfig() = when (mode) {
+                        ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
+                        else -> JoinConfig(username, room, address, port.toInt(), password)
+                    }.sanitised()
 
                     val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
                     PrimaryAction(
@@ -332,11 +362,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 }
                             }
                         },
-                    )
-                    SecondaryAction(
-                        text = stringResource(Res.string.connect_watch_alone),
-                        onClick = { globalViewmodel.viewModelScope.launch { viewmodel.joinRoom(null) } },
-                        modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(Space.gap))
                 }
@@ -357,9 +382,16 @@ private fun JoinConfig.sanitised() = copy(
     room = room.replace("\\", "").trim().substringSafely(0, 34),
 )
 
+/** A section label; with a [tip] it carries the help glyph, the only place the long words live. */
 @Composable
-private fun FormLabel(text: String) {
-    Text(text, style = Type.label, color = palette.inkDim, modifier = Modifier.height(Space.gutter))
+private fun FormLabel(text: String, tip: String? = null) {
+    Row(Modifier.height(Space.glyph), verticalAlignment = Alignment.CenterVertically) {
+        Text(text, style = Type.label, color = palette.inkDim)
+        if (tip != null) {
+            Spacer(Modifier.width(Space.gapTight))
+            HelpTip(tip)
+        }
+    }
 }
 
 /**

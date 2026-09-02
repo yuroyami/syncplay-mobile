@@ -14,8 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -94,7 +93,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
     }
 
     CompositionLocalProvider(LocalTheme provides theme, LocalPalette provides livePalette) {
-        MaterialTheme(colorScheme = scheme) {
+        run {
             ScreenFrame(title = stringResource(Res.string.theme_customize_title), onBack = { close() }) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val wide = maxWidth >= 720.dp

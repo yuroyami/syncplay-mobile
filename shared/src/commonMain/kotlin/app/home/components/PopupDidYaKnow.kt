@@ -1,6 +1,6 @@
 package app.home.components
 
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState

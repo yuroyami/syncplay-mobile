@@ -19,9 +19,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,10 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import app.theme.Space
+import app.theme.Type
+import app.uicomponents.controls.DestructiveAction
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.Text
 import app.utils.loggy
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -61,6 +61,7 @@ object CrashHandler {
     }
 }
 
+/** The last-resort overlay: the trace in monospace, copy and dismiss. Fixed colours on purpose. */
 @Composable
 fun CrashOverlay() {
     val crashTrace by CrashHandler.crashTrace.collectAsState()
@@ -74,56 +75,29 @@ fun CrashOverlay() {
             .background(Color(0xF0121212))
             .systemBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(Space.gutter)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Crash Report",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("Crash Trace", trace))
-                            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                    ) {
-                        Text("Copy")
-                    }
-
-                    Button(
-                        onClick = { CrashHandler.crashTrace.value = null },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF666666))
-                    ) {
-                        Text("Dismiss")
-                    }
+                Text("Crash report", color = Color.White, style = Type.display)
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                    SecondaryAction("Copy", onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Crash Trace", trace))
+                        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                    })
+                    DestructiveAction("Dismiss", onClick = { CrashHandler.crashTrace.value = null })
                 }
             }
-
-            Spacer(Modifier.height(12.dp))
-
+            Spacer(Modifier.height(Space.gap))
             SelectionContainer {
                 Text(
                     text = trace,
                     color = Color(0xFFFF6B6B),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                    style = Type.note.copy(fontFamily = FontFamily.Monospace),
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                 )
             }
         }

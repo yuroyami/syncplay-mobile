@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
@@ -57,14 +57,6 @@ object PopupAPropos {
             open = visibilityState.value,
             onDismiss = { visibilityState.value = false },
             size = ModalSize.Panel,
-            actions = {
-                SecondaryAction(stringResource(Res.string.about_source_button), onClick = { uriHandler.openUri("https://www.github.com/yuroyami/syncplay-mobile") })
-                SecondaryAction(stringResource(Res.string.about_report_button), onClick = { uriHandler.openUri(bugReportUrl()) })
-                AccentAction(stringResource(Res.string.connect_watch_alone), onClick = {
-                    visibilityState.value = false
-                    globalViewmodel.viewModelScope.launch { homeViewmodel.joinRoom(null) }
-                })
-            },
         ) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 SynkplayLogo(modifier = Modifier.size(84.dp))
@@ -99,6 +91,21 @@ object PopupAPropos {
                     Text(stringResource(Res.string.about_developed_by), style = Type.value, color = p.inkDim, maxLines = 1)
                     Text(stringResource(Res.string.about_official_website), style = Type.value, color = p.inkDim, maxLines = 1)
                 }
+                Spacer(Modifier.height(Space.gap))
+                // Two links side by side; watching alone gets its own row, the one way in from here.
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                    SecondaryAction(stringResource(Res.string.about_source_button), onClick = { uriHandler.openUri("https://www.github.com/yuroyami/syncplay-mobile") }, modifier = Modifier.weight(1f))
+                    SecondaryAction(stringResource(Res.string.about_report_button), onClick = { uriHandler.openUri(bugReportUrl()) }, modifier = Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(Space.gap))
+                AccentAction(
+                    text = stringResource(Res.string.connect_watch_alone),
+                    onClick = {
+                        visibilityState.value = false
+                        globalViewmodel.viewModelScope.launch { homeViewmodel.joinRoom(null) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }

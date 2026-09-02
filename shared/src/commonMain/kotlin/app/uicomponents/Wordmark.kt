@@ -1,7 +1,7 @@
 package app.uicomponents
 
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush

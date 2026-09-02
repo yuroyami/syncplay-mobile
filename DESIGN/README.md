@@ -164,6 +164,13 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   the About and tips modals, and the shortcut bugs on both platforms. The engine wheel is
   gone: every engine sits in one segmented frame with a badge square on its mark and a note
   line naming the selected one, and the TV focus helper went with the wheel, its last caller.
+  After the first review on a phone: the root paints the theme's ground so no window colour
+  shows through (AMOLED themes are black now), the server choice is Official, Custom or Host
+  mine with hosting inline under the form instead of its own screen, the official ports are a
+  segmented row, the custom fields carry a help tip instead of a help line, Watch alone lives
+  only in About on its own row, the Join label is centred on the whole bar, the engine picker
+  lost its dots and gained a tip per engine, and Material3 components, theme and typography are
+  gone from the app: only MaterialKolor's scheme class remains, as a value holder.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three
@@ -187,6 +194,10 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
 - COPY: every settings title fits 24 characters and every summary 48, in sentence case; nine
   summaries kept their operational text as editor details; the two Android-style escapes and
   the last hardcoded English glyph names are gone; a copy lint runs with the design tests.
+- PREF_SYSTEM, after the review: a row showing its explanation gets inset rules above and below
+  (one between two open neighbours, none where a group rule already sits), the explanation sits
+  under the label at the label's indent, long labels wrap instead of hiding, and the value column
+  grows with its text up to half the row.
 
 Still to do: the icon set (TEXT_AND_ICONS 4), the error and notice copy pass, the desktop
 scrollbars and drop, the cursor hiding in fullscreen, the TV density flag, the Android server

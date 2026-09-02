@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,10 +51,18 @@ fun PrimaryAction(
             .pressFeedback(source, enabled),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.weight(1f).padding(horizontal = Space.gutter), contentAlignment = Alignment.Center) {
-            Text(text, style = Type.label, color = p.ground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            // The label is centred on the whole bar; the trailing glyph sits over its end.
+            Text(
+                text,
+                style = Type.label,
+                color = p.ground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = if (trailing != null) Space.touchMin else Space.gutter),
+            )
+            if (trailing != null) Box(Modifier.align(Alignment.CenterEnd)) { trailing() }
         }
-        if (trailing != null) trailing()
     }
 }
 

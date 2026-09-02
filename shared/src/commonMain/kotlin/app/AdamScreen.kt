@@ -1,6 +1,5 @@
 package app
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -28,8 +27,6 @@ import app.room.RoomScreenUI
 import app.room.RoomUiStateManager
 import app.room.RoomViewmodel
 import app.room.models.MessagePalette
-import app.server.ServerViewmodel
-import app.server.ui.ServerHostScreenUI
 import androidx.compose.ui.text.font.FontFamily
 import app.theme.LocalPalette
 import app.theme.LocalType
@@ -37,7 +34,10 @@ import app.theme.Palette
 import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
 import app.theme.TypeRoles
-import app.theme.appTypography
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import app.theme.Motion
 import app.uicomponents.LocalWidthClass
 import app.uicomponents.currentWidthClass
@@ -121,10 +121,8 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalPalette provides designPalette,
         LocalWidthClass provides currentWidthClass(),
     ) {
-        MaterialTheme(
-            colorScheme = currentTheme.dynamicScheme,
-            typography = appTypography,
-        ) {
+        // The ground is the theme's: every page sits on it, so no window colour shows through.
+        Box(Modifier.fillMaxSize().background(designPalette.ground)) {
             GlassBackdrop {
                 // Reduced motion: the platform setting or the switch, read once per change.
                 LaunchedEffect(Unit) {
@@ -188,16 +186,6 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                         SettingsScreenUI(settings.categoryKey)
                     }
 
-                    entry<Screen.ServerHost> {
-                        val viewmodel = viewModel(
-                            key = "server_viewmodel",
-                            modelClass = ServerViewmodel::class,
-                            factory = viewModelFactory {
-                                initializer { ServerViewmodel(backStack = globalviewmodel.backstack) }
-                            }
-                        )
-                        ServerHostScreenUI(viewmodel)
-                    }
                 }
                 )
             }

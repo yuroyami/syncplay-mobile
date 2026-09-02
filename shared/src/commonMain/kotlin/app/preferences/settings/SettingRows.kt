@@ -11,13 +11,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Icon
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -87,6 +89,9 @@ data class SettingsDensity(
 
 val LocalSettingsDensity = staticCompositionLocalOf { SettingsDensity() }
 
+/** Which rows show their explanation, keyed by preference; the list reads it to draw the rules. */
+val LocalExpandedSettings = staticCompositionLocalOf { mutableStateMapOf<String, Boolean>() }
+
 /**
  * The console row for one entry: label left, value in the fixed column, control after it. The
  * row kind follows the value type and the control, exactly as DESIGN/PREF_SYSTEM lists them.
@@ -104,7 +109,9 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
     val showDescriptions by Preferences.SHOW_SETTING_DESCRIPTIONS.watchPref()
     val title = stringResource(cfg.title)
     val summary = stringResource(cfg.summary, *cfg.summaryFormatArgs)
-    var explain by remember { mutableStateOf(false) }
+    val expanded = LocalExpandedSettings.current
+    val explain = expanded[pref.key] == true
+    fun toggleExplain() { expanded[pref.key] = !explain }
     val editorOpen = remember { mutableStateOf(false) }
 
     val icon: (@Composable () -> Unit)? = if (density.showRowIcons) {
@@ -121,7 +128,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                         (extra as? PrefExtraConfig.BooleanCallback)?.onBooleanChanged?.invoke(next)
                     }
                 }
-                ListRow(onClick = { flip(!on) }, onLongClick = { explain = !explain }, enabled = enabled, selected = highlighted) {
+                ListRow(onClick = { flip(!on) }, onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
                     icon?.invoke()
                     RowLabel(title)
                     RowGap()
@@ -137,7 +144,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                 val values = entries.values.toList()
                 val index = values.indexOf(value)
                 if (entries.size < 5 && index >= 0) {
-                    ListRow(onLongClick = { explain = !explain }, enabled = enabled, selected = highlighted) {
+                    ListRow(onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
                         icon?.invoke()
                         RowLabel(title)
                         RowGap()
@@ -165,7 +172,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     enabled = enabled,
                     highlighted = highlighted,
                     icon = icon,
-                    onLongPress = { explain = !explain },
+                    onLongPress = ::toggleExplain,
                     onLive = { v -> extra.onValueChanged?.let { cb -> scope.launch { cb(vm, v) } } },
                     onCommit = { v ->
                         scope.launch {
@@ -178,7 +185,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
 
             extra is PrefExtraConfig.ColorPick -> {
                 val color = Color((value as? Int) ?: (pref.default as Int))
-                ListRow(onClick = { editorOpen.value = true }, onLongClick = { explain = !explain }, enabled = enabled, selected = highlighted) {
+                ListRow(onClick = { editorOpen.value = true }, onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
                     icon?.invoke()
                     RowLabel(title)
                     RowGap()
@@ -234,19 +241,22 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
         }
 
         if (showDescriptions || density.showInlineExplanations || explain) {
-            Explanation(summary)
+            Explanation(summary, indent = if (density.showRowIcons) Space.gutter + Space.glyph + Space.gap else Space.gutter)
         }
     }
 }
 
-/** The explanation line under a row, shown on demand or when Show descriptions is on. */
+/**
+ * The explanation under a row, aligned with the row's label and pulled up under it, shown on a
+ * long press or when Show setting descriptions is on. The list around it draws the rules.
+ */
 @Composable
-private fun Explanation(text: String) {
+private fun Explanation(text: String, indent: Dp) {
     Text(
         text = text,
         style = Type.note,
         color = palette.inkDim,
-        modifier = Modifier.fillMaxWidth().padding(start = Space.gutter, end = Space.gutter, bottom = Space.gapTight),
+        modifier = Modifier.fillMaxWidth().offset(y = -Space.gapTight).padding(start = indent, end = Space.gutter, bottom = Space.gapTight),
     )
 }
 

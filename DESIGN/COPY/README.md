@@ -64,12 +64,12 @@ what fits on a 360dp phone in the console rows, not from taste.
 
 | Field | Limit | Where it shows |
 |---|---:|---|
-| title | 24 characters | the row label, one line |
+| title | 26 characters | the row label, one line; a longer one wraps to two |
 | value | 12 characters | the value column: `On`, `Netty`, `English`, `#000000`, `10 s` |
 | summary | 48 characters | one `note` line under the title in the editor, or inline when Show descriptions is on |
 | detail | no limit | the editor only, below the summary |
 
-Where a title cannot fit 24 characters, the group heading carries the context instead: under a
+Where a title cannot fit 26 characters, the group heading carries the context instead: under a
 "Subtitles" heading, "Subtitle language" becomes "Language".
 
 ## Resource rules
@@ -95,7 +95,7 @@ Where a title cannot fit 24 characters, the group heading carries the context in
 
 ## Verification
 
-A desktopTest reads `values-en/strings.xml` and fails on any `_title` over 24 characters, any
+A desktopTest reads `values-en/strings.xml` and fails on any `_title` over 26 characters, any
 `_summary` over 48, any Android style escape, and any string in the banned list. It runs with
 the render goldens.
 

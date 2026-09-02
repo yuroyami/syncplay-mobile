@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -26,7 +25,6 @@ import app.theme.Palette
 import app.theme.SaveableTheme
 import app.theme.TRINITY
 import app.theme.DAYLIGHT
-import app.theme.appTypography
 import org.jetbrains.skia.EncodedImageFormat
 import java.io.File
 
@@ -67,7 +65,7 @@ object DesignHarness {
             LocalPrefsState provides prefs,
             LocalGlobalViewmodel provides vm,
         ) {
-            MaterialTheme(colorScheme = theme.dynamicScheme, typography = appTypography) {
+            run {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }
             }
         }

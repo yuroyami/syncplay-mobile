@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
+import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -76,31 +76,34 @@ fun ListRow(
     )
 }
 
-/** The name of the thing, in `label` type, one line. */
+/** The name of the thing, in `label` type; a long one wraps to a second line instead of hiding. */
 @Composable
 fun RowScope.RowLabel(text: String, modifier: Modifier = Modifier, color: Color = palette.ink) {
     Text(
         text = text,
         style = Type.label,
         color = color,
-        maxLines = 1,
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier.weight(1f),
     )
 }
 
-/** The current value, in the fixed 90dp column, end aligned, `value` type. */
+/**
+ * The current value, end aligned, `value` type. With no [width] it takes what its text needs, up
+ * to half the row, so a long choice label is never cut off; a fixed width pins a short column.
+ */
 @Composable
-fun RowValue(text: String, modifier: Modifier = Modifier, accent: Boolean = false, width: Dp = Space.valueCol) {
+fun RowScope.RowValue(text: String, modifier: Modifier = Modifier, accent: Boolean = false, width: Dp? = null) {
     val p = palette
     Text(
         text = text,
         style = Type.value,
         color = if (accent) p.accent else p.inkDim,
         textAlign = TextAlign.End,
-        maxLines = 1,
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis,
-        modifier = modifier.width(width),
+        modifier = if (width != null) modifier.width(width) else modifier.weight(1f, fill = false),
     )
 }
 
