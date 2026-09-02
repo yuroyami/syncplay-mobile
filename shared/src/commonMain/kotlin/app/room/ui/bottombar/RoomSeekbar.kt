@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -110,8 +112,17 @@ fun RoomSeekbar(modifier: Modifier) {
         }
     }
 
+    /* Both timecodes get the width of the widest string their format can take, so the track
+     * does not shrink (and the thumb jump) when the elapsed time crosses an hour. */
+    val measurer = rememberTextMeasurer()
+    val widest = when {
+        !known || durationMs >= 3_600_000L -> if (durationMs >= 36_000_000L) "00:00:00" else "0:00:00"
+        else -> "00:00"
+    }
+    val timeWidth = with(density) { measurer.measure(widest, Type.value).size.width.toDp() }
+
     Row(modifier.then(keys), verticalAlignment = Alignment.CenterVertically) {
-        Timecode(shownMs)
+        Box(Modifier.width(timeWidth), contentAlignment = Alignment.CenterEnd) { Timecode(shownMs) }
         Box(Modifier.weight(1f).padding(horizontal = Space.gap)) {
             ScrubTrack(
                 value = fraction,
@@ -160,7 +171,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 )
             }
         }
-        Timecode(if (known) durationMs else null, dim = true)
+        Box(Modifier.width(timeWidth), contentAlignment = Alignment.CenterStart) { Timecode(if (known) durationMs else null, dim = true) }
     }
 
     ChaptersModal(open = showChapters, onDismiss = { showChapters = false })

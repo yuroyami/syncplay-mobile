@@ -61,7 +61,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import app.theme.Theming
 import app.theme.defaultTheme
-import app.preferences.settings.ChatColorsPopup
+import app.preferences.settings.SettingRow
 import app.preferences.settings.TrustedDomainsPopup
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.utils.Platform
@@ -313,9 +313,6 @@ import syncplaymobile.shared.generated.resources.uisetting_system_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_system_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
-import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
-import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_summary
-import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_title
 
 /** Common media languages with ISO 639-2 codes for audio/subtitle track selection. */
 private val mediaLanguageEntries = mapOf(
@@ -649,16 +646,21 @@ object Preferences {
     }
 
     /** ------------ Chat Colors -------------*/
-    /** Single entry that opens [app.preferences.settings.ChatColorsPopup] gathering all the
-     *  COLOR_* prefs below. The individual color prefs no longer appear as standalone rows. */
+    /** One entry gathering the COLOR_* prefs below as a nested page, so the room's settings
+     *  panel can show them beside the chat they colour. */
     val CHAT_COLORS_ENTRY = Pref("pref_inroom_chat_colors_entry", "") {
         title = Res.string.uisetting_categ_chat_colors
         summary = Res.string.uisetting_chat_colors_entry_summary
         icon = Icons.Filled.Palette
 
-        extraConfig = PrefExtraConfig.ShowComposable(
-            composable = { ChatColorsPopup(this) }
-        )
+        extraConfig = PrefExtraConfig.Nested {
+            COLOR_TIMESTAMP.SettingRow()
+            COLOR_SELFTAG.SettingRow()
+            COLOR_FRIENDTAG.SettingRow()
+            COLOR_SYSTEMMSG.SettingRow()
+            COLOR_USERMSG.SettingRow()
+            COLOR_ERRORMSG.SettingRow()
+        }
     }
 
     val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", Theming.MSG_TIMESTAMP.toArgb()) {
@@ -729,22 +731,13 @@ object Preferences {
     }
 
     /** ------------ Chat Properties -------------*/
-    val MSG_ACTIVATE_STAMP = Pref("pref_inroom_msg_activate_stamp", true) {
-        title = Res.string.uisetting_timestamp_title
-        summary = Res.string.uisetting_timestamp_summary
-        icon = Icons.Filled.Pin
-    }
-    val MSG_OUTLINE_ACTIVATE = Pref("pref_inroom_msg_outline_activate", true) {
-        title = Res.string.uisetting_msgoutline_title
-        summary = Res.string.uisetting_msgoutline_summary
-        icon = Icons.Filled.BorderColor
-    }
+    /** Zero switches the outline off; there is no separate switch. */
     val MSG_OUTLINE_THICKNESS = Pref("pref_inroom_msg_outline_thickness", 2) {
         title = Res.string.uisetting_msgoutline_title
         summary = Res.string.uisetting_msgoutline_summary
         icon = Icons.Filled.BorderColor
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0, zeroMeansOff = true)
     }
     val MSG_SHADOW_ACTIVATE = Pref("pref_inroom_msg_shadow_activate", false) {
         title = Res.string.uisetting_msgshadow_title
@@ -912,15 +905,17 @@ object Preferences {
         icon = Icons.Filled.Swipe
     }
 
-    /** The HUD hides itself after a few idle seconds; off keeps it up until tapped away. */
-    val HUD_AUTO_HIDE = Pref("pref_inroom_hud_auto_hide", true) {
+    /** Idle seconds before the HUD hides itself; zero keeps it up until tapped away. */
+    val HUD_AUTO_HIDE_SECONDS = Pref("pref_inroom_hud_auto_hide_seconds", 5) {
         title = Res.string.room_hud_auto_hide_title
         summary = Res.string.room_hud_auto_hide_summary
         icon = Icons.Filled.Timer
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0, unit = "s", zeroMeansOff = true)
     }
 
     /** ------------ KitePlayer Settings -------------*/
-    val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
+    val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", true) {
         title = Res.string.uisetting_kite_compose_renderer_title
         summary = Res.string.uisetting_kite_compose_renderer_summary
         icon = Icons.Filled.Layers
@@ -1099,14 +1094,6 @@ object Preferences {
     }
 
     /** ------------ Advanced -------------*/
-    val ROOM_UI_OPACITY = Pref("pref_room_ui_opacity", 80) {
-        title = Res.string.uisetting_ui_opacity_title
-        summary = Res.string.uisetting_ui_opacity_summary
-        icon = Icons.Filled.Opacity
-
-        extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0, unit = "%")
-    }
-
     val RECONNECTION_INTERVAL = Pref("pref_inroom_reconnection_interval", 2) {
         title = Res.string.uisetting_reconnect_interval_title
         summary = Res.string.uisetting_reconnect_interval_summary

@@ -10,7 +10,6 @@ import app.preferences.Preferences.COLOR_SELFTAG
 import app.preferences.Preferences.COLOR_SYSTEMMSG
 import app.preferences.Preferences.COLOR_TIMESTAMP
 import app.preferences.Preferences.COLOR_USERMSG
-import app.preferences.Preferences.MSG_ACTIVATE_STAMP
 import app.preferences.watchPref
 import app.room.models.MessagePalette
 
@@ -22,7 +21,6 @@ val messagePalette: State<MessagePalette>
         val colorSystem = COLOR_SYSTEMMSG.watchPref()
         val colorUserchat = COLOR_USERMSG.watchPref()
         val colorError = COLOR_ERRORMSG.watchPref()
-        val msgIncludeTimestamp = MSG_ACTIVATE_STAMP.watchPref()
 
         return derivedStateOf {
             MessagePalette(
@@ -32,7 +30,7 @@ val messagePalette: State<MessagePalette>
                 systemmsgColor = Color(colorSystem.value),
                 usermsgColor = Color(colorUserchat.value),
                 errormsgColor = Color(colorError.value),
-                includeTimestamp = msgIncludeTimestamp.value
+                includeTimestamp = true
             )
         }
     }

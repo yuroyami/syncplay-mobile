@@ -57,6 +57,12 @@ class SettingCategory(
             groups.add(SettingGroup(title, inner.flatMap { it.entries }))
         }
 
+        /** Adds a group built elsewhere, as is. Used to fold an engine's rows into the player category. */
+        fun include(group: SettingGroup) {
+            flushLoose()
+            groups.add(group)
+        }
+
         private fun flushLoose() {
             if (loose.isNotEmpty()) {
                 groups.add(SettingGroup(null, loose.toList()))

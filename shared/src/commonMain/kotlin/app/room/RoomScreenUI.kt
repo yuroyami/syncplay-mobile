@@ -35,12 +35,11 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
-import app.preferences.Preferences.HUD_AUTO_HIDE
 import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
+import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
 import app.preferences.flow
 import app.preferences.watchPref
 import app.room.ui.bottombar.BlackContrastUnderlay
-import app.room.ui.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import app.room.ui.bottombar.RoomBottomBarSection
 import app.room.ui.chat.FadingMessageLayout
 import app.room.ui.chat.RoomChatSection
@@ -132,20 +131,19 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
             if (!isInPipMode) {
                 // Notices sit above the HUD and outside its alpha: they show while it is hidden.
-                // Notices sit under the status line, in the strip between the chat and the rail.
-                val chatWidth = if (tall) 0.dp else with(LocalDensity.current) { (window.width * 0.36f).toDp() }
+                // They stack on the centre line, under the status line (and under the rail row
+                // on a tall window).
                 NoticeHost(
                     queue = viewmodel.notices,
                     modifier = Modifier.align(Alignment.TopCenter)
                         .windowInsetsPadding(roomTopInsets())
-                        .padding(top = Space.row + Space.gap)
-                        .padding(start = chatWidth + Space.gap, end = Space.gutter),
+                        .padding(top = if (tall) Space.row * 2 + Space.gap * 2 else Space.row + Space.gap)
+                        .padding(horizontal = Space.gutter),
                 )
                 if (!soloMode) FadingMessageLayout()
             }
         }
 
-        SeekToPositionPopup()
         LeaveRoomAsk(viewmodel)
         ManagedRoomModal()
 
@@ -255,27 +253,29 @@ private fun RoomHud(
 }
 
 /**
- * The auto-hide policy: after a few idle seconds the HUD hides, unless a panel or the keyboard
+ * The auto-hide policy: after the configured idle seconds the HUD hides, unless a panel or the keyboard
  * is open, the track is being scrubbed, a message is half-typed, or there is no video to see.
  */
 @Composable
 private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardOpen: Boolean, hasVideo: Boolean) {
-    val autoHide by HUD_AUTO_HIDE.watchPref()
+    val idleSeconds by HUD_AUTO_HIDE_SECONDS.watchPref()
     val ui = viewmodel.uiState
     val activity by ui.hudActivity.collectAsState()
     val userInfo by ui.tabCardUserInfo.collectAsState()
     val playlist by ui.tabCardSharedPlaylist.collectAsState()
     val prefs by ui.tabCardRoomPreferences.collectAsState()
     val tracks by ui.tabCardTracks.collectAsState()
+    val gestures by ui.tabCardGestures.collectAsState()
+    val seekTo by ui.tabCardSeekTo.collectAsState()
     val controls by ui.controlPanel.collectAsState()
     val gifs by ui.gifPanelVisible.collectAsState()
     val scrubbing by ui.scrubbing.collectAsState()
     val draft by ui.msg.collectAsState()
-    val held = userInfo || playlist || prefs || tracks || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
+    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
 
-    LaunchedEffect(autoHide, hudVisible, hasVideo, held, activity) {
-        if (!autoHide || !hudVisible || !hasVideo || held) return@LaunchedEffect
-        delay(Motion.hudIdleMs)
+    LaunchedEffect(idleSeconds, hudVisible, hasVideo, held, activity) {
+        if (idleSeconds <= 0 || !hudVisible || !hasVideo || held) return@LaunchedEffect
+        delay(idleSeconds * 1000L)
         ui.visibleHUD.value = false
     }
 }

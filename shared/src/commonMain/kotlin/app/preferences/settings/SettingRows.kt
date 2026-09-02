@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -65,6 +67,9 @@ import com.kborowy.colorpicker.KolorPicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.cancel
@@ -91,6 +96,14 @@ val LocalSettingsDensity = staticCompositionLocalOf { SettingsDensity() }
 
 /** Which rows show their explanation, keyed by preference; the list reads it to draw the rules. */
 val LocalExpandedSettings = staticCompositionLocalOf { mutableStateMapOf<String, Boolean>() }
+
+/**
+ * A host that shows a nested page (a colour editor, the chat colours list) inline, in place of
+ * the rows, so what the page changes stays visible beside it. Without a host, rows open modals.
+ */
+class InlineEditorHost(val open: (title: String, content: @Composable () -> Unit) -> Unit)
+
+val LocalInlineEditor = staticCompositionLocalOf<InlineEditorHost?> { null }
 
 /**
  * The console row for one entry: label left, value in the fixed column, control after it. The
@@ -169,6 +182,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     min = extra.minValue,
                     max = extra.maxValue,
                     unit = extra.unit,
+                    zeroMeansOff = extra.zeroMeansOff,
                     enabled = enabled,
                     highlighted = highlighted,
                     icon = icon,
@@ -185,22 +199,34 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
 
             extra is PrefExtraConfig.ColorPick -> {
                 val color = Color((value as? Int) ?: (pref.default as Int))
-                ListRow(onClick = { editorOpen.value = true }, onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
+                val inline = LocalInlineEditor.current
+                val onColor: (Color) -> Unit = { c -> scope.launch { pref.setAny(c.toArgb()) } }
+                val onReset: () -> Unit = { scope.launch { pref.setAny(pref.default as Int) } }
+                val edit: () -> Unit = {
+                    if (inline != null) inline.open(title) { InlineColorPage(summary, color, onColor, onReset) }
+                    else editorOpen.value = true
+                }
+                ListRow(onClick = edit, onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
                     icon?.invoke()
                     RowLabel(title)
                     RowGap()
                     RowValue(color.hex())
                     RowGap()
-                    Swatch(color, onClick = { editorOpen.value = true }, enabled = enabled)
+                    Swatch(color, onClick = edit, enabled = enabled)
                 }
-                ColorModal(
-                    open = editorOpen,
-                    title = title,
-                    summary = summary,
-                    initial = color,
-                    onColor = { c -> scope.launch { pref.setAny(c.toArgb()) } },
-                    onReset = { scope.launch { pref.setAny(pref.default as Int) } },
-                )
+                if (inline == null) ColorModal(open = editorOpen, title = title, summary = summary, initial = color, onColor = onColor, onReset = onReset)
+            }
+
+            extra is PrefExtraConfig.Nested -> {
+                val inline = LocalInlineEditor.current
+                OpenRow(title, "", enabled, highlighted, icon, onOpen = {
+                    if (inline != null) inline.open(title, extra.content) else editorOpen.value = true
+                })
+                if (inline == null) {
+                    Modal(open = editorOpen.value, onDismiss = { editorOpen.value = false }, title = title, size = ModalSize.Panel, inset = false) {
+                        extra.content()
+                    }
+                }
             }
 
             extra is PrefExtraConfig.TextField || (value is String && extra == null) -> {
@@ -309,6 +335,7 @@ private fun ScrubRow(
     min: Int,
     max: Int,
     unit: String,
+    zeroMeansOff: Boolean,
     enabled: Boolean,
     highlighted: Boolean,
     icon: (@Composable () -> Unit)?,
@@ -320,8 +347,14 @@ private fun ScrubRow(
     val span = (max - min).coerceAtLeast(1)
     var dragging by remember { mutableStateOf(false) }
     var preview by remember { mutableFloatStateOf(0f) }
-    val shown = if (dragging) preview else (value - min).toFloat() / span
+    /* The store writes on another thread: the row keeps showing what was just committed until
+     * the stored value catches up, so the thumb never snaps back for a frame on release. */
+    var committed by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(value) { if (committed == value) committed = null }
+    val settled = committed ?: value
+    val shown = if (dragging) preview else (settled - min).toFloat() / span
     val shownValue = (min + (shown * span)).roundToInt()
+    val offLabel = stringResource(Res.string.settings_value_off)
     var lastLive by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
 
     ListRow(onLongClick = onLongPress, enabled = enabled, selected = highlighted, minHeight = Space.rowTall) {
@@ -331,7 +364,11 @@ private fun ScrubRow(
                 RowLabel(title)
                 RowGap()
                 Text(
-                    text = if (unit.isEmpty()) "$shownValue" else "$shownValue $unit",
+                    text = when {
+                        zeroMeansOff && shownValue == 0 -> offLabel
+                        unit.isEmpty() -> "$shownValue"
+                        else -> "$shownValue $unit"
+                    },
                     style = Type.value,
                     color = if (enabled) p.accent else p.disabled,
                     maxLines = 1,
@@ -356,7 +393,9 @@ private fun ScrubRow(
                 },
                 onValueChangeFinished = {
                     dragging = false
-                    onCommit((min + preview * span).roundToInt())
+                    val v = (min + preview * span).roundToInt()
+                    committed = v
+                    onCommit(v)
                 },
             )
         }
@@ -427,7 +466,6 @@ internal fun ColorModal(
     onReset: () -> Unit,
 ) {
     if (!open.value) return
-    var draft by remember { mutableStateOf(initial) }
     Modal(
         open = true,
         onDismiss = { open.value = false },
@@ -438,19 +476,42 @@ internal fun ColorModal(
             AccentAction(stringResource(Res.string.done), onClick = { open.value = false })
         },
     ) {
-        Text(summary, style = Type.note, color = palette.inkDim)
+        ColorEditorBody(summary, initial, onColor)
+    }
+}
+
+/** The colour editor inside the room's settings panel: the chat beside it shows every change. */
+@Composable
+private fun InlineColorPage(summary: String, initial: Color, onColor: (Color) -> Unit, onReset: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(Space.gutter)) {
+        ColorEditorBody(summary, initial, onColor)
         Spacer(Modifier.height(Space.gap))
-        KolorPicker(
-            modifier = Modifier.fillMaxWidth().height(260.dp),
-            initialColor = initial,
-            onColorSelected = { c -> draft = c; onColor(c) },
-        )
-        Spacer(Modifier.height(Space.gap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Swatch(draft)
-            RowGap()
-            Text(draft.hex(), style = Type.value, color = palette.inkDim)
+        SecondaryAction(stringResource(Res.string.reset_default), onClick = onReset)
+    }
+}
+
+@Composable
+private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) -> Unit) {
+    var draft by remember { mutableStateOf(initial) }
+    // The store write trails the picker by a beat: one write per pointer move is what stutters.
+    LaunchedEffect(Unit) {
+        snapshotFlow { draft }.drop(1).collectLatest { c ->
+            delay(50)
+            onColor(c)
         }
+    }
+    Text(summary, style = Type.note, color = palette.inkDim)
+    Spacer(Modifier.height(Space.gap))
+    KolorPicker(
+        modifier = Modifier.fillMaxWidth().height(260.dp),
+        initialColor = initial,
+        onColorSelected = { c -> draft = c },
+    )
+    Spacer(Modifier.height(Space.gap))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Swatch(draft)
+        RowGap()
+        Text(draft.hex(), style = Type.value, color = palette.inkDim)
     }
 }
 

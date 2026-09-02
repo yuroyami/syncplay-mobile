@@ -40,7 +40,6 @@ import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FONTSIZE
-import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.watchPref
@@ -185,11 +184,10 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     val chatPalette = LocalChatPalette.current
 
     val bgOpacity by MSG_BG_OPACITY.watchPref()
-    val outlineOn by MSG_OUTLINE_ACTIVATE.watchPref()
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
-    val style = MessageStyle(fontSize, if (outlineOn) outlineThickness.toFloat() else null, shadowOn, chatPalette.includeTimestamp)
+    val style = MessageStyle(fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, chatPalette.includeTimestamp)
 
     Box(modifier.background(if (hasVideo) Color(50, 50, 50, bgOpacity) else Color.Transparent, Radius.panelShape)) {
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))

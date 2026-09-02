@@ -11,9 +11,11 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Box
 import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.controlStates
-import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Icon
 import app.theme.Radius
 import androidx.compose.ui.semantics.semantics
@@ -23,7 +25,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.clickable
@@ -39,22 +40,11 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
-import app.preferences.Preferences.DOUBLETAP_SEEK
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import app.theme.Type
 import app.theme.palette
-import app.uicomponents.controls.ScrubTrack
-import app.utils.platformCallback
-import syncplaymobile.shared.generated.resources.room_brightness
-import syncplaymobile.shared.generated.resources.room_volume
-import kotlin.math.roundToInt
-import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
-import app.preferences.settings.SettingRow
 import app.preferences.watchPref
 import app.theme.Space
 import app.uicomponents.controls.AccentAction
@@ -116,7 +106,6 @@ fun RoomControlPanelCard(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
 
-    var showGestures by remember { mutableStateOf(false) }
 
     var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
     val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
@@ -142,8 +131,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         }
 
         GlyphButton(Icons.Filled.BrowseGallery, name = stringResource(Res.string.room_seek_to), size = Space.glyphLarge) {
-            cardController.controlPanel.value = false
-            viewmodel.uiState.popupSeekToPosition.value = true
+            cardController.toggleSeekTo()
         }
 
         /* Only the local user's seeks are undoable (see RoomCallback.onSomeoneSeeked). The key
@@ -160,7 +148,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         /* Gesture switches live here, not in settings, so they can be flipped mid-playback. */
         GlyphButton(Icons.Filled.TouchApp, name = stringResource(Res.string.room_gestures_panel_title), size = Space.glyphLarge) {
             Feedback.tick()
-            showGestures = true
+            cardController.toggleGestures()
         }
 
         GlyphButton(Icons.Filled.Subtitles, name = stringResource(Res.string.room_tracks), size = Space.glyphLarge) {
@@ -187,68 +175,41 @@ fun RoomControlPanelCard(modifier: Modifier) {
             undo(seek)
         },
     )
-
-    Modal(
-        open = showGestures,
-        onDismiss = { showGestures = false },
-        title = stringResource(Res.string.room_gestures_panel_title),
-        size = ModalSize.Panel,
-        inset = false,
-    ) {
-        DOUBLETAP_SEEK.SettingRow()
-        SWIPE_GESTURES.SettingRow()
-        // The swipes' equivalents, for anyone who cannot swipe: two tracks that set the same values.
-        val maxVolume = viewmodel.player.getMaxVolume().coerceAtLeast(1)
-        var volume by remember { mutableIntStateOf(viewmodel.player.getCurrentVolume()) }
-        var brightness by remember { mutableFloatStateOf(platformCallback.getCurrentBrightness()) }
-        LevelRow(stringResource(Res.string.room_volume), volume.toFloat() / maxVolume, "${volume * 100 / maxVolume}%") { f ->
-            volume = (f * maxVolume).roundToInt()
-            viewmodel.player.changeCurrentVolume(volume)
-        }
-        LevelRow(stringResource(Res.string.room_brightness), brightness, "${(brightness * 100).roundToInt()}%") { f ->
-            brightness = f
-            platformCallback.changeCurrentBrightness(f)
-        }
-    }
-
 }
 
-/** The undo glyph with the timecode an undo would return to beside it, when there is one. */
+/** The undo glyph in a normal 48dp key, with the return timecode as a small badge under it. */
 @Composable
 private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
     val p = palette
     val name = stringResource(Res.string.room_undo_seek)
     val source = remember { MutableInteractionSource() }
-    Row(
+    Box(
         modifier = Modifier
-            .height(Space.touchMin)
+            .size(Space.touchMin)
             .clip(Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
             .hoverable(source)
             .semantics { contentDescription = name }
             .controlStates(source, Radius.controlShape)
             .pointerHoverIcon(PointerIcon.Hand)
-            .pressFeedback(source)
-            .padding(horizontal = Space.gap),
-        verticalAlignment = Alignment.CenterVertically,
+            .pressFeedback(source),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Filled.History, contentDescription = null, tint = p.ink, modifier = Modifier.size(Space.glyphLarge))
+        Icon(
+            Icons.Filled.History,
+            contentDescription = null,
+            tint = p.ink,
+            modifier = Modifier.size(Space.glyphLarge).offset(y = if (target != null) (-4).dp else 0.dp),
+        )
         if (target != null) {
-            RowGap(Space.gapTight)
-            Text(timestampFromMillis(target), style = Type.value, color = p.inkDim, maxLines = 1)
+            Text(
+                text = timestampFromMillis(target),
+                style = Type.group,
+                color = p.inkDim,
+                maxLines = 1,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
+            )
         }
-    }
-}
-
-@Composable
-private fun LevelRow(label: String, value: Float, shown: String, onValue: (Float) -> Unit) {
-    val p = palette
-    Column(Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
-            Text(shown, style = Type.value, color = p.inkDim)
-        }
-        ScrubTrack(value = value.coerceIn(0f, 1f), onValueChange = onValue, describe = { "${(it * 100).roundToInt()} percent" }, name = label)
     }
 }
 

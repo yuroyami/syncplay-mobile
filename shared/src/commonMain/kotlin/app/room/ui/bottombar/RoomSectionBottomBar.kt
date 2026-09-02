@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -15,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -36,14 +34,14 @@ fun RoomBottomBarSection(modifier: Modifier) {
                 .align(Alignment.BottomCenter)
                 .zIndex(999f),
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.Bottom
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (hasVideo) {
                 RoomReadyButton()
 
                 RoomSeekbar(modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
 
-                RoomControlPanelButton(modifier = Modifier.align(CenterVertically).offset(y = (-1).dp), stateAddMedia)
+                RoomControlPanelButton(modifier = Modifier, stateAddMedia)
             }
 
             RoomMediaAddButton(stateAddMedia)

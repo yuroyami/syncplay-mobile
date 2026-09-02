@@ -11,6 +11,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -35,16 +38,27 @@ fun PanelFrame(
     shape: Shape = Radius.panelShape,
     rim: GlassEdge = GlassEdge.All,
     scrollable: Boolean = true,
+    centerTitle: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
     Column(modifier.surface(Tier.Panel, shape, rim)) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gutter, end = Space.gapTight),
+            modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = if (centerTitle) Space.gapTight else Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(title, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            // A centred title gets a lead-in the width of one glyph key, balancing the close key.
+            if (centerTitle) Spacer(Modifier.width(Space.touchMin))
+            Text(
+                text = title,
+                style = Type.label,
+                color = p.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = if (centerTitle) TextAlign.Center else null,
+                modifier = Modifier.weight(1f),
+            )
             actions()
         }
         Rule()

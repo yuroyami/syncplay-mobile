@@ -20,7 +20,6 @@ import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.Preferences.MSG_FONTSIZE
 import app.preferences.Preferences.MSG_MAXCOUNT
-import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.watchPref
@@ -45,12 +44,11 @@ fun FadingMessageLayout() {
     val chatPalette = LocalChatPalette.current
     val holdSeconds by MSG_FADING_DURATION.watchPref()
     val maxCount by MSG_MAXCOUNT.watchPref()
-    val outlineOn by MSG_OUTLINE_ACTIVATE.watchPref()
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
     // Picture in picture drops to the floor, never below it.
-    val style = MessageStyle(if (isInPiPMode) 11 else fontSize, if (outlineOn) outlineThickness.toFloat() else null, shadowOn, showTime = false)
+    val style = MessageStyle(if (isInPiPMode) 11 else fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, showTime = false)
 
     val messages by viewmodel.session.messageSequence.collectAsState()
     var shown by remember { mutableStateOf<List<Message>>(emptyList()) }

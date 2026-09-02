@@ -189,6 +189,18 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   position it returns to and the confirmation offers "Don't ask again"; the add-media sheet no
   longer opens by itself; the GIF drawer has an up-down type switch, a segmented source row and
   a small attribution in the grid corner; the artwork lost its caption.
+  Fourth review: the seekbar's timecodes reserve the widest width their format can take, so
+  the track no longer shrinks when the elapsed time crosses an hour; the undo key is a normal
+  48dp key with the return time as a small badge; gestures and seek-to are side panels like
+  the tracks panel (the volume and brightness tracks are gone), tool panels centre their
+  titles, the tracks columns use the value size with the import and search rows first;
+  notices stack on the centre line; the transport row is centre-aligned; auto-hide is a
+  seconds slider where 0 keeps the controls up; chat colours and each colour open inline
+  pages inside the room's settings panel (InlineEditorHost) so the chat shows every change,
+  with store writes trailing the picker by 50 ms; slider rows hold the committed value until
+  the store catches up; the timestamp switch, the outline switch (0 thickness is off) and the
+  UI opacity row are gone; the engine's rows fold into the player category as its last group,
+  with subtitle size first; the home form is centred in the height under the bar.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

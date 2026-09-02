@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
-import app.preferences.Preferences.HUD_AUTO_HIDE
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CHAT_COLORS_ENTRY
 import app.preferences.Preferences.CLEAR_LOGS
@@ -25,6 +24,7 @@ import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
 import app.preferences.Preferences.HAPTICS_ON_CONTROLS
 import app.preferences.Preferences.REDUCE_MOTION
 import app.preferences.Preferences.HAPTIC_ON_CHAT
+import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
 import app.preferences.Preferences.HAPTIC_ON_CONNECTION
 import app.preferences.Preferences.HAPTIC_ON_JOINED
 import app.preferences.Preferences.HAPTIC_ON_LEFT
@@ -45,13 +45,11 @@ import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
 import app.preferences.Preferences.MEDIA_DIRECTORIES
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
-import app.preferences.Preferences.MSG_ACTIVATE_STAMP
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.Preferences.MSG_FONTSIZE
 import app.preferences.Preferences.MSG_MAXCOUNT
-import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.Preferences.NETWORK_ENGINE
@@ -60,7 +58,6 @@ import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.Preferences.REMEMBER_INFO
-import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SHOW_SETTING_DESCRIPTIONS
@@ -175,8 +172,6 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
 ) {
     group(Res.string.settings_group_messages) {
         +CHAT_COLORS_ENTRY
-        +MSG_ACTIVATE_STAMP
-        +MSG_OUTLINE_ACTIVATE
         +MSG_OUTLINE_THICKNESS
         +MSG_SHADOW_ACTIVATE
         +MSG_BOX_ACTION
@@ -200,7 +195,8 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     title = Res.string.uisetting_categ_player_settings,
     icon = Icons.Filled.VideoLabel,
 ) {
-    +HUD_AUTO_HIDE
+    +SUBTITLE_SIZE
+    +HUD_AUTO_HIDE_SECONDS
     group(Res.string.settings_group_seeking) {
         +SEEK_FORWARD_JUMP
         +SEEK_BACKWARD_JUMP
@@ -208,7 +204,6 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
         +CUSTOM_SEEK_AMOUNT
     }
     group(Res.string.settings_group_subtitles) {
-        +SUBTITLE_SIZE
         /* Preferred track languages, mirrored from the global Language category so they are
          * reachable mid-session too. */
         +CC_LANG
@@ -241,7 +236,6 @@ val INROOM_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
 ) {
-    +ROOM_UI_OPACITY
     +RECONNECTION_INTERVAL
     +INROOM_RESET_DEFAULTS
 }
@@ -252,9 +246,9 @@ val SETTINGS_GLOBAL: List<SettingCategory> = listOf(GLOBAL_GENERAL, GLOBAL_LANGU
 /**
  * Engine-agnostic in-room settings.
  *
- * Engine-specific categories are intentionally absent: each [app.player.PlayerImpl] returns its
- * own via [app.player.PlayerImpl.configurableSettings], and the in-room panel inserts only the
- * active engine's category, right after the player category.
+ * Engine-specific rows are absent here: each [app.player.PlayerImpl] returns its own category
+ * via [app.player.PlayerImpl.configurableSettings], and [roomSettings] folds the active engine's
+ * rows into the player category as its last group.
  */
 val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_SYNC,
@@ -264,8 +258,12 @@ val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_ADVANCED,
 )
 
-/** The room's categories with the active engine's inserted after the player category. */
-fun roomSettings(engine: SettingCategory?): List<SettingCategory> =
-    SETTINGS_ROOM.toMutableList().apply {
-        if (engine != null) add(indexOf(INROOM_PLAYER_SETTINGS) + 1, engine)
+/** The room's categories, with the active engine's rows folded into the player category. */
+fun roomSettings(engine: SettingCategory?): List<SettingCategory> {
+    if (engine == null) return SETTINGS_ROOM
+    val player = SettingCategory(INROOM_PLAYER_SETTINGS.title, INROOM_PLAYER_SETTINGS.icon) {
+        INROOM_PLAYER_SETTINGS.groups.forEach { include(it) }
+        include(SettingGroup(engine.title, engine.entries))
+    }
+    return SETTINGS_ROOM.map { if (it === INROOM_PLAYER_SETTINGS) player else it }
     }

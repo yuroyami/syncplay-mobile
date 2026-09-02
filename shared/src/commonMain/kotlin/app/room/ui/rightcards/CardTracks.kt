@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.ClosedCaptionDisabled
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +42,6 @@ import app.uicomponents.controls.GroupHeading
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
-import app.uicomponents.controls.RowLabel
-import app.uicomponents.controls.RowValue
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.Text
 import app.uicomponents.controls.VerticalRule
@@ -102,6 +102,7 @@ object CardTracks {
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             scrollable = false,
+            centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { ui.toggleTracks(false) } },
         ) {
             Row(Modifier.fillMaxWidth().fillMaxHeight()) {
@@ -117,6 +118,14 @@ object CardTracks {
                 VerticalRule(Modifier.fillMaxHeight())
                 Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
                     GroupHeading(stringResource(Res.string.room_button_desc_subtitle_tracks))
+                    // Ways to get a subtitle first, then what is loaded.
+                    ActionRow(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file)) {
+                        Feedback.tick(); subtitlePicker.launch()
+                    }
+                    ActionRow(Icons.Filled.Search, stringResource(Res.string.room_sub_search_download_from_web)) {
+                        Feedback.tick(); showSearch = true
+                    }
+                    Rule()
                     ActionRow(Icons.Filled.ClosedCaptionDisabled, stringResource(Res.string.room_sub_track_disable), selected = subtitles.none { it.selected }) {
                         choose(null, PlayerImpl.TrackType.SUBTITLE) { getString(Res.string.room_sub_track_disable) }
                     }
@@ -124,13 +133,6 @@ object CardTracks {
                         TrackRow(index = i + 1, track = track) {
                             choose(track, PlayerImpl.TrackType.SUBTITLE) { getString(Res.string.room_subtitle_track_selected, track.name) }
                         }
-                    }
-                    Rule()
-                    ActionRow(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file)) {
-                        Feedback.tick(); subtitlePicker.launch()
-                    }
-                    ActionRow(Icons.Filled.Search, stringResource(Res.string.room_sub_search_download_from_web)) {
-                        Feedback.tick(); showSearch = true
                     }
                 }
             }
@@ -149,16 +151,16 @@ object CardTracks {
         )
     }
 
+    /* The columns are narrow (half a panel), so rows are 36dp on the value size, two lines at most. */
     @Composable
     private fun TrackRow(index: Int, track: Track, onClick: () -> Unit) {
         val p = palette
-        ListRow(onClick = onClick, selected = track.selected) {
-            RowValue("$index", width = 24.dp)
-            RowGap(Space.gapTight)
-            RowLabel(track.name)
+        ListRow(onClick = onClick, selected = track.selected, minHeight = Space.rowCompact) {
+            Text("$index", style = Type.value, color = p.inkDim, maxLines = 1, modifier = Modifier.width(18.dp))
+            Text(track.name, style = Type.value, color = p.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (track.selected) {
-                RowGap()
-                Icon(CheckGlyph, contentDescription = null, tint = p.accent, modifier = Modifier.size(Space.glyph))
+                RowGap(Space.gapTight)
+                Icon(CheckGlyph, contentDescription = null, tint = p.accent, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -166,10 +168,10 @@ object CardTracks {
     @Composable
     private fun ActionRow(icon: ImageVector, label: String, selected: Boolean = false, onClick: () -> Unit) {
         val p = palette
-        ListRow(onClick = onClick, selected = selected) {
-            Icon(icon, contentDescription = null, tint = if (selected) p.accent else p.inkDim, modifier = Modifier.size(Space.glyph))
-            RowGap()
-            RowLabel(label)
+        ListRow(onClick = onClick, selected = selected, minHeight = Space.rowCompact) {
+            Icon(icon, contentDescription = null, tint = if (selected) p.accent else p.inkDim, modifier = Modifier.size(16.dp))
+            RowGap(Space.gapTight)
+            Text(label, style = Type.value, color = p.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
     }
 }

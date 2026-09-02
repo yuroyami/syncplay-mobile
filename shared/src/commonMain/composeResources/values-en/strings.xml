@@ -352,13 +352,13 @@
     <string name="uisetting_timestamp_title">Chat timestamps</string>
     <string name="uisetting_timestamp_summary">Shows the time next to each message.</string>
     <string name="uisetting_msgoutline_title">Chat message outline</string>
-    <string name="uisetting_msgoutline_summary">An outline keeps text readable over video.</string>
+    <string name="uisetting_msgoutline_summary">Keeps text readable over video. 0 turns it off.</string>
     <string name="uisetting_msgoutline_thickness_title">Outline thickness</string>
     <string name="uisetting_msgoutline_thickness_summary">How thick the outline is.</string>
     <string name="uisetting_msgshadow_title">Chat message shadow</string>
     <string name="uisetting_msgshadow_summary">A shadow keeps text readable over video.</string>
-    <string name="uisetting_msgboxaction_title">Keyboard send key</string>
-    <string name="uisetting_msgboxaction_summary">The keyboard's send key sends the message.</string>
+    <string name="uisetting_msgboxaction_title">Enter sends the message</string>
+    <string name="uisetting_msgboxaction_summary">Off makes Enter add a new line instead.</string>
     <string name="uisetting_overview_alpha_title">Room details opacity</string>
     <string name="uisetting_overview_alpha_summary">How solid the room details panel is.</string>
     <string name="uisetting_messagery_alpha_title">Message background</string>
@@ -609,7 +609,7 @@
     <string name="room_sub_search_language">Language</string>
     <!-- Room shell (design overhaul) -->
     <string name="room_hud_auto_hide_title">Auto-hide controls</string>
-    <string name="room_hud_auto_hide_summary">After a few idle seconds.</string>
+    <string name="room_hud_auto_hide_summary">Idle seconds before they hide. 0 keeps them up.</string>
     <string name="room_waiting_for_file">Waiting for a file</string>
     <string name="room_leave_question">Leave the room?</string>
     <string name="room_managed_room">Managed room</string>
@@ -715,7 +715,7 @@
     <string name="connect_custom_tip">The address and port the host gave you. Official servers are syncplay.pl on ports 8995 to 8999; a friend hosting from this app shares an address like 192.168.1.20:8999. Add the password only if the host set one.</string>
     <string name="engine_info_exoplayer">Google's Media3 player, built into Android. Decodes on the device's hardware through MediaCodec. Plays MP4, MKV, WebM, HLS and DASH with the common codecs; ASS subtitles show as plain text. The stable choice for ordinary files.</string>
     <string name="engine_info_mpv">libmpv with FFmpeg, the same engine as the desktop mpv. Plays nearly every container and codec, draws styled ASS subtitles, supports chapters and precise seeking. The best fit for anime and MKV releases. Only in the full build.</string>
-    <string name="engine_info_kiteplayer">Synkplay's own engine on KiteCodec, an FFmpeg build with hardware decoding through MediaCodec and VideoToolbox and a software fallback. Plays most files, SubRip and WebVTT subtitles; styled ASS is listed but not drawn. Still experimental: expect rough edges.</string>
+    <string name="engine_info_kiteplayer">Made by Synkplay's own developer on top of FFmpeg, and tuned for Synkplay. Still experimental: playback can misbehave, so switch engines if something looks off.</string>
     <string name="engine_info_avplayer">Apple's system player. Very stable and battery friendly, but narrow: MP4, MOV and HLS with the codecs iOS ships, no external subtitles, no chapters.</string>
     <string name="engine_info_vlckit">VideoLAN's libVLC 4 for iOS. Plays nearly every container and codec, external subtitles, chapters, picture in picture. The stable default on iOS.</string>
 </resources>

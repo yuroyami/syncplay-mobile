@@ -1,14 +1,9 @@
 package app.room
 
 import androidx.compose.ui.focus.FocusRequester
-import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlin.concurrent.Volatile
 
 class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
@@ -38,12 +33,13 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val visibleHUD = MutableStateFlow(true)
     /** The managed room modal, with create or identify chosen inside it. */
     val managedRoom = MutableStateFlow(false)
-    val popupSeekToPosition = MutableStateFlow(false)
 
     val tabCardUserInfo = MutableStateFlow(false)
     val tabCardSharedPlaylist = MutableStateFlow(false)
     val tabCardRoomPreferences = MutableStateFlow(false)
     val tabCardTracks = MutableStateFlow(false)
+    val tabCardGestures = MutableStateFlow(false)
+    val tabCardSeekTo = MutableStateFlow(false)
 
     /** The rail's room actions, folded behind More until the first tap, for this room session. */
     val railActionsExpanded = MutableStateFlow(false)
@@ -61,41 +57,21 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** True while the user has navigated away for file picking. */
     var wentForFilePick = false
 
-    fun toggleUserInfo(forcedState: Boolean? = null) {
-        tabCardUserInfo.value = forcedState ?: !tabCardUserInfo.value
-        if (tabCardUserInfo.value) {
-            tabCardSharedPlaylist.value = false
-            tabCardRoomPreferences.value = false
-            tabCardTracks.value = false
-        }
+    private val sidePanels
+        get() = listOf(tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences, tabCardTracks, tabCardGestures, tabCardSeekTo)
+
+    /** One side panel at a time: opening one closes the others. */
+    private fun openSide(target: MutableStateFlow<Boolean>, forcedState: Boolean?) {
+        target.value = forcedState ?: !target.value
+        if (target.value) sidePanels.forEach { if (it !== target) it.value = false }
     }
 
-    fun toggleSharedPlaylist(forcedState: Boolean? = null) {
-        tabCardSharedPlaylist.value = forcedState ?: !tabCardSharedPlaylist.value
-        if (tabCardSharedPlaylist.value) {
-            tabCardUserInfo.value = false
-            tabCardRoomPreferences.value = false
-            tabCardTracks.value = false
-        }
-    }
-
-    fun toggleRoomPreferences(forcedState: Boolean? = null) {
-        tabCardRoomPreferences.value = forcedState ?: !tabCardRoomPreferences.value
-        if (tabCardRoomPreferences.value) {
-            tabCardUserInfo.value = false
-            tabCardSharedPlaylist.value = false
-            tabCardTracks.value = false
-        }
-    }
-
-    fun toggleTracks(forcedState: Boolean? = null) {
-        tabCardTracks.value = forcedState ?: !tabCardTracks.value
-        if (tabCardTracks.value) {
-            tabCardUserInfo.value = false
-            tabCardSharedPlaylist.value = false
-            tabCardRoomPreferences.value = false
-        }
-    }
+    fun toggleUserInfo(forcedState: Boolean? = null) = openSide(tabCardUserInfo, forcedState)
+    fun toggleSharedPlaylist(forcedState: Boolean? = null) = openSide(tabCardSharedPlaylist, forcedState)
+    fun toggleRoomPreferences(forcedState: Boolean? = null) = openSide(tabCardRoomPreferences, forcedState)
+    fun toggleTracks(forcedState: Boolean? = null) = openSide(tabCardTracks, forcedState)
+    fun toggleGestures(forcedState: Boolean? = null) = openSide(tabCardGestures, forcedState)
+    fun toggleSeekTo(forcedState: Boolean? = null) = openSide(tabCardSeekTo, forcedState)
 
     /** Room Lifecycle mapping according to platform (iOS/Android)
     * - [onLifecycleCreate] → `viewDidLoad` / `onCreate`
@@ -136,10 +112,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         get() = background
 
 
-    val uiOpacity = ROOM_UI_OPACITY.flow()
-        .map { it / 100f }
-        .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), 1f)
-
     /** Resets all UI state to defaults. */
     override fun invalidate() {
         wentForFilePick = false
@@ -147,7 +119,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         visibleHUD.value = true
         gifPanelVisible.value = false
         scrubbing.value = false
-        tabCardTracks.value = false
+        sidePanels.forEach { it.value = false }
         railActionsExpanded.value = false
     }
 }

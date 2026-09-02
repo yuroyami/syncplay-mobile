@@ -25,6 +25,8 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -152,218 +154,225 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
             /* The form renders with defaults at once and re-keys on the saved config when it
              * arrives. imePadding before verticalScroll, so the keyboard scrolls the form. */
             val config = savedConfig ?: remember { JoinConfig() }
-            Column(
-                modifier = Modifier
+            /* The form is centred in the height left under the bar when it is shorter than
+             * that, and scrolls when it is taller (a small window, or the keyboard up). */
+            BoxWithConstraints(
+                Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) },
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .imePadding(),
             ) {
+                val viewport = maxHeight
                 Column(
-                    modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.gutter),
-                    verticalArrangement = Arrangement.spacedBy(Space.gap),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    var username by remember(savedConfig) { mutableStateOf(config.user) }
-                    var room by remember(savedConfig) { mutableStateOf(config.room) }
-                    var mode by remember(savedConfig) {
-                        mutableStateOf(
-                            when {
-                                officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
-                                config.ip == LOCAL_HOST || config.ip == "localhost" -> ServerMode.Host
-                                else -> ServerMode.Custom
-                            }
-                        )
-                    }
-                    val hostPort by SERVER_PORT.watchPref()
-                    val hostPassword by SERVER_PASSWORD.watchPref()
-                    var address by remember(savedConfig) { mutableStateOf(config.ip) }
-                    var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
-                    var password by remember(savedConfig) { mutableStateOf(config.pw) }
-                    var error by remember { mutableStateOf<StringResource?>(null) }
-
-                    val usernameFocus = remember { FocusRequester() }
-                    val roomFocus = remember { FocusRequester() }
-                    val portFocus = remember { FocusRequester() }
-                    val passwordFocus = remember { FocusRequester() }
-
-                    // Initial focus only under keyboard input, so touch users get no keyboard on arrival.
-                    val inputModeManager = LocalInputModeManager.current
-                    LaunchedEffect(Unit) {
-                        if (inputModeManager.inputMode == InputMode.Keyboard) {
-                            delay(150)
-                            runCatching { usernameFocus.requestFocus() }
-                        }
-                    }
-
-                    FormField(
-                        label = stringResource(Res.string.connect_username),
-                        help = stringResource(Res.string.connect_username_tooltip),
-                        error = error?.takeIf { it == Res.string.connect_username_empty_error }?.let { stringResource(it) },
-                        value = username,
-                        onValueChange = { username = it; error = null },
-                        icon = Icons.Outlined.PersonPin,
-                        focusRequester = usernameFocus,
-                        imeAction = ImeAction.Next,
-                        onImeAction = { roomFocus.requestFocus() },
-                    )
-                    FormField(
-                        label = stringResource(Res.string.connect_roomname),
-                        help = stringResource(Res.string.connect_roomname_tooltip),
-                        error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
-                        value = room,
-                        onValueChange = { room = it; error = null },
-                        icon = Icons.Outlined.MeetingRoom,
-                        focusRequester = roomFocus,
-                        imeAction = ImeAction.Done,
-                        onImeAction = { focusManager.clearFocus(true) },
-                    )
-
-                    /* Server: official, someone else's, or the one this app hosts. Official keeps a
-                     * non-official port from leaking through and clears the password; Custom blanks
-                     * both; Host points the join at the local server. */
-                    Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
-                        FormLabel(
-                            text = stringResource(Res.string.connect_server, appName),
-                            tip = if (mode == ServerMode.Custom) stringResource(Res.string.connect_custom_tip) else null,
-                        )
-                        Segmented(
-                            options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom), stringResource(Res.string.connect_host_mine)),
-                            selected = mode.ordinal,
-                            onSelect = { index ->
-                                val next = ServerMode.entries[index]
-                                if (next == mode) return@Segmented
-                                mode = next
-                                when (next) {
-                                    ServerMode.Official -> {
-                                        address = OFFICIAL_HOST
-                                        if (port !in officialPorts) port = "8997"
-                                        password = ""
-                                    }
-                                    ServerMode.Custom -> {
-                                        address = ""
-                                        port = ""
-                                        password = ""
-                                    }
-                                    ServerMode.Host -> {
-                                        address = LOCAL_HOST
-                                        port = hostPort
-                                        password = hostPassword
-                                    }
+                    Column(
+                        modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().heightIn(min = viewport).padding(horizontal = Space.gutter, vertical = Space.gutter),
+                        verticalArrangement = Arrangement.spacedBy(Space.gutter, Alignment.CenterVertically),
+                    ) {
+                        var username by remember(savedConfig) { mutableStateOf(config.user) }
+                        var room by remember(savedConfig) { mutableStateOf(config.room) }
+                        var mode by remember(savedConfig) {
+                            mutableStateOf(
+                                when {
+                                    officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
+                                    config.ip == LOCAL_HOST || config.ip == "localhost" -> ServerMode.Host
+                                    else -> ServerMode.Custom
                                 }
-                                error = null
-                            },
-                        )
-                        when (mode) {
-                            ServerMode.Official -> Segmented(
-                                options = officialPorts,
-                                selected = officialPorts.indexOf(port).coerceAtLeast(0),
-                                onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
-                                height = Space.row,
                             )
-                            ServerMode.Custom -> {
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
-                                    Field(
-                                        value = address,
-                                        onValueChange = { address = it.trim(); error = null },
-                                        modifier = Modifier.weight(2f),
-                                        placeholder = stringResource(Res.string.home_ip_address),
-                                        leading = Icons.Outlined.Lan,
-                                        keyboardType = KeyboardType.Uri,
-                                        imeAction = ImeAction.Next,
-                                        onImeAction = { portFocus.requestFocus() },
-                                        name = stringResource(Res.string.home_ip_address),
-                                    )
-                                    Field(
-                                        value = port,
-                                        onValueChange = { port = it.trim(); error = null },
-                                        modifier = Modifier.weight(1f),
-                                        placeholder = stringResource(Res.string.home_port),
-                                        keyboardType = KeyboardType.Number,
-                                        imeAction = ImeAction.Next,
-                                        onImeAction = { passwordFocus.requestFocus() },
-                                        focusRequester = portFocus,
-                                        name = stringResource(Res.string.home_port),
-                                    )
-                                }
-                                Field(
-                                    value = password,
-                                    onValueChange = { password = it.trim() },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    placeholder = stringResource(Res.string.home_password_if_any),
-                                    imeAction = ImeAction.Done,
-                                    onImeAction = { focusManager.clearFocus(true) },
-                                    focusRequester = passwordFocus,
-                                    name = stringResource(Res.string.home_password_if_any),
-                                )
-                                val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
-                                if (serverError != null) Text(stringResource(serverError), style = Type.note, color = p.bad)
-                            }
-                            ServerMode.Host -> {
-                                Text(stringResource(Res.string.connect_host_join_note, "$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
-                                ServerHostPanel(Modifier.fillMaxWidth())
-                            }
                         }
-                    }
+                        val hostPort by SERVER_PORT.watchPref()
+                        val hostPassword by SERVER_PASSWORD.watchPref()
+                        var address by remember(savedConfig) { mutableStateOf(config.ip) }
+                        var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
+                        var password by remember(savedConfig) { mutableStateOf(config.pw) }
+                        var error by remember { mutableStateOf<StringResource?>(null) }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
-                        FormLabel(stringResource(Res.string.connect_choose_video_engine))
-                        val selectedEngine by PLAYER_ENGINE.watchPref()
-                        // A saved engine this build no longer ships is replaced once with the platform default.
-                        LaunchedEffect(selectedEngine, availablePlatformPlayerEngines) {
-                            if (availablePlatformPlayerEngines.none { it.name == selectedEngine }) {
-                                availablePlatformPlayerEngines.firstOrNull { it.isDefault }?.let { PLAYER_ENGINE.set(it.name) }
+                        val usernameFocus = remember { FocusRequester() }
+                        val roomFocus = remember { FocusRequester() }
+                        val portFocus = remember { FocusRequester() }
+                        val passwordFocus = remember { FocusRequester() }
+
+                        // Initial focus only under keyboard input, so touch users get no keyboard on arrival.
+                        val inputModeManager = LocalInputModeManager.current
+                        LaunchedEffect(Unit) {
+                            if (inputModeManager.inputMode == InputMode.Keyboard) {
+                                delay(150)
+                                runCatching { usernameFocus.requestFocus() }
                             }
                         }
-                        val unavailable = stringResource(Res.string.home_engine_unavailable_error)
-                        HomeEnginePicker(
+
+                        FormField(
+                            label = stringResource(Res.string.connect_username),
+                            help = stringResource(Res.string.connect_username_tooltip),
+                            error = error?.takeIf { it == Res.string.connect_username_empty_error }?.let { stringResource(it) },
+                            value = username,
+                            onValueChange = { username = it; error = null },
+                            icon = Icons.Outlined.PersonPin,
+                            focusRequester = usernameFocus,
+                            imeAction = ImeAction.Next,
+                            onImeAction = { roomFocus.requestFocus() },
+                        )
+                        FormField(
+                            label = stringResource(Res.string.connect_roomname),
+                            help = stringResource(Res.string.connect_roomname_tooltip),
+                            error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
+                            value = room,
+                            onValueChange = { room = it; error = null },
+                            icon = Icons.Outlined.MeetingRoom,
+                            focusRequester = roomFocus,
+                            imeAction = ImeAction.Done,
+                            onImeAction = { focusManager.clearFocus(true) },
+                        )
+
+                        /* Server: official, someone else's, or the one this app hosts. Official keeps a
+                         * non-official port from leaking through and clears the password; Custom blanks
+                         * both; Host points the join at the local server. */
+                        Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                            FormLabel(
+                                text = stringResource(Res.string.connect_server, appName),
+                                tip = if (mode == ServerMode.Custom) stringResource(Res.string.connect_custom_tip) else null,
+                            )
+                            Segmented(
+                                options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom), stringResource(Res.string.connect_host_mine)),
+                                selected = mode.ordinal,
+                                onSelect = { index ->
+                                    val next = ServerMode.entries[index]
+                                    if (next == mode) return@Segmented
+                                    mode = next
+                                    when (next) {
+                                        ServerMode.Official -> {
+                                            address = OFFICIAL_HOST
+                                            if (port !in officialPorts) port = "8997"
+                                            password = ""
+                                        }
+                                        ServerMode.Custom -> {
+                                            address = ""
+                                            port = ""
+                                            password = ""
+                                        }
+                                        ServerMode.Host -> {
+                                            address = LOCAL_HOST
+                                            port = hostPort
+                                            password = hostPassword
+                                        }
+                                    }
+                                    error = null
+                                },
+                            )
+                            when (mode) {
+                                ServerMode.Official -> Segmented(
+                                    options = officialPorts,
+                                    selected = officialPorts.indexOf(port).coerceAtLeast(0),
+                                    onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
+                                    height = Space.row,
+                                )
+                                ServerMode.Custom -> {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                                        Field(
+                                            value = address,
+                                            onValueChange = { address = it.trim(); error = null },
+                                            modifier = Modifier.weight(2f),
+                                            placeholder = stringResource(Res.string.home_ip_address),
+                                            leading = Icons.Outlined.Lan,
+                                            keyboardType = KeyboardType.Uri,
+                                            imeAction = ImeAction.Next,
+                                            onImeAction = { portFocus.requestFocus() },
+                                            name = stringResource(Res.string.home_ip_address),
+                                        )
+                                        Field(
+                                            value = port,
+                                            onValueChange = { port = it.trim(); error = null },
+                                            modifier = Modifier.weight(1f),
+                                            placeholder = stringResource(Res.string.home_port),
+                                            keyboardType = KeyboardType.Number,
+                                            imeAction = ImeAction.Next,
+                                            onImeAction = { passwordFocus.requestFocus() },
+                                            focusRequester = portFocus,
+                                            name = stringResource(Res.string.home_port),
+                                        )
+                                    }
+                                    Field(
+                                        value = password,
+                                        onValueChange = { password = it.trim() },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        placeholder = stringResource(Res.string.home_password_if_any),
+                                        imeAction = ImeAction.Done,
+                                        onImeAction = { focusManager.clearFocus(true) },
+                                        focusRequester = passwordFocus,
+                                        name = stringResource(Res.string.home_password_if_any),
+                                    )
+                                    val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
+                                    if (serverError != null) Text(stringResource(serverError), style = Type.note, color = p.bad)
+                                }
+                                ServerMode.Host -> {
+                                    Text(stringResource(Res.string.connect_host_join_note, "$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
+                                    ServerHostPanel(Modifier.fillMaxWidth())
+                                }
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                            FormLabel(stringResource(Res.string.connect_choose_video_engine))
+                            val selectedEngine by PLAYER_ENGINE.watchPref()
+                            // A saved engine this build no longer ships is replaced once with the platform default.
+                            LaunchedEffect(selectedEngine, availablePlatformPlayerEngines) {
+                                if (availablePlatformPlayerEngines.none { it.name == selectedEngine }) {
+                                    availablePlatformPlayerEngines.firstOrNull { it.isDefault }?.let { PLAYER_ENGINE.set(it.name) }
+                                }
+                            }
+                            val unavailable = stringResource(Res.string.home_engine_unavailable_error)
+                            HomeEnginePicker(
+                                modifier = Modifier.fillMaxWidth(),
+                                engines = availablePlatformPlayerEngines,
+                                selectedEngine = selectedEngine,
+                                onSelectEngine = { engine ->
+                                    viewmodel.viewModelScope.launch(Dispatchers.IO) {
+                                        if (engine.isAvailable) PLAYER_ENGINE.set(engine.name) else viewmodel.snackIt(unavailable)
+                                    }
+                                },
+                            )
+                        }
+
+                        /* One validation for both paths, so the shortcut saver cannot crash on a
+                         * blank port either. */
+                        fun validate(): StringResource? = when {
+                            username.isBlank() -> Res.string.connect_username_empty_error
+                            room.isBlank() -> Res.string.connect_roomname_empty_error
+                            mode == ServerMode.Host -> null
+                            address.isBlank() -> Res.string.connect_address_empty_error
+                            port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                            else -> null
+                        }
+                        fun currentConfig() = when (mode) {
+                            ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
+                            else -> JoinConfig(username, room, address, port.toInt(), password)
+                        }.sanitised()
+
+                        val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
+                        PrimaryAction(
+                            text = stringResource(Res.string.connect_button_join),
                             modifier = Modifier.fillMaxWidth(),
-                            engines = availablePlatformPlayerEngines,
-                            selectedEngine = selectedEngine,
-                            onSelectEngine = { engine ->
-                                viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                    if (engine.isAvailable) PLAYER_ENGINE.set(engine.name) else viewmodel.snackIt(unavailable)
+                            onClick = {
+                                error = validate()
+                                if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
+                            },
+                            trailing = {
+                                GlyphButton(Icons.Filled.Widgets, name = stringResource(Res.string.connect_button_saveshortcut), tint = p.ground) {
+                                    error = validate()
+                                    if (error == null) {
+                                        with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
+                                        viewmodel.snackItAsync(shortcutSaved)
+                                    }
                                 }
                             },
                         )
                     }
-
-                    /* One validation for both paths, so the shortcut saver cannot crash on a
-                     * blank port either. */
-                    fun validate(): StringResource? = when {
-                        username.isBlank() -> Res.string.connect_username_empty_error
-                        room.isBlank() -> Res.string.connect_roomname_empty_error
-                        mode == ServerMode.Host -> null
-                        address.isBlank() -> Res.string.connect_address_empty_error
-                        port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
-                        else -> null
-                    }
-                    fun currentConfig() = when (mode) {
-                        ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
-                        else -> JoinConfig(username, room, address, port.toInt(), password)
-                    }.sanitised()
-
-                    val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
-                    PrimaryAction(
-                        text = stringResource(Res.string.connect_button_join),
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            error = validate()
-                            if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
-                        },
-                        trailing = {
-                            GlyphButton(Icons.Filled.Widgets, name = stringResource(Res.string.connect_button_saveshortcut), tint = p.ground) {
-                                error = validate()
-                                if (error == null) {
-                                    with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
-                                    viewmodel.snackItAsync(shortcutSaved)
-                                }
-                            }
-                        },
-                    )
-                    Spacer(Modifier.height(Space.gap))
                 }
             }
         }

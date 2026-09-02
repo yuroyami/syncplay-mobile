@@ -24,7 +24,9 @@ sealed interface PrefExtraConfig {
         val maxValue: Int = 100,
         val minValue: Int = 0,
         val unit: String = "",
-        val onValueChanged: (suspend SyncplayViewmodel.(newValue: Int) -> Unit)? = null
+        /** Shows "Off" instead of "0", for sliders where zero switches the feature off. */
+        val zeroMeansOff: Boolean = false,
+        val onValueChanged: (suspend SyncplayViewmodel.(newValue: Int) -> Unit)? = null,
     ) : PrefExtraConfig
 
     data class MultiChoice(
@@ -37,6 +39,9 @@ sealed interface PrefExtraConfig {
     ) : PrefExtraConfig
 
     data object ColorPick : PrefExtraConfig
+
+    /** A page of rows behind one entry: inline in the room's settings panel, a modal elsewhere. */
+    data class Nested(val content: @Composable () -> Unit) : PrefExtraConfig
 
     /** [destructive] draws the row and the confirming action in the destructive treatment. */
     data class YesNoDialog(
