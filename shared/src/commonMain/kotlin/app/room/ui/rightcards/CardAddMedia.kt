@@ -90,8 +90,8 @@ import syncplaymobile.shared.generated.resources.room_route_share_note
 
 /**
  * Adding media, as a side panel: the routes a file can come in by, each a 54dp row. The link
- * route swaps the rows for the link form in the same panel. Pickers launch straight away: the
- * modal race (FileKit #575) does not apply to a panel.
+ * route swaps the rows for the link form in the same panel. Pickers launch straight away (the
+ * modal race, FileKit #575, does not apply to a panel) and the panel waits for their return.
  */
 object CardAddMedia {
 
@@ -101,18 +101,23 @@ object CardAddMedia {
         val ui = LocalRoomUiState.current
         var linkMode by remember { mutableStateOf(false) }
 
+        fun close() {
+            linkMode = false
+            ui.toggleAddMedia(false)
+        }
+
+        /* The panel stays open while a picker is out and closes on its return. Closing first
+         * would drop the panel from composition and the launcher with it, and the picked file
+         * would come back to nobody. */
         val videoPicker = rememberFilePickerLauncher(type = videoFileKitType) { file ->
+            close()
             file ?: return@rememberFilePickerLauncher
             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
         }
         val playlistPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = playlistExs)) { file ->
+            close()
             file ?: return@rememberFilePickerLauncher
             viewmodel.playlistManager.loadPlaylistLocally(file, alsoShuffle = false)
-        }
-
-        fun close() {
-            linkMode = false
-            ui.toggleAddMedia(false)
         }
 
         PanelFrame(
@@ -129,7 +134,7 @@ object CardAddMedia {
                 LinkForm(onCancel = { linkMode = false }, onPlayed = ::close)
             } else {
                 RouteRow(Icons.Filled.FolderOpen, stringResource(Res.string.room_route_device), stringResource(Res.string.room_route_device_note)) {
-                    Feedback.tick(); close(); videoPicker.launch()
+                    Feedback.tick(); videoPicker.launch()
                 }
                 RouteRow(Icons.Filled.Link, stringResource(Res.string.room_route_link), stringResource(supportedSites())) {
                     Feedback.tick(); linkMode = true
@@ -145,7 +150,7 @@ object CardAddMedia {
                 }
                 if (!viewmodel.isSoloMode) {
                     RouteRow(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(Res.string.room_route_playlist), stringResource(Res.string.room_route_playlist_note)) {
-                        Feedback.tick(); close(); playlistPicker.launch()
+                        Feedback.tick(); playlistPicker.launch()
                     }
                 }
             }
