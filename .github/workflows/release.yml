@@ -38,14 +38,15 @@ jobs:
       - name: Extract version from build.gradle.kts
         id: version
         run: |
-          # versionName lives in the kmpSsot { } block in the root build script,
-          # not in AppConfig.kt (the plugin owns it — see AppConfig.kt header comment).
-          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
+          # The version lives in the kiteConfig { } block in the root build script,
+          # not in AppConfig.kt (the plugin owns it). The code follows KiteConfig's
+          # scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1).
+          VERSION=$(grep -E '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract versionName from build.gradle.kts" >&2
+            echo "::error::Could not extract version from the kiteConfig { } block in build.gradle.kts" >&2
             exit 1
           fi
-          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + ''.join(s.zfill(3) for s in v))")
+          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + v[0].zfill(3) + v[1].zfill(3) + v[2].zfill(2) + '0')")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION (code: $VERSION_CODE)"
@@ -174,10 +175,6 @@ jobs:
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
-      - name: Ensure DEBUG flag is off
-        run: |
-          sed -i "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
-
       - name: Build APK
         # -PexoOnly=true selects the exo-only flavor (overrides the gradle.properties default).
         # That is what creates the `exoOnly` flavor, and therefore the assembleExoOnlyRelease task.
@@ -216,30 +213,19 @@ jobs:
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
-      - name: Ensure DEBUG off
-        run: |
-          sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
-
-      # Stamp the iOS version from the SSOT (kmpSsot.versionName in build.gradle.kts)
-      # into the Xcode project BEFORE xcodebuild reads it.
-      #
-      # The kmp-ssot plugin normally rewrites MARKETING_VERSION/CURRENT_PROJECT_VERSION
-      # in the pbxproj, but it does so during the iOS framework *link* task — which runs
-      # from the CocoaPods "[CP] Build" script phase partway through the archive. By then
-      # Xcode has already read the committed (stale) version and baked it into Info.plist
-      # (CFBundleShortVersionString = $(MARKETING_VERSION)). Locally you build twice and
-      # commit the rewritten pbxproj, so it self-corrects; a one-shot CI `clean archive`
-      # uploads the previous version. Stamping here makes CI authoritative regardless of
-      # what's committed.
+      # Stamp the iOS version from the kiteConfig { } block into the Xcode project
+      # BEFORE xcodebuild reads it. KiteConfig only rewrites the pbxproj when
+      # kiteRewriteXcode is run by hand, so a forgotten run would ship the previous
+      # version; stamping here makes CI authoritative regardless of what is committed.
       - name: Stamp iOS version from SSOT
         id: version
         run: |
-          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
+          VERSION=$(grep -E '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract versionName from build.gradle.kts" >&2
+            echo "::error::Could not extract version from the kiteConfig { } block in build.gradle.kts" >&2
             exit 1
           fi
-          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + ''.join(s.zfill(3) for s in v))")
+          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + v[0].zfill(3) + v[1].zfill(3) + v[2].zfill(2) + '0')")
           PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
           sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $VERSION;/g" "$PBXPROJ"
           sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = $VERSION_CODE;/g" "$PBXPROJ"
