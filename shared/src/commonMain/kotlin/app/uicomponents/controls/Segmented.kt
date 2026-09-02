@@ -12,6 +12,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ fun Segmented(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     height: Dp = Space.rowCompact,
+    autoSize: Boolean = false,
 ) {
     val p = palette
     Row(
@@ -60,6 +62,7 @@ fun Segmented(
                 label = label,
                 active = i == selected,
                 enabled = enabled,
+                autoSize = autoSize,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 onClick = { if (i != selected) { Feedback.tick(); onSelect(i) } },
             )
@@ -68,7 +71,7 @@ fun Segmented(
 }
 
 @Composable
-private fun SegmentedCell(label: String, active: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun SegmentedCell(label: String, active: Boolean, enabled: Boolean, autoSize: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val p = palette
     val source = remember { MutableInteractionSource() }
     val fill by animateColorAsState(if (active) p.accent.copy(alpha = 0.16f) else p.accent.copy(alpha = 0f), Motion.quick(), label = "cell")
@@ -98,6 +101,8 @@ private fun SegmentedCell(label: String, active: Boolean, enabled: Boolean, modi
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            // Between the group and value sizes, in one-sp steps, when a label has to fit.
+            autoSize = if (autoSize) TextAutoSize.StepBased(minFontSize = Type.group.fontSize, maxFontSize = Type.value.fontSize, stepSize = Type.group.fontSize / 11) else null,
         )
     }
 }

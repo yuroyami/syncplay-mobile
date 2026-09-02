@@ -56,7 +56,8 @@ fun RoomPlayButton(modifier: Modifier) {
             .size(Space.hero)
             .then(if (initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier)
             .clip(Radius.panelShape)
-            .background(Brush.horizontalGradient(p.brandField))
+            // Translucent, like the rest of the chrome, so the picture reads through the key.
+            .background(Brush.horizontalGradient(p.brandField.map { it.copy(alpha = 0.82f) }))
             .clickable(interactionSource = source, indication = null, role = Role.Button) {
                 viewmodel.dispatcher.controlPlayback(if (playing) Playback.PAUSE else Playback.PLAY, true)
             }

@@ -15,13 +15,13 @@ import app.LocalRoomViewmodel
 import app.theme.palette
 import app.uicomponents.SynkplayLogo
 
-/** The room ground before a file loads: the mark at 12 percent, nothing else. */
+/** The room ground before a file loads: the mark at 35 percent, nothing else. */
 @Composable
 fun RoomBackgroundArtwork() {
     val viewmodel = LocalRoomViewmodel.current
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val p = palette
     Box(Modifier.fillMaxSize().background(p.ground), contentAlignment = Alignment.Center) {
-        SynkplayLogo(modifier = Modifier.size(if (isInPipMode) 40.dp else 84.dp).alpha(0.12f))
+        SynkplayLogo(modifier = Modifier.size(if (isInPipMode) 40.dp else 128.dp).alpha(0.35f))
     }
 }

@@ -7,6 +7,13 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -121,5 +128,25 @@ object Feedback {
         runCatching {
             if (Preferences.HAPTICS_ON_CONTROLS.value()) platformCallback.performHapticFeedback()
         }
+    }
+}
+
+/** A slow light sweep for a tile still loading: ink at 6 to 14 percent, moving across. */
+@Composable
+fun Modifier.shimmer(): Modifier {
+    val p = palette
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1400, easing = LinearEasing), RepeatMode.Restart),
+        label = "shimmerPhase",
+    )
+    val base = p.ink.copy(alpha = 0.06f)
+    val lit = p.ink.copy(alpha = 0.14f)
+    return drawBehind {
+        val w = size.width
+        val x = (phase * 2f - 0.5f) * w
+        drawRect(Brush.linearGradient(listOf(base, lit, base), start = Offset(x - w / 2, 0f), end = Offset(x + w / 2, size.height)))
     }
 }

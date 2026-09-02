@@ -169,6 +169,8 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
                                 val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
                                 downloading = null
                                 if (injected) {
+                                    // The tracks panel stays open behind this, so its list must follow.
+                                    viewmodel.media?.let { viewmodel.player.analyzeTracks(it) }
                                     // Free plan keys allow a handful of downloads a day; searches are unlimited.
                                     viewmodel.dispatchOSD { getString(Res.string.room_subs_downloaded_remaining, outcome.remaining) }
                                     downloadedOk = result.fileId

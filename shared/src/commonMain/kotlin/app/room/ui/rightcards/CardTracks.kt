@@ -3,7 +3,6 @@ package app.room.ui.rightcards
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,6 +13,9 @@ import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.ClosedCaptionDisabled
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
@@ -85,7 +87,12 @@ object CardTracks {
 
         // A side panel, not a modal: the picker can launch straight away (FileKit #575 is a modal race).
         val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
-            file?.let { scope.launch(Dispatchers.IO) { viewmodel.player.loadExternalSub(it) } }
+            file?.let {
+                scope.launch(Dispatchers.IO) {
+                    viewmodel.player.loadExternalSub(it)
+                    viewmodel.media?.let { m -> viewmodel.player.analyzeTracks(m) }
+                }
+            }
         }
 
         fun choose(track: Track?, type: PlayerImpl.TrackType, notice: suspend () -> String) {
@@ -99,13 +106,14 @@ object CardTracks {
 
         PanelFrame(
             title = stringResource(Res.string.room_tracks_title),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             shape = shape,
             scrollable = false,
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { ui.toggleTracks(false) } },
         ) {
-            Row(Modifier.fillMaxWidth().fillMaxHeight()) {
+            // Wraps its lists, capped, so the panel is as tall as the tracks and no taller.
+            Row(Modifier.fillMaxWidth().heightIn(max = 300.dp).height(IntrinsicSize.Min)) {
                 Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
                     GroupHeading(stringResource(Res.string.room_button_desc_audio_tracks))
                     if (audio.isEmpty()) NoneLine()
@@ -147,17 +155,16 @@ object CardTracks {
             text = stringResource(Res.string.room_tracks_none),
             style = Type.note,
             color = palette.inkDim,
-            modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight),
+            modifier = Modifier.padding(horizontal = Space.gap, vertical = Space.gapTight),
         )
     }
 
-    /* The columns are narrow (half a panel), so rows are 36dp on the value size, two lines at most. */
+    /* The columns are narrow (half a panel), so rows are 30dp on the value size, one line each. */
     @Composable
     private fun TrackRow(index: Int, track: Track, onClick: () -> Unit) {
         val p = palette
-        ListRow(onClick = onClick, selected = track.selected, minHeight = Space.rowCompact) {
-            Text("$index", style = Type.value, color = p.inkDim, maxLines = 1, modifier = Modifier.width(18.dp))
-            Text(track.name, style = Type.value, color = p.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        ListRow(onClick = onClick, selected = track.selected, minHeight = 30.dp, horizontalPadding = Space.gap) {
+            Text(track.name, style = Type.value, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (track.selected) {
                 RowGap(Space.gapTight)
                 Icon(CheckGlyph, contentDescription = null, tint = p.accent, modifier = Modifier.size(16.dp))
@@ -168,10 +175,10 @@ object CardTracks {
     @Composable
     private fun ActionRow(icon: ImageVector, label: String, selected: Boolean = false, onClick: () -> Unit) {
         val p = palette
-        ListRow(onClick = onClick, selected = selected, minHeight = Space.rowCompact) {
+        ListRow(onClick = onClick, selected = selected, minHeight = 30.dp, horizontalPadding = Space.gap) {
             Icon(icon, contentDescription = null, tint = if (selected) p.accent else p.inkDim, modifier = Modifier.size(16.dp))
             RowGap(Space.gapTight)
-            Text(label, style = Type.value, color = p.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(label, style = Type.value, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
     }
 }

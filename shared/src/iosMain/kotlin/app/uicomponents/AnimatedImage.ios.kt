@@ -98,6 +98,7 @@ actual fun AnimatedImage(
     contentDescription: String?,
     contentScale: ContentScale,
     alpha: Float,
+    onLoaded: (() -> Unit)?,
 ) {
     /* Seed from the cache synchronously during composition so cache hits paint on the very
      * first frame — no flicker, no LaunchedEffect await. Cache misses fall through to the
@@ -108,6 +109,7 @@ actual fun AnimatedImage(
         if (nativeImage != null) return@LaunchedEffect
         nativeImage = downloadAndDecodeAnimatedImage(url)?.also { cacheImage(url, it) }
     }
+    LaunchedEffect(nativeImage) { if (nativeImage != null) onLoaded?.invoke() }
 
     val contentMode = when (contentScale) {
         ContentScale.Crop -> UIViewContentMode.UIViewContentModeScaleAspectFill

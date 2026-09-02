@@ -20,4 +20,5 @@ expect fun AnimatedImage(
     contentDescription: String? = null,
     contentScale: ContentScale = ContentScale.Fit,
     alpha: Float = 1f,
+    onLoaded: (() -> Unit)? = null,
 )

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.HeartBroken
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import app.uicomponents.controls.shimmer
 import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.Segmented
@@ -247,6 +248,7 @@ fun GifPanel(
                 selected = sources.indexOf(selectedSource),
                 onSelect = { selectedSource = sources[it] },
                 modifier = Modifier.weight(1f),
+                autoSize = true,
             )
         }
         Rule()
@@ -281,18 +283,26 @@ fun GifPanel(
                     items(results, key = { it.id }) { media ->
                         /* Fixed width and height on the tile: an empty UIImageView reports zero
                          * size and Compose never re-measures UIKit interop after the image loads.
-                         * Alpha is a parameter for the same interop reason. */
-                        AnimatedImage(
-                            url = media.previewUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            alpha = if (isHUDVisible) 1f else 0f,
-                            modifier = Modifier
+                         * Alpha is a parameter for the same interop reason. The tile shimmers
+                         * until the image reports itself loaded. */
+                        var loaded by remember(media.id) { mutableStateOf(false) }
+                        Box(
+                            Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
                                 .clip(Radius.tightShape)
                                 .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
-                        )
+                        ) {
+                            if (!loaded && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
+                            AnimatedImage(
+                                url = media.previewUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                alpha = if (isHUDVisible && loaded) 1f else 0f,
+                                onLoaded = { loaded = true },
+                                modifier = Modifier.matchParentSize(),
+                            )
+                        }
                     }
                     if (isLoadingMore) {
                         item(span = { GridItemSpan(maxLineSpan) }) {

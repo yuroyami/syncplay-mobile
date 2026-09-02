@@ -13,11 +13,13 @@ actual fun AnimatedImage(
     contentDescription: String?,
     contentScale: ContentScale,
     alpha: Float,
+    onLoaded: (() -> Unit)?,
 ) {
     AsyncImage(
         model = url,
         contentDescription = contentDescription,
         contentScale = contentScale,
+        onSuccess = { onLoaded?.invoke() },
         modifier = modifier.alpha(alpha),
     )
 }

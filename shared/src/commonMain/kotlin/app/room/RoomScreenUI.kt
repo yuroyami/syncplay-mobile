@@ -267,11 +267,12 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     val tracks by ui.tabCardTracks.collectAsState()
     val gestures by ui.tabCardGestures.collectAsState()
     val seekTo by ui.tabCardSeekTo.collectAsState()
+    val addMedia by ui.tabCardAddMedia.collectAsState()
     val controls by ui.controlPanel.collectAsState()
     val gifs by ui.gifPanelVisible.collectAsState()
     val scrubbing by ui.scrubbing.collectAsState()
     val draft by ui.msg.collectAsState()
-    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
+    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
 
     LaunchedEffect(idleSeconds, hudVisible, hasVideo, held, activity) {
         if (idleSeconds <= 0 || !hudVisible || !hasVideo || held) return@LaunchedEffect

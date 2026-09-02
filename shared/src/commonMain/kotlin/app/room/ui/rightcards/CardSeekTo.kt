@@ -3,7 +3,6 @@ package app.room.ui.rightcards
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -93,7 +92,7 @@ object CardSeekTo {
 
         PanelFrame(
             title = stringResource(Res.string.room_seek_toposition_title),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             shape = shape,
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close), onClick = ::close) },

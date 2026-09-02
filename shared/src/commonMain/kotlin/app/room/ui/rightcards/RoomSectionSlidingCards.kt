@@ -54,6 +54,7 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val stateTracks by ui.tabCardTracks.collectAsState()
     val stateGestures by ui.tabCardGestures.collectAsState()
     val stateSeekTo by ui.tabCardSeekTo.collectAsState()
+    val stateAddMedia by ui.tabCardAddMedia.collectAsState()
     val stateControls by ui.controlPanel.collectAsState()
 
     val density = LocalDensity.current
@@ -71,9 +72,11 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
                 AnimatedVisibility(statePlaylist, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
             }
             AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
-            AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { CardTracks.TracksPanel(shape) }
-            AnimatedVisibility(stateGestures, Modifier.fillMaxHeight(), enter, exit) { CardGestures.GesturesPanel(shape) }
-            AnimatedVisibility(stateSeekTo, Modifier.fillMaxHeight(), enter, exit) { CardSeekTo.SeekToPanel(shape) }
+            // Tool panels wrap their content instead of filling the dock.
+            AnimatedVisibility(stateTracks, enter = enter, exit = exit) { CardTracks.TracksPanel(shape) }
+            AnimatedVisibility(stateGestures, enter = enter, exit = exit) { CardGestures.GesturesPanel(shape) }
+            AnimatedVisibility(stateSeekTo, enter = enter, exit = exit) { CardSeekTo.SeekToPanel(shape) }
+            AnimatedVisibility(stateAddMedia, enter = enter, exit = exit) { CardAddMedia.AddMediaPanel(shape) }
         }
         AnimatedVisibility(stateControls, enter = expandVertically(Motion.move()), exit = shrinkVertically(Motion.move())) {
             Box(

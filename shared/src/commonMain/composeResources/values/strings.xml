@@ -172,7 +172,7 @@
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
-    <string name="room_button_desc_subtitle_tracks_import_from_file">Import from file</string>
+    <string name="room_button_desc_subtitle_tracks_import_from_file">Load from file</string>
     <string name="room_tracks_title">Audio &amp; subtitles</string>
     <string name="room_button_desc_rewind">Rewind</string>
     <string name="room_button_desc_toggle">.</string>
@@ -202,8 +202,8 @@
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_audio_track_not_found">No audio found !</string>
     <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
-    <string name="room_managed_room_popup_create">Enter name of managed room\nsee https://app.pl/guide/ for usage instructions)</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">Enter operator password for this room\nsee https://app.pl/guide/ for usage instructions)</string>
+    <string name="room_managed_room_popup_create">Name of the managed room. See syncplay.pl/guide for how these rooms work.</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Operator password for this room. See syncplay.pl/guide for how these rooms work.</string>
     <string name ="room_setting_pick_color">Pick a Color</string>
     <string name ="room_reconnect_button">Reconnect</string>
     <string name="room_more_info_change_network_engine_msg">Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.</string>

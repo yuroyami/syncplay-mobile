@@ -74,7 +74,7 @@ object CardRoomPrefs {
                     val current = open
                     when {
                         page != null -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { page.second() }
-                        current == null -> SettingsCategoryList(list) { open = it }
+                        current == null -> SettingsCategoryList(list, columns = 2) { open = it }
                         else -> SettingsCategoryBody(current)
                     }
                 }

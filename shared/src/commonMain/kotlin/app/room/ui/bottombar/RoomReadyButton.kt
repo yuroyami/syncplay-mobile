@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,6 +54,14 @@ fun RoomReadyButton() {
     var ready by remember { viewmodel.session.ready }
     val p = palette
     val source = remember { MutableInteractionSource() }
+    // One width for both words, so flipping the state never reshapes the seekbar beside it.
+    val readyLabel = stringResource(Res.string.room_ready)
+    val notReadyLabel = stringResource(Res.string.room_not_ready)
+    val measurer = rememberTextMeasurer()
+    val labelStyle = Type.label
+    val cellWidth = with(LocalDensity.current) {
+        maxOf(measurer.measure(readyLabel, labelStyle).size.width, measurer.measure(notReadyLabel, labelStyle).size.width).toDp()
+    } + Space.gap * 2 + 6.dp + Space.gapTight + 2.dp
 
     Row(
         modifier = Modifier
@@ -66,6 +77,7 @@ fun RoomReadyButton() {
             .pressFeedback(source)
             .touchTarget(minHeight = Space.row)
             .height(Space.rowCompact)
+            .width(cellWidth)
             .clip(Radius.controlShape)
             .background(if (ready) p.ok.copy(alpha = 0.18f) else Color.Transparent)
             .border(Space.hair, if (ready) p.ok else p.rule, Radius.controlShape)
@@ -76,7 +88,7 @@ fun RoomReadyButton() {
         Box(Modifier.size(6.dp).background(if (ready) p.ok else p.bad, Radius.tightShape))
         RowGap(Space.gapTight + 2.dp)
         Text(
-            text = stringResource(if (ready) Res.string.room_ready else Res.string.room_not_ready),
+            text = if (ready) readyLabel else notReadyLabel,
             style = Type.label,
             color = p.ink,
             maxLines = 1,

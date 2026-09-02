@@ -1,6 +1,6 @@
 package app.room.ui.rightcards
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -24,7 +24,7 @@ object CardGestures {
         val ui = LocalRoomUiState.current
         PanelFrame(
             title = stringResource(Res.string.room_gestures_panel_title),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(),
             shape = shape,
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { ui.toggleGestures(false) } },

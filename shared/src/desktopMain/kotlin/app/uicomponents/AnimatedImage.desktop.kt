@@ -40,8 +40,10 @@ actual fun AnimatedImage(
     contentDescription: String?,
     contentScale: ContentScale,
     alpha: Float,
+    onLoaded: (() -> Unit)?,
 ) {
     var animation by remember(url) { mutableStateOf<DecodedAnimation?>(AnimatedImageCache.peek(url)) }
+    LaunchedEffect(animation) { if (animation != null) onLoaded?.invoke() }
 
     if (animation == null) {
         LaunchedEffect(url) {

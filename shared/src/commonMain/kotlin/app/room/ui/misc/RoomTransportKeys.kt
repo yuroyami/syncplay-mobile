@@ -14,6 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,7 +37,6 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
-import app.uicomponents.chromeSurface
 import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.RowGap
@@ -81,8 +83,9 @@ private fun JumpKey(icon: ImageVector, name: String, amount: String, onClick: ()
     Row(
         modifier = Modifier
             .height(Space.row)
-            .chromeSurface(Radius.controlShape)
             .clip(Radius.controlShape)
+            .background(Color(0xFF15151A).copy(alpha = 0.55f))
+            .border(Space.hair, p.rule, Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
             .hoverable(source)
             .semantics { contentDescription = name }

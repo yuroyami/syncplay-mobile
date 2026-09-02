@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,8 +24,6 @@ fun RoomBottomBarSection(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     Box(modifier.windowInsetsPadding(WindowInsets.safeGestures)) {
-        val stateAddMedia = remember { mutableStateOf(false) }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -41,10 +37,10 @@ fun RoomBottomBarSection(modifier: Modifier) {
 
                 RoomSeekbar(modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
 
-                RoomControlPanelButton(modifier = Modifier, stateAddMedia)
+                RoomControlPanelButton(modifier = Modifier)
             }
 
-            RoomMediaAddButton(stateAddMedia)
+            RoomMediaAddButton()
         }
     }
 }

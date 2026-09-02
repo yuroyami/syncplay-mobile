@@ -137,8 +137,8 @@ fun HomeEnginePicker(
     }
 }
 
-private val CellHeight = 78.dp
-private val MarkSize = 28.dp
+private val CellHeight = 104.dp
+private val MarkSize = 40.dp
 
 /** What a badge says, in a word for the cell and a line for the note. */
 private class EngineBadge(val label: StringResource, val note: StringResource, val tone: Tone)

@@ -3,6 +3,7 @@ package app.uicomponents.controls
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -30,6 +31,7 @@ fun Text(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
+    autoSize: TextAutoSize? = null,
 ) {
     val resolved = when {
         color.isSpecified -> color
@@ -37,7 +39,7 @@ fun Text(
         else -> palette.ink
     }
     val merged = style.merge(TextStyle(color = resolved, textAlign = textAlign ?: TextAlign.Unspecified))
-    BasicText(text = text, modifier = modifier, style = merged, overflow = overflow, softWrap = softWrap, maxLines = maxLines, minLines = minLines)
+    BasicText(text = text, modifier = modifier, style = merged, overflow = overflow, softWrap = softWrap, maxLines = maxLines, minLines = minLines, autoSize = autoSize)
 }
 
 /** A vector glyph tinted in one colour, the palette's ink by default. No Material. */

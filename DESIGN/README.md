@@ -201,6 +201,16 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   the store catches up; the timestamp switch, the outline switch (0 thickness is off) and the
   UI opacity row are gone; the engine's rows fold into the player category as its last group,
   with subtitle size first; the home form is centred in the height under the bar.
+  Fifth review: the readiness cell measures both words and keeps one width; the tracks panel
+  wraps its lists (30dp rows, one line, no index), lists the load and search rows first and
+  says "Load from file"; timecodes are measured on the padded 00:00:00 format and the undo key
+  widens for its badge; GIF tiles shimmer until the image reports loaded (AnimatedImage has an
+  onLoaded callback on all three actuals); the managed room strings point at syncplay.pl again;
+  a downloaded or loaded subtitle re-reads the track list; the room's category list runs in
+  two columns; Text and Segmented can auto-size, used in the GIF drawer; add media is a side
+  panel (CardAddMedia) with the link form inline; the play key and the jump keys are
+  translucent; the room mark shows at 35 percent; a tool panel closes the control strip and
+  the strip closes tool panels; the home form runs top to bottom with 104dp engine cells.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

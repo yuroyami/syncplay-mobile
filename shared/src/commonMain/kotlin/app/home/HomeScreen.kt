@@ -199,9 +199,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 ) {
                     Column(
                         modifier = Modifier.widthIn(max = FORM_MAX_WIDTH).fillMaxWidth().heightIn(min = viewport).padding(horizontal = Space.gutter, vertical = Space.gutter),
-                        // Four groups spread over whatever height is free; the padding keeps a
-                        // floor between them when there is none (short window, keyboard up).
-                        verticalArrangement = Arrangement.SpaceEvenly,
+                        // Identity at the top, join at the bottom, the rest spread between; the
+                        // padding keeps a floor between groups when there is no free height.
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         var username by remember(savedConfig) { mutableStateOf(config.user) }
                         var room by remember(savedConfig) { mutableStateOf(config.room) }
@@ -315,7 +315,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                             options = officialPorts,
                                             selected = officialPorts.indexOf(port).coerceAtLeast(0),
                                             onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
-                                            height = Space.row,
+                                            height = Space.rowTall,
                                         )
                                         ServerMode.Custom -> {
                                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {

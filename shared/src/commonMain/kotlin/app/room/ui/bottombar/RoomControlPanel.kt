@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
@@ -28,7 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.clickable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -81,7 +82,7 @@ import syncplaymobile.shared.generated.resources.room_undo_seek_title
 
 /** The entry glyph in the transport bar. */
 @Composable
-fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<Boolean>) {
+fun RoomControlPanelButton(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
@@ -92,10 +93,7 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
             name = stringResource(Res.string.room_control_panel),
             size = Space.glyphLarge,
             modifier = modifier,
-            onClick = {
-                popupStateAddMedia.value = false
-                cardController.controlPanel.value = !cardController.controlPanel.value
-            },
+            onClick = { cardController.toggleControlPanel() },
         )
     }
 }
@@ -185,7 +183,8 @@ private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
     val source = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
-            .size(Space.touchMin)
+            .height(Space.touchMin)
+            .widthIn(min = Space.touchMin)
             .clip(Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
             .hoverable(source)
@@ -207,7 +206,7 @@ private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
                 style = Type.group,
                 color = p.inkDim,
                 maxLines = 1,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp, start = 4.dp, end = 4.dp),
             )
         }
     }

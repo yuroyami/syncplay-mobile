@@ -115,10 +115,8 @@ fun RoomSeekbar(modifier: Modifier) {
     /* Both timecodes get the width of the widest string their format can take, so the track
      * does not shrink (and the thumb jump) when the elapsed time crosses an hour. */
     val measurer = rememberTextMeasurer()
-    val widest = when {
-        !known || durationMs >= 3_600_000L -> if (durationMs >= 36_000_000L) "00:00:00" else "0:00:00"
-        else -> "00:00"
-    }
+    // timestampFromMillis pads to mm:ss under an hour and to hh:mm:ss from there.
+    val widest = if (!known || durationMs >= 3_600_000L) "00:00:00" else "00:00"
     val timeWidth = with(density) { measurer.measure(widest, Type.value).size.width.toDp() }
 
     Row(modifier.then(keys), verticalAlignment = Alignment.CenterVertically) {

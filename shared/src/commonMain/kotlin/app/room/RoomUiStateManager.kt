@@ -40,6 +40,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val tabCardTracks = MutableStateFlow(false)
     val tabCardGestures = MutableStateFlow(false)
     val tabCardSeekTo = MutableStateFlow(false)
+    val tabCardAddMedia = MutableStateFlow(false)
 
     /** The rail's room actions, folded behind More until the first tap, for this room session. */
     val railActionsExpanded = MutableStateFlow(false)
@@ -58,12 +59,24 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     var wentForFilePick = false
 
     private val sidePanels
-        get() = listOf(tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences, tabCardTracks, tabCardGestures, tabCardSeekTo)
+        get() = listOf(tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences, tabCardTracks, tabCardGestures, tabCardSeekTo, tabCardAddMedia)
 
-    /** One side panel at a time: opening one closes the others. */
+    /** The panels the control strip opens; the strip and these never show together. */
+    private val toolPanels
+        get() = listOf(tabCardTracks, tabCardGestures, tabCardSeekTo, tabCardAddMedia)
+
+    /** One side panel at a time: opening one closes the others, and a tool panel closes the strip. */
     private fun openSide(target: MutableStateFlow<Boolean>, forcedState: Boolean?) {
         target.value = forcedState ?: !target.value
-        if (target.value) sidePanels.forEach { if (it !== target) it.value = false }
+        if (target.value) {
+            sidePanels.forEach { if (it !== target) it.value = false }
+            if (toolPanels.any { it === target }) controlPanel.value = false
+        }
+    }
+
+    fun toggleControlPanel(forcedState: Boolean? = null) {
+        controlPanel.value = forcedState ?: !controlPanel.value
+        if (controlPanel.value) toolPanels.forEach { it.value = false }
     }
 
     fun toggleUserInfo(forcedState: Boolean? = null) = openSide(tabCardUserInfo, forcedState)
@@ -72,6 +85,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     fun toggleTracks(forcedState: Boolean? = null) = openSide(tabCardTracks, forcedState)
     fun toggleGestures(forcedState: Boolean? = null) = openSide(tabCardGestures, forcedState)
     fun toggleSeekTo(forcedState: Boolean? = null) = openSide(tabCardSeekTo, forcedState)
+    fun toggleAddMedia(forcedState: Boolean? = null) = openSide(tabCardAddMedia, forcedState)
 
     /** Room Lifecycle mapping according to platform (iOS/Android)
     * - [onLifecycleCreate] → `viewDidLoad` / `onCreate`

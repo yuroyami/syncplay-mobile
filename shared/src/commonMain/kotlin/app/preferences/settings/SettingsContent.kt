@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.size
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -80,16 +82,27 @@ fun SettingsCategoryList(
     categories: List<SettingCategory>,
     modifier: Modifier = Modifier,
     selectedKey: String? = null,
+    columns: Int = 1,
     onOpen: (SettingCategory) -> Unit,
 ) {
     val p = palette
     Column(modifier.fillMaxWidth()) {
-        categories.forEach { category ->
-            ListRow(onClick = { onOpen(category) }, selected = category.key == selectedKey) {
-                Icon(category.icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
-                RowGap()
-                RowLabel(stringResource(category.title))
-                Chevron(ChevronDirection.Right)
+        categories.chunked(columns.coerceAtLeast(1)).forEach { rowOf ->
+            Row(Modifier.fillMaxWidth()) {
+                rowOf.forEach { category ->
+                    ListRow(
+                        modifier = Modifier.weight(1f),
+                        onClick = { onOpen(category) },
+                        selected = category.key == selectedKey,
+                        horizontalPadding = if (columns > 1) Space.gap else Space.gutter,
+                    ) {
+                        Icon(category.icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
+                        RowGap()
+                        RowLabel(stringResource(category.title))
+                        if (columns == 1) Chevron(ChevronDirection.Right)
+                    }
+                }
+                repeat(columns - rowOf.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
