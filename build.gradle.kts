@@ -72,7 +72,7 @@ kiteConfig {
         // className is left at its default, KiteBuildConfig, since 1.0.0: no clash
         // with the BuildConfig that AGP generates.
         packageName = "SyncplayMobile.shared"
-
+//
         stringField("APP_NAME", kiteConfig.appName.get())
         stringField("APP_VERSION", kiteConfig.version.get())
         // NOT "DEBUG": KiteConfig generates a PUBLIC object, so every field becomes a property on the

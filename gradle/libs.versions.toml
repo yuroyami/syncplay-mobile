@@ -15,7 +15,7 @@ compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
 navigation3Runtime = "1.2.0-alpha04"
 navigation3Ui = "1.2.0-alpha02"
-compose-unstyled = "2.9.0"
+compose-unstyled = "2.9.2"
 # Backdrop blur. Built against Kotlin 2.4.10 + Compose Multiplatform 1.12.0, both of which
 # this project already runs, and publishes exactly our four targets (no iosX64, which we
 # don't declare either).
@@ -26,12 +26,12 @@ datastore = "1.3.0-alpha10"
 filekit = "0.15.0"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
-materialkolor = "5.0.0"
+materialkolor = "5.0.1"
 ktor = "3.5.2"
 koroutines = "1.11.0"
 datetime = "0.8.0"
 atomicfu = "0.33.0"
-coil = "3.5.0"
+coil = "3.6.1"
 # Skiko: Compose 1.12.0-beta02 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
 # Pin to the more recent (Compose's), explicitly forced so neither side regresses
 # silently when either library is bumped. Bump this to whatever the new Compose
@@ -40,7 +40,7 @@ skiko = "0.150.1"
 
 #Android
 coreSplashscreen = "1.2.0"
-corePip = "1.0.0-alpha03"
+corePip = "1.0.0-alpha04"
 activityCompose = "1.13.0"
 documentfile = "1.1.0"
 appcompat = "1.8.0"
@@ -48,11 +48,11 @@ coreKtx = "1.19.0"
 desugaring = "2.1.5"
 media3 = "1.11.0"
 netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
-conscrypt = "2.6.2"
+conscrypt = "2.7.0"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.20"
+kiteplayer = "0.0.21"
 
 #iOS (VLCKit pod)
 libvlc-ios = "4.0.0a19"

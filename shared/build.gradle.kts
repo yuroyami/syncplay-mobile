@@ -67,7 +67,6 @@ kotlin {
         all {
             languageSettings {
                 optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
-                optIn("androidx.compose.material3.ExperimentalMaterial3Api")
                 optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("kotlin.RequiresOptIn")
                 optIn("kotlin.experimental.ExperimentalNativeApi")
@@ -75,7 +74,6 @@ kotlin {
                 optIn("kotlin.ExperimentalUnsignedTypes")
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.io.encoding.ExperimentalEncodingApi")
-                optIn("androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
