@@ -254,8 +254,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 /* The four blocks of the form, placed by the window: one spread column when the
                  * window is narrow, two columns when it is wide, and two columns on a short wide
                  * window too, where one column would have to scroll to reach the join key. */
-                val identityBlock: @Composable () -> Unit = {
-                        Column(Modifier.fillMaxWidth(0.82f).padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                val identityBlock: @Composable (dense: Boolean) -> Unit = { dense ->
+                        Column(Modifier.fillMaxWidth(if (dense) 1f else 0.82f).padding(vertical = if (dense) 0.dp else Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
                             FormField(
                                 label = stringResource(Res.string.connect_username),
                                 help = stringResource(Res.string.connect_username_tooltip),
@@ -284,8 +284,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                              * both; Host points the join at the local server. */
                         }
                 }
-                val serverBlock: @Composable () -> Unit = {
-                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                val serverBlock: @Composable (dense: Boolean) -> Unit = { dense ->
+                        Column(Modifier.padding(vertical = if (dense) 0.dp else Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(
                                 text = stringResource(Res.string.connect_server, appName),
                                 tip = if (mode == ServerMode.Custom) stringResource(Res.string.connect_custom_tip) else null,
@@ -345,7 +345,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                             options = officialPorts,
                                             selected = officialPorts.indexOf(port).coerceAtLeast(0),
                                             onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
-                                            height = Space.rowTall,
+                                            height = if (dense) Space.row else Space.rowTall,
                                         )
                                         ServerMode.Custom -> {
                                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
@@ -395,8 +395,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         }
 
                 }
-                val engineBlock: @Composable () -> Unit = {
-                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                val engineBlock: @Composable (dense: Boolean) -> Unit = { dense ->
+                        Column(Modifier.padding(vertical = if (dense) 0.dp else Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             FormLabel(stringResource(Res.string.connect_choose_video_engine))
                             val selectedEngine by PLAYER_ENGINE.watchPref()
                             // A saved engine this build no longer ships is replaced once with the platform default.
@@ -419,9 +419,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         }
 
                 }
-                val joinBlock: @Composable () -> Unit = {
+                val joinBlock: @Composable (dense: Boolean) -> Unit = { dense ->
                         val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
-                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                        Column(Modifier.padding(vertical = if (dense) 0.dp else Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                             // The shortcut saver is its own key, a third of the width, over the join key's end.
                             ShortcutKey {
                                 error = validate()
@@ -463,8 +463,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         verticalArrangement = Arrangement.spacedBy(Space.gap),
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                     ) {
-                                        identityBlock()
-                                        serverBlock()
+                                        identityBlock(false)
+                                        serverBlock(false)
                                     }
                                 },
                                 right = {
@@ -473,8 +473,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         verticalArrangement = Arrangement.SpaceBetween,
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                     ) {
-                                        engineBlock()
-                                        joinBlock()
+                                        engineBlock(false)
+                                        joinBlock(false)
                                     }
                                 },
                             )
@@ -483,15 +483,23 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 } else if (twoColumns) {
                     /* Wide and short (a phone on its side): each column scrolls on its own and the
                      * join key stays pinned to the window's foot, never below the fold. */
+                    /* Dense blocks: no portrait spacing, so the form fits the height at rest and
+                     * the room left over becomes breathing space between the blocks. Scrolling
+                     * only starts when something grows, like the host panel. */
                     Box(Modifier.fillMaxSize().then(clearFocus), contentAlignment = Alignment.TopCenter) {
                         Row(Modifier.widthIn(max = FORM_MAX_WIDTH * 2 + Space.gutter).fillMaxSize().padding(horizontal = Space.gutter)) {
                             Column(
-                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = Space.gutter),
-                                verticalArrangement = Arrangement.spacedBy(Space.gap),
+                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                identityBlock()
-                                serverBlock()
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = viewport).padding(vertical = Space.gap),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    identityBlock(true)
+                                    serverBlock(true)
+                                }
                             }
                             Spacer(Modifier.width(Space.gutter * 2))
                             Column(
@@ -499,12 +507,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().heightIn(min = viewport).padding(vertical = Space.gutter),
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = viewport).padding(vertical = Space.gap),
                                     verticalArrangement = Arrangement.SpaceBetween,
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    engineBlock()
-                                    joinBlock()
+                                    engineBlock(true)
+                                    joinBlock(true)
                                 }
                             }
                         }
@@ -521,10 +529,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             verticalArrangement = Arrangement.SpaceBetween,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            identityBlock()
-                            serverBlock()
-                            engineBlock()
-                            joinBlock()
+                            identityBlock(false)
+                            serverBlock(false)
+                            engineBlock(false)
+                            joinBlock(false)
                         }
                     }
                 }
