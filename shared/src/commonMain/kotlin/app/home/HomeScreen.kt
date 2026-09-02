@@ -24,7 +24,9 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.style.TextOverflow
+import syncplaymobile.shared.generated.resources.connect_server_pick_note
+import syncplaymobile.shared.generated.resources.connect_server_pick_error
+import app.preferences.Preferences
 import syncplaymobile.shared.generated.resources.home_shortcut_explain
 import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.controlStates
@@ -156,8 +158,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     val focusManager = LocalFocusManager.current
 
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
+    // A fresh install has no saved join: the server choice starts empty and must be made.
+    var hasSavedConfig by remember { mutableStateOf(false) }
     LaunchedEffect(null) {
-        withContext(Dispatchers.IO) { savedConfig = JoinConfig.savedConfig() }
+        withContext(Dispatchers.IO) {
+            hasSavedConfig = Preferences.JOIN_CONFIG.value() != null
+            savedConfig = JoinConfig.savedConfig()
+        }
     }
 
     // A pending shortcut joins once, on arrival, through the same caps as the form.
@@ -203,12 +210,14 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         // Identity at the top, join at the bottom, the rest spread between; the
                         // padding keeps a floor between groups when there is no free height.
                         verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         var username by remember(savedConfig) { mutableStateOf(config.user) }
                         var room by remember(savedConfig) { mutableStateOf(config.room) }
                         var mode by remember(savedConfig) {
-                            mutableStateOf(
+                            mutableStateOf<ServerMode?>(
                                 when {
+                                    !hasSavedConfig -> null
                                     officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
                                     config.ip == LOCAL_HOST || config.ip == "localhost" -> ServerMode.Host
                                     else -> ServerMode.Custom
@@ -236,7 +245,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         }
 
-                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                        Column(Modifier.fillMaxWidth(0.82f).padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
                             FormField(
                                 label = stringResource(Res.string.connect_username),
                                 help = stringResource(Res.string.connect_username_tooltip),
@@ -271,7 +280,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             )
                             Segmented(
                                 options = listOf(stringResource(Res.string.connect_official), stringResource(Res.string.connect_custom), stringResource(Res.string.connect_host_mine)),
-                                selected = mode.ordinal,
+                                selected = mode?.ordinal ?: -1,
                                 onSelect = { index ->
                                     val next = ServerMode.entries[index]
                                     if (next == mode) return@Segmented
@@ -302,7 +311,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             AnimatedContent(
                                 targetState = mode,
                                 transitionSpec = {
-                                    val forward = targetState.ordinal > initialState.ordinal
+                                    val forward = (targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)
                                     val distance = if (Motion.reduced) 0 else 1
                                     (fadeIn(Motion.move()) + slideInHorizontally(Motion.move()) { if (forward) it / 6 * distance else -it / 6 * distance })
                                         .togetherWith(fadeOut(Motion.quick()) + slideOutHorizontally(Motion.quick()) { if (forward) -it / 6 * distance else it / 6 * distance })
@@ -312,6 +321,14 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             ) { m ->
                                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                                     when (m) {
+                                        null -> {
+                                            val pickError = error?.takeIf { it == Res.string.connect_server_pick_error }
+                                            Text(
+                                                text = stringResource(pickError ?: Res.string.connect_server_pick_note),
+                                                style = Type.note,
+                                                color = if (pickError != null) p.bad else p.inkDim,
+                                            )
+                                        }
                                         ServerMode.Official -> Segmented(
                                             options = officialPorts,
                                             selected = officialPorts.indexOf(port).coerceAtLeast(0),
@@ -392,6 +409,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         fun validate(): StringResource? = when {
                             username.isBlank() -> Res.string.connect_username_empty_error
                             room.isBlank() -> Res.string.connect_roomname_empty_error
+                            mode == null -> Res.string.connect_server_pick_error
                             mode == ServerMode.Host -> null
                             address.isBlank() -> Res.string.connect_address_empty_error
                             port.isBlank() || port.toIntOrNull() == null -> Res.string.connect_port_empty_error
@@ -535,17 +553,11 @@ private fun FormField(
             focusRequester = focusRequester,
             name = label,
         )
-        // Always one line here, so focus and errors never move the fields under the finger.
-        Text(
-            text = error ?: help,
-            style = Type.note,
-            color = when {
-                error != null -> p.bad
-                focused || value.isEmpty() -> p.inkDim
-                else -> p.inkFaint
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        /* The help is laid out at all times at its full wrapped height and only made visible
+         * on focus, so its appearance never moves the fields; an error draws over the same space. */
+        Box(Modifier.fillMaxWidth()) {
+            Text(help, style = Type.note, color = p.inkDim, modifier = Modifier.alpha(if (focused && error == null) 1f else 0f))
+            if (error != null) Text(error, style = Type.note, color = p.bad)
+        }
     }
 }

@@ -32,6 +32,8 @@
     <string name="connect_username">Username</string>
     <string name="connect_roomname">Room name</string>
     <string name="connect_server">Server</string>
+    <string name="connect_server_pick_note">Choose where to connect.</string>
+    <string name="connect_server_pick_error">Pick a server first.</string>
     <string name="connect_choose_video_engine">Video engine</string>
     <string name="connect_username_tooltip">Pick any name you like, it's just what others in the room see.</string>
     <string name="connect_roomname_tooltip">Any name works. Friends who enter the same room name get synced together.</string>
