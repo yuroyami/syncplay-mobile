@@ -13,8 +13,8 @@ import androidx.compose.foundation.background
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import syncplaymobile.shared.generated.resources.room_route_link
 import syncplaymobile.shared.generated.resources.action_close
 import syncplaymobile.shared.generated.resources.action_back
@@ -73,8 +73,9 @@ fun RoomMediaAddButton() {
     val initialFocus = LocalRoomInitialFocus.current
     val expanded = !hasVideo && open
     /* One block that is the key and the card: the brand gradient stays on it at full strength,
-     * its size animates between the two, and the contents crossfade inside it, so the violet
-     * key becomes a violet card. The card's rows take dark ink, the way the key's label does. */
+     * its size animates between the two from the key's corner, and the contents crossfade
+     * inside it, so the violet key becomes a violet card. Its rows take dark ink, the way the
+     * key's label does. */
     val onBrand = p.copy(
         ink = p.ground,
         inkDim = p.ground.copy(alpha = 0.72f),
@@ -82,16 +83,18 @@ fun RoomMediaAddButton() {
         rule = p.ground.copy(alpha = 0.25f),
         accent = p.ground,
     )
-    AnimatedContent(
-        targetState = expanded,
+    Box(
         modifier = Modifier
             .padding(Space.gapTight)
             .clip(Radius.panelShape)
-            .background(Brush.horizontalGradient(p.brandField)),
-        transitionSpec = {
-            (fadeIn(Motion.move()) togetherWith fadeOut(Motion.quick()))
-                .using(SizeTransform(clip = true) { _, _ -> Motion.move() })
-        },
+            .background(Brush.horizontalGradient(p.brandField))
+            .animateContentSize(Motion.move()),
+        contentAlignment = Alignment.BottomEnd,
+    ) {
+    AnimatedContent(
+        targetState = expanded,
+        transitionSpec = { fadeIn(Motion.move()) togetherWith fadeOut(Motion.quick()) },
+        contentAlignment = Alignment.BottomEnd,
         label = "addKey",
     ) { showCard ->
         if (showCard) {
@@ -132,6 +135,7 @@ fun RoomMediaAddButton() {
                 },
             )
         }
+    }
     }
 }
 
