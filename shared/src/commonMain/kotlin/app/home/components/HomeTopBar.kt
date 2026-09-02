@@ -64,7 +64,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                 modifier = Modifier.clickable(interactionSource = null, indication = null, role = Role.Button) { aboutOpen.value = true },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SynkplayLogo(modifier = Modifier.size(24.dp))
+                SynkplayLogo(modifier = Modifier.size(40.dp))
                 Spacer(Modifier.width(Space.gap))
                 Column(horizontalAlignment = Alignment.End) {
                     // The version rides the wordmark as a tiny overscore, same brush, no pull on the eye.
