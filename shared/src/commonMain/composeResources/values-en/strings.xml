@@ -603,6 +603,9 @@
     <string name="room_undo_seek">Undo seek</string>
     <string name="room_tracks">Audio and subtitles</string>
     <string name="room_tracks_none">No tracks</string>
+    <string name="room_roster_view_compact">Compact</string>
+    <string name="room_roster_view_standard">Standard</string>
+    <string name="room_roster_view_files">By file</string>
     <string name="room_rail_more">More</string>
     <string name="room_seek_toposition_hint">Type a time, for example 1:23:45 or 12:30.</string>
     <string name="room_audio_track_selected">Audio: %1$s</string>
@@ -635,9 +638,9 @@
     <string name="room_route_share">From a network share</string>
     <string name="room_route_share_note">SMB, cloud and other providers</string>
     <string name="room_route_playlist">Import a playlist</string>
-    <string name="room_route_playlist_note">m3u and txt</string>
-    <string name="room_link_sites_full">YouTube, SoundCloud, PeerTube, Bandcamp and media.ccc.de, resolved on this device. Direct links play as they are.</string>
-    <string name="room_link_sites_youtube">YouTube, resolved on this device. Direct links play as they are.</string>
+    <string name="room_route_playlist_note">m3u or txt, into the shared playlist</string>
+    <string name="room_link_sites_full">YouTube, SoundCloud and more, or a direct link</string>
+    <string name="room_link_sites_youtube">YouTube, or a direct link</string>
     <string name="room_link_direct">A direct media link. It will play as it is.</string>
     <string name="room_link_resolving">Looking it up</string>
     <string name="room_link_failed">Could not resolve this link. You can still try it as it is.</string>

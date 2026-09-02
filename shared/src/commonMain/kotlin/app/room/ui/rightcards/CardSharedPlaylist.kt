@@ -1,9 +1,23 @@
 package app.room.ui.rightcards
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,10 +33,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Shuffle
-import app.uicomponents.controls.Icon
-import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,13 +41,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
+import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
@@ -45,13 +62,19 @@ import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.AddGlyph
 import app.uicomponents.controls.Field
+import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.MoreGlyph
 import app.uicomponents.controls.PlayGlyph
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.RowLabel
+import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.Text
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.pressFeedback
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.uicomponents.frames.PanelFrame
@@ -65,9 +88,9 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
+import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -76,6 +99,7 @@ import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.delete
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.play
+import syncplaymobile.shared.generated.resources.room_link_paste
 import syncplaymobile.shared.generated.resources.room_shared_playlist
 import syncplaymobile.shared.generated.resources.room_shared_playlist_add
 import syncplaymobile.shared.generated.resources.room_shared_playlist_add_url
@@ -94,15 +118,17 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_empty
 import syncplaymobile.shared.generated.resources.room_shared_playlist_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
 import syncplaymobile.shared.generated.resources.room_shared_playlist_urls
-import syncplaymobile.shared.generated.resources.room_link_paste
-import kotlin.time.Clock
+
+/** Which header key is unfolded, if any. */
+private enum class PlaylistGroup { Add, Shuffle, More }
 
 object CardSharedPlaylist {
 
     /**
      * The shared playlist panel: rows with a play mark on the current entry, and three glyphs in
-     * the header (add, shuffle, more) that open short action lists. Every picker launches only
-     * after its list has dismissed, the iOS rule.
+     * the header (add, shuffle, more). A tap on one unfolds its options in a strip under the
+     * header, part of the chrome, and a second tap or a choice folds it back. Pickers launch
+     * straight from the strip: the panel stays composed, so their results always land.
      */
     @Composable
     fun SharedPlaylistCard(shape: Shape = Radius.panelShape) {
@@ -131,22 +157,13 @@ object CardSharedPlaylist {
 
         val mediaDirsOpen = remember { mutableStateOf(false) }
         var urlsOpen by remember { mutableStateOf(false) }
-        var addOpen by remember { mutableStateOf(false) }
-        var shuffleOpen by remember { mutableStateOf(false) }
-        var moreOpen by remember { mutableStateOf(false) }
+        var group by remember { mutableStateOf<PlaylistGroup?>(null) }
         var itemActions by remember { mutableStateOf<Int?>(null) }
-        var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
-        // Cleared after it ran: clearing first restarted this effect and cancelled the launch.
-        LaunchedEffect(addOpen, moreOpen, pending) {
-            val action = pending ?: return@LaunchedEffect
-            if (addOpen || moreOpen) return@LaunchedEffect
-            delay(50)
-            action()
-            pending = null
-        }
 
         val items = viewmodel.session.sharedPlaylist
         val current by remember { viewmodel.session.spIndex }
+
+        fun toggle(g: PlaylistGroup) { Feedback.tick(); group = if (group == g) null else g }
 
         PanelFrame(
             title = stringResource(Res.string.room_shared_playlist),
@@ -154,11 +171,54 @@ object CardSharedPlaylist {
             shape = shape,
             scrollable = false,
             actions = {
-                GlyphButton(AddGlyph, name = stringResource(Res.string.room_shared_playlist_add), target = Space.row) { addOpen = true }
-                GlyphButton(Icons.Filled.Shuffle, name = stringResource(Res.string.room_shared_playlist_button_shuffle), target = Space.row) { shuffleOpen = true }
-                GlyphButton(MoreGlyph, name = stringResource(Res.string.room_shared_playlist_more), target = Space.row) { moreOpen = true }
+                HeaderKey(AddGlyph, stringResource(Res.string.room_shared_playlist_add), group == PlaylistGroup.Add) { toggle(PlaylistGroup.Add) }
+                HeaderKey(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle), group == PlaylistGroup.Shuffle) { toggle(PlaylistGroup.Shuffle) }
+                HeaderKey(MoreGlyph, stringResource(Res.string.room_shared_playlist_more), group == PlaylistGroup.More) { toggle(PlaylistGroup.More) }
             },
         ) {
+            // The strip: the header grown by one row, on the accent's faint ground.
+            AnimatedVisibility(group != null, enter = expandVertically(Motion.move()) + fadeIn(Motion.quick()), exit = shrinkVertically(Motion.move()) + fadeOut(Motion.quick())) {
+                Column(Modifier.fillMaxWidth().background(p.accent.copy(alpha = 0.06f))) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
+                        horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+                        verticalArrangement = Arrangement.spacedBy(Space.gapTight),
+                    ) {
+                        when (group) {
+                            PlaylistGroup.Add -> {
+                                Chip(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_shared_playlist_button_add_file)) { group = null; mediaFilePicker.launch() }
+                                Chip(Icons.Filled.CreateNewFolder, stringResource(Res.string.room_shared_playlist_button_add_folder)) { group = null; mediaDirectoryPicker.launch() }
+                                Chip(Icons.Filled.AddLink, stringResource(Res.string.room_shared_playlist_button_add_url)) { group = null; urlsOpen = true }
+                            }
+                            PlaylistGroup.Shuffle -> {
+                                Chip(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle)) { group = null; scope.launch { playlist.shuffle(false) } }
+                                Chip(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle_rest)) { group = null; scope.launch { playlist.shuffle(true) } }
+                            }
+                            PlaylistGroup.More -> {
+                                Chip(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import)) { group = null; playlistLoadPicker.launch() }
+                                Chip(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)) {
+                                    // The flag is read by the picker's callback, so it is set before the launch.
+                                    group = null
+                                    shouldShuffle = true
+                                    playlistLoadPicker.launch()
+                                }
+                                Chip(Icons.Filled.Save, stringResource(Res.string.room_shared_playlist_button_playlist_export)) {
+                                    group = null
+                                    if (items.isEmpty()) {
+                                        viewmodel.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
+                                    } else {
+                                        playlistSaver.launch(suggestedName = "SharedPlaylist_${Clock.System.now()}", extension = "txt")
+                                    }
+                                }
+                                Chip(Icons.Filled.Folder, stringResource(Res.string.room_shared_playlist_button_set_media_directories)) { group = null; mediaDirsOpen.value = true }
+                                Chip(Icons.Filled.ClearAll, stringResource(Res.string.room_shared_playlist_clear_playlist)) { group = null; playlist.clearPlaylist() }
+                            }
+                            null -> Unit
+                        }
+                    }
+                    Rule()
+                }
+            }
             if (items.isEmpty()) {
                 Text(
                     text = stringResource(Res.string.room_shared_playlist_empty),
@@ -190,40 +250,38 @@ object CardSharedPlaylist {
             }
         }
 
-        Modal(open = addOpen, onDismiss = { addOpen = false }, title = stringResource(Res.string.room_shared_playlist_add), size = ModalSize.Ask, inset = false) {
-            ActionRow(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_shared_playlist_button_add_file)) { pending = { mediaFilePicker.launch() }; addOpen = false }
-            ActionRow(Icons.Filled.CreateNewFolder, stringResource(Res.string.room_shared_playlist_button_add_folder)) { pending = { mediaDirectoryPicker.launch() }; addOpen = false }
-            ActionRow(Icons.Filled.AddLink, stringResource(Res.string.room_shared_playlist_button_add_url)) { addOpen = false; urlsOpen = true }
-        }
-
-        Modal(open = shuffleOpen, onDismiss = { shuffleOpen = false }, title = stringResource(Res.string.room_shared_playlist_button_shuffle), size = ModalSize.Ask, inset = false) {
-            ActionRow(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle)) { shuffleOpen = false; scope.launch { playlist.shuffle(false) } }
-            ActionRow(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle_rest)) { shuffleOpen = false; scope.launch { playlist.shuffle(true) } }
-        }
-
-        Modal(open = moreOpen, onDismiss = { moreOpen = false }, title = stringResource(Res.string.room_shared_playlist_more), size = ModalSize.Ask, inset = false) {
-            ActionRow(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import)) { pending = { playlistLoadPicker.launch() }; moreOpen = false }
-            ActionRow(Icons.Filled.Download, stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)) {
-                // The flag is read by the picker's callback, so it is set before the launch.
-                shouldShuffle = true
-                pending = { playlistLoadPicker.launch() }
-                moreOpen = false
-            }
-            ActionRow(Icons.Filled.Save, stringResource(Res.string.room_shared_playlist_button_playlist_export)) {
-                moreOpen = false
-                if (items.isEmpty()) {
-                    viewmodel.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
-                } else {
-                    val suggestedName = "SharedPlaylist_${Clock.System.now()}"
-                    pending = { playlistSaver.launch(suggestedName = suggestedName, extension = "txt") }
-                }
-            }
-            ActionRow(Icons.Filled.Folder, stringResource(Res.string.room_shared_playlist_button_set_media_directories)) { moreOpen = false; mediaDirsOpen.value = true }
-            ActionRow(Icons.Filled.ClearAll, stringResource(Res.string.room_shared_playlist_clear_playlist)) { moreOpen = false; playlist.clearPlaylist() }
-        }
-
         MediaDirsPopup(mediaDirsOpen)
         AddUrlsModal(open = urlsOpen, onDismiss = { urlsOpen = false })
+    }
+
+    /** A header glyph that shows which strip is open: accent when unfolded. */
+    @Composable
+    private fun HeaderKey(icon: ImageVector, name: String, open: Boolean, onClick: () -> Unit) {
+        GlyphButton(icon, name = name, target = Space.row, tint = if (open) palette.accent else palette.ink, onClick = onClick)
+    }
+
+    /** One option in the strip: a 36dp hairline chip with its glyph and word. */
+    @Composable
+    private fun Chip(icon: ImageVector, label: String, onClick: () -> Unit) {
+        val p = palette
+        val source = remember { MutableInteractionSource() }
+        Row(
+            modifier = Modifier
+                .height(Space.rowCompact)
+                .clip(Radius.controlShape)
+                .border(Space.hair, p.rule, Radius.controlShape)
+                .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
+                .hoverable(source)
+                .controlStates(source, Radius.controlShape)
+                .pointerHoverIcon(PointerIcon.Hand)
+                .pressFeedback(source)
+                .padding(horizontal = Space.gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(16.dp))
+            RowGap(Space.gapTight)
+            Text(label, style = Type.value, color = p.ink, maxLines = 1)
+        }
     }
 
     @Composable

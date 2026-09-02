@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextOverflow
 import syncplaymobile.shared.generated.resources.home_shortcut_explain
 import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.controlStates
@@ -534,9 +535,17 @@ private fun FormField(
             focusRequester = focusRequester,
             name = label,
         )
-        when {
-            error != null -> Text(error, style = Type.note, color = p.bad)
-            value.isEmpty() || focused -> Text(help, style = Type.note, color = p.inkDim)
-        }
+        // Always one line here, so focus and errors never move the fields under the finger.
+        Text(
+            text = error ?: help,
+            style = Type.note,
+            color = when {
+                error != null -> p.bad
+                focused || value.isEmpty() -> p.inkDim
+                else -> p.inkFaint
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

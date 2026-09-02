@@ -10,7 +10,7 @@ val defaultTheme: SaveableTheme
 
 /** The flagship theme: the Trinity brand colors (ultraviolet/orchid/coral) seeded into a dark scheme. */
 val TRINITY = SaveableTheme(
-    name = "Trinity",
+    name = "Violet",
     primaryColor = Theming.NeoSP1.toArgb(),
     secondaryColor = Theming.NeoSP2.toArgb(),
     tertiaryColor = Theming.NeoSP3.toArgb(),
@@ -36,7 +36,7 @@ val DAYLIGHT = SaveableTheme(
 
 /** Signature pink AMOLED theme with the Rainbow palette style. */
 val PYNCSLAY = SaveableTheme(
-    name = "PyncSlay",
+    name = "Neon",
     primaryColor = -44800,
     secondaryColor = -13794424,
     tertiaryColor = -2654317,
@@ -86,3 +86,10 @@ val SILVER_LAKE = SaveableTheme(
     style = PaletteStyle.Neutral,
     syncplayGradients = true
 )
+
+/** Builtin themes stored under their old names come back as the current objects. */
+fun SaveableTheme.migrated(): SaveableTheme = when (name) {
+    "Trinity" -> TRINITY
+    "PyncSlay" -> PYNCSLAY
+    else -> this
+}

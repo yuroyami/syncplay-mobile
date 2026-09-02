@@ -914,6 +914,9 @@ object Preferences {
         extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0, unit = "s", zeroMeansOff = true)
     }
 
+    /** How the roster panel is laid out: compact, standard or by file. Never shown as a row. */
+    val USER_INFO_VIEW = Pref("pref_inroom_user_info_view", "standard")
+
     /** ------------ KitePlayer Settings -------------*/
     val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
         title = Res.string.uisetting_kite_compose_renderer_title

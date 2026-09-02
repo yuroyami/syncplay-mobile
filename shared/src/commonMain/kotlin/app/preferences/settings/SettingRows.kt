@@ -72,6 +72,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.no
@@ -121,7 +122,8 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
     val density = LocalSettingsDensity.current
     val showDescriptions by Preferences.SHOW_SETTING_DESCRIPTIONS.watchPref()
     val title = stringResource(cfg.title)
-    val summary = stringResource(cfg.summary, *cfg.summaryFormatArgs)
+    // The config's default summary is a placeholder, not a sentence: treat it as none.
+    val summary = if (cfg.summary == Res.string.okay) "" else stringResource(cfg.summary, *cfg.summaryFormatArgs)
     val expanded = LocalExpandedSettings.current
     val explain = expanded[pref.key] == true
     fun toggleExplain() { expanded[pref.key] = !explain }
@@ -278,6 +280,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
  */
 @Composable
 private fun Explanation(text: String, indent: Dp) {
+    if (text.isBlank()) return
     Text(
         text = text,
         style = Type.note,
@@ -414,7 +417,7 @@ private fun ChoiceModal(
     onPick: (String) -> Unit,
 ) {
     Modal(open = open.value, onDismiss = { open.value = false }, title = title, size = ModalSize.Panel, inset = false) {
-        Text(summary, style = Type.note, color = palette.inkDim, modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight))
+        if (summary.isNotBlank()) Text(summary, style = Type.note, color = palette.inkDim, modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight))
         entries.forEach { (label, v) ->
             ListRow(onClick = { onPick(v); open.value = false }, selected = v == selected) {
                 RowLabel(label)
@@ -444,7 +447,7 @@ private fun TextModal(
             AccentAction(stringResource(Res.string.save), onClick = { onSave(draft); open.value = false })
         },
     ) {
-        Text(summary, style = Type.note, color = palette.inkDim)
+        if (summary.isNotBlank()) Text(summary, style = Type.note, color = palette.inkDim)
         Spacer(Modifier.height(Space.gap))
         Field(
             value = draft,
@@ -500,8 +503,10 @@ private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) ->
             onColor(c)
         }
     }
-    Text(summary, style = Type.note, color = palette.inkDim)
-    Spacer(Modifier.height(Space.gap))
+    if (summary.isNotBlank()) {
+        Text(summary, style = Type.note, color = palette.inkDim)
+        Spacer(Modifier.height(Space.gap))
+    }
     KolorPicker(
         modifier = Modifier.fillMaxWidth().height(260.dp),
         initialColor = initial,

@@ -211,6 +211,15 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   panel (CardAddMedia) with the link form inline; the play key and the jump keys are
   translucent; the room mark shows at 35 percent; a tool panel closes the control strip and
   the strip closes tool panels; the home form runs top to bottom with 104dp engine cells.
+  Sixth review: a preference without a written summary shows none (the config default was a
+  placeholder that read "OK"); the home fields keep their help line always, so focus never
+  moves them; engine cells carry their badge and the "?" under the selected cell morphs into
+  the story card; Trinity is Violet and PyncSlay is Neon (stored copies migrate); before a file
+  loads the add key morphs in place into the routes card, the side panel stays for later;
+  panels swallow taps that land between rows; route notes are one line; the tracks panel fills
+  the dock again with numbered rows; a centred field style centres its text; the readiness word
+  sits on the cell's centre; the playlist's header keys unfold their options in a strip under
+  the header; the roster has compact, standard and by-file views behind a persisted choice.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

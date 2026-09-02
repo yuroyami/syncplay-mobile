@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.width
@@ -83,6 +84,7 @@ fun RoomReadyButton() {
             .border(Space.hair, if (ready) p.ok else p.rule, Radius.controlShape)
             .controlStates(source, Radius.controlShape)
             .padding(horizontal = Space.gap),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(6.dp).background(if (ready) p.ok else p.bad, Radius.tightShape))

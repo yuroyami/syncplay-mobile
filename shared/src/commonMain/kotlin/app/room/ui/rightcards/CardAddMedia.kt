@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalClipboard
 import app.player.resolver.ResolvedMedia
 import app.player.resolver.extractYoutubeId
@@ -97,27 +98,12 @@ object CardAddMedia {
 
     @Composable
     fun AddMediaPanel(shape: Shape) {
-        val viewmodel = LocalRoomViewmodel.current
         val ui = LocalRoomUiState.current
         var linkMode by remember { mutableStateOf(false) }
 
         fun close() {
             linkMode = false
             ui.toggleAddMedia(false)
-        }
-
-        /* The panel stays open while a picker is out and closes on its return. Closing first
-         * would drop the panel from composition and the launcher with it, and the picked file
-         * would come back to nobody. */
-        val videoPicker = rememberFilePickerLauncher(type = videoFileKitType) { file ->
-            close()
-            file ?: return@rememberFilePickerLauncher
-            viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
-        }
-        val playlistPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = playlistExs)) { file ->
-            close()
-            file ?: return@rememberFilePickerLauncher
-            viewmodel.playlistManager.loadPlaylistLocally(file, alsoShuffle = false)
         }
 
         PanelFrame(
@@ -130,14 +116,40 @@ object CardAddMedia {
                 GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close), onClick = ::close)
             },
         ) {
-            if (linkMode) {
-                LinkForm(onCancel = { linkMode = false }, onPlayed = ::close)
-            } else {
+            AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = ::close)
+        }
+    }
+
+    /**
+     * The routes, or the link form when [linkMode] is on. Shared by the side panel and the
+     * morphing key the room shows before a file loads. Whoever hosts it must stay composed
+     * while a picker is out: closing first drops the launcher and the picked file with it.
+     */
+    @Composable
+    fun AddMediaBody(linkMode: Boolean, onLinkMode: (Boolean) -> Unit, onClose: () -> Unit) {
+        val viewmodel = LocalRoomViewmodel.current
+        fun close() = onClose()
+
+        val videoPicker = rememberFilePickerLauncher(type = videoFileKitType) { file ->
+            close()
+            file ?: return@rememberFilePickerLauncher
+            viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
+        }
+        val playlistPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = playlistExs)) { file ->
+            close()
+            file ?: return@rememberFilePickerLauncher
+            viewmodel.playlistManager.loadPlaylistLocally(file, alsoShuffle = false)
+        }
+
+        if (linkMode) {
+            LinkForm(onCancel = { onLinkMode(false) }, onPlayed = ::close)
+        } else {
+            Column {
                 RouteRow(Icons.Filled.FolderOpen, stringResource(Res.string.room_route_device), stringResource(Res.string.room_route_device_note)) {
                     Feedback.tick(); videoPicker.launch()
                 }
                 RouteRow(Icons.Filled.Link, stringResource(Res.string.room_route_link), stringResource(supportedSites())) {
-                    Feedback.tick(); linkMode = true
+                    Feedback.tick(); onLinkMode(true)
                 }
                 if (platform == Platform.Android) {
                     RouteRow(Icons.Filled.Cloud, stringResource(Res.string.room_route_share), stringResource(Res.string.room_route_share_note)) {
@@ -157,7 +169,7 @@ object CardAddMedia {
         }
     }
 
-    /** A 54dp route: glyph, name, one note line. */
+    /** A 54dp route: glyph, name, one note line, never more. */
     @Composable
     private fun RouteRow(icon: ImageVector, label: String, note: String, onClick: () -> Unit) {
         val p = palette
@@ -166,7 +178,7 @@ object CardAddMedia {
             RowGap()
             Column(Modifier.weight(1f).padding(vertical = Space.gapTight)) {
                 Text(label, style = Type.label, color = p.ink, maxLines = 1)
-                Text(note, style = Type.note, color = p.inkDim, maxLines = 2)
+                Text(note, style = Type.note, color = p.inkDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

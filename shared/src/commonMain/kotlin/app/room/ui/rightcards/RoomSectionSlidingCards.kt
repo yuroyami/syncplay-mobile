@@ -72,8 +72,8 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
                 AnimatedVisibility(statePlaylist, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
             }
             AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
-            // Tool panels wrap their content instead of filling the dock.
-            AnimatedVisibility(stateTracks, enter = enter, exit = exit) { CardTracks.TracksPanel(shape) }
+            // The tool panels below wrap their content instead of filling the dock.
+            AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { CardTracks.TracksPanel(shape) }
             AnimatedVisibility(stateGestures, enter = enter, exit = exit) { CardGestures.GesturesPanel(shape) }
             AnimatedVisibility(stateSeekTo, enter = enter, exit = exit) { CardSeekTo.SeekToPanel(shape) }
             AnimatedVisibility(stateAddMedia, enter = enter, exit = exit) { CardAddMedia.AddMediaPanel(shape) }

@@ -11,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
@@ -43,7 +45,8 @@ fun PanelFrame(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
-    Column(modifier.surface(Tier.Panel, shape, rim)) {
+    // A tap that lands between rows stops here instead of reaching the HUD and hiding it.
+    Column(modifier.surface(Tier.Panel, shape, rim).pointerInput(Unit) { detectTapGestures { } }) {
         Row(
             modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = if (centerTitle) Space.gapTight else Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,

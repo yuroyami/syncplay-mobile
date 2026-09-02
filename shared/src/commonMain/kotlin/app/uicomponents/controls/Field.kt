@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -104,11 +105,16 @@ fun Field(
                     Icon(leading, contentDescription = null, tint = if (focused) p.accent else p.inkDim, modifier = Modifier.size(Space.glyph))
                     Spacer(Modifier.width(Space.gap))
                 }
-                Box(Modifier.weight(1f).padding(vertical = Space.gapTight), contentAlignment = Alignment.CenterStart) {
+                val centred = textStyle.textAlign == TextAlign.Center
+                Box(
+                    modifier = Modifier.weight(1f).padding(vertical = Space.gapTight),
+                    contentAlignment = if (centred) Alignment.Center else Alignment.CenterStart,
+                ) {
                     if (value.isEmpty() && placeholder != null) {
                         Text(placeholder, style = textStyle, color = p.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    inner()
+                    // The editor gets the full width, so a centred style has something to centre in.
+                    Box(Modifier.fillMaxWidth()) { inner() }
                 }
                 if (showClear && value.isNotEmpty() && enabled && !readOnly) {
                     GlyphButton(

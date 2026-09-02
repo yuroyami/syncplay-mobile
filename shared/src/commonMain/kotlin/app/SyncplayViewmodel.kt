@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.home.HomeViewmodel
 import app.preferences.Preferences.CURRENT_THEME
+import app.theme.migrated
 import app.preferences.Preferences.CUSTOM_THEMES
 import app.preferences.Preferences.USER_ID
 import app.preferences.flow
@@ -71,7 +72,7 @@ class SyncplayViewmodel : ViewModel() {
      */
     val currentTheme: StateFlow<SaveableTheme> = CURRENT_THEME.flow()
         .flowOn(Dispatchers.IO)
-        .map { it.toTheme() }
+        .map { it.toTheme().migrated() }
         .stateIn(scope = viewModelScope, started = Eagerly, defaultTheme)
 
     val customThemes = CUSTOM_THEMES.flow()
