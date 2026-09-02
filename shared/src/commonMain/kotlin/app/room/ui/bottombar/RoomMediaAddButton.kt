@@ -5,16 +5,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import kotlin.math.roundToInt
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.draw.alpha
+import androidx.compose.animation.core.animateFloatAsState
 import app.theme.LocalPalette
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
 import syncplaymobile.shared.generated.resources.room_route_link
 import syncplaymobile.shared.generated.resources.action_close
 import syncplaymobile.shared.generated.resources.action_back
@@ -72,10 +74,13 @@ fun RoomMediaAddButton() {
     // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.
     val initialFocus = LocalRoomInitialFocus.current
     val expanded = !hasVideo && open
-    /* One block that is the key and the card: the brand gradient stays on it at full strength,
-     * its size animates between the two from the key's corner, and the contents crossfade
-     * inside it, so the violet key becomes a violet card. Its rows take dark ink, the way the
-     * key's label does. */
+    /* One block that is the key and the card. A single progress value drives its width, its
+     * height and both contents' alpha from the same frame: both contents are measured up front,
+     * so the block knows its target size at once and grows out of the key's corner in one
+     * straight tween, the key's label fading as the card's rows come in. The brand gradient
+     * stays on it at full strength; the rows take dark ink, the way the key's label does. */
+    // A plain standard curve: the emphasized decelerate the rest of the app uses reads as a spring on a block this size.
+    val t by animateFloatAsState(if (expanded) 1f else 0f, tween(Motion.moveMs, easing = FastOutSlowInEasing), label = "addMorph")
     val onBrand = p.copy(
         ink = p.ground,
         inkDim = p.ground.copy(alpha = 0.72f),
@@ -83,59 +88,72 @@ fun RoomMediaAddButton() {
         rule = p.ground.copy(alpha = 0.25f),
         accent = p.ground,
     )
-    Box(
+    Layout(
         modifier = Modifier
             .padding(Space.gapTight)
             .clip(Radius.panelShape)
-            .background(Brush.horizontalGradient(p.brandField))
-            .animateContentSize(Motion.move()),
-        contentAlignment = Alignment.BottomEnd,
-    ) {
-    AnimatedContent(
-        targetState = expanded,
-        transitionSpec = { fadeIn(Motion.move()) togetherWith fadeOut(Motion.quick()) },
-        contentAlignment = Alignment.BottomEnd,
-        label = "addKey",
-    ) { showCard ->
-        if (showCard) {
-            CompositionLocalProvider(LocalPalette provides onBrand) {
-                Column(Modifier.width(MorphWidth)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (linkMode) GlyphButton(BackGlyph, name = stringResource(Res.string.action_back)) { linkMode = false }
-                        else Spacer(Modifier.width(Space.touchMin))
-                        Text(
-                            text = stringResource(if (linkMode) Res.string.room_route_link else Res.string.room_button_desc_add),
-                            style = Type.label,
-                            color = onBrand.ink,
-                            maxLines = 1,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f),
-                        )
-                        GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { open = false; linkMode = false }
-                    }
-                    Rule()
-                    CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { open = false; linkMode = false })
+            .background(Brush.horizontalGradient(p.brandField)),
+        content = {
+            // The key stays composed until the card is fully in, and the card until the key is.
+            if (t < 1f || !expanded) {
+                Box(Modifier.layoutId("key").alpha(1f - t)) {
+                    AddVideoButton(
+                        modifier = Modifier.then(if (!hasVideo && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
+                        expanded = !hasVideo,
+                        onClick = {
+                            if (hasVideo) {
+                                ui.toggleAddMedia()
+                            } else {
+                                // The card needs the room's right side to itself.
+                                ui.closeSidePanels()
+                                open = true
+                            }
+                        },
+                    )
                 }
             }
-        } else {
-            AddVideoButton(
-                modifier = Modifier.then(if (!hasVideo && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
-                expanded = !hasVideo,
-                onClick = {
-                    if (hasVideo) {
-                        ui.toggleAddMedia()
-                    } else {
-                        // The card needs the room's right side to itself.
-                        ui.closeSidePanels()
-                        open = true
+            if (t > 0f || expanded) {
+                Box(Modifier.layoutId("card").alpha(t).width(MorphWidth)) {
+                    CompositionLocalProvider(LocalPalette provides onBrand) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (linkMode) GlyphButton(BackGlyph, name = stringResource(Res.string.action_back)) { linkMode = false }
+                                else Spacer(Modifier.width(Space.touchMin))
+                                Text(
+                                    text = stringResource(if (linkMode) Res.string.room_route_link else Res.string.room_button_desc_add),
+                                    style = Type.label,
+                                    color = onBrand.ink,
+                                    maxLines = 1,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close)) { open = false; linkMode = false }
+                            }
+                            Rule()
+                            CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { open = false; linkMode = false })
+                        }
                     }
-                },
-            )
+                }
+            }
+        },
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val key = measurables.firstOrNull { it.layoutId == "key" }?.measure(loose)
+        val card = measurables.firstOrNull { it.layoutId == "card" }?.measure(loose)
+        val fromW = key?.width ?: card!!.width
+        val fromH = key?.height ?: card!!.height
+        val toW = card?.width ?: fromW
+        val toH = card?.height ?: fromH
+        val w = (fromW + (toW - fromW) * t).roundToInt()
+        val h = (fromH + (toH - fromH) * t).roundToInt()
+        layout(w, h) {
+            // Both sit on the block's bottom-end corner, the corner the key lives in.
+            key?.placeRelative(w - key.width, h - key.height)
+            card?.placeRelative(w - card.width, h - card.height)
         }
-    }
     }
 }
 
