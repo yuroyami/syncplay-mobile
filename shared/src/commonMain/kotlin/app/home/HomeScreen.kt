@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
@@ -57,8 +56,8 @@ import app.theme.Space
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.Field
-import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.PrimaryAction
+import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Segmented
 import app.uicomponents.controls.HelpTip
 import app.server.ui.ServerHostPanel
@@ -359,23 +358,31 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         }.sanitised()
 
                         val shortcutSaved = stringResource(Res.string.home_shortcut_saved, room)
-                        PrimaryAction(
-                            text = stringResource(Res.string.connect_button_join),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = Space.gap),
-                            onClick = {
-                                error = validate()
-                                if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
-                            },
-                            trailing = {
-                                GlyphButton(Icons.Filled.Widgets, name = stringResource(Res.string.connect_button_saveshortcut), tint = p.ground) {
+                        Column(Modifier.padding(vertical = Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                            // The shortcut saver is its own key, a third of the width, over the join key's end.
+                            Row(Modifier.fillMaxWidth()) {
+                                Spacer(Modifier.weight(2f))
+                                SecondaryAction(
+                                    text = stringResource(Res.string.connect_button_saveshortcut),
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        error = validate()
+                                        if (error == null) {
+                                            with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
+                                            viewmodel.snackItAsync(shortcutSaved)
+                                        }
+                                    },
+                                )
+                            }
+                            PrimaryAction(
+                                text = stringResource(Res.string.connect_button_join),
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
                                     error = validate()
-                                    if (error == null) {
-                                        with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
-                                        viewmodel.snackItAsync(shortcutSaved)
-                                    }
-                                }
-                            },
-                        )
+                                    if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
+                                },
+                            )
+                        }
                     }
                 }
             }
