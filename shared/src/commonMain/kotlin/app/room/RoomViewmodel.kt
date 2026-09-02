@@ -1,5 +1,6 @@
 package app.room
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -94,7 +95,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
      * Used for tracking and potentially reverting seek operations.
      */
-    val seeks = mutableListOf<Pair<Long, Long>>()
+    val seeks = mutableStateListOf<Pair<Long, Long>>()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

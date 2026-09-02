@@ -43,6 +43,10 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val tabCardUserInfo = MutableStateFlow(false)
     val tabCardSharedPlaylist = MutableStateFlow(false)
     val tabCardRoomPreferences = MutableStateFlow(false)
+    val tabCardTracks = MutableStateFlow(false)
+
+    /** The rail's room actions, folded behind More until the first tap, for this room session. */
+    val railActionsExpanded = MutableStateFlow(false)
     val tabLock = MutableStateFlow(false)
 
     val controlPanel = MutableStateFlow(false)
@@ -62,6 +66,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         if (tabCardUserInfo.value) {
             tabCardSharedPlaylist.value = false
             tabCardRoomPreferences.value = false
+            tabCardTracks.value = false
         }
     }
 
@@ -70,6 +75,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         if (tabCardSharedPlaylist.value) {
             tabCardUserInfo.value = false
             tabCardRoomPreferences.value = false
+            tabCardTracks.value = false
         }
     }
 
@@ -78,6 +84,16 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         if (tabCardRoomPreferences.value) {
             tabCardUserInfo.value = false
             tabCardSharedPlaylist.value = false
+            tabCardTracks.value = false
+        }
+    }
+
+    fun toggleTracks(forcedState: Boolean? = null) {
+        tabCardTracks.value = forcedState ?: !tabCardTracks.value
+        if (tabCardTracks.value) {
+            tabCardUserInfo.value = false
+            tabCardSharedPlaylist.value = false
+            tabCardRoomPreferences.value = false
         }
     }
 
@@ -131,5 +147,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         visibleHUD.value = true
         gifPanelVisible.value = false
         scrubbing.value = false
+        tabCardTracks.value = false
+        railActionsExpanded.value = false
     }
 }

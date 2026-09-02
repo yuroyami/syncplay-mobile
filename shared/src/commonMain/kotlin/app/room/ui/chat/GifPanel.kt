@@ -26,6 +26,25 @@ import androidx.compose.material.icons.filled.HeartBroken
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import app.uicomponents.controls.pressFeedback
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.Segmented
+import app.uicomponents.controls.Feedback
+import app.theme.Motion
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,8 +78,6 @@ import app.uicomponents.controls.RowLabel
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.SendGlyph
-import app.uicomponents.controls.Tag
-import app.uicomponents.controls.VerticalRule
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.uicomponents.surface
@@ -89,7 +106,45 @@ import syncplaymobile.shared.generated.resources.room_gif_tab_trending
 private enum class GifSource { TRENDING, RECENTS, FAVORITES }
 
 /**
- * The GIF drawer: two tag groups (type and source), a square tile grid with 4dp gaps, and a
+ * The type switch: a 14 x 30dp track with a knob that sits up for GIFs and down for stickers,
+ * the two words beside it. One tap flips it, so it needs no more width than the words.
+ */
+@Composable
+private fun TypeSwitch(gifs: Boolean, onChange: (gifs: Boolean) -> Unit) {
+    val p = palette
+    val source = remember { MutableInteractionSource() }
+    val trackHeight = 30.dp
+    val knob = 10.dp
+    val knobY by animateDpAsState(if (gifs) 2.dp else trackHeight - knob - 2.dp, Motion.move(), label = "knob")
+    val gifLabel = stringResource(Res.string.room_gif_tab_gifs)
+    val stickerLabel = stringResource(Res.string.room_gif_tab_stickers)
+
+    Row(
+        modifier = Modifier
+            .height(Space.rowCompact)
+            .clip(Radius.controlShape)
+            .clickable(interactionSource = source, indication = null, role = Role.Switch) { Feedback.tick(); onChange(!gifs) }
+            .hoverable(source)
+            .semantics { contentDescription = if (gifs) gifLabel else stickerLabel }
+            .controlStates(source, Radius.controlShape)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .pressFeedback(source)
+            .padding(horizontal = Space.gapTight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(14.dp, trackHeight).border(Space.hair, p.rule, Radius.tightShape)) {
+            Box(Modifier.offset(y = knobY).padding(start = 2.dp).size(knob).background(p.accent, Radius.tightShape))
+        }
+        RowGap(Space.gapTight)
+        Column(Modifier.height(trackHeight), verticalArrangement = Arrangement.SpaceBetween) {
+            Text(gifLabel, style = Type.group, color = if (gifs) p.accent else p.inkDim, maxLines = 1)
+            Text(stickerLabel, style = Type.group, color = if (gifs) p.inkDim else p.accent, maxLines = 1)
+        }
+    }
+}
+
+/**
+ * The GIF drawer: the type switch and the source row, a square tile grid with 4dp gaps, and a
  * failure state that is not an empty one. The composer text is the query, debounced 400 ms on
  * typing only. Selecting sends at once and closes; a long press offers send or favourite.
  */
@@ -174,27 +229,35 @@ fun GifPanel(
     }
 
     Column(modifier.surface(Tier.Panel, Radius.panelShape)) {
+        val sources = listOf(GifSource.TRENDING, GifSource.RECENTS, GifSource.FAVORITES)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-            horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+            horizontalArrangement = Arrangement.spacedBy(Space.gap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Tag(stringResource(Res.string.room_gif_tab_gifs), filled = selectedType == KlipyMediaType.GIF, onToggle = { selectedType = KlipyMediaType.GIF })
-            Tag(stringResource(Res.string.room_gif_tab_stickers), filled = selectedType == KlipyMediaType.STICKER, onToggle = { selectedType = KlipyMediaType.STICKER })
-            VerticalRule(Modifier.height(16.dp))
-            Tag(stringResource(Res.string.room_gif_tab_trending), filled = selectedSource == GifSource.TRENDING, onToggle = { selectedSource = GifSource.TRENDING })
-            Tag(stringResource(Res.string.room_gif_tab_recents), filled = selectedSource == GifSource.RECENTS, onToggle = { selectedSource = GifSource.RECENTS })
-            Tag(stringResource(Res.string.room_gif_tab_favorites), filled = selectedSource == GifSource.FAVORITES, onToggle = { selectedSource = GifSource.FAVORITES })
-            Spacer(Modifier.weight(1f))
-            Image(
-                imageVector = vectorResource(Res.drawable.powered_by_klipy),
-                contentDescription = "Powered by Klipy",
-                modifier = Modifier.height(14.dp).aspectRatio(640 / 107f),
+            TypeSwitch(gifs = selectedType == KlipyMediaType.GIF) { gifs ->
+                selectedType = if (gifs) KlipyMediaType.GIF else KlipyMediaType.STICKER
+            }
+            Segmented(
+                options = listOf(
+                    stringResource(Res.string.room_gif_tab_trending),
+                    stringResource(Res.string.room_gif_tab_recents),
+                    stringResource(Res.string.room_gif_tab_favorites),
+                ),
+                selected = sources.indexOf(selectedSource),
+                onSelect = { selectedSource = sources[it] },
+                modifier = Modifier.weight(1f),
             )
         }
         Rule()
 
         Box(Modifier.fillMaxSize()) {
+            // The attribution stays, small and out of the way, in the grid's bottom end corner.
+            Image(
+                imageVector = vectorResource(Res.drawable.powered_by_klipy),
+                contentDescription = "Powered by Klipy",
+                modifier = Modifier.align(Alignment.BottomEnd).zIndex(1f).padding(Space.gapTight).height(10.dp).aspectRatio(640 / 107f).alpha(0.7f),
+            )
             when {
                 isLoading -> ProgressBar(null, Modifier.fillMaxWidth().align(Alignment.TopCenter))
                 failed -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {

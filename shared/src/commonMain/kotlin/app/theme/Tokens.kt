@@ -63,7 +63,7 @@ object Radius {
 object Motion {
     const val quickMs = 120
     const val moveMs = 220
-    const val hudIdleMs = 3200L
+    const val hudIdleMs = 5500L
 
     val easing: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 

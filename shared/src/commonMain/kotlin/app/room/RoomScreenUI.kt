@@ -46,7 +46,7 @@ import app.room.ui.chat.FadingMessageLayout
 import app.room.ui.chat.RoomChatSection
 import app.room.ui.misc.RoomBackgroundArtwork
 import app.room.ui.misc.RoomGestureInterceptor
-import app.room.ui.misc.RoomPlayButton
+import app.room.ui.misc.RoomTransportKeys
 import app.room.ui.rightcards.RoomSidePanels
 import app.room.ui.statinfo.RoomStatusInfoSection
 import app.room.ui.tabs.ManagedRoomModal
@@ -133,7 +133,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             if (!isInPipMode) {
                 // Notices sit above the HUD and outside its alpha: they show while it is hidden.
                 // Notices sit under the status line, in the strip between the chat and the rail.
-                val chatWidth = if (tall) 0.dp else with(LocalDensity.current) { (window.width * 0.44f).toDp() }
+                val chatWidth = if (tall) 0.dp else with(LocalDensity.current) { (window.width * 0.36f).toDp() }
                 NoticeHost(
                     queue = viewmodel.notices,
                     modifier = Modifier.align(Alignment.TopCenter)
@@ -245,7 +245,7 @@ private fun RoomHud(
             chat = if (soloMode) null else ({ RoomChatSection(modifier = Modifier.fillMaxSize()) }),
             side = { RoomSidePanels(Modifier.fillMaxSize(), tall = tall) },
             bottom = { RoomBottomBarSection(modifier = Modifier.fillMaxWidth()) },
-            center = { RoomPlayButton(modifier = Modifier) },
+            center = { RoomTransportKeys() },
         )
     }
 
@@ -266,11 +266,12 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     val userInfo by ui.tabCardUserInfo.collectAsState()
     val playlist by ui.tabCardSharedPlaylist.collectAsState()
     val prefs by ui.tabCardRoomPreferences.collectAsState()
+    val tracks by ui.tabCardTracks.collectAsState()
     val controls by ui.controlPanel.collectAsState()
     val gifs by ui.gifPanelVisible.collectAsState()
     val scrubbing by ui.scrubbing.collectAsState()
     val draft by ui.msg.collectAsState()
-    val held = userInfo || playlist || prefs || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
+    val held = userInfo || playlist || prefs || tracks || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
 
     LaunchedEffect(autoHide, hudVisible, hasVideo, held, activity) {
         if (!autoHide || !hudVisible || !hasVideo || held) return@LaunchedEffect

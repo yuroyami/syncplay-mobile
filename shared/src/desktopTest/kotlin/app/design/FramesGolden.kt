@@ -13,6 +13,7 @@ import app.theme.Space
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.AccentAction
+import app.uicomponents.controls.DestructiveAction
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowLabel
@@ -78,7 +79,7 @@ class FramesGolden {
     fun modalFrames() {
         DesignHarness.render("modal-ask", 360, heightDp = 400) {
             ModalFrame(ModalSize.Ask, "Leave the room?", true, {}, actions = {
-                SecondaryAction("Stay", onClick = {}); AccentAction("Leave", onClick = {})
+                SecondaryAction("Stay", onClick = {}); DestructiveAction("Leave", onClick = {})
             }) { Text("Playback keeps going for everyone else.", style = Type.note, color = palette.inkDim) }
         }
         DesignHarness.render("modal-panel", 720, heightDp = 480) {

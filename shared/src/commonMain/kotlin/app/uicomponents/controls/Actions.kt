@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.draw.clip
@@ -115,6 +118,8 @@ fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modi
 fun DestructiveAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
     val source = remember { MutableInteractionSource() }
+    val stub = if (enabled) p.bad else p.disabled
+    // No weighted child here: a weight would stretch this row across the whole action bar.
     Row(
         modifier = modifier
             .height(Space.row)
@@ -123,12 +128,13 @@ fun DestructiveAction(text: String, onClick: () -> Unit, modifier: Modifier = Mo
             .hoverable(source, enabled)
             .controlStates(source, Radius.controlShape, enabled = enabled)
             .pointerHoverIcon(PointerIcon.Hand)
-            .pressFeedback(source, enabled),
+            .pressFeedback(source, enabled)
+            .drawBehind { drawRect(stub, size = Size(2.dp.toPx(), size.height)) },
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(2.dp).height(Space.row).background(if (enabled) p.bad else p.disabled))
-        Box(Modifier.weight(1f).padding(horizontal = Space.gutter), contentAlignment = Alignment.CenterStart) {
-            Text(text, style = Type.label, color = if (enabled) p.bad else p.disabled, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Box(Modifier.padding(start = Space.gutter + 2.dp, end = Space.gutter), contentAlignment = Alignment.Center) {
+            Text(text, style = Type.label, color = stub, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

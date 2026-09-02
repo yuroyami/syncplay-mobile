@@ -143,8 +143,8 @@ internal class KiteImpl(
     override val supportsPictureInPicture: Boolean
         get() = KitePlayerPlatform.supportsPictureInPicture
 
-    /** Fit, Fill and Stretch since 0.0.5, cycled in [switchAspectRatio]. */
-    override val canChangeAspectRatio: Boolean = true
+    /** [switchAspectRatio] cycles Fit, Fill and Stretch, but the picture does not follow yet. */
+    override val canChangeAspectRatio: Boolean = false
 
     @UiThread
     override fun initialize() {

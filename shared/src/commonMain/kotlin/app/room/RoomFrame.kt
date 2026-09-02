@@ -36,7 +36,7 @@ fun roomTopInsets(): WindowInsets =
 /**
  * The docks of the room, each padded for the notch and the gesture bars exactly once. The rail
  * at the top end, vertical when the window is tall enough and a row when it is not; the status
- * line beside it. Chat owns the start corner from the top down. Side: panels and the control
+ * line on the top centre. Chat owns the start corner from the top down. Side: panels and the control
  * strip beside the rail, under it when the rail is a row, or a full-width sheet on a tall
  * window. Bottom: the transport, which pads its own gesture inset. Center: the play key. The
  * video underneath and the notices above are not this frame's business.
@@ -71,21 +71,21 @@ fun RoomFrame(
                     .onSizeChanged { railWidth = with(density) { it.width.toDp() } },
             ) { rail() }
         }
-        // The status line sits beside the rail, so the start corner belongs to the chat alone.
+        // The status line sits on the exact centre, under the rail row on a tall window; the
+        // chat stays narrow enough (36 percent) that the two never meet.
         if (status != null) {
             Box(
-                Modifier.align(Alignment.TopEnd).focusGroup()
+                Modifier.align(Alignment.TopCenter).focusGroup()
                     .windowInsetsPadding(topInsets)
-                    .windowInsetsPadding(sideInsets)
-                    .padding(end = railWidth + Space.gap, top = Space.gapTight)
-                    .then(if (tall) Modifier.fillMaxWidth(0.5f) else Modifier.fillMaxWidth(0.34f)),
-                contentAlignment = Alignment.TopEnd,
+                    .padding(top = if (tall) Space.row + Space.gap else Space.gapTight)
+                    .then(if (tall) Modifier.fillMaxWidth(0.6f) else Modifier.fillMaxWidth(0.26f)),
+                contentAlignment = Alignment.TopCenter,
             ) { status() }
         }
         if (chat != null) {
             Box(
                 Modifier.align(Alignment.TopStart).focusGroup()
-                    .then(if (tall) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.44f))
+                    .then(if (tall) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.36f))
                     .fillMaxHeight()
                     .windowInsetsPadding(topInsets)
                     .padding(top = if (tall) Space.row + Space.gap else Space.gapTight, bottom = transport)

@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import app.LocalGlobalViewmodel
 import app.LocalRoomViewmodel
 
 
@@ -29,8 +28,7 @@ fun RoomBottomBarSection(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     Box(modifier.windowInsetsPadding(WindowInsets.safeGestures)) {
-        val globalVm = LocalGlobalViewmodel.current
-        val stateAddMedia = remember { mutableStateOf(!globalVm.hasEnteredRoomOnce) }
+        val stateAddMedia = remember { mutableStateOf(false) }
 
         Row(
             modifier = Modifier
@@ -49,12 +47,6 @@ fun RoomBottomBarSection(modifier: Modifier) {
             }
 
             RoomMediaAddButton(stateAddMedia)
-        }
-
-        if (hasVideo) {
-            RoomBottomBarVideoControlRow(
-                modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f).padding(bottom = 52.dp)
-            )
         }
     }
 }

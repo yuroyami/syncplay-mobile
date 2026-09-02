@@ -11,7 +11,22 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import app.uicomponents.controls.pressFeedback
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.Icon
+import app.theme.Radius
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,10 +63,7 @@ import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
-import app.utils.ccExs
 import app.utils.timestampFromMillis
-import io.github.vinceglb.filekit.dialogs.FileKitType
-import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -73,8 +85,8 @@ import syncplaymobile.shared.generated.resources.room_undo_seek_message
 import syncplaymobile.shared.generated.resources.room_undo_seek_title
 
 /*
- * The control panel: a row of glyph buttons, each opening one modal. The audio and subtitle
- * list, the subtitle search and the chapter list live in their own files.
+ * The control panel: a row of glyph buttons. The audio and subtitle panel lives in the side dock
+ * (CardTracks); the subtitle search and the chapter list live in their own files.
  */
 
 /** The entry glyph in the transport bar. */
@@ -104,23 +116,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
 
-    val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
-        file?.let { scope.launch(Dispatchers.IO) { viewmodel.player.loadExternalSub(it) } }
-    }
-
-    var showTracks by remember { mutableStateOf(false) }
-    var showSubtitleSearch by remember { mutableStateOf(false) }
     var showGestures by remember { mutableStateOf(false) }
-
-    // iOS FileKit picker race (FileKit #575): launching a picker while a modal is closing fires
-    // the native delegate twice ("Already resumed"). Dismiss first, launch once it has settled.
-    var launchSubtitlePickerAfterDismiss by remember { mutableStateOf(false) }
-    LaunchedEffect(showTracks, launchSubtitlePickerAfterDismiss) {
-        if (!showTracks && launchSubtitlePickerAfterDismiss) {
-            launchSubtitlePickerAfterDismiss = false
-            subtitlePicker.launch()
-        }
-    }
 
     var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
     val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
@@ -136,10 +132,12 @@ fun RoomControlPanelCard(modifier: Modifier) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlyphButton(Icons.Filled.AspectRatio, name = stringResource(Res.string.room_aspect_ratio), size = Space.glyphLarge) {
-            scope.launch(Dispatchers.IO) {
-                val label = viewmodel.player.switchAspectRatio()
-                viewmodel.dispatchOSD { label }
+        if (viewmodel.player.canChangeAspectRatio) {
+            GlyphButton(Icons.Filled.AspectRatio, name = stringResource(Res.string.room_aspect_ratio), size = Space.glyphLarge) {
+                scope.launch(Dispatchers.IO) {
+                    val label = viewmodel.player.switchAspectRatio()
+                    viewmodel.dispatchOSD { label }
+                }
             }
         }
 
@@ -148,9 +146,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
             viewmodel.uiState.popupSeekToPosition.value = true
         }
 
-        /* Only the local user's seeks are undoable (see RoomCallback.onSomeoneSeeked). */
-        GlyphButton(Icons.Filled.History, name = stringResource(Res.string.room_undo_seek), size = Space.glyphLarge) {
-            val last = viewmodel.seeks.lastOrNull()
+        /* Only the local user's seeks are undoable (see RoomCallback.onSomeoneSeeked). The key
+         * carries the position an undo would return to, so there is no guessing before the tap. */
+        val last = viewmodel.seeks.lastOrNull()
+        UndoSeekKey(target = last?.first) {
             when {
                 last == null -> viewmodel.dispatchOSD { getString(Res.string.room_no_recent_seek) }
                 undoNoConfirm -> undo(last)
@@ -166,10 +165,14 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
         GlyphButton(Icons.Filled.Subtitles, name = stringResource(Res.string.room_tracks), size = Space.glyphLarge) {
             Feedback.tick()
+            if (cardController.tabCardTracks.value) {
+                cardController.toggleTracks(false)
+                return@GlyphButton
+            }
             viewmodel.viewModelScope.launch {
-                // The list never opens without media; the engine needs one to list tracks.
+                // The panel never opens without media; the engine needs one to list tracks.
                 viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
-                showTracks = true
+                cardController.toggleTracks(true)
             }
         }
     }
@@ -208,20 +211,33 @@ fun RoomControlPanelCard(modifier: Modifier) {
         }
     }
 
-    TracksModal(
-        open = showTracks,
-        onDismiss = { showTracks = false },
-        onImportSubtitle = {
-            launchSubtitlePickerAfterDismiss = true
-            showTracks = false
-        },
-        onSearchOnline = {
-            showTracks = false
-            showSubtitleSearch = true
-        },
-    )
+}
 
-    SubtitleSearchModal(open = showSubtitleSearch, onDismiss = { showSubtitleSearch = false })
+/** The undo glyph with the timecode an undo would return to beside it, when there is one. */
+@Composable
+private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
+    val p = palette
+    val name = stringResource(Res.string.room_undo_seek)
+    val source = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
+            .height(Space.touchMin)
+            .clip(Radius.controlShape)
+            .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
+            .hoverable(source)
+            .semantics { contentDescription = name }
+            .controlStates(source, Radius.controlShape)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .pressFeedback(source)
+            .padding(horizontal = Space.gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.History, contentDescription = null, tint = p.ink, modifier = Modifier.size(Space.glyphLarge))
+        if (target != null) {
+            RowGap(Space.gapTight)
+            Text(timestampFromMillis(target), style = Type.value, color = p.inkDim, maxLines = 1)
+        }
+    }
 }
 
 @Composable

@@ -177,6 +177,18 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   the rail runs horizontally on windows under 480dp tall instead of folding behind More; the
   status line sits beside the rail so the chat owns its corner; managed rooms are one modal
   with a segmented create-or-identify choice.
+  Third review (after a file was playing): the destructive action no longer carries a weighted
+  child, which used to stretch it across the whole action bar and push the other button to the
+  far left (the golden now renders it); the HUD idles 5.5 s before hiding; the rail's active
+  edge sits along the bottom of a row rail and the room actions start folded behind More,
+  unfolding once per room session; the transport is the play key with the two jump keys under
+  it; readiness is a 36dp cell; the status line sits on the top centre with the chat at 36
+  percent; audio and subtitles are a two-column side panel (CardTracks) instead of a modal, and
+  the picker launches straight from it; the aspect key hides on engines that cannot change it;
+  seek-to is one timecode field with no title so it clears the keyboard; the undo key shows the
+  position it returns to and the confirmation offers "Don't ask again"; the add-media sheet no
+  longer opens by itself; the GIF drawer has an up-down type switch, a segmented source row and
+  a small attribution in the grid corner; the artwork lost its caption.
 - THEMING: the miniature, the picker as a list with a delete that asks and works, the creator
   with a live canvas, token controls and a single-write save. Gradients stay reserved.
 - SERVER_HOST: the address block with copy and share (a new platform callback on all three

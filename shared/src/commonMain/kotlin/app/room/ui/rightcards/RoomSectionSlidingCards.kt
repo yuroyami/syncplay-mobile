@@ -51,6 +51,7 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val stateUserInfo by ui.tabCardUserInfo.collectAsState()
     val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
+    val stateTracks by ui.tabCardTracks.collectAsState()
     val stateControls by ui.controlPanel.collectAsState()
 
     val density = LocalDensity.current
@@ -68,6 +69,7 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
                 AnimatedVisibility(statePlaylist, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
             }
             AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
+            AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { CardTracks.TracksPanel(shape) }
         }
         AnimatedVisibility(stateControls, enter = expandVertically(Motion.move()), exit = shrinkVertically(Motion.move())) {
             Box(
