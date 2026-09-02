@@ -5,6 +5,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.AnimatedContent
 import syncplaymobile.shared.generated.resources.room_route_link
 import syncplaymobile.shared.generated.resources.action_close
 import syncplaymobile.shared.generated.resources.action_back
@@ -12,7 +22,6 @@ import app.uicomponents.controls.Text
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.CloseGlyph
 import app.uicomponents.controls.BackGlyph
-import app.uicomponents.chromeSurface
 import app.theme.palette
 import app.theme.Type
 import app.theme.Radius
@@ -30,7 +39,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
-import androidx.compose.animation.animateContentSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -63,9 +71,26 @@ fun RoomMediaAddButton() {
 
     // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.
     val initialFocus = LocalRoomInitialFocus.current
-    Box(Modifier.padding(Space.gapTight).animateContentSize(Motion.move())) {
-        if (!hasVideo && open) {
-            Column(Modifier.width(MorphWidth).chromeSurface(Radius.panelShape)) {
+    val expanded = !hasVideo && open
+    /* One block that is the key and the card. Its size animates between the two, the contents
+     * crossfade inside it, and the brand gradient it always carries thins to a tint as it grows,
+     * so the violet key becomes the card instead of being swapped for one. */
+    val progress by animateFloatAsState(if (expanded) 1f else 0f, Motion.move(), label = "addMorph")
+    AnimatedContent(
+        targetState = expanded,
+        modifier = Modifier
+            .padding(Space.gapTight)
+            .clip(Radius.panelShape)
+            .background(Color(0xFF0E0E12).copy(alpha = 0.94f * progress))
+            .background(Brush.horizontalGradient(p.brandField.map { it.copy(alpha = 1f - 0.84f * progress) })),
+        transitionSpec = {
+            (fadeIn(Motion.move()) togetherWith fadeOut(Motion.quick()))
+                .using(SizeTransform(clip = true) { _, _ -> Motion.move() })
+        },
+        label = "addKey",
+    ) { showCard ->
+        if (showCard) {
+            Column(Modifier.width(MorphWidth)) {
                 Row(
                     modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
                     verticalAlignment = Alignment.CenterVertically,

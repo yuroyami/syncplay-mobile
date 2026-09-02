@@ -16,6 +16,24 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.ViewCompact
 import androidx.compose.runtime.Composable
+import app.uicomponents.controls.pressFeedback
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.Feedback
+import app.theme.Motion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.clickable
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +59,7 @@ import app.theme.Space
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.RowLabel
@@ -98,11 +117,7 @@ object CardUserInfo {
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             actions = {
-                RosterView.entries.forEach { v ->
-                    GlyphButton(v.icon, name = stringResource(v.label), target = Space.row, tint = if (v == view) p.accent else p.inkDim) {
-                        scope.launch { USER_INFO_VIEW.set(v.key) }
-                    }
-                }
+                ViewToggler(view) { next -> scope.launch { USER_INFO_VIEW.set(next.key) } }
             },
         ) {
             if (users.size <= 1) {
@@ -142,6 +157,38 @@ object CardUserInfo {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /** One key that cycles the views; its glyph scales out and the next one scales in. */
+    @Composable
+    private fun ViewToggler(view: RosterView, onNext: (RosterView) -> Unit) {
+        val p = palette
+        val source = remember { MutableInteractionSource() }
+        val name = stringResource(view.label)
+        val next = RosterView.entries[(view.ordinal + 1) % RosterView.entries.size]
+        Box(
+            modifier = Modifier
+                .size(Space.row)
+                .clip(Radius.controlShape)
+                .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onNext(next) }
+                .hoverable(source)
+                .semantics { contentDescription = name }
+                .controlStates(source, Radius.controlShape)
+                .pointerHoverIcon(PointerIcon.Hand)
+                .pressFeedback(source),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedContent(
+                targetState = view,
+                transitionSpec = {
+                    (scaleIn(Motion.move(), initialScale = 0.6f) + fadeIn(Motion.move()))
+                        .togetherWith(scaleOut(Motion.quick(), targetScale = 0.6f) + fadeOut(Motion.quick()))
+                },
+                label = "rosterView",
+            ) { v ->
+                Icon(v.icon, contentDescription = null, tint = p.accent, modifier = Modifier.size(Space.glyph))
             }
         }
     }

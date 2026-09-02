@@ -12,7 +12,6 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -127,7 +126,7 @@ object CardSharedPlaylist {
     /**
      * The shared playlist panel: rows with a play mark on the current entry, and three glyphs in
      * the header (add, shuffle, more). A tap on one unfolds its options in a strip under the
-     * header, part of the chrome, and a second tap or a choice folds it back. Pickers launch
+     * header as rows, part of the chrome, and a second tap or a choice folds it back. Pickers launch
      * straight from the strip: the panel stays composed, so their results always land.
      */
     @Composable
@@ -179,11 +178,7 @@ object CardSharedPlaylist {
             // The strip: the header grown by one row, on the accent's faint ground.
             AnimatedVisibility(group != null, enter = expandVertically(Motion.move()) + fadeIn(Motion.quick()), exit = shrinkVertically(Motion.move()) + fadeOut(Motion.quick())) {
                 Column(Modifier.fillMaxWidth().background(p.accent.copy(alpha = 0.06f))) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-                        horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
-                        verticalArrangement = Arrangement.spacedBy(Space.gapTight),
-                    ) {
+                    Column(Modifier.fillMaxWidth().padding(vertical = Space.gapTight)) {
                         when (group) {
                             PlaylistGroup.Add -> {
                                 Chip(Icons.AutoMirrored.Filled.NoteAdd, stringResource(Res.string.room_shared_playlist_button_add_file)) { group = null; mediaFilePicker.launch() }
@@ -260,26 +255,13 @@ object CardSharedPlaylist {
         GlyphButton(icon, name = name, target = Space.row, tint = if (open) palette.accent else palette.ink, onClick = onClick)
     }
 
-    /** One option in the strip: a 36dp hairline chip with its glyph and word. */
+    /** One option in the strip: a 36dp row with its glyph and word, like any list row. */
     @Composable
     private fun Chip(icon: ImageVector, label: String, onClick: () -> Unit) {
         val p = palette
-        val source = remember { MutableInteractionSource() }
-        Row(
-            modifier = Modifier
-                .height(Space.rowCompact)
-                .clip(Radius.controlShape)
-                .border(Space.hair, p.rule, Radius.controlShape)
-                .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
-                .hoverable(source)
-                .controlStates(source, Radius.controlShape)
-                .pointerHoverIcon(PointerIcon.Hand)
-                .pressFeedback(source)
-                .padding(horizontal = Space.gap),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(16.dp))
-            RowGap(Space.gapTight)
+        ListRow(onClick = { Feedback.tick(); onClick() }, minHeight = Space.rowCompact) {
+            Icon(icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
+            RowGap()
             Text(label, style = Type.value, color = p.ink, maxLines = 1)
         }
     }
