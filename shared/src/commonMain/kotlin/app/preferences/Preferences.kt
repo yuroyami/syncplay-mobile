@@ -915,7 +915,7 @@ object Preferences {
     }
 
     /** ------------ KitePlayer Settings -------------*/
-    val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", true) {
+    val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
         title = Res.string.uisetting_kite_compose_renderer_title
         summary = Res.string.uisetting_kite_compose_renderer_summary
         icon = Icons.Filled.Layers

@@ -44,6 +44,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.border
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -288,54 +295,71 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     error = null
                                 },
                             )
-                            when (mode) {
-                                ServerMode.Official -> Segmented(
-                                    options = officialPorts,
-                                    selected = officialPorts.indexOf(port).coerceAtLeast(0),
-                                    onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
-                                    height = Space.row,
-                                )
-                                ServerMode.Custom -> {
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
-                                        Field(
-                                            value = address,
-                                            onValueChange = { address = it.trim(); error = null },
-                                            modifier = Modifier.weight(2f),
-                                            placeholder = stringResource(Res.string.home_ip_address),
-                                            leading = Icons.Outlined.Lan,
-                                            keyboardType = KeyboardType.Uri,
-                                            imeAction = ImeAction.Next,
-                                            onImeAction = { portFocus.requestFocus() },
-                                            name = stringResource(Res.string.home_ip_address),
+                            /* The tab's content slides in from the side of the tab it came from
+                             * and fades, and the form's height follows it, so a switch reads as a
+                             * move rather than a swap. */
+                            AnimatedContent(
+                                targetState = mode,
+                                transitionSpec = {
+                                    val forward = targetState.ordinal > initialState.ordinal
+                                    val distance = if (Motion.reduced) 0 else 1
+                                    (fadeIn(Motion.move()) + slideInHorizontally(Motion.move()) { if (forward) it / 6 * distance else -it / 6 * distance })
+                                        .togetherWith(fadeOut(Motion.quick()) + slideOutHorizontally(Motion.quick()) { if (forward) -it / 6 * distance else it / 6 * distance })
+                                        .using(SizeTransform(clip = false) { _, _ -> Motion.move() })
+                                },
+                                label = "serverMode",
+                            ) { m ->
+                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+                                    when (m) {
+                                        ServerMode.Official -> Segmented(
+                                            options = officialPorts,
+                                            selected = officialPorts.indexOf(port).coerceAtLeast(0),
+                                            onSelect = { port = officialPorts[it]; address = OFFICIAL_HOST },
+                                            height = Space.row,
                                         )
-                                        Field(
-                                            value = port,
-                                            onValueChange = { port = it.trim(); error = null },
-                                            modifier = Modifier.weight(1f),
-                                            placeholder = stringResource(Res.string.home_port),
-                                            keyboardType = KeyboardType.Number,
-                                            imeAction = ImeAction.Next,
-                                            onImeAction = { passwordFocus.requestFocus() },
-                                            focusRequester = portFocus,
-                                            name = stringResource(Res.string.home_port),
-                                        )
+                                        ServerMode.Custom -> {
+                                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                                                Field(
+                                                    value = address,
+                                                    onValueChange = { address = it.trim(); error = null },
+                                                    modifier = Modifier.weight(2f),
+                                                    placeholder = stringResource(Res.string.home_ip_address),
+                                                    leading = Icons.Outlined.Lan,
+                                                    keyboardType = KeyboardType.Uri,
+                                                    imeAction = ImeAction.Next,
+                                                    onImeAction = { portFocus.requestFocus() },
+                                                    name = stringResource(Res.string.home_ip_address),
+                                                )
+                                                Field(
+                                                    value = port,
+                                                    onValueChange = { port = it.trim(); error = null },
+                                                    modifier = Modifier.weight(1f),
+                                                    placeholder = stringResource(Res.string.home_port),
+                                                    keyboardType = KeyboardType.Number,
+                                                    imeAction = ImeAction.Next,
+                                                    onImeAction = { passwordFocus.requestFocus() },
+                                                    focusRequester = portFocus,
+                                                    name = stringResource(Res.string.home_port),
+                                                )
+                                            }
+                                            Field(
+                                                value = password,
+                                                onValueChange = { password = it.trim() },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                placeholder = stringResource(Res.string.home_password_if_any),
+                                                imeAction = ImeAction.Done,
+                                                onImeAction = { focusManager.clearFocus(true) },
+                                                focusRequester = passwordFocus,
+                                                name = stringResource(Res.string.home_password_if_any),
+                                            )
+                                            val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
+                                            if (serverError != null) Text(stringResource(serverError), style = Type.note, color = p.bad)
+                                        }
+                                        ServerMode.Host -> {
+                                            Text(stringResource(Res.string.connect_host_join_note, "$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
+                                            ServerHostPanel(Modifier.fillMaxWidth())
+                                        }
                                     }
-                                    Field(
-                                        value = password,
-                                        onValueChange = { password = it.trim() },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        placeholder = stringResource(Res.string.home_password_if_any),
-                                        imeAction = ImeAction.Done,
-                                        onImeAction = { focusManager.clearFocus(true) },
-                                        focusRequester = passwordFocus,
-                                        name = stringResource(Res.string.home_password_if_any),
-                                    )
-                                    val serverError = error?.takeIf { it == Res.string.connect_address_empty_error || it == Res.string.connect_port_empty_error }
-                                    if (serverError != null) Text(stringResource(serverError), style = Type.note, color = p.bad)
-                                }
-                                ServerMode.Host -> {
-                                    Text(stringResource(Res.string.connect_host_join_note, "$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
-                                    ServerHostPanel(Modifier.fillMaxWidth())
                                 }
                             }
                         }
