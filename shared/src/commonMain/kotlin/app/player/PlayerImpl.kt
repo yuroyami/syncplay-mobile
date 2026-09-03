@@ -18,9 +18,12 @@ import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.protocol.WireMessage
 import app.room.toFileData
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.utils.Platform
+import app.utils.ccExs
 import app.utils.getFileName
+import app.utils.loggy
 import app.utils.platform
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.startAccessingSecurityScopedResource
@@ -37,9 +40,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.Volatile
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_msg_problem_loading_file
+import syncplaymobile.shared.generated.resources.room_msg_resolve_failed
 import syncplaymobile.shared.generated.resources.room_msg_resolved_url
 import syncplaymobile.shared.generated.resources.room_msg_resolving_url
 import syncplaymobile.shared.generated.resources.room_selected_sub
@@ -77,10 +82,6 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract val supportsChapters: Boolean
     open val supportsPictureInPicture: Boolean = true
 
-    /** Whether this engine can capture a still video frame via [takeScreenshot]. Gates the
-     *  screenshot button in the room control panel so it only shows where it actually works. */
-    open val supportsScreenshot: Boolean = false
-
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true
 
@@ -91,6 +92,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      *  no load event leave this false and rely on the [parseMedia] announce. */
     protected open val announcesFileLoadViaEvent: Boolean = false
 
+    /** Volatile: the destroy contract flips it on one thread while trackers and callbacks read it on others. */
+    @Volatile
     var isInitialized: Boolean = false
 
     /**
@@ -202,10 +205,19 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             val extension = filename.substringAfterLast('.', "srt").lowercase()
 
             if (isValidSubtitleFile(extension)) {
-                loadExternalSubImpl(uri, extension)
-
+                // An engine refusing the file must not throw out of the room's composition.
+                val loaded = try {
+                    loadExternalSubImpl(uri, extension)
+                    true
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (e: Exception) {
+                    loggy("External subtitle load failed: ${e.stackTraceToString()}")
+                    false
+                }
                 viewmodel.dispatchOSD {
-                    getString(Res.string.room_selected_sub, filename)
+                    if (loaded) getString(Res.string.room_selected_sub, filename)
+                    else getString(Res.string.room_selected_sub_error)
                 }
             } else {
                 viewmodel.dispatchOSD {
@@ -232,14 +244,16 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             val extension = filename.substringAfterLast('.', "srt").lowercase()
             loadExternalSubImpl(PlatformFile(path), extension)
             true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
-            e.printStackTrace()
+            loggy("Downloaded subtitle load failed: ${e.stackTraceToString()}")
             false
         }
     }
 
-    private fun isValidSubtitleFile(extension: String) =
-        listOf("srt", "ass", "ssa", "ttml", "vtt").any { it in extension.lowercase() }
+    /** The picker offers [ccExs]; an engine that cannot parse one of them reports its own error. */
+    private fun isValidSubtitleFile(extension: String) = extension.lowercase() in ccExs
 
 
     abstract suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote)
@@ -290,6 +304,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                 viewmodel.dispatchOSD {
                     getString(Res.string.room_msg_resolved_url, resolved.title ?: resolved.directUrl)
                 }
+            } else {
+                // Said out loud: the raw page URL is handed to the engine next, and its failure
+                // would otherwise be the first sign that nothing was resolved.
+                viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_msg_resolve_failed) }
             }
             resolved
         }
@@ -352,8 +370,11 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         fileLoadResyncPending = true
         // Wipe the previous file's duration: engines (and mpv's duration-wait loop) treat a
         // positive value as "this file's duration is known". Leaking the old value made the
-        // very first announce of a newly injected file carry stale metadata.
+        // very first announce of a newly injected file carry stale metadata. The playhead goes
+        // too, or the previous file's position feeds the desync comparison until the first tick.
         playerManager.timeFullMillis.value = 0L
+        playerManager.samplePosition(0L)
+        playerManager.timeBufferedMillis.value = -1L
     }
 
     /**
@@ -392,10 +413,15 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     abstract suspend fun isSeekable(): Boolean
 
+    /**
+     * Every engine calls this first. The tracker cache takes the target at once, so the very next
+     * State ACK advertises where the engine is heading rather than a sample from before the seek,
+     * which the server would otherwise adopt as the room's slowest position.
+     */
     @UiThread
     @CallSuper
     open fun seekTo(toPositionMs: Long) {
-        if (viewmodel.uiState.isInBackground) return
+        playerManager.samplePosition(toPositionMs.coerceAtLeast(0L))
     }
 
     @UiThread
@@ -406,9 +432,6 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     open fun bufferedPositionMs(): Long? = null
 
     abstract suspend fun switchAspectRatio(): String
-
-    /** Takes a screenshot of the current video frame. Returns true if supported and successful. */
-    open suspend fun takeScreenshot(): Boolean = false
 
     abstract suspend fun changeSubtitleSize(newSize: Int)
 
@@ -434,6 +457,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
         viewmodel.media?.let { viewmodel.networkManager.sendAsync(WireMessage.file(it.toFileData())) }
         viewmodel.networkManager.sendAsync(WireMessage.listRequest())
+        // The loader is warned about a mismatch too, not only everyone else in the room.
+        viewmodel.checkFileMismatches()
 
         // Re-anchor room sync once per loaded file, now that the engine reports the file as
         // loaded (and is therefore seekable before the next State arrives). Without this a file
@@ -483,7 +508,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         playerScopeMain.launch {
             while (isActive) {
                 if (isSeekable()) {
-                    playerManager.timeCurrentMillis.value = currentPositionMs()
+                    playerManager.samplePosition(currentPositionMs())
                     playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
                 }
                 delay(trackerJobInterval)

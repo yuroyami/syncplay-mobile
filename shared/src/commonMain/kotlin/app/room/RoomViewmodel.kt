@@ -35,6 +35,7 @@ import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_core
 import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_duration
 import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_name
 import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_size
+import syncplaymobile.shared.generated.resources.room_no_player_engine
 
 /**
  * Classification used by the categorized [RoomViewmodel.dispatchOSD] overload to decide whether
@@ -102,10 +103,20 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             networkManager = instantiateNetworkManager()
 
             launch {
+                // The previous room's engine may still be tearing down (mpv's handle is
+                // process-global); never build the next one over it.
+                PlayerManager.awaitPendingDestroy()
                 val preferred = Preferences.PLAYER_ENGINE.value()
                 val engine = availablePlatformPlayerEngines
                     .firstOrNull { it.name == preferred && it.isAvailable }
-                    ?: availablePlatformPlayerEngines.first { it.isAvailable }
+                    ?: availablePlatformPlayerEngines.firstOrNull { it.isAvailable }
+                if (engine == null) {
+                    // Nothing can play here (desktop with KitePlayer unavailable, for one).
+                    loggy("No available player engine on this platform")
+                    dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_no_player_engine) }
+                    dispatcher.broadcastMessage(isChat = false, isError = true) { getString(Res.string.room_no_player_engine) }
+                    return@launch
+                }
                 if (engine.name != preferred) {
                     // A debug-only engine can disappear when a release build replaces the app.
                     // Persist the effective fallback so the picker never displays a stale,
@@ -118,6 +129,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             joinConfig?.let {
                 launch {
+                    session.tlsPeerHost = joinConfig.ip.trim().ifEmpty { "syncplay.pl" }
                     session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
                     session.serverPort = joinConfig.port
                     session.currentUsername = joinConfig.user
@@ -232,7 +244,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         if (!baseAllowed) return
 
         // Layer the non-operator filter on top of same-room events when in a controlled room.
-        if (category == OSDCategory.SAME_ROOM && originUser != null && session.currentOperatorPassword.isNotEmpty()) {
+        if (category == OSDCategory.SAME_ROOM && originUser != null && session.isControlledRoom()) {
             val originIsController = session.userList.value.firstOrNull { it.name == originUser }?.isController ?: false
             if (!originIsController && !prefs.OSD_NON_OPERATOR.value()) return
         }

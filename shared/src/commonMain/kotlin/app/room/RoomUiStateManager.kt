@@ -106,23 +106,32 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         // Nothing to do
     }
 
-    fun onLifecycleStart() { background = false
-    }
+    fun onLifecycleStart() = leaveBackground()
 
-    fun onLifecycleResume() {
-        background = false
-    }
+    fun onLifecycleResume() = leaveBackground()
 
     fun onLifecyclePause() {
         // Nothing to do
     }
 
-    /** Pauses playback unless in Picture-in-Picture mode. */
+    /**
+     * Pauses playback unless in Picture-in-Picture mode. The pause is local: the expectation flips
+     * first so the divergence collector sees no news, and the outbound State keeps advertising the
+     * room's position, so a phone in a pocket never drags the room back to where it stopped.
+     */
     fun onLifecycleStop() {
-        if (!hasEnteredPipMode.value) {
-            background = true
-            onMainThread { viewmodel.player.pause() }
-        }
+        if (hasEnteredPipMode.value) return
+        background = true
+        if (!viewmodel.playerManager.isPlayerReady.value) return
+        viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+        onMainThread { viewmodel.player.pause() }
+    }
+
+    /** Back in front: the next server State hard-seeks us to the room and re-applies play/pause. */
+    private fun leaveBackground() {
+        if (!background) return
+        background = false
+        viewmodel.protocol.resumeFromBackground()
     }
 
     val isInBackground: Boolean
