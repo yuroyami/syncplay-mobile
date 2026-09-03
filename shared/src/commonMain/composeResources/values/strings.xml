@@ -92,7 +92,7 @@
     <string name="room_guy_played">%1$s unpaused</string>
     <string name="room_guy_paused">%1$s paused at %2$s</string>
     <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
-    <string name="room_rewinded">Rewinded due to time difference with %1$s</string>
+    <string name="room_rewinded">Rewound to catch up with %1$s</string>
     <string name="room_fastforwarded">Fast-forwarded due to time difference with %1$s</string>
     <string name="room_guy_left">%1$s left the room.</string>
     <string name="room_guy_joined">%1$s joined the room.</string>
@@ -102,6 +102,10 @@
     <string name="room_audio_track_changed">Audio Track changed to: %1$s</string>
     <string name="room_details_current_room">Room: %1$s</string>
     <string name="room_details_user_count">%1$d users</string>
+    <plurals name="room_user_count">
+        <item quantity="one">%1$d user</item>
+        <item quantity="other">%1$d users</item>
+    </plurals>
     <string name="room_details_file_properties">Duration: %1$s - Size: %2$s MBs</string>
     <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
@@ -169,7 +173,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Select one or multiple files to add to playlist</string>
     <string name="room_shared_playlist_filepick_rationale2">Select directory to add its files to playlist</string>
     <string name="room_shared_playlist_add_url">Add URL to Shared Playlist</string>
-    <string name="room_shared_playlist_add_url_subtext">This line wil be added as an entry to the shared playlist.\n%1$s Android supports only direct links for now.</string>
+    <string name="room_shared_playlist_add_url_subtext">This line will be added as an entry to the shared playlist.\n%1$s Android supports only direct links for now.</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
@@ -188,7 +192,7 @@
     <string name="room_addmedia_offline_system">From storage (custom picker)</string>
     <string name="room_addmedia_online">From a network URL</string>
     <string name="room_addmedia_online_details">Load Media from a network URL</string>
-    <string name="room_addmedia_online_popup_subtext">Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.</string>
+    <string name="room_addmedia_online_popup_subtext">Direct links work everywhere (for example: www.example.com/video.mp4). YouTube links work on Android; other streaming sites may not.</string>
     <string name="room_addmedia_online_url">URL address</string>
     <string name="room_overflow_title">More options...</string>
     <string name="room_overflow_create_managed_room">Create managed room</string>
@@ -204,6 +208,31 @@
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_audio_track_not_found">No audio found !</string>
     <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
+    <string name="room_playback_error">Playback error: %1$s</string>
+    <string name="room_no_player_engine">No video engine is available on this device.</string>
+    <string name="room_msg_resolve_failed">Could not resolve this link. Trying it as a direct stream.</string>
+    <string name="room_slowdown_notification">Slowing down to match %1$s</string>
+    <string name="room_slowdown_reverted">Back to normal speed</string>
+    <string name="room_tls_handshake_failed">Encrypted connection failed: %1$s. For a server with a self-signed certificate, turn off Secure connection in Settings.</string>
+    <string name="room_tls_required_downgrade">This server does not offer encryption. Connection refused because encryption is required in Settings.</string>
+    <string name="room_guy_joined_other_room">%1$s joined room %2$s</string>
+    <string name="room_guy_left_other_room">%1$s left room %2$s</string>
+    <string name="room_chat_too_long">Message too long: %1$d of %2$d characters.</string>
+    <string name="room_shared_playlist_clear_question">Clear the whole shared playlist for everyone in the room?</string>
+    <string name="room_shared_playlist_exported">Playlist saved.</string>
+    <string name="room_shared_playlist_export_failed">Could not save the playlist.</string>
+    <string name="room_aspect_original">Aspect: original</string>
+    <string name="room_aspect_fit">Aspect: fit</string>
+    <string name="room_aspect_fill">Aspect: fill (crop)</string>
+    <string name="room_aspect_stretch">Aspect: stretch</string>
+    <string name="room_aspect_panscan">Aspect: pan and scan</string>
+    <string name="room_aspect_ratio_label">Aspect: %1$s</string>
+    <string name="room_user_ready_label">%1$s, ready</string>
+    <string name="room_user_not_ready_label">%1$s, not ready</string>
+    <string name="room_chat_copied">Copied</string>
+    <string name="room_gif_powered_by">Powered by Klipy</string>
+    <string name="modal_dismiss">Close</string>
+    <string name="about_privacy_button">Privacy policy</string>
     <string name="room_managed_room_popup_create">Name of the managed room. See syncplay.pl/guide for how these rooms work.</string>
     <string name="room_managed_room_popup_pw_identify_as_operator">Operator password for this room. See syncplay.pl/guide for how these rooms work.</string>
     <string name ="room_setting_pick_color">Pick a Color</string>
@@ -241,7 +270,6 @@
     <string name="room_gif_action_favorite">Favorite</string>
     <string name="room_gif_action_unfavorite">Unfavorite</string>
     <string name="room_gif_search_hint">Search GIFs...</string>
-    <string name="room_gif_powered_by">Powered by Klipy</string>
     <string name="room_gif_no_results">No results found</string>
     <string name="room_gif_error">Failed to load GIFs</string>
 
@@ -282,10 +310,11 @@
     <string name="setting_erase_shortcuts_summary">Removes every home screen shortcut.</string>
     <string name="setting_erase_shortcuts_dialog">Do you really wish to erase all existing shortcuts ?</string>
     <string name="setting_display_language_title">Display language</string>
+    <string name="setting_display_language_system">System language</string>
     <string name="setting_display_language_summry">Select your language of choice with which %1$s is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Audio language</string>
-    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
+    <string name="setting_audio_default_language_summry">Automatically load an audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_cc_default_language_title">Subtitle language</string>
     <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_use_buffer_title">Use custom buffer sizes</string>
@@ -305,10 +334,13 @@
     <string name="setting_unpause_action_if_min_users_ready">Unpause if others ready + min users</string>
     <string name="setting_unpause_action_always">Always unpause</string>
     <string name="room_set_as_ready">Set as ready to unpause</string>
-    <string name="setting_rewind_threshold_title">Rewind thresold</string>
+    <string name="setting_rewind_threshold_title">Rewind threshold</string>
     <string name="setting_rewind_threshold_summary">How far behind someone is before you rewind.</string>
     <string name="setting_tls_title">Secure connection (TLS)</string>
     <string name="setting_tls_summary">Encrypted when the server supports it.</string>
+    <string name="setting_tls_required_title">Require encryption</string>
+    <string name="setting_tls_required_summary">Refuse servers that cannot encrypt.</string>
+    <string name="setting_tls_required_detail">Off: a server without TLS is joined in plain text, with a notice. On: the connection is dropped instead.</string>
     <string name="setting_resetdefault_title">Reset default settings</string>
     <string name="setting_resetdefault_summary">Everything back to its default.</string>
     <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
@@ -561,7 +593,7 @@
         <item>You can always reset settings to their default states by going to 'Settings -> Advanced -> Reset to Default'</item>
         <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to 'Join Room'.</item>
         <item>Each player has different strengths. If one doesn't work well with your video format, try another.</item>
-        <item>%1$s Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+        <item>%1$s plays direct links and, on Android, YouTube and a few other sites. Paste the link under Add media.</item>
         <item>If you want to minimize the room temporarily without leaving, you can go into "Picture-in-Picture" mode where the screen is a small floating screen above other apps.</item>
     </string-array>
     <string name="room_gestures_panel_title">Gestures</string>

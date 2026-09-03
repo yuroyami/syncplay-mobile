@@ -149,8 +149,8 @@
     <string name="room_card_title_in_room_prefs">Настройки комнаты</string>
     <string name="room_audio_track_not_found">Звуковая дорожка не найдена!</string>
     <string name="room_msg_problem_loading_file">Возникла проблема при загрузке этого файла.</string>
-    <string name="room_managed_room_popup_create">Введите название управляемой комнаты\n(см. https://app.pl/guide/ для инструкций по использованию)</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">Введите пароль оператора для этой комнаты\n(см. https://app.pl/guide/ для инструкций по использованию)</string>
+    <string name="room_managed_room_popup_create">Введите название управляемой комнаты\n(см. https://syncplay.pl/guide/ для инструкций по использованию)</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Введите пароль оператора для этой комнаты\n(см. https://syncplay.pl/guide/ для инструкций по использованию)</string>
     <string name="room_setting_pick_color">Выберите цвет</string>
     <string name="room_reconnect_button">Переподключиться</string>
     <string name="room_more_info_change_network_engine_msg">Попробуйте изменить сетевой движок в Настройки > Сеть на Ktor, если у вас возникают проблемы с подключением.</string>
