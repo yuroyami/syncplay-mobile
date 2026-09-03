@@ -35,7 +35,9 @@ class PingService {
      * (sub-second drift) and replaces it with up-to-±500 ms quantization noise.
      */
     fun receiveMessage(timestamp: Double?, senderRtt: Double) {
-        if (timestamp == null) return
+        // A missing timestamp arrives as null, or as 0 from a sender that coerced it: neither is a
+        // clock reading, and subtracting 0 from "now" would age every position by decades.
+        if (timestamp == null || timestamp <= 0.0) return
         rtt = generateTimestampMillis() / 1000.0 - timestamp
         if (rtt < 0 || senderRtt < 0) return
 

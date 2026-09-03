@@ -1,5 +1,6 @@
 package app.room
 
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.viewModelScope
 import app.player.models.MediaFile
 import app.preferences.Preferences
@@ -11,8 +12,10 @@ import app.protocol.ProtocolManager.Companion.FASTFORWARD_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
+import app.protocol.Session
 import app.protocol.WireMessage
 import app.protocol.WireMessageHandler
+import app.protocol.models.TlsState
 import app.protocol.models.User
 import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
@@ -29,6 +32,8 @@ import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_not_ready_set_by
 import syncplaymobile.shared.generated.resources.room_ready_set_by
+import syncplaymobile.shared.generated.resources.room_slowdown_notification
+import syncplaymobile.shared.generated.resources.room_slowdown_reverted
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,12 +59,19 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
     override suspend fun onHello(message: WireMessage.Hello) {
         val data = message.data
-        data.username?.let { session.currentUsername = it }
+        data.username?.let { session.currentUsername = it.take(MAX_USERNAME_CHARS) }
         session.roomFeatures = data.features
 
         // Ask for the user list right away — the server will send a `List` reply.
         network.send(WireMessage.listRequest())
         callback.onConnected()
+
+        // The server's message of the day, shown in chat like PC does (it may carry an update
+        // notice or house rules).
+        data.motd?.takeIf { it.isNotBlank() }?.let { motd ->
+            val text = motd.take(MAX_CHAT_CHARS)
+            dispatcher.broadcastMessage(message = { text }, isChat = false)
+        }
     }
 
     override suspend fun onState(message: WireMessage.State) {
@@ -117,17 +129,16 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // corrected by the rewind/fastforward/slowdown block and the channel-health
             // collector, not by re-announcing here.
             val pausedChanged = protocol.globalPaused != paused
-            // Position comes from the tracker cache (timeCurrentMillis, refreshed every
-            // 200-500ms by each engine), NOT from a live player probe. Two reasons:
-            //  1. PC parity — the reference client compares against its 100ms-polled cache,
-            //     never a synchronous player query (client.py getPlayerPosition).
+            // Position comes from the tracker cache, aged by the time since its sample while
+            // the engine plays, NOT from a live player probe. Two reasons:
+            //  1. PC parity — the reference client compares against its 100ms-polled cache
+            //     plus elapsed time, never a synchronous player query (client.py getPlayerPosition).
             //  2. The protocol consumer must NEVER wait on the UI thread. On desktop, a
             //     withContext(Main) here deadlocked the whole inbound pipeline when libVLC
             //     was still initializing on the EDT at cold-start auto-join: the first State
             //     suspended forever, every later message queued behind it, and the server
-            //     dropped us for not ACKing. diff consumers tolerate the <=500ms staleness
-            //     (thresholds are 1.5-4s).
-            val diff = (viewmodel.playerManager.timeCurrentMillis.value / 1000.0) - agedPosition
+            //     dropped us for not ACKing.
+            val diff = (viewmodel.playerManager.estimatedPositionMs() / 1000.0) - agedPosition
 
             /* Updating Global State */
             protocol.globalPaused = paused
@@ -156,11 +167,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             protocol.lastGlobalUpdate = Clock.System.now()
 
             if (doSeek == true && setBy != null) {
-                if (protocol.speedChanged) {
-                    viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                    protocol.speedChanged = false
-                }
-                callback.onSomeoneSeeked(setBy, agedPosition)
+                resetSpeedIfChanged()
+                callback.onSomeoneSeeked(setBy.take(MAX_USERNAME_CHARS), agedPosition)
             }
 
             /* Desync-correction logic (rewind / fastforward / slowdown) only makes sense
@@ -170,14 +178,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
              * adjust. Mirrors the PC client's `if self._player:` gate around the whole
              * `_changePlayerStateAccordingToGlobalState` (client.py:459). The pause/play
              * callbacks below still fire — those are informational and useful even without
-             * a file loaded ("X paused the room"). */
-            if (viewmodel.media != null) {
+             * a file loaded ("X paused the room"). A backgrounded client is paused on purpose
+             * and catches up when it returns, so no correction runs there either. */
+            if (viewmodel.media != null && !viewmodel.uiState.isInBackground) {
                 /* Rewind check if someone is behind */
                 if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
-                    if (protocol.speedChanged) {
-                        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                        protocol.speedChanged = false
-                    }
+                    resetSpeedIfChanged()
                     callback.onSomeoneBehind(setBy ?: "", agedPosition)
                 }
 
@@ -187,7 +193,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                  * follows the slowest member via rewind/slowdown). SYNC_DONT_SLOW_WITH_ME opts
                  * in regardless. */
                 val canFastForward = Preferences.SYNC_FASTFORWARD.value()
-                        && (isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
+                        && (session.isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
                 if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
                     val now = Clock.System.now()
                     if (protocol.behindFirstDetected == null) {
@@ -213,25 +219,24 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                             if (setBy != null && setBy != session.currentUsername) {
                                 viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
                                 protocol.speedChanged = true
+                                // PC's slowdown-notification: the room hears it, the user must too.
+                                val who = setBy.take(MAX_USERNAME_CHARS)
+                                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_notification, who) }
                             }
                         } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
-                            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                            protocol.speedChanged = false
+                            resetSpeedIfChanged()
                         }
                     } else if (protocol.speedChanged) {
-                        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                        protocol.speedChanged = false
+                        resetSpeedIfChanged()
                     }
                 }
             }
 
             if (pausedChanged) {
-                if (paused && protocol.speedChanged) {
-                    viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                    protocol.speedChanged = false
-                }
-                if (!paused) callback.onSomeonePlayed(setBy ?: "")
-                if (paused) callback.onSomeonePaused(setBy ?: "")
+                if (paused) resetSpeedIfChanged()
+                val who = (setBy ?: "").take(MAX_USERNAME_CHARS)
+                if (!paused) callback.onSomeonePlayed(who)
+                if (paused) callback.onSomeonePaused(who)
             }
         }
 
@@ -284,6 +289,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         }
     }
 
+    /** Back to 1.0x, with PC's revert-notification, whenever the slowdown ends for any reason. */
+    private fun resetSpeedIfChanged() {
+        if (!protocol.speedChanged) return
+        protocol.speedChanged = false
+        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+        viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_reverted) }
+    }
+
     override suspend fun onSet(message: WireMessage.Set) {
         val set = message.data
         // Process EVERY key present, not just the first — python's handleSet iterates the
@@ -303,31 +316,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         // configured (`roomsDbFile` set on server), so we cannot rely on it.
     }
 
-    /**
-     * True when we ARE in a controlled (+) room but are NOT a controller, so we must follow
-     * the controller's pace. Mirrors python's `!currentUser.canControl()`. In a normal room
-     * this is false (everyone can control), which is why fast-forward-on-desync must not fire
-     * there. Inverse of [isControllerInControlledRoom]'s controller test.
-     */
-    private fun isInControlledRoomWithoutController(): Boolean {
-        if (!session.roomFeatures.supportsManagedRooms) return false
-        if (!session.currentRoom.startsWith("+")) return false
-        return session.userList.value.firstOrNull { it.name == session.currentUsername }?.isController != true
-    }
-
-    private fun isControllerInControlledRoom(): Boolean {
-        if (!session.roomFeatures.supportsManagedRooms) return false
-        if (!session.currentRoom.startsWith("+")) return false
-        // Find ourselves in the user list — `isController` is set by the server's auth ack.
-        return session.userList.value.firstOrNull { it.name == session.currentUsername }?.isController == true
-    }
-
     override suspend fun onListResponse(message: WireMessage.ListResponse) {
         val userlist = message.rooms[session.currentRoom] ?: return
         val newList = mutableListOf<User>()
         var indexer = 1
 
-        for ((userName, userData) in userlist) {
+        for ((rawName, userData) in userlist) {
+            if (newList.size >= Session.MAX_USERS) break
+            val userName = rawName.take(MAX_USERNAME_CHARS)
             val user = User(
                 name = userName,
                 index = if (userName != session.currentUsername) indexer++ else 0,
@@ -335,7 +331,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 file = userData.file?.let { fileData ->
                     if (fileData.name != null) {
                         MediaFile().apply {
-                            fileName = fileData.name
+                            fileName = fileData.name.take(MAX_FILENAME_CHARS)
                             fileDuration = fileData.duration ?: 0.0
                             fileSize = fileData.size ?: ""
                         }
@@ -346,20 +342,28 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             newList.add(user)
         }
 
-        viewmodel.viewModelScope.launch {
-            session.userList.emit(newList)
-            callback.onReceivedList()
-        }
+        // Applied inline, on the serial consumer, like every other roster mutation: a launch here
+        // let a List reply land after the Set that followed it on the wire.
+        session.userList.emit(newList)
+        callback.onReceivedList()
     }
 
     override suspend fun onChatBroadcast(message: WireMessage.ChatBroadcast) {
         val sender = message.data.username ?: return
         val text = message.data.message ?: return
-        callback.onChatReceived(sender, text)
+        // Hard caps, above any honest server's limits: a hostile one must not be able to hand
+        // the chat a megabyte to lay out.
+        callback.onChatReceived(sender.take(MAX_USERNAME_CHARS), text.take(MAX_CHAT_CHARS))
     }
 
     override suspend fun onTLS(message: WireMessage.TLS) {
         val startTLS = message.data.startTLS ?: return
+        // Only the answer to our own request counts (PC acts on it only before login). An
+        // unsolicited TLS line would otherwise re-send Hello and re-pin the transport.
+        if (network.tls != TlsState.TLS_ASK) {
+            loggy("Ignoring an unsolicited TLS message from the server")
+            return
+        }
         // Match python client semantics: `"true" in answer` / `"false" in answer`.
         val supported = startTLS.contains("true", ignoreCase = true)
         callback.onReceivedTLS(supported)
@@ -394,7 +398,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         for ((userName, userData) in userMap) handleSingleUserSet(userName, userData)
     }
 
-    private suspend fun handleSingleUserSet(userName: String, userData: UserSetData) {
+    private suspend fun handleSingleUserSet(rawName: String, userData: UserSetData) {
+        val userName = rawName.take(MAX_USERNAME_CHARS)
         val current = session.userList.value
         val updated = current.toMutableList()
         var changed = false
@@ -415,10 +420,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                         updated.removeAt(idx)
                         changed = true
                         callback.onSomeoneLeft(userName)
+                    } else if (eventRoom != null && !inOurRoom) {
+                        callback.onSomeoneLeftOtherRoom(userName, eventRoom)
                     }
                 }
                 event.joined != null && inOurRoom -> {
                     if (updated.none { it.name == userName }) {
+                        // A hostile server streaming joins must not grow the roster without end.
+                        if (updated.size >= Session.MAX_USERS) return
                         val nextIndex = (updated.maxOfOrNull { it.index } ?: 0) + 1
                         updated.add(
                             User(
@@ -433,7 +442,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     }
                     callback.onSomeoneJoined(userName)
                 }
-                // joined another room: not in our view, nothing to render.
+                // Joined another room (a server without isolated rooms): a quiet notice, PC's
+                // different-room OSD, and nothing in our roster.
+                event.joined != null && eventRoom != null -> callback.onSomeoneJoinedOtherRoom(userName, eventRoom)
             }
         }
 
@@ -465,9 +476,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         userData.file?.let { file ->
             // Re-resolve the index — the join branch above may have just inserted them.
             val idx = updated.indexOfFirst { it.name == userName }
-            if (idx >= 0 && file.name != null) {
+            val name = file.name?.take(MAX_FILENAME_CHARS)
+            if (idx >= 0 && name != null) {
                 val mediaFile = MediaFile().apply {
-                    fileName = file.name
+                    fileName = name
                     fileDuration = file.duration ?: 0.0
                     fileSize = file.size ?: ""
                 }
@@ -475,7 +487,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 changed = true
             }
             // Announce file loads only for users we can see (our room).
-            if (idx >= 0) callback.onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
+            if (idx >= 0) callback.onSomeoneLoadedFile(userName, name ?: "", file.duration ?: 0.0)
         }
 
         if (changed) session.userList.emit(updated)
@@ -532,8 +544,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     private fun handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
-        session.sharedPlaylist.clear()
-        session.sharedPlaylist.addAll(files)
+        // One atomic replacement: a clear then an addAll from this thread let the playlist
+        // panel draw an empty list between the two.
+        Snapshot.withMutableSnapshot {
+            session.sharedPlaylist.clear()
+            session.sharedPlaylist.addAll(files)
+        }
         callback.onPlaylistUpdated(user)
     }
 
@@ -553,5 +569,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
     private fun handleControllerAuth(data: ControllerAuthData) {
         callback.onHandleControllerAuth(data)
+    }
+
+    private companion object {
+        /** Absolute ceilings on peer-supplied strings, well above any honest server's limits. */
+        const val MAX_USERNAME_CHARS = 64
+        const val MAX_CHAT_CHARS = 2000
+        const val MAX_FILENAME_CHARS = 512
     }
 }

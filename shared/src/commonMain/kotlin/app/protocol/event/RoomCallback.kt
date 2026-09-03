@@ -13,6 +13,7 @@ import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
+import app.preferences.Preferences.TLS_REQUIRED
 import app.preferences.value
 import app.protocol.WireMessage
 import app.protocol.models.ConnectionState
@@ -21,6 +22,8 @@ import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
 import app.room.OSDCategory
 import app.room.RoomViewmodel
+import app.room.models.BIDI_ISOLATE_END
+import app.room.models.BIDI_ISOLATE_START
 import app.room.toFileData
 import app.utils.loggy
 import app.utils.timestampFromMillis
@@ -35,7 +38,9 @@ import syncplaymobile.shared.generated.resources.room_attempting_tls
 import syncplaymobile.shared.generated.resources.room_connected_to_server
 import syncplaymobile.shared.generated.resources.room_connection_failed
 import syncplaymobile.shared.generated.resources.room_guy_joined
+import syncplaymobile.shared.generated.resources.room_guy_joined_other_room
 import syncplaymobile.shared.generated.resources.room_guy_left
+import syncplaymobile.shared.generated.resources.room_guy_left_other_room
 import syncplaymobile.shared.generated.resources.room_guy_paused
 import syncplaymobile.shared.generated.resources.room_guy_played
 import syncplaymobile.shared.generated.resources.room_isplayingfile
@@ -47,7 +52,9 @@ import syncplaymobile.shared.generated.resources.room_rewinded
 import syncplaymobile.shared.generated.resources.room_seeked
 import syncplaymobile.shared.generated.resources.room_shared_playlist_changed
 import syncplaymobile.shared.generated.resources.room_shared_playlist_updated
+import syncplaymobile.shared.generated.resources.room_tls_handshake_failed
 import syncplaymobile.shared.generated.resources.room_tls_not_supported
+import syncplaymobile.shared.generated.resources.room_tls_required_downgrade
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
 
@@ -63,6 +70,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun String.isSelf(): Boolean = (this == session.currentUsername)
     fun String.isNotSelf(): Boolean = (this != session.currentUsername)
+
+    /** A username inside a system line keeps its own direction; chat rows already do this. */
+    private fun String.isolated(): String = BIDI_ISOLATE_START + this + BIDI_ISOLATE_END
 
     /** Triggers a platform haptic feedback event if the given preference is enabled */
     private fun hapticIf(pref: app.preferences.Pref<Boolean>) {
@@ -89,7 +99,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val osdMessage: suspend () -> String = {
             getString(
                 resource = Res.string.room_guy_paused,
-                pauser, timestampFromMillis(protocol.globalPositionMs)
+                pauser.isolated(), timestampFromMillis(protocol.globalPositionMs)
             )
         }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
@@ -104,13 +114,13 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             dispatcher.controlPlayback(Playback.PLAY, false)
         }
 
-        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_played, player) }
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_played, player.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = player, getter = osdMessage)
     }
 
     fun onChatReceived(chatter: String, chatmessage: String) {
-        loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
+        loggy("SYNCPLAY Protocol: chat from $chatter (${chatmessage.length} chars)")
 
         if (chatter.isNotSelf()) hapticIf(HAPTIC_ON_CHAT)
         dispatcher.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
@@ -120,21 +130,30 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
         if (joiner.isNotSelf()) hapticIf(HAPTIC_ON_JOINED)
-        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_joined, joiner) }
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_joined, joiner.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = joiner, getter = osdMessage)
     }
 
+    /** Presence in another room on a server without isolated rooms: a quiet notice, nothing more. */
+    fun onSomeoneJoinedOtherRoom(joiner: String, room: String) {
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { getString(Res.string.room_guy_joined_other_room, joiner.isolated(), room.isolated()) }
+    }
+
+    fun onSomeoneLeftOtherRoom(leaver: String, room: String) {
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { getString(Res.string.room_guy_left_other_room, leaver.isolated(), room.isolated()) }
+    }
+
     fun onSomeoneLeft(leaver: String) {
-        if (viewmodel.protocol.isRoomChanging) {
-            viewmodel.protocol.isRoomChanging = false
-            return
-        }
+        // Our own "left" arrives when the server moves us between rooms (an isolated server tells
+        // the old room, us included). It is not news, and it is not a lost connection: tearing
+        // the socket down here started a reconnect on a healthy session.
+        if (leaver.isSelf()) return
 
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
         hapticIf(HAPTIC_ON_LEFT)
-        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_left, leaver) }
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_left, leaver.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = leaver, getter = osdMessage)
 
@@ -148,8 +167,6 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 this@RoomCallback.dispatcher.controlPlayback(Playback.PAUSE, false)
             }
         }
-
-        if (leaver.isSelf()) onDisconnected()
     }
 
     fun onSomeoneSeeked(seeker: String, toPosition: Double) {
@@ -190,7 +207,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             if (noOpSeek) return@onMainThread
 
             val osdMessage: suspend () -> String = {
-                getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
+                getString(Res.string.room_seeked, seeker.isolated(), timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
             }
             dispatcher.broadcastMessage(message = osdMessage, isChat = false)
             viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = seeker, getter = osdMessage)
@@ -211,7 +228,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (behinder.isNotSelf()) {
             onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                val osdMessage: suspend () -> String = { getString(Res.string.room_rewinded, behinder) }
+                val osdMessage: suspend () -> String = { getString(Res.string.room_rewinded, behinder.isolated()) }
                 dispatcher.broadcastMessage(message = osdMessage, isChat = false)
                 viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
             }
@@ -224,7 +241,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (setBy.isNotSelf()) {
             onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                val osdMessage: suspend () -> String = { getString(Res.string.room_fastforwarded, setBy) }
+                val osdMessage: suspend () -> String = { getString(Res.string.room_fastforwarded, setBy.isolated()) }
                 dispatcher.broadcastMessage(message = osdMessage, isChat = false)
                 viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
             }
@@ -239,7 +256,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
         val osdMessage: suspend () -> String = {
-            getString(Res.string.room_isplayingfile, person, file ?: "", timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0))
+            getString(Res.string.room_isplayingfile, person.isolated(), (file ?: "").isolated(), timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0))
         }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = person, getter = osdMessage)
@@ -254,7 +271,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (user.isNotEmpty()) hapticIf(HAPTIC_ON_PLAYLIST)
 
         if (user == "") return
-        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_updated, user) }
+        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_updated, user.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
@@ -271,7 +288,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
 
         if (user == "") return
-        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_changed, user) }
+        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_changed, user.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
@@ -298,7 +315,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // Atomic snapshot-and-clear under the queue's lock — a failed transmit during the
         // replay loop below re-queues safely without racing the drain.
         val drained = session.drainOutbound()
-        for (m in drained) network.transmitPacket(m, queueable = true)
+        for (m in drained) network.sendRaw(m, queueable = true)
 
         // Mirror python's reIdentifyAsController — after every (re)connect, if we're
         // in a controlled room and we know the operator password, re-auth so the server
@@ -376,11 +393,23 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 // would crash the process. Treat the socket as dead and let the retry loop
                 // take over (it re-arms TLS_ASK itself).
                 loggy("TLS upgrade failed: ${e.stackTraceToString()}")
+                val reason = e.message ?: e::class.simpleName ?: ""
+                val failure: suspend () -> String = { getString(Res.string.room_tls_handshake_failed, reason) }
+                dispatcher.broadcastMessage(message = failure, isChat = false, isError = true)
+                viewmodel.dispatchOSD(OSDCategory.WARNING, getter = failure)
                 network.terminateExistingConnection()
                 onConnectionFailed()
                 return
             }
         } else {
+            if (TLS_REQUIRED.value()) {
+                // The user asked for encryption or nothing: no Hello in plain text, no retry loop.
+                val refused: suspend () -> String = { getString(Res.string.room_tls_required_downgrade) }
+                dispatcher.broadcastMessage(message = refused, isChat = false, isError = true)
+                viewmodel.dispatchOSD(OSDCategory.WARNING, getter = refused)
+                network.abortConnection()
+                return
+            }
             dispatcher.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
             network.tls = TlsState.TLS_NO
         }
@@ -402,6 +431,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onHandleControllerAuth(data: ControllerAuthData) {
         val user = data.user ?: session.currentUsername
 
+        // Our own successful identification: keep the password, so the re-identification that
+        // every reconnect performs (see onConnected) can restore control without asking again.
+        if (data.success && user.isSelf() && session.lastControlPasswordAttempt.isNotEmpty()) {
+            session.currentOperatorPassword = session.lastControlPasswordAttempt
+        }
+
         network.sendAsync(WireMessage.listRequest())
 
         val osdMessage: suspend () -> String = {
@@ -409,7 +444,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 when (data.success) {
                     true -> Res.string.room_on_controller_auth_success
                     false -> Res.string.room_on_controller_auth_failed
-                }, user
+                }, user.isolated()
             )
         }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = !data.success)

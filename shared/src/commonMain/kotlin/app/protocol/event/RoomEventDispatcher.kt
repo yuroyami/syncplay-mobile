@@ -8,10 +8,12 @@ import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.value
 import app.protocol.ProtocolManager.Companion.SYNCPLAY_LEGACY_VERSION
 import app.protocol.ProtocolManager.Companion.SYNCPLAY_PROTOCOL_VERSION
+import app.protocol.Session
 import app.protocol.WireMessage
 import app.protocol.models.RoomFeatures
 import app.protocol.wire.HelloData
 import app.protocol.wire.Room
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.utils.loggy
@@ -102,13 +104,10 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     }
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
-        // When the app is backgrounded, the lifecycle force-pauses the player. That engine
-        // pause must NOT be told to the room — otherwise a backgrounded client broadcasts a
-        // "paused" State and drags everyone else's playback down with it (and with several
-        // clients backgrounding, multiplies "X paused" spam). PC never lets a background
-        // auto-pause propagate. Only this outbound path is gated; the inbound apply path
-        // (server-driven pause/play in RoomServerMessageHandler) is untouched, so a
-        // backgrounded client still follows the room.
+        // In the background the player is paused on purpose and stays that way: nothing here
+        // reaches the engine, and nothing is told to the room (a backgrounded client used to
+        // broadcast its pause and drag everyone down with it). Inbound pause/play is skipped
+        // too; the return to the foreground re-anchors to the room's real state in one step.
         if (viewmodel.uiState.isInBackground) return
 
         /* If this is a user-initiated play request, check readiness gating */
@@ -116,11 +115,12 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             && viewmodel.session.roomFeatures.supportsReadiness
         ) {
             if (!instaplayConditionsMet()) {
-                /* Block the unpause — set as ready instead */
+                /* Block the unpause — set as ready instead, and say so where the user is looking. */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
                 viewmodel.session.ready.value = true
                 network.sendAsync(WireMessage.readiness(isReady = true, manuallyInitiated = true))
                 broadcastMessage(isChat = false) { getString(Res.string.room_set_as_ready) }
+                viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_set_as_ready) }
                 return
             }
         }
@@ -184,7 +184,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         // it ourselves — no point pretending we can. Without this, mobile lets the user
         // try, then the server's forcePositionUpdate echoes their state back as paused,
         // creating a brief unpause-then-repause flicker on the local player.
-        if (isInControlledRoomWithoutController()) return false
+        if (session.isInControlledRoomWithoutController()) return false
 
         val unpauseAction = UNPAUSE_ACTION.value()
         val session = viewmodel.session
@@ -204,14 +204,6 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             "Always" -> true
             else -> true
         }
-    }
-
-    private fun isInControlledRoomWithoutController(): Boolean {
-        if (!session.roomFeatures.supportsManagedRooms) return false
-        if (!session.currentRoom.startsWith("+")) return false
-        return session.userList.value
-            .firstOrNull { it.name == session.currentUsername }
-            ?.isController != true
     }
 
     /**
@@ -277,7 +269,8 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 content = message.invoke(),
                 isError = isError
             )
-            viewmodel.session.messageSequence.update { it + msg }
+            // Bounded: a long session must not keep every line ever shown.
+            viewmodel.session.messageSequence.update { (it + msg).takeLast(Session.MAX_MESSAGES) }
         }
     }
 

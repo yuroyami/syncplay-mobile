@@ -15,10 +15,20 @@ import kotlinx.coroutines.sync.withLock
 class Session(val protocol: ProtocolManager) {
     var serverHost: String = "151.80.32.178"
     var serverPort: Int = 8997
+
+    /**
+     * The host name the user typed, kept apart from [serverHost] because the official server's
+     * name is collapsed to an IP before connecting. TLS checks the certificate against this and
+     * sends it as SNI; the socket still dials [serverHost].
+     */
+    var tlsPeerHost: String = "syncplay.pl"
     var currentUsername: String = "Anonymous${(1000..9999).random()}"
     var currentRoom: String = "roomname"
     var currentPassword: String = ""
     var currentOperatorPassword: String = ""
+
+    /** The operator password last sent to identify with; stored as the real one once the server says yes. */
+    var lastControlPasswordAttempt: String = ""
 
     var roomFeatures: RoomFeatures = RoomFeatures()
         set(value) {
@@ -72,10 +82,31 @@ class Session(val protocol: ProtocolManager) {
         return selfReady + othersReady
     }
 
-    /** Total count of users in the room who have a file loaded. */
+    /** Us plus every other user who is ready with a file, PC's `usersInRoomCount` to the letter. */
     fun usersInRoomCount(): Int {
-        val selfHasFile = if (protocol.viewmodel.media != null) 1 else 0
-        val othersWithFile = userList.value.count { it.name != currentUsername && it.file != null }
-        return selfHasFile + othersWithFile
+        val othersReadyWithFile = userList.value.count { it.name != currentUsername && it.file != null && it.readiness }
+        return 1 + othersReadyWithFile
+    }
+
+    /**
+     * True when we ARE in a controlled (+) room but are NOT a controller, so we must follow the
+     * controller's pace. Mirrors python's `!currentUser.canControl()`. In a normal room this is
+     * false (everyone can control).
+     */
+    fun isInControlledRoomWithoutController(): Boolean {
+        if (!roomFeatures.supportsManagedRooms) return false
+        if (!currentRoom.startsWith("+")) return false
+        return userList.value.firstOrNull { it.name == currentUsername }?.isController != true
+    }
+
+    /** True in a controlled room, whoever holds the password. */
+    fun isControlledRoom(): Boolean = roomFeatures.supportsManagedRooms && currentRoom.startsWith("+")
+
+    companion object {
+        /** A hostile server streaming joins must not grow the roster without end. */
+        const val MAX_USERS = 500
+
+        /** The chat log keeps this many lines; older ones fall off the top. */
+        const val MAX_MESSAGES = 1000
     }
 }

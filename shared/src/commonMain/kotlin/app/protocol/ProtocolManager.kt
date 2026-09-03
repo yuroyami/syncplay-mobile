@@ -19,7 +19,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.time.Clock
@@ -151,6 +150,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * everything, so reacting to the flow avoids the phantom seeks a poll produces when
      * it samples a player still mid-converging on a seek target.
      */
+    @Volatile
     private var expectedPaused: Boolean = true
 
     /**
@@ -229,6 +229,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 if (network.state.value != ConnectionState.CONNECTED) return@collect
                 if (lastGlobalUpdate == null) return@collect
                 if (isRoomChanging) return@collect
+                // A backgrounded client is paused locally and catches up on return; nothing the
+                // engine does back there is room news.
+                if (viewmodel.uiState.isInBackground) return@collect
 
                 val expectedPlaying = !expectedPaused
                 if (isPlaying == expectedPlaying) return@collect
@@ -280,6 +283,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     override fun invalidate() {
         stopChannelHealthMonitoring()
         lastStateReceivedAt = null
+        lastGlobalUpdate = null
         session = Session(this)
         globalPaused = true
         globalPositionMs = 0.0
@@ -288,8 +292,21 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         clientIgnFly = 0
         speedChanged = false
         behindFirstDetected = null
+        isRoomChanging = false
         awaitingRoomResyncDeadline = null
+        expectedPaused = true
         pingService = PingService()
+    }
+
+    /**
+     * Called when the app returns to the foreground after a background pause. The room moved on
+     * without us, so the next `State` must hard-seek and re-apply pause/play exactly like a fresh
+     * file load, and until we converge the ACK advertises the room position instead of ours.
+     */
+    fun resumeFromBackground() {
+        if (viewmodel.isSoloMode || viewmodel.media == null) return
+        markAwaitingRoomResync()
+        reanchorSyncOnFileLoad()
     }
 
     /**
@@ -359,20 +376,22 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * — or the file is provably too short to ever reach the room position — the flag clears and the
      * true local position is reported, so genuine desync (buffering) is still visible to the room.
      *
-     * Reads the engine position on the main thread, so callers may invoke it from any coroutine.
+     * Reads the tracker's position estimate, never the engine itself: the serial inbound consumer
+     * calls this once per second and must not wait on the main thread (PC parity, and a desktop
+     * deadlock when it did).
      */
-    suspend fun reportableStatePositionSec(): Double {
+    fun reportableStatePositionSec(): Double {
         val globalMs = extrapolatedGlobalPositionMs()
         // No file → nothing local to report; advertise the room position (the server pushes
         // file-less watchers last anyway, but this keeps us from ever announcing a bare 0).
         if (viewmodel.media == null) return globalMs / 1000.0
+        // Paused in the background: the room must not adopt a frozen watcher as its slowest.
+        if (viewmodel.uiState.isInBackground) return globalMs / 1000.0
 
         // Single volatile read: non-null = still masking, null = report the real local position.
         val deadline = awaitingRoomResyncDeadline
 
-        val localMs = withContext(Dispatchers.Main.immediate) {
-            viewmodel.player.currentPositionMs()
-        }.toDouble()
+        val localMs = viewmodel.playerManager.estimatedPositionMs().toDouble()
 
         if (deadline == null) return localMs / 1000.0
 
