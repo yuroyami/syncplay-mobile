@@ -9,7 +9,10 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.datastore.core.DataStore
@@ -155,6 +158,49 @@ fun ComponentActivity.applyActivityUiProperties() {
     /** Telling Android that it should keep the screen on */
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     WindowCompat.setDecorFitsSystemWindows(window, false)
+}
+
+/**
+ * Android 16 hides the fade-out of transient system bars from the app. Older builds let that
+ * animation reach the insets callbacks, so anything padded on the status bar jumps down and slides
+ * back up when the bars leave after a top-edge swipe. A bar animation that starts and ends hidden
+ * is that fade-out, so its bar insets are zeroed here before Compose sees them. Show animations and
+ * the hide on room entry start from visible bars and pass through unchanged.
+ */
+fun ComponentActivity.maskTransientBarAnimations() {
+    if (Build.VERSION.SDK_INT < 30) return
+    val decor = window.decorView
+    val statusBars = WindowInsetsCompat.Type.statusBars()
+    val navigationBars = WindowInsetsCompat.Type.navigationBars()
+    fun barsHidden(insets: WindowInsetsCompat) = !insets.isVisible(statusBars) && !insets.isVisible(navigationBars)
+
+    ViewCompat.setWindowInsetsAnimationCallback(decor, object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+        // Bar-only animations that began with both bars already hidden. Prepare fires before the
+        // next layout, so the root insets still hold the state from before the animation.
+        private val startedHidden = HashSet<WindowInsetsAnimationCompat>()
+
+        override fun onPrepare(animation: WindowInsetsAnimationCompat) {
+            val barsOnly = animation.typeMask and (statusBars or navigationBars).inv() == 0
+            val root = ViewCompat.getRootWindowInsets(decor) ?: return
+            if (barsOnly && barsHidden(root)) startedHidden += animation
+        }
+
+        override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
+            if (runningAnimations.none { it in startedHidden }) return insets
+            // By now the root insets hold the animation's target: bars still hidden means a fade-out.
+            val root = ViewCompat.getRootWindowInsets(decor) ?: return insets
+            if (!barsHidden(root)) return insets
+            return WindowInsetsCompat.Builder(insets)
+                .setInsets(statusBars, Insets.NONE)
+                .setInsets(navigationBars, Insets.NONE)
+                .setVisible(statusBars or navigationBars, false)
+                .build()
+        }
+
+        override fun onEnd(animation: WindowInsetsAnimationCompat) {
+            startedHidden -= animation
+        }
+    })
 }
 
 val PlatformFile.uri: Uri

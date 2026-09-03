@@ -5,7 +5,7 @@
 <h1 align="center">Synkplay</h1>
 
 <p align="center">
-  <b>Watch videos together, in sync. An unofficial <a href="https://syncplay.pl">Syncplay</a> client for Android &amp; iOS.</b><br>
+  <b>Watch videos together, in sync. An unofficial <a href="https://syncplay.pl">Syncplay</a> client for Android and iOS, with a desktop client in the source tree.</b><br>
   <sub>The "k" stands for Kotlin.</sub>
 </p>
 
@@ -58,7 +58,7 @@
       </a>
     </td>
     <td>
-      <a href="https://github.com/yuroyami/syncplay-mobile/releases/download/v0.23.0/synkplay-0.23.0-ios.ipa">
+      <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest">
         <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/Download_Blue.png" width="140" alt="Download IPA">
       </a>
     </td>
@@ -107,7 +107,7 @@
 ## Getting Started
 
 1. Open the app and enter a **username** and a **room** name.
-2. Pick a **server** (the official `syncplay.pl` is preselected) and a **port** (`8995`–`8999`). Add a password only if your server needs one.
+2. Pick a **server** (the official `syncplay.pl` is preselected) and a **port** (`8995` to `8999`). Add a password only if your server needs one.
 3. Tap **Join**, then load a video from device storage or paste a direct URL.
 4. Anyone in the same room on the same file plays in sync, mobile or PC.
 
@@ -139,7 +139,7 @@ Switch engines at runtime in the room settings. `✔` in **Default** marks the e
 
 ## Architecture
 
-Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared codebase for Android and iOS. The networking and sync protocol is a direct port of the official Syncplay client.
+Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared codebase for Android, iOS and desktop (the desktop app is built from source for now; no packaged downloads yet). The networking and sync protocol is a direct port of the official Syncplay client.
 
 | Layer | Technology |
 |:---|:---|
@@ -184,7 +184,7 @@ Thanks to **[@Zhaodaidai](https://github.com/Zhaodaidai)** (Chinese), **[@Doncan
 
 ## Building
 
-**Requirements:** a recent Android Studio (Narwhal / 2025.2+), and Xcode 16.3+ for iOS.
+**Requirements:** an Android Studio recent enough to open AGP 9.x projects, and a recent Xcode for iOS.
 
 **Android:** clone the repo and open it in Android Studio. No extra configuration needed. Two product flavors are available:
 - `full` (default): ExoPlayer + mpv + KitePlayer.

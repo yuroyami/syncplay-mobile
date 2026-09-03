@@ -1,33 +1,28 @@
 # Privacy Policy
 
-_Last Updated: August 1, 2025_
-
 Thank you for using our app built by **yuroyami**.
 
-## No Data Collection
+## What the app sends, and to whom
 
-We value your privacy. This app does **not collect**, **store**, or **transmit** any personal information or usage data. No analytics, tracking, or logging mechanisms are used.
+Synkplay is a synchronized-playback client. It only talks to services you actively use:
 
-- No account or login is required.
-- No personal data is collected or processed.
-- No third-party SDKs or services are integrated.
-- No internet access is used for transmitting user information.
+- **The Syncplay server you choose to join.** The app sends your chosen username, room name, chat messages, playback position, and the name, size and duration of the file you load. You can hash the filename and file size in the settings so the server and other room members only see a fingerprint.
+- **Klipy** (GIF search), only when you open the GIF panel. The search text and a random per-install identifier are sent so the "recent GIFs" feature works.
+- **OpenSubtitles**, only when you search for subtitles. The search text is sent.
+- **A public-IP lookup service** (api.ipify.org), only when you host a server, so the screen can show you your public address.
+- **Media resolvers** (YouTube and similar), only when you paste a link to such a site.
+
+## What stays on your device
+
+- Settings, saved room details (including the room password if you choose "remember"), and custom themes are stored locally.
+- A local log (kept for 7 days) exists for troubleshooting. It is never sent anywhere; you can export or clear it from the settings.
+
+There is no account system, no analytics SDK, no advertising, and no crash-reporting service.
 
 ## Permissions
 
-If the app requests any permissions (e.g. storage), they are used **solely for local functionality** and never result in data being sent outside your device.
+Any permission the app requests (storage, notifications, vibration) is used solely for local functionality and never results in data being sent outside your device beyond what is listed above.
 
 ## Changes to This Policy
 
-If the policy ever changes (which we don't anticipate), we will update this file accordingly and indicate the revision date at the top.
-
-## Contact
-
-If you have any questions about this privacy policy or the app, feel free to contact us at:
-
-**yuroyami**  
-Email: `younesaouameur@gmail.com`
-
----
-
-_This app respects your privacy by design._
+This policy may be updated as the app evolves. Changes are published at this file's location in the source repository.

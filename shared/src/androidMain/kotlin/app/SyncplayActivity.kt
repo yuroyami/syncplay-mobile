@@ -50,6 +50,7 @@ import app.utils.applyActivityUiProperties
 import app.utils.bindWatchdog
 import app.utils.changeLanguage
 import app.utils.loggy
+import app.utils.maskTransientBarAnimations
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -101,6 +102,7 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Tweaking window UI decor (transparent system bars, edge-to-edge) */
         applyActivityUiProperties()
+        maskTransientBarAnimations()
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
