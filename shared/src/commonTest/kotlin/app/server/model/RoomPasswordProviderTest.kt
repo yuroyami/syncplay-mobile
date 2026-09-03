@@ -34,6 +34,24 @@ class RoomPasswordProviderTest {
      *   provisional = sha256(roomName + salt).hexdigest()
      *   return sha1(provisional + salt + password).hexdigest()[:12].upper()
      */
+    /**
+     * The value below was produced by the Python reference implementation, not by this code:
+     *
+     *   salt   = sha256("testsalt12").hexdigest()
+     *   prov   = sha256("lobby" + salt).hexdigest()
+     *   sha1(prov + salt + "AB-123-456").hexdigest()[:12].upper()  ->  EB6501C30B97
+     *
+     * Recomputing the chain with the same library, as the test below also does, proves the steps
+     * are wired together but cannot catch the two of them drifting from Python in the same way.
+     */
+    @Test
+    fun `hash matches the value the Python server produces`() {
+        assertEquals(
+            "+lobby:EB6501C30B97",
+            RoomPasswordProvider.getControlledRoomName("lobby", validPassword, testSalt),
+        )
+    }
+
     @Test
     fun `hash matches Python step-by-step computation`() {
         val roomName = "lobby"

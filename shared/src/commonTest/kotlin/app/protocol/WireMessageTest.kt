@@ -363,11 +363,13 @@ class WireMessageTest {
     @Test
     fun `default no-op handlers don't throw for unhandled variants`() = runBlocking {
         val emptyHandler = object : WireMessageHandler {}
-        // Should not throw — defaults are Unit.
-        WireMessage.Hello(HelloData()).dispatch(emptyHandler)
-        WireMessage.State(StateData()).dispatch(emptyHandler)
-        WireMessage.listRequest().dispatch(emptyHandler)
-        WireMessage.chatBroadcast("u", "m").dispatch(emptyHandler)
+        val outcome = runCatching {
+            WireMessage.Hello(HelloData()).dispatch(emptyHandler)
+            WireMessage.State(StateData()).dispatch(emptyHandler)
+            WireMessage.listRequest().dispatch(emptyHandler)
+            WireMessage.chatBroadcast("u", "m").dispatch(emptyHandler)
+        }
+        assertTrue(outcome.isSuccess, "every default must be a no-op, not a throw: ${outcome.exceptionOrNull()}")
     }
 
     // ============================================================

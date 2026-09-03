@@ -28,7 +28,8 @@ object SubtitleSearch {
     /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`). */
     private val API_KEY = KiteBuildConfig.OPENSUBTITLES_API_KEY
 
-    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    /** Internal, not private: the model test pins THIS configuration rather than a copy of it. */
+    internal val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     private val client by lazy {
         httpClient.config {

@@ -1,6 +1,5 @@
 package app.subtitles
 
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -11,7 +10,9 @@ import kotlin.test.assertEquals
  */
 class OpenSubtitlesModelsTest {
 
-    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    /* The production instance. A local copy here protected nothing: the shipping config could
+     * lose ignoreUnknownKeys and every one of these tests would still pass. */
+    private val json = SubtitleSearch.json
 
     @Test
     fun `search response decodes the documented shape`() {
