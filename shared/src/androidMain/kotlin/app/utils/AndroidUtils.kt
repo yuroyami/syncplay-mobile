@@ -107,11 +107,6 @@ fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
             newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE
             newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             decorView.systemUiVisibility = newUiOptions
-            View.OnSystemUiVisibilityChangeListener { newmode ->
-                if (newmode != newUiOptions) {
-                    hideSystemUI(false)
-                }
-            }
             window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
             window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
 

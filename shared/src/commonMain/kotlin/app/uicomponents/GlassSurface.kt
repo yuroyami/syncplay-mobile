@@ -69,7 +69,13 @@ val LocalGlassSuspended = staticCompositionLocalOf { false }
 fun glassEnabled(): Boolean = !Preferences.DISABLE_FROSTED_GLASS.watchPref().value
 
 /** The same switch outside composition, for the Android player views choosing a surface type. */
-fun glassEnabledNow(): Boolean = !Preferences.DISABLE_FROSTED_GLASS.value()
+fun glassEnabledNow(): Boolean = !Preferences.DISABLE_FROSTED_GLASS.value() && videoSurfaceSupportsGlass()
+
+/**
+ * Whether this device can usefully draw video into the view hierarchy for glass to sample.
+ * Android answers by version and by how much memory the device has; everywhere else it is moot.
+ */
+expect fun videoSurfaceSupportsGlass(): Boolean
 
 /**
  * Marks [content] as the backdrop every glass surface blurs, and publishes it as [LocalHazeState].

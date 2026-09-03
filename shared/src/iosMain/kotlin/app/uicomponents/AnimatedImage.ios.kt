@@ -140,7 +140,9 @@ actual fun AnimatedImage(
         },
         update = { imageView ->
             imageView.contentMode = contentMode
-            imageView.image = nativeImage
+            // An invisible tile drops its image, so UIKit stops animating it; the decoded frames
+            // stay in the cache, so showing it again is instant.
+            imageView.image = if (alpha > 0f) nativeImage else null
             /* Native alpha — Compose's `Modifier.alpha` does not propagate into UIKit interop
              * layers. The underlying UIImageView keeps drawing at full opacity unless we set
              * its alpha here, which is what fades the actual pixels along with the parent HUD. */

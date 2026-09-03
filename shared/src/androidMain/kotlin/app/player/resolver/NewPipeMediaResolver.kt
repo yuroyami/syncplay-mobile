@@ -65,7 +65,10 @@ internal object NewPipeMediaResolver : MediaResolver {
         // Combined audio+video streams — non-DASH-aware players (ExoPlayer w/o DASH module on
         // some flavors, AVPlayer, VLCKit) need a single muxed source. videoOnlyStreams + audio are
         // intentionally skipped to avoid having to mux.
-        return info.videoStreams.orEmpty().bestPick()?.content
+        info.videoStreams.orEmpty().bestPick()?.content?.let { return it }
+        // SoundCloud and Bandcamp are advertised as supported and have no video at all, so their
+        // links resolved to nothing and the raw page URL went to the player instead.
+        return info.audioStreams.orEmpty().maxByOrNull { it.averageBitrate }?.content
     }
 
     private fun List<VideoStream>.bestPick(): VideoStream? {
