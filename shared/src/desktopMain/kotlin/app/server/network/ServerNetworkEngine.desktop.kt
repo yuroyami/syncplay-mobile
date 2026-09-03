@@ -4,7 +4,7 @@ import app.server.ClientConnection
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.Channel
+import io.netty.channel.Channel as NettyChannel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
@@ -18,6 +18,7 @@ import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
@@ -34,10 +35,13 @@ actual class ServerNetworkEngine actual constructor(
 ) {
     private var bossGroup: EventLoopGroup? = null
     private var workerGroup: EventLoopGroup? = null
-    private var serverChannel: Channel? = null
+    private var serverChannel: NettyChannel? = null
     // Concurrent: Netty delivers channelActive/channelInactive/exceptionCaught for different
     // channels on multiple event-loop threads, so this per-channel registry must be thread-safe.
-    private val clientChannels = ConcurrentHashMap<Channel, ClientConnection>()
+    private val clientChannels = ConcurrentHashMap<NettyChannel, ClientMailbox>()
+
+    /** A client's handler and the ordered queue its lines wait in. */
+    private class ClientMailbox(val connection: ClientConnection, val mailbox: Channel<String>)
 
     var isRunning: Boolean = false
         private set
@@ -67,36 +71,52 @@ actual class ServerNetworkEngine actual constructor(
                                     ctx.channel().close()
                                 }
                             )
-                            clientChannels[ctx.channel()] = connection
+                            // One mailbox and one consumer per socket: lines are handled in arrival
+                            // order, and the connection is only reported lost after the last line it
+                            // sent was handled. Fanning each line onto a pool let a later line, or the
+                            // loss itself, overtake the Hello and leave a ghost watcher behind.
+                            val mailbox = Channel<String>(Channel.UNLIMITED)
+                            clientChannels[ctx.channel()] = ClientMailbox(connection, mailbox)
+                            scope.launch(Dispatchers.Default) {
+                                try {
+                                    for (line in mailbox) connection.handlePacket(line)
+                                } finally {
+                                    connection.onConnectionLost()
+                                }
+                            }
                             loggy("Server: Client connected from ${ctx.channel().remoteAddress()}")
                         }
 
                         override fun channelRead0(ctx: ChannelHandlerContext, msg: String) {
-                            val connection = clientChannels[ctx.channel()] ?: return
-                            scope.launch(Dispatchers.Default) {
-                                connection.handlePacket(msg)
-                            }
+                            clientChannels[ctx.channel()]?.mailbox?.trySend(msg)
                         }
 
                         override fun channelInactive(ctx: ChannelHandlerContext) {
-                            val connection = clientChannels.remove(ctx.channel())
-                            connection?.onConnectionLost()
+                            clientChannels.remove(ctx.channel())?.mailbox?.close()
                             loggy("Server: Client disconnected from ${ctx.channel().remoteAddress()}")
                         }
 
                         @Deprecated("Deprecated in Java")
                         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
                             loggy("Server: Exception from ${ctx.channel().remoteAddress()}: ${cause.message}")
-                            val connection = clientChannels.remove(ctx.channel())
-                            connection?.onConnectionLost()
+                            clientChannels.remove(ctx.channel())?.mailbox?.close()
                             ctx.close()
                         }
                     })
                 }
             })
 
-        val future = bootstrap.bind(port).sync()
-        serverChannel = future.channel()
+        try {
+            val future = bootstrap.bind(port).sync()
+            serverChannel = future.channel()
+        } catch (e: Exception) {
+            // A port in use used to leak both event-loop groups on every retry.
+            workerGroup?.shutdownGracefully()
+            bossGroup?.shutdownGracefully()
+            workerGroup = null
+            bossGroup = null
+            throw e
+        }
         isRunning = true
         loggy("Server: Listening on port $port")
     }
@@ -104,8 +124,8 @@ actual class ServerNetworkEngine actual constructor(
     actual fun stop() {
         isRunning = false
 
-        for ((channel, connection) in clientChannels.toMap()) {
-            connection.onConnectionLost()
+        for ((channel, client) in clientChannels.toMap()) {
+            client.mailbox.close()
             channel.close()
         }
         clientChannels.clear()

@@ -3,14 +3,15 @@ package app.server
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import app.preferences.Preferences
+import app.preferences.set
 import app.preferences.value
 import app.server.model.ServerConfig
 import app.server.network.ServerNetworkEngine
 import app.utils.generateTimestampMillis
 import app.utils.getDeviceIpAddress
+import app.utils.httpClient
 import app.utils.loggy
 import app.utils.platformCallback
-import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
@@ -68,12 +69,18 @@ object ServerHostSession {
             fail("Invalid port number")
             return
         }
+        // The salt is minted once and kept: a fresh one per start would silently invalidate every
+        // controlled-room password handed out by the previous run.
+        val salt = Preferences.SERVER_SALT.value().ifEmpty {
+            ServerConfig.generateSalt().also { minted -> scope.launch { Preferences.SERVER_SALT.set(minted) } }
+        }
         val config = ServerConfig(
             port = portInt,
             password = Preferences.SERVER_PASSWORD.value(),
             isolateRooms = Preferences.SERVER_ISOLATE_ROOMS.value(),
             disableReady = Preferences.SERVER_DISABLE_READY.value(),
             disableChat = Preferences.SERVER_DISABLE_CHAT.value(),
+            salt = salt,
             motd = Preferences.SERVER_MOTD.value(),
         )
 
@@ -99,7 +106,10 @@ object ServerHostSession {
                         }
                     }
                     launch {
-                        newServer.connectedClients.collect { count -> connectedClients.value = count }
+                        newServer.connectedClients.collect { count ->
+                            connectedClients.value = count
+                            if (serverStatus.value == ServerStatus.Running) platformCallback.serverClientsChanged(portInt, count)
+                        }
                     }
                 }
 
@@ -112,11 +122,9 @@ object ServerHostSession {
 
                 launch {
                     publicIpLoading.value = true
+                    // The shared client has timeouts; a bare one hung forever offline and leaked on failure.
                     publicIpAddress.value = try {
-                        val client = HttpClient()
-                        val ip = client.get("https://api.ipify.org").bodyAsText().trim()
-                        client.close()
-                        ip
+                        httpClient.get("https://api.ipify.org").bodyAsText().trim().takeIf { it.isNotEmpty() }
                     } catch (_: Exception) {
                         null
                     }

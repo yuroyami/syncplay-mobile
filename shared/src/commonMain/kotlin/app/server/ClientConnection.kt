@@ -72,6 +72,12 @@ class ClientConnection(
         dropFn()
     }
 
+    /** Closes the socket with no error line, PC's plain `drop()`. */
+    fun drop() {
+        logged = false
+        dropFn()
+    }
+
     fun onConnectionLost() {
         // Called from raw transport threads (Netty/iOS); routes through the server's confined
         // dispatcher so removeWatcher's shared-map mutation can't race the timer / inbound work.
@@ -91,7 +97,8 @@ class ClientConnection(
                 val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
                 message.dispatch(this)
             } catch (e: SerializationException) {
-                loggy("Server: failed to decode line '$jsonString' — ${e.message}")
+                // A bounded excerpt: an unauthenticated peer must not write 64 KiB frames into the log.
+                loggy("Server: failed to decode line '${jsonString.take(LOGGED_LINE_MAX)}' — ${e.message}")
                 dropWithError("Failed to parse message")
             }
         }
@@ -109,6 +116,11 @@ class ClientConnection(
 
         if (username.isNullOrEmpty() || roomName.isNullOrEmpty() || clientVersion == null) {
             dropWithError("Hello command does not have enough parameters")
+            return
+        }
+        // A second Hello on a live connection would register a second watcher for one socket.
+        if (logged) {
+            dropWithError("Already logged in")
             return
         }
 
@@ -133,17 +145,20 @@ class ClientConnection(
             ignore.client?.let { cl -> clientIgnoringOnTheFly = cl }
         }
 
+        // Absence stays absent: a ping-only State (no playstate) must not rewind this watcher to
+        // 0, and PC's updateState takes None for exactly that reason.
         val playstate = state.playstate
-        val position = playstate?.position ?: 0.0
+        val position = playstate?.position
         val paused = playstate?.paused
         val doSeek = playstate?.doSeek
 
         state.ping?.let { ping ->
-            val latencyCalc = ping.latencyCalculation ?: 0.0
             val clientRtt = ping.clientRtt ?: 0.0
             clientLatencyCalculation = ping.clientLatencyCalculation ?: 0.0
             clientLatencyCalculationArrivalTime = currentTimeSeconds()
-            pingService.receiveMessage(latencyCalc, clientRtt)
+            // A missing echo is null, never 0: PingService ignores it instead of computing an RTT
+            // against the epoch.
+            pingService.receiveMessage(ping.latencyCalculation, clientRtt)
         }
 
         if (serverIgnoringOnTheFly == 0) {
@@ -160,8 +175,9 @@ class ClientConnection(
         set.file?.let { w.setFile(truncateFileName(it)) }
         set.ready?.let { handleReady(w, it) }
         set.controllerAuth?.let { handleControllerAuth(w, it) }
-        set.playlistChange?.let { server.setPlaylist(w, it.files ?: emptyList()) }
-        set.playlistIndex?.let { server.setPlaylistIndex(w, it.index ?: 0) }
+        // A playlistChange with no files, or an index with no number, is malformed, not a wipe.
+        set.playlistChange?.files?.let { server.setPlaylist(w, it) }
+        set.playlistIndex?.index?.let { server.setPlaylistIndex(w, it) }
         // Features must be written to the WATCHER, not just this connection's copy: List
         // responses read the watcher's features.
         set.features?.let {
@@ -392,4 +408,8 @@ class ClientConnection(
     }
 
     private fun currentTimeSeconds(): Double = generateTimestampMillis() / 1000.0
+
+    private companion object {
+        const val LOGGED_LINE_MAX = 200
+    }
 }

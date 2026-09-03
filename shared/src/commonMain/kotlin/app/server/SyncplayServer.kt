@@ -20,6 +20,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,8 +145,24 @@ class SyncplayServer(
             while (isActive) {
                 delay(SERVER_STATE_INTERVAL_MS)
                 sendState(watcher, doSeek = false, forcedUpdate = false)
+                if (dropIfSilent(watcher)) break
             }
         }
+    }
+
+    /**
+     * PC's Watcher.sendState tail: a client that has not sent a State for the protocol timeout is
+     * dead, whatever its socket says. Left in, a half-dead phone becomes a frozen watcher whose
+     * stale position the room adopts as its slowest and rewinds to. Returns true when dropped.
+     */
+    private fun dropIfSilent(watcher: ServerWatcher): Boolean {
+        val silentFor = ServerWatcher.currentTimeSeconds() - watcher.lastUpdatedOn
+        if (silentFor <= config.protocolTimeoutSeconds) return false
+        log("${watcher.name} timed out after ${silentFor.toInt()}s of silence")
+        val conn = _connections[watcher]
+        removeWatcher(watcher)
+        conn?.drop()
+        return true
     }
 
     private fun stopStateTimer(watcher: ServerWatcher) {
@@ -303,7 +320,10 @@ class SyncplayServer(
         val targetName = roomBaseName ?: room.name
 
         try {
-            val success = RoomPasswordProvider.check(targetName, password, config.salt)
+            // The password proves control of the room it was minted for and of no other. PC grants
+            // control of whatever room the watcher sits in; here the target must be that room, or
+            // one valid password would unlock every controlled room on the server.
+            val success = RoomPasswordProvider.check(targetName, password, config.salt) && targetName == room.name
             if (success && room is ControlledServerRoom) {
                 room.addController(watcher)
             }
@@ -352,18 +372,28 @@ class SyncplayServer(
             timestamp = generateTimestampMillis(),
             message = message
         )
-        serverLog.value = serverLog.value + entry
+        // Bounded: the screen keeps its own capped copy, and a long-running host must not grow
+        // this list (and copy it per line) for the life of the process.
+        serverLog.update { current -> (current + entry).takeLast(LOG_CAP) }
     }
 
-    /** Shuts down the server, cancelling all state timers and dropping every client. */
-    fun shutdown() {
+    /**
+     * Shuts down the server, cancelling all state timers and dropping every client. Confined to
+     * [serverDispatcher] like every other mutation, so a Stop cannot race a tick or a join.
+     */
+    suspend fun shutdown() = onServerThread {
         log("Server shutting down")
-        for ((watcher, _) in _connections.toMap()) {
+        for ((watcher, conn) in _connections.toMap()) {
             stopStateTimer(watcher)
+            conn.drop()
         }
         stateTimerJobs.clear()
         _connections.clear()
         connectedClients.value = 0
+    }
+
+    private companion object {
+        const val LOG_CAP = 500
     }
 }
 

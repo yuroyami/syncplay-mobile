@@ -4,6 +4,9 @@ import app.protocol.WireMessage
 import app.protocol.WireMessageDeserializer
 import app.protocol.syncplayJson
 import app.protocol.wire.HelloData
+import app.protocol.wire.PingData
+import app.protocol.wire.PlaystateData
+import app.protocol.wire.StateData
 import app.protocol.wire.Room
 import app.server.model.ServerConfig
 import kotlinx.coroutines.CoroutineScope
@@ -272,6 +275,167 @@ class ServerProtocolFlowTest {
         assertNotNull(list)
         assertTrue(list.rooms.containsKey("foyer"), "Alice should now be listed in 'foyer'")
         assertTrue(list.rooms["foyer"]!!.containsKey("alice"))
+    }
+
+    // -----------------------------------------------------------
+    // State handling
+    // -----------------------------------------------------------
+
+    private fun stateOf(position: Double?, paused: Boolean?, ping: PingData? = null) = WireMessage.State(
+        StateData(
+            playstate = if (position == null && paused == null) null else PlaystateData(position = position, paused = paused),
+            ping = ping
+        )
+    )
+
+    private suspend fun TestClient.positionSeenByServer(name: String, room: String): Double? {
+        sent.clear()
+        receive(WireMessage.listRequest())
+        return lastOf<WireMessage.ListResponse>()?.rooms?.get(room)?.get(name)?.position
+    }
+
+    @Test
+    fun `a ping-only State does not rewind the watcher to zero`(): Unit = runBlocking {
+        val srv = server()
+        val alice = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        alice.receive(WireMessage.file(app.protocol.wire.FileData(name = "movie.mkv", duration = 7200.0, size = "1")))
+
+        alice.receive(stateOf(position = 100.0, paused = true))
+        assertEquals(100.0, alice.positionSeenByServer("alice", "lobby"))
+
+        // A keep-alive with a ping and no playstate must leave the position alone.
+        alice.receive(stateOf(position = null, paused = null, ping = PingData(clientRtt = 0.05, clientLatencyCalculation = 1.0)))
+        assertEquals(100.0, alice.positionSeenByServer("alice", "lobby"))
+    }
+
+    @Test
+    fun `a missing ping echo does not age the position by decades`(): Unit = runBlocking {
+        val srv = server()
+        val alice = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        alice.receive(WireMessage.file(app.protocol.wire.FileData(name = "movie.mkv", duration = 7200.0, size = "1")))
+
+        // Playing, with a ping block that carries no latencyCalculation echo: the server must not
+        // compute an RTT against the epoch and add half of it as message age.
+        alice.receive(stateOf(position = 100.0, paused = false, ping = PingData(clientRtt = 0.05, clientLatencyCalculation = 1.0)))
+        val seen = alice.positionSeenByServer("alice", "lobby")
+        assertNotNull(seen)
+        assertTrue(seen in 100.0..101.0, "position should stay near 100, was $seen")
+    }
+
+    @Test
+    fun `a client that stops sending State is dropped after the protocol timeout`(): Unit = runBlocking {
+        val srv = server(ServerConfig(isolateRooms = false, protocolTimeoutSeconds = 0.3))
+        val alice = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        assertEquals(false, alice.dropped)
+
+        // The state timer ticks once a second; two ticks are enough for the timeout to be seen.
+        kotlinx.coroutines.delay(2_500)
+        assertEquals(true, alice.dropped, "a silent client must be dropped")
+
+        val bob = TestClient(srv)
+        bob.receive(helloFor("bob", "lobby"))
+        bob.sent.clear()
+        bob.receive(WireMessage.listRequest())
+        val users = bob.lastOf<WireMessage.ListResponse>()!!.rooms["lobby"]!!
+        assertTrue("alice" !in users, "the dropped watcher must leave the room")
+    }
+
+    @Test
+    fun `a playlistChange without files does not wipe the room playlist`(): Unit = runBlocking {
+        val srv = server()
+        val alice = TestClient(srv)
+        val bob = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        bob.receive(helloFor("bob", "lobby"))
+
+        alice.receive(WireMessage.playlistChange(listOf("a.mkv", "b.mkv")))
+        bob.sent.clear()
+        alice.receiveRaw("""{"Set":{"playlistChange":{"user":"alice"}}}""")
+        assertEquals(0, bob.allOf<WireMessage.Set>().count { it.data.playlistChange != null }, "no playlist broadcast for a fileless change")
+
+        bob.sent.clear()
+        bob.receive(WireMessage.roomChange("lobby"))
+        val playlist = bob.allOf<WireMessage.Set>().last { it.data.playlistChange != null }.data.playlistChange!!.files
+        assertEquals(listOf("a.mkv", "b.mkv"), playlist)
+    }
+
+    // -----------------------------------------------------------
+    // Controlled rooms
+    // -----------------------------------------------------------
+
+    /** Creates a controlled room the way a client does: ask in a plain room, then join the minted name. */
+    private suspend fun TestClient.createControlledRoom(baseRoom: String, password: String): String {
+        receive(WireMessage.controllerAuth(room = baseRoom, password = password))
+        val minted = lastOf<WireMessage.Set>()!!.data.newControlledRoom!!
+        receive(WireMessage.roomChange(minted.roomName))
+        receive(WireMessage.controllerAuth(room = minted.roomName, password = minted.password))
+        return minted.roomName
+    }
+
+    @Test
+    fun `the right password grants control of its own room`(): Unit = runBlocking {
+        val srv = server()
+        val alice = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        val room = alice.createControlledRoom("lobby", "AB-123-456")
+
+        val auth = alice.allOf<WireMessage.Set>().last { it.data.controllerAuth != null }.data.controllerAuth!!
+        assertEquals(true, auth.success)
+        alice.sent.clear()
+        alice.receive(WireMessage.listRequest())
+        assertEquals(true, alice.lastOf<WireMessage.ListResponse>()!!.rooms[room]!!["alice"]!!.controller)
+    }
+
+    @Test
+    fun `a valid password for another controlled room grants nothing`(): Unit = runBlocking {
+        val srv = server()
+        val alice = TestClient(srv)
+        val mallory = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        mallory.receive(helloFor("mallory", "den"))
+        val aliceRoom = alice.createControlledRoom("lobby", "AB-123-456")
+        // Mallory mints a room of her own, so she holds one valid controlled-room password.
+        val malloryRoom = mallory.createControlledRoom("den", "CD-789-012")
+
+        // She then walks into alice's room and presents the password she legitimately owns.
+        mallory.receive(WireMessage.roomChange(aliceRoom))
+        mallory.sent.clear()
+        mallory.receive(WireMessage.controllerAuth(room = malloryRoom, password = "CD-789-012"))
+
+        val auth = mallory.allOf<WireMessage.Set>().last { it.data.controllerAuth != null }.data.controllerAuth!!
+        assertEquals(false, auth.success, "a password proves control of the room it was minted for")
+
+        mallory.sent.clear()
+        mallory.receive(WireMessage.listRequest())
+        assertEquals(false, mallory.lastOf<WireMessage.ListResponse>()!!.rooms[aliceRoom]!!["mallory"]!!.controller)
+    }
+
+    @Test
+    fun `a second Hello on a live connection is refused`(): Unit = runBlocking {
+        val client = TestClient(server())
+        client.receive(helloFor("alice", "lobby"))
+        client.receive(helloFor("alice2", "lobby"))
+        assertEquals(true, client.dropped)
+    }
+
+    @Test
+    fun `an isolated room switch re-announces the file to the new room`(): Unit = runBlocking {
+        val srv = server(ServerConfig(isolateRooms = true))
+        val alice = TestClient(srv)
+        val bob = TestClient(srv)
+        alice.receive(helloFor("alice", "lobby"))
+        alice.receive(WireMessage.file(app.protocol.wire.FileData(name = "movie.mkv", duration = 7200.0, size = "1")))
+        bob.receive(helloFor("bob", "foyer"))
+        bob.sent.clear()
+
+        alice.receive(WireMessage.roomChange("foyer"))
+
+        val fileSet = bob.allOf<WireMessage.Set>().lastOrNull { it.data.user?.get("alice")?.file != null }
+        assertNotNull(fileSet, "bob should learn alice's file when she switches into his room")
+        assertEquals("movie.mkv", fileSet.data.user!!["alice"]?.file?.name)
     }
 
     // -----------------------------------------------------------

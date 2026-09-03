@@ -119,5 +119,7 @@ class PublicServerRoomManager : ServerRoomManager() {
             }
         }
         super.moveWatcher(watcher, roomName)
+        // The new room never saw this watcher's file; PC re-sends it on every isolated switch.
+        watcher.setFile(watcher.file)
     }
 }

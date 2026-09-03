@@ -34,7 +34,10 @@ data class ServerConfig(
     val salt: String = generateSalt(),
 
     /** Message of the day shown to connecting clients. */
-    val motd: String = ""
+    val motd: String = "",
+
+    /** Seconds without a State from a client before it is dropped as dead. */
+    val protocolTimeoutSeconds: Double = PROTOCOL_TIMEOUT_SECONDS
 ) {
     /** Returns the MD5-hashed password, or empty string if no password set. */
     val hashedPassword: String

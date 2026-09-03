@@ -23,6 +23,9 @@ class ServerWatcher(
     private var _position: Double? = null
     private var _lastUpdatedOn: Double = currentTimeSeconds()
 
+    /** Seconds (wall clock) at which this client last sent a State; the server's silence check reads it. */
+    val lastUpdatedOn: Double get() = _lastUpdatedOn
+
     var file: FileData? = null
         private set
 
