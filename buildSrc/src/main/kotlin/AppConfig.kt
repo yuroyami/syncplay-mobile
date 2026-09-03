@@ -88,10 +88,24 @@ object AppConfig {
 
     /* ── Propagation: values-en/strings.xml → values/strings.xml (default fallback) ─────────────── */
     fun Project.propagateDefaultStrings() {
-        val src = File("${rootDir}/shared/src/commonMain/composeResources/values-en/strings.xml")
-        val dst = File("${rootDir}/shared/src/commonMain/composeResources/values/strings.xml")
-        if (src.exists()) {
-            src.copyTo(dst, overwrite = true)
+        val resDir = File("${rootDir}/shared/src/commonMain/composeResources")
+        val src = File(resDir, "values-en/strings.xml")
+        val dst = File(resDir, "values/strings.xml")
+        val untranslatable = File(resDir, "values/strings_untranslatable.xml")
+        if (!src.exists()) return
+        // A key declared in strings_untranslatable.xml must not also land in values/strings.xml:
+        // two default-qualifier declarations of one key make the resource resolver throw on
+        // every device whose language has no translation of it (issue #151).
+        val reserved = if (untranslatable.exists()) {
+            Regex("""<string(?:-array)?\s+name="([^"]+)"""").findAll(untranslatable.readText()).map { it.groupValues[1] }.toSet()
+        } else emptySet()
+        val nameOf = Regex("""^\s*<string\s+name="([^"]+)"""")
+        val filtered = src.readLines().filterNot { line ->
+            nameOf.find(line)?.groupValues?.get(1) in reserved
+        }
+        val text = filtered.joinToString("\n") + "\n"
+        if (!dst.exists() || dst.readText() != text) {
+            dst.writeText(text)
             logger.lifecycle("✅ Default strings fallback synced from values-en")
         }
     }

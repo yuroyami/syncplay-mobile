@@ -490,7 +490,6 @@
     <string name="uisetting_osd_warnings_summary">File mismatch, alone in the room, errors.</string>
 
     <!-- mpv.conf import/export (Android-only; mpv on iOS doesn't read a user config file) -->
-    <string name="uisetting_categ_mpv">mpv</string>
     <string name="uisetting_mpv_import_conf_title">Import mpv.conf</string>
     <string name="uisetting_mpv_import_conf_summary">Replaces mpv.conf with a file you pick.</string>
     <string name="uisetting_mpv_export_conf_title">Export mpv.conf</string>
@@ -500,7 +499,6 @@
     <string name="uisetting_mpv_conf_missing">No mpv.conf to export yet — import one first or start mpv at least once.</string>
 
     <!-- VLC custom flags (appended to LibVLC init args on iOS) -->
-    <string name="uisetting_categ_vlc">VLC</string>
     <string name="uisetting_vlc_custom_flags_title">Custom VLC flags</string>
     <string name="uisetting_vlc_custom_flags_summary">Extra LibVLC flags, separated by spaces.</string>
 
