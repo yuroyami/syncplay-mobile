@@ -123,6 +123,9 @@ actual fun getLogDirectoryPath(): String? {
     }
 }
 
+actual fun platformDescription(): String =
+    "${System.getProperty("os.name")} ${System.getProperty("os.version")} (${System.getProperty("os.arch")})"
+
 actual fun getCacheDirectoryPath(subdir: String): String? = try {
     File(File(desktopAppDataDir, "cache"), subdir).apply { mkdirs() }.absolutePath
 } catch (_: Exception) {

@@ -198,6 +198,9 @@ actual fun getLogDirectoryPath(): String? {
     }
 }
 
+actual fun platformDescription(): String =
+    "Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
+
 actual fun getCacheDirectoryPath(subdir: String): String? = try {
     java.io.File(contextObtainer().cacheDir, subdir).apply { mkdirs() }.absolutePath
 } catch (_: Exception) {

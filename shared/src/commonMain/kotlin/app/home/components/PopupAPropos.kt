@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
+import app.preferences.value
+import app.preferences.Preferences
 import app.home.HomeViewmodel
 import app.theme.Space
 import app.theme.Type
@@ -31,6 +33,7 @@ import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.utils.appName
 import app.utils.platform
+import app.utils.platformDescription
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -119,6 +122,8 @@ object PopupAPropos {
 
     /** A new-issue link with the environment already in the body. */
     private fun bugReportUrl(): String {
+        // Everything a triage needs, filled in already: without the engine and the build, most
+        // reports cost a round trip before anyone can even reproduce them.
         val body = """
             |**What happened?**
             |
@@ -127,8 +132,11 @@ object PopupAPropos {
             |
             |
             |---
-            |App version: ${KiteBuildConfig.APP_VERSION}
+            |App version: ${KiteBuildConfig.APP_VERSION}${if (KiteBuildConfig.EXOPLAYER_ONLY) " (exoOnly)" else ""}
             |Platform: ${platform.label}
+            |Device: ${platformDescription()}
+            |Video engine: ${Preferences.PLAYER_ENGINE.value()}
+            |Network engine: ${Preferences.NETWORK_ENGINE.value()}
         """.trimMargin()
         return "https://github.com/yuroyami/syncplay-mobile/issues/new" +
             "?title=" + urlEncode("[${platform.label}] ") +

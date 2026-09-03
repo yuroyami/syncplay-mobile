@@ -34,6 +34,7 @@ import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSCachesDirectory
+import platform.UIKit.UIDevice
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
@@ -249,6 +250,11 @@ actual fun getLogDirectoryPath(): String? {
     } catch (_: Exception) {
         null
     }
+}
+
+actual fun platformDescription(): String {
+    val device = UIDevice.currentDevice
+    return "${device.systemName} ${device.systemVersion} (${device.model})"
 }
 
 actual fun getCacheDirectoryPath(subdir: String): String? {

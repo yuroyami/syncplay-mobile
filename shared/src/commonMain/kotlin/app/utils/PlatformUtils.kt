@@ -147,3 +147,6 @@ expect fun consumePendingShortcut(): app.home.JoinConfig?
 
 /** True when the system asks for less motion: iOS Reduce Motion, Android's animator scale at zero, never on desktop. */
 expect fun reducedMotion(): Boolean
+
+/** The OS and the hardware, one line, for a bug report: "Android 15 (Pixel 7)". */
+expect fun platformDescription(): String
