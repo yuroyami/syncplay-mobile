@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.preferences.Preferences
 import app.preferences.datastore
+import kotlinx.coroutines.flow.first
 import app.preferences.datastoreStateFlow
 import app.preferences.set
 import app.preferences.value
@@ -129,7 +130,7 @@ object MediaAccessRegistry {
     }
 
     /** Resolves the stored bookmark for [filename] and confirms the target still exists. */
-    private fun directFile(filename: String): PlatformFile? {
+    private suspend fun directFile(filename: String): PlatformFile? {
         val bytes = readBookmark(FILE_BOOKMARKS, filename) ?: return null
         val file = runCatching { PlatformFile.fromBookmarkData(bytes) }.getOrNull() ?: return null
         // exists() can throw on a stale/revoked handle; treat that as "still try it" only when
@@ -139,7 +140,7 @@ object MediaAccessRegistry {
     }
 
     /** Resolves a media-directory handle from its bookmark, falling back to the raw id. */
-    private fun resolveDirectory(dirId: String): PlatformFile? {
+    private suspend fun resolveDirectory(dirId: String): PlatformFile? {
         readBookmark(DIR_BOOKMARKS, dirId)?.let { bytes ->
             runCatching { PlatformFile.fromBookmarkData(bytes) }.getOrNull()?.let { return it }
         }
@@ -164,8 +165,10 @@ object MediaAccessRegistry {
     /* ------------------------------ Storage -------------------------------- */
 
     @OptIn(ExperimentalEncodingApi::class)
-    private fun readBookmark(key: androidx.datastore.preferences.core.Preferences.Key<String>, id: String): ByteArray? {
-        val raw = datastoreStateFlow.value[key] ?: return null
+    private suspend fun readBookmark(key: androidx.datastore.preferences.core.Preferences.Key<String>, id: String): ByteArray? {
+        // The hot snapshot lags its own writes by a collection, so a file remembered a moment ago
+        // read back as missing. Read the store itself; a bookmark lookup is not a hot path.
+        val raw = datastore.data.first()[key] ?: return null
         val map = decode(raw)
         val b64 = map[id] ?: return null
         return runCatching { Base64.decode(b64) }.getOrNull()

@@ -44,6 +44,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      */
     private var lastLoadedSource: String? = null
 
+    /** The index [lastLoadedSource] was loaded from, so a playlist with the same name twice can move between them. */
+    private var lastLoadedIndex: Int = -1
+
     /**
      * URLs the *local user* explicitly added (typed in, or imported from a local playlist file).
      *
@@ -170,6 +173,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             // reload it.
             val first = toAdd.first()
             lastLoadedSource = first.name
+            lastLoadedIndex = 0
             session.spIndex.intValue = 0
             viewmodel.player.injectVideoFile(first)
             viewmodel.networkManager.send(WireMessage.playlistIndex(0))
@@ -265,7 +269,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (index !in session.sharedPlaylist.indices) return /* In rare cases when this was called on an empty/short list */
         session.spIndex.intValue = index
         val target = session.sharedPlaylist[index]
-        if (target == lastLoadedSource) return /* Already loaded this exact entry — don't reload */
+        // Name AND index: a playlist holding the same filename twice could not move between the
+        // two entries, because the name alone always matched what was already loaded.
+        if (target == lastLoadedSource && index == lastLoadedIndex) return
+        lastLoadedIndex = index
         retrieveFile(target)
     }
 
