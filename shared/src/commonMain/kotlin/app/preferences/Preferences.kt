@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Language
@@ -167,6 +168,8 @@ import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
 import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.setting_resetdefault_title
 import syncplaymobile.shared.generated.resources.setting_tls_summary
+import syncplaymobile.shared.generated.resources.setting_room_portrait_summary
+import syncplaymobile.shared.generated.resources.setting_room_portrait_title
 import syncplaymobile.shared.generated.resources.setting_tls_required_detail
 import syncplaymobile.shared.generated.resources.setting_tls_required_summary
 import syncplaymobile.shared.generated.resources.setting_tls_required_title
@@ -380,6 +383,13 @@ object Preferences {
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
+
+    /** Whether the room follows the device's rotation instead of being held in landscape. */
+    val ROOM_ALLOW_PORTRAIT = Pref("pref_room_allow_portrait", false) {
+        title = Res.string.setting_room_portrait_title
+        summary = Res.string.setting_room_portrait_summary
+        icon = Icons.Filled.ScreenRotation
+    }
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())

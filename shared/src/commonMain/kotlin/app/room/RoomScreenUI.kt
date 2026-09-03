@@ -37,6 +37,7 @@ import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
 import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
+import app.preferences.Preferences.ROOM_ALLOW_PORTRAIT
 import app.preferences.flow
 import app.preferences.watchPref
 import app.room.ui.bottombar.BlackContrastUnderlay
@@ -84,7 +85,9 @@ val LocalRoomInitialFocus = compositionLocalOf<FocusRequester?> { null }
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
     // Phones stay landscape in the room; the tall arrangement is for windows taller than wide.
-    EnterRoomMode(false)
+    // The room is held in landscape unless the user asked otherwise; the arrangement already
+    // follows the window, so portrait lays out on its own once rotation is allowed.
+    EnterRoomMode(portrait = ROOM_ALLOW_PORTRAIT.watchPref().value)
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)

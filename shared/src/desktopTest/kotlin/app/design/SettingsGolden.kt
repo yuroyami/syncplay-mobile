@@ -28,7 +28,8 @@ class SettingsGolden {
 
         // 260dp until the encryption-required row joined the category; still one screen, no scroll.
         assertTrue(network.contentHeightDp <= 285, "network category ${network.contentHeightDp}dp exceeds its 285dp budget")
-        assertTrue(player.contentHeightDp <= 690, "player category ${player.contentHeightDp}dp exceeds its 690dp budget")
+        // 690dp until the room gained a rotation switch; still one screen on a phone in landscape.
+        assertTrue(player.contentHeightDp <= 750, "player category ${player.contentHeightDp}dp exceeds its 750dp budget")
         assertTrue(chat.contentHeightDp <= 900, "chat category ${chat.contentHeightDp}dp exceeds its 900dp budget")
     }
 }

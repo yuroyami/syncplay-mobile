@@ -116,6 +116,10 @@
     <string name="room_user_unmute">Unmute</string>
     <string name="room_user_muted">%1$s is muted. Their messages stay hidden until you unmute them.</string>
     <string name="room_user_report">Report</string>
+    <string name="room_user_set_ready">Mark ready</string>
+    <string name="room_user_set_not_ready">Mark not ready</string>
+    <string name="setting_room_portrait_title">Follow device rotation</string>
+    <string name="setting_room_portrait_summary">Let the room turn with the device.</string>
     <string name="room_share_invite_message">Join me in %1$s on Synkplay:</string>
     <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
@@ -588,11 +592,11 @@
     <string name="about_source_button">Source code</string>
     <string name="about_report_button">Report a bug</string>
     <string name="connect_solomode_tooltip">Turns Synkplay into a regular video player. Fully offline: no server, no room, no syncing. Just you and your file.</string>
-    <string name="about_version">Version %1$s</string>
-    <string name="about_developed_by">Built by yuroyami</string>
-    <string name="about_client_is_unofficial_disclaimer">Watch anything in sync with friends, wherever they are. Synkplay keeps everyone\u2019s playback lined up to the moment, so a pause here is a pause there.</string>
-    <string name="about_client_platforms">An independent client for the Syncplay protocol, with thanks to the maintainers who made it open.</string>
-    <string name="about_official_website">syncplay.pl</string>
+    <string name="about_version_value">Version %1$s</string>
+    <string name="about_author">Built by yuroyami</string>
+    <string name="about_blurb">Watch anything in sync with friends, wherever they are. Synkplay keeps everyone\u2019s playback lined up to the moment, so a pause here is a pause there.</string>
+    <string name="about_independent">An independent client for the Syncplay protocol, with thanks to the maintainers who made it open.</string>
+    <string name="about_website">syncplay.pl</string>
 
     <string name="tips_dontshowmetips">No more tips</string>
     <string name="tips_did_ya_know">Did ya know?</string>
