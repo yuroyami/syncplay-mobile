@@ -47,4 +47,22 @@ data class Message(
                 path.endsWith(".jpg", ignoreCase = true) ||
                 path.endsWith(".jpeg", ignoreCase = true)
         }
+
+    /** The host an image came from, for the "load this?" line and the trust check below. */
+    val imageHost: String
+        get() = content.substringAfter("://", "").substringBefore('/').substringBefore(':').lowercase()
+
+    /**
+     * Whether this image may load without being asked for.
+     *
+     * Fetching an image the moment a peer names it hands that peer's chosen host the address of
+     * every device in the room, with nothing asked. The GIF picker's own CDN is exempt, because
+     * the sender chose it from inside this app; anything else waits for a tap.
+     */
+    val isFromTrustedImageHost: Boolean
+        get() = TRUSTED_IMAGE_HOSTS.any { imageHost == it || imageHost.endsWith(".$it") }
+
+    companion object {
+        private val TRUSTED_IMAGE_HOSTS = listOf("klipy.com", "klipy.co")
+    }
 }

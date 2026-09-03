@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
+import app.LocalRoomUiState
 import app.player.models.Chapter
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
@@ -61,7 +62,14 @@ fun RoomSeekbar(modifier: Modifier) {
     val p = palette
     val density = LocalDensity.current
     val scope = rememberCoroutineScope { Dispatchers.Main }
-    val positionMs by viewmodel.playerManager.timeCurrentMillis.collectAsState()
+    /* Collected only while the HUD shows. The bar stays composed at alpha 0 when hidden, so a
+     * plain collect recomposed it four times a second behind an invisible layer, forever. */
+    val hudVisible by LocalRoomUiState.current.visibleHUD.collectAsState()
+    val positionState = remember { mutableLongStateOf(viewmodel.playerManager.timeCurrentMillis.value) }
+    LaunchedEffect(hudVisible) {
+        if (hudVisible) viewmodel.playerManager.timeCurrentMillis.collect { positionState.longValue = it }
+    }
+    val positionMs = positionState.longValue
     val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
 
     /* The one caller of analyzeChapters: engines clear the list first, so a second caller

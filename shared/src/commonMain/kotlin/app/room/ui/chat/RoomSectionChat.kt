@@ -189,7 +189,11 @@ fun ChatComposer(
 @Composable
 fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
-    val messages by viewmodel.session.messageSequence.collectAsState()
+    val allMessages by viewmodel.session.messageSequence.collectAsState()
+    val muted = viewmodel.uiState.mutedUsers
+    // A muted peer's lines are dropped from the list rather than blanked, so grouping and the
+    // time gutter read as if they were never sent.
+    val messages = remember(allMessages, muted.size) { allMessages.filter { it.sender == null || it.sender !in muted } }
     val chatPalette = LocalChatPalette.current
 
     val bgOpacity by MSG_BG_OPACITY.watchPref()

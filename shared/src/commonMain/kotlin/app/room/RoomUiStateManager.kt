@@ -1,5 +1,6 @@
 package app.room
 
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.ui.focus.FocusRequester
 import app.AbstractManager
 import app.preferences.flow
@@ -50,6 +51,19 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
+
+    /**
+     * Image URLs the user tapped to load. Chat does not fetch a peer's image host on sight, so
+     * this is what un-hides one, for this room session only.
+     */
+    val revealedImages = mutableStateSetOf<String>()
+
+    /** Muted usernames: their chat lines are not rendered. Kept for this room session. */
+    val mutedUsers = mutableStateSetOf<String>()
+
+    fun toggleMute(username: String) {
+        if (!mutedUsers.remove(username)) mutedUsers.add(username)
+    }
 
     fun triggerHaptic() {
         app.utils.platformCallback.performHapticFeedback()
@@ -147,5 +161,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         scrubbing.value = false
         sidePanels.forEach { it.value = false }
         railActionsExpanded.value = false
+        revealedImages.clear()
+        mutedUsers.clear()
     }
 }

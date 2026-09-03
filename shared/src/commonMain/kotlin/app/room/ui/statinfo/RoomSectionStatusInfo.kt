@@ -25,6 +25,9 @@ import app.theme.Space
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.chromeSurface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
 import org.jetbrains.compose.resources.pluralStringResource
@@ -33,6 +36,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_connecting
 import syncplaymobile.shared.generated.resources.room_user_count
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
+import syncplaymobile.shared.generated.resources.room_reconnect_now
 import syncplaymobile.shared.generated.resources.room_reconnecting
 
 private val EPISODE = Regex("(?:s|season)(\\d{1,2})(?:e|episode)(\\d{1,2})")
@@ -92,6 +96,17 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         )
         RowGap(Space.gapTight + 2.dp)
         Text(state, style = Type.value, color = p.inkDim, maxLines = 1)
+        // Waiting out the backoff is the common case, but a user who knows the server just came
+        // back should not have to leave the room to try again.
+        if (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.SCHEDULING_RECONNECT) {
+            RowGap(Space.gapTight)
+            GlyphButton(
+                icon = Icons.Filled.Refresh,
+                name = stringResource(Res.string.room_reconnect_now),
+                tint = p.accent,
+                size = Space.glyph,
+            ) { viewmodel.networkManager.reconnectNow() }
+        }
         if (episode != null) {
             RowGap(Space.gapTight + 2.dp)
             Tag(episode)

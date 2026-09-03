@@ -107,6 +107,16 @@
         <item quantity="other">%1$d users</item>
     </plurals>
     <string name="room_details_file_properties">Duration: %1$s - Size: %2$s MBs</string>
+    <string name="room_details_user_position">At: %1$s</string>
+    <string name="room_share_invite">Share the room</string>
+    <string name="room_reconnect_now">Try again now</string>
+    <string name="room_chat_show_image">Show image from %1$s</string>
+    <string name="room_chat_image_hidden">Image hidden. Tap to load it from %1$s.</string>
+    <string name="room_user_mute">Mute</string>
+    <string name="room_user_unmute">Unmute</string>
+    <string name="room_user_muted">%1$s is muted. Their messages stay hidden until you unmute them.</string>
+    <string name="room_user_report">Report</string>
+    <string name="room_share_invite_message">Join me in %1$s on Synkplay:</string>
     <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
     <string name="room_shared_playlist_changed">%1$s changed the playlist current selection</string>
@@ -343,7 +353,7 @@
     <string name="setting_tls_required_detail">Off: a server without TLS is joined in plain text, with a notice. On: the connection is dropped instead.</string>
     <string name="setting_resetdefault_title">Reset default settings</string>
     <string name="setting_resetdefault_summary">Everything back to its default.</string>
-    <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
+    <string name="setting_resetdefault_dialog">Reset every setting in Settings to its default? Your themes, saved rooms and shortcuts are not touched.</string>
     <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
     <string name="setting_pause_if_someone_left_summary">Pauses when someone leaves the room.</string>
     <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
@@ -431,7 +441,7 @@
     <string name="uisetting_reconnect_interval_title">Reconnection interval</string>
     <string name="uisetting_reconnect_interval_summary">Wait between reconnection attempts.</string>
     <string name="uisetting_resetdefault_title">Reset default settings</string>
-    <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
+    <string name="uisetting_resetdefault_summary">Reset the settings on this screen.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_kite_compose_renderer_title">Compose renderer</string>
     <string name="uisetting_kite_compose_renderer_summary">Draws video as Compose content. Switches live.</string>

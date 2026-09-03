@@ -37,12 +37,15 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import app.LocalRoomViewmodel
 import app.utils.platformCallback
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_chat_copied
+import syncplaymobile.shared.generated.resources.room_chat_image_hidden
+import syncplaymobile.shared.generated.resources.room_chat_show_image
 import app.uicomponents.AnimatedImage
 
 /** How chat text is drawn: the size preference (floored at 11), the outline and shadow switches. */
@@ -124,14 +127,32 @@ fun MessageRow(
                     )
                 }
                 if (message.isImageUrl) {
-                    /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
-                    AnimatedImage(
-                        url = message.content,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        alpha = imageAlpha,
-                        modifier = Modifier.padding(top = 2.dp).size(96.dp).clip(Radius.controlShape),
-                    )
+                    val revealed = message.isFromTrustedImageHost || message.content in viewmodel.uiState.revealedImages
+                    if (revealed) {
+                        /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
+                        AnimatedImage(
+                            url = message.content,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            alpha = imageAlpha,
+                            modifier = Modifier.padding(top = 2.dp).size(96.dp).clip(Radius.controlShape),
+                        )
+                    } else {
+                        /* A peer's link is not fetched on sight: that would hand their chosen host
+                         * the address of every device in the room. One tap loads it. */
+                        Text(
+                            text = stringResource(Res.string.room_chat_image_hidden, message.imageHost),
+                            style = body,
+                            color = chatPalette.systemmsgColor,
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .clip(Radius.controlShape)
+                                .clickable(
+                                    onClickLabel = stringResource(Res.string.room_chat_show_image, message.imageHost),
+                                ) { viewmodel.uiState.revealedImages.add(message.content) }
+                                .padding(vertical = 2.dp),
+                        )
+                    }
                 } else {
                     OutlinedText(
                         text = BIDI_ISOLATE_START + message.content + BIDI_ISOLATE_END,

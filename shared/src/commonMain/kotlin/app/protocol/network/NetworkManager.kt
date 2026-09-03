@@ -196,6 +196,24 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
+     * Retries at once instead of waiting out the backoff. The running campaign is dropped first,
+     * so the next attempt starts now rather than after the delay it was already sleeping through.
+     */
+    fun reconnectNow() {
+        if (viewmodel.isSoloMode) return
+        if (state.value == ConnectionState.CONNECTED || state.value == ConnectionState.CONNECTING) return
+        reconnectionJob?.cancel()
+        reconnectionJob = null
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            tls = if (TLS_ENABLE.value() && supportsTLS()) TlsState.TLS_ASK else TlsState.TLS_NO
+            connect()
+            // Whatever the outcome, the ordinary loop takes over from here.
+            state.first { it != ConnectionState.CONNECTING }
+            if (state.value != ConnectionState.CONNECTED) reconnect()
+        }
+    }
+
+    /**
      * Inbound lines, processed STRICTLY one at a time in arrival order by the single consumer
      * below. The Syncplay protocol is serial (PC runs one Twisted reactor; the server side here
      * uses `limitedParallelism(1)`); handling two `State`s concurrently would interleave their
