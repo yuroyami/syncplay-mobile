@@ -1,11 +1,11 @@
 package app.protocol.network
 
 import android.net.TrafficStats
+import app.protocol.models.ConnectionState
 import app.room.RoomViewmodel
 import app.utils.loggy
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
-import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelPipeline
@@ -19,9 +19,11 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
+import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 
 /**
  * Netty-based [NetworkManager] for Android: async TCP socket with TLS support.
@@ -31,6 +33,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     override val engine = NetworkEngine.NETTY
 
+    @Volatile
     private var channel: Channel? = null
 
     /**
@@ -46,7 +49,8 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     /**
      * Opens a TCP connection to the Syncplay server. Bootstraps a NIO client with string
      * codecs, a CRLF line-frame decoder, and an inbound handler that forwards each line to
-     * [handlePacket]. Waits up to 10s; on timeout calls onConnectionFailed.
+     * [handlePacket]. Waits up to 10 s; a refused, unreachable or timed-out connect throws,
+     * which [connect] turns into onConnectionFailed.
      */
     override suspend fun connectSocket() {
         val group: EventLoopGroup = NioEventLoopGroup()
@@ -73,11 +77,15 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                             if (msg != null) handlePacket(msg)
                         }
 
+                        override fun channelInactive(ctx: ChannelHandlerContext) {
+                            super.channelInactive(ctx)
+                            lost(ctx.channel())
+                        }
+
                         @Deprecated("Deprecated in Java")
                         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
-                            super.exceptionCaught(ctx, cause)
                             loggy("EXCEPTION CAUGHT IN NETTY: ${cause?.stackTraceToString()}")
-                            viewmodel.callback.onDisconnected()
+                            ctx?.close()
                         }
                     })
                 }
@@ -85,27 +93,46 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
         TrafficStats.setThreadStatsTag(0xF00DFAF) // Satisfies Android's StrictMode policy
 
-        val f = b.connect(
-            viewmodel.session.serverHost,
-            viewmodel.session.serverPort
-        )
-        val success = f.await(10000)
-        if (!success) {
-            viewmodel.callback.onConnectionFailed()
-        } else {
-            channel = f.channel()
-            loggy("$channel")
+        val connected = withTimeout(CONNECT_TIMEOUT_MS) {
+            suspendCancellableCoroutine<Channel> { cont ->
+                val f = b.connect(viewmodel.session.serverHost, viewmodel.session.serverPort)
+                f.addListener { future ->
+                    // The future completing is not the same as it succeeding: a refused or
+                    // unreachable host completes it with a cause.
+                    if (future.isSuccess) cont.resume(f.channel())
+                    else cont.resumeWithException(future.cause() ?: IOException("Connect failed"))
+                }
+                cont.invokeOnCancellation { f.cancel(true) }
+            }
+        }
+        channel = connected
+        loggy("$connected")
+    }
+
+    /**
+     * The socket went away under us. Only the current channel counts: our own teardown of a
+     * previous socket is not news. In CONNECTING that is a server closing mid-handshake (a
+     * wrong password, for one), which used to leave the room dead-ended with no callback.
+     */
+    private fun lost(ch: Channel) {
+        if (ch !== channel) return
+        channel = null
+        when (state.value) {
+            ConnectionState.CONNECTING -> viewmodel.callback.onConnectionFailed()
+            ConnectionState.CONNECTED -> viewmodel.callback.onDisconnected()
+            else -> Unit
         }
     }
 
-    /** Closes the channel and shuts down [group], releasing its NIO threads. */
+    /** Closes the channel and shuts down [group], releasing its NIO threads. Never blocks the caller. */
     override fun terminateExistingConnection() {
+        val ch = channel
+        channel = null
         try {
             loggy("Terminating network session.")
-            channel?.close()?.await()
-            channel = null
+            ch?.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            loggy("Channel close failed: ${e.message}")
         } finally {
             // Release the NIO threads with the channel — see [group].
             group?.shutdownGracefully()
@@ -113,15 +140,15 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         }
     }
 
-    /** Writes and flushes [s]; a failed write triggers onDisconnected. */
+    /** Writes and flushes [s], returning once Netty has written it and throwing when it could not. */
     override suspend fun writeActualString(s: String) {
-        val f = channel?.writeAndFlush(s)
-        f?.addListener(ChannelFutureListener { future ->
-            if (!future.isSuccess) {
-                loggy("OH NO, no future...")
-                viewmodel.callback.onDisconnected()
+        val ch = channel ?: throw SocketGoneException()
+        suspendCancellableCoroutine<Unit> { cont ->
+            ch.writeAndFlush(s).addListener { future ->
+                if (future.isSuccess) cont.resume(Unit)
+                else cont.resumeWithException(future.cause() ?: IOException("Write failed"))
             }
-        })
+        }
     }
 
     override fun supportsTLS() = true
@@ -130,6 +157,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * Inserts an SSL handler at the front of the pipeline and suspends until the TLS handshake
      * completes (or fails). Awaiting the handshake guarantees a subsequent `Hello` write goes out
      * as ciphertext rather than relying on the SSL handler's buffering as a timing detail.
+     *
+     * The certificate is checked against the host name the user typed (SNI carries it too), not
+     * the IP the socket dialled: without that check any certificate from anyone on the path
+     * passed, and encryption bought nothing.
      */
     override suspend fun upgradeTls() = suspendCancellableCoroutine<Unit> { cont ->
         try {
@@ -138,11 +169,15 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                 .startTls(false)
                 .build()
 
+            val peerHost = viewmodel.session.tlsPeerHost
             val handler = sslContext.newHandler(
                 pipeline.channel().alloc(),
-                viewmodel.session.serverHost,
+                peerHost,
                 viewmodel.session.serverPort
             )
+            handler.engine().apply {
+                sslParameters = sslParameters.apply { endpointIdentificationAlgorithm = "HTTPS" }
+            }
             pipeline.addFirst(handler)
             handler.handshakeFuture().addListener { future ->
                 if (future.isSuccess) cont.resume(Unit)
@@ -153,4 +188,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         }
     }
 
+    private companion object {
+        const val CONNECT_TIMEOUT_MS = 10_000L
+    }
 }
