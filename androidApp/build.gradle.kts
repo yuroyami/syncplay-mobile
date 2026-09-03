@@ -62,6 +62,19 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            /* An unsigned APK under a release filename is indistinguishable from a real one until
+             * a device refuses to install it. A missing keystore stops the build instead. */
+            if (signingConfigs.findByName("synkplay_keystore") == null) {
+                gradle.taskGraph.whenReady {
+                    val releasing = allTasks.any { it.path.contains("Release") && (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package")) }
+                    check(!releasing) {
+                        "No signing keystore: put keystore/syncplaykey.jks and its local.properties entries in place, or build a debug variant."
+                    }
+                }
+            }
+            /* R8's mapping and the native symbol table, or a crash report from the store is a
+             * page of obfuscated frames and addresses. */
+            ndk { debugSymbolLevel = "FULL" }
         }
         debug {
         }
@@ -163,7 +176,7 @@ androidComponents {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
                 val v = kiteConfig.version.get()
                 val fileName = if (exoOnly) {
-                    "syncplay-$v-exo-only.apk"
+                    "${kiteConfig.appName.get().lowercase()}-$v-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
                     "${kiteConfig.appName.get().lowercase()}-$v-full-${abiName}.apk"

@@ -19,7 +19,14 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://jitpack.io") // NewPipe Extractor (Android-only YouTube/SoundCloud/PeerTube resolver)
+        // NewPipe Extractor (Android-only YouTube/SoundCloud/PeerTube resolver), and nothing else:
+        // unfiltered, jitpack can answer for any coordinate Central and Google happen to miss.
+        maven("https://jitpack.io") {
+            content {
+                includeGroup("com.github.TeamNewPipe")
+                includeGroupByRegex("com\\.github\\.TeamNewPipe\\..*")
+            }
+        }
     }
 }
 
