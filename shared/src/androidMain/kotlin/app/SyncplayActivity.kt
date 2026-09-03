@@ -35,6 +35,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import app.home.HomeViewmodel
+import app.home.InviteLink
 import app.home.JoinConfig
 import app.player.Playback
 import app.player.SyncplayMediaSessionService
@@ -325,22 +326,8 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        /** Maybe there is a shortcut intent */
-        if (intent?.getBooleanExtra("quickLaunch", false) == true) {
-            intent.apply {
-                val config = JoinConfig(
-                    user = getStringExtra("name") ?: "",
-                    room = getStringExtra("room") ?: "",
-                    ip = getStringExtra("serverip") ?: "",
-                    port = getIntExtra("serverport", 8997),
-                    pw = getStringExtra("serverpw") ?: ""
-                )
-
-                lifecycleScope.launch {
-                    homeViewmodel?.joinRoom(config)
-                }
-            }
-        }
+        /** A shortcut, or an invite link someone tapped */
+        handleLaunchIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -354,6 +341,35 @@ class SyncplayActivity : ComponentActivity() {
      *
      * This ensures the correct locale is used when inflating resources.
      */
+    /** A link that arrives while the app is already running reaches the same handler. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleLaunchIntent(intent)
+    }
+
+    /**
+     * Joins from a launcher shortcut or an invite link. Both are outside input: the room name and
+     * the addresses go through the same caps and trimming the join form applies.
+     */
+    private fun handleLaunchIntent(intent: Intent?) {
+        intent ?: return
+        val config = when {
+            intent.getBooleanExtra("quickLaunch", false) -> JoinConfig(
+                user = intent.getStringExtra("name") ?: "",
+                room = intent.getStringExtra("room") ?: "",
+                ip = intent.getStringExtra("serverip") ?: "",
+                port = intent.getIntExtra("serverport", 8997),
+                pw = intent.getStringExtra("serverpw") ?: ""
+            )
+            intent.action == Intent.ACTION_VIEW -> intent.dataString?.let { InviteLink.parse(it) } ?: return
+            else -> return
+        }
+        lifecycleScope.launch {
+            homeViewmodel?.joinRoom(config)
+        }
+    }
+
     override fun attachBaseContext(newBase: Context?) {
         /** Applying the saved language; blank means the device's own, so nothing is forced. */
         val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)

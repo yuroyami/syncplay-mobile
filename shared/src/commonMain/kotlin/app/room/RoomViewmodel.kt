@@ -74,8 +74,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /** Manages media player lifecycle, controls, and state */
     val playerManager: PlayerManager by lazy { PlayerManager(this) }
 
-    /** Manages the network connection and communication with the Syncplay server */
-    lateinit var networkManager: NetworkManager
+    /**
+     * Manages the network connection and communication with the Syncplay server. Built on first
+     * touch rather than inside a coroutine: as a lateinit assigned from a launch, anything that
+     * reached it first (a callback, the dispatcher, a fast leave) threw.
+     */
+    private val networkManagerHolder = lazy { instantiateNetworkManager() }
+    val networkManager: NetworkManager by networkManagerHolder
 
     /** Manages the Syncplay protocol and its events */
     val protocol: ProtocolManager by lazy { ProtocolManager(this) }
@@ -100,8 +105,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            networkManager = instantiateNetworkManager()
-
             launch {
                 // The previous room's engine may still be tearing down (mpv's handle is
                 // process-global); never build the next one over it.
@@ -135,6 +138,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     session.currentUsername = joinConfig.user
                     session.currentRoom = joinConfig.room
                     session.currentPassword = joinConfig.pw
+                    // Pasted alongside the room name; onConnected re-identifies with it, so this
+                    // also survives every later reconnect.
+                    session.currentOperatorPassword = joinConfig.operatorPassword
 
                     /** Connecting (via TLS or noTLS) */
                     val tls = Preferences.TLS_ENABLE.value()
@@ -286,7 +292,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     override fun onCleared() {
         loggy("²²²²²²²²²²²² Clearing viewmodel")
         playerManager.invalidate()
-        networkManager.invalidate()
+        // Solo mode may never have needed one; building it here only to tear it down is waste.
+        if (networkManagerHolder.isInitialized()) networkManager.invalidate()
         uiState.invalidate()
         protocol.invalidate()
         super.onCleared()

@@ -275,7 +275,21 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 help = stringResource(Res.string.connect_roomname_tooltip),
                                 error = error?.takeIf { it == Res.string.connect_roomname_empty_error }?.let { stringResource(it) },
                                 value = room,
-                                onValueChange = { room = it; error = null },
+                                onValueChange = { typed ->
+                                    // An invite link pasted into the room field fills the whole
+                                    // form: the room, the server, the port and the password.
+                                    val invite = InviteLink.parse(typed)
+                                    if (invite != null) {
+                                        room = invite.room
+                                        address = invite.ip
+                                        port = invite.port.toString()
+                                        password = invite.pw
+                                        mode = if (officialServers.contains("${invite.ip}:${invite.port}")) ServerMode.Official else ServerMode.Custom
+                                    } else {
+                                        room = typed
+                                    }
+                                    error = null
+                                },
                                 icon = Icons.Outlined.MeetingRoom,
                                 focusRequester = roomFocus,
                                 imeAction = ImeAction.Done,
@@ -550,11 +564,19 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     }
 }
 
-/** Backslashes out, trimmed, capped: the same on the form and on a shortcut. */
-private fun JoinConfig.sanitised() = copy(
-    user = user.replace("\\", "").trim().substringSafely(0, 149),
-    room = room.replace("\\", "").trim().substringSafely(0, 34),
-)
+/**
+ * Backslashes out, trimmed, capped: the same on the form and on a shortcut. A room pasted as the
+ * whole `+name:HASH:PASSWORD` string the app prints on creation is split, so it joins the managed
+ * room and identifies as its operator instead of creating a room by that literal name.
+ */
+private fun JoinConfig.sanitised(): JoinConfig {
+    val (roomName, operator) = InviteLink.splitOperatorRoom(room)
+    return copy(
+        user = user.replace("\\", "").trim().substringSafely(0, 149),
+        room = roomName.replace("\\", "").trim().substringSafely(0, 34),
+        operatorPassword = operator.ifEmpty { operatorPassword },
+    )
+}
 
 /** A section label; with a [tip] it carries the help glyph, the only place the long words live. */
 /**

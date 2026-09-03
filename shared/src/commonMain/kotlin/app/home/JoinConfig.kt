@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @property ip Server hostname or IP address (default: official Syncplay server)
  * @property port Server port (default: 8997)
  * @property pw Room password, if required (empty by default)
+ * @property operatorPassword Managed-room operator password, when one was pasted with the room name
  */
 @Serializable
 data class JoinConfig(
@@ -28,6 +29,7 @@ data class JoinConfig(
     val ip: String = "syncplay.pl",
     val port: Int = 8997,
     val pw: String = "",
+    val operatorPassword: String = "",
 ) {
     companion object {
         /**

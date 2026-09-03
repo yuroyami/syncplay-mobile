@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material.icons.filled.Tune
@@ -53,6 +54,7 @@ import app.uicomponents.controls.Rule
 import app.uicomponents.controls.VerticalRule
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
+import app.home.InviteLink
 import app.utils.platformCallback
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -62,6 +64,8 @@ import syncplaymobile.shared.generated.resources.room_lock
 import syncplaymobile.shared.generated.resources.room_managed_room
 import syncplaymobile.shared.generated.resources.room_overflow_leave_room
 import syncplaymobile.shared.generated.resources.room_overflow_pip
+import syncplaymobile.shared.generated.resources.room_share_invite
+import syncplaymobile.shared.generated.resources.room_share_invite_message
 import syncplaymobile.shared.generated.resources.room_rail_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist
 
@@ -83,6 +87,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val managedRooms by viewmodel.protocol.supportsManagedRooms.collectAsState()
+    val inviteMessage = stringResource(Res.string.room_share_invite_message, viewmodel.session.currentRoom)
     val expanded by ui.railActionsExpanded.collectAsState()
     // Starts at the session's value, so a rebuilt rail (rotation) does not replay the unfold.
     val unfolded = remember { MutableTransitionState(expanded) }
@@ -102,6 +107,15 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val actions = buildList {
         if (viewmodel.player.supportsPictureInPicture) {
             add(RailCell(Icons.Filled.PictureInPicture, stringResource(Res.string.room_overflow_pip)) { platformCallback.onPictureInPicture(true) })
+        }
+        if (!solo) {
+            // The room as one line: the link carries the server, the port and the password, so
+            // nobody has to read five fields down a phone line.
+            add(RailCell(Icons.Filled.Share, stringResource(Res.string.room_share_invite)) {
+                viewmodel.joinConfig?.let { config ->
+                    platformCallback.shareText(inviteMessage + "\n" + InviteLink.build(config))
+                }
+            })
         }
         if (!solo && managedRooms) {
             add(RailCell(Icons.Filled.SupervisedUserCircle, stringResource(Res.string.room_managed_room)) { ui.managedRoom.value = true })

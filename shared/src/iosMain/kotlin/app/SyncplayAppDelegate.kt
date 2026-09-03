@@ -1,10 +1,12 @@
 package app
 
 import app.utils.platformCallback
+import app.home.InviteLink
 import app.home.JoinConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 import platform.AVKit.AVPictureInPictureController
+import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDelegateProtocol
 import platform.UIKit.UIApplicationLaunchOptionsShortcutItemKey
@@ -52,6 +54,13 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         handleShortcut(performActionForShortcutItem)
         completionHandler(true)
 
+    }
+
+    /** An invite link, parked for the home screen exactly like a Quick Action. */
+    override fun application(app: UIApplication, openURL: NSURL, options: Map<Any?, *>): Boolean {
+        val parsed = openURL.absoluteString?.let { InviteLink.parse(it) } ?: return false
+        pendingShortcutJoinConfig.value = parsed
+        return true
     }
 
 }
