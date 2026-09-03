@@ -75,13 +75,6 @@ class Session(val protocol: ProtocolManager) {
             .all { it.readiness }
     }
 
-    /** Count of users in the room who have a file and are ready. */
-    fun readyUserCount(): Int {
-        val selfReady = if (ready.value) 1 else 0
-        val othersReady = userList.value.count { it.name != currentUsername && it.file != null && it.readiness }
-        return selfReady + othersReady
-    }
-
     /** Us plus every other user who is ready with a file, PC's `usersInRoomCount` to the letter. */
     fun usersInRoomCount(): Int {
         val othersReadyWithFile = userList.value.count { it.name != currentUsername && it.file != null && it.readiness }

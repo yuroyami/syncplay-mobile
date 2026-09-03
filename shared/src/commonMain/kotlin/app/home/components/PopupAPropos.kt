@@ -37,15 +37,15 @@ import app.utils.platformDescription
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.about_client_is_unofficial_disclaimer
-import syncplaymobile.shared.generated.resources.about_client_platforms
-import syncplaymobile.shared.generated.resources.about_developed_by
-import syncplaymobile.shared.generated.resources.about_official_website
+import syncplaymobile.shared.generated.resources.about_blurb
+import syncplaymobile.shared.generated.resources.about_independent
+import syncplaymobile.shared.generated.resources.about_author
+import syncplaymobile.shared.generated.resources.about_website
 import syncplaymobile.shared.generated.resources.about_privacy_button
 import syncplaymobile.shared.generated.resources.about_report_button
 import syncplaymobile.shared.generated.resources.about_source_button
 import syncplaymobile.shared.generated.resources.about_tagline
-import syncplaymobile.shared.generated.resources.about_version
+import syncplaymobile.shared.generated.resources.about_version_value
 import syncplaymobile.shared.generated.resources.connect_watch_alone
 
 object PopupAPropos {
@@ -75,7 +75,7 @@ object PopupAPropos {
                 )
                 Spacer(Modifier.height(Space.gap))
                 Text(
-                    text = stringResource(Res.string.about_client_is_unofficial_disclaimer),
+                    text = stringResource(Res.string.about_blurb),
                     style = Type.note,
                     color = p.ink,
                     textAlign = TextAlign.Center,
@@ -83,7 +83,7 @@ object PopupAPropos {
                 )
                 Spacer(Modifier.height(Space.gapTight))
                 Text(
-                    text = stringResource(Res.string.about_client_platforms),
+                    text = stringResource(Res.string.about_independent),
                     style = Type.note,
                     color = p.inkDim,
                     textAlign = TextAlign.Center,
@@ -91,9 +91,9 @@ object PopupAPropos {
                 )
                 Spacer(Modifier.height(Space.gap))
                 Row(Modifier.fillMaxWidth().padding(bottom = Space.gapTight), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Text(stringResource(Res.string.about_version, KiteBuildConfig.APP_VERSION), style = Type.value, color = p.inkDim, maxLines = 1)
-                    Text(stringResource(Res.string.about_developed_by), style = Type.value, color = p.inkDim, maxLines = 1)
-                    Text(stringResource(Res.string.about_official_website), style = Type.value, color = p.inkDim, maxLines = 1)
+                    Text(stringResource(Res.string.about_version_value, KiteBuildConfig.APP_VERSION), style = Type.value, color = p.inkDim, maxLines = 1)
+                    Text(stringResource(Res.string.about_author), style = Type.value, color = p.inkDim, maxLines = 1)
+                    Text(stringResource(Res.string.about_website), style = Type.value, color = p.inkDim, maxLines = 1)
                 }
                 Spacer(Modifier.height(Space.gap))
                 // Two links side by side; watching alone gets its own row, the one way in from here.

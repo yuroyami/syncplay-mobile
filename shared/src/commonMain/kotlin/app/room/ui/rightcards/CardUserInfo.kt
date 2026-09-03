@@ -55,6 +55,7 @@ import app.player.models.MediaFile
 import app.preferences.Preferences.USER_INFO_VIEW
 import app.preferences.set
 import app.preferences.watchPref
+import app.protocol.WireMessage
 import app.protocol.models.User
 import app.theme.Radius
 import app.theme.Space
@@ -89,6 +90,8 @@ import syncplaymobile.shared.generated.resources.room_file_same
 import syncplaymobile.shared.generated.resources.room_user_not_ready_label
 import syncplaymobile.shared.generated.resources.room_user_unmute
 import syncplaymobile.shared.generated.resources.room_user_report
+import syncplaymobile.shared.generated.resources.room_user_set_not_ready
+import syncplaymobile.shared.generated.resources.room_user_set_ready
 import syncplaymobile.shared.generated.resources.room_user_mute
 import syncplaymobile.shared.generated.resources.room_user_ready_label
 import syncplaymobile.shared.generated.resources.room_roster_view_compact
@@ -266,6 +269,7 @@ private fun reportUserUrl(username: String): String {
 private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
     val p = palette
     val uriHandler = LocalUriHandler.current
+    val viewmodel = LocalRoomViewmodel.current
     var expanded by remember(user.name) { mutableStateOf(false) }
     val file = user.file
     val state: StringResource = when {
@@ -304,6 +308,18 @@ private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
                 text = stringResource(Res.string.room_user_report),
                 onClick = { uriHandler.openUri(reportUserUrl(user.name)) },
             )
+            /* setOthersReadiness has been on the wire, implemented in the server and tested for
+             * as long as this app has existed, with nothing anywhere to reach it. */
+            if (viewmodel.session.userList.value.firstOrNull { it.name == viewmodel.session.currentUsername }?.isController == true) {
+                SecondaryAction(
+                    text = stringResource(if (user.readiness) Res.string.room_user_set_not_ready else Res.string.room_user_set_ready),
+                    onClick = {
+                        viewmodel.networkManager.sendAsync(
+                            WireMessage.readiness(isReady = !user.readiness, manuallyInitiated = true, username = user.name)
+                        )
+                    },
+                )
+            }
         }
     }
     if (expanded && file != null) {
