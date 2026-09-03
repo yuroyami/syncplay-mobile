@@ -68,6 +68,7 @@ import app.preferences.Preferences.SYNC_FASTFORWARD
 import app.preferences.Preferences.SYNC_REWIND
 import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
+import app.preferences.Preferences.TLS_REQUIRED
 import app.preferences.Preferences.TRUSTED_DOMAINS
 import app.preferences.Preferences.UNPAUSE_ACTION
 import syncplaymobile.shared.generated.resources.Res
@@ -136,6 +137,7 @@ val GLOBAL_NETWORK = SettingCategory(
 ) {
     group(Res.string.settings_group_connection) {
         +TLS_ENABLE
+        +TLS_REQUIRED
         +NETWORK_ENGINE
     }
     group(Res.string.settings_group_links) {

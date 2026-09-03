@@ -1,7 +1,6 @@
 package app.preferences
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.Animation
@@ -24,6 +23,7 @@ import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Language
@@ -118,6 +118,7 @@ import syncplaymobile.shared.generated.resources.setting_audio_default_language_
 import syncplaymobile.shared.generated.resources.setting_cc_default_language_summry
 import syncplaymobile.shared.generated.resources.setting_cc_default_language_title
 import syncplaymobile.shared.generated.resources.setting_display_language_summry
+import syncplaymobile.shared.generated.resources.setting_display_language_system
 import syncplaymobile.shared.generated.resources.setting_display_language_title
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_dialog
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_summary
@@ -166,6 +167,9 @@ import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
 import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.setting_resetdefault_title
 import syncplaymobile.shared.generated.resources.setting_tls_summary
+import syncplaymobile.shared.generated.resources.setting_tls_required_detail
+import syncplaymobile.shared.generated.resources.setting_tls_required_summary
+import syncplaymobile.shared.generated.resources.setting_tls_required_title
 import syncplaymobile.shared.generated.resources.setting_tls_title
 import syncplaymobile.shared.generated.resources.setting_trusted_domains_summary
 import syncplaymobile.shared.generated.resources.setting_trusted_domains_title
@@ -185,8 +189,6 @@ import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_summary
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_title
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_summary
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_title
-import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
-import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
@@ -243,8 +245,6 @@ import syncplaymobile.shared.generated.resources.uisetting_kite_sub_autoselect_s
 import syncplaymobile.shared.generated.resources.uisetting_kite_sub_autoselect_title
 import syncplaymobile.shared.generated.resources.uisetting_kite_sub_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_kite_sub_delay_title
-import syncplaymobile.shared.generated.resources.uisetting_kite_sub_scale_summary
-import syncplaymobile.shared.generated.resources.uisetting_kite_sub_scale_title
 import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_summary
 import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_title
 import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_summary
@@ -295,8 +295,6 @@ import syncplaymobile.shared.generated.resources.uisetting_chapter_dots_clickabl
 import syncplaymobile.shared.generated.resources.uisetting_chapter_dots_clickable_title
 import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_summary
 import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_title
-import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
-import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_title
 import syncplaymobile.shared.generated.resources.uisetting_swipe_gestures_summary
@@ -373,6 +371,12 @@ object Preferences {
 
     /** ------------ Miscellaneous -------------*/
     val USER_ID = Pref<String?>("misc_user_id", null)
+
+    /** The hosted server's controlled-room salt, minted once so operator passwords survive a restart. */
+    val SERVER_SALT = Pref("misc_server_salt", "")
+
+    /** How many cold starts have shown the tips; they stop on their own after a few. */
+    val TIPS_SHOWN_COUNT = Pref("misc_tips_shown_count", 0)
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
@@ -442,7 +446,8 @@ object Preferences {
     }
 
     /** ------------ Language -------------*/
-    val DISPLAY_LANG = Pref("pref_lang", "en") {
+    /** Blank means the device's language; a code forces that language on Android. */
+    val DISPLAY_LANG = Pref("pref_lang", "") {
         title = Res.string.setting_display_language_title
         summary = Res.string.setting_display_language_summry
         summaryFormatArgs = arrayOf(appName)
@@ -453,7 +458,7 @@ object Preferences {
                 entries = {
                     val langNames = stringArrayResource(Res.array.language_names)
                     val langCodes = stringArrayResource(Res.array.language_codes)
-                    langNames.zip(langCodes).toMap()
+                    linkedMapOf(stringResource(Res.string.setting_display_language_system) to "") + langNames.zip(langCodes).toMap()
                 },
                 onItemChosen = { v ->
                     platformCallback.onLanguageChanged(v)
@@ -585,6 +590,13 @@ object Preferences {
         summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Key
     }
+    /** With this on, a server that cannot encrypt is refused instead of joined in plain text. */
+    val TLS_REQUIRED = Pref("pref_tls_required", false) {
+        title = Res.string.setting_tls_required_title
+        summary = Res.string.setting_tls_required_summary
+        detail = Res.string.setting_tls_required_detail
+        icon = Icons.Filled.Lock
+    }
     /** When true, page URLs (YouTube, SoundCloud, …) entered as media are run through the
      *  platform's native extractor before reaching the player. A heuristic short-circuits when
      *  the URL is already direct media, so there's no cost in the common case. */
@@ -612,7 +624,7 @@ object Preferences {
     }
 
     /** ------------ Security -------------*/
-    val TRUSTED_DOMAINS = Pref("pref_trusted_domains", "") {
+    val TRUSTED_DOMAINS = Pref("pref_trusted_domains", "youtube.com\nyoutu.be") {
         title = Res.string.setting_trusted_domains_title
         summary = Res.string.setting_trusted_domains_summary
         detail = Res.string.setting_trusted_domains_detail
@@ -834,21 +846,6 @@ object Preferences {
         )
     }
 
-    val AUDIO_DELAY = Pref("pref_inroom_audio_delay", 0) {
-        title = Res.string.uisetting_audio_delay_title
-        summary = Res.string.uisetting_audio_delay_summary
-        icon = Icons.AutoMirrored.Filled.CompareArrows
-
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000, unit = "ms")
-    }
-    val SUBTITLE_DELAY = Pref("pref_inroom_subtitle_delay", 0) {
-        title = Res.string.uisetting_subtitle_delay_title
-        summary = Res.string.uisetting_subtitle_delay_summary
-        icon = Icons.AutoMirrored.Filled.CompareArrows
-
-        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000, unit = "ms")
-    }
-
     val CUSTOM_SEEK_AMOUNT = Pref("pref_inroom_custom_seek_amount", 90) {
         title = Res.string.uisetting_custom_seek_amount_title
         summary = Res.string.uisetting_custom_seek_amount_summary
@@ -932,11 +929,6 @@ object Preferences {
         title = Res.string.uisetting_kite_sub_autoselect_title
         summary = Res.string.uisetting_kite_sub_autoselect_summary
         icon = Icons.Filled.Subtitles
-    }
-    val KITE_SUBTITLE_SCALE = Pref("pref_kite_sub_scale", 100) {
-        title = Res.string.uisetting_kite_sub_scale_title
-        summary = Res.string.uisetting_kite_sub_scale_summary
-        icon = Icons.Filled.FormatSize
     }
     val KITE_SUBTITLE_DELAY_MS = Pref("pref_kite_sub_delay_ms", 0) {
         title = Res.string.uisetting_kite_sub_delay_title
