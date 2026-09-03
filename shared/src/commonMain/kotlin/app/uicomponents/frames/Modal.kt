@@ -8,6 +8,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import syncplaymobile.shared.generated.resources.modal_dismiss
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -122,6 +126,7 @@ internal fun ModalFrame(
     val sheet = size != ModalSize.Ask && LocalWidthClass.current == WidthClass.Compact
     val visible = remember { MutableTransitionState(false) }.apply { targetState = true }
     val focusRequester = remember { FocusRequester() }
+    val dismissLabel = stringResource(Res.string.modal_dismiss)
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
 
     Box(
@@ -130,7 +135,8 @@ internal fun ModalFrame(
             .background(glassScrim)
             .imePadding()
             .then(
-                if (dismissable) Modifier.clickable(interactionSource = null, indication = null) { onDismiss() }
+                // Named, so a screen reader's first stop on a popup is "Close", not a blank button.
+                if (dismissable) Modifier.clickable(interactionSource = null, indication = null, onClickLabel = dismissLabel, role = Role.Button) { onDismiss() }
                 else Modifier
             )
             .focusRequester(focusRequester)
@@ -159,7 +165,8 @@ internal fun ModalFrame(
                         }
                     )
                     .surface(Tier.Panel, shape)
-                    .clickable(interactionSource = null, indication = null) { /* consume, so a tap inside never dismisses */ },
+                    // Swallows the tap so it never reaches the scrim, with no semantics node of its own.
+                    .pointerInput(Unit) { detectTapGestures { } },
             ) {
                 if (sheet) SheetHandle()
                 if (title != null) {

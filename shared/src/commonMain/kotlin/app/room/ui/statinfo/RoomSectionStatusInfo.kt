@@ -13,6 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
@@ -24,10 +27,11 @@ import app.theme.palette
 import app.uicomponents.chromeSurface
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_connecting
-import syncplaymobile.shared.generated.resources.room_details_user_count
+import syncplaymobile.shared.generated.resources.room_user_count
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
 import syncplaymobile.shared.generated.resources.room_reconnecting
 
@@ -56,7 +60,7 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         ConnectionState.DISCONNECTED -> p.bad
     }
     val state = when (connectionState) {
-        ConnectionState.CONNECTED -> stringResource(Res.string.room_details_user_count, totalUsers)
+        ConnectionState.CONNECTED -> pluralStringResource(Res.plurals.room_user_count, totalUsers, totalUsers)
         ConnectionState.CONNECTING -> stringResource(Res.string.room_connecting)
         ConnectionState.SCHEDULING_RECONNECT -> stringResource(Res.string.room_reconnecting)
         ConnectionState.DISCONNECTED -> stringResource(Res.string.room_ping_disconnected)
@@ -69,6 +73,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
 
     Row(
         modifier = modifier
+            // Connection changes are read out as they happen.
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
             .chromeSurface(Radius.panelShape)
             .heightIn(min = Space.rowCompact)
             .padding(horizontal = Space.gap),

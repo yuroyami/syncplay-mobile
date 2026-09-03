@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.input.KeyboardType
@@ -149,7 +150,8 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     RowGap()
                     RowValue(stringResource(if (on) Res.string.settings_value_on else Res.string.settings_value_off), accent = on, width = 36.dp)
                     RowGap()
-                    Rocker(on = on, onChange = flip, enabled = enabled)
+                    // The row is the one toggleable node; a second node on the rocker read as two switches.
+                    Rocker(on = on, onChange = flip, enabled = enabled, modifier = Modifier.clearAndSetSemantics { })
                 }
             }
 

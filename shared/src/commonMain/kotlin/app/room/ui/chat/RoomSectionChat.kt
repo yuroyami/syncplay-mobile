@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import app.LocalChatPalette
 import app.LocalRoomViewmodel
+import app.room.OSDCategory
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FONTSIZE
@@ -54,9 +55,11 @@ import app.uicomponents.controls.SendGlyph
 import app.utils.Platform
 import app.utils.platform
 import androidx.compose.foundation.text.selection.SelectionContainer
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_chat_input
+import syncplaymobile.shared.generated.resources.room_chat_too_long
 import syncplaymobile.shared.generated.resources.room_gif_open
 import syncplaymobile.shared.generated.resources.room_send
 
@@ -136,8 +139,14 @@ fun ChatComposer(
         /* The cap is the server's own limit, floored at 1 so a hostile zero cannot eat every
          * message. Nothing is stripped: the JSON layer escapes backslashes itself. */
         val maxLen = viewmodel.session.roomFeatures.maxChatMessageLength.coerceAtLeast(1)
-        val text = msg.take(maxLen)
+        val text = msg.trimEnd()
         if (text.isBlank()) return
+        if (text.length > maxLen) {
+            // The draft stays in the field; a silent cut lost the end of the message.
+            val length = text.length
+            viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_chat_too_long, length, maxLen) }
+            return
+        }
         viewmodel.dispatcher.sendMessage(text)
         viewmodel.uiState.msg.value = ""
         viewmodel.uiState.gifPanelVisible.value = false
@@ -209,6 +218,7 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
                     chatPalette = chatPalette,
                     style = style,
                     imageAlpha = if (isHUDVisible) 1f else 0f,
+                    announce = index == messages.lastIndex,
                 )
             }
         }

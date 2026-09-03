@@ -26,7 +26,8 @@ class SettingsGolden {
         DesignHarness.render("settings-player", 360, fontScale = 1.3f) { SettingsCategoryBody(INROOM_PLAYER_SETTINGS) }
         DesignHarness.render("settings-categories", 360) { SettingsCategoryList(SETTINGS_GLOBAL) {} }
 
-        assertTrue(network.contentHeightDp <= 260, "network category ${network.contentHeightDp}dp exceeds its 260dp budget")
+        // 260dp until the encryption-required row joined the category; still one screen, no scroll.
+        assertTrue(network.contentHeightDp <= 285, "network category ${network.contentHeightDp}dp exceeds its 285dp budget")
         assertTrue(player.contentHeightDp <= 690, "player category ${player.contentHeightDp}dp exceeds its 690dp budget")
         assertTrue(chat.contentHeightDp <= 900, "chat category ${chat.contentHeightDp}dp exceeds its 900dp budget")
     }

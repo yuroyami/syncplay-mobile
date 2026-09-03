@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.border
@@ -30,9 +31,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import app.LocalRoomViewmodel
+import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import app.preferences.Preferences.CUSTOM_SEEK_FRONT
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.watchPref
+import app.room.ui.rightcards.customSkip
+import app.utils.timestampFromMillis
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
@@ -45,6 +50,7 @@ import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_custom_skip_button
 import syncplaymobile.shared.generated.resources.room_jump_back
 import syncplaymobile.shared.generated.resources.room_jump_forward
 
@@ -60,6 +66,8 @@ fun RoomTransportKeys(modifier: Modifier = Modifier) {
     if (!hasVideo) return
     val back by SEEK_BACKWARD_JUMP.watchPref()
     val forward by SEEK_FORWARD_JUMP.watchPref()
+    val customSkip by CUSTOM_SEEK_FRONT.watchPref()
+    val customAmount by CUSTOM_SEEK_AMOUNT.watchPref()
 
     Column(modifier.padding(top = Space.row + Space.gap), horizontalAlignment = Alignment.CenterHorizontally) {
         RoomPlayButton(modifier = Modifier)
@@ -70,6 +78,12 @@ fun RoomTransportKeys(modifier: Modifier = Modifier) {
             }
             JumpKey(Icons.Filled.FastForward, stringResource(Res.string.room_jump_forward, forward), "$forward s") {
                 viewmodel.dispatcher.seekFrwrd()
+            }
+            // The longer skip from the settings, beside the two jumps when the setting asks for it.
+            if (customSkip) {
+                JumpKey(Icons.Filled.Update, stringResource(Res.string.room_custom_skip_button, timestampFromMillis(customAmount * 1000L)), "$customAmount s") {
+                    viewmodel.customSkip()
+                }
             }
         }
     }

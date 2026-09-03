@@ -64,6 +64,8 @@ fun HelpTip(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(Space.glyph)
+            // The drawn square stays 18dp; the touch target is the platform minimum.
+            .touchTarget(minWidth = Space.touchMin, minHeight = Space.touchMin)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { open = !open }
             .hoverable(source)
             .semantics { contentDescription = name }

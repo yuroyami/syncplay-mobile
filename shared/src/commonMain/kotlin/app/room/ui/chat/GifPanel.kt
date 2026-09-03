@@ -95,6 +95,7 @@ import syncplaymobile.shared.generated.resources.room_gif_action_favorite
 import syncplaymobile.shared.generated.resources.room_gif_action_send
 import syncplaymobile.shared.generated.resources.room_gif_action_unfavorite
 import syncplaymobile.shared.generated.resources.room_gif_failed
+import syncplaymobile.shared.generated.resources.room_gif_powered_by
 import syncplaymobile.shared.generated.resources.room_gif_no_results
 import syncplaymobile.shared.generated.resources.room_gif_retry
 import syncplaymobile.shared.generated.resources.room_gif_tab_favorites
@@ -257,7 +258,7 @@ fun GifPanel(
             // The attribution stays, small and out of the way, in the grid's bottom end corner.
             Image(
                 imageVector = vectorResource(Res.drawable.powered_by_klipy),
-                contentDescription = "Powered by Klipy",
+                contentDescription = stringResource(Res.string.room_gif_powered_by),
                 modifier = Modifier.align(Alignment.BottomEnd).zIndex(1f).padding(Space.gapTight).height(10.dp).aspectRatio(640 / 107f).alpha(0.7f),
             )
             when {
@@ -296,7 +297,7 @@ fun GifPanel(
                             if (!loaded && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
                             AnimatedImage(
                                 url = media.previewUrl,
-                                contentDescription = null,
+                                contentDescription = media.title.ifBlank { null },
                                 contentScale = ContentScale.Crop,
                                 alpha = if (isHUDVisible && loaded) 1f else 0f,
                                 onLoaded = { loaded = true },

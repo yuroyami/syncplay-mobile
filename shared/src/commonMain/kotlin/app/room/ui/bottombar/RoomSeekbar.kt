@@ -61,16 +61,19 @@ fun RoomSeekbar(modifier: Modifier) {
     val p = palette
     val density = LocalDensity.current
     val scope = rememberCoroutineScope { Dispatchers.Main }
-    val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
-
-    /* The one caller of analyzeChapters: engines clear the list first, so a second caller
-     * would blank the marks mid-frame. */
-    LaunchedEffect(viewmodel.media?.fileName) {
-        viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
-    }
-
     val positionMs by viewmodel.playerManager.timeCurrentMillis.collectAsState()
     val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
+
+    /* The one caller of analyzeChapters: engines clear the list first, so a second caller
+     * would blank the marks mid-frame. It runs again once the duration lands, because most
+     * engines know the chapters only after the container is parsed, and the snapshot below
+     * is taken after each run rather than once per file name. */
+    var chapterListVersion by remember { mutableIntStateOf(0) }
+    LaunchedEffect(viewmodel.media?.fileName, durationMs > 0L) {
+        viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
+        chapterListVersion++
+    }
+    val chapters = remember(viewmodel.media?.fileName, chapterListVersion) { viewmodel.media?.chapters?.toList() ?: emptyList() }
     val bufferedMs by viewmodel.playerManager.timeBufferedMillis.collectAsState()
     val showMarks by SHOW_CHAPTER_DOTS.watchPref()
     val marksClickable by CHAPTER_DOTS_CLICKABLE.watchPref()

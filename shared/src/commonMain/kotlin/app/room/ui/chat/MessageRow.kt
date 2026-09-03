@@ -22,7 +22,9 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,12 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+import androidx.compose.foundation.combinedClickable
+import app.LocalRoomViewmodel
+import app.utils.platformCallback
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_chat_copied
 import app.uicomponents.AnimatedImage
 
 /** How chat text is drawn: the size preference (floored at 11), the outline and shadow switches. */
@@ -59,8 +67,11 @@ fun MessageRow(
     style: MessageStyle,
     modifier: Modifier = Modifier,
     imageAlpha: Float = 1f,
+    announce: Boolean = false,
 ) {
     val p = palette
+    val viewmodel = LocalRoomViewmodel.current
+    val copied = stringResource(Res.string.room_chat_copied)
     val sinceMs = if (previous == null) Long.MAX_VALUE else message.epochMs - previous.epochMs
     val grouped = message.sender != null && previous?.sender == message.sender && sinceMs < GROUP_WINDOW_MS
     val showTime = style.showTime && sinceMs > GROUP_WINDOW_MS
@@ -69,7 +80,24 @@ fun MessageRow(
     val spoken = listOfNotNull(message.sender, message.timestamp, message.content).joinToString(", ")
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 2.dp).semantics(mergeDescendants = true) { contentDescription = spoken },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            // A long press copies the line on touch platforms, where no selection container runs.
+            .combinedClickable(
+                interactionSource = null,
+                indication = null,
+                onClick = {},
+                onLongClick = {
+                    platformCallback.copyText(message.content)
+                    viewmodel.dispatchOSD { copied }
+                },
+            )
+            .semantics(mergeDescendants = true) {
+                contentDescription = spoken
+                // Only the newest line is a live region, so a screen reader hears each new message once.
+                if (announce) liveRegion = LiveRegionMode.Polite
+            },
         verticalAlignment = Alignment.Top,
     ) {
         if (message.sender == null) {

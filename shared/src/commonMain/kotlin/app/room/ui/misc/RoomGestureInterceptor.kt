@@ -222,6 +222,13 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         initialBrightness = -1f
                                         return@detectVerticalDragGestures
                                     }
+                                    // Where the platform cannot set brightness the left half does nothing,
+                                    // rather than showing a readout of a change that never happens.
+                                    val brightnessSide = startOffset.x < size.width * 0.5f
+                                    if (brightnessSide && !platformCallback.supportsBrightness) {
+                                        initialBrightness = -1f
+                                        return@detectVerticalDragGestures
+                                    }
                                     initialBrightness = platformCallback.getCurrentBrightness()
                                     initialVolume = viewmodel.player.volume.current()
                                     lastAppliedBrightness = initialBrightness

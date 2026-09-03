@@ -82,6 +82,8 @@ import syncplaymobile.shared.generated.resources.room_file_different
 import syncplaymobile.shared.generated.resources.room_file_has
 import syncplaymobile.shared.generated.resources.room_file_none
 import syncplaymobile.shared.generated.resources.room_file_same
+import syncplaymobile.shared.generated.resources.room_user_not_ready_label
+import syncplaymobile.shared.generated.resources.room_user_ready_label
 import syncplaymobile.shared.generated.resources.room_roster_view_compact
 import syncplaymobile.shared.generated.resources.room_roster_view_files
 import syncplaymobile.shared.generated.resources.room_roster_view_standard
@@ -223,9 +225,11 @@ object CardUserInfo {
     private fun UserChip(user: User, isSelf: Boolean) {
         val p = palette
         val square = Modifier.size(6.dp)
+        val spoken = readinessLabel(user)
         Row(
             modifier = Modifier
                 .height(30.dp)
+                .semantics(mergeDescendants = true) { contentDescription = spoken }
                 .clip(Radius.controlShape)
                 .background(if (isSelf) p.ink.copy(alpha = 0.08f) else Color.Transparent)
                 .border(Space.hair, if (user.isController) p.accent else p.rule, Radius.controlShape)
@@ -239,6 +243,11 @@ object CardUserInfo {
     }
 }
 
+/** "name, ready" or "name, not ready": the square's colour, in words, for screen readers. */
+@Composable
+private fun readinessLabel(user: User): String =
+    stringResource(if (user.readiness) Res.string.room_user_ready_label else Res.string.room_user_not_ready_label, user.name)
+
 @Composable
 private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
     val p = palette
@@ -250,9 +259,11 @@ private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
         FileComparison.sameFilename(myFile.fileName, file.fileName) -> Res.string.room_file_same
         else -> Res.string.room_file_different
     }
+    val spoken = readinessLabel(user) + ", " + stringResource(state)
 
     ListRow(
-        modifier = if (isSelf) Modifier.background(p.ink.copy(alpha = 0.06f)) else Modifier,
+        modifier = (if (isSelf) Modifier.background(p.ink.copy(alpha = 0.06f)) else Modifier)
+            .semantics(mergeDescendants = true) { contentDescription = spoken },
         onClick = if (file != null) ({ expanded = !expanded }) else null,
         selected = user.isController,
     ) {
