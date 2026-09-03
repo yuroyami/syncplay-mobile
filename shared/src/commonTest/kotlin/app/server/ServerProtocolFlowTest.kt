@@ -7,6 +7,9 @@ import app.protocol.wire.HelloData
 import app.protocol.wire.PingData
 import app.protocol.wire.PlaystateData
 import app.protocol.wire.StateData
+import app.utils.md5
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import app.protocol.wire.Room
 import app.server.model.ServerConfig
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +28,7 @@ import kotlin.test.assertTrue
  * fresh [TestClient] into a shared [SyncplayServer] instance so multiple clients can join the
  * same room and observe each other's broadcasts.
  */
+@OptIn(ExperimentalStdlibApi::class)
 class ServerProtocolFlowTest {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -40,13 +44,28 @@ class ServerProtocolFlowTest {
      * so the wire format stays correct even when a test holds an interface-typed reference.
      */
     class TestClient(server: SyncplayServer) {
-        val sent = mutableListOf<WireMessage>()
+        /* Guarded: the server's per-watcher state timer writes here from its own thread while the
+         * test reads, so a plain list could tear or drop an entry and turn a real failure green. */
+        private val lock = SynchronizedObject()
+        private val captured = mutableListOf<WireMessage>()
+
+        /** A snapshot; iterate this, never the live list. */
+        val sent: List<WireMessage> get() = synchronized(lock) { captured.toList() }
+
+        @Volatile
         var dropped = false
+            private set
+
         val connection: ClientConnection = ClientConnection(
             server = server,
-            sendFn = { line -> sent += syncplayJson.decodeFromString(WireMessageDeserializer, line) },
+            sendFn = { line ->
+                val message = syncplayJson.decodeFromString(WireMessageDeserializer, line)
+                synchronized(lock) { captured += message }
+            },
             dropFn = { dropped = true }
         )
+
+        fun clearSent() = synchronized(lock) { captured.clear() }
 
         suspend fun receive(message: WireMessage) {
             connection.handlePacket(message.toJson())
@@ -112,7 +131,7 @@ class ServerProtocolFlowTest {
     fun `ListRequest after Hello yields a populated ListResponse`(): Unit = runBlocking {
         val client = TestClient(server())
         client.receive(helloFor("alice", "lobby"))
-        client.sent.clear()
+        client.clearSent()
 
         client.receive(WireMessage.listRequest())
 
@@ -130,7 +149,7 @@ class ServerProtocolFlowTest {
     fun `empty object payload is unparseable and drops the client`(): Unit = runBlocking {
         val client = TestClient(server())
         client.receive(helloFor("alice", "lobby"))
-        client.sent.clear()
+        client.clearSent()
 
         client.receiveRaw("{}")
 
@@ -138,9 +157,25 @@ class ServerProtocolFlowTest {
     }
 
     @Test
+    fun `a correct server password is accepted`(): Unit = runBlocking {
+        val client = TestClient(server(ServerConfig(password = "secret")))
+        // The client sends the MD5 hex of the password, which is what the server compares against.
+        val hashed = md5("secret").toHexString(HexFormat.Default)
+        client.receive(helloFor("alice", "lobby", password = hashed))
+
+        assertEquals(false, client.dropped, "the right password must get in")
+        assertNotNull(client.lastOf<WireMessage.Hello>(), "an accepted client gets a Hello back")
+    }
+
+    @Test
     fun `ListRequest before Hello is rejected`(): Unit = runBlocking {
         val client = TestClient(server())
         client.receive(WireMessage.listRequest())
+        // The gate itself, not just its side effect: an unauthenticated request is answered with
+        // an error and the socket goes. Asserting only "no list came back" passed even with the
+        // whole requireLogged() check deleted, because sendList returns early with no watcher.
+        assertEquals(true, client.dropped, "an unauthenticated request must drop the connection")
+        assertNotNull(client.lastOf<WireMessage.Error>(), "and say why")
         // Either dropped or no list response — but definitely no list reply since not logged in.
         assertEquals(0, client.allOf<WireMessage.ListResponse>().size)
     }
@@ -158,7 +193,7 @@ class ServerProtocolFlowTest {
         alice.receive(helloFor("alice", "lobby"))
         bob.receive(helloFor("bob", "lobby"))
 
-        bob.sent.clear()
+        bob.clearSent()
         bob.receive(WireMessage.listRequest())
 
         val list = bob.lastOf<WireMessage.ListResponse>()
@@ -176,7 +211,7 @@ class ServerProtocolFlowTest {
         val bob = TestClient(srv)
 
         alice.receive(helloFor("alice", "lobby"))
-        alice.sent.clear()
+        alice.clearSent()
 
         bob.receive(helloFor("bob", "lobby"))
 
@@ -216,7 +251,7 @@ class ServerProtocolFlowTest {
 
         alice.receive(helloFor("alice", "lobby"))
         bob.receive(helloFor("bob", "lobby"))
-        bob.sent.clear()
+        bob.clearSent()
 
         alice.receive(WireMessage.chatRequest("hello bob"))
 
@@ -234,7 +269,7 @@ class ServerProtocolFlowTest {
 
         alice.receive(helloFor("alice", "lobby"))
         bob.receive(helloFor("bob", "lobby"))
-        bob.sent.clear()
+        bob.clearSent()
 
         alice.receive(WireMessage.chatRequest("hello bob"))
         assertEquals(0, bob.allOf<WireMessage.ChatBroadcast>().size, "Chat should be dropped on server side")
@@ -252,7 +287,7 @@ class ServerProtocolFlowTest {
 
         alice.receive(helloFor("alice", "lobby"))
         bob.receive(helloFor("bob", "lobby"))
-        bob.sent.clear()
+        bob.clearSent()
 
         alice.receive(WireMessage.file(app.protocol.wire.FileData(name = "movie.mkv", duration = 7200.0, size = "1024")))
 
@@ -266,7 +301,7 @@ class ServerProtocolFlowTest {
         val srv = server()
         val alice = TestClient(srv)
         alice.receive(helloFor("alice", "lobby"))
-        alice.sent.clear()
+        alice.clearSent()
 
         alice.receive(WireMessage.roomChange("foyer"))
         alice.receive(WireMessage.listRequest())
@@ -289,7 +324,7 @@ class ServerProtocolFlowTest {
     )
 
     private suspend fun TestClient.positionSeenByServer(name: String, room: String): Double? {
-        sent.clear()
+        clearSent()
         receive(WireMessage.listRequest())
         return lastOf<WireMessage.ListResponse>()?.rooms?.get(room)?.get(name)?.position
     }
@@ -337,7 +372,7 @@ class ServerProtocolFlowTest {
 
         val bob = TestClient(srv)
         bob.receive(helloFor("bob", "lobby"))
-        bob.sent.clear()
+        bob.clearSent()
         bob.receive(WireMessage.listRequest())
         val users = bob.lastOf<WireMessage.ListResponse>()!!.rooms["lobby"]!!
         assertTrue("alice" !in users, "the dropped watcher must leave the room")
@@ -352,11 +387,11 @@ class ServerProtocolFlowTest {
         bob.receive(helloFor("bob", "lobby"))
 
         alice.receive(WireMessage.playlistChange(listOf("a.mkv", "b.mkv")))
-        bob.sent.clear()
+        bob.clearSent()
         alice.receiveRaw("""{"Set":{"playlistChange":{"user":"alice"}}}""")
         assertEquals(0, bob.allOf<WireMessage.Set>().count { it.data.playlistChange != null }, "no playlist broadcast for a fileless change")
 
-        bob.sent.clear()
+        bob.clearSent()
         bob.receive(WireMessage.roomChange("lobby"))
         val playlist = bob.allOf<WireMessage.Set>().last { it.data.playlistChange != null }.data.playlistChange!!.files
         assertEquals(listOf("a.mkv", "b.mkv"), playlist)
@@ -384,7 +419,7 @@ class ServerProtocolFlowTest {
 
         val auth = alice.allOf<WireMessage.Set>().last { it.data.controllerAuth != null }.data.controllerAuth!!
         assertEquals(true, auth.success)
-        alice.sent.clear()
+        alice.clearSent()
         alice.receive(WireMessage.listRequest())
         assertEquals(true, alice.lastOf<WireMessage.ListResponse>()!!.rooms[room]!!["alice"]!!.controller)
     }
@@ -402,13 +437,13 @@ class ServerProtocolFlowTest {
 
         // She then walks into alice's room and presents the password she legitimately owns.
         mallory.receive(WireMessage.roomChange(aliceRoom))
-        mallory.sent.clear()
+        mallory.clearSent()
         mallory.receive(WireMessage.controllerAuth(room = malloryRoom, password = "CD-789-012"))
 
         val auth = mallory.allOf<WireMessage.Set>().last { it.data.controllerAuth != null }.data.controllerAuth!!
         assertEquals(false, auth.success, "a password proves control of the room it was minted for")
 
-        mallory.sent.clear()
+        mallory.clearSent()
         mallory.receive(WireMessage.listRequest())
         assertEquals(false, mallory.lastOf<WireMessage.ListResponse>()!!.rooms[aliceRoom]!!["mallory"]!!.controller)
     }
@@ -429,7 +464,7 @@ class ServerProtocolFlowTest {
         alice.receive(helloFor("alice", "lobby"))
         alice.receive(WireMessage.file(app.protocol.wire.FileData(name = "movie.mkv", duration = 7200.0, size = "1")))
         bob.receive(helloFor("bob", "foyer"))
-        bob.sent.clear()
+        bob.clearSent()
 
         alice.receive(WireMessage.roomChange("foyer"))
 
@@ -453,7 +488,7 @@ class ServerProtocolFlowTest {
     fun `unknown top-level key drops the client`(): Unit = runBlocking {
         val client = TestClient(server())
         client.receive(helloFor("alice", "lobby"))
-        client.sent.clear()
+        client.clearSent()
         client.receiveRaw("""{"NotARealMessage":42}""")
         assertEquals(true, client.dropped)
     }

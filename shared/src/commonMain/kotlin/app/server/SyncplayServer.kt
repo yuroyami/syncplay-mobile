@@ -115,6 +115,7 @@ class SyncplayServer(
         stopStateTimer(watcher)
         sendLeftMessage(watcher)
         roomManager.removeWatcher(watcher)
+        authFailures.remove(watcher)
         _connections.remove(watcher)
         connectedClients.value = _connections.size
 
@@ -327,8 +328,14 @@ class SyncplayServer(
             if (success && room is ControlledServerRoom) {
                 room.addController(watcher)
             }
-            roomManager.broadcast(watcher) { w ->
-                _connections[w]?.sendControlledRoomAuthStatus(success, watcher.name, room.name)
+            if (success) {
+                roomManager.broadcast(watcher) { w ->
+                    _connections[w]?.sendControlledRoomAuthStatus(true, watcher.name, room.name)
+                }
+            } else {
+                // A refusal is the sender's business. Broadcasting it made every wrong guess a
+                // message to the whole room, which a guesser could use as a megaphone.
+                failedAuth(watcher)
             }
         } catch (_: NotControlledRoomException) {
             // Plain room: mint a new controlled-room name for it.
@@ -336,9 +343,23 @@ class SyncplayServer(
             _connections[watcher]?.sendNewControlledRoom(newName, password)
         } catch (_: IllegalArgumentException) {
             // Malformed password.
-            roomManager.broadcastRoom(watcher) { w ->
-                _connections[w]?.sendControlledRoomAuthStatus(false, watcher.name, room.name)
-            }
+            failedAuth(watcher)
+        }
+    }
+
+    /** Failed operator passwords per watcher; enough of them and the connection goes. */
+    private val authFailures = mutableMapOf<ServerWatcher, Int>()
+
+    private fun failedAuth(watcher: ServerWatcher) {
+        val conn = _connections[watcher] ?: return
+        val room = watcher.room ?: return
+        conn.sendControlledRoomAuthStatus(false, watcher.name, room.name)
+        val count = (authFailures[watcher] ?: 0) + 1
+        authFailures[watcher] = count
+        if (count >= MAX_AUTH_FAILURES) {
+            log("${watcher.name} dropped after $count failed operator passwords")
+            removeWatcher(watcher)
+            conn.drop()
         }
     }
 
@@ -389,11 +410,15 @@ class SyncplayServer(
         }
         stateTimerJobs.clear()
         _connections.clear()
+        authFailures.clear()
         connectedClients.value = 0
     }
 
     private companion object {
         const val LOG_CAP = 500
+
+        /** Wrong operator passwords tolerated on one connection before it is dropped. */
+        const val MAX_AUTH_FAILURES = 3
     }
 }
 
