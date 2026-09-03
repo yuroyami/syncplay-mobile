@@ -42,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
+import app.LocalRoomUiState
 import app.player.models.MediaFile
 import app.preferences.Preferences.USER_INFO_VIEW
 import app.preferences.set
@@ -64,6 +66,7 @@ import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.RowLabel
 import app.uicomponents.controls.RowValue
+import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelFrame
 import app.utils.FileComparison
@@ -78,11 +81,15 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_alone
 import syncplaymobile.shared.generated.resources.room_card_title_user_info
 import syncplaymobile.shared.generated.resources.room_details_file_properties
+import syncplaymobile.shared.generated.resources.room_details_user_position
 import syncplaymobile.shared.generated.resources.room_file_different
 import syncplaymobile.shared.generated.resources.room_file_has
 import syncplaymobile.shared.generated.resources.room_file_none
 import syncplaymobile.shared.generated.resources.room_file_same
 import syncplaymobile.shared.generated.resources.room_user_not_ready_label
+import syncplaymobile.shared.generated.resources.room_user_unmute
+import syncplaymobile.shared.generated.resources.room_user_report
+import syncplaymobile.shared.generated.resources.room_user_mute
 import syncplaymobile.shared.generated.resources.room_user_ready_label
 import syncplaymobile.shared.generated.resources.room_roster_view_compact
 import syncplaymobile.shared.generated.resources.room_roster_view_files
@@ -248,9 +255,17 @@ object CardUserInfo {
 private fun readinessLabel(user: User): String =
     stringResource(if (user.readiness) Res.string.room_user_ready_label else Res.string.room_user_not_ready_label, user.name)
 
+/** A report the maintainer can act on: who, in which room, and on which build. */
+private fun reportUserUrl(username: String): String {
+    val body = "Reporting a user in a Synkplay room.\n\nUser: $username\nWhat happened:\n"
+    return "https://github.com/yuroyami/syncplay-mobile/issues/new?title=" +
+        "[Report]%20user%20report&body=" + body.replace(" ", "%20").replace("\n", "%0A")
+}
+
 @Composable
 private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
     val p = palette
+    val uriHandler = LocalUriHandler.current
     var expanded by remember(user.name) { mutableStateOf(false) }
     val file = user.file
     val state: StringResource = when {
@@ -264,7 +279,8 @@ private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
     ListRow(
         modifier = (if (isSelf) Modifier.background(p.ink.copy(alpha = 0.06f)) else Modifier)
             .semantics(mergeDescendants = true) { contentDescription = spoken },
-        onClick = if (file != null) ({ expanded = !expanded }) else null,
+        // Always expandable now: even a user with no file can be muted from here.
+        onClick = { expanded = !expanded },
         selected = user.isController,
     ) {
         val square = Modifier.size(6.dp)
@@ -273,11 +289,31 @@ private fun UserRow(user: User, isSelf: Boolean, myFile: MediaFile?) {
         RowLabel(user.name)
         RowValue(stringResource(state), accent = state == Res.string.room_file_same)
     }
+    if (expanded && !isSelf) {
+        val ui = LocalRoomUiState.current
+        val isMuted = user.name in ui.mutedUsers
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = Space.gutter + Space.gap + 2.dp, end = Space.gutter, bottom = Space.gapTight),
+            horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+        ) {
+            SecondaryAction(
+                text = stringResource(if (isMuted) Res.string.room_user_unmute else Res.string.room_user_mute),
+                onClick = { ui.toggleMute(user.name) },
+            )
+            SecondaryAction(
+                text = stringResource(Res.string.room_user_report),
+                onClick = { uriHandler.openUri(reportUserUrl(user.name)) },
+            )
+        }
+    }
     if (expanded && file != null) {
         val megabytes = file.fileSize.toDoubleOrNull()?.div(1_000_000.0)?.let { ((it * 10).roundToLong() / 10.0).toString() } ?: "?"
         val duration = timestampFromMillis(((file.fileDuration ?: 0.0) * 1000).toLong())
+        /* Where they actually are in the file. The server sends it on every List response and it
+         * used to be dropped on decode, so the room could not say who was behind. */
+        val at = user.position?.let { "\n" + stringResource(Res.string.room_details_user_position, timestampFromMillis((it * 1000).toLong())) } ?: ""
         Text(
-            text = file.fileName + "\n" + stringResource(Res.string.room_details_file_properties, duration, megabytes),
+            text = file.fileName + "\n" + stringResource(Res.string.room_details_file_properties, duration, megabytes) + at,
             style = Type.note,
             color = p.inkDim,
             modifier = Modifier.padding(start = Space.gutter + Space.gap + 2.dp, end = Space.gutter, bottom = Space.gapTight),

@@ -8,5 +8,7 @@ data class User(
     var name: String = "",
     var readiness: Boolean, // whether the user marked themselves ready
     var file: MediaFile?, // file the user is playing, null if none
-    var isController: Boolean // whether the user controls the managed room
+    var isController: Boolean, // whether the user controls the managed room
+    /** Where this user's playhead was in the last `List` response, in seconds; null when unknown. */
+    var position: Double? = null
 )

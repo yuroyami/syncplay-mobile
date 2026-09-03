@@ -203,6 +203,11 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 delay(WATCHDOG_INTERVAL_SECONDS.seconds)
                 if (network.state.value != ConnectionState.CONNECTED) continue
 
+                // The collector below only fires on a change. An engine that came up in the wrong
+                // state, or a flip that arrived while nothing was collecting, would sit there
+                // silently, so the same comparison runs on this tick too.
+                broadcastPlaybackDivergence(viewmodel.playerManager.isNowPlaying.value)
+
                 val last = lastStateReceivedAt ?: continue
                 val elapsedSec = (Clock.System.now() - last).inWholeSeconds
                 if (elapsedSec >= STATE_TIMEOUT_SECONDS) {
@@ -234,23 +239,32 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 if (viewmodel.uiState.isInBackground) return@collect
 
                 val expectedPlaying = !expectedPaused
-                if (isPlaying == expectedPlaying) return@collect
-
-                // Engine-driven pause/resume (buffer underrun, audio focus loss, EOF
-                // transitions, etc.). Tell the room and update our expectation so we
-                // don't re-broadcast on the next emission.
-                expectedPaused = !isPlaying
-                viewmodel.networkManager.sendAsync(
-                    buildStatePacket(
-                        serverTime = null,
-                        doSeek = null,
-                        position = reportableStatePositionSec(),
-                        isLocalStateChange = true,
-                        play = isPlaying
-                    )
-                )
+                broadcastPlaybackDivergence(isPlaying)
             }
         }
+    }
+
+    /**
+     * Engine-driven pause/resume (buffer underrun, audio focus loss, EOF): tell the room and
+     * update the expectation, so neither the collector nor the watchdog says it twice. Anything
+     * the app does deliberately notes its expectation first and never reaches here.
+     */
+    private fun broadcastPlaybackDivergence(isPlaying: Boolean) {
+        if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return
+        if (lastGlobalUpdate == null || isRoomChanging) return
+        if (viewmodel.uiState.isInBackground) return
+        if (isPlaying == expectedPlaying) return
+
+        expectedPaused = !isPlaying
+        viewmodel.networkManager.sendAsync(
+            buildStatePacket(
+                serverTime = null,
+                doSeek = null,
+                position = reportableStatePositionSec(),
+                isLocalStateChange = true,
+                play = isPlaying
+            )
+        )
     }
 
     /** Cancels the channel-health coroutines. Safe to call multiple times. */

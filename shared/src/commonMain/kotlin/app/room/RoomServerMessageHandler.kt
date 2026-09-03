@@ -337,7 +337,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                         }
                     } else null
                 },
-                isController = userData.controller
+                isController = userData.controller,
+                position = userData.position,
             )
             newList.add(user)
         }

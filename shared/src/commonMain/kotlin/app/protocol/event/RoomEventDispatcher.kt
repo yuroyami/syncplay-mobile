@@ -159,6 +159,16 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
         if (viewmodel.isSoloMode || !tellServer) return
 
+        /* Readiness follows a deliberate pause: walking away used to leave the room a watcher who
+         * showed as ready forever, so PC's changeReadyState(!paused) is mirrored here. A follower
+         * in a controlled room cannot control playback, so its readiness is left alone. */
+        if (session.roomFeatures.supportsReadiness && !session.isInControlledRoomWithoutController()) {
+            if (session.ready.value != playback.play) {
+                session.ready.value = playback.play
+                network.sendAsync(WireMessage.readiness(isReady = playback.play, manuallyInitiated = false))
+            }
+        }
+
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
             // While a fresh file is still catching up to the room, this advertises the room
             // position rather than the engine's ~0 (mirrors PC getCalculatedPosition).
