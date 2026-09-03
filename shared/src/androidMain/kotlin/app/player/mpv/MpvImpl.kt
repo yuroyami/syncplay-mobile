@@ -39,9 +39,14 @@ import io.github.vinceglb.filekit.PlatformFile
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_aspect_original
+import syncplaymobile.shared.generated.resources.room_aspect_panscan
+import syncplaymobile.shared.generated.resources.room_aspect_ratio_label
 import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
 import kotlin.math.roundToLong
 import kotlin.time.Duration
@@ -51,10 +56,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     lateinit var audioManager: AudioManager
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver
+    private var durationWaitJob: kotlinx.coroutines.Job? = null
     lateinit var mpvView: MPVView
     private lateinit var ctx: Context
     override val supportsChapters: Boolean = true
-    override val supportsScreenshot: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
@@ -63,6 +68,13 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
         copyAssets(ctx)
 
+        // A recreated view means a new surface for a core that already exists. libmpv's handle
+        // is process-global, so the only clean way to rehost it is the same destroy-then-create
+        // every file load already does; a second create over a live core aborts.
+        if (isInitialized) {
+            removeObserver()
+            MPVLib.destroy()
+        }
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
         // The gain rung: mpv clamps volume at 130 by default.
         runCatching { MPVLib.setPropertyInt("volume-max", gainMax) }
@@ -135,9 +147,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         +MPV_DEBUG_MODE.withControl(PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
             MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
         })
-        // mpv.conf import/export: Android-only because iOS mpv does not read a user config
-        // file (getMpvConfFilePath() returns null there). Attached to the engine-specific
-        // category so it only appears when the mpv engine is active.
+        // mpv.conf import/export, attached to the engine category so it only shows with mpv.
         +MPV_IMPORT_CONF
         +MPV_EXPORT_CONF
     }
@@ -354,26 +364,20 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         return if (precise != null) (precise * 1000.0).toLong() else mpvPos
     }
 
-    override suspend fun takeScreenshot(): Boolean {
-        if (!isInitialized) return false
-        return try {
-            MPVLib.command(arrayOf("screenshot"))
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
     override suspend fun switchAspectRatio(): String {
-        if (!isInitialized) return "NO PLAYER FOUND"
+        if (!isInitialized) return ""
         return withContext(Dispatchers.Main.immediate) {
             val currentAspect = MPVLib.getPropertyString("video-aspect-override")
             val currentPanscan = MPVLib.getPropertyDouble("panscan")
 
+            // mpv value to the spoken label; the last entry is pan-and-scan rather than a ratio.
             val aspectRatios = listOf(
-                "-1.000000" to "Original", "1.777778" to "16:9",
-                "1.600000" to "16:10", "1.333333" to "4:3",
-                "2.350000" to "2.35:1", "panscan" to "Pan/Scan"
+                "-1.000000" to getString(Res.string.room_aspect_original),
+                "1.777778" to getString(Res.string.room_aspect_ratio_label, "16:9"),
+                "1.600000" to getString(Res.string.room_aspect_ratio_label, "16:10"),
+                "1.333333" to getString(Res.string.room_aspect_ratio_label, "4:3"),
+                "2.350000" to getString(Res.string.room_aspect_ratio_label, "2.35:1"),
+                "panscan" to getString(Res.string.room_aspect_panscan),
             )
 
             var enablePanscan = false
@@ -383,7 +387,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 enablePanscan = true
                 aspectRatios[5]
             } else {
-                aspectRatios[aspectRatios.indexOfFirst { it.first == currentAspect } + 1]
+                // An unknown current value (a user config) restarts the cycle at the first ratio.
+                aspectRatios.getOrElse(aspectRatios.indexOfFirst { it.first == currentAspect } + 1) { aspectRatios[1] }
             }
 
             if (enablePanscan) {
@@ -439,7 +444,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 when (eventId) {
                     MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
                         if (viewmodel.isSoloMode) return
-                        playerScopeIO.launch {
+                        // One wait per file: a fast second load cancels the first file's waiter,
+                        // which would otherwise announce the new file with the old one's timing.
+                        durationWaitJob?.cancel()
+                        durationWaitJob = playerScopeIO.launch {
                             // timeFullMillis is wiped to 0 on every inject (PlayerImpl.installMedia),
                             // so this genuinely waits for THIS file's duration event. Before that
                             // wipe existed, the previous file's stale duration made the wait exit
@@ -447,10 +455,11 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                             // metadata (old name/size/duration). Bounded wait: files with no
                             // detectable duration (live streams) still announce, with 0.
                             var waitedMs = 0L
-                            while (playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
+                            while (isActive && playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
                                 delay(50)
                                 waitedMs += 50
                             }
+                            if (!isActive) return@launch
                             playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
                             announceFileLoaded()
                         }
@@ -458,8 +467,15 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
                     MPVLib.MpvEvent.MPV_EVENT_END_FILE -> {
                         playerScopeMain.launch {
+                            // The event carries no reason through the JNI, so the position says
+                            // whether this was the end of the file. Anything else (a decode
+                            // error, a stop) ends locally: the room is told nothing.
+                            val dur = playerManager.timeFullMillis.value
+                            val pos = playerManager.timeCurrentMillis.value
+                            val atEnd = dur > 0L && pos >= dur - 1500L
+                            if (!atEnd) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
                             pause()
-                            onPlaybackEnded()
+                            if (atEnd) onPlaybackEnded()
                         }
                     }
                 }

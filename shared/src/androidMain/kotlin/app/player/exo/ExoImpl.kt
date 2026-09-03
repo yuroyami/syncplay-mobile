@@ -41,6 +41,7 @@ import app.preferences.Preferences.EXO_MAX_BUFFER
 import app.preferences.Preferences.EXO_MIN_BUFFER
 import app.preferences.Preferences.EXO_SEEK_BUFFER
 import app.preferences.settings.SettingCategory
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.utils.contextObtainer
 import app.utils.loggy
@@ -52,6 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_playback_error
 import syncplaymobile.shared.generated.resources.room_scaling_fill_screen
 import syncplaymobile.shared.generated.resources.room_scaling_fit_screen
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
@@ -77,6 +79,11 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
+        // A recreated view hosts the existing player; a second ExoPlayer would leak the first.
+        if (isInitialized) {
+            exoView.player = exoplayer
+            return
+        }
         val context = contextObtainer()
 
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -150,13 +157,17 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
 
-                if (!isLoading && exoplayer != null) {
-                    val durationMs = exoplayer!!.duration
-                    viewmodel.playerManager.timeFullMillis.value = abs(durationMs)
+                val player = exoplayer ?: return
+                if (!isLoading) {
+                    // C.TIME_UNSET means "not known yet"; its absolute value is not a duration.
+                    val raw = player.duration
+                    val durationMs = if (raw == C.TIME_UNSET || raw < 0) 0L else raw
+                    viewmodel.playerManager.timeFullMillis.value = durationMs
 
                     if (viewmodel.isSoloMode) return
-                    if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
-                        viewmodel.media?.fileDuration = durationMs / 1000.0
+                    val durationSec = durationMs / 1000.0
+                    if (abs(durationSec - (viewmodel.media?.fileDuration ?: -1.0)) > 0.001) {
+                        viewmodel.media?.fileDuration = durationSec
 
                         announceFileLoaded()
                     }
@@ -167,14 +178,22 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
 
-                if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
-                    if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                        viewmodel.playerManager.isNowPlaying.value = isPlaying
-
-                        if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
-                            onPlaybackEnded()
-                        }
+                val player = exoplayer ?: return
+                if (player.mediaItemCount == 0) return
+                when (player.playbackState) {
+                    Player.STATE_BUFFERING -> return
+                    Player.STATE_IDLE -> {
+                        // The engine gave up (a stream error, a stop); the room did not. Note
+                        // the pause as expected so the collector treats it as local news only.
+                        viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                        viewmodel.playerManager.isNowPlaying.value = false
+                        return
                     }
+                }
+                viewmodel.playerManager.isNowPlaying.value = isPlaying
+
+                if (player.playbackState == Player.STATE_ENDED) {
+                    onPlaybackEnded()
                 }
             }
 
@@ -188,7 +207,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                loggy("Player error: ${error.message ?: ""}")
+                loggy("Player error: ${error.errorCodeName} ${error.message ?: ""}")
+                val reason = error.errorCodeName
+                viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_playback_error, reason) }
+                viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
+                    getString(Res.string.room_playback_error, reason)
+                }
             }
         })
 
@@ -267,7 +291,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
 
-        return withContext(Dispatchers.Main.immediate) { exoplayer?.mediaItemCount != 0 && exoplayer != null }
+        return withContext(Dispatchers.Main.immediate) { (exoplayer?.mediaItemCount ?: 0) != 0 }
     }
 
     override suspend fun isPlaying(): Boolean {
@@ -367,6 +391,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     var externalSub: MediaItem.SubtitleConfiguration? = null
 
+    /** The media the external subtitle belongs to; a different file must not inherit it. */
+    private var externalSubMediaId: String? = null
+
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         // Was FileProvider with authority "${packageName}.fileprovider": that authority doesn't
         // exist (the manifest declares "${applicationId}.provider"), AND filesDir/logs (where
@@ -380,11 +407,24 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .setMimeType(extension.mimeType)
             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
             .build()
+        externalSubMediaId = viewmodel.media?.location?.commonUri
 
         withContext(Dispatchers.Main.immediate) {
             // Exo can only attach an external subtitle by reloading the media item.
             reloadVideo()
         }
+    }
+
+    /** The subtitle for [mediaId], or nothing when the file changed since it was chosen. */
+    private fun MediaItem.Builder.withExternalSub(mediaId: String): MediaItem.Builder {
+        val sub = externalSub
+        if (sub == null) return this
+        if (externalSubMediaId != mediaId) {
+            externalSub = null
+            externalSubMediaId = null
+            return this
+        }
+        return setSubtitleConfigurations(Collections.singletonList(sub))
     }
 
     private val String.mimeType: String
@@ -402,9 +442,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         val vid = MediaItem.Builder()
             .setUri(location.file.uri)
             .setMediaId(location.file.uri.toString())
-            .run {
-                if (externalSub != null) setSubtitleConfigurations(Collections.singletonList(externalSub!!)) else this
-            }
+            .withExternalSub(location.commonUri)
             .build()
 
         exoplayer?.setMediaItem(vid)
@@ -414,9 +452,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         val vid = MediaItem.Builder()
             .setUri(location.url)
             .setMediaId(location.url)
-            .run {
-                if (externalSub != null) setSubtitleConfigurations(Collections.singletonList(externalSub!!)) else this
-            }
+            .withExternalSub(location.commonUri)
             .build()
 
         exoplayer?.setMediaItem(vid)
@@ -488,7 +524,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     @SuppressLint("WrongConstant")
     override suspend fun switchAspectRatio(): String {
-        if (!isInitialized) return "NO PLAYER FOUND"
+        if (!isInitialized) return ""
         val resolutions = mutableMapOf<Int, String>()
 
         resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = getString(Res.string.room_scaling_fit_screen)

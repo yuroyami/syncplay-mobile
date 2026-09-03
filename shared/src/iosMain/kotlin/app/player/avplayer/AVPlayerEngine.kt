@@ -11,6 +11,7 @@ import app.player.models.MediaFileLocation
 import app.player.PlayerImpl.TrackType
 import app.player.models.PlayerOptions
 import app.player.models.Track
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CPointer
@@ -48,11 +49,11 @@ import platform.AVFoundation.selectMediaOption
 import platform.AVFoundation.setVolume
 import platform.AVFoundation.timeControlStatus
 import platform.AVFoundation.volume
-import platform.AVKit.AVPlayerViewController
 import platform.CoreGraphics.CGRect
 import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
+import platform.Foundation.NSError
 import platform.Foundation.NSKeyValueObservingOptionNew
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSURL
@@ -60,10 +61,16 @@ import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
+import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
 import platform.foundation.NSKeyValueObservingProtocol
+import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_aspect_fill
+import syncplaymobile.shared.generated.resources.room_aspect_fit
+import syncplaymobile.shared.generated.resources.room_aspect_stretch
+import syncplaymobile.shared.generated.resources.room_playback_error
 import syncplaymobile.shared.generated.resources.swift
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -90,10 +97,11 @@ object AVPlayerEngine: PlayerEngine {
     class AVPlayerImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, this@AVPlayerEngine) {
         var avPlayer: AVPlayer? = null
 
-        private lateinit var avView: AVPlayerViewController
-
-        /** Layer used both for rendering and for native Picture-in-Picture. */
+        /** The one render surface: a sublayer of the container, and the PiP controller's source. */
         var avPlayerLayer: AVPlayerLayer? = null
+
+        /** The rate playback should run at; applied on play() so a paused player is never started by a speed change. */
+        private var desiredRate: Float = 1f
 
         private var avContainer: UIView? = null
 
@@ -112,14 +120,12 @@ object AVPlayerEngine: PlayerEngine {
         private var observerAttached = false
 
         /**
-         * Disables the default playback controls and starts progress tracking.
-         *
-         * The KVO `timeControlStatus` observer is not attached here: `avPlayer` is still null at
-         * this point (created lazily in [injectVideoFileImpl] / [injectVideoURLImpl]). Attachment
-         * happens in [attachTimeControlObserver] after each player instance is created.
+         * Starts progress tracking. The KVO `timeControlStatus` observer is not attached here:
+         * `avPlayer` is still null at this point (created lazily in [injectVideoFileImpl] /
+         * [injectVideoURLImpl]). Attachment happens in [attachTimeControlObserver] after each
+         * player instance is created.
          */
         override fun initialize() {
-            avView.showsPlaybackControls = false
             startTrackingProgress()
         }
 
@@ -175,15 +181,31 @@ object AVPlayerEngine: PlayerEngine {
                         // change), and treating that as playing would broadcast a phantom unpause.
                         val isPlaying = avPlayer?.timeControlStatus == AVPlayerTimeControlStatusPlaying
 
+                        // A failed player or item pauses on its own; that is local news only.
+                        val failure = avPlayer?.error ?: avMedia?.error
+                        if (!isPlaying && failure != null) {
+                            viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                            if (failure !== reportedFailure) {
+                                reportedFailure = failure
+                                val reason = failure.localizedDescription
+                                viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_playback_error, reason) }
+                                viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
+                                    getString(Res.string.room_playback_error, reason)
+                                }
+                            }
+                        }
+
                         viewmodel.playerManager.isNowPlaying.value = isPlaying
                     }
                 }
             }
         }
 
-        /** Re-attaches the current [avPlayer] to the view controller and layer after a media switch. */
+        /** The last failure told to the user, so one error is not announced on every KVO tick. */
+        private var reportedFailure: NSError? = null
+
+        /** Re-attaches the current [avPlayer] to the render layer after a media switch. */
         private fun hookPlayerAgain() {
-            avView.player = avPlayer!!
             avPlayerLayer?.player = avPlayer
         }
 
@@ -199,7 +221,10 @@ object AVPlayerEngine: PlayerEngine {
 
             detachTimeControlObserver()
             avPlayer?.pause()
-            avPlayer?.finalize()
+            avPlayerLayer?.player = null
+            avPlayerLayer?.removeFromSuperlayer()
+            avPlayerLayer = null
+            avMedia = null
             avPlayer = null
             avContainer = null
         }
@@ -218,22 +243,24 @@ object AVPlayerEngine: PlayerEngine {
                 modifier = modifier,
                 factory = remember {
                     factorylambda@{
-                        avPlayerLayer = AVPlayerLayer()
-                        avView = AVPlayerViewController()
+                        // The layer is the picture: added once as the container's sublayer, it is
+                        // what videoGravity resizes and what the PiP controller is built around.
+                        val container = UIView().also { it.setBackgroundColor(UIColor.blackColor) }
+                        val layer = AVPlayerLayer().also { it.videoGravity = AVLayerVideoGravityResizeAspect }
+                        container.layer.addSublayer(layer)
+                        avPlayerLayer = layer
+                        avContainer = container
                         initialize()
-                        avContainer = UIView()
-                        avContainer!!.addSubview(avView.view)
                         isInitialized = true
                         onPlayerReady()
-                        return@factorylambda avContainer!!
+                        return@factorylambda container
                     }
                 },
                 onResize = { view: UIView, rect: CValue<CGRect> ->
                     CATransaction.begin()
                     CATransaction.setValue(true, kCATransactionDisableActions)
                     view.layer.setFrame(rect)
-                    avPlayerLayer?.setFrame(rect)
-                    avView.view.layer.frame = rect
+                    avPlayerLayer?.setFrame(view.layer.bounds)
                     CATransaction.commit()
                 },
                 update = { }
@@ -346,14 +373,9 @@ object AVPlayerEngine: PlayerEngine {
             if (!isInitialized) return
         }
 
-        /** AVPlayer cannot load external subtitles; shows an OSD error instead. */
+        /** AVPlayer cannot load external subtitles; the base class turns the failure into the subtitle error notice. */
         override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
-            if (!isInitialized) return
-
-            viewmodel.dispatchOSD {
-                "Player does not support external subtitles."
-                //TODO LOCALIZE
-            }
+            throw UnsupportedOperationException("AVPlayer does not support external subtitles")
         }
 
         override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
@@ -402,12 +424,15 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun play() {
             if (!isInitialized) return
-            avPlayer?.play()
+            // Setting a positive rate is how AVPlayer plays, so the desired speed rides along.
+            avPlayer?.rate = desiredRate
         }
 
         override suspend fun setSpeed(speed: Double) {
             if (!isInitialized) return
-            avPlayer?.rate = speed.toFloat()
+            desiredRate = speed.toFloat()
+            // On AVPlayer a non-zero rate IS play: a speed change while paused must stay pending.
+            if ((avPlayer?.rate ?: 0f) > 0f) avPlayer?.rate = desiredRate
         }
 
         /** False for live streams (no seekable time ranges). */
@@ -437,7 +462,7 @@ object AVPlayerEngine: PlayerEngine {
          * ResizeAspectFill (crop), returning the name of the newly applied mode.
          */
         override suspend fun switchAspectRatio(): String {
-            if (!isInitialized) return "NO PLAYER FOUND"
+            if (!isInitialized) return ""
 
             val scales = listOf(
                 AVLayerVideoGravityResize,
@@ -447,9 +472,12 @@ object AVPlayerEngine: PlayerEngine {
             val current = avPlayerLayer?.videoGravity
             val currentIndex = if (current != null) scales.indexOf(current) else -1
             val nextIndex = (currentIndex + 1) % scales.size
-            val nextScale = scales[nextIndex]
-            avPlayerLayer?.videoGravity = nextScale
-            return nextScale!!
+            avPlayerLayer?.videoGravity = scales[nextIndex]
+            return when (nextIndex) {
+                0 -> getString(Res.string.room_aspect_stretch)
+                1 -> getString(Res.string.room_aspect_fit)
+                else -> getString(Res.string.room_aspect_fill)
+            }
         }
 
         /** Not implemented: AVPlayer has no subtitle size control. */

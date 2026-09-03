@@ -19,6 +19,7 @@ import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.Preferences.VLC_CUSTOM_FLAGS
 import app.preferences.settings.SettingCategory
 import app.preferences.value
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.utils.generateTimestampMillis
 import app.utils.loggy
@@ -67,7 +68,11 @@ import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
 import platform.darwin.NSObjectProtocol
+import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_aspect_original
+import syncplaymobile.shared.generated.resources.room_aspect_ratio_label
+import syncplaymobile.shared.generated.resources.room_playback_error
 import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
@@ -195,6 +200,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             vlcPlayer = null
 
             vlcMedia = null
+            releaseSubtitleScope()
 
             libvlc = null
             vlcView = null
@@ -695,13 +701,24 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
             val nsUrl = uri.nsUrl
-            nsUrl.startAccessingSecurityScopedResource()
+            // libvlc reads the slave for the whole playback, so the scope stays open until the
+            // next subtitle replaces it or the player is torn down.
+            releaseSubtitleScope()
+            if (nsUrl.startAccessingSecurityScopedResource()) subtitleScopedUrl = nsUrl
             vlcPlayer?.addPlaybackSlave(
                 nsUrl,
                 VLCMediaPlaybackSlaveTypeSubtitle,
                 true
             )
         }
+    }
+
+    /** The external subtitle whose security scope is currently held open. */
+    private var subtitleScopedUrl: NSURL? = null
+
+    private fun releaseSubtitleScope() {
+        subtitleScopedUrl?.stopAccessingSecurityScopedResource()
+        subtitleScopedUrl = null
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
@@ -825,11 +842,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * @param toPositionMs The target position in milliseconds
      */
     override fun seekTo(toPositionMs: Long) {
+        // The base call stamps the tracker cache with the target, so the seekbar moves at once
+        // even while paused, when libvlc emits no mediaPlayerTimeChanged for the new position.
         super.seekTo(toPositionMs)
-        // Reflect the seek on the seekbar immediately. When paused, libvlc may not emit a
-        // mediaPlayerTimeChanged for the new position, so without this the seekbar would not move
-        // until playback resumes.
-        playerManager.timeCurrentMillis.value = toPositionMs
         playerScopeMain.launch(Dispatchers.Main.immediate) {
             val player = vlcPlayer ?: return@launch
             // Defense-in-depth NULL-media guard — same rationale as in [pause]/[play].
@@ -885,7 +900,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * @return The name of the newly applied aspect ratio
      */
     override suspend fun switchAspectRatio(): String {
-        if (!isInitialized) return "NO PLAYER FOUND"
+        if (!isInitialized) return ""
         return withContext(Dispatchers.Main.immediate) {
             val currentAspectRatio = vlcPlayer?.videoAspectRatio
 
@@ -909,7 +924,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // no more cstr.ptr round trip.
             vlcPlayer?.videoAspectRatio = newAspectRatio
 
-            return@withContext newAspectRatio
+            return@withContext if (nextIndex == 0) getString(Res.string.room_aspect_original)
+            else getString(Res.string.room_aspect_ratio_label, newAspectRatio)
         }
     }
 
@@ -1031,7 +1047,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     // Real end of playback (natural EOF or explicit stop) — reflect
                     // that in the button so it doesn't stay stuck showing "pause".
                     primingFirstFrame = false
-                    playerManager.isNowPlaying.value = false
                     // VLCKit 4 has no distinct "Ended" state: Stopped fires on a genuine
                     // end-of-file AND on error/teardown/manual stop. Only treat it as a
                     // natural EOF (which auto-advances the shared playlist for the WHOLE
@@ -1040,11 +1055,24 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     // unreliable, so the last good seekbar value is the trustworthy reference.
                     val endPos = playerManager.timeCurrentMillis.value
                     val endDur = playerManager.timeFullMillis.value
-                    if (endDur > 0L && endPos >= endDur - 1500L) {
-                        onPlaybackEnded()
+                    val atEnd = endDur > 0L && endPos >= endDur - 1500L
+                    // Anything but the end of the file is this client's own stop: local news,
+                    // never a pause broadcast to the room.
+                    if (!atEnd) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                    playerManager.isNowPlaying.value = false
+                    if (atEnd) onPlaybackEnded()
+                }
+                VLCMediaPlayerState.VLCMediaPlayerStateError -> {
+                    primingFirstFrame = false
+                    viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                    playerManager.isNowPlaying.value = false
+                    val reason = vlcPlayer?.media?.url?.lastPathComponent ?: ""
+                    viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_playback_error, reason) }
+                    viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
+                        getString(Res.string.room_playback_error, reason)
                     }
                 }
-                else -> { /* Opening, Buffering, Stopping, Error — leave isNowPlaying alone */ }
+                else -> { /* Opening, Buffering, Stopping — leave isNowPlaying alone */ }
             }
 
             // Bounce off our coroutine scope to invalidate the PiP overlay so libvlc has
@@ -1061,7 +1089,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
          * applies identically to the seekbar and to the room-facing live read.
          */
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
-            playerManager.timeCurrentMillis.value = currentPositionMs()
+            playerManager.samplePosition(currentPositionMs())
         }
 
         /**

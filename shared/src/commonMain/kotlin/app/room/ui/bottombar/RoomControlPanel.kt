@@ -123,7 +123,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             GlyphButton(Icons.Filled.AspectRatio, name = stringResource(Res.string.room_aspect_ratio), size = Space.glyphLarge) {
                 scope.launch(Dispatchers.IO) {
                     val label = viewmodel.player.switchAspectRatio()
-                    viewmodel.dispatchOSD { label }
+                    if (label.isNotBlank()) viewmodel.dispatchOSD { label }
                 }
             }
         }

@@ -3,7 +3,6 @@ package app.player.mpv
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.os.Build
-import android.os.Environment
 import android.util.AttributeSet
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -44,6 +43,9 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
 
     /** The SurfaceView or TextureView actually showing the video. */
     private var surfaceChild: View? = null
+
+    /** The SurfaceView holder callback, kept so [destroy] can unregister it. */
+    private var surfaceCallback: SurfaceHolder.Callback? = null
 
     fun initialize(configDir: String, cacheDir: String) {
         MPVLib.create(contextObtainer.invoke())
@@ -145,9 +147,6 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
         val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
         MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
         MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
-        val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        screenshotDir.mkdirs()
-        MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
     }
 
     private var filePath: String? = null
@@ -164,12 +163,15 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
 
     // Called when back button is pressed, or app is shutting down
     fun destroy() {
-        // Disable surface callbacks to avoid using unintialized mpv state
+        // Stop the surface callbacks first so nothing reaches mpv mid-teardown, then hand the
+        // surface back BEFORE the core goes: a surface still attached when MPVLib.destroy() runs
+        // is released underneath the render thread.
         (surfaceChild as? TextureView)?.surfaceTextureListener = null
+        surfaceCallback?.let { (surfaceChild as? SurfaceView)?.holder?.removeCallback(it) }
+        surfaceCallback = null
+        if (mpvSurface != null) detachSurface()
         removeAllViews()
         surfaceChild = null
-        mpvSurface?.release()
-        mpvSurface = null
 
         MPVLib.destroy()
     }
@@ -248,14 +250,16 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
         } else {
             SurfaceView(context).also { sv ->
                 sv.layoutParams = lp
-                sv.holder.addCallback(object : SurfaceHolder.Callback {
+                val callback = object : SurfaceHolder.Callback {
                     override fun surfaceCreated(holder: SurfaceHolder) = attachSurface(holder.surface)
 
                     override fun surfaceChanged(holder: SurfaceHolder, f: Int, w: Int, h: Int) =
                         setSurfaceSize(w, h)
 
                     override fun surfaceDestroyed(holder: SurfaceHolder) = detachSurface()
-                })
+                }
+                surfaceCallback = callback
+                sv.holder.addCallback(callback)
                 addView(sv)
             }
         }
