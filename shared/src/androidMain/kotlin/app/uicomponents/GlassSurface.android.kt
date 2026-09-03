@@ -26,6 +26,12 @@ actual fun DialogBackdropBlur() {
             window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
             window.attributes = window.attributes.apply { blurBehindRadius = BLUR_BEHIND_RADIUS }
         }
-        onDispose { }
+        onDispose {
+            // Leaving the flag set kept the platform blurring behind a dialog that no longer wanted it.
+            if (window != null && supported) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                window.attributes = window.attributes.apply { blurBehindRadius = 0 }
+            }
+        }
     }
 }

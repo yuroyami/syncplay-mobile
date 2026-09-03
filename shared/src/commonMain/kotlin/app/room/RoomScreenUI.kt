@@ -54,6 +54,9 @@ import app.room.ui.tabs.RoomUnlockableLayout
 import app.theme.LocalPalette
 import app.theme.Motion
 import app.theme.Space
+import app.uicomponents.GlassDemand
+import app.uicomponents.LocalGlassDemand
+import app.uicomponents.LocalGlassSuspended
 import app.uicomponents.LocalHazeState
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.glassBackdropLayer
@@ -100,10 +103,14 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     // Over video the palette is pinned dark; the theme supplies only accent, gradient and status.
     val videoPalette = LocalPalette.current.overVideo()
 
+    // The room's panels sample the room's own capture, so they arm the room's own demand: on
+    // the app-wide one they kept the whole-screen backdrop capturing for nothing.
+    val roomGlassDemand = remember { GlassDemand() }
     CompositionLocalProvider(
         LocalRoomUiState provides viewmodel.uiState,
         LocalRoomInitialFocus provides initialFocusRequester,
         LocalHazeState provides roomHazeState,
+        LocalGlassDemand provides roomGlassDemand,
         LocalPalette provides videoPalette,
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -211,6 +218,8 @@ private fun RoomHud(
     val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
     HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo)
 
+    // While the HUD is faded out its glass releases the capture; it re-arms as the fade begins.
+    CompositionLocalProvider(LocalGlassSuspended provides (hudAlpha == 0f)) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -245,6 +254,7 @@ private fun RoomHud(
             bottom = { RoomBottomBarSection(modifier = Modifier.fillMaxWidth()) },
             center = { RoomTransportKeys() },
         )
+    }
     }
 
     /* Above the HUD: with the HUD hidden it takes the touches that would otherwise reach the

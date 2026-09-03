@@ -56,7 +56,13 @@ class GlassDemand {
     fun release() { count-- }
 }
 
-private val LocalGlassDemand = staticCompositionLocalOf { GlassDemand() }
+val LocalGlassDemand = staticCompositionLocalOf { GlassDemand() }
+
+/**
+ * True while the glass surfaces below are composed but invisible (the room's hidden HUD). They
+ * release their demand, so no backdrop is captured for panels nobody can see.
+ */
+val LocalGlassSuspended = staticCompositionLocalOf { false }
 
 /** The one switch for the whole glass system: no capture, no blur, solid panels when off. */
 @Composable
@@ -143,21 +149,28 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
     val tint = if (heavy) 0.38f else 0.26f
     val opaqueTint = if (heavy) 0.80f else 0.65f
 
-    // Demand is registered only when glass can run, so the disabled path never arms a capture.
+    // Demand is registered only when glass can run and the surface can be seen, so the disabled
+    // path never arms a capture and a hidden HUD stops paying for one.
     val demand = LocalGlassDemand.current
-    if (enabled) {
+    val suspended = LocalGlassSuspended.current
+    if (enabled && !suspended) {
         DisposableEffect(demand) {
             demand.acquire()
             onDispose { demand.release() }
         }
     }
 
-    val style = HazeBlurStyle {
-        blurRadius(GLASS_BLUR_RADIUS)
-        // A transparent background is what makes it glass: only the blurred capture and a light tint.
-        backgroundColor(Color.Transparent)
-        colorEffects(listOf(HazeColorEffect.tint(Color.Black.copy(alpha = GLASS_INNER_DIM)), HazeColorEffect.tint(container.copy(alpha = tint))))
-        fallbackColorEffect(HazeColorEffect.tint(container.copy(alpha = opaqueTint)))
+    val style = remember(container, tint, opaqueTint) {
+        HazeBlurStyle {
+            blurRadius(GLASS_BLUR_RADIUS)
+            // A transparent background is what makes it glass: only the blurred capture and a light tint.
+            backgroundColor(Color.Transparent)
+            colorEffects(listOf(HazeColorEffect.tint(Color.Black.copy(alpha = GLASS_INNER_DIM)), HazeColorEffect.tint(container.copy(alpha = tint))))
+            fallbackColorEffect(HazeColorEffect.tint(container.copy(alpha = opaqueTint)))
+        }
+    }
+    val fallback = remember(container, opaqueTint) {
+        Brush.verticalGradient(listOf(container.copy(alpha = opaqueTint), lerp(container, Color.Black, 0.45f).copy(alpha = opaqueTint)))
     }
 
     return this
@@ -169,14 +182,10 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
                  * contains itself and the render thread recurses until it dies. */
                 Modifier.hazeBlur(input = HazeInput.Sources(hazeState), style = style, performanceMode = HazePerformanceMode.Quality)
             } else {
-                Modifier.background(
-                    Brush.verticalGradient(
-                        listOf(container.copy(alpha = opaqueTint), lerp(container, Color.Black, 0.45f).copy(alpha = opaqueTint))
-                    )
-                )
+                Modifier.background(fallback)
             }
         )
-        .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Black.copy(alpha = 0.20f))))
+        .background(GLASS_SHEEN)
         .then(
             when (rim) {
                 GlassEdge.All -> Modifier.border(width = 1.dp, brush = rimBrush(), shape = shape)
@@ -192,7 +201,11 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
 }
 
 /** The rim: lit along the top edge, nearly gone at the bottom. */
-private fun rimBrush(): Brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f)))
+private val RIM_BRUSH: Brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f)))
+private fun rimBrush(): Brush = RIM_BRUSH
+
+/** The faint top light and bottom shade every panel wears, built once. */
+private val GLASS_SHEEN: Brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Black.copy(alpha = 0.20f)))
 
 /**
  * Asks the platform to blur whatever sits behind the dialog window this is called from. The only
