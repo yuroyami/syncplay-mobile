@@ -30,6 +30,7 @@ import app.preferences.set
 import app.preferences.value
 import app.protocol.WireMessage
 import app.utils.initializeDatastore
+import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +52,12 @@ private var mutedFrom: Int? = null
 
 fun main(args: Array<String>) {
     initializeDatastore()
+    // The trace reaches the log file before the JVM's own handler prints and exits.
+    val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        loggy("Uncaught exception on ${thread.name}: ${throwable.stackTraceToString()}")
+        previousHandler?.uncaughtException(thread, throwable)
+    }
     platformCallback = DesktopPlatformCallback
     parseJoinArgs(args)
 
@@ -225,10 +232,8 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
 
     return when (event.key) {
         Key.Spacebar -> {
-            mainScope.launch {
-                val isPlaying = vm.player.isPlaying()
-                vm.dispatcher.controlPlayback(if (isPlaying) Playback.PAUSE else Playback.PLAY, true)
-            }
+            // The app's own intent, never a live engine probe (a probe mid-buffer says "not playing").
+            vm.dispatcher.controlPlayback(if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true)
             true
         }
         Key.DirectionLeft -> { vm.dispatcher.seekBy(-Preferences.SEEK_BACKWARD_JUMP.value() * times); true }

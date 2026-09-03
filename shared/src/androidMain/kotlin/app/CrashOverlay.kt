@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Looper
+import SyncplayMobile.shared.KiteBuildConfig
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,23 +41,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object CrashHandler {
     val crashTrace = MutableStateFlow<String?>(null)
 
+    /**
+     * Debug builds keep the process alive and draw the trace on screen, which is the fastest way
+     * to read a crash on a device. Release builds log it and hand it to the platform handler:
+     * a swallowed fatal never reached Play vitals, and the user was left with a frozen app
+     * instead of a clean restart.
+     */
     fun install() {
-        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             val trace = throwable.stackTraceToString()
             loggy(trace)
-            crashTrace.value = trace
 
-            if (Looper.myLooper() == Looper.getMainLooper()) {
-                // Restart the main looper so Compose can still render the crash overlay
-                while (true) {
-                    try {
-                        Looper.loop()
-                    } catch (_: Throwable) {
-                        // Swallow subsequent crashes to keep the overlay visible
+            if (KiteBuildConfig.IS_DEBUG) {
+                crashTrace.value = trace
+                if (Looper.myLooper() == Looper.getMainLooper()) {
+                    // Restart the main looper so Compose can still render the crash overlay
+                    while (true) {
+                        try {
+                            Looper.loop()
+                        } catch (_: Throwable) {
+                            // Swallow subsequent crashes to keep the overlay visible
+                        }
                     }
                 }
+                // Background thread: let it die, main thread + Compose keep running
+                return@setDefaultUncaughtExceptionHandler
             }
-            // Background thread: let it die, main thread + Compose keep running
+
+            previous?.uncaughtException(thread, throwable)
         }
     }
 }

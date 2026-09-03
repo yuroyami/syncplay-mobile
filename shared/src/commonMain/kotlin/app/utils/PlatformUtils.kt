@@ -10,7 +10,7 @@ import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.ktor.client.HttpClient
 
-/** expect declarations actualized per platform (Android/iOS). */
+/** expect declarations actualized per platform (Android, iOS, desktop). */
 
 /** Current system time as Unix epoch milliseconds (UTC). */
 expect fun generateTimestampMillis(): Long
@@ -92,6 +92,9 @@ expect fun getDeviceIpAddress(): String?
 /** Log directory path (Android: filesDir/logs, iOS: NSDocumentDirectory/logs). */
 expect fun getLogDirectoryPath(): String?
 
+/** An app-private cache folder named [subdir], created if missing; null when the platform has none. */
+expect fun getCacheDirectoryPath(subdir: String): String?
+
 /** Appends [content] to [path], creating the file if missing. */
 expect fun appendToFile(path: String, content: String)
 
@@ -130,8 +133,8 @@ expect fun fileExists(path: String): Boolean
 
 /**
  * Returns the absolute path where mpv looks for its user configuration file, or null on
- * platforms where mpv does not honor a persistent config file (iOS). On Android this resolves
- * to `{filesDir}/mpv.conf` — the `config-dir` mpv is initialized with in MPVView.
+ * platforms with no mpv engine. On Android this resolves to `{filesDir}/mpv.conf`, the
+ * `config-dir` mpv is initialized with in MPVView.
  */
 expect fun getMpvConfFilePath(): String?
 

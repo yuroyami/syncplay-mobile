@@ -47,6 +47,7 @@ import platform.ImageIO.kCGImagePropertyGIFDelayTime
 import platform.ImageIO.kCGImagePropertyGIFDictionary
 import platform.ImageIO.kCGImagePropertyGIFUnclampedDelayTime
 import platform.ImageIO.kCGImagePropertyPNGDictionary
+import kotlinx.cinterop.useContents
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageView
 import platform.UIKit.UIViewContentMode
@@ -67,6 +68,7 @@ import platform.UIKit.UIViewContentMode
  * [downloadAndDecodeAnimatedImage] which finishes on Dispatchers.Default.
  */
 private const val IMAGE_CACHE_MAX_ENTRIES = 64
+private const val IMAGE_CACHE_MAX_BYTES = 48L * 1024 * 1024
 private val imageCacheLock = SynchronizedObject()
 /* LinkedHashMap on Kotlin/Native preserves insertion order only — no access-order
  * constructor like the JVM offers. Implement LRU by removing + re-inserting on read,
@@ -79,13 +81,24 @@ private fun cachedImage(url: String): UIImage? = synchronized(imageCacheLock) {
     hit
 }
 
+/** Decoded frames, four bytes a pixel: the cost a cached image actually has in memory. */
+@OptIn(ExperimentalForeignApi::class)
+private fun UIImage.approximateBytes(): Long {
+    val (w, h) = size.useContents { width to height }
+    val pixels = (w * scale) * (h * scale)
+    val frames = (images?.size ?: 1).coerceAtLeast(1)
+    return (pixels * 4.0 * frames).toLong()
+}
+
 private fun cacheImage(url: String, image: UIImage) {
     synchronized(imageCacheLock) {
         imageCache.remove(url)
         imageCache[url] = image
-        while (imageCache.size > IMAGE_CACHE_MAX_ENTRIES) {
+        // Two bounds: a count for the panel's grid, and bytes so a few long GIFs cannot own the heap.
+        var bytes = imageCache.values.sumOf { it.approximateBytes() }
+        while (imageCache.size > IMAGE_CACHE_MAX_ENTRIES || (bytes > IMAGE_CACHE_MAX_BYTES && imageCache.size > 1)) {
             val oldest = imageCache.keys.iterator().next()
-            imageCache.remove(oldest)
+            bytes -= imageCache.remove(oldest)?.approximateBytes() ?: 0L
         }
     }
 }

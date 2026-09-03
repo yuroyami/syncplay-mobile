@@ -85,7 +85,8 @@ fun cleanupOldLogs() {
             try {
                 val datePart = fileName.removeSuffix(".log")
                 val fileDays = datePart.toEpochDays()
-                if (todayEpochDays - fileDays > LOG_RETENTION_DAYS) {
+                // Today counts as day one, so a file from LOG_RETENTION_DAYS ago is the first to go.
+                if (todayEpochDays - fileDays >= LOG_RETENTION_DAYS) {
                     deleteFile("$logDir/$fileName")
                 }
             } catch (_: Exception) {

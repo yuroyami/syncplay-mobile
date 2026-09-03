@@ -33,10 +33,12 @@ import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
+import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
+import platform.Foundation.NSLibraryDirectory
 import platform.Foundation.NSNumber
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSSelectorFromString
@@ -226,16 +228,39 @@ actual fun getDeviceIpAddress(): String? {
     }
 }
 
+/**
+ * Logs live under Library, out of the Files app's reach: Documents is shared on purpose for media,
+ * and a week of protocol logs (usernames, room names, file names) does not belong there. The old
+ * Documents/logs folder is removed the first time this runs.
+ */
 actual fun getLogDirectoryPath(): String? {
     return try {
-        val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
-        val docDir = paths.firstOrNull() as? String ?: return null
-        val logDir = "$docDir/logs"
         val fm = NSFileManager.defaultManager
+        val library = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true).firstOrNull() as? String ?: return null
+        val logDir = "$library/Logs/Synkplay"
         if (!fm.fileExistsAtPath(logDir)) {
             fm.createDirectoryAtPath(logDir, withIntermediateDirectories = true, attributes = null, error = null)
         }
+        (NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true).firstOrNull() as? String)?.let { docs ->
+            val legacy = "$docs/logs"
+            if (fm.fileExistsAtPath(legacy)) fm.removeItemAtPath(legacy, null)
+        }
         logDir
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun getCacheDirectoryPath(subdir: String): String? {
+    return try {
+        val paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
+        val cacheDir = paths.firstOrNull() as? String ?: return null
+        val dir = "$cacheDir/$subdir"
+        val fm = NSFileManager.defaultManager
+        if (!fm.fileExistsAtPath(dir)) {
+            fm.createDirectoryAtPath(dir, withIntermediateDirectories = true, attributes = null, error = null)
+        }
+        dir
     } catch (_: Exception) {
         null
     }

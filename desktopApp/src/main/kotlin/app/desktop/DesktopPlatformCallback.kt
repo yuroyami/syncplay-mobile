@@ -31,6 +31,9 @@ object DesktopPlatformCallback : PlatformCallback {
 
     override fun changeCurrentBrightness(v: Float) {}
 
+    /** No desktop OS lets an app set screen brightness; the room hides the swipe rather than fake a readout. */
+    override val supportsBrightness: Boolean get() = false
+
     override fun mediaSessionInitialize() {}
 
     override fun mediaSessionFinalize() {}

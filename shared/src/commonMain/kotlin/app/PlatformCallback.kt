@@ -70,6 +70,12 @@ interface PlatformCallback {
     fun serverServiceStart(port: Int)
     fun serverServiceStop()
 
+    /** The hosted server's client count changed; a platform notification may show it. */
+    fun serverClientsChanged(port: Int, clients: Int) {}
+
+    /** Whether the platform lets the app change screen brightness; the swipe is hidden where it cannot. */
+    val supportsBrightness: Boolean get() = true
+
     /**
      * Called when playback state changes.
      *

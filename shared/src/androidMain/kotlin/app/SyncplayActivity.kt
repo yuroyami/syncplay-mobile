@@ -22,7 +22,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
 import android.view.KeyEvent
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContract
@@ -35,7 +34,6 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.session.MediaController
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.player.Playback
@@ -76,7 +74,6 @@ class SyncplayActivity : ComponentActivity() {
     val roomViewmodel: RoomViewmodel?
         get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
 
-    lateinit var media3Controller: MediaController
 
     /**
      * Called when the activity is first created.
@@ -125,6 +122,15 @@ class SyncplayActivity : ComponentActivity() {
                 stopService(Intent(this@SyncplayActivity, SyncplayServerService::class.java))
             }
 
+            override fun serverClientsChanged(port: Int, clients: Int) {
+                // The same start intent updates the running notification's client count.
+                val intent = Intent(this@SyncplayActivity, SyncplayServerService::class.java).apply {
+                    putExtra(SyncplayServerService.EXTRA_PORT, port)
+                    putExtra(SyncplayServerService.EXTRA_CLIENTS, clients)
+                }
+                runCatching { startForegroundService(intent) }
+            }
+
             /**
              * Recreates the activity to apply the new language.
              */
@@ -171,6 +177,12 @@ class SyncplayActivity : ComponentActivity() {
              */
             override fun onEraseConfigShortcuts() {
                 ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
+                // Pinned copies live on the launcher and keep the room password; they can only
+                // be disabled, which is what stops them from ever joining again.
+                val pinned = ShortcutManagerCompat.getShortcuts(this@SyncplayActivity, ShortcutManagerCompat.FLAG_MATCH_PINNED)
+                if (pinned.isNotEmpty()) {
+                    ShortcutManagerCompat.disableShortcuts(this@SyncplayActivity, pinned.map { it.id }, null)
+                }
             }
 
             /**
@@ -330,7 +342,9 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
             notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
     }
@@ -341,17 +355,18 @@ class SyncplayActivity : ComponentActivity() {
      * This ensures the correct locale is used when inflating resources.
      */
     override fun attachBaseContext(newBase: Context?) {
-        /** Applying saved language (fall back to default if DataStore isn't ready yet) */
+        /** Applying the saved language; blank means the device's own, so nothing is forced. */
         val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)
-        super.attachBaseContext(newBase!!.changeLanguage(lang))
+        super.attachBaseContext(if (lang.isBlank()) newBase else newBase!!.changeLanguage(lang))
     }
 
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // Reapply locale after orientation changes.
+        // Reapply a chosen locale after orientation changes; a blank choice follows the device.
         // TODO: migrate to AppCompatDelegate.setApplicationLocales for per-app language on Android 13+.
         val lang = DISPLAY_LANG.value()
+        if (lang.isBlank()) return
         val locale = Locale.Builder().setLanguage(lang).build()
         Locale.setDefault(locale)
         val config = resources.configuration
@@ -397,14 +412,11 @@ class SyncplayActivity : ComponentActivity() {
     private fun initiatePIPmode() {
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = true
 
-        lifecycleScope.launch {
-            val playing = roomViewmodel?.player?.isPlaying() == true
-            val params = buildPiPParams(playing)
-            runCatching {
-                enterPictureInPictureMode(params)
-            }
-            roomViewmodel?.uiState?.visibleHUD?.value = false
+        val params = buildPiPParams(roomViewmodel?.playerManager?.isNowPlaying?.value == true)
+        runCatching {
+            enterPictureInPictureMode(params)
         }
+        roomViewmodel?.uiState?.visibleHUD?.value = false
     }
 
     /**
@@ -418,7 +430,8 @@ class SyncplayActivity : ComponentActivity() {
         // When playing → show pause button (action=0 means pause)
         // When paused  → show play button  (action=1 means play)
         val actionValue = if (isPlaying) 0 else 1
-        val intent = Intent("pip").putExtra("pause_zero_play_one", actionValue)
+        // Explicit and package-bound: the receiver is not exported, so no other app can press it.
+        val intent = Intent(PIP_ACTION).setPackage(packageName).putExtra("pause_zero_play_one", actionValue)
         val pendingIntent = PendingIntent.getBroadcast(
             this, 6969 + actionValue, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
@@ -434,20 +447,28 @@ class SyncplayActivity : ComponentActivity() {
             pendingIntent
         )
 
-        return PictureInPictureParams.Builder()
-            .setActions(if (roomViewmodel?.hasVideo?.value == true) listOf(action) else listOf())
-            .build()
+        val hasVideo = roomViewmodel?.hasVideo?.value == true
+        val builder = PictureInPictureParams.Builder()
+            .setActions(if (hasVideo) listOf(action) else listOf())
+        if (hasVideo) {
+            // A video-shaped window instead of the system's square default.
+            builder.setAspectRatio(android.util.Rational(16, 9))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Home while playing keeps the picture on screen, the way video apps do.
+                builder.setAutoEnterEnabled(isPlaying)
+            }
+        }
+        return builder.build()
     }
 
     /**
-     * Updates the PiP parameters on the activity to reflect current playback state.
+     * Updates the PiP parameters on the activity to reflect current playback state. Reads the
+     * engine's reported state, never a live probe (rule 5 of the ledger).
      */
     private fun updatePiPParams() {
-        lifecycleScope.launch {
-            val playing = roomViewmodel?.player?.isPlaying() == true
-            runCatching {
-                setPictureInPictureParams(buildPiPParams(playing))
-            }
+        val playing = roomViewmodel?.playerManager?.isNowPlaying?.value == true
+        runCatching {
+            setPictureInPictureParams(buildPiPParams(playing))
         }
     }
 
@@ -459,7 +480,7 @@ class SyncplayActivity : ComponentActivity() {
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let { intnt ->
-                if (intnt.action == "pip") {
+                if (intnt.action == PIP_ACTION) {
                     val pausePlayValue = intnt.getIntExtra("pause_zero_play_one", -1)
 
                     if (pausePlayValue == 1) {
@@ -483,9 +504,10 @@ class SyncplayActivity : ComponentActivity() {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
-        val filter = IntentFilter("pip")
+        val filter = IntentFilter(PIP_ACTION)
+        // Not exported: only our own PendingIntent (explicit, package-bound) may pause the room.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(pipBroadcastReceiver, filter, RECEIVER_EXPORTED)
+            registerReceiver(pipBroadcastReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
             registerReceiver(pipBroadcastReceiver, filter)
         }
@@ -510,14 +532,12 @@ class SyncplayActivity : ComponentActivity() {
         if (vm != null) {
             when (keyCode) {
                 KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                    val playing = vm.playerManager.hasVideo.value
-                    if (playing) {
-                        lifecycleScope.launch {
-                            val isPlaying = vm.player.isPlaying() == true
-                            vm.dispatcher.controlPlayback(
-                                if (isPlaying) Playback.PAUSE else Playback.PLAY, true
-                            )
-                        }
+                    if (vm.playerManager.hasVideo.value) {
+                        // The app's own intent, not a live engine probe: mid-buffer a probe says
+                        // "not playing" and the key would unpause a room that just paused.
+                        vm.dispatcher.controlPlayback(
+                            if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true
+                        )
                     }
                     return true
                 }
@@ -546,12 +566,9 @@ class SyncplayActivity : ComponentActivity() {
             if (hasVideo && !hudVisible) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                        lifecycleScope.launch {
-                            val isPlaying = vm.player.isPlaying() == true
-                            vm.dispatcher.controlPlayback(
-                                if (isPlaying) Playback.PAUSE else Playback.PLAY, true
-                            )
-                        }
+                        vm.dispatcher.controlPlayback(
+                            if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true
+                        )
                         vm.uiState.visibleHUD.value = true
                         return true
                     }
@@ -581,21 +598,15 @@ class SyncplayActivity : ComponentActivity() {
         runCatching { unregisterReceiver(pipBroadcastReceiver) }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    private companion object {
+        const val PIP_ACTION = "app.syncplay.PIP_PLAYBACK"
     }
 
+    /* A refusal is respected quietly: the old toast fired on every cold start, in English, and
+     * promised playback controls the notification does not carry. */
     private var notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (!granted) {
-            Toast.makeText(
-                applicationContext,
-                "Notification permission is required to show playback controls outside the app.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
+    ) { _ -> }
 
     /**
      * Callback indirection for the "custom picker" (chooser-of-file-managers) flow. The

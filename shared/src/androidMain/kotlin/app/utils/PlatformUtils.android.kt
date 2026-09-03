@@ -198,6 +198,12 @@ actual fun getLogDirectoryPath(): String? {
     }
 }
 
+actual fun getCacheDirectoryPath(subdir: String): String? = try {
+    java.io.File(contextObtainer().cacheDir, subdir).apply { mkdirs() }.absolutePath
+} catch (_: Exception) {
+    null
+}
+
 actual fun appendToFile(path: String, content: String) {
     try {
         java.io.File(path).appendText(content)

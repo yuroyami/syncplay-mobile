@@ -15,7 +15,9 @@ class SyncplayMediaSessionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
-        return START_STICKY
+        // Not sticky: a restart after process death would only resurrect a notification with no
+        // room behind it.
+        return START_NOT_STICKY
     }
 
     private fun createNotificationChannel() {

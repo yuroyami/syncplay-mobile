@@ -123,6 +123,12 @@ actual fun getLogDirectoryPath(): String? {
     }
 }
 
+actual fun getCacheDirectoryPath(subdir: String): String? = try {
+    File(File(desktopAppDataDir, "cache"), subdir).apply { mkdirs() }.absolutePath
+} catch (_: Exception) {
+    null
+}
+
 actual fun appendToFile(path: String, content: String) {
     try {
         File(path).appendText(content)

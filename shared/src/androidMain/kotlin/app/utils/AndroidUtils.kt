@@ -57,24 +57,24 @@ fun Context.changeLanguage(lang: String): Context {
 }
 
 /**
- * Forwards Activity lifecycle events (CREATE/START/RESUME/PAUSE/STOP) to the room's
- * UI state manager so it can react to background/foreground transitions.
+ * Forwards Activity lifecycle events (CREATE/START/RESUME/PAUSE/STOP) to the room's UI state
+ * manager. Registered once in onCreate, before any room exists, so the room is looked up at
+ * event time: resolving it at registration time bound nothing and left every background gate dead.
  */
 fun SyncplayActivity.bindWatchdog() {
-    roomViewmodel?.uiState?.let { watchdog ->
-        lifecycle.addObserver(
-            observer = LifecycleEventObserver { _, event ->
-                when (event) {
-                    Lifecycle.Event.ON_CREATE -> watchdog.onLifecycleCreate()
-                    Lifecycle.Event.ON_START -> watchdog.onLifecycleStart()
-                    Lifecycle.Event.ON_RESUME -> watchdog.onLifecycleResume()
-                    Lifecycle.Event.ON_PAUSE -> watchdog.onLifecyclePause()
-                    Lifecycle.Event.ON_STOP -> watchdog.onLifecycleStop()
-                    else -> {}
-                }
+    lifecycle.addObserver(
+        observer = LifecycleEventObserver { _, event ->
+            val watchdog = roomViewmodel?.uiState ?: return@LifecycleEventObserver
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> watchdog.onLifecycleCreate()
+                Lifecycle.Event.ON_START -> watchdog.onLifecycleStart()
+                Lifecycle.Event.ON_RESUME -> watchdog.onLifecycleResume()
+                Lifecycle.Event.ON_PAUSE -> watchdog.onLifecyclePause()
+                Lifecycle.Event.ON_STOP -> watchdog.onLifecycleStop()
+                else -> {}
             }
-        )
-    }
+        }
+    )
 }
 
 /**

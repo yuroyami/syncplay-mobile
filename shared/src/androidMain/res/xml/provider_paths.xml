@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Only the app's own files and cache: the provider hands engines our downloaded subtitles,
+     never the whole external storage. -->
 <paths>
-    <external-path
-        name="external_files"
-        path="." />
+    <files-path name="app_files" path="." />
+    <cache-path name="app_cache" path="." />
 </paths>

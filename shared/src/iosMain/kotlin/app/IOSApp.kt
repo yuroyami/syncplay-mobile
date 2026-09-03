@@ -5,8 +5,15 @@ package app
 import androidx.compose.ui.window.ComposeUIViewController
 import app.home.HomeViewmodel
 import app.room.RoomViewmodel
+import app.utils.loggy
 import app.utils.platformCallback
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.setUnhandledExceptionHook
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
 import platform.UIKit.NSLayoutConstraint
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
+import platform.UIKit.UIApplicationWillEnterForegroundNotification
 import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
@@ -45,6 +52,8 @@ val roomViewmodel: RoomViewmodel?
 
 fun SyncplayController(): UIViewController {
     platformCallback = ApplePlatformCallback
+    observeAppBackgrounding()
+    installCrashHook()
 
     val parentController = object : UIViewController(nibName = null, bundle = null) {
         /** Hosts the Compose UI as a child VC pinned to fill the parent. */
@@ -103,4 +112,32 @@ fun SyncplayController(): UIViewController {
     }
 
     return parentController
+}
+
+private var backgroundObserversInstalled = false
+
+/** The trace reaches the log file before the runtime terminates the process; there was no hook at all. */
+@OptIn(ExperimentalNativeApi::class)
+private fun installCrashHook() {
+    setUnhandledExceptionHook { throwable ->
+        loggy("Uncaught Kotlin exception: ${throwable.stackTraceToString()}")
+    }
+}
+
+/**
+ * The root view controller never disappears when the app is sent to the background, so the
+ * view-controller hooks above never see it. The application notifications do; they drive the
+ * same room lifecycle as Android's ON_STOP and ON_START.
+ */
+private fun observeAppBackgrounding() {
+    if (backgroundObserversInstalled) return
+    backgroundObserversInstalled = true
+    val center = NSNotificationCenter.defaultCenter
+    val queue = NSOperationQueue.mainQueue
+    center.addObserverForName(UIApplicationDidEnterBackgroundNotification, null, queue) { _ ->
+        roomViewmodel?.uiState?.onLifecycleStop()
+    }
+    center.addObserverForName(UIApplicationWillEnterForegroundNotification, null, queue) { _ ->
+        roomViewmodel?.uiState?.onLifecycleStart()
+    }
 }

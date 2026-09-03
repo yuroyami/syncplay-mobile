@@ -39,6 +39,8 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Synkplay hosts a watch-party server on your local network so nearby devices can join it.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Synkplay saves video screenshots to your photo library.</string>
 	<key>UIBackgroundModes</key>
