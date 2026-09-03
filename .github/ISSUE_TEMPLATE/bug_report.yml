@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in the app does not work
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, and what the app did instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown at the bottom of the About sheet (tap the logo on the home screen).
+      placeholder: "0.24.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Android, iOS, Windows, macOS, Linux]
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: "Pixel 7, Android 15"
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Video engine
+      description: Settings, or the picker on the home screen.
+      options: [ExoPlayer, mpv, KitePlayer, AVPlayer, VLCKit, "Not sure"]
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server
+      description: The official server, your own, or someone else's. No addresses or passwords needed.
+      placeholder: "syncplay.pl:8997"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: Settings, Advanced, Export logs. Check it for room names before attaching it.
+      render: text

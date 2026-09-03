@@ -1,7 +1,8 @@
 # AGENTS.md
 
-This project keeps its knowledge in two files. There is no third copy, and nothing here is
-duplicated, so neither file can drift from the other.
+This project keeps its knowledge in two files. Neither is generated, so both can go stale; the
+rule is that a change updates the file it touches in the same commit. This file used to be a
+third copy and drifted badly, which is why it is a pointer now.
 
 | File | What is in it |
 |---|---|

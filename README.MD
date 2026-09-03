@@ -153,7 +153,7 @@ Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared co
 
 **Mobile adds:** Picture-in-Picture, gesture controls (double-tap seek, swipe brightness/volume), haptic feedback, GIF chat, a built-in server, runtime engine switching, solo/offline mode, custom themes, and Android TV support.
 
-**Not yet ported from desktop:** the command-line interface, persistent server rooms (the built-in server is in-memory only), the file-switch manager, and per-user time offset.
+**Not yet ported from desktop:** persistent server rooms (the built-in server keeps rooms in memory only), the file-switch manager that hunts for a matching file on every machine, and per-user time offset. The desktop build does take the same command-line join arguments.
 
 ---
 

@@ -46,6 +46,6 @@ rm -rf prefix
 Once build is complete:
 
 * The compiled `.so` native libraries will appear under
-  `shared/src/androidMain/libs/` (one subfolder per architecture)
+  `androidApp/src/main/libs/` (one subfolder per architecture)
 
 You can proceed to building the APK now that the native libs are ready to be packaged.

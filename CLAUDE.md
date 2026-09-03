@@ -41,7 +41,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 | Gradle module | Purpose |
 |---|---|
-| `:shared` | KMP library: `commonMain` + `androidMain` + `iosMain` + `desktopMain` + `commonTest` |
+| `:shared` | KMP library: `commonMain` + `androidMain` + `iosMain` + `desktopMain` + `commonTest` + `desktopTest` (design harness, ignored subtitle E2E); an empty `mobileMain` tree is an orphan |
 | `:androidApp` | Android app shell (single Activity, depends on `:shared`) |
 | `:desktopApp` | Compose for Desktop shell (`app.desktop.MainKt`), jpackage distributions |
 | `buildSrc` | Build config helpers: `AppConfig.kt`, `NativeBuildConfig.kt` |
@@ -165,7 +165,12 @@ Client advertises `realversion = "1.7.5"` (matches PC `RECENT_CLIENT_THRESHOLD`)
 
 **FileData.size is polymorphic** (`FileSizeSerializer`): decodes a JSON number, string, or `0` all to `String`; encodes a raw byte count (and the hidden sentinel `0`) as a JSON **number** but the 12-char privacy hash as a **string**. `deserialize` throws `SerializationException` on a non-primitive.
 
-**TLS:** client `{"TLS":{"startTLS":"send"}}`, server `{"TLS":{"startTLS":"true"|"false"}}`. **Chat/Error/List** as above.
+**TLS:** client `{"TLS":{"startTLS":"send"}}`, server `{"TLS":{"startTLS":"true"|"false"}}`.
+`Session.tlsPeerHost` holds the name the user typed, kept apart from `serverHost` (which the
+official server collapses to an IP): Netty sets `endpointIdentificationAlgorithm = "HTTPS"`
+against it and SwiftNIO passes it as `serverHostname`, so the certificate is really checked, and
+both send it as SNI. `Preferences.TLS_REQUIRED` decides what a `TLS:false` answer means: a notice
+and plain text when off, `abortConnection()` when on. An unsolicited `TLS` message is ignored. **Chat/Error/List** as above.
 
 ### Tolerant features decoding
 
@@ -221,6 +226,17 @@ The desync-correction block is gated on `viewmodel.media != null` (with no media
 ### Channel health & playback broadcast (`ProtocolManager`)
 
 While CONNECTED, two coroutines run: a **List-probe** every 15 s (keeps the channel warm) and a **watchdog** every 5 s that terminates the socket and fires `onDisconnected()` if no State arrives for 15 s. Playback changes are **callback-driven, not polled**: a collector on `PlayerManager.isNowPlaying` broadcasts a State **only** when the engine-reported state diverges from `expectedPaused`. Deliberate changes call `noteExpectedPlaybackState()` first to suppress re-broadcast; only engine-driven auto pause/resume (buffer underrun, audio-focus loss, EOF) actually broadcasts. Outbound paths read `expectedPlaying`, never a live `isPlaying()` probe. `serverIgnFly`/`clientIgnFly` are atomicfu atomics (built from `Dispatchers.IO`).
+
+**Position.** One estimator: `PlayerManager.samplePosition` records the engine's position with a
+timestamp wherever an engine reports one (its tracker, a seek, a VLCKit time-changed event), and
+`estimatedPositionMs()` returns that sample plus the time since it while `isNowPlaying` holds.
+Every protocol read goes through it, from any thread; nothing probes the engine on the main
+thread. A stale sample past two seconds stops being extrapolated.
+
+**Background.** `RoomUiStateManager.onLifecycleStop` pauses locally after noting the expectation,
+so the room hears nothing, and the outbound State keeps advertising the room's position.
+Returning calls `ProtocolManager.resumeFromBackground`, which re-arms both the position mask and
+the first-sync anchor, so the next server `State` hard-seeks and re-applies pause/play.
 
 `invalidate()` is full teardown; `resetSyncAnchorForReconnect()` is the lightweight transient-reconnect reset (clears `lastGlobalUpdate`, `lastGlobalPositionSetAt`, and the ignFly counters only) so the first State on a new socket re-anchors. Mirrors PC `_performRetryStateReset`.
 
@@ -378,7 +394,7 @@ The mobile app can host a full Syncplay server, a direct port of `server.py`/`ut
 
 | File | Purpose |
 |---|---|
-| `server/SyncplayServer.kt` | Rooms, watchers, per-watcher state timer (initial forced State after 100 ms `doSeek=true`, then every `SERVER_STATE_INTERVAL_MS=1000`), broadcasting, controlled-room auth, `buildServerFeatures` (advertises `setOthersReadiness=true`, `persistentRooms=false`). |
+| `server/SyncplayServer.kt` | Rooms, watchers, per-watcher state timer (initial forced State after 100 ms `doSeek=true`, then every `SERVER_STATE_INTERVAL_MS=1000`, dropping a watcher silent past `protocolTimeoutSeconds`), broadcasting, controlled-room auth (the password must name the room the sender is in; three failures drop the connection, and a refusal goes only to the sender), `buildServerFeatures` (advertises `setOthersReadiness=true`, `persistentRooms=false`). `shutdown()` runs on the confined dispatcher; the log is capped at 500 lines. |
 | `server/ClientConnection.kt` | Per-client `WireMessageHandler`: decodes inbound JSON inside `onServerThread{}`, builds typed outbound via `sendTyped → toJson()`. MD5 password check; `onTLS` always answers `tlsResponse(false)` (no server TLS); filenames truncated to 250. |
 | `server/ServerRoomManager.kt` | Room lifecycle, `findFreeUsername` (appends `_`), broadcast/broadcastRoom; `PublicServerRoomManager` (room isolation) overrides `broadcast` to the sender's room only. `getOrCreateRoom` returns `ControlledServerRoom` for `+` names. |
 | `server/ServerHostSession.kt` | Process-lifetime owner of the hosted server (survives leaving the screen; the Android foreground service keeps the process alive). Config from six persisted prefs, port validated 1-65535, re-entrant-safe Start (rejects Starting too), failed-start cleanup, capped severity log (500) with its own consumed-count cursor, device/public IP (`api.ipify.org`). |
@@ -388,7 +404,7 @@ The mobile app can host a full Syncplay server, a direct port of `server.py`/`ut
 | `server/model/ServerWatcher.kt` | `updateState` adds `messageAge` on unpause; relays pause changes; `compareTo` pushes no-position/no-file watchers last. |
 | `server/model/ServerConfig.kt` | Port 8999, `isolateRooms=true`; `MAX_*` (chat 150, username 16, room 35, filename 250); `PROTOCOL_TIMEOUT_SECONDS=12.5`; `hashedPassword` = MD5 hex. |
 | `server/model/RoomPasswordProvider.kt` | Controlled-room hash chain + `XX-###-###` validation. |
-| `server/network/ServerNetworkEngine.{android,ios}.kt` | Netty `ServerBootstrap` (Android, `DelimiterBasedFrameDecoder` 64 KiB) / Ktor raw sockets (iOS, IPv4); both feed CRLF lines to `ClientConnection.handlePacket`. |
+| `server/network/ServerNetworkEngine.{android,ios}.kt` | Netty `ServerBootstrap` (Android and desktop, `DelimiterBasedFrameDecoder` 64 KiB) / Ktor raw sockets (iOS, IPv4). Every engine gives one socket one ordered mailbox and one consumer, so a line or a disconnect cannot overtake the Hello; the iOS engine also writes through one queue per client and survives a failed accept. |
 
 The Android server process is kept alive by `SyncplayServerService` (a foreground notification only; logic runs in `ServerViewmodel`'s scope). The general media-session foreground service is `SyncplayMediaSessionService`.
 
@@ -408,12 +424,13 @@ The Android server process is kept alive by `SyncplayServerService` (a foregroun
 
 ## Known Gaps & Platform Limitations
 
-**Missing vs desktop:** file-switch manager (auto-find matching files across users), per-user time offset, persistent rooms / SQLite on the mobile server (ephemeral only), server statistics, IPv6 server (IPv4 only), CLI/console UI, desktop players (MPC-HC/BE, MPlayer, IINA).
+**Missing vs desktop:** file-switch manager (auto-find matching files across users), per-user time offset, autoplay countdown, persistent rooms / SQLite on the mobile server (ephemeral only), server statistics, IPv6 server (IPv4 only), a console UI (the desktop build does take CLI join arguments), desktop players (MPC-HC/BE, MPlayer, IINA).
 
-**Code-level TODOs:** `TrackChoices` → sealed class; `PlayerManager.timeCurrentMillis/timeFullMillis` → `media.fileTimePos`/`fileDuration`; copy `+room:password` to the clipboard on managed-room creation; check operator status before opening the identify popup. Phones are landscape-locked in the room (`EnterRoomMode(false)`); the tall arrangement exists but only windows taller than wide reach it (issue #93 in effect). An empty orphan `shared/src/mobileMain/` tree exists. The full open-defect list is `MASTER_LEDGER.md`.
+**Code-level TODOs:** `TrackChoices` → sealed class; `PlayerManager.timeCurrentMillis/timeFullMillis` → `media.fileTimePos`/`fileDuration`; check operator status before opening the identify popup. Phones are landscape-locked in the room (`EnterRoomMode(false)`); the tall arrangement exists but only windows taller than wide reach it (issue #93 in effect). An empty orphan `shared/src/mobileMain/` tree exists, and `shared/src/desktopTest/` holds the design harness plus the ignored subtitle E2E. The full open-defect list is `MASTER_LEDGER.md`.
 
 **Platform limitations:**
 - **iOS server hosting** may not run reliably in the background (no foreground services); the mobile server always answers `TLS: false` (no server-side cert support).
+- **Invite links** use the app's own `synkplay://join?server=…&room=…` scheme (`app.home.InviteLink`), registered in the Android manifest and in `CFBundleURLTypes`. There is no https fallback, so a link only opens where the app is installed.
 - **Ktor networking** has no opportunistic TLS upgrade (KTOR-6623); encrypted connections require Netty (Android) or SwiftNIO (iOS).
 - **AVPlayer (iOS):** no external subtitles, no chapters, narrow format support (MP4/HLS).
 - **ExoPlayer (Android):** no chapters.

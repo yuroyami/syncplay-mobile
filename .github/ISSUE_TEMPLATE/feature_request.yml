@@ -1,0 +1,16 @@
+name: Feature request
+description: Something the app should do and does not
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do
+      description: The thing you want, and what you are trying to get done with it.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How you manage today
+      description: What you do instead right now, if anything.

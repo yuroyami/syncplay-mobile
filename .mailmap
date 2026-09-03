@@ -1,0 +1,11 @@
+# One person, ten git identities. Without this, `git shortlog -sn` reads as a crowd.
+yuroyami <evongintoki@gmail.com> <akrame0@gmail.com>
+yuroyami <evongintoki@gmail.com> <evogintoki@gmail.com>
+yuroyami <evongintoki@gmail.com> <72363167+yuroyami@users.noreply.github.com>
+yuroyami <evongintoki@gmail.com> AKRAM SIDENA <akrame0@gmail.com>
+yuroyami <evongintoki@gmail.com> Sidena Akram <72363167+yuroyami@users.noreply.github.com>
+yuroyami <evongintoki@gmail.com> Akram <72363167+yuroyami@users.noreply.github.com>
+yuroyami <evongintoki@gmail.com> SPACESHIP <evogintoki@gmail.com>
+yuroyami <evongintoki@gmail.com> evong <evongintoki@gmail.com>
+yuroyami <evongintoki@gmail.com> mac <akrame0@gmail.com>
+yuroyami <evongintoki@gmail.com> macbook <akrame0@gmail.com>
