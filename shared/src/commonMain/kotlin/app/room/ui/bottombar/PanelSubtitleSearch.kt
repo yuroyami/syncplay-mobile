@@ -35,6 +35,7 @@ import app.preferences.watchPref
 import app.subtitles.SubtitleDownloadResult
 import app.subtitles.SubtitleResult
 import app.subtitles.SubtitleSearch
+import app.subtitles.SubtitleSearchOutcome
 import app.subtitles.subtitleSearchLanguages
 import app.theme.Space
 import app.theme.Type
@@ -54,6 +55,7 @@ import app.uicomponents.frames.ModalSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -96,23 +98,29 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
         subtitleSearchLanguages.firstOrNull { it.second == languageCode }?.first ?: languageCode.uppercase()
     }
 
+    /* One search in flight: a language change or a retyped query cancels the previous one, so
+     * an older, slower reply can never overwrite a newer result list. */
+    var searchJob by remember { mutableStateOf<Job?>(null) }
+    fun runSearch() {
+        searchJob?.cancel()
+        searchJob = scope.launch(Dispatchers.IO) {
+            searching = true
+            when (val outcome = SubtitleSearch.search(query, languageCode)) {
+                is SubtitleSearchOutcome.Results -> { results = outcome.items; error = null }
+                is SubtitleSearchOutcome.Failed -> { results = emptyList(); error = outcome.reason }
+            }
+            searching = false
+        }
+    }
     fun search() {
         if (query.isBlank()) return
         focusManager.clearFocus() // the keyboard would cover the results
-        scope.launch(Dispatchers.IO) {
-            searching = true
-            results = SubtitleSearch.search(query, languageCode)
-            searching = false
-        }
+        runSearch()
     }
 
     /* Search on open and again whenever the language changes, keeping the current query. */
     LaunchedEffect(languageCode) {
-        if (query.isNotBlank()) {
-            searching = true
-            results = SubtitleSearch.search(query, languageCode)
-            searching = false
-        }
+        if (query.isNotBlank()) runSearch()
     }
 
     Modal(open = true, onDismiss = onDismiss, title = stringResource(Res.string.room_sub_search_title), size = ModalSize.Panel, inset = false) {

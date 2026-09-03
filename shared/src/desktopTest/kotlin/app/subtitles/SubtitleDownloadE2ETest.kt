@@ -19,7 +19,10 @@ class SubtitleDownloadE2ETest {
     @Ignore
     @Test
     fun searchThenDownload() = runBlocking {
-        val results = SubtitleSearch.search("big buck bunny", "en")
+        val results = when (val outcome = SubtitleSearch.search("big buck bunny", "en")) {
+            is SubtitleSearchOutcome.Results -> outcome.items
+            is SubtitleSearchOutcome.Failed -> error("search failed: ${outcome.reason}")
+        }
         println("E2E: search returned ${results.size} results")
         check(results.isNotEmpty()) { "search returned no results" }
 

@@ -82,6 +82,7 @@ import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.preferences.Preferences.NEVER_SHOW_TIPS
+import app.preferences.Preferences.TIPS_SHOWN_COUNT
 import app.preferences.Preferences.PLAYER_ENGINE
 import app.preferences.set
 import app.preferences.value
@@ -160,15 +161,11 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     val globalViewmodel = LocalGlobalViewmodel.current
     val focusManager = LocalFocusManager.current
 
-    var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
+    // The store is a hot snapshot, so the saved join is read in the first composition: the
+    // fields never paint defaults and then swap values under a user who started typing.
+    val savedConfig by remember { mutableStateOf(JoinConfig.savedConfigNow()) }
     // A fresh install has no saved join: the server choice starts empty and must be made.
-    var hasSavedConfig by remember { mutableStateOf(false) }
-    LaunchedEffect(null) {
-        withContext(Dispatchers.IO) {
-            hasSavedConfig = Preferences.JOIN_CONFIG.value() != null
-            savedConfig = JoinConfig.savedConfig()
-        }
-    }
+    val hasSavedConfig = remember { Preferences.JOIN_CONFIG.value() != null }
 
     // A pending shortcut joins once, on arrival, through the same caps as the form.
     LaunchedEffect(Unit) {
@@ -180,7 +177,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            if (!globalViewmodel.hasEnteredRoomOnce && !NEVER_SHOW_TIPS.value()) didYaKnowPopup.value = true
+            // A few first launches, then the tips leave on their own; the popup's own switch
+            // silences them for good.
+            val shown = TIPS_SHOWN_COUNT.value()
+            if (!globalViewmodel.hasEnteredRoomOnce && !NEVER_SHOW_TIPS.value() && shown < TIPS_MAX_SHOWINGS) {
+                TIPS_SHOWN_COUNT.set(shown + 1)
+                didYaKnowPopup.value = true
+            }
         }
     }
 
@@ -190,7 +193,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
             /* The form renders with defaults at once and re-keys on the saved config when it
              * arrives. imePadding before verticalScroll, so the keyboard scrolls the form. */
-            val config = savedConfig ?: remember { JoinConfig() }
+            val config = savedConfig
             /* The form is centred in the height left under the bar when it is shorter than
              * that, and scrolls when it is taller (a small window, or the keyboard up). */
             BoxWithConstraints(
@@ -685,3 +688,6 @@ private fun FormField(
         }
     }
 }
+
+/** Cold starts that show the tips before they stop appearing by themselves. */
+private const val TIPS_MAX_SHOWINGS = 3

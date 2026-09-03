@@ -54,9 +54,17 @@ fun ManagedRoomModal() {
     fun close() { ui.managedRoom.value = false }
     fun send() {
         close()
-        viewmodel.protocol.isRoomChanging = true
-        val auth = if (create) WireMessage.controllerAuth(room = roomName, password = generateRoomPassword())
-        else WireMessage.controllerAuth(password = password)
+        val auth = if (create) {
+            // Creating moves us to the minted room; the flag mutes the transition's own events.
+            viewmodel.protocol.isRoomChanging = true
+            WireMessage.controllerAuth(room = roomName, password = generateRoomPassword())
+        } else {
+            // Identifying stays in this room. The attempt is kept so a success can store it for
+            // the re-identification every reconnect performs.
+            val attempt = password.trim().uppercase()
+            viewmodel.session.lastControlPasswordAttempt = attempt
+            WireMessage.controllerAuth(room = viewmodel.session.currentRoom, password = attempt)
+        }
         viewmodel.networkManager.sendAsync(auth)
     }
 

@@ -44,7 +44,7 @@ object KlipyUtils {
     ): KlipyPagedResult {
         if (query.isBlank()) return trending(type, limit, page)
 
-        loggy("KlipyUtils.search → type=$type query='$query' limit=$limit page=$page customerId=$customerId baseUrl=$BASE_URL")
+        loggy("KlipyUtils.search → type=$type limit=$limit page=$page")
         return try {
             val result = when (type) {
                 KlipyMediaType.GIF -> klipy.searchGifs(query = query, perPage = limit, customerId = customerId, page = page)
@@ -73,7 +73,7 @@ object KlipyUtils {
         limit: Int = 24,
         page: Int = 1
     ): KlipyPagedResult {
-        loggy("KlipyUtils.trending → type=$type limit=$limit page=$page customerId=$customerId baseUrl=$BASE_URL")
+        loggy("KlipyUtils.trending → type=$type limit=$limit page=$page")
         return try {
             val result = when (type) {
                 KlipyMediaType.GIF -> klipy.trendingGifs(perPage = limit, customerId = customerId, page = page)
@@ -136,6 +136,7 @@ object KlipyUtils {
             KlipyMedia(
                 id = item.id,
                 slug = item.slug,
+                title = item.title,
                 previewUrl = if (isSticker) item.file.sm.webp.url else item.file.sm.gif.url,
                 fullUrl = if (isSticker) item.file.hd.webp.url else item.file.hd.gif.url,
                 type = type
@@ -190,6 +191,8 @@ object KlipyUtils {
 data class KlipyMedia(
     val id: Long,
     val slug: String = "",
+    /** The provider's caption, spoken for the tile. */
+    val title: String = "",
     val previewUrl: String,
     val fullUrl: String,
     val type: KlipyMediaType = KlipyMediaType.GIF

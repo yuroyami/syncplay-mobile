@@ -1,7 +1,7 @@
 package app.subtitles
 
 import SyncplayMobile.shared.KiteBuildConfig
-import app.utils.getLogDirectoryPath
+import app.utils.getCacheDirectoryPath
 import app.utils.httpClient
 import app.utils.loggy
 import app.utils.writeTextFile
@@ -82,7 +82,7 @@ object SubtitleSearch {
      * comma-separated ISO 639-1 codes; the sentinel "all" (or a blank value) drops the language
      * filter so every language is returned.
      */
-    suspend fun search(query: String, language: String = "en"): List<SubtitleResult> {
+    suspend fun search(query: String, language: String = "en"): SubtitleSearchOutcome {
         return try {
             // Doc rules: languages lower-case, comma-separated, alphabetically sorted. "all" (or
             // empty) becomes null, which omits the filter — the API then returns all languages.
@@ -105,13 +105,13 @@ object SubtitleSearch {
                     downloadCount = item.attributes.downloadCount,
                     hearingImpaired = item.attributes.hearingImpaired
                 )
-            }.filter { it.fileId > 0 }
+            }.filter { it.fileId > 0 }.let { SubtitleSearchOutcome.Results(it) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            // A rejected key, a quota, a dead network: each used to look like "no results".
             loggy("SubtitleSearch error: ${e.message}")
-            e.printStackTrace()
-            emptyList()
+            SubtitleSearchOutcome.Failed(e.message ?: e::class.simpleName ?: "error")
         }
     }
 
@@ -136,7 +136,8 @@ object SubtitleSearch {
             /* The link is a short-lived direct URL to the UTF-8 subtitle text. */
             val subtitleContent = client.get(info.link).bodyAsText()
 
-            val dir = getLogDirectoryPath() ?: return SubtitleDownloadResult.Failed
+            // The cache, not the log folder: a log export must never carry subtitle files along.
+            val dir = getCacheDirectoryPath("subtitles") ?: return SubtitleDownloadResult.Failed
             // The server controls file_name — never let it traverse out of our directory.
             val filename = info.fileName.substringAfterLast('/').substringAfterLast('\\')
                 .ifBlank { "subtitle_$fileId.srt" }
@@ -172,6 +173,12 @@ object SubtitleSearch {
     }
 }
 
+/** Outcome of [SubtitleSearch.search]: the rows, or why there are none. */
+sealed class SubtitleSearchOutcome {
+    data class Results(val items: List<SubtitleResult>) : SubtitleSearchOutcome()
+    data class Failed(val reason: String) : SubtitleSearchOutcome()
+}
+
 /** Outcome of [SubtitleSearch.download], rich enough for user-facing quota messaging. */
 sealed class SubtitleDownloadResult {
     /** [remaining] = downloads left in the key's daily quota window (5/day on the free plan). */
@@ -180,7 +187,7 @@ sealed class SubtitleDownloadResult {
     /** Daily quota exhausted (HTTP 406). [resetTime] is human-readable, e.g. "12 hours". */
     data class QuotaExceeded(val resetTime: String) : SubtitleDownloadResult()
 
-    object Failed : SubtitleDownloadResult()
+    data object Failed : SubtitleDownloadResult()
 }
 
 data class SubtitleResult(

@@ -38,6 +38,7 @@ import syncplaymobile.shared.generated.resources.about_client_is_unofficial_disc
 import syncplaymobile.shared.generated.resources.about_client_platforms
 import syncplaymobile.shared.generated.resources.about_developed_by
 import syncplaymobile.shared.generated.resources.about_official_website
+import syncplaymobile.shared.generated.resources.about_privacy_button
 import syncplaymobile.shared.generated.resources.about_report_button
 import syncplaymobile.shared.generated.resources.about_source_button
 import syncplaymobile.shared.generated.resources.about_tagline
@@ -97,6 +98,12 @@ object PopupAPropos {
                     SecondaryAction(stringResource(Res.string.about_source_button), onClick = { uriHandler.openUri("https://www.github.com/yuroyami/syncplay-mobile") }, modifier = Modifier.weight(1f))
                     SecondaryAction(stringResource(Res.string.about_report_button), onClick = { uriHandler.openUri(bugReportUrl()) }, modifier = Modifier.weight(1f))
                 }
+                Spacer(Modifier.height(Space.gapTight))
+                SecondaryAction(
+                    stringResource(Res.string.about_privacy_button),
+                    onClick = { uriHandler.openUri("https://github.com/yuroyami/syncplay-mobile/blob/master/PRIVACY_POLICY.md") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(Space.gap))
                 AccentAction(
                     text = stringResource(Res.string.connect_watch_alone),

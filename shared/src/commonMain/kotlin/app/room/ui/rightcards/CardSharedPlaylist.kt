@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
+import app.preferences.settings.AskModal
 import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
@@ -113,6 +114,7 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
 import syncplaymobile.shared.generated.resources.room_shared_playlist_clear_playlist
+import syncplaymobile.shared.generated.resources.room_shared_playlist_clear_question
 import syncplaymobile.shared.generated.resources.room_shared_playlist_empty
 import syncplaymobile.shared.generated.resources.room_shared_playlist_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
@@ -157,6 +159,8 @@ object CardSharedPlaylist {
         val mediaDirsOpen = remember { mutableStateOf(false) }
         var urlsOpen by remember { mutableStateOf(false) }
         var group by remember { mutableStateOf<PlaylistGroup?>(null) }
+        // Clearing empties the list for the whole room, so it asks first.
+        val askClear = remember { mutableStateOf(false) }
         var itemActions by remember { mutableStateOf<Int?>(null) }
 
         val items = viewmodel.session.sharedPlaylist
@@ -206,7 +210,7 @@ object CardSharedPlaylist {
                                     }
                                 }
                                 Chip(Icons.Filled.Folder, stringResource(Res.string.room_shared_playlist_button_set_media_directories)) { group = null; mediaDirsOpen.value = true }
-                                Chip(Icons.Filled.ClearAll, stringResource(Res.string.room_shared_playlist_clear_playlist)) { group = null; playlist.clearPlaylist() }
+                                Chip(Icons.Filled.ClearAll, stringResource(Res.string.room_shared_playlist_clear_playlist)) { group = null; askClear.value = true }
                             }
                             null -> Unit
                         }
@@ -246,6 +250,14 @@ object CardSharedPlaylist {
         }
 
         MediaDirsPopup(mediaDirsOpen)
+        AskModal(
+            open = askClear,
+            title = stringResource(Res.string.room_shared_playlist_clear_playlist),
+            text = stringResource(Res.string.room_shared_playlist_clear_question),
+            destructive = true,
+            onYes = { askClear.value = false; playlist.clearPlaylist() },
+            onNo = { askClear.value = false },
+        )
         AddUrlsModal(open = urlsOpen, onDismiss = { urlsOpen = false })
     }
 

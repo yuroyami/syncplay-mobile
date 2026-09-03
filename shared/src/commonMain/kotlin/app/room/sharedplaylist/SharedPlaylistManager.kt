@@ -5,6 +5,8 @@ import app.AbstractManager
 import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.WireMessage
+import app.protocol.wire.PlaystateData
+import app.protocol.wire.StateData
 import app.room.RoomViewmodel
 import app.utils.PLAYLIST_MAX_CHARACTERS
 import app.utils.PLAYLIST_MAX_ITEMS
@@ -17,10 +19,13 @@ import io.github.vinceglb.filekit.writeString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_shared_playlist_limit
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
+import syncplaymobile.shared.generated.resources.room_shared_playlist_export_failed
+import syncplaymobile.shared.generated.resources.room_shared_playlist_exported
 import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
 import syncplaymobile.shared.generated.resources.room_untrusted_domain_warning
 
@@ -47,7 +52,14 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * configured. The gate exists to block auto-switching onto *peer-pushed* untrusted URLs, which
      * never pass through here.
      */
-    private val locallyAddedUrls = mutableSetOf<String>()
+    private val locallyAddedUrls = linkedSetOf<String>()
+
+    /** Remembers a consented URL, forgetting the oldest past the cap so a long session stays bounded. */
+    private fun rememberLocalUrl(url: String) {
+        locallyAddedUrls.remove(url)
+        locallyAddedUrls.add(url)
+        while (locallyAddedUrls.size > MAX_LOCAL_URLS) locallyAddedUrls.remove(locallyAddedUrls.first())
+    }
 
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
@@ -111,7 +123,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 merged.add(url)
                 // The local user typed this URL in, so it's trusted by consent regardless of the
                 // trusted-domains setting (see [locallyAddedUrls] / [isUrlTrusted]).
-                if (isRemoteUrl(url)) locallyAddedUrls.add(url)
+                if (isRemoteUrl(url)) rememberLocalUrl(url)
             }
         }
         if (merged.size == session.sharedPlaylist.size) return
@@ -213,8 +225,13 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         session.sharedPlaylist.removeAt(i)
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(session.sharedPlaylist.toList()))
 
-        if (session.sharedPlaylist.isEmpty()) {
-            session.spIndex.intValue = -1
+        // The highlighted entry keeps pointing at the same file: an item removed above it moves
+        // it up one, and removing the current one leaves the highlight on what took its place.
+        val current = session.spIndex.intValue
+        session.spIndex.intValue = when {
+            session.sharedPlaylist.isEmpty() -> -1
+            i < current -> current - 1
+            else -> current.coerceAtMost(session.sharedPlaylist.lastIndex)
         }
     }
 
@@ -227,6 +244,12 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             return
         }
         viewmodel.networkManager.sendAsync(WireMessage.playlistIndex(i))
+        // PC pauses the room at 0 with the index change, so everyone starts the new file from
+        // the top together instead of landing mid-way at the old position.
+        viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+        viewmodel.networkManager.sendAsync(
+            WireMessage.State(StateData(playstate = PlaystateData(position = 0.0, paused = true)))
+        )
     }
 
     /**
@@ -268,7 +291,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             return
         }
 
-        val resolved = MediaAccessRegistry.resolvePlayableFile(fileName)
+        // A peer's selection arrives on the main thread; resolving may walk every remembered
+        // media folder, which on a SAF tree is seconds of IO.
+        val resolved = withContext(Dispatchers.IO) { MediaAccessRegistry.resolvePlayableFile(fileName) }
         if (resolved != null) {
             lastLoadedSource = fileName
             viewmodel.player.injectVideoFile(resolved)
@@ -292,7 +317,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val snapshot = session.sharedPlaylist.toList()
         if (snapshot.isEmpty()) return
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            runCatching { destination.writeString(snapshot.joinToString("\n")) }
+            val saved = runCatching { destination.writeString(snapshot.joinToString("\n")) }.isSuccess
+            viewmodel.dispatchOSD {
+                getString(if (saved) Res.string.room_shared_playlist_exported else Res.string.room_shared_playlist_export_failed)
+            }
         }
     }
 
@@ -308,7 +336,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             if (alsoShuffle) lines.shuffle()
             if (rejectsOversizedPlaylist(lines)) return@launch
             // The local user is importing this playlist, so any URLs in it are trusted by consent.
-            lines.filter { isRemoteUrl(it) }.forEach { locallyAddedUrls.add(it) }
+            lines.filter { isRemoteUrl(it) }.forEach { rememberLocalUrl(it) }
             viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
         }
     }
@@ -363,6 +391,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     companion object {
+        private const val MAX_LOCAL_URLS = 500
+
         /**
          * One trusted-domain entry against one URL, with PC's exact matching rules
          * (client.py:565-602):

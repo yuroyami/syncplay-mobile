@@ -42,6 +42,11 @@ data class JoinConfig(
         suspend fun savedConfig(): JoinConfig = withTimeoutOrNull(250.milliseconds) {
             Preferences.JOIN_CONFIG.value()?.let { Json.decodeFromString<JoinConfig>(it) }
         } ?: JoinConfig()
+
+        /** The same read, synchronous: the preference store is a hot snapshot, so nothing waits. */
+        fun savedConfigNow(): JoinConfig =
+            runCatching { Preferences.JOIN_CONFIG.value()?.let { Json.decodeFromString<JoinConfig>(it) } }.getOrNull()
+                ?: JoinConfig()
     }
 
     /**
