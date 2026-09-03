@@ -2,13 +2,12 @@ package app.protocol.network
 
 import androidx.lifecycle.viewModelScope
 import app.room.RoomViewmodel
+import app.utils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CancellationException
@@ -16,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.protocol.models.ConnectionState
 
 /**
  * Cross-platform [NetworkManager] over Ktor TCP sockets. Works on every platform but does
@@ -25,79 +25,84 @@ import kotlinx.coroutines.withContext
 class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     override val engine = NetworkEngine.KTOR
 
+    private var selector: SelectorManager? = null
+
     private var socket: Socket? = null
 
     private var connection: Connection? = null
 
-    private var input: ByteReadChannel? = null
-
-    private var output: ByteWriteChannel? = null
-
     /**
      * Opens the TCP socket and launches a reader coroutine that feeds each inbound line to
-     * [handlePacket]. Connection failure triggers onConnectionFailed.
+     * [handlePacket]. A failure to open throws, and [connect] turns that into onConnectionFailed.
      */
     override suspend fun connectSocket() {
         withContext(Dispatchers.IO) {
-            try {
-                socket = aSocket(SelectorManager(Dispatchers.IO))
-                    .tcp()
-                    .connect(
-                        hostname = viewmodel.session.serverHost,
-                        port = viewmodel.session.serverPort
-                    ) {
-                        socketTimeout = 10000
-                    }
-
-                connection = socket?.connection() ?: throw Exception("Ktor: Socket unobtainable (is null)")
-
-                input = connection?.input
-                output = connection?.output
-
-                viewmodel.viewModelScope.launch {
-                    try {
-                        // readLineStrict suspends until a full line arrives, draining the
-                        // socket at line granularity with no artificial pacing. Pacing here
-                        // (e.g. a per-line delay) lags join bursts and inflates RTT samples.
-                        while (true) {
-                            val line = input?.readLineStrict() ?: break
-                            handlePacket(line)
-                        }
-                        viewmodel.callback.onDisconnected()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (_: Exception) {
-                        viewmodel.callback.onDisconnected()
-                    }
+            val sm = SelectorManager(Dispatchers.IO)
+            selector = sm
+            val sock = aSocket(sm)
+                .tcp()
+                .connect(
+                    hostname = viewmodel.session.serverHost,
+                    port = viewmodel.session.serverPort
+                ) {
+                    socketTimeout = 10000
                 }
+            socket = sock
+            val conn = sock.connection()
+            connection = conn
 
-            } catch (e: Exception) {
-                e.printStackTrace()
-                viewmodel.callback.onConnectionFailed()
+            // The reader lives on IO, never the main dispatcher, and only reports the loss of
+            // the socket it was reading: our own teardown of a previous socket is not news.
+            viewmodel.viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    // readLineStrict suspends until a full line arrives, draining the
+                    // socket at line granularity with no artificial pacing. Pacing here
+                    // (e.g. a per-line delay) lags join bursts and inflates RTT samples.
+                    // The limit matches the Netty framers: a line with no newline in 64 KiB
+                    // is not the Syncplay protocol.
+                    while (true) {
+                        val line = conn.input.readLineStrict(limit = MAX_LINE_BYTES) ?: break
+                        handlePacket(line)
+                    }
+                    lost(sock)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    loggy("Ktor reader ended: ${e.message}")
+                    lost(sock)
+                }
             }
         }
     }
 
-    /** Closes the socket (errors ignored) and clears all connection references. */
-    override fun terminateExistingConnection() {
-        runCatching {
-            socket?.close()
-        }
+    /** A socket closed under us: a failed handshake or a dropped session, depending on where we were. */
+    private fun lost(sock: Socket) {
+        if (socket !== sock) return
         socket = null
         connection = null
-        input = null
-        output = null
+        when (state.value) {
+            ConnectionState.CONNECTING -> viewmodel.callback.onConnectionFailed()
+            ConnectionState.CONNECTED -> viewmodel.callback.onDisconnected()
+            else -> Unit
+        }
     }
 
-    /** Writes a UTF-8 string and flushes; a write failure triggers onDisconnected. */
+    /** Closes the socket (errors ignored) and the selector behind it, clearing every reference. */
+    override fun terminateExistingConnection() {
+        val sock = socket
+        socket = null
+        connection = null
+        runCatching { sock?.close() }
+        // The selector owns a thread; one per connection attempt used to leak for the process life.
+        runCatching { selector?.close() }
+        selector = null
+    }
+
+    /** Writes a UTF-8 string and flushes; a failure throws so the caller can retry or queue. */
     override suspend fun writeActualString(s: String) {
-        try {
-            connection?.output?.writeStringUtf8(s)
-            connection?.output?.flush()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            viewmodel.callback.onDisconnected()
-        }
+        val out = connection?.output ?: throw SocketGoneException()
+        out.writeStringUtf8(s)
+        out.flush()
     }
 
     override fun supportsTLS() = false
@@ -108,5 +113,9 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
      */
     override suspend fun upgradeTls() {
         //TODO("Opportunistic TLS not yet supported by Ktor")
+    }
+
+    private companion object {
+        const val MAX_LINE_BYTES = 65536L
     }
 }

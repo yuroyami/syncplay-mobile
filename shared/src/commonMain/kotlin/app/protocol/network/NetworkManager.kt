@@ -4,6 +4,7 @@ import SyncplayMobile.shared.KiteBuildConfig
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.RECONNECTION_INTERVAL
+import app.preferences.Preferences.TLS_ENABLE
 import app.preferences.value
 import app.protocol.WireMessage
 import app.protocol.WireMessageDeserializer
@@ -14,15 +15,17 @@ import app.protocol.syncplayJson
 import app.room.RoomViewmodel
 import app.utils.loggy
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.SerializationException
 import kotlin.time.Duration.Companion.seconds
@@ -34,7 +37,8 @@ import kotlin.time.Duration.Companion.seconds
  * [WireMessage] → [WireMessage.dispatch] into the room's [WireMessageHandler].
  *
  * Outbound: callers construct typed [WireMessage] instances and pass them to [send] /
- * [sendAsync]; encoding goes through [syncplayJson] and onto the wire.
+ * [sendAsync]; encoding goes through [syncplayJson] and onto the wire, in the order the calls
+ * were made, through one writer.
  */
 abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
@@ -51,7 +55,14 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         SWIFTNIO // iOS, TLS
     }
 
+    /** Thrown by [writeActualString] when there is no socket at all: not a retry case. */
+    class SocketGoneException : Exception("No socket to write to")
+
     override fun invalidate() {
+        handshakeDeadlineJob?.cancel()
+        handshakeDeadlineJob = null
+        reconnectionJob?.cancel()
+        reconnectionJob = null
         terminateExistingConnection()
         state.value = ConnectionState.DISCONNECTED
         tls = TlsState.TLS_NO
@@ -59,7 +70,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     /**
      * Connects to the server. If [tls] is TLS_ASK, sends a TLS negotiation packet first;
-     * otherwise sends Hello directly.
+     * otherwise sends Hello directly. The handshake (socket, optional TLS, Hello and its reply)
+     * has a deadline: a server that accepts and then says nothing must not leave the room in
+     * CONNECTING forever, where no watchdog runs.
      */
     open suspend fun connect() {
         if (viewmodel.isSoloMode) return
@@ -67,6 +80,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         terminateExistingConnection()
         viewmodel.callback.onConnectionAttempt()
         state.value = ConnectionState.CONNECTING
+        armHandshakeDeadline()
 
         try {
             connectSocket()
@@ -76,15 +90,47 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             } else {
                 viewmodel.dispatcher.sendHello()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
             viewmodel.callback.onConnectionFailed()
         }
     }
 
+    private var handshakeDeadlineJob: Job? = null
+
+    private fun armHandshakeDeadline() {
+        handshakeDeadlineJob?.cancel()
+        handshakeDeadlineJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            delay(HANDSHAKE_TIMEOUT)
+            if (state.value == ConnectionState.CONNECTING) {
+                loggy("Handshake timed out after ${HANDSHAKE_TIMEOUT.inWholeSeconds}s")
+                terminateExistingConnection()
+                viewmodel.callback.onConnectionFailed()
+            }
+        }
+    }
+
+    /** Drops the connection for good: no reconnect loop. For a refused plain-text downgrade. */
+    fun abortConnection() {
+        reconnectionJob?.cancel()
+        reconnectionJob = null
+        handshakeDeadlineJob?.cancel()
+        handshakeDeadlineJob = null
+        terminateExistingConnection()
+        state.value = ConnectionState.DISCONNECTED
+    }
+
     abstract suspend fun connectSocket()
     abstract fun supportsTLS(): Boolean
     abstract fun terminateExistingConnection()
+
+    /**
+     * Writes [s] and returns once the transport has accepted it, throwing when it has not, so the
+     * retry and queue logic in [transmitPacket] sees real outcomes. Throws [SocketGoneException]
+     * when there is no socket.
+     */
     abstract suspend fun writeActualString(s: String)
 
     /**
@@ -105,11 +151,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     /**
      * Schedules automatic reconnection. A single coroutine owns the whole retry loop and keeps
      * retrying until the state reaches CONNECTED ([onConnected]) or the job is cancelled by
-     * [invalidate]/[terminateExistingConnection] (manual disconnect / leaving the room).
+     * [invalidate]/[abortConnection] (manual disconnect / leaving the room).
      *
      * The guard is on [Job.isActive], not isCompleted: a synchronous connect failure re-enters
      * [reconnect] from within the running loop, where the job is still active, so the re-entry
      * is a harmless no-op and the existing loop keeps driving retries.
+     *
+     * Each attempt waits for the previous handshake to settle (the deadline guarantees it does),
+     * and the pause between attempts doubles up to [MAX_RECONNECT_INTERVAL], so a server that is
+     * down does not keep the radio busy every two seconds for hours.
      */
     fun reconnect() {
         if (reconnectionJob?.isActive == true) return
@@ -119,27 +169,28 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             // player to the authoritative room position (mirrors PC's _performRetryStateReset).
             // Runs once per reconnect campaign (the isActive guard above prevents re-entry).
             viewmodel.protocol.resetSyncAnchorForReconnect()
+            var attempt = 0
             while (isActive && state.value != ConnectionState.CONNECTED) {
                 state.value = ConnectionState.SCHEDULING_RECONNECT
                 // Clamp the user-configurable interval: it can be 0, which would otherwise
                 // spin a tight zero-delay reconnect loop hammering the server and the CPU.
                 // Clamping the Duration (not the raw pref number) keeps this agnostic to
                 // whether the pref reads back as Int or Long.
-                val interval = RECONNECTION_INTERVAL.value().seconds
-                    .coerceAtLeast(MIN_RECONNECT_INTERVAL)
-                delay(interval)
+                val base = RECONNECTION_INTERVAL.value().seconds.coerceAtLeast(MIN_RECONNECT_INTERVAL)
+                val backoff = (base * (1 shl attempt.coerceAtMost(5))).coerceAtMost(MAX_RECONNECT_INTERVAL)
+                delay(backoff)
                 if (!isActive || state.value == ConnectionState.CONNECTED) break
-                // Re-arm TLS negotiation for the fresh socket. After a successful encrypted
-                // session [tls] is left at TLS_YES, but a brand-new socket has no SSL handler
-                // in its pipeline — if we reconnect with TLS_YES, connect() skips the startTLS
-                // step and sends Hello in plaintext, silently downgrading an encrypted room.
-                // Resetting to TLS_ASK makes the reconnect re-do the same negotiation the
-                // initial connect did. (TLS_NO is left alone: TLS was disabled / unsupported.)
-                if (tls == TlsState.TLS_YES) tls = TlsState.TLS_ASK
+                // Re-arm TLS negotiation for the fresh socket from the setting, not from the last
+                // answer: a new socket has no TLS handler in its pipeline, and a server that
+                // answered "false" once must be asked again rather than pinned to plain text.
+                tls = if (TLS_ENABLE.value() && supportsTLS()) TlsState.TLS_ASK else TlsState.TLS_NO
                 // connect() flips state to CONNECTING; on success the onConnected callback
-                // sets CONNECTED and the loop exits next iteration. On failure (sync or
-                // async) the state lands back on DISCONNECTED and we retry after the delay.
+                // sets CONNECTED. On failure (sync, async, or the handshake deadline) the state
+                // lands back on DISCONNECTED. Either way, wait for it before trying again, or a
+                // slow handshake gets torn down by its own retry.
                 connect()
+                state.first { it != ConnectionState.CONNECTING }
+                attempt++
             }
         }
     }
@@ -154,9 +205,28 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     private val inboundLines = Channel<String>(capacity = Channel.UNLIMITED)
 
+    /** One outbound packet: its JSON, whether a failed write may be replayed, and who is waiting on it. */
+    private class Outbound(val json: String, val queueable: Boolean, val done: CompletableDeferred<Unit>?)
+
+    /**
+     * Outbound packets, written STRICTLY in the order they were handed in by one writer. Two
+     * fire-and-forget sends used to race each other onto the socket, so a room change could
+     * arrive after the controller auth that depended on it.
+     */
+    private val outbound = Channel<Outbound>(capacity = Channel.UNLIMITED)
+
     init {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
             for (line in inboundLines) processPacket(line)
+        }
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            for (item in outbound) {
+                try {
+                    transmitPacket(item.json, item.queueable)
+                } finally {
+                    item.done?.complete(Unit)
+                }
+            }
         }
     }
 
@@ -183,15 +253,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             // protocol is loosely typed and periodically sends shapes the strict models reject
             // (a user's `features` as `[]`, `size` number-vs-string, a future field of the
             // wrong type; issue #152). Log and skip the offending line; every other message
-            // still flows. Mirrors the server side's ClientConnection.handlePacket.
-            loggy("Skipping unparseable server message: $jsonString")
+            // still flows. Mirrors the server side's ClientConnection.handlePacket. Only an
+            // excerpt is logged: a hostile server must not fill the disk through the log.
+            loggy("Skipping unparseable server message: ${jsonString.take(LOGGED_LINE_MAX)}")
             loggy("Reason: ${e.message}")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // A handler blowing up on one message must kill neither this consumer loop (the
             // app's protocol heart) nor the process. Log and move on to the next line.
-            loggy("Handler failed on message: $jsonString")
+            loggy("Handler failed on message: ${jsonString.take(LOGGED_LINE_MAX)}")
             loggy(e.stackTraceToString())
         }
     }
@@ -201,55 +272,81 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
-     * Encodes a [WireMessage] to JSON and writes it. Uses [WireMessage.toJson] so the
-     * concrete-subclass serializer is always used, even when [message] is typed at the
-     * call site as the interface — that protects against the polymorphic-discriminator
-     * trap that would otherwise inject a `"type"` field the protocol doesn't allow.
+     * Encodes a [WireMessage] to JSON and writes it, returning once the write has been made (or
+     * given up on). Uses [WireMessage.toJson] so the concrete-subclass serializer is always
+     * used, even when [message] is typed at the call site as the interface — that protects
+     * against the polymorphic-discriminator trap that would otherwise inject a `"type"` field
+     * the protocol doesn't allow.
      *
      * No-op in solo mode.
      */
     suspend fun send(message: WireMessage) {
         if (viewmodel.isSoloMode) return
-        // Hello must never be queued (the handshake re-runs on reconnect). State must never be
-        // queued either: it carries a position/seek that was true the instant the socket died,
-        // but the app owns the player so by reconnect the playhead has moved — replaying a frozen
-        // State (worst case doSeek=true to a stale target) would yank the whole room. State
-        // regenerates fresh from the live player via the ACK path after reconnect, matching PC,
-        // which has no outbound queue at all. Chat/playlist/ready ARE legitimate to replay.
-        val queueable = message !is WireMessage.Hello && message !is WireMessage.State
-        transmitPacket(message.toJson(), queueable = queueable)
+        val done = CompletableDeferred<Unit>()
+        outbound.send(Outbound(message.toJson(), message.isQueueable(), done))
+        done.await()
     }
 
-    /** Fire-and-forget [send] — launched on [Dispatchers.IO]. */
+    /** Fire-and-forget [send]: same writer, same order, nobody waits. */
     fun sendAsync(message: WireMessage) {
-        viewmodel.viewModelScope.launch(Dispatchers.IO) { send(message) }
+        if (viewmodel.isSoloMode) return
+        outbound.trySend(Outbound(message.toJson(), message.isQueueable(), null))
+    }
+
+    /** A pre-encoded line (a replayed queue entry) through the same ordered writer. */
+    suspend fun sendRaw(json: String, queueable: Boolean) {
+        if (viewmodel.isSoloMode) return
+        val done = CompletableDeferred<Unit>()
+        outbound.send(Outbound(json, queueable, done))
+        done.await()
     }
 
     /**
-     * Appends CRLF, writes to socket with a 10s timeout. Retries up to 3 times before giving up.
-     * On final failure, packets flagged [queueable] get queued via [Session.queueOutbound] for
-     * replay on reconnect. Hello and State are NOT queueable (see [send]).
+     * Hello must never be queued (the handshake re-runs on reconnect). State must never be
+     * queued either: it carries a position/seek that was true the instant the socket died,
+     * but the app owns the player so by reconnect the playhead has moved — replaying a frozen
+     * State (worst case doSeek=true to a stale target) would yank the whole room. State
+     * regenerates fresh from the live player via the ACK path after reconnect, matching PC,
+     * which has no outbound queue at all. Chat/playlist/ready ARE legitimate to replay.
      */
-    suspend fun transmitPacket(json: String, queueable: Boolean = true, retryCounter: Int = 0) {
-        withContext(Dispatchers.IO) {
+    private fun WireMessage.isQueueable(): Boolean =
+        this !is WireMessage.Hello && this !is WireMessage.State && this !is WireMessage.TLS
+
+    /**
+     * Appends CRLF and writes to the socket with a 10 s timeout, retrying up to three times
+     * with a short pause. On final failure, packets flagged [queueable] get queued via
+     * [Session.queueOutbound] for replay on reconnect. With no socket at all the write is not
+     * retried: the packet is queued (if queueable) and the connection loss is left to the
+     * transport's own callback, so a burst of sends cannot start a burst of reconnects.
+     */
+    private suspend fun transmitPacket(json: String, queueable: Boolean) {
+        val finalOut = json + "\r\n"
+        var attempt = 0
+        while (true) {
             try {
-                withTimeout(10.seconds) {
-                    val finalOut = json + "\r\n"
+                withTimeout(WRITE_TIMEOUT) {
                     if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
+                return
+            } catch (_: SocketGoneException) {
+                if (queueable) viewmodel.session.queueOutbound(json)
+                return
+            } catch (e: TimeoutCancellationException) {
+                loggy("Write timed out: ${e.message}")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 loggy(e.stackTraceToString())
-                if (retryCounter >= 3) {
-                    loggy("SOCKET INVALID")
-                    if (queueable) {
-                        viewmodel.session.queueOutbound(json)
-                    }
-                    onError()
-                } else {
-                    transmitPacket(json, queueable, retryCounter = retryCounter + 1)
-                }
             }
+            attempt++
+            if (attempt > WRITE_RETRIES) {
+                loggy("SOCKET INVALID")
+                if (queueable) viewmodel.session.queueOutbound(json)
+                onError()
+                return
+            }
+            delay(WRITE_RETRY_PAUSE_MS * attempt)
         }
     }
 
@@ -259,5 +356,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
          * which would otherwise produce a `delay(0)` tight loop on every retry.
          */
         val MIN_RECONNECT_INTERVAL = 1.seconds
+
+        /** Ceiling for the doubled reconnect delay. */
+        val MAX_RECONNECT_INTERVAL = 60.seconds
+
+        /** Socket open, optional TLS, Hello and its reply must all land within this. */
+        val HANDSHAKE_TIMEOUT = 20.seconds
+
+        val WRITE_TIMEOUT = 10.seconds
+        const val WRITE_RETRIES = 3
+        const val WRITE_RETRY_PAUSE_MS = 250L
+        const val LOGGED_LINE_MAX = 300
     }
 }
