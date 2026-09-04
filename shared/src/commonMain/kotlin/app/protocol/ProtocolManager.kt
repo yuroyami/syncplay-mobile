@@ -10,6 +10,9 @@ import app.protocol.wire.PlaystateData
 import app.protocol.wire.StateData
 import app.room.RoomViewmodel
 import app.protocol.sync.SyncState
+import app.protocol.sync.reportablePosition
+import app.protocol.sync.extrapolatedGlobalPositionMs
+import app.protocol.sync.PositionInputs
 import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.atomicfu.atomic
@@ -21,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
-import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -401,61 +403,29 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * [lastGlobalPositionSetAt]. Mirrors python's `getGlobalPosition()` — without the
      * extrapolation, a SYNC_ON_PAUSE seek lands on a stale frame from the last 1 Hz tick.
      */
-    fun extrapolatedGlobalPositionMs(): Double {
-        val anchor = lastGlobalPositionSetAt ?: return globalPositionMs
-        if (globalPaused) return globalPositionMs
-        val elapsedMs = (SyncClock.now() - anchor).inWholeMilliseconds.toDouble()
-        return globalPositionMs + elapsedMs
-    }
+    /** Everything [reportablePosition] needs, gathered from the room. */
+    private fun positionInputs() = PositionInputs(
+        now = SyncClock.now(),
+        globalPositionMs = globalPositionMs,
+        globalPositionSetAt = lastGlobalPositionSetAt,
+        globalPaused = globalPaused,
+        hasMedia = viewmodel.media != null,
+        isInBackground = viewmodel.uiState.isInBackground,
+        localPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
+        durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble(),
+        awaitingRoomResyncDeadline = awaitingRoomResyncDeadline,
+    )
 
-    /**
-     * The position (seconds) to ADVERTISE to the server in any outbound `State`, mirroring the
-     * desktop client's `getCalculatedPosition` (players/mpv.py): while a freshly-loaded file has not
-     * yet caught up to the room (see [awaitingRoomResyncDeadline]), report the room's extrapolated position
-     * instead of the local engine's (which sits at ~0 right after a load). Once the engine converges
-     * — or the file is provably too short to ever reach the room position — the flag clears and the
-     * true local position is reported, so genuine desync (buffering) is still visible to the room.
-     *
-     * Reads the tracker's position estimate, never the engine itself: the serial inbound consumer
-     * calls this once per second and must not wait on the main thread (PC parity, and a desktop
-     * deadlock when it did).
-     */
+    fun extrapolatedGlobalPositionMs(): Double = extrapolatedGlobalPositionMs(positionInputs())
+
     fun reportableStatePositionSec(): Double {
-        val globalMs = extrapolatedGlobalPositionMs()
-        // No file → nothing local to report; advertise the room position (the server pushes
-        // file-less watchers last anyway, but this keeps us from ever announcing a bare 0).
-        if (viewmodel.media == null) return globalMs / 1000.0
-        // Paused in the background: the room must not adopt a frozen watcher as its slowest.
-        if (viewmodel.uiState.isInBackground) return globalMs / 1000.0
-
-        // Single volatile read: non-null = still masking, null = report the real local position.
-        val deadline = awaitingRoomResyncDeadline
-
-        val localMs = viewmodel.playerManager.estimatedPositionMs().toDouble()
-
-        if (deadline == null) return localMs / 1000.0
-
-        // Catching up from a fresh load. Keep masking with the room position until the engine has
-        // converged, or until it has reached a point past which it cannot catch up (file shorter
-        // than the room position — e.g. a mismatched file), or the backstop deadline passes, so we
-        // don't lie about position forever.
-        val durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble()
-        val thresholdMs = SEEK_THRESHOLD * 1000.0
-        val converged = abs(localMs - globalMs) <= thresholdMs
-        val cannotCatchUp = durationMs > 0.0 && globalMs >= durationMs - thresholdMs
-        val timedOut = SyncClock.now() >= deadline
-        if (converged || cannotCatchUp || timedOut) {
-            awaitingRoomResyncDeadline = null
-            return localMs / 1000.0
-        }
-        return globalMs / 1000.0
+        val report = reportablePosition(positionInputs())
+        // Single volatile write, and only to disarm: see the field's own note on why this is
+        // one field rather than a pair.
+        if (!report.keepMasking) awaitingRoomResyncDeadline = null
+        return report.positionSeconds
     }
 
-    /**
-     * Arms the position-masking window for a freshly-loaded file. Called from
-     * [app.player.PlayerImpl.parseMedia] BEFORE `media.value` is set, so an inbound-State ACK can
-     * never observe media!=null with the mask still disarmed. See [awaitingRoomResyncDeadline].
-     */
     fun markAwaitingRoomResync() {
         awaitingRoomResyncDeadline = SyncClock.now() + AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS.seconds
     }
