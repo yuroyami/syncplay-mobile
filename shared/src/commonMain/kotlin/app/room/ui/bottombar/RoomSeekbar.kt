@@ -71,17 +71,20 @@ fun RoomSeekbar(modifier: Modifier) {
     }
     val positionMs = positionState.longValue
     val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
+    /* Collected, not read off the viewmodel's plain getter: that getter is a StateFlow value read,
+     * which Compose does not observe, so a new file left the chapter marks on the previous one. */
+    val media by viewmodel.playerManager.media.collectAsState()
 
     /* The one caller of analyzeChapters: engines clear the list first, so a second caller
      * would blank the marks mid-frame. It runs again once the duration lands, because most
      * engines know the chapters only after the container is parsed, and the snapshot below
      * is taken after each run rather than once per file name. */
     var chapterListVersion by remember { mutableIntStateOf(0) }
-    LaunchedEffect(viewmodel.media?.fileName, durationMs > 0L) {
-        viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
+    LaunchedEffect(media?.fileName, durationMs > 0L) {
+        viewmodel.player.analyzeChapters(media ?: return@LaunchedEffect)
         chapterListVersion++
     }
-    val chapters = remember(viewmodel.media?.fileName, chapterListVersion) { viewmodel.media?.chapters?.toList() ?: emptyList() }
+    val chapters = remember(media?.fileName, chapterListVersion) { media?.chapters?.toList() ?: emptyList() }
     val bufferedMs by viewmodel.playerManager.timeBufferedMillis.collectAsState()
     val showMarks by SHOW_CHAPTER_DOTS.watchPref()
     val marksClickable by CHAPTER_DOTS_CLICKABLE.watchPref()

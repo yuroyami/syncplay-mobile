@@ -69,8 +69,9 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         ConnectionState.SCHEDULING_RECONNECT -> stringResource(Res.string.room_reconnecting)
         ConnectionState.DISCONNECTED -> stringResource(Res.string.room_ping_disconnected)
     }
-    val episode = remember(viewmodel.media?.fileName) {
-        viewmodel.media?.fileName?.lowercase()?.let { EPISODE.find(it) }?.let { m ->
+    val media by viewmodel.playerManager.media.collectAsState()
+    val episode = remember(media?.fileName) {
+        media?.fileName?.lowercase()?.let { EPISODE.find(it) }?.let { m ->
             "S" + m.groupValues[1].padStart(2, '0') + "E" + m.groupValues[2].padStart(2, '0')
         }
     }

@@ -118,7 +118,7 @@ object CardUserInfo {
         val viewmodel = LocalRoomViewmodel.current
         val users by viewmodel.session.userList.collectAsState()
         val me = viewmodel.session.currentUsername
-        val myFile = viewmodel.media
+        val myFile by viewmodel.playerManager.media.collectAsState()
         val p = palette
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val viewKey by USER_INFO_VIEW.watchPref()
@@ -150,15 +150,16 @@ object CardUserInfo {
                     users.forEach { user -> UserChip(user, isSelf = user.name == me) }
                 }
                 RosterView.Files -> {
+                    val myFileName = myFile?.fileName
                     val groups = users.groupBy { it.file?.fileName }
                     // Our own file first, then the other files, the file-less last.
                     val ordered = groups.entries.sortedWith(
                         compareBy<Map.Entry<String?, List<User>>> { it.key == null }
-                            .thenBy { !(myFile != null && it.key != null && FileComparison.sameFilename(myFile.fileName, it.key)) }
+                            .thenBy { !(myFileName != null && it.key != null && FileComparison.sameFilename(myFileName, it.key)) }
                             .thenBy { it.key ?: "" },
                     )
                     ordered.forEach { (fileName, group) ->
-                        val mine = myFile != null && fileName != null && FileComparison.sameFilename(myFile.fileName, fileName)
+                        val mine = myFileName != null && fileName != null && FileComparison.sameFilename(myFileName, fileName)
                         FileGroupHeading(fileName, mine, group.firstOrNull()?.file)
                         FlowRow(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),

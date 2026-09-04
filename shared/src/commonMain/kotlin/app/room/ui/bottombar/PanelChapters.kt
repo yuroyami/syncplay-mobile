@@ -5,6 +5,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import app.uicomponents.controls.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
@@ -36,7 +38,8 @@ import syncplaymobile.shared.generated.resources.room_chapters_skip
 fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
     if (!open) return
     val viewmodel = LocalRoomViewmodel.current
-    val chapters = viewmodel.media?.chapters ?: emptyList()
+    val media by viewmodel.playerManager.media.collectAsState()
+    val chapters = media?.chapters ?: emptyList()
     val p = palette
 
     Modal(open = true, onDismiss = onDismiss, title = stringResource(Res.string.room_chapters), size = ModalSize.Panel, inset = false) {
