@@ -96,6 +96,10 @@ kotlin {
         }
 
         commonMain.dependencies {
+            /* The @Preview annotation for the drawn control set. Annotation only: the IDE
+             * supplies the renderer, so this adds nothing to a shipped build. */
+            implementation(compose.components.uiToolingPreview)
+
             /* Forcing Kotlin libs to match the compiler */
             implementation(libs.kotlin.stdlib)
 

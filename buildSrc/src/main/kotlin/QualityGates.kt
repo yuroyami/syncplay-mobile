@@ -17,6 +17,14 @@ import java.io.File
 
 private const val GATE_GROUP = "verification"
 
+/**
+ * Gates always run. They are millisecond scans, and declaring the source and resource trees as
+ * inputs collides with the tasks that generate into them.
+ */
+private fun org.gradle.api.Task.alwaysRun() {
+    outputs.upToDateWhen { false }
+}
+
 /** Every gate, in one place, hung off the module that owns the code. */
 fun Project.registerQualityGates() {
     val gates = listOf(
@@ -56,7 +64,7 @@ private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
     return tasks.register("checkProtocolThrows") {
         group = GATE_GROUP
         description = "Fails if inbound protocol code throws anything but SerializationException."
-        inputs.files(sources)
+        alwaysRun()
         doLast {
             val banned = Regex("""(^|[^\w."])(error|check|checkNotNull|require|requireNotNull)\s*\(""")
             val offenders = sources.kotlinFiles().flatMap { f ->
@@ -90,7 +98,7 @@ private fun Project.registerStringResourceGate(): TaskProvider<*> {
     return tasks.register("checkStringResources") {
         group = GATE_GROUP
         description = "Fails on a duplicate string or plural key in any locale."
-        inputs.dir(resourceRoot)
+        alwaysRun()
         doLast {
             val problems = mutableListOf<String>()
             resourceRoot.listFiles().orEmpty().sortedBy { it.name }.forEach { dir ->
@@ -135,7 +143,7 @@ private fun Project.registerLocaleParityGate(): TaskProvider<*> {
     return tasks.register("checkLocaleParity") {
         group = GATE_GROUP
         description = "Reports untranslated keys and fails on keys that exist only in a translation."
-        inputs.dir(resourceRoot)
+        alwaysRun()
         doLast {
             fun keysIn(dir: String): Set<String> {
                 val xml = File(File(resourceRoot, dir), "strings.xml")
@@ -198,8 +206,7 @@ private fun Project.registerDeadResourceGate(): TaskProvider<*> {
     return tasks.register("checkDeadResources") {
         group = GATE_GROUP
         description = "Reports string and drawable resources nothing references."
-        inputs.dir(resourceRoot)
-        inputs.files(codeRoots.filter { it.exists() })
+        alwaysRun()
         doLast {
             val sourceXml = File(File(resourceRoot, "values-en"), "strings.xml")
             if (!sourceXml.isFile) return@doLast
@@ -261,9 +268,7 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
     return tasks.register("checkSettingsReachable") {
         group = GATE_GROUP
         description = "Fails if a preference declares a title and no settings category shows it."
-        inputs.file(prefsFile)
-        inputs.files(settingsDir)
-        inputs.files(engineDirs)
+        alwaysRun()
         doLast {
             // `val NAME = Pref(...) {` with a config block is a preference meant to be displayed.
             val displayable = Regex("""\n    val ([A-Z][A-Z0-9_]*)\s*(?::[^=\n]+)?=\s*Pref[^\n]*\{""")
@@ -318,7 +323,7 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
     return tasks.register("checkDestroyContract") {
         group = GATE_GROUP
         description = "Fails if a player engine's destroy() breaks the guard-then-cancel-then-release order."
-        inputs.files(engineRoots)
+        alwaysRun()
         doLast {
             val problems = mutableListOf<String>()
             var checked = 0
