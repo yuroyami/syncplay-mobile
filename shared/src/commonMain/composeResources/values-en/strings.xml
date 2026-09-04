@@ -329,6 +329,8 @@
     <string name="uisetting_sync_fastforward_threshold_summary">How far behind before catching up.</string>
     <string name="uisetting_user_offset_title">My copy runs ahead by</string>
     <string name="uisetting_user_offset_summary">Shift only your own playback.</string>
+    <string name="uisetting_chat_clearance_title">Keep chat off subtitles</string>
+    <string name="uisetting_chat_clearance_summary">Height chat leaves clear at the bottom.</string>
     <string name="uisetting_sync_rewind_title">Rewind on major desync</string>
     <string name="uisetting_sync_rewind_summary">Rewinds to anyone far behind.</string>
     <string name="uisetting_sync_dont_slow_with_me_title">Never slow others for me</string>

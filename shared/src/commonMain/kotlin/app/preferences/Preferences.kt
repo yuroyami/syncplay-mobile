@@ -325,6 +325,8 @@ import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_thre
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_threshold_title
 import syncplaymobile.shared.generated.resources.uisetting_user_offset_summary
 import syncplaymobile.shared.generated.resources.uisetting_user_offset_title
+import syncplaymobile.shared.generated.resources.uisetting_chat_clearance_summary
+import syncplaymobile.shared.generated.resources.uisetting_chat_clearance_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
@@ -703,6 +705,18 @@ object Preferences {
         icon = Icons.Filled.MoreTime
 
         extraConfig = PrefExtraConfig.Slider(minValue = 0, maxValue = 1200, unit = "ds")
+    }
+
+    /**
+     * How much of the picture's height, as a percentage, chat keeps clear at the bottom so it
+     * does not sit on the subtitles (issue 160). Zero lets chat use the full height.
+     */
+    val CHAT_SUBTITLE_CLEARANCE = Pref("pref_inroom_chat_subtitle_clearance", 15) {
+        title = Res.string.uisetting_chat_clearance_title
+        summary = Res.string.uisetting_chat_clearance_summary
+        icon = Icons.Filled.Subtitles
+
+        extraConfig = PrefExtraConfig.Slider(minValue = 0, maxValue = 40, unit = "%", zeroMeansOff = true)
     }
 
     val SYNC_DONT_SLOW_WITH_ME = Pref("pref_inroom_sync_dont_slow_with_me", false) {

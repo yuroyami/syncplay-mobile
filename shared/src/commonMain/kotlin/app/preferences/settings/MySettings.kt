@@ -44,6 +44,7 @@ import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
+import app.preferences.Preferences.CHAT_SUBTITLE_CLEARANCE
 import app.preferences.Preferences.MEDIA_DIRECTORIES
 import app.preferences.Preferences.RESUME_PLAYBACK
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
@@ -189,6 +190,7 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
 ) {
     group(Res.string.settings_group_messages) {
         +CHAT_COLORS_ENTRY
+        +CHAT_SUBTITLE_CLEARANCE
         +MSG_OUTLINE_THICKNESS
         +MSG_SHADOW_ACTIVATE
         +MSG_BOX_ACTION
