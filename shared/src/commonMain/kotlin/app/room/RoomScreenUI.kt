@@ -88,6 +88,11 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.PrimaryAction
 import app.uicomponents.frames.ModalSize
 import app.uicomponents.frames.Modal
+import app.utils.timestampFromMillis
+import syncplaymobile.shared.generated.resources.room_resume_restart
+import syncplaymobile.shared.generated.resources.room_resume_continue
+import syncplaymobile.shared.generated.resources.room_resume_body
+import syncplaymobile.shared.generated.resources.room_resume_title
 
 /**
  * Primary focus target for D-pad and TV use: the play key, or the add button before a file
@@ -185,6 +190,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         LeaveRoomAsk(viewmodel)
         ManagedRoomModal()
         UntrustedUrlAsk(viewmodel)
+        ResumeAsk(viewmodel)
 
         val globalViewmodel = LocalGlobalViewmodel.current
         // The roster opens once, on the first room of the session, so a newcomer sees who is here.
@@ -228,6 +234,39 @@ private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
     ) {
         Text(
             text = stringResource(Res.string.room_untrusted_ask_body, asked.domain),
+            style = Type.note,
+            color = palette.inkDim,
+        )
+    }
+}
+
+/** Watching alone, a file that was left part-way asks whether to pick it up. */
+@Composable
+private fun ResumeAsk(viewmodel: RoomViewmodel) {
+    val point by viewmodel.resume.offer.collectAsState()
+    val offered = point ?: return
+    Modal(
+        open = true,
+        onDismiss = { viewmodel.resume.startOver() },
+        title = stringResource(Res.string.room_resume_title),
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(
+                text = stringResource(Res.string.room_resume_restart),
+                onClick = { viewmodel.resume.startOver() },
+            )
+            PrimaryAction(
+                text = stringResource(Res.string.room_resume_continue),
+                onClick = { viewmodel.resume.continueFromOffer() },
+            )
+        },
+    ) {
+        Text(
+            text = stringResource(
+                Res.string.room_resume_body,
+                offered.fileName,
+                timestampFromMillis(offered.positionMs),
+            ),
             style = Type.note,
             color = palette.inkDim,
         )

@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.SlowMotionVideo
@@ -187,6 +188,8 @@ import syncplaymobile.shared.generated.resources.setting_unpause_action_if_ready
 import syncplaymobile.shared.generated.resources.setting_unpause_action_summary
 import syncplaymobile.shared.generated.resources.setting_autoplay_summary
 import syncplaymobile.shared.generated.resources.setting_autoplay_title
+import syncplaymobile.shared.generated.resources.setting_resume_summary
+import syncplaymobile.shared.generated.resources.setting_resume_title
 import syncplaymobile.shared.generated.resources.setting_unpause_action_title
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_summary
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_title
@@ -354,6 +357,16 @@ object Preferences {
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())
+
+    /** Where each recently watched file was left, as JSON. See [app.player.ResumePoint]. */
+    val RESUME_POSITIONS = Pref("misc_resume_positions", "")
+
+    /** Offer to pick a file up where it was left. Only ever offered when watching alone. */
+    val RESUME_PLAYBACK = Pref("pref_resume_playback", true) {
+        title = Res.string.setting_resume_title
+        summary = Res.string.setting_resume_summary
+        icon = Icons.Filled.History
+    }
 
     /**
      * Whether the GIF panel may keep the same id with the GIF service from one launch to the next.

@@ -101,6 +101,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /** Who the room is waiting for, and the countdown once it is waiting for nobody. */
     val readiness: ReadinessManager by lazy { ReadinessManager(this) }
 
+    /** Where each file was left, and the offer to pick it up. */
+    val resume: ResumeManager by lazy { ResumeManager(this) }
+
     /**
      * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
      * Used for tracking and potentially reverting seek operations.
@@ -164,6 +167,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      * Exits the current room and returns to the home screen.
      */
     fun goHome() {
+        // Leaving is the last chance to write down where this file got to.
+        resume.record()
         backStack.removeAt(backStack.lastIndex)
     }
 

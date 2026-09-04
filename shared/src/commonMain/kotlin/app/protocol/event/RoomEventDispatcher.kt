@@ -148,6 +148,8 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
          * is set: the user's intent gets recorded for peers even when local playback
          * can't honor it. */
         if (viewmodel.media != null) {
+            // A pause is the natural place to write down where we are.
+            if (playback == Playback.PAUSE) viewmodel.resume.record()
             onMainThread {
                 when (playback) {
                     Playback.PAUSE -> viewmodel.player.pause()

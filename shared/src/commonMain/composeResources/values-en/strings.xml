@@ -272,6 +272,12 @@
     <string name="room_waiting_for_many">Waiting for %1$d people</string>
     <string name="room_everyone_ready">Everyone is ready (%1$d)</string>
     <string name="room_starting_in">Starting in %1$d</string>
+    <string name="setting_resume_title">Continue watching</string>
+    <string name="setting_resume_summary">Pick a file up where you left it.</string>
+    <string name="room_resume_title">Continue watching?</string>
+    <string name="room_resume_body">You left %1$s at %2$s.</string>
+    <string name="room_resume_continue">Continue</string>
+    <string name="room_resume_restart">Start over</string>
     <string name="setting_unpause_action_title">Readiness unpause action</string>
     <string name="setting_unpause_action_summary">What must be true before play unpauses.</string>
     <string name="setting_unpause_action_if_ready">Unpause if already set as ready</string>

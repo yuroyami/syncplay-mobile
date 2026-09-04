@@ -45,6 +45,7 @@ import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
 import app.preferences.Preferences.MEDIA_DIRECTORIES
+import app.preferences.Preferences.RESUME_PLAYBACK
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
@@ -110,6 +111,7 @@ val GLOBAL_GENERAL = SettingCategory(
         +REDUCE_MOTION
     +ERASE_SHORTCUTS
     +MEDIA_DIRECTORIES
+    +RESUME_PLAYBACK
 }
 
 val GLOBAL_LANGUAGE = SettingCategory(

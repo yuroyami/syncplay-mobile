@@ -522,7 +522,14 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     val volume: VolumeController by lazy { VolumeController(this) }
 
     fun announceFileLoaded() {
-        if (viewmodel.isSoloMode) return
+        // Watching alone, the only thing to do on a load is ask whether to pick up where this
+        // file was left. In a room the room's position is the right answer instead.
+        if (viewmodel.isSoloMode) {
+            viewmodel.media?.let { media ->
+                viewmodel.resume.onMediaReady(media.fileName, playerManager.timeFullMillis.value)
+            }
+            return
+        }
 
         viewmodel.media?.let { viewmodel.networkManager.sendAsync(WireMessage.file(it.toFileData())) }
         viewmodel.networkManager.sendAsync(WireMessage.listRequest())
