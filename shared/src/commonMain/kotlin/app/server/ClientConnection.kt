@@ -23,7 +23,7 @@ import app.protocol.wire.UserSetData
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.serialization.SerializationException
 
@@ -407,7 +407,7 @@ class ClientConnection(
         return true
     }
 
-    private fun currentTimeSeconds(): Double = generateTimestampMillis() / 1000.0
+    private fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
 
     private companion object {
         const val LOGGED_LINE_MAX = 200

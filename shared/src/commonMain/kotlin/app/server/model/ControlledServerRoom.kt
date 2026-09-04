@@ -1,6 +1,6 @@
 package app.server.model
 
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 
 /**
  * A password-protected room where only authenticated controllers can change playback state.
@@ -77,5 +77,5 @@ class ControlledServerRoom(name: String) : ServerRoom(name) {
         _controllers.remove(watcher.name)
     }
 
-    private fun currentTimeSeconds(): Double = generateTimestampMillis() / 1000.0
+    private fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
 }

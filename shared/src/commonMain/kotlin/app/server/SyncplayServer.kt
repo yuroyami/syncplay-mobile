@@ -10,7 +10,7 @@ import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.server.model.ServerConfig.Companion.MAX_ROOM_NAME_LENGTH
 import app.server.model.ServerConfig.Companion.SERVER_STATE_INTERVAL_MS
 import app.server.model.ServerWatcher
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 import app.utils.loggy
 import app.utils.playlistIsValid
 import kotlinx.coroutines.CoroutineDispatcher
@@ -390,7 +390,7 @@ class SyncplayServer(
     private fun log(event: ServerLogEvent) {
         loggy("SyncplayServer: $event")
         val entry = ServerLogEntry(
-            timestamp = generateTimestampMillis(),
+            timestamp = SyncClock.nowMillis(),
             event = event,
         )
         // Bounded: the screen keeps its own capped copy, and a long-running host must not grow

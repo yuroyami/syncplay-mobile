@@ -4,7 +4,7 @@ import app.protocol.models.RoomFeatures
 import app.protocol.wire.FileData
 import app.server.SyncplayServer
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 
 /**
  * Represents a connected client on the server side.
@@ -108,6 +108,6 @@ class ServerWatcher(
     }
 
     companion object {
-        fun currentTimeSeconds(): Double = generateTimestampMillis() / 1000.0
+        fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
     }
 }

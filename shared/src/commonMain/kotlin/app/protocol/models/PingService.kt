@@ -1,6 +1,6 @@
 package app.protocol.models
 
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 
 /**
  * Measures network latency between client and server to keep playback in sync.
@@ -15,7 +15,7 @@ class PingService(
      * timestamps from the same wall clock it is asserting against fails on a loaded machine and
      * cannot pin the smoothing constant at all.
      */
-    private val nowSeconds: () -> Double = { generateTimestampMillis() / 1000.0 },
+    private val nowSeconds: () -> Double = { SyncClock.nowSeconds() },
 ) {
     companion object {
         /** EMA weight — higher value means slower, smoother adaptation to RTT changes. */

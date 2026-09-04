@@ -226,6 +226,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
+            // Virtual time, so sync tests advance the clock instead of sleeping.
+            implementation(libs.kotlin.coroutines.test)
         }
 
         val desktopTest by getting {

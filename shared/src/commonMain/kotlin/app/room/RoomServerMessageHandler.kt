@@ -23,6 +23,7 @@ import app.protocol.wire.PlaylistChangeData
 import app.protocol.wire.PlaylistIndexData
 import app.protocol.wire.ReadyData
 import app.protocol.wire.UserSetData
+import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -34,7 +35,6 @@ import syncplaymobile.shared.generated.resources.room_not_ready_set_by
 import syncplaymobile.shared.generated.resources.room_ready_set_by
 import syncplaymobile.shared.generated.resources.room_slowdown_notification
 import syncplaymobile.shared.generated.resources.room_slowdown_reverted
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -78,7 +78,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         // Freshness stamp for the channel-health watchdog. Set before any other processing
         // so even a State we end up ignoring still resets the "no State received" timer —
         // the server is clearly alive.
-        protocol.lastStateReceivedAt = Clock.System.now()
+        protocol.lastStateReceivedAt = SyncClock.now()
 
         val state = message.data
         var position: Double? = null
@@ -143,7 +143,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             /* Updating Global State */
             protocol.globalPaused = paused
             protocol.globalPositionMs = agedPosition * 1000.0
-            protocol.lastGlobalPositionSetAt = Clock.System.now()
+            protocol.lastGlobalPositionSetAt = SyncClock.now()
 
             if (protocol.lastGlobalUpdate == null) {
                 if (viewmodel.media != null) {
@@ -164,7 +164,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 }
             }
 
-            protocol.lastGlobalUpdate = Clock.System.now()
+            protocol.lastGlobalUpdate = SyncClock.now()
 
             if (doSeek == true && setBy != null) {
                 resetSpeedIfChanged()
@@ -195,7 +195,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 val canFastForward = Preferences.SYNC_FASTFORWARD.value()
                         && (session.isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
                 if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
-                    val now = Clock.System.now()
+                    val now = SyncClock.now()
                     if (protocol.behindFirstDetected == null) {
                         protocol.behindFirstDetected = now
                     } else {

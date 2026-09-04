@@ -1,6 +1,6 @@
 package app.server.model
 
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 
 /**
  * Represents a room on the server.
@@ -98,5 +98,5 @@ open class ServerRoom(val name: String) {
 
     override fun toString(): String = name
 
-    private fun currentTimeSeconds(): Double = generateTimestampMillis() / 1000.0
+    private fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
 }

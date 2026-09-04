@@ -9,7 +9,7 @@ import app.protocol.wire.PingData
 import app.protocol.wire.PlaystateData
 import app.protocol.wire.StateData
 import app.room.RoomViewmodel
-import app.utils.generateTimestampMillis
+import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -185,7 +184,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         stopChannelHealthMonitoring()
 
         // Seed the watchdog so it doesn't immediately fire before any State arrives.
-        lastStateReceivedAt = Clock.System.now()
+        lastStateReceivedAt = SyncClock.now()
 
         val network = viewmodel.networkManager
 
@@ -209,7 +208,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 broadcastPlaybackDivergence(viewmodel.playerManager.isNowPlaying.value)
 
                 val last = lastStateReceivedAt ?: continue
-                val elapsedSec = (Clock.System.now() - last).inWholeSeconds
+                val elapsedSec = (SyncClock.now() - last).inWholeSeconds
                 if (elapsedSec >= STATE_TIMEOUT_SECONDS) {
                     loggy("Channel watchdog: no State received for ${elapsedSec}s — marking disconnected")
                     // Drop the now-stale socket before firing the callback so the reconnect
@@ -378,7 +377,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     fun extrapolatedGlobalPositionMs(): Double {
         val anchor = lastGlobalPositionSetAt ?: return globalPositionMs
         if (globalPaused) return globalPositionMs
-        val elapsedMs = (Clock.System.now() - anchor).inWholeMilliseconds.toDouble()
+        val elapsedMs = (SyncClock.now() - anchor).inWholeMilliseconds.toDouble()
         return globalPositionMs + elapsedMs
     }
 
@@ -417,7 +416,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         val thresholdMs = SEEK_THRESHOLD * 1000.0
         val converged = abs(localMs - globalMs) <= thresholdMs
         val cannotCatchUp = durationMs > 0.0 && globalMs >= durationMs - thresholdMs
-        val timedOut = Clock.System.now() >= deadline
+        val timedOut = SyncClock.now() >= deadline
         if (converged || cannotCatchUp || timedOut) {
             awaitingRoomResyncDeadline = null
             return localMs / 1000.0
@@ -431,7 +430,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * never observe media!=null with the mask still disarmed. See [awaitingRoomResyncDeadline].
      */
     fun markAwaitingRoomResync() {
-        awaitingRoomResyncDeadline = Clock.System.now() + AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS.seconds
+        awaitingRoomResyncDeadline = SyncClock.now() + AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS.seconds
     }
 
     /**
@@ -462,7 +461,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
         val ping = PingData(
             latencyCalculation = serverTime,
-            clientLatencyCalculation = generateTimestampMillis() / 1000.0,
+            clientLatencyCalculation = SyncClock.nowSeconds(),
             clientRtt = pingService.rtt
         )
 
