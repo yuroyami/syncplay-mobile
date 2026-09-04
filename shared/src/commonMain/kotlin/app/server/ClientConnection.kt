@@ -20,6 +20,7 @@ import app.protocol.wire.Room
 import app.protocol.wire.StateData
 import app.protocol.wire.UserEvent
 import app.protocol.wire.UserSetData
+import app.server.model.RateLimiter
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
@@ -44,6 +45,18 @@ class ClientConnection(
     var watcher: ServerWatcher? = null
     private var version: String? = null
     private var features: RoomFeatures? = null
+
+    /**
+     * What this one connection may do per second. Griefing, not compromise, so the answer is a
+     * cap rather than anything cleverer. Both buckets start full, so an ordinary session never
+     * notices them.
+     */
+    private val chatLimiter = RateLimiter(
+        RateLimiter.CHAT_BURST, RateLimiter.CHAT_PER_SECOND, SyncClock.nowSeconds()
+    )
+    private val playlistLimiter = RateLimiter(
+        RateLimiter.PLAYLIST_BURST, RateLimiter.PLAYLIST_PER_SECOND, SyncClock.nowSeconds()
+    )
     private var logged: Boolean = false
     var clientIgnoringOnTheFly: Int = 0
     var serverIgnoringOnTheFly: Int = 0
@@ -176,6 +189,10 @@ class ClientConnection(
         set.ready?.let { handleReady(w, it) }
         set.controllerAuth?.let { handleControllerAuth(w, it) }
         // A playlistChange with no files, or an index with no number, is malformed, not a wipe.
+        // Each edit reaches the whole room, so they are capped more tightly than chat.
+        if (set.playlistChange != null || set.playlistIndex != null) {
+            if (!playlistLimiter.allow(SyncClock.nowSeconds())) return
+        }
         set.playlistChange?.files?.let { server.setPlaylist(w, it) }
         set.playlistIndex?.index?.let { server.setPlaylistIndex(w, it) }
         // Features must be written to the WATCHER, not just this connection's copy: List
@@ -193,9 +210,12 @@ class ClientConnection(
 
     override suspend fun onChatRequest(message: WireMessage.ChatRequest) {
         if (!requireLogged()) return
-        if (!server.config.disableChat) {
-            server.sendChat(watcher ?: return, message.message)
-        }
+        if (server.config.disableChat) return
+        // A peer sending chat in a loop reaches everyone in the room as fast as its socket
+        // allows. Over the cap, the message is dropped rather than broadcast; the sender is not
+        // told, because a rate limit that answers is a rate limit that can be measured.
+        if (!chatLimiter.allow(SyncClock.nowSeconds())) return
+        server.sendChat(watcher ?: return, message.message)
     }
 
     override suspend fun onTLS(message: WireMessage.TLS) {
