@@ -117,7 +117,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     dontSlowWithMe = Preferences.SYNC_DONT_SLOW_WITH_ME.value(),
                 ),
                 messageAge = messageAge,
-                rewindThreshold = protocol.rewindThreshold.toDouble(),
+                // Stored in tenths of a second so the sliders are whole numbers.
+                rewindThreshold = Preferences.SYNC_REWIND_THRESHOLD.value() / 10.0,
+                slowdownThreshold = Preferences.SYNC_SLOWDOWN_THRESHOLD.value() / 10.0,
+                fastForwardThreshold = Preferences.SYNC_FASTFORWARD_THRESHOLD.value() / 10.0,
             ),
         )
         protocol.syncState = outcome.state

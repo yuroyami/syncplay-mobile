@@ -68,6 +68,10 @@ import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
 import app.preferences.Preferences.SYNC_FASTFORWARD
 import app.preferences.Preferences.SYNC_REWIND
+import app.preferences.Preferences.AUTOPLAY
+import app.preferences.Preferences.SYNC_FASTFORWARD_THRESHOLD
+import app.preferences.Preferences.SYNC_REWIND_THRESHOLD
+import app.preferences.Preferences.SYNC_SLOWDOWN_THRESHOLD
 import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
 import app.preferences.Preferences.TLS_REQUIRED
@@ -165,9 +169,14 @@ val INROOM_SYNC = SettingCategory(
     icon = Icons.Filled.ConnectWithoutContact,
 ) {
     +SYNC_DONT_SLOW_WITH_ME
+    +AUTOPLAY
+    // Each threshold sits under the switch it belongs to, and greys out with it.
     +SYNC_FASTFORWARD
+    +SYNC_FASTFORWARD_THRESHOLD
     +SYNC_SLOWDOWN
+    +SYNC_SLOWDOWN_THRESHOLD
     +SYNC_REWIND
+    +SYNC_REWIND_THRESHOLD
 }
 
 val INROOM_CHAT_PROPERTIES = SettingCategory(

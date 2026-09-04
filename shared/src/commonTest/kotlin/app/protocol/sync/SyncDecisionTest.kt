@@ -325,3 +325,72 @@ class SyncDecisionTest {
         assertEquals(0.0, out.state.globalPositionMs)
     }
 }
+
+/** The three drift thresholds are settings now; the defaults must still be the PC values. */
+class SyncThresholdTest {
+
+    private val t0 = kotlin.time.Instant.fromEpochMilliseconds(1_700_000_000_000L)
+
+    private fun ctx(
+        playerSeconds: Double,
+        rewind: Double = REWIND_THRESHOLD,
+        slowdown: Double = SLOWDOWN_THRESHOLD,
+        fastForward: Double = FASTFORWARD_THRESHOLD,
+        follower: Boolean = false,
+        now: kotlin.time.Instant = t0,
+    ) = SyncContext(
+        now = now,
+        playerPositionMs = playerSeconds * 1000.0,
+        hasMedia = true,
+        isInBackground = false,
+        supportsSpeedAdjustment = true,
+        selfName = "me",
+        followerInControlledRoom = follower,
+        prefs = SyncPrefs(rewind = true, fastForward = true, slowdown = true, dontSlowWithMe = false),
+        messageAge = 0.0,
+        rewindThreshold = rewind,
+        slowdownThreshold = slowdown,
+        fastForwardThreshold = fastForward,
+    )
+
+    private fun anchored() = SyncState(
+        globalPaused = false,
+        lastGlobalUpdate = t0 - kotlin.time.Duration.parse("10s"),
+    )
+
+    private fun playstate(position: Double = 100.0) =
+        app.protocol.wire.PlaystateData(position = position, paused = false, setBy = "peer")
+
+    @Test
+    fun the_defaults_are_the_reference_client_values() {
+        assertEquals(4.0, REWIND_THRESHOLD)
+        assertEquals(1.5, SLOWDOWN_THRESHOLD)
+        assertEquals(5.0, FASTFORWARD_THRESHOLD)
+    }
+
+    @Test
+    fun a_tighter_rewind_threshold_fires_sooner() {
+        val loose = decideSync(playstate(), anchored(), ctx(playerSeconds = 102.0))
+        assertTrue(loose.actions.none { it is SyncAction.SomeoneBehind }, "2s is inside the 4s default")
+
+        val tight = decideSync(playstate(), anchored(), ctx(playerSeconds = 102.0, rewind = 1.5))
+        assertTrue(tight.actions.any { it is SyncAction.SomeoneBehind })
+    }
+
+    @Test
+    fun a_looser_slowdown_threshold_holds_off() {
+        val loose = decideSync(playstate(), anchored(), ctx(playerSeconds = 102.0, slowdown = 3.0))
+        assertTrue(loose.actions.none { it is SyncAction.SlowDown }, "2s is inside a 3s threshold")
+    }
+
+    @Test
+    fun the_fastforward_head_start_scales_with_its_threshold() {
+        // The reference client starts its clock 3.25s before the 5s trigger. A 10s trigger keeps
+        // the same head start, so the clock starts at 6.75s behind.
+        val notYet = decideSync(playstate(), anchored(), ctx(playerSeconds = 94.0, fastForward = 10.0, follower = true))
+        assertEquals(null, notYet.state.behindFirstDetected, "6s behind is inside a 10s trigger's head start")
+
+        val started = decideSync(playstate(), anchored(), ctx(playerSeconds = 92.0, fastForward = 10.0, follower = true))
+        assertEquals(t0, started.state.behindFirstDetected, "8s behind is past it")
+    }
+}

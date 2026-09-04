@@ -53,7 +53,10 @@ data class SyncContext(
     val prefs: SyncPrefs,
     /** Seconds the inbound position is already stale, from the ping service. */
     val messageAge: Double,
+    /** The three drift thresholds, in seconds. Defaults match the reference client. */
     val rewindThreshold: Double = REWIND_THRESHOLD,
+    val slowdownThreshold: Double = SLOWDOWN_THRESHOLD,
+    val fastForwardThreshold: Double = FASTFORWARD_THRESHOLD,
 )
 
 /** What the handler should do, in the order given. */
@@ -154,14 +157,17 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
          * in a controlled room force-fastforwards. In a normal room everyone can control, so
          * the room follows its slowest member instead. dontSlowWithMe opts in regardless. */
         val canFastForward = ctx.prefs.fastForward && (ctx.followerInControlledRoom || ctx.prefs.dontSlowWithMe)
-        if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
+        /* The "behind" clock starts well before the trigger, so a user who moves the trigger
+         * keeps the same head start the reference client gives. */
+        val behindThreshold = ctx.fastForwardThreshold - (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
+        if (diff < -behindThreshold && doSeek != true && canFastForward) {
             val since = next.behindFirstDetected
             if (since == null) {
                 next = next.copy(behindFirstDetected = ctx.now)
             } else {
                 val secondsBehind = (ctx.now - since).inWholeMilliseconds / 1000.0
-                if (secondsBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD) &&
-                    diff < -FASTFORWARD_THRESHOLD
+                if (secondsBehind > (ctx.fastForwardThreshold - behindThreshold) &&
+                    diff < -ctx.fastForwardThreshold
                 ) {
                     actions += SyncAction.SomeoneFastForwarded(setBy ?: "", agedPosition + FASTFORWARD_EXTRA_TIME)
                     next = next.copy(behindFirstDetected = ctx.now + FASTFORWARD_RESET_THRESHOLD.seconds)
@@ -173,7 +179,7 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
 
         if (doSeek != true && !paused) {
             if (ctx.prefs.slowdown && ctx.supportsSpeedAdjustment) {
-                if (diff > SLOWDOWN_THRESHOLD && !next.speedChanged) {
+                if (diff > ctx.slowdownThreshold && !next.speedChanged) {
                     if (setBy != null && setBy != ctx.selfName) {
                         actions += SyncAction.SlowDown(setBy.take(MAX_USERNAME_CHARS))
                         next = next.copy(speedChanged = true)

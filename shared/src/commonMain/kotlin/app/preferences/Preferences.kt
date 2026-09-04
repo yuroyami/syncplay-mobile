@@ -313,6 +313,12 @@ import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_m
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_threshold_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_threshold_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_threshold_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_threshold_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_threshold_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_threshold_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
@@ -633,6 +639,40 @@ object Preferences {
         summary = Res.string.uisetting_sync_rewind_summary
         icon = Icons.Filled.FastRewind
     }
+    /**
+     * How far ahead of the room you may drift before it asks everyone to come back, in tenths of
+     * a second. The reference client's default is 4 seconds, and it refuses anything under 3
+     * because below that ordinary jitter would trigger it constantly.
+     */
+    val SYNC_REWIND_THRESHOLD = Pref("pref_inroom_sync_rewind_threshold", 40) {
+        title = Res.string.uisetting_sync_rewind_threshold_title
+        summary = Res.string.uisetting_sync_rewind_threshold_summary
+        icon = Icons.Filled.FastRewind
+        dependencyEnable = { SYNC_REWIND.value() }
+
+        extraConfig = PrefExtraConfig.Slider(minValue = 30, maxValue = 150, unit = "ds")
+    }
+
+    /** How far ahead you may drift before playback slows to let the room catch up, in tenths. */
+    val SYNC_SLOWDOWN_THRESHOLD = Pref("pref_inroom_sync_slowdown_threshold", 15) {
+        title = Res.string.uisetting_sync_slowdown_threshold_title
+        summary = Res.string.uisetting_sync_slowdown_threshold_summary
+        icon = Icons.Filled.SlowMotionVideo
+        dependencyEnable = { SYNC_SLOWDOWN.value() }
+
+        extraConfig = PrefExtraConfig.Slider(minValue = 5, maxValue = 60, unit = "ds")
+    }
+
+    /** How far behind you may fall before the room pulls you forward, in tenths. */
+    val SYNC_FASTFORWARD_THRESHOLD = Pref("pref_inroom_sync_fastforward_threshold", 50) {
+        title = Res.string.uisetting_sync_fastforward_threshold_title
+        summary = Res.string.uisetting_sync_fastforward_threshold_summary
+        icon = Icons.Filled.FastForward
+        dependencyEnable = { SYNC_FASTFORWARD.value() }
+
+        extraConfig = PrefExtraConfig.Slider(minValue = 20, maxValue = 200, unit = "ds")
+    }
+
     val SYNC_DONT_SLOW_WITH_ME = Pref("pref_inroom_sync_dont_slow_with_me", false) {
         title = Res.string.uisetting_sync_dont_slow_with_me_title
         summary = Res.string.uisetting_sync_dont_slow_with_me_summary
