@@ -84,6 +84,9 @@ import syncplaymobile.shared.generated.resources.room_details_file_properties
 import syncplaymobile.shared.generated.resources.room_details_user_position
 import syncplaymobile.shared.generated.resources.room_file_different
 import syncplaymobile.shared.generated.resources.room_file_has
+import syncplaymobile.shared.generated.resources.room_file_group_mine
+import syncplaymobile.shared.generated.resources.room_file_group_none
+import syncplaymobile.shared.generated.resources.room_file_group_other
 import syncplaymobile.shared.generated.resources.room_file_none
 import syncplaymobile.shared.generated.resources.room_file_same
 import syncplaymobile.shared.generated.resources.room_user_not_ready_label
@@ -207,15 +210,31 @@ object CardUserInfo {
         }
     }
 
-    /** A file line: the name, its duration, and whether it is ours or nobody's. */
+    /**
+     * A file line: the name, its duration, and whether it is ours or nobody's.
+     *
+     * The square used to carry that last part in colour alone. It now differs in fill as well,
+     * and the whole row says which of the three states it is out loud.
+     */
     @Composable
     private fun FileGroupHeading(fileName: String?, mine: Boolean, file: MediaFile?) {
         val p = palette
+        val square = Modifier.size(6.dp)
+        val spoken = when {
+            fileName == null -> stringResource(Res.string.room_file_group_none)
+            mine -> stringResource(Res.string.room_file_group_mine, fileName)
+            else -> stringResource(Res.string.room_file_group_other, fileName)
+        }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = Space.gutter, end = Space.gutter, top = Space.gap),
+            modifier = Modifier.fillMaxWidth().padding(start = Space.gutter, end = Space.gutter, top = Space.gap)
+                .semantics(mergeDescendants = true) { contentDescription = spoken },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(6.dp).background(if (fileName == null) p.inkFaint else if (mine) p.ok else p.warn, Radius.tightShape))
+            when {
+                fileName == null -> Box(square.border(Space.hair, p.inkFaint, Radius.tightShape))
+                mine -> Box(square.background(p.ok, Radius.tightShape))
+                else -> Box(square.border(Space.hair, p.warn, Radius.tightShape))
+            }
             RowGap(Space.gapTight + 2.dp)
             Text(
                 text = fileName ?: stringResource(Res.string.room_file_none),

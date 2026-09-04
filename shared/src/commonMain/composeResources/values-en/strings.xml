@@ -564,6 +564,9 @@
     <string name="room_alone">Nobody else is here yet.</string>
     <string name="room_file_same">Same file</string>
     <string name="room_file_different">Different file</string>
+    <string name="room_file_group_mine">Your file: %1$s</string>
+    <string name="room_file_group_other">Someone else's file: %1$s</string>
+    <string name="room_file_group_none">Nobody has opened a file</string>
     <string name="room_file_none">No file</string>
     <string name="room_file_has">Has a file</string>
     <!-- Chat (design overhaul) -->
