@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import app.preferences.Preferences.SYNKPLAY_PREFS
 import app.preferences.createDataStore
 import app.preferences.datastore
+import app.preferences.warmPreferences
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSDocumentDirectory
@@ -48,5 +49,8 @@ fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
 fun initializeDS() {
     runCatching {
         datastore = dataStore(SYNKPLAY_PREFS)
+        // The first read comes off disk; doing it here, on a background thread, keeps it off the
+        // one that draws the first frame.
+        warmPreferences()
     }
 }

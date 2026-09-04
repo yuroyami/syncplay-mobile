@@ -41,6 +41,7 @@ import app.player.Playback
 import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
+import app.preferences.arePreferencesLoaded
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
@@ -89,7 +90,9 @@ class SyncplayActivity : ComponentActivity() {
      */
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen() /* This will be called only on cold starts */
+        // Cold starts only. It holds while preferences are still being read, so no screen is
+        // ever drawn against defaults that are about to change.
+        installSplashScreen().setKeepOnScreenCondition { !arePreferencesLoaded }
 
         /** Communicates the lifecycle with our common code */
         bindWatchdog()

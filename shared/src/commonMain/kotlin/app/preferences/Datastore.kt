@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
@@ -31,13 +33,50 @@ lateinit var datastore: DataStore<Preferences>
 val datastoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 
-/** Hot [StateFlow] of all preferences, collected once and shared eagerly for the whole process. */
-val datastoreStateFlow: StateFlow<Preferences> by lazy {
-    datastore.data.stateIn(
+/** True once the first read off disk has landed, so nothing has to block waiting for it. */
+private val preferencesLoaded = CompletableDeferred<Unit>()
+
+private var cachedStateFlow: StateFlow<Preferences>? = null
+
+/**
+ * Hot [StateFlow] of all preferences, collected once and shared for the whole process.
+ *
+ * The first read comes off disk, and the first caller pays for it. That caller used to be the
+ * main thread during startup, which is why [warmPreferences] exists: it does the same read on a
+ * background thread before the first frame, so by the time anything on the main thread asks, the
+ * answer is already here.
+ */
+val datastoreStateFlow: StateFlow<Preferences>
+    get() = cachedStateFlow ?: datastore.data.stateIn(
         scope = datastoreScope,
         started = SharingStarted.Eagerly,
-        initialValue = runBlocking { datastore.data.first() }
-    )
+        initialValue = runBlocking { datastore.data.first() },
+    ).also {
+        cachedStateFlow = it
+        preferencesLoaded.complete(Unit)
+    }
+
+/**
+ * Reads the store on a background thread. Called once at startup, before anything composes.
+ * The platform holds its splash until [awaitPreferences] returns, so no screen is ever drawn
+ * against default values that are about to change.
+ */
+fun warmPreferences() {
+    datastoreScope.launch { datastoreStateFlow }
+}
+
+/** True once [warmPreferences] has finished; the Android splash holds on this. */
+val arePreferencesLoaded: Boolean get() = preferencesLoaded.isCompleted
+
+/** Suspends until the store has been read at least once. */
+suspend fun awaitPreferences() = preferencesLoaded.await()
+
+/**
+ * Drops the memoized flow so the next read builds against whatever [datastore] now points at.
+ * Only tests install a second store in one process; without this the first one won a whole JVM.
+ */
+fun resetPreferencesForTesting() {
+    cachedStateFlow = null
 }
 
 /**

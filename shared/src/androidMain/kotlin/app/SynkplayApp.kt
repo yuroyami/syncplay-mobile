@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.StrictMode
 import app.preferences.Preferences
 import app.preferences.datastore
+import app.preferences.warmPreferences
 import app.utils.SecurityProvider
 import app.utils.contextObtainer
 import app.utils.dataStore
@@ -24,6 +25,9 @@ class SynkplayApp: Application() {
         SecurityProvider.installInBackground()
 
         datastore = dataStore(applicationContext, Preferences.SYNKPLAY_PREFS)
+        // Read off disk on a background thread. The activity's splash waits on it, so the first
+        // frame still sees real values without the main thread doing the reading.
+        warmPreferences()
 
         contextObtainer = ::returnAppContext
     }

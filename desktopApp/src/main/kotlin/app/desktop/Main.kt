@@ -33,6 +33,7 @@ import app.utils.initializeDatastore
 import app.utils.loggy
 import app.utils.platformCallback
 import app.uicomponents.controls.TextInputFocus
+import app.preferences.warmPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,6 +54,7 @@ private var mutedFrom: Int? = null
 
 fun main(args: Array<String>) {
     initializeDatastore()
+    warmPreferences()
     // Before anything composes: Compose Desktop resolves its strings against the JVM locale.
     applyDisplayLanguage(runCatching { Preferences.DISPLAY_LANG.value() }.getOrDefault(""))
     // The trace reaches the log file before the JVM's own handler prints and exits.
