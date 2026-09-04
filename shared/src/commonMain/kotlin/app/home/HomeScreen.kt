@@ -37,6 +37,7 @@ import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Feedback
 import app.theme.Radius
 import app.theme.Motion
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
@@ -460,7 +461,11 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 val twoColumns = maxWidth >= 600.dp && (maxHeight < 620.dp || maxWidth >= 840.dp)
                 // Roughly what the two columns need; above it the block sits centred as one unit.
                 val blockFits = maxHeight >= 560.dp
-                val clearFocus = Modifier.clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) }
+                /* Tapping the background dismisses the keyboard. It is not a control, so it is
+                 * hidden from assistive tech rather than announced as an unnamed button. */
+                val clearFocus = Modifier
+                    .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) }
+                    .clearAndSetSemantics { }
                 if (twoColumns && blockFits) {
                     /* Wide and tall (a tablet, a desktop window): the two columns are one block,
                      * centred in the window, the join key on the block's foot level with the end of

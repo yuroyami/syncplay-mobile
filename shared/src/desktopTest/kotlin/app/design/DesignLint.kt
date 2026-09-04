@@ -5,8 +5,13 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * The four source checks from DESIGN/FOUNDATION, as a ratchet: each count may only go down.
- * Lower the baseline in the same commit that removes the usages.
+ * The source checks from DESIGN/FOUNDATION, as a ratchet: each count may only go down. Lower the
+ * baseline in the same commit that removes the usages.
+ *
+ * The last rule is about reachability rather than looks. A `.clickable {}` with no role and no
+ * description is invisible to a screen reader and unreachable by a remote: it is a tap target
+ * that announces nothing. The drawn control set carries its own semantics, so anything that
+ * calls clickable directly has to say what it is.
  */
 class DesignLint {
 
@@ -23,6 +28,7 @@ class DesignLint {
         "sp literals outside Tokens.kt" to 0,
         "MaterialTheme or ripple" to 0,
         "text sizes under 11sp" to 0,
+        "clickable without semantics" to 0,
     )
 
     private fun sources(): List<File> = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
@@ -33,9 +39,11 @@ class DesignLint {
             hits.getOrPut(rule) { mutableListOf() }.add("${file.relativeTo(root)}:$line: ${text.trim()}")
         }
         val importRe = Regex("""^import androidx\.compose\.material3\.([A-Za-z0-9_]+)""")
+        val clickableRe = Regex("""\.(clickable|combinedClickable|selectable|toggleable)\s*[({]""")
         val spRe = Regex("""\b(\d+(?:\.\d+)?)\.sp\b""")
         for (file in sources()) {
-            file.readLines().forEachIndexed { i, line ->
+            val allLines = file.readLines()
+            allLines.forEachIndexed { i, line ->
                 val n = i + 1
                 importRe.find(line)?.let { m ->
                     if (m.groupValues[1] !in allowedMaterialImports) hit("material3 component imports", file, n, line)
@@ -48,6 +56,23 @@ class DesignLint {
                 }
                 if (line.contains("MaterialTheme") || line.contains("ripple(")) {
                     if (file.name !in bridgeFiles) hit("MaterialTheme or ripple", file, n, line)
+                }
+                if (clickableRe.containsMatchIn(line)) {
+                    /* A role names the thing for assistive tech and is what selectable and
+                     * toggleable take directly; a nearby semantics block or contentDescription
+                     * does the same job for a hand-rolled clickable. clearAndSetSemantics is the
+                     * deliberate opposite: this surface is not a control at all.
+                     *
+                     * The window is generous because these modifier chains run long, and the
+                     * semantics that answer for a clickable often sit well below it. */
+                    val window = allLines
+                        .subList(maxOf(0, i - 8), minOf(allLines.size, i + 20))
+                        .joinToString("\n")
+                    val answered = listOf(
+                        "role =", "role=", "semantics", "clearAndSetSemantics",
+                        "contentDescription", "onClickLabel",
+                    ).any { it in window }
+                    if (!answered) hit("clickable without semantics", file, n, line)
                 }
             }
         }
