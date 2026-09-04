@@ -37,7 +37,11 @@ internal object FileSizeSerializer : KSerializer<String> {
         PrimitiveSerialDescriptor("FileSize", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): String {
-        require(decoder is JsonDecoder) { "FileSizeSerializer requires a JSON decoder" }
+        if (decoder !is JsonDecoder) {
+            // SerializationException, not require(): it is the only type the
+            // skip-a-poisoned-line catch in the inbound path covers.
+            throw SerializationException("FileSizeSerializer requires a JSON decoder")
+        }
         val element = decoder.decodeJsonElement()
         // Must be SerializationException, not error()/IllegalStateException: file dicts are
         // relayed verbatim from other clients by the server, and NetworkManager.handlePacket's

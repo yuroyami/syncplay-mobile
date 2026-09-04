@@ -1,5 +1,6 @@
 package app.protocol.models
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -65,7 +66,11 @@ internal object LenientRoomFeaturesSerializer : KSerializer<RoomFeatures> {
     override val descriptor: SerialDescriptor = RoomFeatures.serializer().descriptor
 
     override fun deserialize(decoder: Decoder): RoomFeatures {
-        require(decoder is JsonDecoder) { "LenientRoomFeaturesSerializer requires a JSON decoder" }
+        if (decoder !is JsonDecoder) {
+            // SerializationException, not require(): it is the only type the
+            // skip-a-poisoned-line catch in the inbound path covers.
+            throw SerializationException("LenientRoomFeaturesSerializer requires a JSON decoder")
+        }
         val element = decoder.decodeJsonElement()
         return if (element is JsonObject) {
             decoder.json.decodeFromJsonElement(RoomFeatures.serializer(), element)
