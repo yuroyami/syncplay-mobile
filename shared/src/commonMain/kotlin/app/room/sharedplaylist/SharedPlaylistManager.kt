@@ -17,6 +17,9 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
 import io.github.vinceglb.filekit.writeString
+import app.preferences.set
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -80,6 +83,37 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * never pass through here.
      */
     private val locallyAddedUrls = linkedSetOf<String>()
+
+    /**
+     * A peer-pushed URL from a host nobody has trusted, waiting on an answer.
+     *
+     * Blocking it outright was a dead end: the room said "untrusted" and the file simply never
+     * played, with the only way forward buried in a settings field the user had to guess the
+     * syntax of. Asking is the same safety with a way through it.
+     */
+    data class UntrustedUrl(val url: String, val domain: String)
+
+    private val _pendingUntrusted = MutableStateFlow<UntrustedUrl?>(null)
+    val pendingUntrusted = _pendingUntrusted.asStateFlow()
+
+    /** Answers the prompt. [always] adds the host to the trusted list for good. */
+    fun allowPendingUrl(always: Boolean) {
+        val pending = _pendingUntrusted.value ?: return
+        _pendingUntrusted.value = null
+        if (always) {
+            val existing = Preferences.TRUSTED_DOMAINS.value().trim()
+            val updated = if (existing.isEmpty()) pending.domain else existing + "\n" + pending.domain
+            onIOThread { Preferences.TRUSTED_DOMAINS.set(updated) }
+        }
+        // Consent given here is consent either way, so this one plays even without the list.
+        rememberLocalUrl(pending.url)
+        onIOThread { retrieveFile(pending.url) }
+    }
+
+    /** Declines. The file stays unplayed and nothing is remembered. */
+    fun dismissPendingUrl() {
+        _pendingUntrusted.value = null
+    }
 
     /** Remembers a consented URL, forgetting the oldest past the cap so a long session stays bounded. */
     private fun rememberLocalUrl(url: String) {
@@ -314,8 +348,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (isRemoteUrl(fileName)) {
             if (!isUrlTrusted(fileName)) {
                 val domain = extractDomain(fileName)
+                // Ask instead of refusing. The answer is the user's, and the safe default
+                // (nothing plays until they say so) is unchanged.
+                _pendingUntrusted.value = UntrustedUrl(fileName, domain)
                 val warning = getString(Res.string.room_untrusted_domain_warning, domain)
-                viewmodel.dispatchOSD { warning }
                 viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
                 return
             }

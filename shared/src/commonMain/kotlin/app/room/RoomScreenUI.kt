@@ -77,6 +77,17 @@ import syncplaymobile.shared.generated.resources.room_overflow_leave_room
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import kotlin.math.roundToInt
+import syncplaymobile.shared.generated.resources.room_untrusted_ask_always
+import syncplaymobile.shared.generated.resources.room_untrusted_ask_once
+import syncplaymobile.shared.generated.resources.room_untrusted_ask_body
+import syncplaymobile.shared.generated.resources.room_untrusted_ask_title
+import app.theme.palette
+import app.theme.Type
+import app.uicomponents.controls.Text
+import app.uicomponents.controls.SecondaryAction
+import app.uicomponents.controls.PrimaryAction
+import app.uicomponents.frames.ModalSize
+import app.uicomponents.frames.Modal
 
 /**
  * Primary focus target for D-pad and TV use: the play key, or the add button before a file
@@ -173,6 +184,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
         LeaveRoomAsk(viewmodel)
         ManagedRoomModal()
+        UntrustedUrlAsk(viewmodel)
 
         val globalViewmodel = LocalGlobalViewmodel.current
         // The roster opens once, on the first room of the session, so a newcomer sees who is here.
@@ -186,6 +198,39 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             if (!firstRoom || soloMode || roster.isEmpty()) return@LaunchedEffect
             viewmodel.uiState.toggleUserInfo(true)
         }
+    }
+}
+
+/**
+ * The question a peer-pushed link from an unknown host raises. Refusing outright was a dead end:
+ * the file never played and the only way forward was a settings field the user had to guess the
+ * syntax of.
+ */
+@Composable
+private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
+    val pending by viewmodel.playlistManager.pendingUntrusted.collectAsState()
+    val asked = pending ?: return
+    Modal(
+        open = true,
+        onDismiss = { viewmodel.playlistManager.dismissPendingUrl() },
+        title = stringResource(Res.string.room_untrusted_ask_title, asked.domain),
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(
+                text = stringResource(Res.string.room_untrusted_ask_once),
+                onClick = { viewmodel.playlistManager.allowPendingUrl(always = false) },
+            )
+            PrimaryAction(
+                text = stringResource(Res.string.room_untrusted_ask_always, asked.domain),
+                onClick = { viewmodel.playlistManager.allowPendingUrl(always = true) },
+            )
+        },
+    ) {
+        Text(
+            text = stringResource(Res.string.room_untrusted_ask_body, asked.domain),
+            style = Type.note,
+            color = palette.inkDim,
+        )
     }
 }
 

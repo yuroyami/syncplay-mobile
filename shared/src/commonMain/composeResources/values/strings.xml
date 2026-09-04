@@ -426,6 +426,10 @@
 
     <string name="setting_trusted_domains_title">Trusted domains</string>
     <string name="setting_trusted_domains_summary">Only links from these hosts auto-load.</string>
+    <string name="room_untrusted_ask_title">Play from %1$s?</string>
+    <string name="room_untrusted_ask_body">Someone in the room added a link from %1$s. Nothing plays from a host you have not allowed.</string>
+    <string name="room_untrusted_ask_once">Play once</string>
+    <string name="room_untrusted_ask_always">Always allow %1$s</string>
     <string name="room_untrusted_domain_warning">Blocked URL from untrusted domain: %1$s. Add it to Trusted Domains in settings to allow.</string>
     <string name="room_shared_playlist_limit">Shared playlist limit reached (%1$d items / %2$d characters)</string>
     <string name="room_ready_set_by">%1$s was set as ready by %2$s</string>
