@@ -555,6 +555,8 @@
     <string name="room_leave_question">Leave the room?</string>
     <string name="room_managed_room">Managed room</string>
     <string name="room_lock">Lock the screen</string>
+    <string name="room_locked_hint">Screen locked. Tap anywhere to show the unlock key.</string>
+    <string name="room_locked_surface">Locked screen. Activate to show the unlock key.</string>
     <string name="room_connection_encrypted">Encrypted connection</string>
     <string name="room_connection_plaintext">Unencrypted connection</string>
     <string name="room_connecting">Connecting</string>
