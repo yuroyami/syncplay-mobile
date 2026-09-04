@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
@@ -73,6 +74,11 @@ fun Field(
     val p = palette
     val source = remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
+    // Reported for the desktop key map, which must not spend the arrows on seeking mid-sentence.
+    DisposableEffect(focused) {
+        if (focused) TextInputFocus.report(true)
+        onDispose { if (focused) TextInputFocus.report(false) }
+    }
     val lineColor by animateColorAsState(if (focused) p.accent else p.rule, Motion.quick(), label = "line")
     val lineWidth by animateDpAsState(if (focused) 2.dp else Space.hair, Motion.quick(), label = "lineWidth")
 

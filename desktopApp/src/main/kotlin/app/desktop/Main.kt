@@ -32,6 +32,7 @@ import app.protocol.WireMessage
 import app.utils.initializeDatastore
 import app.utils.loggy
 import app.utils.platformCallback
+import app.uicomponents.controls.TextInputFocus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -52,6 +53,8 @@ private var mutedFrom: Int? = null
 
 fun main(args: Array<String>) {
     initializeDatastore()
+    // Before anything composes: Compose Desktop resolves its strings against the JVM locale.
+    applyDisplayLanguage(runCatching { Preferences.DISPLAY_LANG.value() }.getOrDefault(""))
     // The trace reaches the log file before the JVM's own handler prints and exits.
     val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -69,6 +72,10 @@ fun main(args: Array<String>) {
             onCloseRequest = ::exitApplication,
             title = "Synkplay",
             state = windowState,
+            // Arrows are claimed before focus dispatch, or Compose spends them moving focus and the
+            // room never sees them. Everything else stays after dispatch, so a space typed into
+            // chat is a space. Nothing is claimed while a text field has focus.
+            onPreviewKeyEvent = { event -> handleArrowKey(event) },
             onKeyEvent = { event -> handleGlobalKey(event, windowState) },
         ) {
             // A 320dp side dock beside a 16:9 picture that is 480dp tall.
@@ -161,6 +168,30 @@ private fun parseJoinArgs(args: Array<String>) {
 }
 
 /**
+ * The arrows: seek on the horizontal pair, volume on the vertical one, claimed before Compose's
+ * focus traversal gets them. They act only inside the room, and never while someone is typing.
+ */
+private fun handleArrowKey(event: KeyEvent): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    if (TextInputFocus.isTyping) return false
+    val global = globalViewmodel ?: return false
+    if (global.backstack.lastOrNull() !is Screen.Room) return false
+    val vm = global.roomWeakRef?.get() ?: return false
+    if (!vm.playerManager.hasVideo.value) return false
+
+    val times = if (event.isShiftPressed) 5 else 1
+    val volume = vm.player.volume
+    val volumeStep = 5
+    return when (event.key) {
+        Key.DirectionLeft -> { vm.dispatcher.seekBy(-Preferences.SEEK_BACKWARD_JUMP.value() * times); true }
+        Key.DirectionRight -> { vm.dispatcher.seekBy(Preferences.SEEK_FORWARD_JUMP.value() * times); true }
+        Key.DirectionUp -> { volume.set(volume.current() + volumeStep); true }
+        Key.DirectionDown -> { volume.set(volume.current() - volumeStep); true }
+        else -> false
+    }
+}
+
+/**
  * The window-level key map, run after focus dispatch (onKeyEvent, not onPreviewKeyEvent) so a
  * space typed into the chat field never toggles playback. Escape is the one key that acts
  * anywhere: leave fullscreen, else close the open panels, else hide the HUD, else pop a page.
@@ -236,10 +267,7 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
             vm.dispatcher.controlPlayback(if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true)
             true
         }
-        Key.DirectionLeft -> { vm.dispatcher.seekBy(-Preferences.SEEK_BACKWARD_JUMP.value() * times); true }
-        Key.DirectionRight -> { vm.dispatcher.seekBy(Preferences.SEEK_FORWARD_JUMP.value() * times); true }
-        Key.DirectionUp -> { volume.set(volume.current() + volumeStep); true }
-        Key.DirectionDown -> { volume.set(volume.current() - volumeStep); true }
+        // The arrows are handled before focus dispatch, in handleArrowKey.
         Key.M -> {
             val current = volume.current()
             val restore = mutedFrom

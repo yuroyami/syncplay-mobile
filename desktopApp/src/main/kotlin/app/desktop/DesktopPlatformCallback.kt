@@ -5,6 +5,7 @@ import app.home.HomeViewmodel
 import app.home.JoinConfig
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
+import java.util.Locale
 
 /**
  * Desktop implementation of the platform callback surface. Most operations are inherently
@@ -18,7 +19,10 @@ import java.awt.datatransfer.StringSelection
 object DesktopPlatformCallback : PlatformCallback {
 
     override fun onLanguageChanged(newLang: String) {
-        // Compose picks the new strings up on the next app start; no Activity to recreate.
+        // Compose Desktop reads its strings against the JVM's default locale, so setting that is
+        // what makes the choice mean anything here. Screens already composed keep the strings they
+        // resolved, so the change is complete at the next start; there is no Activity to recreate.
+        applyDisplayLanguage(newLang)
     }
 
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {}
@@ -58,4 +62,13 @@ object DesktopPlatformCallback : PlatformCallback {
     }
 
     override fun shareText(text: String) = copyText(text)
+}
+
+/**
+ * Points the JVM's default locale at [lang], which is where Compose Desktop reads its strings
+ * from. A blank choice means "follow the system", so nothing is forced.
+ */
+internal fun applyDisplayLanguage(lang: String) {
+    if (lang.isBlank()) return
+    runCatching { Locale.setDefault(Locale.forLanguageTag(lang)) }
 }
