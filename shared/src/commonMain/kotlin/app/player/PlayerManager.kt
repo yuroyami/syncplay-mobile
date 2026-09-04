@@ -33,6 +33,16 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     val isNowPlaying = MutableStateFlow(false)
 
+    /**
+     * True while the engine is filling its buffer or opening media rather than showing frames.
+     *
+     * Every engine reports this in its own words (a state constant, a cache property, a status
+     * enum), so each one mirrors it here and the room shows one indicator regardless of engine.
+     * It is display only: nothing in the sync path reads it, because a stalled buffer is not a
+     * pause and must never be broadcast as one.
+     */
+    val isBuffering = MutableStateFlow(false)
+
     //TODO Remove in favor of media.fileDuration
     val timeFullMillis = MutableStateFlow<Long>(0L)
 
@@ -93,6 +103,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         timeCurrentMillis.value = 0L
         timeBufferedMillis.value = -1L
         currentTrackChoices = TrackChoices()
+        isBuffering.value = false
     }
 
     companion object {

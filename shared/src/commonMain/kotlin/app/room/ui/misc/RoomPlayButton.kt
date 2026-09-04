@@ -34,6 +34,11 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_pause
 import syncplaymobile.shared.generated.resources.room_play
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import app.uicomponents.controls.ProgressBar
 
 /**
  * The room's one gradient moment: a 60dp square key filled with the brand field. It acts on the
@@ -44,6 +49,7 @@ fun RoomPlayButton(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val playing by viewmodel.playerManager.isNowPlaying.collectAsState()
+    val buffering by viewmodel.playerManager.isBuffering.collectAsState()
     if (!hasVideo) return
 
     val p = palette
@@ -51,27 +57,36 @@ fun RoomPlayButton(modifier: Modifier) {
     val name = stringResource(if (playing) Res.string.room_pause else Res.string.room_play)
     val initialFocus = LocalRoomInitialFocus.current
 
-    Box(
-        modifier = modifier
-            .size(Space.hero)
-            .then(if (initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier)
-            .clip(Radius.panelShape)
-            // Translucent, like the rest of the chrome, so the picture reads through the key.
-            .background(Brush.horizontalGradient(p.brandField.map { it.copy(alpha = 0.82f) }))
-            .clickable(interactionSource = source, indication = null, role = Role.Button) {
-                viewmodel.dispatcher.controlPlayback(if (playing) Playback.PAUSE else Playback.PLAY, true)
-            }
-            .hoverable(source)
-            .semantics { contentDescription = name }
-            .controlStates(source, Radius.panelShape)
-            .pressFeedback(source),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = if (playing) PauseGlyph else PlayGlyph,
-            contentDescription = null,
-            tint = p.ground,
-            modifier = Modifier.size(28.dp),
-        )
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(Space.hero)
+                .then(if (initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier)
+                .clip(Radius.panelShape)
+                // Translucent, like the rest of the chrome, so the picture reads through the key.
+                .background(Brush.horizontalGradient(p.brandField.map { it.copy(alpha = 0.82f) }))
+                .clickable(interactionSource = source, indication = null, role = Role.Button) {
+                    viewmodel.dispatcher.controlPlayback(if (playing) Playback.PAUSE else Playback.PLAY, true)
+                }
+                .hoverable(source)
+                .semantics { contentDescription = name }
+                .controlStates(source, Radius.panelShape)
+                .pressFeedback(source),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (playing) PauseGlyph else PlayGlyph,
+                contentDescription = null,
+                tint = p.ground,
+                modifier = Modifier.size(28.dp),
+            )
+        }
+
+        // The engine is filling its buffer or opening the file. Shown under the key rather than over
+        // it, so the key stays readable and the room does not gain another dock for one thin line.
+        if (buffering) {
+            Spacer(Modifier.height(Space.gapTight))
+            ProgressBar(progress = null, modifier = Modifier.width(Space.hero))
+        }
     }
 }

@@ -13,6 +13,7 @@ import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.player.models.TrackTrait
 import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
 import app.preferences.Preferences.KITE_DEBUG_STATS
 import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
@@ -35,6 +36,7 @@ import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
 import app.room.OSDCategory
 import app.room.RoomViewmodel
+import app.uicomponents.glassEnabled
 import app.utils.getCacheDirectoryPath
 import app.utils.getFileName
 import app.utils.loggy
@@ -52,6 +54,7 @@ import io.github.yuroyami.kiteplayer.SeekMode
 import kotlinx.coroutines.CancellationException
 import io.github.yuroyami.kiteplayer.SubtitleConfig
 import io.github.yuroyami.kiteplayer.SubtitleSource
+import io.github.yuroyami.kiteplayer.TrackInfo
 import io.github.yuroyami.kiteplayer.TrackKind
 import io.github.yuroyami.kiteplayer.VideoAdjustments
 import io.github.yuroyami.kiteplayer.VideoScale
@@ -249,6 +252,8 @@ internal class KiteImpl(
                 // to advance (isActive), and KitePlayer never auto-pauses on underrun, so a
                 // buffering spell must not read as a pause. Opening is media lifecycle, not a
                 // playback intent, and is left alone like VLCKit's transitional states.
+                playerManager.isBuffering.value =
+                    snapshot.status == PlaybackStatus.Buffering || snapshot.status == PlaybackStatus.Opening
                 when (snapshot.status) {
                     PlaybackStatus.Playing, PlaybackStatus.Buffering ->
                         playerManager.isNowPlaying.value = true
@@ -417,6 +422,8 @@ internal class KiteImpl(
                     index = position,
                     selected = info.id == tracks.selectedAudio,
                     trackId = info.id,
+                    language = info.language,
+                    trait = info.traitOrNull(),
                 ),
             )
         }
@@ -428,9 +435,20 @@ internal class KiteImpl(
                     index = position,
                     selected = info.id == tracks.selectedSubtitle,
                     trackId = info.id,
+                    language = info.language,
+                    trait = info.traitOrNull(),
                 ),
             )
         }
+
+        applyPreferredLanguages(mediafile)
+    }
+
+    /** KitePlayer states both flags on the track itself, so nothing is read out of the label. */
+    private fun TrackInfo.traitOrNull(): TrackTrait? = when {
+        isAccessibility -> TrackTrait.ACCESSIBILITY
+        isForced -> TrackTrait.FORCED
+        else -> null
     }
 
     override suspend fun selectTrack(track: Track?, type: TrackType) {
@@ -656,10 +674,14 @@ internal class KiteImpl(
         }
         val composedKite by kiteFlow.collectAsState()
         val composeRenderer by KITE_COMPOSE_RENDERER.watchPref()
+        // The native view is a surface the frosted panels cannot sample, which is why the other
+        // engines swap their view type with the same switch. Here the Compose path is the one
+        // glass can read, so glass being on decides the path and the preference decides the rest.
+        val path = if (composeRenderer || glassEnabled()) KiteRenderPath.ComposeCanvas else KiteRenderPath.NativeView
         KitePlayerVideo(
             player = composedKite,
             modifier = modifier,
-            path = if (composeRenderer) KiteRenderPath.ComposeCanvas else KiteRenderPath.NativeView,
+            path = path,
             onRendererAttached = { presented ->
                 if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
                     onPlayerReady()
