@@ -41,6 +41,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object CrashHandler {
     val crashTrace = MutableStateFlow<String?>(null)
 
+    /** How many times the debug overlay may restart the main looper before giving up. */
+    private const val MAX_LOOPER_RESTARTS = 10
+
     /**
      * Debug builds keep the process alive and draw the trace on screen, which is the fastest way
      * to read a crash on a device. Release builds log it and hand it to the platform handler:
@@ -56,8 +59,13 @@ object CrashHandler {
             if (KiteBuildConfig.IS_DEBUG) {
                 crashTrace.value = trace
                 if (Looper.myLooper() == Looper.getMainLooper()) {
-                    // Restart the main looper so Compose can still render the crash overlay
-                    while (true) {
+                    // Restart the main looper so Compose can still render the crash overlay.
+                    // Bounded: if the overlay itself is what keeps crashing, an endless restart
+                    // loop just spins the CPU behind a frozen screen, so after a few attempts the
+                    // crash goes to the platform handler and the app restarts cleanly.
+                    var restarts = 0
+                    while (restarts < MAX_LOOPER_RESTARTS) {
+                        restarts++
                         try {
                             Looper.loop()
                         } catch (_: Throwable) {

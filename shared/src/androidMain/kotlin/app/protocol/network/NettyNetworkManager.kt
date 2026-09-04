@@ -18,6 +18,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder
 import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
+import app.utils.SecurityProvider
 import io.netty.handler.ssl.SslContextBuilder
 import java.io.IOException
 import kotlin.coroutines.resume
@@ -162,7 +163,14 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * the IP the socket dialled: without that check any certificate from anyone on the path
      * passed, and encryption bought nothing.
      */
-    override suspend fun upgradeTls() = suspendCancellableCoroutine<Unit> { cont ->
+    override suspend fun upgradeTls(): Unit {
+        // Conscrypt is installed off the main thread at startup; the handshake is the one caller
+        // that needs it in place, and it is always far enough after startup to just wait here.
+        SecurityProvider.awaitInstalled()
+        return upgradeTlsNow()
+    }
+
+    private suspend fun upgradeTlsNow() = suspendCancellableCoroutine<Unit> { cont ->
         try {
             val sslContext = SslContextBuilder
                 .forClient()

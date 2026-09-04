@@ -5,25 +5,23 @@ import android.content.Context
 import android.os.StrictMode
 import app.preferences.Preferences
 import app.preferences.datastore
+import app.utils.SecurityProvider
 import app.utils.contextObtainer
 import app.utils.dataStore
-import org.conscrypt.Conscrypt
-import java.security.Security
 
 /**
- * Application entry point. Runs one-time process init: installs the Conscrypt security
- * provider (TLS 1.3 on API 24+), initializes DataStore, and registers the global context
- * provider. Lives for the whole app process.
+ * Application entry point. Runs one-time process init: starts the Conscrypt install (TLS 1.3),
+ * initializes DataStore, and registers the global context provider. Lives for the whole app
+ * process.
  */
 class SynkplayApp: Application() {
 
     override fun onCreate() {
         super.onCreate()
 
-        /* Install Conscrypt as the top-priority security provider for TLS 1.3 support. */
-        runCatching {
-            Security.insertProviderAt(Conscrypt.newProvider(), 1)
-        }
+        /* Conscrypt gives us TLS 1.3, and building it loads a native library, so it is installed
+         * off the main thread. The TLS upgrade is the only caller that waits for it. */
+        SecurityProvider.installInBackground()
 
         datastore = dataStore(applicationContext, Preferences.SYNKPLAY_PREFS)
 
