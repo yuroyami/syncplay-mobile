@@ -48,3 +48,6 @@ Written for people who use the app. The full engineering history is in the commi
 - About lists what the app is built from, and can check for a newer release.
 - The GIF service can be told to stop recognising you between sessions.
 - Startup no longer reads preferences on the drawing thread, and neither does logging.
+- KitePlayer, the experimental engine, is on a newer build. Seeking is about twice as fast,
+  and files carrying tens of thousands of subtitle lines no longer make it re-read the whole
+  list every time a line changes.

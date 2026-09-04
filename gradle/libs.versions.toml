@@ -52,8 +52,9 @@ netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.7.0"
 newpipeExtractor = "v0.24.6"
 
-# Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.21"
+# Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
+# published locally but not yet served by Central.
+kiteplayer = "0.0.22"
 
 #iOS (VLCKit pod)
 libvlc-ios = "4.0.0a19"

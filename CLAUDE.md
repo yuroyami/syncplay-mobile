@@ -100,7 +100,7 @@ live; the workflow fails if the version being built has no section in it.
 
 **Android-only native gotchas.** `restoreMpvLibcxx` copies the NDK r29 `libc++_shared.so` into `src/main/libs/<abi>/`; `verifyMpvLibcxx` greps for the `from_chars_floating` symbol and fails the build if missing (an older libc++ lacks `__from_chars_floating_point`, crashing mpv at load). `exoOnly` runs `pruneStaleExoOnlyLibcxx` so the exo-only APK ships no libc++ at all, matching a clean checkout.
 
-**Reproducible-build constraints (IzzyOnDroid, issue #105).** Do NOT re-add foojay-resolver or pin a JVM toolchain vendor; JDK 21 is requested vendor-neutrally. KitePlayer (0.0.21) now resolves from Maven Central; the two content-filtered `mavenLocal()` blocks in `settings.gradle.kts` remain only as a local-override escape hatch for `io.github.yuroyami` artifacts and could shadow Central for that group, so treat them as removal candidates. `jitpack.io` is for the NewPipe Extractor (unfiltered today).
+**Reproducible-build constraints (IzzyOnDroid, issue #105).** Do NOT re-add foojay-resolver or pin a JVM toolchain vendor; JDK 21 is requested vendor-neutrally. KitePlayer (0.0.22) now resolves from Maven Central; the two content-filtered `mavenLocal()` blocks in `settings.gradle.kts` remain only as a local-override escape hatch for `io.github.yuroyami` artifacts and could shadow Central for that group, so treat them as removal candidates. `jitpack.io` is for the NewPipe Extractor (unfiltered today).
 
 ---
 
@@ -124,7 +124,7 @@ Kotlin 2.4.10, AGP 9.3.2, Compose Multiplatform 1.12.0, Gradle 9.7.1, NDK 29.0.1
 | kotlinx-datetime | 0.8.0 |
 | Media3 / ExoPlayer | 1.11.0 |
 | VLCKit (iOS) | 4.0.0a19 |
-| KitePlayer | 0.0.21 |
+| KitePlayer | 0.0.22 |
 | Coil3 | 3.6.1 |
 | Haze | 2.0.0-beta02 |
 | MaterialKolor | 5.0.1 |
