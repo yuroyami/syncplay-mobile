@@ -11,6 +11,8 @@ plugins {
     alias(libs.plugins.ksp)
     //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.ktorfit)
+    // Coverage, measured on the desktop test run; the report is configured in the root build.
+    alias(libs.plugins.kover)
 }
 
 kotlin {
