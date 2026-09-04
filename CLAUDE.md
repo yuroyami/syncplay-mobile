@@ -9,7 +9,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 | Package (full flavor) | `com.yuroyami.syncplay` |
 | Package (exoOnly flavor) | `com.reddnek.syncplay` |
 | iOS bundle base | `com.yuroyami.syncplay.iosApp` |
-| Android flavors | `full` (ExoPlayer + mpv + KitePlayer native libs) / `exoOnly` (ExoPlayer only, no native libs) |
+| Android flavors | `full` (ExoPlayer + mpv + KitePlayer native libs) / `exoOnly` (ExoPlayer only, no player native libs; the Exo FFmpeg audio AAR, Conscrypt, DataStore and the graphics-path library still ship) |
 | Shared-state SSOT | KiteConfig plugin `io.github.yuroyami.kiteconfig` 1.0.0 (appName/version/bundleId/SDKs/logo/buildConfig; values fed from buildSrc `AppConfig` and `gradle.properties`) |
 
 ---
@@ -49,7 +49,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 **Toolchain (from `gradle.properties` / `libs.versions.toml`):** Kotlin 2.4.10, AGP 9.3.2, Compose Multiplatform 1.12.0, Gradle 9.7.1, compileSdk 37, minSdk 26, targetSdk 37, NDK 29.0.14206865, Java toolchain 21, buildToolsVersion 37.0.0 (pinned for reproducible builds).
 
-**`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), used by the root `kiteConfig { buildConfig { } }` block to emit the commonMain `EXOPLAYER_ONLY` field and by `androidApp` for flavor selection. `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv native build scripts, and ships no native player libs.
+**`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), used by the root `kiteConfig { buildConfig { } }` block to emit the commonMain `EXOPLAYER_ONLY` field and by `androidApp` for flavor selection. `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv native build scripts, and ships no native *player* libraries. It is not free of native code: a release exoOnly APK carries `libffmpegJNI.so` from the ExoPlayer audio AAR, plus Conscrypt, DataStore and the AndroidX graphics-path library.
 
 **buildSrc holds all non-trivial build logic; the four `build.gradle.kts` files stay declarative.**
 - `AppConfig.kt` - build helpers that are NOT app identity (identity now lives only in the root `kiteConfig { }` block): `SHARED_MODULE_NAME`, `localProperties(rootDir)` (signing secrets - caller must pass `rootDir` explicitly), the `exoOnly` flag + `resolveExoOnly(providers)`, Trinity brand colors (`0xFF9879EF` ultraviolet / `0xFFC331D8` orchid / `0xFFD86B75` coral, the three dominant stops of `art/synkplay_logo_palette.md`), `abiCodes`, `mpvLibs` (9 `.so` files), and the custom propagators `propagateTrinityColors()` (rewrites `ic_launcher_foreground.xml` gradient stops) + `propagateDefaultStrings()` (`values-en/strings.xml` → `values/strings.xml`); `propagateAllCustom()` runs them.
