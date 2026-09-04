@@ -59,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import java.lang.ref.WeakReference
 
 /**
  * Main Activity for the Syncplay Android application.
@@ -102,193 +103,9 @@ class SyncplayActivity : ComponentActivity() {
         applyActivityUiProperties()
         maskTransientBarAnimations()
 
-        /** Binding common logic with platform logic */
-        platformCallback = object : PlatformCallback {
-            override fun mediaSessionInitialize() {
-                startForegroundService(Intent(this@SyncplayActivity, SyncplayMediaSessionService::class.java))
-            }
-
-            override fun mediaSessionFinalize() {
-                stopService(Intent(this@SyncplayActivity, SyncplayMediaSessionService::class.java))
-            }
-
-            override fun serverServiceStart(port: Int) {
-                val intent = Intent(this@SyncplayActivity, SyncplayServerService::class.java).apply {
-                    putExtra(SyncplayServerService.EXTRA_PORT, port)
-                }
-                startForegroundService(intent)
-            }
-
-            override fun serverServiceStop() {
-                stopService(Intent(this@SyncplayActivity, SyncplayServerService::class.java))
-            }
-
-            override fun serverClientsChanged(port: Int, clients: Int) {
-                // The same start intent updates the running notification's client count.
-                val intent = Intent(this@SyncplayActivity, SyncplayServerService::class.java).apply {
-                    putExtra(SyncplayServerService.EXTRA_PORT, port)
-                    putExtra(SyncplayServerService.EXTRA_CLIENTS, clients)
-                }
-                runCatching { startForegroundService(intent) }
-            }
-
-            /**
-             * Recreates the activity to apply the new language.
-             */
-            override fun onLanguageChanged(newLang: String) {
-                runOnUiThread {
-                    recreate()
-                }
-            }
-
-            /**
-             * Creates a pinned home screen shortcut and dynamic shortcut for quick room access.
-             *
-             * Encodes room configuration in the intent extras for deep linking.
-             */
-            override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
-                val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    action = Intent.ACTION_MAIN
-                    putExtra("quickLaunch", true)
-                    putExtra("name", joinInfo.user.trim())
-                    putExtra("room", joinInfo.room.trim())
-                    putExtra("serverip", joinInfo.ip.trim())
-                    putExtra("serverport", joinInfo.port)
-                    putExtra("serverpw", joinInfo.pw)
-                }
-
-
-                val shortcutId = "${joinInfo.user}${joinInfo.room}${joinInfo.ip}${joinInfo.port}"
-                val shortcutInfo = ShortcutInfoCompat.Builder(this@SyncplayActivity, shortcutId)
-                    .setShortLabel(joinInfo.room)
-                    .setIcon(IconCompat.createWithResource(this@SyncplayActivity, R.mipmap.ic_launcher))
-                    .setIntent(shortcutIntent)
-                    .build()
-
-                ShortcutManagerCompat.addDynamicShortcuts(this@SyncplayActivity, listOf(shortcutInfo))
-
-                if (ShortcutManagerCompat.isRequestPinShortcutSupported(this@SyncplayActivity)) {
-                    ShortcutManagerCompat.requestPinShortcut(this@SyncplayActivity, shortcutInfo, null)
-                }
-            }
-
-            /**
-             * Removes all dynamic shortcuts created for room configurations.
-             */
-            override fun onEraseConfigShortcuts() {
-                ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
-                // Pinned copies live on the launcher and keep the room password; they can only
-                // be disabled, which is what stops them from ever joining again.
-                val pinned = ShortcutManagerCompat.getShortcuts(this@SyncplayActivity, ShortcutManagerCompat.FLAG_MATCH_PINNED)
-                if (pinned.isNotEmpty()) {
-                    ShortcutManagerCompat.disableShortcuts(this@SyncplayActivity, pinned.map { it.id }, null)
-                }
-            }
-
-            /**
-             * Gets the maximum brightness value (1.0 on Android).
-             */
-            private val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
-            override fun deviceVolumeSteps(): Int = if (audioManager.isVolumeFixed) 0 else audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            override fun getDeviceVolume(): Int = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-            override fun setDeviceVolume(step: Int) {
-                if (!audioManager.isVolumeFixed) audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, step, 0)
-            }
-
-            override fun getMaxBrightness() = 1f
-
-            /**
-             * Gets the current screen brightness from window attributes or system settings.
-             *
-             * Handles both manual and automatic brightness modes.
-             */
-            override fun getCurrentBrightness(): Float {
-                val brightness = window.attributes.screenBrightness
-
-                val brightnesstemp = if (brightness != -1f)
-                    brightness
-                else {
-                    // No window override set: fall back to system brightness. In auto mode the
-                    // raw value is unreliable, so default to 0.5.
-                    if (Settings.System.getInt(
-                            contentResolver,
-                            Settings.System.SCREEN_BRIGHTNESS_MODE,
-                            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                        ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                    ) {
-                        0.5f
-                    } else Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128).toFloat() / 255
-                }
-
-                return brightnesstemp
-            }
-
-            /**
-             * Sets the screen brightness level for this window.
-             *
-             * @param v Brightness value between 0.0 (darkest) and 1.0 (brightest)
-             */
-            override fun changeCurrentBrightness(v: Float) {
-                loggy("Brightness: $v")
-                val attrs = window.attributes
-                attrs.screenBrightness = v.coerceIn(0f, 1f)
-                window.attributes = attrs
-            }
-
-            /**
-             * Updates Picture-in-Picture controls when playback state changes.
-             */
-            override fun onPlayback(paused: Boolean) {
-                updatePiPParams()
-            }
-
-            /**
-             * Initiates Picture-in-Picture mode when requested.
-             */
-            override fun onPictureInPicture(enable: Boolean) {
-                if (enable) {
-                    initiatePIPmode()
-                }
-            }
-
-            override fun performHapticFeedback() {
-                val vibrator = getSystemService(Vibrator::class.java) ?: return
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-                } else {
-                    vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-                }
-            }
-
-            /**
-             * Launches the "custom picker" — an `ACTION_GET_CONTENT` chooser that lets the user
-             * pick which installed file manager / explorer to browse with. Routes the result
-             * through [pendingSystemFilePickerCallback] back to the caller. Helpful for mpv to
-             * play SMB-backed files that are hidden by FileKit's extension-based filter.
-             */
-            override fun copyText(text: String) {
-                getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(app.utils.appName, text))
-            }
-
-            override fun shareText(text: String) {
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-                startActivity(Intent.createChooser(send, null))
-            }
-
-            override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
-                pendingSystemFilePickerCallback = onResult
-                runCatching {
-                    systemFilePickerLauncher.launch("*/*")
-                }.onFailure {
-                    pendingSystemFilePickerCallback = null
-                    onResult(null)
-                }
-            }
-        }
+        /** Binding common logic with platform logic. Held weakly: the callback outlives this
+         * Activity, which is recreated on a theme, locale or font-size change. */
+        platformCallback = AndroidPlatformCallback(WeakReference(this))
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
@@ -355,19 +172,43 @@ class SyncplayActivity : ComponentActivity() {
     private fun handleLaunchIntent(intent: Intent?) {
         intent ?: return
         val config = when {
-            intent.getBooleanExtra("quickLaunch", false) -> JoinConfig(
-                user = intent.getStringExtra("name") ?: "",
-                room = intent.getStringExtra("room") ?: "",
-                ip = intent.getStringExtra("serverip") ?: "",
-                port = intent.getIntExtra("serverport", 8997),
-                pw = intent.getStringExtra("serverpw") ?: ""
-            )
+            intent.getBooleanExtra("quickLaunch", false) -> quickLaunchConfig(intent) ?: return
             intent.action == Intent.ACTION_VIEW -> intent.dataString?.let { InviteLink.parse(it) } ?: return
             else -> return
         }
         lifecycleScope.launch {
             homeViewmodel?.joinRoom(config)
         }
+    }
+
+    /**
+     * The join behind a launcher shortcut.
+     *
+     * This activity is exported, so any installed app can send these extras and ask us to join a
+     * server of its choosing. They are only honoured when a shortcut we ourselves saved carries
+     * exactly that configuration: shortcut ids are per-package, so nobody else can plant one. The
+     * fields then go through the same caps as an invite link.
+     */
+    private fun quickLaunchConfig(intent: Intent): JoinConfig? {
+        val name = intent.getStringExtra("name") ?: ""
+        val room = intent.getStringExtra("room") ?: ""
+        val ip = intent.getStringExtra("serverip") ?: ""
+        val port = intent.getIntExtra("serverport", JoinConfig().port)
+
+        val ours = runCatching {
+            ShortcutManagerCompat.getShortcuts(
+                this,
+                ShortcutManagerCompat.FLAG_MATCH_DYNAMIC or ShortcutManagerCompat.FLAG_MATCH_PINNED,
+            ).any { it.id == "$name$room$ip$port" }
+        }.getOrDefault(false)
+
+        if (!ours) {
+            loggy("Ignored a quick-launch intent that matches no shortcut of ours")
+            return null
+        }
+        return InviteLink.sanitize(
+            JoinConfig(user = name, room = room, ip = ip, port = port, pw = intent.getStringExtra("serverpw") ?: "")
+        )
     }
 
     override fun attachBaseContext(newBase: Context?) {
@@ -425,7 +266,7 @@ class SyncplayActivity : ComponentActivity() {
      *
      * Updates PiP parameters and enters PiP, hiding the HUD controls.
      */
-    private fun initiatePIPmode() {
+    internal fun initiatePIPmode() {
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = true
 
         val params = buildPiPParams(roomViewmodel?.playerManager?.isNowPlaying?.value == true)
@@ -481,7 +322,7 @@ class SyncplayActivity : ComponentActivity() {
      * Updates the PiP parameters on the activity to reflect current playback state. Reads the
      * engine's reported state, never a live probe (rule 5 of the ledger).
      */
-    private fun updatePiPParams() {
+    internal fun updatePiPParams() {
         val playing = roomViewmodel?.playerManager?.isNowPlaying?.value == true
         runCatching {
             setPictureInPictureParams(buildPiPParams(playing))
@@ -630,7 +471,7 @@ class SyncplayActivity : ComponentActivity() {
      * [systemFilePickerLauncher]. When the picker returns, the result handler invokes and
      * clears this callback.
      */
-    private var pendingSystemFilePickerCallback: ((String?) -> Unit)? = null
+    internal var pendingSystemFilePickerCallback: ((String?) -> Unit)? = null
 
     /**
      * "Custom picker" launcher — fires `ACTION_GET_CONTENT` wrapped in [Intent.createChooser] so
@@ -653,7 +494,7 @@ class SyncplayActivity : ComponentActivity() {
      * playback; it may become invalid on process restart (acceptable trade-off — the FileKit
      * path is already the recommended choice for persistent playlist entries).
      */
-    private val systemFilePickerLauncher = registerForActivityResult(
+    internal val systemFilePickerLauncher = registerForActivityResult(
         object : ActivityResultContract<String, Uri?>() {
             override fun createIntent(context: Context, input: String): Intent {
                 val pick = Intent(Intent.ACTION_GET_CONTENT).apply {

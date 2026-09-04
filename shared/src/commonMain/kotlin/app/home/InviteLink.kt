@@ -68,6 +68,23 @@ object InviteLink {
     }
 
     /**
+     * Caps and trims a join built from outside the app (an invite link, a launcher shortcut).
+     * Returns null when there is no room to join, which is the one field with no sensible default.
+     */
+    fun sanitize(config: JoinConfig): JoinConfig? {
+        val room = config.room.trim()
+        if (room.isEmpty()) return null
+        val default = JoinConfig()
+        return JoinConfig(
+            user = config.user.trim().take(MAX_NAME).ifEmpty { default.user },
+            room = room.take(MAX_ROOM),
+            ip = config.ip.trim().take(MAX_HOST).ifEmpty { default.ip },
+            port = config.port.takeIf { it in 1..65535 } ?: default.port,
+            pw = config.pw.take(MAX_NAME),
+        )
+    }
+
+    /**
      * The string the app itself prints when a managed room is created, `+name:HASH12:PASSWORD`,
      * split into the room and the operator password. Pasting it whole used to create a room
      * literally called "+name:HASH12:PASSWORD".
