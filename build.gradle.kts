@@ -205,3 +205,33 @@ kover {
 
 // Build-time gates live in buildSrc/src/main/kotlin/QualityGates.kt.
 registerQualityGates()
+
+/**
+ * Release identity, printed once, for anything outside Gradle that needs it.
+ *
+ * The release workflow used to grep the version out of this file with sed and recompute the
+ * version code in an inline Python one-liner, which meant KiteConfig's scheme was written down
+ * twice and the second copy could drift without anyone noticing. It asks for these now.
+ */
+tasks.register("printReleaseIdentity") {
+    group = "help"
+    description = "Prints version, versionCode, applicationId and the iOS deployment target as KEY=VALUE."
+    val version = kiteConfig.version.get()
+    val appId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
+    // Read from the pbxproj, which is what Xcode and the App Store actually see; KiteConfig's
+    // ios block only asserts against it.
+    val iosMinimum = file("iosApp/iosApp.xcodeproj/project.pbxproj").readLines()
+        .firstNotNullOfOrNull { line ->
+            Regex("""IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);""").find(line)?.groupValues?.get(1)
+        } ?: "14.1"
+    // KiteConfig's scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1).
+    val parts = version.split(".")
+    val versionCode = "1" + parts[0].padStart(3, '0') + parts[1].padStart(3, '0') +
+        parts[2].padStart(2, '0') + "0"
+    doLast {
+        println("VERSION=$version")
+        println("VERSION_CODE=$versionCode")
+        println("APPLICATION_ID=$appId")
+        println("IOS_MIN_VERSION=$iosMinimum")
+    }
+}

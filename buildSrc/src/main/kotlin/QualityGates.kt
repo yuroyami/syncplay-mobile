@@ -34,6 +34,7 @@ fun Project.registerQualityGates() {
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
+        registerStoreMetadataGate(),
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
@@ -361,6 +362,64 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
             logger.lifecycle("All " + checked + " engine destroy() bodies follow the contract.")
         }
     }
+}
+
+/**
+ * Store copy has hard limits the stores enforce on upload, not at build time, so an overlong
+ * file only fails at the point where a release is already half-published. The 0.24.0 What's New
+ * was 1635 characters against a 500 limit and nothing had noticed.
+ *
+ * Also checks that a changelog exists for the version being built, since a release with no notes
+ * is one of the two things standing between this app and a tagged version.
+ */
+private fun Project.registerStoreMetadataGate(): TaskProvider<*> {
+    val metadata = file("fastlane/metadata/android/en-US")
+    val versionCode = releaseVersionCode()
+    return tasks.register("checkStoreMetadata") {
+        group = GATE_GROUP
+        description = "Fails if Play store copy is over the limit or the version has no changelog."
+        alwaysRun()
+        doLast {
+            val problems = mutableListOf<String>()
+            fun limit(path: String, max: Int, what: String) {
+                val f = File(metadata, path)
+                if (!f.isFile) {
+                    problems += "$path is missing ($what)"
+                    return
+                }
+                val n = f.readText().trim().length
+                if (n > max) problems += "$path is $n characters; Play allows $max ($what)"
+            }
+            limit("short_description.txt", 80, "the one-line pitch")
+            limit("full_description.txt", 4000, "the store listing body")
+
+            val changelog = File(metadata, "changelogs/$versionCode.txt")
+            if (!changelog.isFile) {
+                problems += "changelogs/$versionCode.txt is missing; this version has no release notes"
+            } else {
+                val n = changelog.readText().trim().length
+                if (n > 500) problems += "changelogs/$versionCode.txt is $n characters; Play allows 500"
+            }
+
+            if (problems.isNotEmpty()) {
+                throw GradleException(
+                    "Store metadata will be rejected on upload:\n" +
+                        problems.joinToString("\n") { "  " + it }
+                )
+            }
+            logger.lifecycle("Store metadata fits, and " + versionCode + " has release notes.")
+        }
+    }
+}
+
+/** KiteConfig's version code scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1). */
+private fun Project.releaseVersionCode(): String {
+    val version = Regex("""\n\s+version\s*=\s*"([^"]+)"""")
+        .find(file("build.gradle.kts").readText())?.groupValues?.get(1)
+        ?: error("no version in the kiteConfig block")
+    val parts = version.split(".")
+    return "1" + parts[0].padStart(3, '0') + parts[1].padStart(3, '0') +
+        parts[2].padStart(2, '0') + "0"
 }
 
 private fun List<File>.kotlinFiles(): List<File> =
