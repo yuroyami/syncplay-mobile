@@ -24,6 +24,7 @@ fun Project.registerQualityGates() {
         registerStringResourceGate(),
         registerLocaleParityGate(),
         registerDeadResourceGate(),
+        registerSettingsReachabilityGate(),
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
@@ -234,6 +235,65 @@ private fun Project.registerDeadResourceGate(): TaskProvider<*> {
         }
     }
 }
+
+/**
+ * A preference that declares a title, a summary and an icon is meant to be seen. If nothing
+ * outside its own declaration ever names it, nobody can reach it, and nobody finds out until
+ * someone asks where a setting went.
+ *
+ * Deliberately wider than the settings console: plenty of preferences surface through a
+ * purpose-built panel instead (gestures on their card, chat colours in the palette, the hosted
+ * server on its own panel). What this catches is a pref that reaches no screen at all.
+ *
+ * A scan, not a test: nothing enumerates the members of the Preferences object at runtime, and
+ * Kotlin/Native has no reflection to do it with.
+ */
+private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
+    val prefsFile = file("shared/src/commonMain/kotlin/app/preferences/Preferences.kt")
+    val settingsDir = file("shared/src/commonMain/kotlin/app/preferences/settings")
+    val engineDirs = listOf(
+        file("shared/src/commonMain/kotlin/app"),
+        file("shared/src/androidMain/kotlin/app"),
+        file("shared/src/iosMain/kotlin/app"),
+        file("shared/src/desktopMain/kotlin/app"),
+    ).filter { it.exists() }
+    return tasks.register("checkSettingsReachable") {
+        group = GATE_GROUP
+        description = "Fails if a preference declares a title and no settings category shows it."
+        inputs.file(prefsFile)
+        inputs.files(settingsDir)
+        inputs.files(engineDirs)
+        doLast {
+            // `val NAME = Pref(...) {` with a config block is a preference meant to be displayed.
+            val displayable = Regex("""\n    val ([A-Z][A-Z0-9_]*)\s*(?::[^=\n]+)?=\s*Pref[^\n]*\{""")
+                .findAll(prefsFile.readText())
+                .map { it.groupValues[1] }
+                .toSet()
+
+            // Engines attach their own rows, so their files count as places a pref can surface.
+            val consumers = buildString {
+                (listOf(settingsDir) + engineDirs).forEach { dir ->
+                    dir.walkTopDown()
+                        .filter { it.isFile && it.extension == "kt" && it != prefsFile }
+                        .forEach { append(it.readText()).append('\n') }
+                }
+            }
+
+            val unreachable = displayable
+                .filter { name -> !Regex("\\b" + Regex.escape(name) + "\\b").containsMatchIn(consumers) }
+                .sorted()
+            if (unreachable.isNotEmpty()) {
+                throw GradleException(
+                    "These preferences declare a title, summary and icon but no settings\n" +
+                        "category lists them, so nobody can reach them:\n" +
+                        unreachable.joinToString("\n") { "  Preferences." + it }
+                )
+            }
+            logger.lifecycle("All " + displayable.size + " displayable preferences are reachable.")
+        }
+    }
+}
+
 
 private fun List<File>.kotlinFiles(): List<File> =
     flatMap { if (it.isDirectory) it.walkTopDown().toList() else listOf(it) }
