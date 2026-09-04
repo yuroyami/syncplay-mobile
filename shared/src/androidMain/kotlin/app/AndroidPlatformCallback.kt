@@ -13,6 +13,9 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import app.home.HomeViewmodel
+import androidx.media3.session.MediaSession
+import app.player.RoomMediaSessionHolder
+import app.player.RoomMediaSessionPlayer
 import app.player.SyncplayMediaSessionService
 import app.server.SyncplayServerService
 import app.home.JoinConfig
@@ -41,12 +44,19 @@ internal class AndroidPlatformCallback(
 
     private val audioManager by lazy { appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
-    override fun mediaSessionInitialize() {
+    @OptIn(androidx.media3.common.util.UnstableApi::class)
+    override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
         val a = activity ?: return
+        // The session is built here and left where the service will find it, because the player
+        // behind it is whichever engine the room built.
+        val player = RoomMediaSessionPlayer(viewmodel, android.os.Looper.getMainLooper())
+        RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).build())
         a.startForegroundService(Intent(a, SyncplayMediaSessionService::class.java))
     }
 
+    @OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun mediaSessionFinalize() {
+        RoomMediaSessionHolder.clear()
         val a = activity ?: return
         a.stopService(Intent(a, SyncplayMediaSessionService::class.java))
     }

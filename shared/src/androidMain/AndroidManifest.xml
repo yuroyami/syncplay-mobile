@@ -33,10 +33,17 @@
                 />
         </service>
 
+        <!-- A real MediaSessionService: the system draws the transport and routes media buttons,
+             so the intent filter below is what makes a headset button reach the room. -->
         <service
             android:name="app.player.SyncplayMediaSessionService"
             android:foregroundServiceType="mediaPlayback"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </service>
 
     </application>
 

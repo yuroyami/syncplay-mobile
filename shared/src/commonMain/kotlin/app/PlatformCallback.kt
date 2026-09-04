@@ -64,7 +64,11 @@ interface PlatformCallback {
     fun setDeviceVolume(step: Int) {}
 
 
-    fun mediaSessionInitialize()
+    /**
+     * Puts the room on the lock screen. Takes the room because the player behind the session is
+     * whichever engine the room built, and there are five of them.
+     */
+    fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel)
     fun mediaSessionFinalize()
 
     fun serverServiceStart(port: Int)

@@ -88,7 +88,7 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
 
-    override fun mediaSessionInitialize() {
+    override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
 
     }
 

@@ -1,68 +1,65 @@
 package app.player
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
 import android.content.Intent
-import androidx.core.app.NotificationCompat
-import app.R
-import app.utils.appName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_notification_text
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import app.utils.loggy
 
-class SyncplayMediaSessionService : Service() {
+/**
+ * Puts the room on the lock screen and answers the headset button.
+ *
+ * This used to be a bare foreground notification: it kept the process alive, showed a line of
+ * text, and offered no controls at all, which is most of what issue 125 is about. It is a real
+ * MediaSessionService now, so the system draws the transport, media buttons work, and Android
+ * knows something is playing.
+ *
+ * The session is created by the room and handed here, because the player behind it is whichever
+ * engine the room built. [RoomMediaSessionHolder] is the handover.
+ */
+@UnstableApi
+class SyncplayMediaSessionService : MediaSessionService() {
 
-    /** Only for resolving the notification's own string; cancelled with the service. */
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
+        RoomMediaSessionHolder.session
 
-    override fun onBind(intent: Intent?) = null
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
-        // Foreground first, then the localized line: startForeground has a deadline of its own and
-        // must not wait on the resource loader.
-        startForeground(NOTIFICATION_ID, buildNotification(text = null))
-        scope.launch {
-            val text = runCatching { getString(Res.string.room_notification_text) }.getOrNull() ?: return@launch
-            runCatching {
-                getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotification(text))
-            }
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Swiping the app away should end playback, not leave a notification behind with no room.
+        val session = RoomMediaSessionHolder.session
+        if (session == null || !session.player.playWhenReady) {
+            stopSelf()
         }
-        // Not sticky: a restart after process death would only resurrect a notification with no
-        // room behind it.
-        return START_NOT_STICKY
+        super.onTaskRemoved(rootIntent)
     }
-
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "${appName} Playback",
-            NotificationManager.IMPORTANCE_LOW // LOW = no sound, no heads-up, just tray presence
-        )
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-    }
-
-    private fun buildNotification(text: String?) = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_launcher_foreground)
-        .setContentTitle(appName)
-        .apply { if (text != null) setContentText(text) }
-        .setSilent(true)
-        .setOngoing(true)
-        .build()
 
     override fun onDestroy() {
-        scope.cancel()
+        loggy("Media session service destroyed")
         super.onDestroy()
     }
+}
 
-    companion object {
-        const val CHANNEL_ID = "syncplay_playback"
-        const val NOTIFICATION_ID = 1
+/**
+ * Where the room leaves its session for the service to pick up.
+ *
+ * A process-wide holder rather than a binder because the service and the room live in the same
+ * process and the alternative is a lot of ceremony for one reference. Cleared on teardown, so a
+ * dead room can never be driven from a stale notification.
+ */
+@UnstableApi
+object RoomMediaSessionHolder {
+    @Volatile
+    var session: MediaSession? = null
+        private set
+
+    fun install(session: MediaSession) {
+        clear()
+        this.session = session
+    }
+
+    fun clear() {
+        val current = session ?: return
+        (current.player as? RoomMediaSessionPlayer)?.stopWatching()
+        current.release()
+        session = null
     }
 }

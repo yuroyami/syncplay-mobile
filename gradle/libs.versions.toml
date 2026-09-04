@@ -124,6 +124,8 @@ m3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 m3-extractor = { module = "androidx.media3:media3-extractor", version.ref = "media3" }
 m3-decoder = { module = "androidx.media3:media3-decoder", version.ref = "media3" }
 m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "media3" }
+# The lock screen, the notification transport and headset buttons, for every engine.
+m3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 # Only what the client and the built-in server actually use. netty-all pulls the whole family
 # (about forty jars) for the seventeen classes below: a bootstrap, a channel, the codec pair and
@@ -145,7 +147,7 @@ compose-multiplatform = [
 ktor = ["ktor-network", "ktor-network-tls"]
 media3 = [
     "m3-exo", "m3-exo-dash", "m3-exo-hls", "m3-exo-rtsp", "m3-datasource-okhttp",
-    "m3-ui", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
+    "m3-ui", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common", "m3-session"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
 compose-unstyled = [
