@@ -5,21 +5,15 @@
     <string name="okay">حسنًا</string>
 
     <string name="cancel">إلغاء</string>
-    <string name="confirm" translatable="false">تأكيد</string>
     <string name="done">تم</string>
-    <string name="close">إغلاق</string>
 
-    <string name="dont_show_again">لا تظهر هذا مرة أخرى</string>
 
     <string name="edit">تعديل</string>
 
     <string name="play">تشغيل</string>
-    <string name="pause">إيقاف مؤقت</string>
 
     <string name="delete">حذف</string>
 
-    <string name="off">إيقاف</string>
-    <string name="on">تشغيل</string>
 
     <string name="save">حفظ</string>
 
@@ -39,10 +33,6 @@
     <string name="connect_roomname_empty_error">اسم الغرفة لا يجب أن يكون فارغاً</string>
     <string name="connect_address_empty_error">عنوان الخادم لا يجب أن يكون فارغاً</string>
     <string name="connect_port_empty_error">أدخل المنفذ!</string>
-    <string name="connect_enter_custom_server">أدخل خادم مخصص</string>
-    <string name="connect_custom_server_password">كلمة المرور (اتركها فارغة إذا لم تكن مطلوبة)</string>
-    <string name="connect_port">المنفذ</string>
-    <string name="connect_solomode">الوضع غير المتصل</string>
 
     <string name="home_ip_address">عنوان IP</string>
     <string name="home_port">المنفذ</string>
@@ -51,10 +41,8 @@
     <string name="home_engine_unavailable_error">هذا المحرك غير متوفر. هل قمت بتنزيل ملف APK الصحيح؟</string>
 
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
-    <string name="connect_button_current_engine">المحرك الحالي: %1$s</string>
     <string name="room_selected_vid">ملف الفيديو المحدد: %1$s</string>
     <string name="room_selected_sub">ملف الترجمة المحمل: %1$s</string>
-    <string name="room_ping_connected">متصل</string>
     <string name="room_attempting_connect">محاولة الاتصال بـ %1$s:%2$s</string>
     <string name="room_guy_played">%1$s استأنف التشغيل</string>
     <string name="room_guy_paused">%1$s أوقف التشغيل عند %2$s</string>
@@ -65,10 +53,6 @@
     <string name="room_guy_joined">%1$s انضم إلى الغرفة.</string>
     <string name="room_isplayingfile">%1$s يشغل '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %1$s</string>
-    <string name="room_sub_track_changed">تم تغيير مسار الترجمة إلى: %1$s</string>
-    <string name="room_audio_track_changed">تم تغيير مسار الصوت إلى: %1$s</string>
-    <string name="room_details_current_room">الغرفة: %1$s</string>
-    <string name="room_details_user_count">%1$d مستخدمين</string>
     <string name="room_details_file_properties">المدة: %1$s - الحجم: %2$s ميغابايت</string>
     <string name="room_file_mismatch_warning_core">ملفك يختلف عن ملف %1$s بالطرق التالية:</string>
     <string name="room_shared_playlist_updated">%1$s حدّث قائمة التشغيل</string>
@@ -83,11 +67,9 @@
     <!-- Room Screen -->
     <string name="room_selected_sub_error">ملف ترجمة غير صالح. التنسيقات المدعومة هي: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">قم بتحميل الفيديو أولاً</string>
-    <string name="room_type_message">اكتب رسالتك…</string>
     <string name="room_ready">جاهز</string>
     <string name="room_not_ready">غير جاهز</string>
     <string name="room_ping_disconnected">غير متصل</string>
-    <string name="room_empty_message_error">اكتب شيئاً!</string>
     <string name="room_connected_to_server">تم الاتصال بالخادم بنجاح.</string>
     <string name="room_connection_failed">فشل الاتصال.</string>
     <string name="room_attempting_reconnection">فقد الاتصال بالخادم.</string>
@@ -100,84 +82,48 @@
     <string name="room_scaling_fill_screen">وضع تغيير الحجم: ملء الشاشة</string>
     <string name="room_scaling_zoom">وضع تغيير الحجم: تكبير</string>
     <string name="room_sub_track_disable">تعطيل الترجمة</string>
-    <string name="room_track_track">المسار</string>
-    <string name="room_sub_track_notfound">لم يتم العثور على ترجمات!</string>
-    <string name="room_details_nofileplayed">(لا يوجد ملف قيد التشغيل)</string>
     <string name="room_file_mismatch_warning_name">الاسم.</string>
     <string name="room_file_mismatch_warning_duration">المدة.</string>
     <string name="room_file_mismatch_warning_size">الحجم.</string>
     <string name="room_shared_playlist">قائمة التشغيل المشتركة</string>
-    <string name="room_shared_playlist_brief">استورد ملفاً أو مجلداً لإضافة أسماء الملفات إلى قائمة التشغيل. انقر على سطر ملف لجعل جميع المستخدمين يشغلونه.</string>
     <string name="room_shared_playlist_no_directories">لم تحدد أي مجلدات وسائط لقوائم التشغيل المشتركة. أضف الملفات يدوياً.</string>
     <string name="room_shared_playlist_not_found">لم يتمكن %1$s من العثور على الملف الذي يتم تشغيله حالياً في قائمة التشغيل المشتركة في مجلدات الوسائط الخاصة بك.</string>
-    <string name="room_shared_playlist_not_featured">هذه الغرفة أو الخادم لا تحتوي على ميزة قوائم التشغيل المشتركة.</string>
     <string name="room_shared_playlist_button_add_file">إضافة ملف (ملفات) إلى أسفل قائمة التشغيل</string>
     <string name="room_shared_playlist_button_add_folder">إضافة مجلد إلى قائمة التشغيل (ومجلدات الوسائط)</string>
     <string name="room_shared_playlist_button_add_url">إضافة رابط (روابط) إلى أسفل قائمة التشغيل</string>
     <string name="room_shared_playlist_button_shuffle">خلط قائمة التشغيل بالكامل</string>
     <string name="room_shared_playlist_button_shuffle_rest">خلط قائمة التشغيل المتبقية</string>
-    <string name="room_shared_playlist_button_overflow">المزيد من إعدادات قائمة التشغيل المشتركة</string>
     <string name="room_shared_playlist_button_playlist_import">تحميل قائمة التشغيل من ملف</string>
     <string name="room_shared_playlist_button_playlist_import_n_shuffle">تحميل وخلط قائمة التشغيل من ملف</string>
     <string name="room_shared_playlist_button_playlist_export">حفظ قائمة التشغيل إلى ملف</string>
     <string name="room_shared_playlist_button_set_media_directories">تعيين مجلدات الوسائط</string>
-    <string name="room_shared_playlist_button_set_trusted_domains">تعيين النطاقات الموثوقة</string>
-    <string name="room_shared_playlist_button_undo">التراجع عن آخر تغيير</string>
-    <string name="room_shared_playlist_item_actions">إجراءات العنصر</string>
-    <string name="room_shared_playlist_actions">إجراءات قائمة التشغيل المشتركة</string>
     <string name="room_shared_playlist_clear_playlist">مسح قائمة التشغيل</string>
     <string name="room_shared_playlist_playlist_is_empty">قائمة التشغيل المشتركة فارغة. لا يوجد شيء لحفظه.</string>
-    <string name="room_shared_playlist_filepick_rationale1">اختر ملفاً واحداً أو عدة ملفات لإضافتها إلى قائمة التشغيل</string>
-    <string name="room_shared_playlist_filepick_rationale2">اختر مجلداً لإضافة ملفاته إلى قائمة التشغيل</string>
     <string name="room_shared_playlist_add_url">إضافة رابط إلى قائمة التشغيل المشتركة</string>
     <string name="room_shared_playlist_add_url_subtext">سيتم إضافة هذا السطر كإدخال في قائمة التشغيل المشتركة.\nيدعم %1$s Android الروابط المباشرة فقط في الوقت الحالي.</string>
-    <string name="room_button_desc_aspect_ratio">نسبة العرض إلى الارتفاع</string>
-    <string name="room_button_desc_shared_playlist">قائمة التشغيل المشتركة</string>
     <string name="room_button_desc_audio_tracks">مسارات الصوت</string>
     <string name="room_button_desc_subtitle_tracks">مسارات الترجمة</string>
     <string name="room_button_desc_subtitle_tracks_import_from_file">استيراد من ملف</string>
-    <string name="room_button_desc_rewind">الترجيع</string>
-    <string name="room_button_desc_toggle">.</string>
-    <string name="room_button_desc_play">تشغيل</string>
-    <string name="room_button_desc_pause">إيقاف</string>
-    <string name="room_button_desc_ffwd">التقديم السريع</string>
     <string name="room_button_desc_add">إضافة وسائط</string>
-    <string name="room_button_desc_lock">قفل اللمس</string>
-    <string name="room_button_desc_more">المزيد من الإعدادات</string>
-    <string name="room_addmedia_offline">من ذاكرة الهاتف</string>
-    <string name="room_addmedia_online">من رابط شبكة</string>
-    <string name="room_addmedia_online_details">تحميل الوسائط من رابط شبكة</string>
-    <string name="room_addmedia_online_popup_subtext">تأكد من توفير روابط مباشرة (على سبيل المثال: www.example.com/video.mp4). YouTube وخدمات البث الأخرى غير مدعومة بعد.</string>
     <string name="room_addmedia_online_url">عنوان الرابط</string>
-    <string name="room_overflow_title">المزيد من الخيارات...</string>
     <string name="room_overflow_create_managed_room">إنشاء غرفة مُدارة</string>
-    <string name="room_overflow_create_managed_room_tooltip">إنشاء غرفة مُدارة</string>
     <string name="room_overflow_identify_as_operator">التحقق من الهوية كمشغل للغرفة</string>
     <string name="room_overflow_pip">صورة داخل صورة</string>
-    <string name="room_overflow_msghistory">سجل المحادثة</string>
-    <string name="room_overflow_toggle_nightmode">تبديل الوضع الليلي</string>
     <string name="room_overflow_leave_room">مغادرة الغرفة</string>
     <string name="room_card_title_user_info">معلومات المستخدم</string>
     <string name="room_card_title_in_room_prefs">تفضيلات داخل الغرفة</string>
-    <string name="room_audio_track_not_found">لم يتم العثور على صوت!</string>
     <string name="room_msg_problem_loading_file">حدثت مشكلة في تحميل هذا الملف.</string>
     <string name="room_managed_room_popup_create">أدخل اسم الغرفة المُدارة\nراجع https://syncplay.pl/guide/ لتعليمات الاستخدام)</string>
     <string name="room_managed_room_popup_pw_identify_as_operator">أدخل كلمة مرور المشغل لهذه الغرفة\nراجع https://syncplay.pl/guide/ لتعليمات الاستخدام)</string>
     <string name ="room_setting_pick_color">اختر لوناً</string>
     <string name ="room_reconnect_button">إعادة الاتصال</string>
-    <string name="room_more_info_change_network_engine_msg">جرب تغيير محرك الشبكة في الإعدادات > الشبكة إلى Ktor إذا كنت تواجه مشاكل في الاتصال.</string>
     <string name="room_volume">مستوى الصوت</string>
     <string name="room_brightness">السطوع</string>
-    <string name="room_coming_soon">قريباً!</string>
     <string name="room_chapters_skip">تخطي الفصل</string>
     <string name="room_chapters">الفصول</string>
-    <string name="room_gestures_enabled">إيماءات اللمس مفعلة</string>
-    <string name="room_gestures_disabled">إيماءات اللمس معطلة</string>
     <string name="room_no_recent_seek">لا يوجد انتقال حديث في هذه الغرفة.</string>
     <string name="room_seek_undone">تم التراجع عن الانتقال.</string>
     <string name="room_seek_toposition_title">الانتقال إلى موضع محدد</string>
-    <string name="room_seek_toposition_timeformat">ساعة:دقيقة:ثانية</string>
-    <string name="room_seek_toposition_timediff">تخطي %1$s ثانية من الوقت</string>
     <string name="room_seek_toposition_success">الانتقال إلى %1$s</string>
 
     <!-- Settings Categories -->
@@ -188,8 +134,6 @@
     <string name="settings_categ_advanced">متقدم</string>
 
     <!-- Settings -->
-    <string name="setting_night_mode_title">الوضع الليلي</string>
-    <string name="setting_night_mode_summary">اختر سلوك الوضع الليلي.</string>
     <string name="setting_remember_join_info_title">تذكر معلومات الانضمام</string>
     <string name="setting_remember_join_info_summary">مفعّل افتراضياً. سيسمح هذا لـ %1$s بحفظ آخر اسم مستخدم واسم غرفة وآخر خادم رسمي استخدمته.</string>
     <string name="setting_never_show_tips_title">عدم إظهار النصائح أبداً</string>
@@ -199,13 +143,10 @@
     <string name="setting_erase_shortcuts_dialog">هل تريد حقاً مسح جميع الاختصارات الموجودة؟</string>
     <string name="setting_display_language_title">لغة العرض</string>
     <string name="setting_display_language_summry">اختر اللغة المفضلة لديك التي سيتم عرض %1$s بها.</string>
-    <string name="setting_display_language_toast">تم تغيير اللغة. أعد تشغيل التطبيق ليصبح الإعداد ساري المفعول بالكامل.</string>
     <string name="setting_audio_default_language_title">لغة مسار الصوت المفضلة</string>
     <string name="setting_audio_default_language_summry">تحميل مسار صوتي تلقائياً برمز اللغة الذي تحدده هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث عن 'IETF BCP 47 codes' في Google لمزيد من المعلومات.</string>
     <string name="setting_cc_default_language_title">لغة الترجمة المفضلة</string>
     <string name="setting_cc_default_language_summry">تحميل مسار ترجمة تلقائياً برمز اللغة الذي تحدده هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث عن 'IETF BCP 47 codes' في Google لمزيد من المعلومات.</string>
-    <string name="setting_use_buffer_title">استخدام أحجام تخزين مؤقت مخصصة</string>
-    <string name="setting_use_buffer_summary">إذا لم تكن راضياً عن أوقات تحميل الفيديو قبل وأثناء التشغيل، يمكنك استخدام أحجام تخزين مؤقت مخصصة (استخدمها على مسؤوليتك الخاصة).</string>
     <string name="setting_max_buffer_title">حجم التخزين المؤقت الأقصى المخصص</string>
     <string name="setting_max_buffer_summary">الافتراضي هو 30 (30000 ميلي ثانية). يحدد هذا الحد الأقصى لحجم التخزين المؤقت قبل بدء تشغيل الفيديو. إذا كنت لا تعرف ما هو هذا، فلا تغيره.</string>
     <string name="setting_min_buffer_title">حجم التخزين المؤقت الأدنى المخصص</string>
@@ -221,8 +162,6 @@
     <string name="setting_unpause_action_if_min_users_ready">استئناف إذا كان الآخرون جاهزين + حد أدنى للمستخدمين</string>
     <string name="setting_unpause_action_always">استئناف دائماً</string>
     <string name="room_set_as_ready">تم التعيين كجاهز للاستئناف</string>
-    <string name="setting_rewind_threshold_title">عتبة الترجيع</string>
-    <string name="setting_rewind_threshold_summary">إذا كان شخص ما متأخراً بالقيمة التي تحددها هنا، سيتم ترجيع الفيديو الخاص بك ليتطابق مع الشخص المتأخر.</string>
     <string name="setting_tls_title">استخدام اتصال آمن (TLS)</string>
     <string name="setting_tls_summary">سيحاول %1$s إنشاء اتصال آمن ومشفر (بشكل أساسي TLSv1.3 ولكن يعود إلى إصدارات أقدم) مع الخادم إذا كان الأخير يدعمه. سيتم تجاهل هذا الإعداد إذا كان محرك الشبكة لا يدعم TLS.</string>
     <string name="setting_resetdefault_title">إعادة تعيين الإعدادات الافتراضية</string>
@@ -253,19 +192,13 @@
     <string name="uisetting_categ_chat_properties">خصائص المحادثة</string>
 
     <!-- UI Settings -->
-    <string name="uisetting_apply">تطبيق</string>
-    <string name="uisetting_timestamp_title">الطوابع الزمنية للمحادثة</string>
     <string name="uisetting_timestamp_summary">عطّل هذا لإخفاء الطوابع الزمنية في بداية رسائل المحادثة.</string>
-    <string name="uisetting_msgoutline_thickness_title">سُمك مخطط رسالة الدردشة</string>
-    <string name="uisetting_msgoutline_thickness_summary">سُمك مخطط رسالة الدردشة في حالة التفعيل.</string>
     <string name="uisetting_msgoutline_title">حدود رسالة المحادثة</string>
     <string name="uisetting_msgoutline_summary">فعّل هذا لإعطاء رسائل المحادثة حدوداً، لتقليل الاندماج مع فيديو الخلفية.</string>
     <string name="uisetting_msgshadow_title">ظل رسالة المحادثة</string>
     <string name="uisetting_msgshadow_summary">فعّل هذا لإعطاء رسائل المحادثة ظلاً، لتقليل الاندماج مع فيديو الخلفية.</string>
     <string name="uisetting_msgboxaction_title">وظيفة زر موافق في لوحة المفاتيح</string>
     <string name="uisetting_msgboxaction_summary">عند التفعيل، النقر على زر 'موافق' في لوحة المفاتيح سيرسل الرسالة. عند التعطيل، سيغلق لوحة المفاتيح فقط دون فعل أي شيء.</string>
-    <string name="uisetting_overview_alpha_title">شفافية خلفية تفاصيل الغرفة</string>
-    <string name="uisetting_overview_alpha_summary">الافتراضي هو 40 (شفاف تقريباً)، غيّر هذا إذا كنت تريد جعل لوحة تفاصيل الغرفة أكثر قابلية للقراءة عن طريق زيادة العتامة.</string>
     <string name="uisetting_messagery_alpha_title">شفافية خلفية الرسائل</string>
     <string name="uisetting_messagery_alpha_summary">الافتراضي هو 0 (شفاف). الحد الأقصى هو 255 (معتم 100%). زد من قابلية قراءة الرسائل بجعل الخلفية أكثر عتامة.</string>
     <string name="uisetting_msgsize_title">حجم خط الرسالة</string>
@@ -275,7 +208,6 @@
     <string name="uisetting_msglife_title">مدة عرض رسائل المحادثة</string>
     <string name="uisetting_msglife_summary">عند تلقي رسالة محادثة أو رسالة غرفة، ستبدأ في التلاشي بعد المدة الزمنية المحددة أدناه.</string>
     <string name="uisetting_timestamp_color_title">لون نص الطابع الزمني</string>
-    <string name="uisetting_timestamp_color_summary">خصص لون نص الطوابع الزمنية للرسائل (الافتراضي هو الوردي)</string>
     <string name="uisetting_self_color_title">لون علامة الذات</string>
     <string name="uisetting_self_color_summary">خصص لون نص علامة اسمك (الافتراضي هو الأحمر الداكن)</string>
     <string name="uisetting_friend_color_title">لون نص علامة الصديق</string>
@@ -296,8 +228,6 @@
     <string name="uisetting_seek_forward_jump_summary">يحدد عدد الثواني التي يجب تخطيها عند التقديم للأمام. الافتراضي هو 10 ثوانٍ.</string>
     <string name="uisetting_seek_backward_jump_title">مقدار القفز للخلف (ثواني)</string>
     <string name="uisetting_seek_backward_jump_summary">يحدد عدد الثواني التي يجب الترجيع إليها عند الرجوع للخلف. الافتراضي هو 10 ثوانٍ.</string>
-    <string name="uisetting_pip_title">وضع صورة داخل صورة</string>
-    <string name="uisetting_pip_summary">ما إذا كان يجب على المشغل الدخول في وضع صورة داخل صورة النافذة عند تصغير التطبيق. الافتراضي هو نعم</string>
     <string name="uisetting_reconnect_interval_title">فترة إعادة الاتصال</string>
     <string name="uisetting_reconnect_interval_summary">عدد الثواني للانتظار لإعادة الاتصال عند كل فشل في الاتصال أو انقطاع. الافتراضي هو ثانيتان.</string>
     <string name="uisetting_resetdefault_title">إعادة تعيين الإعدادات الافتراضية</string>
@@ -318,11 +248,8 @@
     <string name="uisetting_custom_seek_front_summary">تفعيل هذا سيعرض زر 'فترة التخطي' المخصص، الموجود في نافذة 'الانتقال إلى موضع'، على شاشة المشغل الرئيسية بين أزرار الترجيع والتقديم السريع لسهولة الوصول.</string>
     <string name="uisetting_custom_seek_amount_title">مدة التخطي المخصصة</string>
     <string name="uisetting_custom_seek_amount_summary">مدة التخطي الافتراضية هي 90 ثانية (1:30 دقيقة)، وهي مثالية للأنمي. يمكنك ضبط هذه المدة لزر التخطي المخصص هنا.</string>
-    <string name="uisetting_ui_opacity_title">شفافية الواجهة</string>
-    <string name="uisetting_ui_opacity_summary">يضبط شفافية خلفيات الواجهة.</string>
 
     <string name="theme_popup_select_a_theme">اختر سمة</string>
-    <string name="theme_popup_builtin_themes">السمات المدمجة</string>
     <string name="theme_popup_custom_themes">السمات المخصصة</string>
     <string name="theme_popup_customize_button">تخصيص</string>
 
@@ -335,21 +262,15 @@
     <string name="theme_customize_neutral_color">اللون المحايد</string>
     <string name="theme_customize_neutral_variant_color">لون متغير محايد</string>
     <string name="theme_customize_is_amoled">سمة بشاشة AMOLED</string>
-    <string name="theme_customize_use_syncplay_gradients">استخدام تدرجات %1$s</string>
     <string name="theme_customize_contrast">التباين</string>
     <string name="theme_customize_palette_style">نمط لوحة الألوان</string>
-    <string name="theme_customize_preview">معاينة</string>
 
     <!-- Media Directories -->
     <string name="media_directories">مجلدات الوسائط لقائمة التشغيل المشتركة</string>
-    <string name="media_directories_brief">سيبحث %1$s في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة التشغيل المشتركة. من الأفضل بكثير تحديد مجلدات صغيرة لأن عملية البحث قد تكون بطيئة جداً.</string>
-    <string name="media_directories_save">حفظ والخروج</string>
     <string name="media_directories_clear_all">مسح الكل</string>
     <string name="media_directories_clear_all_confirm">هل أنت متأكد من رغبتك في مسح القائمة؟</string>
     <string name="media_directories_add_folder">إضافة مجلد</string>
     <string name="media_directories_delete">إزالة من القائمة</string>
-    <string name="media_directories_show_full_path">عرض المسار الكامل</string>
-    <string name="media_directories_going_for_pick_rationale">اختر المجلد لحفظ قائمة التشغيل كملف</string>
 
 
     <string name="about_version">• الإصدار: %1$s</string>
@@ -372,33 +293,20 @@
     </string-array>
 
     <!-- Server hosting -->
-    <string name="connect_host_own_server">استضف خادمك الخاص</string>
-    <string name="room_gif_error">فشل تحميل GIFs</string>
     <string name="room_gif_no_results">لم يتم العثور على نتائج</string>
     <string name="room_gif_powered_by">مدعوم من Klipy</string>
-    <string name="room_gif_search_hint">ابحث عن GIFs...</string>
     <string name="room_gif_tab_gifs">GIFs</string>
     <string name="room_gif_tab_recents">الأخيرة</string>
     <string name="room_gif_tab_stickers">ملصقات</string>
     <string name="room_gif_tab_trending">الرائجة</string>
-    <string name="room_overflow_landscape_mode">الوضع الأفقي</string>
-    <string name="room_overflow_portrait_mode">الوضع العمودي</string>
-    <string name="room_screenshot_saved">تم حفظ لقطة الشاشة</string>
-    <string name="room_screenshot_unsupported">لقطة الشاشة غير مدعومة من محرك المشغل هذا</string>
     <string name="room_untrusted_domain_warning">تم حظر رابط من نطاق غير موثوق: %1$s. أضفه إلى النطاقات الموثوقة في الإعدادات للسماح به.</string>
-    <string name="server_host_address">العنوان المحلي (Wi-Fi/LAN)</string>
-    <string name="server_host_clients_connected">%1$d عميل (عملاء) متصل</string>
     <string name="server_host_disable_chat">تعطيل الدردشة</string>
     <string name="server_host_disable_ready">تعطيل الاستعداد</string>
-    <string name="server_host_ios_warning">على iOS، سيتوقف الخادم عند انتقال التطبيق إلى الخلفية.</string>
     <string name="server_host_isolate_rooms">عزل الغرف</string>
     <string name="server_host_motd">رسالة اليوم (اختياري)</string>
     <string name="server_host_password">كلمة مرور الخادم (اختياري)</string>
     <string name="server_host_port">المنفذ</string>
     <string name="server_host_port_forward_hint">للأصدقاء خارج شبكتك، يجب توجيه المنفذ %1$s على جهاز التوجيه.</string>
-    <string name="server_host_public_address">العنوان العام (الإنترنت)</string>
-    <string name="server_host_public_address_fetching">جارٍ الجلب…</string>
-    <string name="server_host_public_address_unavailable">تعذر التحديد</string>
     <string name="server_host_server_log">سجل الخادم</string>
     <string name="server_host_start">بدء الخادم</string>
     <string name="server_host_status_error">خطأ</string>
@@ -406,7 +314,6 @@
     <string name="server_host_status_starting">جارٍ البدء…</string>
     <string name="server_host_status_stopped">متوقف</string>
     <string name="server_host_stop">إيقاف الخادم</string>
-    <string name="server_host_title">استضافة الخادم</string>
     <string name="setting_clear_logs_dialog">هل أنت متأكد من رغبتك في حذف جميع ملفات السجل؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="setting_clear_logs_summary">حذف جميع ملفات السجل المخزنة</string>
     <string name="setting_clear_logs_title">مسح السجلات</string>

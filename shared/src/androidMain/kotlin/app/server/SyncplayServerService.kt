@@ -16,6 +16,7 @@ import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.server_notification_channel_description
+import syncplaymobile.shared.generated.resources.server_notification_title
 import syncplaymobile.shared.generated.resources.server_notification_text
 
 /**
@@ -66,6 +67,7 @@ class SyncplayServerService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         scope.launch {
             val described = runCatching { getString(Res.string.server_notification_channel_description) }.getOrNull()
+            title = runCatching { getString(Res.string.server_notification_title, appName) }.getOrNull() ?: title
             if (described != null) {
                 channel.description = described
                 runCatching { getSystemService(NotificationManager::class.java).createNotificationChannel(channel) }
@@ -73,7 +75,11 @@ class SyncplayServerService : Service() {
         }
     }
 
-    private val title get() = "${appName} server"
+    /**
+     * The app's own name plus the word for what this is. Resolved through the loader like the rest
+     * of the text, with the plain app name standing in until it answers.
+     */
+    private var title: String = appName
 
     private fun buildNotification(text: String?) = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)

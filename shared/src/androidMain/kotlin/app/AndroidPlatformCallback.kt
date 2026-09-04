@@ -106,7 +106,9 @@ internal class AndroidPlatformCallback(
         val shortcutId = "$name$room$ip${joinInfo.port}"
         val shortcutInfo = ShortcutInfoCompat.Builder(a, shortcutId)
             .setShortLabel(joinInfo.room)
-            .setIcon(IconCompat.createWithResource(a, R.mipmap.ic_launcher))
+            // The app module owns the launcher icon, so it is taken from the manifest rather than
+            // from this module's own resources, which held a shadowed second copy.
+            .setIcon(IconCompat.createWithResource(a, a.applicationInfo.icon))
             .setIntent(shortcutIntent)
             .build()
 

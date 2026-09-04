@@ -5,21 +5,15 @@
     <string name="okay">OK</string>
 
     <string name="cancel">Cancel</string>
-    <string name="confirm" translatable="false">Confirm</string>
     <string name="done">Done</string>
-    <string name="close">Close</string>
 
-    <string name="dont_show_again">Don't show this again</string>
 
     <string name="edit">Edit</string>
 
     <string name="play">Play</string>
-    <string name="pause">Pause</string>
 
     <string name="delete">Delete</string>
 
-    <string name="off">Off</string>
-    <string name="on">On</string>
 
     <string name="save">Save</string>
 
@@ -37,7 +31,6 @@
     <string name="connect_choose_video_engine">Video engine</string>
     <string name="connect_username_tooltip">Any name you like. It is what others see.</string>
     <string name="connect_roomname_tooltip">Friends who enter the same room name sync together.</string>
-    <string name="connect_server_tooltip">All official servers work the same. Everyone must join the same server and port.</string>
     <string name="connect_button_join">Join room</string>
     <string name="connect_button_saveshortcut">Save as home shortcut</string>
     <string name="home_shortcut_explain">Save this setup as a home screen shortcut</string>
@@ -45,9 +38,6 @@
     <string name="connect_roomname_empty_error">Roomname shouldn't be empty</string>
     <string name="connect_address_empty_error">Server Address shouldn't be empty</string>
     <string name="connect_port_empty_error">Enter port!</string>
-    <string name="connect_enter_custom_server">Enter Custom Server</string>
-    <string name="connect_custom_server_password">Password (Empty if not required)</string>
-    <string name="connect_solomode">Offline mode</string>
 
     <string name="home_ip_address">IP Address</string>
     <string name="home_port">Port</string>
@@ -60,7 +50,6 @@
     <string name="connect_engine_badge_unavailable">Unavailable</string>
 
     <!-- Server hosting -->
-    <string name="server_host_title">Host server</string>
     <string name="server_host_port">Port</string>
     <string name="server_host_password">Server Password (optional)</string>
     <string name="server_host_motd">Message of the Day (optional)</string>
@@ -73,21 +62,12 @@
     <string name="server_host_status_starting">Starting…</string>
     <string name="server_host_status_running">Running</string>
     <string name="server_host_status_error">Error</string>
-    <string name="server_host_clients_connected">%1$d client(s) connected</string>
-    <string name="server_host_address">Local address (Wi-Fi/LAN)</string>
-    <string name="server_host_public_address">Public address (Internet)</string>
-    <string name="server_host_public_address_fetching">Fetching…</string>
-    <string name="server_host_public_address_unavailable">Could not determine</string>
     <string name="server_host_port_forward_hint">For friends outside your network, port %1$s must be forwarded on your router.</string>
     <string name="server_host_server_log">Server Log</string>
-    <string name="server_host_ios_warning">On iOS, the server will stop when the app goes to background.</string>
-    <string name="connect_host_own_server">Host Your Own Server</string>
 
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
-    <string name="connect_button_current_engine">Current engine: %1$s</string>
     <string name="room_selected_vid">Selected video file: %1$s</string>
     <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
-    <string name="room_ping_connected">Connected</string>
     <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
     <string name="room_guy_played">%1$s unpaused</string>
     <string name="room_guy_paused">%1$s paused at %2$s</string>
@@ -98,10 +78,6 @@
     <string name="room_guy_joined">%1$s joined the room.</string>
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">You have joined the room: %1$s</string>
-    <string name="room_sub_track_changed">Subtitle Track changed to: %1$s</string>
-    <string name="room_audio_track_changed">Audio Track changed to: %1$s</string>
-    <string name="room_details_current_room">Room: %1$s</string>
-    <string name="room_details_user_count">%1$d users</string>
     <plurals name="room_user_count">
         <item quantity="one">%1$d user</item>
         <item quantity="other">%1$d users</item>
@@ -114,7 +90,6 @@
     <string name="room_chat_image_hidden">Image hidden. Tap to load it from %1$s.</string>
     <string name="room_user_mute">Mute</string>
     <string name="room_user_unmute">Unmute</string>
-    <string name="room_user_muted">%1$s is muted. Their messages stay hidden until you unmute them.</string>
     <string name="room_user_report">Report</string>
     <string name="room_user_set_ready">Mark ready</string>
     <string name="room_user_set_not_ready">Mark not ready</string>
@@ -134,11 +109,9 @@
     <!-- Room Screen -->
     <string name="room_selected_sub_error">Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Load video first</string>
-    <string name="room_type_message">Type your message…</string>
     <string name="room_ready">Ready</string>
     <string name="room_not_ready">Not Ready</string>
     <string name="room_ping_disconnected">Disconnected</string>
-    <string name="room_empty_message_error">Type something!</string>
     <string name="room_connected_to_server">Successfully connected to the server.</string>
     <string name="room_connection_failed">Connecting failed.</string>
     <string name="room_attempting_reconnection">Lost connection to the server.</string>
@@ -154,73 +127,39 @@
     <string name="room_sub_search_title">Search subtitles</string>
     <string name="room_sub_search_hint">Search by movie or episode name…</string>
     <string name="room_sub_search_no_results">No subtitles found</string>
-    <string name="room_sub_search_downloading">Downloading…</string>
     <string name="room_sub_search_download_from_web">Search online</string>
     <string name="room_sub_search_downloads">downloads</string>
-    <string name="room_track_track">Track</string>
-    <string name="room_sub_track_notfound">No subtitles found !</string>
-    <string name="room_details_nofileplayed">(No file being played)</string>
     <string name="room_file_mismatch_warning_name">Name.</string>
     <string name="room_file_mismatch_warning_duration">Duration.</string>
     <string name="room_file_mismatch_warning_size">Size.</string>
     <string name="room_shared_playlist">Shared Playlist</string>
-    <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist. Click on a file line to get all users to play it.</string>
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
     <string name="room_shared_playlist_not_found">%1$s couldn't find the file that is currently playing in the shared playlist in your media directories.</string>
-    <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
     <string name="room_shared_playlist_button_add_url">Add URL(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_shuffle">Shuffle entire playlist</string>
     <string name="room_shared_playlist_button_shuffle_rest">Shuffle remaining playlist</string>
-    <string name="room_shared_playlist_button_overflow">More Shared Playlist settings</string>
     <string name="room_shared_playlist_button_playlist_import">Load playlist from file</string>
     <string name="room_shared_playlist_button_playlist_import_n_shuffle">Load and shuffle playlist from file</string>
     <string name="room_shared_playlist_button_playlist_export">Save playlist to file</string>
     <string name="room_shared_playlist_button_set_media_directories">Set media directories</string>
-    <string name="room_shared_playlist_button_set_trusted_domains">Set trusted domains</string>
-    <string name="room_shared_playlist_button_undo">Undo last change</string>
-    <string name="room_shared_playlist_item_actions">Item Actions</string>
-    <string name="room_shared_playlist_actions">Shared Playlist actions</string>
     <string name="room_shared_playlist_clear_playlist">Clear the playlist</string>
     <string name="room_shared_playlist_playlist_is_empty">Shared Playlist is empty. Nothing to save.</string>
-    <string name="room_shared_playlist_filepick_rationale1">Select one or multiple files to add to playlist</string>
-    <string name="room_shared_playlist_filepick_rationale2">Select directory to add its files to playlist</string>
     <string name="room_shared_playlist_add_url">Add URL to Shared Playlist</string>
     <string name="room_shared_playlist_add_url_subtext">This line will be added as an entry to the shared playlist.\n%1$s Android supports only direct links for now.</string>
-    <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
-    <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
     <string name="room_button_desc_subtitle_tracks_import_from_file">Load from file</string>
     <string name="room_tracks_title">Audio &amp; subtitles</string>
-    <string name="room_button_desc_rewind">Rewind</string>
-    <string name="room_button_desc_toggle">.</string>
-    <string name="room_button_desc_play">Play</string>
-    <string name="room_button_desc_pause">Pause</string>
-    <string name="room_button_desc_ffwd">Fast-forward</string>
     <string name="room_button_desc_add">Add Media</string>
-    <string name="room_button_desc_lock">Touch-lock</string>
-    <string name="room_button_desc_more">More Settings</string>
-    <string name="room_addmedia_offline">From storage (system picker)</string>
-    <string name="room_addmedia_offline_system">From storage (custom picker)</string>
-    <string name="room_addmedia_online">From a network URL</string>
-    <string name="room_addmedia_online_details">Load Media from a network URL</string>
-    <string name="room_addmedia_online_popup_subtext">Direct links work everywhere (for example: www.example.com/video.mp4). YouTube links work on Android; other streaming sites may not.</string>
     <string name="room_addmedia_online_url">URL address</string>
-    <string name="room_overflow_title">More options...</string>
     <string name="room_overflow_create_managed_room">Create managed room</string>
-    <string name="room_overflow_create_managed_room_tooltip">Create managed room</string>
     <string name="room_overflow_identify_as_operator">Identify as room operator</string>
     <string name="room_overflow_pip">Picture-in-Picture</string>
-    <string name="room_overflow_msghistory">Chat History</string>
-    <string name="room_overflow_toggle_nightmode">Toggle night-mode</string>
-    <string name="room_overflow_portrait_mode">Portrait mode</string>
-    <string name="room_overflow_landscape_mode">Landscape mode</string>
     <string name="room_overflow_leave_room">Leave room</string>
     <string name="room_card_title_user_info">User info</string>
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
-    <string name="room_audio_track_not_found">No audio found !</string>
     <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
     <string name="room_playback_error">Playback error: %1$s</string>
     <string name="room_no_player_engine">No video engine is available on this device.</string>
@@ -251,17 +190,11 @@
     <string name="room_managed_room_popup_pw_identify_as_operator">Operator password for this room. See syncplay.pl/guide for how these rooms work.</string>
     <string name ="room_setting_pick_color">Pick a Color</string>
     <string name ="room_reconnect_button">Reconnect</string>
-    <string name="room_more_info_change_network_engine_msg">Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.</string>
     <string name="room_volume">Volume</string>
     <string name="room_brightness">Brightness</string>
-    <string name="room_coming_soon">Coming soon!</string>
     <string name="room_chapters_skip">Skipped to next chapter</string>
     <string name="room_chapters_jump">Chapter: %1$s</string>
     <string name="room_chapters">Chapters</string>
-    <string name="room_gestures_enabled">Touch Gestures enabled</string>
-    <string name="room_gestures_disabled">Touch Gestures disabled</string>
-    <string name="room_screenshot_saved">Screenshot saved</string>
-    <string name="room_screenshot_unsupported">Screenshot not supported by this player engine</string>
     <string name="room_no_recent_seek">There is no recent seek in this room.</string>
     <string name="room_seek_undone">Seek undone.</string>
     <string name="room_undo_seek_title">Undo your last seek?</string>
@@ -270,8 +203,6 @@
     <string name="room_undo_seek_cancel">Cancel</string>
     <string name="room_undo_seek_always">Don't ask again</string>
     <string name="room_seek_toposition_title">Seek to precise position</string>
-    <string name="room_seek_toposition_timeformat">Hour:Minute:Second</string>
-    <string name="room_seek_toposition_timediff">Skipping %1$sseconds of time</string>
     <string name="room_seek_toposition_success">Seeking to %1$s</string>
 
     <!-- GIF Panel -->
@@ -283,9 +214,7 @@
     <string name="room_gif_action_send">Send</string>
     <string name="room_gif_action_favorite">Favorite</string>
     <string name="room_gif_action_unfavorite">Unfavorite</string>
-    <string name="room_gif_search_hint">Search GIFs...</string>
     <string name="room_gif_no_results">No results found</string>
-    <string name="room_gif_error">Failed to load GIFs</string>
 
     <!-- Haptics -->
     <string name="uisetting_categ_haptics">Haptics</string>
@@ -314,8 +243,6 @@
     <string name="settings_categ_advanced">Advanced</string>
 
     <!-- Settings -->
-    <string name="setting_night_mode_title">Night mode</string>
-    <string name="setting_night_mode_summary">Select the night mode behavior.</string>
     <string name="setting_remember_join_info_title">Remember joining info</string>
     <string name="setting_remember_join_info_summary">Keeps your last name, room and server.</string>
     <string name="setting_never_show_tips_title">Never show tips</string>
@@ -326,13 +253,10 @@
     <string name="setting_display_language_title">Display language</string>
     <string name="setting_display_language_system">System language</string>
     <string name="setting_display_language_summry">Select your language of choice with which %1$s is displayed.</string>
-    <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Audio language</string>
     <string name="setting_audio_default_language_summry">Automatically load an audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_cc_default_language_title">Subtitle language</string>
     <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
-    <string name="setting_use_buffer_title">Use custom buffer sizes</string>
-    <string name="setting_use_buffer_summary">Use your own buffer sizes. At your own risk.</string>
     <string name="setting_max_buffer_title">Custom max buffer size</string>
     <string name="setting_max_buffer_summary">Largest buffer before playback starts.</string>
     <string name="setting_min_buffer_title">Custom min buffer size</string>
@@ -348,8 +272,6 @@
     <string name="setting_unpause_action_if_min_users_ready">Unpause if others ready + min users</string>
     <string name="setting_unpause_action_always">Always unpause</string>
     <string name="room_set_as_ready">Set as ready to unpause</string>
-    <string name="setting_rewind_threshold_title">Rewind threshold</string>
-    <string name="setting_rewind_threshold_summary">How far behind someone is before you rewind.</string>
     <string name="setting_tls_title">Secure connection (TLS)</string>
     <string name="setting_tls_summary">Encrypted when the server supports it.</string>
     <string name="setting_tls_required_title">Require encryption</string>
@@ -397,19 +319,13 @@
     <string name="uisetting_categ_chat_properties">Chat</string>
 
     <!-- UI Settings -->
-    <string name="uisetting_apply">APPLY</string>
-    <string name="uisetting_timestamp_title">Chat timestamps</string>
     <string name="uisetting_timestamp_summary">Shows the time next to each message.</string>
     <string name="uisetting_msgoutline_title">Chat message outline</string>
     <string name="uisetting_msgoutline_summary">Keeps text readable over video. 0 turns it off.</string>
-    <string name="uisetting_msgoutline_thickness_title">Outline thickness</string>
-    <string name="uisetting_msgoutline_thickness_summary">How thick the outline is.</string>
     <string name="uisetting_msgshadow_title">Chat message shadow</string>
     <string name="uisetting_msgshadow_summary">A shadow keeps text readable over video.</string>
     <string name="uisetting_msgboxaction_title">Enter sends the message</string>
     <string name="uisetting_msgboxaction_summary">Off makes Enter add a new line instead.</string>
-    <string name="uisetting_overview_alpha_title">Room details opacity</string>
-    <string name="uisetting_overview_alpha_summary">How solid the room details panel is.</string>
     <string name="uisetting_messagery_alpha_title">Message background</string>
     <string name="uisetting_messagery_alpha_summary">How solid the ground behind messages is.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
@@ -419,7 +335,6 @@
     <string name="uisetting_msglife_title">Message hold time</string>
     <string name="uisetting_msglife_summary">How long a message stays over the video.</string>
     <string name="uisetting_timestamp_color_title">Timestamp text color</string>
-    <string name="uisetting_timestamp_color_summary">The time next to each message.</string>
     <string name="uisetting_self_color_title">Self tag color</string>
     <string name="uisetting_self_color_summary">Your own name.</string>
     <string name="uisetting_friend_color_title">Friend tag text color</string>
@@ -440,8 +355,6 @@
     <string name="uisetting_seek_forward_jump_summary">How far a forward jump goes.</string>
     <string name="uisetting_seek_backward_jump_title">Backward jump</string>
     <string name="uisetting_seek_backward_jump_summary">How far a backward jump goes.</string>
-    <string name="uisetting_pip_title">Picture-in-picture mode</string>
-    <string name="uisetting_pip_summary">Keeps playing in a small window when you leave.</string>
     <string name="uisetting_reconnect_interval_title">Reconnection interval</string>
     <string name="uisetting_reconnect_interval_summary">Wait between reconnection attempts.</string>
     <string name="uisetting_resetdefault_title">Reset default settings</string>
@@ -453,8 +366,6 @@
     <string name="uisetting_kite_hw_summary">Uses the hardware decoder when it can.</string>
     <string name="uisetting_kite_sub_autoselect_title">Auto-select subtitles</string>
     <string name="uisetting_kite_sub_autoselect_summary">Shows the default subtitle track on open.</string>
-    <string name="uisetting_kite_sub_scale_title">Subtitle size</string>
-    <string name="uisetting_kite_sub_scale_summary">Subtitle size, in percent of authored.</string>
     <string name="uisetting_kite_sub_delay_title">Subtitle delay (ms)</string>
     <string name="uisetting_kite_sub_delay_summary">Positive shows subtitles later.</string>
     <string name="uisetting_kite_audio_delay_title">Audio delay (ms)</string>
@@ -492,8 +403,6 @@
     <string name="uisetting_custom_seek_amount_title">Custom skip duration</string>
     <string name="uisetting_custom_seek_amount_summary">How far the custom skip button jumps.</string>
 
-    <string name="uisetting_ui_opacity_title">UI opacity</string>
-    <string name="uisetting_ui_opacity_summary">How solid interface backgrounds are.</string>
 
 
     <string name="uisetting_doubletap_seek_title">Double-tap to seek</string>
@@ -523,7 +432,6 @@
     <string name="uisetting_osd_duration_summary">How long a notice stays. 0 turns them off.</string>
 
     <!-- OSD message control settings (mirrors Syncplay PC's "Messages" tab toggles) -->
-    <string name="uisetting_categ_osd">OSD Notifications</string>
     <string name="uisetting_osd_sameroom_title">Events from your room</string>
     <string name="uisetting_osd_sameroom_summary">Pauses, plays, seeks, joins and leaves.</string>
     <string name="uisetting_osd_nonoperator_title">Non-operator events</string>
@@ -540,9 +448,6 @@
     <string name="uisetting_mpv_import_conf_summary">Replaces mpv.conf with a file you pick.</string>
     <string name="uisetting_mpv_export_conf_title">Export mpv.conf</string>
     <string name="uisetting_mpv_export_conf_summary">Saves the current mpv.conf.</string>
-    <string name="uisetting_mpv_conf_imported">mpv.conf imported. Restart playback to apply.</string>
-    <string name="uisetting_mpv_conf_import_failed">Failed to import mpv.conf.</string>
-    <string name="uisetting_mpv_conf_missing">No mpv.conf to export yet — import one first or start mpv at least once.</string>
 
     <!-- VLC custom flags (appended to LibVLC init args on iOS) -->
     <string name="uisetting_vlc_custom_flags_title">Custom VLC flags</string>
@@ -554,8 +459,6 @@
     <string name="uisetting_chapter_dots_clickable_summary">Tap a chapter dot to jump to that position.</string>
 
     <string name="theme_popup_select_a_theme">Select a Theme</string>
-    <string name="theme_popup_builtin_themes">Built-in themes</string>
-    <string name="theme_popup_subtitle">Pick a look. Your choice applies everywhere, instantly.</string>
     <string name="theme_popup_custom_themes">Custom themes</string>
     <string name="theme_popup_customize_button">Customize</string>
 
@@ -568,30 +471,20 @@
     <string name="theme_customize_neutral_color">Neutral color</string>
     <string name="theme_customize_neutral_variant_color">Neutral Variant color</string>
     <string name="theme_customize_is_amoled">is an AMOLED theme</string>
-    <string name="theme_customize_use_syncplay_gradients">Use %1$s gradients</string>
     <string name="theme_customize_contrast">Contrast</string>
     <string name="theme_customize_palette_style">Palette Style</string>
-    <string name="theme_customize_preview">Preview</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Media Directories for Shared Playlist</string>
-    <string name="media_directories_brief">%1$s will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
-    <string name="media_directories_save">Save &amp; Exit</string>
     <string name="media_directories_clear_all">Clear all</string>
     <string name="media_directories_clear_all_confirm">Are you sure you want to clear the list ?</string>
     <string name="media_directories_add_folder">Add folder</string>
     <string name="media_directories_delete">Remove from list</string>
-    <string name="media_directories_show_full_path">Show full path</string>
-    <string name="media_directories_going_for_pick_rationale">Select directory to save playlist to as a file</string>
 
 
-    <string name="connect_official_server">Official server</string>
-    <string name="connect_official_server_desc">syncplay.pl, port %1$s</string>
-    <string name="connect_port">Port</string>
     <string name="about_tagline">a Syncplay client for %1$s</string>
     <string name="about_source_button">Source code</string>
     <string name="about_report_button">Report a bug</string>
-    <string name="connect_solomode_tooltip">Turns Synkplay into a regular video player. Fully offline: no server, no room, no syncing. Just you and your file.</string>
     <string name="about_version_value">Version %1$s</string>
     <string name="about_author">Built by yuroyami</string>
     <string name="about_blurb">Watch anything in sync with friends, wherever they are. Synkplay keeps everyone\u2019s playback lined up to the moment, so a pause here is a pause there.</string>
@@ -612,7 +505,6 @@
     </string-array>
     <string name="room_gestures_panel_title">Gestures</string>
     <string name="uisetting_chat_colors_entry_summary">Set the color of each part of chat messages</string>
-    <string name="server_host_background_note">The server keeps running in the background until you stop it here.</string>
     <!-- Settings console (design overhaul) -->
     <string name="settings_title">Settings</string>
     <string name="settings_value_on">On</string>
@@ -634,7 +526,6 @@
     <string name="settings_group_picture">Picture</string>
     <string name="settings_group_privacy">Privacy</string>
     <string name="settings_group_readiness">Readiness</string>
-    <string name="settings_group_display">Display</string>
     <string name="settings_group_logs">Logs</string>
     <!-- Transport (design overhaul) -->
     <string name="room_play">Play</string>
@@ -660,7 +551,6 @@
     <!-- Room shell (design overhaul) -->
     <string name="room_hud_auto_hide_title">Auto-hide controls</string>
     <string name="room_hud_auto_hide_summary">Idle seconds before they hide. 0 keeps them up.</string>
-    <string name="room_waiting_for_file">Waiting for a file</string>
     <string name="room_leave_question">Leave the room?</string>
     <string name="room_managed_room">Managed room</string>
     <string name="room_lock">Lock the screen</string>
@@ -733,9 +623,6 @@
     <string name="room_shared_playlist_add">Add</string>
     <string name="room_shared_playlist_more">More</string>
     <string name="room_shared_playlist_urls">URLs, one per line</string>
-    <string name="room_seek_hours">Hours</string>
-    <string name="room_seek_minutes">Minutes</string>
-    <string name="room_seek_seconds">Seconds</string>
     <string name="room_unlock">Unlock</string>
     <!-- Motion and back (design overhaul) -->
     <string name="setting_reduce_motion_title">Reduce motion</string>
@@ -754,10 +641,6 @@
     <string name="action_close">Close</string>
     <string name="action_clear">Clear</string>
     <!-- Engine picker (design overhaul) -->
-    <string name="connect_engine_note_default">The default on this platform.</string>
-    <string name="connect_engine_note_experimental">Experimental. It can misbehave.</string>
-    <string name="connect_engine_note_system">The platform's own player.</string>
-    <string name="connect_engine_note_unavailable">Not in this build.</string>
     <!-- Home revisions -->
     <string name="help_tip">Help</string>
     <string name="connect_host_mine">Host mine</string>
@@ -794,4 +677,14 @@
         <item quantity="other">%1$d people connected</item>
     </plurals>
     <string name="room_notification_text">Room open</string>
+    <string name="room_volume_label">Volume</string>
+    <string name="room_brightness_label">Brightness</string>
+    <string name="about_licences_button">Open source licences</string>
+    <string name="about_licences_title">Built with</string>
+    <string name="about_licences_note">This app is free software under the AGPL 3.0. The pieces it is built from carry their own licences.</string>
+    <string name="about_update_button">Check for updates</string>
+    <string name="about_update_checking">Checking…</string>
+    <string name="about_update_current">You are on the newest release</string>
+    <string name="about_update_available">Version %1$s is out</string>
+    <string name="about_update_failed">Could not reach the release list</string>
 </resources>

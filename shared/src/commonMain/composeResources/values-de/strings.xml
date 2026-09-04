@@ -5,21 +5,15 @@
     <string name="okay">OK</string>
 
     <string name="cancel">Abbrechen</string>
-    <string name="confirm" translatable="false">Bestätigen</string>
     <string name="done">Fertig</string>
-    <string name="close">Schließen</string>
 
-    <string name="dont_show_again">Nicht mehr anzeigen</string>
 
     <string name="edit">Bearbeiten</string>
 
     <string name="play">Abspielen</string>
-    <string name="pause">Pause</string>
 
     <string name="delete">Löschen</string>
 
-    <string name="off">Aus</string>
-    <string name="on">An</string>
 
     <string name="save">Speichern</string>
 
@@ -39,10 +33,6 @@
     <string name="connect_roomname_empty_error">Raumname sollte nicht leer sein</string>
     <string name="connect_address_empty_error">Serveradresse sollte nicht leer sein</string>
     <string name="connect_port_empty_error">Port eingeben!</string>
-    <string name="connect_enter_custom_server">Benutzerdefinierten Server eingeben</string>
-    <string name="connect_custom_server_password">Passwort (Leer lassen falls nicht benötigt)</string>
-    <string name="connect_port">Port</string>
-    <string name="connect_solomode">Offline-Modus</string>
 
     <string name="home_ip_address">IP-Adresse</string>
     <string name="home_port">Port</string>
@@ -51,10 +41,8 @@
     <string name="home_engine_unavailable_error">Diese Engine ist nicht verfügbar. Haben Sie das richtige APK heruntergeladen?</string>
 
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
-    <string name="connect_button_current_engine">Aktuelle Engine: %1$s</string>
     <string name="room_selected_vid">Ausgewählte Videodatei: %1$s</string>
     <string name="room_selected_sub">Geladene Untertiteldatei: %1$s</string>
-    <string name="room_ping_connected">Verbunden</string>
     <string name="room_attempting_connect">Verbindungsaufbau zu %1$s:%2$s</string>
     <string name="room_guy_played">%1$s hat fortgesetzt</string>
     <string name="room_guy_paused">%1$s pausiert bei %2$s</string>
@@ -65,10 +53,6 @@
     <string name="room_guy_joined">%1$s ist dem Raum beigetreten.</string>
     <string name="room_isplayingfile">%1$s spielt '%2$s' ab (%3$s)</string>
     <string name="room_you_joined_room">Sie sind dem Raum beigetreten: %1$s</string>
-    <string name="room_sub_track_changed">Untertitelspur geändert zu: %1$s</string>
-    <string name="room_audio_track_changed">Audiospur geändert zu: %1$s</string>
-    <string name="room_details_current_room">Raum: %1$s</string>
-    <string name="room_details_user_count">%1$d Nutzer</string>
     <string name="room_details_file_properties">Dauer: %1$s - Größe: %2$s MB</string>
     <string name="room_file_mismatch_warning_core">Ihre Datei unterscheidet sich von %1$s's Datei in folgenden Punkten:</string>
     <string name="room_shared_playlist_updated">%1$s hat die Playlist aktualisiert</string>
@@ -83,11 +67,9 @@
     <!-- Room Screen -->
     <string name="room_selected_sub_error">Ungültige Untertiteldatei. Unterstützte Formate: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Zuerst Video laden</string>
-    <string name="room_type_message">Nachricht eingeben…</string>
     <string name="room_ready">Bereit</string>
     <string name="room_not_ready">Nicht bereit</string>
     <string name="room_ping_disconnected">Getrennt</string>
-    <string name="room_empty_message_error">Schreiben Sie etwas!</string>
     <string name="room_connected_to_server">Erfolgreich mit dem Server verbunden.</string>
     <string name="room_connection_failed">Verbindungsaufbau fehlgeschlagen.</string>
     <string name="room_attempting_reconnection">Verbindung zum Server verloren.</string>
@@ -100,84 +82,48 @@
     <string name="room_scaling_fill_screen">Größenanpassung: BILDSCHIRM FÜLLEN</string>
     <string name="room_scaling_zoom">Größenanpassung: Zoom</string>
     <string name="room_sub_track_disable">Untertitel deaktivieren</string>
-    <string name="room_track_track">Spur</string>
-    <string name="room_sub_track_notfound">Keine Untertitel gefunden!</string>
-    <string name="room_details_nofileplayed">(Keine Datei wird abgespielt)</string>
     <string name="room_file_mismatch_warning_name">Name.</string>
     <string name="room_file_mismatch_warning_duration">Dauer.</string>
     <string name="room_file_mismatch_warning_size">Größe.</string>
     <string name="room_shared_playlist">Gemeinsame Playlist</string>
-    <string name="room_shared_playlist_brief">Importieren Sie eine Datei oder ein Verzeichnis, um Dateinamen in die Playlist aufzunehmen. Klicken Sie auf eine Dateizeile, damit alle Benutzer sie abspielen.</string>
     <string name="room_shared_playlist_no_directories">Sie haben keine Medienverzeichnisse für gemeinsame Playlists angegeben. Fügen Sie die Dateien manuell hinzu.</string>
     <string name="room_shared_playlist_not_found">%1$s konnte die Datei, die aktuell in der gemeinsamen Playlist abgespielt wird, nicht in Ihren Medienverzeichnissen finden.</string>
-    <string name="room_shared_playlist_not_featured">Dieser Raum oder Server hat die gemeinsame Playlist-Funktion nicht aktiviert.</string>
     <string name="room_shared_playlist_button_add_file">Datei(en) unten in Playlist hinzufügen</string>
     <string name="room_shared_playlist_button_add_folder">Ordner zur Playlist hinzufügen (und zu Medienverzeichnissen)</string>
     <string name="room_shared_playlist_button_add_url">URL(s) unten in Playlist hinzufügen</string>
     <string name="room_shared_playlist_button_shuffle">Gesamte Playlist mischen</string>
     <string name="room_shared_playlist_button_shuffle_rest">Verbleibende Playlist mischen</string>
-    <string name="room_shared_playlist_button_overflow">Weitere Playlist-Einstellungen</string>
     <string name="room_shared_playlist_button_playlist_import">Playlist aus Datei laden</string>
     <string name="room_shared_playlist_button_playlist_import_n_shuffle">Playlist aus Datei laden und mischen</string>
     <string name="room_shared_playlist_button_playlist_export">Playlist in Datei speichern</string>
     <string name="room_shared_playlist_button_set_media_directories">Medienverzeichnisse festlegen</string>
-    <string name="room_shared_playlist_button_set_trusted_domains">Vertrauenswürdige Domains festlegen</string>
-    <string name="room_shared_playlist_button_undo">Letzte Änderung rückgängig machen</string>
-    <string name="room_shared_playlist_item_actions">Element-Aktionen</string>
-    <string name="room_shared_playlist_actions">Playlist-Aktionen</string>
     <string name="room_shared_playlist_clear_playlist">Playlist leeren</string>
     <string name="room_shared_playlist_playlist_is_empty">Gemeinsame Playlist ist leer. Nichts zu speichern.</string>
-    <string name="room_shared_playlist_filepick_rationale1">Eine oder mehrere Dateien zur Playlist hinzufügen</string>
-    <string name="room_shared_playlist_filepick_rationale2">Verzeichnis auswählen, um dessen Dateien zur Playlist hinzuzufügen</string>
     <string name="room_shared_playlist_add_url">URL zur gemeinsamen Playlist hinzufügen</string>
     <string name="room_shared_playlist_add_url_subtext">Diese Zeile wird als Eintrag zur gemeinsamen Playlist hinzugefügt.\n%1$s Android unterstützt vorerst nur direkte Links.</string>
-    <string name="room_button_desc_aspect_ratio">Seitenverhältnis</string>
-    <string name="room_button_desc_shared_playlist">Gemeinsame Playlist</string>
     <string name="room_button_desc_audio_tracks">Audiospuren</string>
     <string name="room_button_desc_subtitle_tracks">Untertitelspuren</string>
     <string name="room_button_desc_subtitle_tracks_import_from_file">Aus Datei importieren</string>
-    <string name="room_button_desc_rewind">Zurückspulen</string>
-    <string name="room_button_desc_toggle">.</string>
-    <string name="room_button_desc_play">Abspielen</string>
-    <string name="room_button_desc_pause">Pause</string>
-    <string name="room_button_desc_ffwd">Vorspulen</string>
     <string name="room_button_desc_add">Medien hinzufügen</string>
-    <string name="room_button_desc_lock">Touchsperre</string>
-    <string name="room_button_desc_more">Weitere Einstellungen</string>
-    <string name="room_addmedia_offline">Vom Telefonspeicher</string>
-    <string name="room_addmedia_online">Von einer Netzwerk-URL</string>
-    <string name="room_addmedia_online_details">Medien von einer Netzwerk-URL laden</string>
-    <string name="room_addmedia_online_popup_subtext">Stellen Sie direkte Links bereit (z.B.: www.example.com/video.mp4). YouTube und andere Medien-Streaming-Dienste werden noch nicht unterstützt.</string>
     <string name="room_addmedia_online_url">URL-Adresse</string>
-    <string name="room_overflow_title">Weitere Optionen...</string>
     <string name="room_overflow_create_managed_room">Verwalteten Raum erstellen</string>
-    <string name="room_overflow_create_managed_room_tooltip">Verwalteten Raum erstellen</string>
     <string name="room_overflow_identify_as_operator">Als Raumoperator identifizieren</string>
     <string name="room_overflow_pip">Bild-in-Bild</string>
-    <string name="room_overflow_msghistory">Chatverlauf</string>
-    <string name="room_overflow_toggle_nightmode">Nachtmodus umschalten</string>
     <string name="room_overflow_leave_room">Raum verlassen</string>
     <string name="room_card_title_user_info">Benutzerinfo</string>
     <string name="room_card_title_in_room_prefs">Raumeinstellungen</string>
-    <string name="room_audio_track_not_found">Kein Audio gefunden!</string>
     <string name="room_msg_problem_loading_file">Beim Laden dieser Datei ist ein Problem aufgetreten.</string>
     <string name="room_managed_room_popup_create">Namen des verwalteten Raums eingeben\n(siehe https://syncplay.pl/guide/ für Anleitung)</string>
     <string name="room_managed_room_popup_pw_identify_as_operator">Operator-Passwort für diesen Raum eingeben\n(siehe https://syncplay.pl/guide/ für Anleitung)</string>
     <string name ="room_setting_pick_color">Farbe auswählen</string>
     <string name ="room_reconnect_button">Erneut verbinden</string>
-    <string name="room_more_info_change_network_engine_msg">Versuchen Sie, die Netzwerk-Engine in Einstellungen > Netzwerk auf Ktor zu ändern, wenn Sie Verbindungsprobleme haben.</string>
     <string name="room_volume">Lautstärke</string>
     <string name="room_brightness">Helligkeit</string>
-    <string name="room_coming_soon">Demnächst verfügbar!</string>
     <string name="room_chapters_skip">Kapitel überspringen</string>
     <string name="room_chapters">Kapitel</string>
-    <string name="room_gestures_enabled">Touch-Gesten aktiviert</string>
-    <string name="room_gestures_disabled">Touch-Gesten deaktiviert</string>
     <string name="room_no_recent_seek">Es gibt kein kürzliches Suchen in diesem Raum.</string>
     <string name="room_seek_undone">Suchen rückgängig gemacht.</string>
     <string name="room_seek_toposition_title">Zu genauer Position springen</string>
-    <string name="room_seek_toposition_timeformat">Stunde:Minute:Sekunde</string>
-    <string name="room_seek_toposition_timediff">Überspringe %1$s Sekunden</string>
     <string name="room_seek_toposition_success">Springe zu %1$s</string>
 
     <!-- Settings Categories -->
@@ -188,8 +134,6 @@
     <string name="settings_categ_advanced">Erweitert</string>
 
     <!-- Settings -->
-    <string name="setting_night_mode_title">Nachtmodus</string>
-    <string name="setting_night_mode_summary">Nachtmodus-Verhalten auswählen.</string>
     <string name="setting_remember_join_info_title">Beitrittsinfo merken</string>
     <string name="setting_remember_join_info_summary">Standardmäßig aktiviert. Ermöglicht %1$s, Ihren letzten Benutzernamen, Raumnamen und den zuletzt verwendeten offiziellen Server zu speichern.</string>
     <string name="setting_never_show_tips_title">Tipps nie anzeigen</string>
@@ -199,13 +143,10 @@
     <string name="setting_erase_shortcuts_dialog">Wirklich alle vorhandenen Verknüpfungen löschen?</string>
     <string name="setting_display_language_title">Anzeigesprache</string>
     <string name="setting_display_language_summry">Bevorzugte Sprache für die %1$s-Oberfläche auswählen.</string>
-    <string name="setting_display_language_toast">Sprache geändert. App neu starten, damit die Einstellung vollständig wirksam wird.</string>
     <string name="setting_audio_default_language_title">Bevorzugte Audiospur-Sprache</string>
     <string name="setting_audio_default_language_summry">Automatisch eine Audiospur mit dem hier festgelegten Sprachcode laden. Zum Beispiel ist Englisch 'en-US', Japanisch 'ja-JP'. Suchen Sie nach 'IETF BCP 47 codes' für mehr Informationen.</string>
     <string name="setting_cc_default_language_title">Bevorzugte Untertitelsprache</string>
     <string name="setting_cc_default_language_summry">Automatisch eine Untertitelspur mit dem hier festgelegten Sprachcode laden. Zum Beispiel ist Englisch 'en-US', Japanisch 'ja-JP'. Suchen Sie nach 'IETF BCP 47 codes' für mehr Informationen.</string>
-    <string name="setting_use_buffer_title">Benutzerdefinierte Puffergrößen verwenden</string>
-    <string name="setting_use_buffer_summary">Wenn Sie mit den Videoladezeiten des Players vor und während der Wiedergabe nicht zufrieden sind, können Sie benutzerdefinierte Puffergrößen verwenden (Auf eigenes Risiko).</string>
     <string name="setting_max_buffer_title">Benutzerdefinierte maximale Puffergröße</string>
     <string name="setting_max_buffer_summary">Standard ist 30 (30000 Millisekunden). Bestimmt die maximale Puffergröße vor Beginn der Videowiedergabe. Wenn Sie nicht wissen, was das ist, ändern Sie es nicht.</string>
     <string name="setting_min_buffer_title">Benutzerdefinierte minimale Puffergröße</string>
@@ -221,8 +162,6 @@
     <string name="setting_unpause_action_if_min_users_ready">Fortsetzen wenn andere bereit + Min. Benutzer</string>
     <string name="setting_unpause_action_always">Immer fortsetzen</string>
     <string name="room_set_as_ready">Als bereit gesetzt zum Fortsetzen</string>
-    <string name="setting_rewind_threshold_title">Rückspul-Schwellenwert</string>
-    <string name="setting_rewind_threshold_summary">Wenn jemand um den hier ausgewählten Wert hinterherhinkt, wird Ihr Video zurückgespult, um mit dem Hinterherhinkenden synchron zu sein.</string>
     <string name="setting_tls_title">Sichere Verbindung verwenden (TLS)</string>
     <string name="setting_tls_summary">%1$s versucht eine sichere verschlüsselte Verbindung (hauptsächlich TLSv1.3, fallback zu älteren Versionen) mit dem Server herzustellen, falls dieser es unterstützt. Diese Einstellung wird ignoriert, wenn die Netzwerk-Engine TLS nicht unterstützt.</string>
     <string name="setting_resetdefault_title">Standardeinstellungen zurücksetzen</string>
@@ -253,19 +192,13 @@
     <string name="uisetting_categ_chat_properties">Chat-Eigenschaften</string>
 
     <!-- UI Settings -->
-    <string name="uisetting_apply">ANWENDEN</string>
-    <string name="uisetting_timestamp_title">Chat-Zeitstempel</string>
     <string name="uisetting_timestamp_summary">Deaktivieren, um die Zeitstempel am Anfang von Chat-Nachrichten auszublenden.</string>
     <string name="uisetting_msgoutline_title">Chat-Nachrichten-Kontur</string>
     <string name="uisetting_msgoutline_summary">Aktivieren, um Chat-Nachrichten eine Kontur zu geben, um Vermischung mit dem Hintergrundvideo zu reduzieren.</string>
-    <string name="uisetting_msgoutline_thickness_title">Dicke der Chat-Nachrichtenumrandung</string>
-    <string name="uisetting_msgoutline_thickness_summary">Dicke der Umrandung von Chat-Nachrichten, falls aktiviert.</string>
     <string name="uisetting_msgshadow_title">Chat-Nachrichten-Schatten</string>
     <string name="uisetting_msgshadow_summary">Aktivieren, um Chat-Nachrichten einen Schatten zu geben, um Vermischung mit dem Hintergrundvideo zu reduzieren.</string>
     <string name="uisetting_msgboxaction_title">OK-Tasten-Funktion der Tastatur</string>
     <string name="uisetting_msgboxaction_summary">Wenn aktiviert, sendet ein Klick auf die 'OK'-Taste Ihrer Tastatur die Nachricht. Wenn deaktiviert, schließt sie einfach die Tastatur, ohne etwas zu tun.</string>
-    <string name="uisetting_overview_alpha_title">Raumdetails Hintergrund-Deckkraft</string>
-    <string name="uisetting_overview_alpha_summary">Standard ist 40 (Fast transparent), ändern Sie dies, wenn Sie den Raumdetails-Bereich lesbarer machen möchten, indem Sie die Deckkraft erhöhen.</string>
     <string name="uisetting_messagery_alpha_title">Nachrichten-Hintergrund-Deckkraft</string>
     <string name="uisetting_messagery_alpha_summary">Standard ist 0 (transparent). Maximum ist 255 (100% Deckkraft). Lesbarkeit der Nachrichten verbessern, indem der Hintergrund undurchsichtiger gemacht wird.</string>
     <string name="uisetting_msgsize_title">Nachrichten-Schriftgröße</string>
@@ -275,7 +208,6 @@
     <string name="uisetting_msglife_title">Anzeigedauer für Chat-Nachrichten</string>
     <string name="uisetting_msglife_summary">Beim Empfang einer Chat- oder Raumnachricht beginnt sie für die unten eingestellte Zeit auszublenden.</string>
     <string name="uisetting_timestamp_color_title">Zeitstempel-Textfarbe</string>
-    <string name="uisetting_timestamp_color_summary">Textfarbe der Nachrichten-Zeitstempel anpassen (Standard ist Pink)</string>
     <string name="uisetting_self_color_title">Eigene Tag-Farbe</string>
     <string name="uisetting_self_color_summary">Textfarbe Ihres Namens-Tags anpassen (Standard ist Dunkelrot)</string>
     <string name="uisetting_friend_color_title">Freunde Tag-Textfarbe</string>
@@ -296,8 +228,6 @@
     <string name="uisetting_seek_forward_jump_summary">Legt fest, wie viele Sekunden ein Vorspulen überspringen soll. Standard ist 10 Sekunden.</string>
     <string name="uisetting_seek_backward_jump_title">Rückspul-Sprungweite (Sekunden)</string>
     <string name="uisetting_seek_backward_jump_summary">Legt fest, wie viele Sekunden ein Rückspulen zurückspulen soll. Standard ist 10 Sekunden.</string>
-    <string name="uisetting_pip_title">Bild-in-Bild-Modus</string>
-    <string name="uisetting_pip_summary">Ob der Player in den fensterbasierten Bild-in-Bild-Modus wechseln soll, wenn die App minimiert wird. Standard ist true</string>
     <string name="uisetting_reconnect_interval_title">Wiederverbindungs-Intervall</string>
     <string name="uisetting_reconnect_interval_summary">Wie viele Sekunden bei jedem Verbindungsfehler oder -abbruch auf Wiederverbindung gewartet werden soll. Standard ist 2 Sekunden.</string>
     <string name="uisetting_resetdefault_title">Standardeinstellungen zurücksetzen</string>
@@ -318,11 +248,8 @@
     <string name="uisetting_custom_seek_front_summary">Aktivieren, um die benutzerdefinierte 'Zeitspanne überspringen'-Taste, die im 'Zu Position springen'-Popup gefunden wird, auf dem Hauptplayer-Bildschirm zwischen den Zurückspulen- und Vorspulen-Tasten für einfacheren Zugriff anzuzeigen.</string>
     <string name="uisetting_custom_seek_amount_title">Benutzerdefinierte Überspring-Dauer</string>
     <string name="uisetting_custom_seek_amount_summary">Die standardmäßige Überspring-Dauer ist 90 Sekunden (1:30 Minuten), was ideal für Anime ist. Sie können diese Dauer für die benutzerdefinierte Überspring-Taste hier anpassen.</string>
-    <string name="uisetting_ui_opacity_title">Oberflächentransparenz</string>
-    <string name="uisetting_ui_opacity_summary">Passt die Transparenz von Hintergründen der Benutzeroberfläche an.</string>
 
     <string name="theme_popup_select_a_theme">Theme auswählen</string>
-    <string name="theme_popup_builtin_themes">Integrierte Themes</string>
     <string name="theme_popup_custom_themes">Benutzerdefinierte Themes</string>
     <string name="theme_popup_customize_button">Anpassen</string>
 
@@ -335,21 +262,15 @@
     <string name="theme_customize_neutral_color">Neutrale Farbe</string>
     <string name="theme_customize_neutral_variant_color">Neutrale Variantenfarbe</string>
     <string name="theme_customize_is_amoled">Ist ein AMOLED-Theme</string>
-    <string name="theme_customize_use_syncplay_gradients">%1$s-Verläufe verwenden</string>
     <string name="theme_customize_contrast">Kontrast</string>
     <string name="theme_customize_palette_style">Palettenstil</string>
-    <string name="theme_customize_preview">Vorschau</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Medienverzeichnisse für gemeinsame Playlist</string>
-    <string name="media_directories_brief">%1$s durchsucht alle hier angegebenen Medienverzeichnisse, um einen Namen zu finden, der in einer gemeinsamen Playlist abgespielt wird. Es ist viel besser, wenn Sie kleine Verzeichnisse angeben, da der Suchvorgang drosseln und sehr langsam sein kann.</string>
-    <string name="media_directories_save">Speichern &amp; Beenden</string>
     <string name="media_directories_clear_all">Alle löschen</string>
     <string name="media_directories_clear_all_confirm">Wirklich die Liste löschen?</string>
     <string name="media_directories_add_folder">Ordner hinzufügen</string>
     <string name="media_directories_delete">Aus Liste entfernen</string>
-    <string name="media_directories_show_full_path">Vollständigen Pfad anzeigen</string>
-    <string name="media_directories_going_for_pick_rationale">Verzeichnis auswählen, um Playlist als Datei zu speichern</string>
 
 
     <string name="about_version">• Version: %1$s</string>
@@ -371,33 +292,20 @@
         <item>Wenn Sie den Raum vorübergehend minimieren möchten, ohne ihn zu verlassen, können Sie in den "Bild-in-Bild"-Modus wechseln, wo der Bildschirm ein kleiner schwebender Bildschirm über anderen Apps ist.</item>
     </string-array>
 
-    <string name="connect_host_own_server">Eigenen Server hosten</string>
-    <string name="room_gif_error">GIFs konnten nicht geladen werden</string>
     <string name="room_gif_no_results">Keine Ergebnisse gefunden</string>
     <string name="room_gif_powered_by">Bereitgestellt von Klipy</string>
-    <string name="room_gif_search_hint">GIFs suchen…</string>
     <string name="room_gif_tab_gifs">GIFs</string>
     <string name="room_gif_tab_recents">Zuletzt verwendet</string>
     <string name="room_gif_tab_stickers">Sticker</string>
     <string name="room_gif_tab_trending">Beliebt</string>
-    <string name="room_overflow_landscape_mode">Querformat</string>
-    <string name="room_overflow_portrait_mode">Hochformat</string>
-    <string name="room_screenshot_saved">Screenshot gespeichert</string>
-    <string name="room_screenshot_unsupported">Screenshot wird von dieser Player-Engine nicht unterstützt</string>
     <string name="room_untrusted_domain_warning">URL von nicht vertrauenswürdiger Domain blockiert: %1$s. Fügen Sie sie unter Einstellungen zu den vertrauenswürdigen Domains hinzu, um sie zuzulassen.</string>
-    <string name="server_host_address">Lokale Adresse (WLAN/LAN)</string>
-    <string name="server_host_clients_connected">%1$d Client(s) verbunden</string>
     <string name="server_host_disable_chat">Chat deaktivieren</string>
     <string name="server_host_disable_ready">Bereitschaft deaktivieren</string>
-    <string name="server_host_ios_warning">Unter iOS wird der Server gestoppt, wenn die App in den Hintergrund wechselt.</string>
     <string name="server_host_isolate_rooms">Räume isolieren</string>
     <string name="server_host_motd">Nachricht des Tages (optional)</string>
     <string name="server_host_password">Server-Passwort (optional)</string>
     <string name="server_host_port">Port</string>
     <string name="server_host_port_forward_hint">Für Freunde außerhalb Ihres Netzwerks muss Port %1$s auf Ihrem Router weitergeleitet werden.</string>
-    <string name="server_host_public_address">Öffentliche Adresse (Internet)</string>
-    <string name="server_host_public_address_fetching">Wird abgerufen…</string>
-    <string name="server_host_public_address_unavailable">Konnte nicht ermittelt werden</string>
     <string name="server_host_server_log">Server-Protokoll</string>
     <string name="server_host_start">Server starten</string>
     <string name="server_host_status_error">Fehler</string>
@@ -405,7 +313,6 @@
     <string name="server_host_status_starting">Wird gestartet…</string>
     <string name="server_host_status_stopped">Gestoppt</string>
     <string name="server_host_stop">Server stoppen</string>
-    <string name="server_host_title">Server hosten</string>
     <string name="setting_clear_logs_dialog">Möchten Sie wirklich alle Protokolldateien löschen? Dies kann nicht rückgängig gemacht werden.</string>
     <string name="setting_clear_logs_summary">Alle gespeicherten Protokolldateien löschen</string>
     <string name="setting_clear_logs_title">Protokolle löschen</string>
