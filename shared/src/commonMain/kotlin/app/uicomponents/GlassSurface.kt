@@ -134,7 +134,8 @@ fun Modifier.chromeSurface(shape: Shape = Radius.panelShape): Modifier = this
     .shadow(20.dp, shape)
     .clip(shape)
     .background(Brush.verticalGradient(listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))))
-    .border(width = 1.dp, brush = rimBrush(), shape = shape)
+    // Fixed on purpose: chrome only ever floats over video, which the room pins dark.
+    .border(width = 1.dp, brush = OVER_VIDEO_RIM, shape = shape)
 
 /** A blur this wide is what buys readability on a translucent panel with a low tint. */
 private val GLASS_BLUR_RADIUS = 40.dp
@@ -166,17 +167,23 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
         }
     }
 
-    val style = remember(container, tint, opaqueTint) {
+    /* Which way the glass shades. A dark theme wants a dark inner wash and a lit rim; a light
+     * theme wants the opposite, and the old fixed white-on-black pair made Daylight panels look
+     * bruised at the bottom and edgeless at the top. */
+    val isDark = palette.isDark
+    val wash = if (isDark) Color.Black else Color.White
+    val style = remember(container, tint, opaqueTint, isDark) {
         HazeBlurStyle {
             blurRadius(GLASS_BLUR_RADIUS)
             // A transparent background is what makes it glass: only the blurred capture and a light tint.
             backgroundColor(Color.Transparent)
-            colorEffects(listOf(HazeColorEffect.tint(Color.Black.copy(alpha = GLASS_INNER_DIM)), HazeColorEffect.tint(container.copy(alpha = tint))))
+            colorEffects(listOf(HazeColorEffect.tint(wash.copy(alpha = GLASS_INNER_DIM)), HazeColorEffect.tint(container.copy(alpha = tint))))
             fallbackColorEffect(HazeColorEffect.tint(container.copy(alpha = opaqueTint)))
         }
     }
-    val fallback = remember(container, opaqueTint) {
-        Brush.verticalGradient(listOf(container.copy(alpha = opaqueTint), lerp(container, Color.Black, 0.45f).copy(alpha = opaqueTint)))
+    val fallback = remember(container, opaqueTint, isDark) {
+        val foot = if (isDark) lerp(container, Color.Black, 0.45f) else lerp(container, Color.Black, 0.10f)
+        Brush.verticalGradient(listOf(container.copy(alpha = opaqueTint), foot.copy(alpha = opaqueTint)))
     }
 
     return this
@@ -191,27 +198,41 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
                 Modifier.background(fallback)
             }
         )
-        .background(GLASS_SHEEN)
+        .background(glassSheen(isDark))
         .then(
             when (rim) {
-                GlassEdge.All -> Modifier.border(width = 1.dp, brush = rimBrush(), shape = shape)
+                GlassEdge.All -> Modifier.border(width = 1.dp, brush = panelRim(isDark), shape = shape)
                 // Full-bleed chrome draws only the edge that faces content.
                 GlassEdge.BottomOnly -> Modifier.drawWithContent {
                     drawContent()
                     val h = 1.dp.toPx()
-                    drawRect(Color.White.copy(alpha = 0.10f), Offset(0f, size.height - h), Size(size.width, h))
+                    val edge = if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.10f)
+                    drawRect(edge, Offset(0f, size.height - h), Size(size.width, h))
                 }
                 GlassEdge.None -> Modifier
             }
         )
 }
 
-/** The rim: lit along the top edge, nearly gone at the bottom. */
-private val RIM_BRUSH: Brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f)))
-private fun rimBrush(): Brush = RIM_BRUSH
+/** The rim over video: lit along the top edge, nearly gone at the bottom. */
+private val OVER_VIDEO_RIM: Brush =
+    Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f)))
+
+/** A shaded rim for a light theme: the same idea, drawn in the only colour that shows there. */
+private val LIGHT_PANEL_RIM: Brush =
+    Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.14f), Color.Black.copy(alpha = 0.04f)))
+
+private fun panelRim(isDark: Boolean): Brush = if (isDark) OVER_VIDEO_RIM else LIGHT_PANEL_RIM
 
 /** The faint top light and bottom shade every panel wears, built once. */
-private val GLASS_SHEEN: Brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Black.copy(alpha = 0.20f)))
+private val DARK_SHEEN: Brush =
+    Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Black.copy(alpha = 0.20f)))
+
+/** A light panel takes a faint shade rather than a highlight, or the sheen simply is not there. */
+private val LIGHT_SHEEN: Brush =
+    Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.02f), Color.Black.copy(alpha = 0.08f)))
+
+private fun glassSheen(isDark: Boolean): Brush = if (isDark) DARK_SHEEN else LIGHT_SHEEN
 
 /**
  * Asks the platform to blur whatever sits behind the dialog window this is called from. The only
