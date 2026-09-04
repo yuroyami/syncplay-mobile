@@ -455,7 +455,7 @@ iOS Swift bridges (registered at startup in `iosApp/iOSApp.swift`): `instantiate
 | MPV (libmpv/JNI) | Android | ✓ | ✓ | ✗ | `full` flavor only and the default there; precise double `time-pos` seeking; needs NDK r29 libc++; `MpvSubfont` for subs; tracker 500 ms |
 | AVPlayer (AVFoundation) | iOS | ✗ | ✗ | ✓ | The iOS **system** engine (badge "System"); KVO on `timeControlStatus` - only `Playing` counts (buffering must not); MP4/HLS only; per-inject new AVPlayer instance |
 | VLCKit 4 | iOS | ✓ | ✓ | ✓ | **Default iOS engine**; 250 ms main-thread position tracker (NOT libvlc callbacks - lock assert); `VLCEventsLegacyConfiguration` for async callbacks; `:start-paused`; seek-shadow convergence; every play/pause/seek guarded on `media != null`; configures AVAudioSession; volume 0-200 |
-| KitePlayer (KiteCodec/FFmpeg) | Android, iOS, Desktop | ✓ | ✓ | (Android PiP) | Experimental everywhere, and the only desktop engine (default there). One `KiteImpl` in commonMain; hardware decode is MediaCodec / VideoToolbox inside FFmpeg with a measured software fallback. Presentation is `KitePlayerVideo` (native view or pure Compose, switched live by the in-room `KITE_COMPOSE_RENDERER` toggle; the JVM actual always answers pure Compose). Subtitles cover SubRip and WebVTT, embedded or external; styled ASS shows as a track but is not drawn. Speed 0.25x-4x pitch-preserved; no screenshot path; tracker 250 ms. Absent from `exoOnly` (its `libkitecodec_jni.so` is stripped) |
+| KitePlayer (KiteCodec/FFmpeg) | Android, iOS, Desktop | ✓ | ✓ | (Android PiP) | Experimental everywhere, and the only desktop engine (default there). One `KiteImpl` in commonMain; hardware decode is MediaCodec / VideoToolbox inside FFmpeg with a measured software fallback. Presentation is `KitePlayerVideo` (native view or pure Compose, switched live by the in-room `KITE_COMPOSE_RENDERER` toggle; desktop pins the Compose canvas because the JVM native view swallows clicks meant for the HUD). Subtitles cover SubRip and WebVTT, embedded or external; styled ASS shows as a track but is not drawn. Speed 0.25x-4x pitch-preserved; no screenshot path; tracker 250 ms. Absent from `exoOnly` (its `libkitecodec_jni.so` is stripped) |
 
 **Engine badges** (home wheel, `PlayerEngine.isSystem`/`isDefault`/`isExperimental`, one badge per engine, ladder Unavailable > Experimental > Default > System): Android = ExoPlayer System, mpv Default, KitePlayer Experimental. iOS = AVPlayer System, VLCKit Default, KitePlayer Experimental. Desktop = KitePlayer Default. `isDefault` is also what `Preferences.PLAYER_ENGINE` resolves its default value from, so moving it moves the engine new installs get.
 
@@ -467,9 +467,11 @@ only one on all three platforms, so it is where an unfamiliar reader gets stuck.
 - **One implementation.** `KiteImpl` lives in `commonMain` and is the whole engine for Android,
   iOS and desktop. There is no per-platform engine class; only the presentation differs.
 - **Two ways to draw.** `KitePlayerVideo` picks a native surface or a pure-Compose renderer, and
-  the in-room `KITE_COMPOSE_RENDERER` toggle switches it live. The JVM actual always answers pure
-  Compose, because there is no native video view to host on desktop, and desktop frames come
-  through KiteCodec's CPU converter as one Skia raster each.
+  the in-room `KITE_COMPOSE_RENDERER` toggle switches it live. Desktop pins the Compose canvas
+  through `KiteEngine.forcesComposeCanvas`: since KitePlayer 0.0.21 the JVM native view is a real
+  AWT canvas and the library's desktop default, but macOS routes a click to the topmost native
+  view, so every control the room draws over the video would stop taking input. Desktop frames
+  come through KiteFFmpeg's CPU converter as one Skia raster each.
 - **Loading waits for the renderer.** Media loading stays suspended until the renderer reports
   itself attached, so decoder selection cannot race video output.
 - **Hardware decode** is MediaCodec on Android and VideoToolbox on Apple, both inside FFmpeg,
@@ -494,7 +496,7 @@ only one on all three platforms, so it is where an unfamiliar reader gets stuck.
 
 **Desktop actuals in brief:** Netty client + server engines are near-verbatim copies of the Android ones (JDK TLS, no Conscrypt; `NETWORK_ENGINE` defaults to `netty`); NewPipe resolver copied as-is (pure JVM); file ops/`indexMediaTree` are plain `java.io.File`; `AnimatedImage` decodes GIFs with Skia `Codec` (coil-gif is Android-only) behind a 64-entry LRU; DataStore + logs live in the per-OS app-data dir (`~/Library/Application Support/Synkplay`, `%APPDATA%\Synkplay`, `$XDG_DATA_HOME/synkplay`); `EnterRoomMode`/`ExitRoomMode` are no-ops; PiP/haptics/brightness/media-session are no-ops. CLI join: `--user U --room R [--host H] [--port P] [--pw W] [--media URL] [--autoplay]` (the desktop `consumePendingShortcut`).
 
-**Desktop engine:** KitePlayer only, via `desktopKiteEngine` (`desktopMain app/player/kite/KiteDesktopEngine.kt`), which is also the platform default because exactly one engine per platform must say `isDefault`. Presentation always resolves to the pure-Compose renderer: the JVM has no native video view to host, so KitePlayer's native-surface path draws an empty box there. Frames come through KiteCodec's CPU converter as one Skia raster each, and media loading stays suspended until the renderer reports itself attached so decoder selection cannot race video output. There is no `--engine` CLI flag any more.
+**Desktop engine:** KitePlayer only, via `desktopKiteEngine` (`desktopMain app/player/kite/KiteDesktopEngine.kt`), which is also the platform default because exactly one engine per platform must say `isDefault`. Presentation is pinned to the Compose canvas (`forcesComposeCanvas = true`): KitePlayer's JVM native view is real since 0.0.21, but on macOS it takes every click meant for the HUD drawn over it. Frames come through KiteFFmpeg's CPU converter as one Skia raster each, and media loading stays suspended until the renderer reports itself attached so decoder selection cannot race video output. There is no `--engine` CLI flag any more.
 
 **Hard-won rules:** the serial protocol consumer must NEVER suspend on the UI thread - `onState` reads the tracker position cache (`timeCurrentMillis`, PC-parity) and issues player commands as fire-and-forget Main launches; a `withContext(Main)` there deadlocked the whole inbound pipeline when the player still owned the EDT at cold-start auto-join. macOS jpackage rejects `0.x.y` versions → macOS `packageVersion` is `1.23.x` while the app stays `0.23.x`.
 

@@ -3,12 +3,13 @@ package app.player.kite
 /**
  * KitePlayer on desktop, and the only engine there.
  *
- * Presentation is the shared KitePlayerVideo since 0.0.20. Its JVM actual coerces every request
- * to the pure-Compose renderer, because the JVM has no native video view to host: KitePlayer's
- * native-surface path compiles there but draws an empty box. So the in-room renderer toggle is
- * accepted and simply has one honest answer on this platform.
+ * Presentation is the shared KitePlayerVideo since 0.0.20, pinned to the Compose canvas here.
+ * Since KitePlayer 0.0.21 the JVM has a real native view, an AWT canvas, and it is the library's
+ * desktop default, but macOS routes a click to the topmost native view, so every control this
+ * room draws over the video would stop taking input. The in-room renderer toggle is accepted and
+ * has one honest answer on this platform.
  *
- * Frames arrive through KiteCodec's CPU converter and become one Skia raster each; media loading
+ * Frames arrive through KiteFFmpeg's CPU converter and become one Skia raster each; media loading
  * stays suspended until KitePlayerVideo reports its renderer attached, so decoder selection
  * cannot race video output.
  *
@@ -18,4 +19,5 @@ package app.player.kite
 internal val desktopKiteEngine = KiteEngine(
     mediaResolver = DesktopKiteMediaResolver,
     isDefault = true,
+    forcesComposeCanvas = true,
 )

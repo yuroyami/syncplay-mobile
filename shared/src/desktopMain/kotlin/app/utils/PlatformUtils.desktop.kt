@@ -56,9 +56,9 @@ actual val httpClient: HttpClient by lazy {
  * build, not a shell around whatever native player happens to be installed. That also takes their
  * bundled natives out of the distribution.
  *
- * The engine renders through the pure-Compose path, which on the JVM is not a choice: KitePlayer's
- * native-surface path compiles for the JVM but draws nothing, because desktop has no equivalent of
- * a SurfaceView to hand it. See KiteDesktopEngine.
+ * The engine renders through the Compose canvas, pinned there by KiteDesktopEngine: KitePlayer's
+ * JVM native view is real since 0.0.21, but on macOS it takes every click meant for the controls
+ * drawn over it.
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(desktopKiteEngine)
 

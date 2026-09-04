@@ -94,9 +94,9 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 internal class KiteImpl(
     viewmodel: RoomViewmodel,
-    engine: KiteEngine,
+    private val kiteEngine: KiteEngine,
     private val mediaResolver: KiteMediaResolver,
-) : PlayerImpl(viewmodel, engine) {
+) : PlayerImpl(viewmodel, kiteEngine) {
 
     /**
      * A StateFlow, not a plain field and deliberately not Compose snapshot state. Not plain
@@ -677,7 +677,12 @@ internal class KiteImpl(
         // The native view is a surface the frosted panels cannot sample, which is why the other
         // engines swap their view type with the same switch. Here the Compose path is the one
         // glass can read, so glass being on decides the path and the preference decides the rest.
-        val path = if (composeRenderer || glassEnabled()) KiteRenderPath.ComposeCanvas else KiteRenderPath.NativeView
+        // Desktop overrides both: its native view swallows every click meant for the HUD.
+        val path = if (kiteEngine.forcesComposeCanvas || composeRenderer || glassEnabled()) {
+            KiteRenderPath.ComposeCanvas
+        } else {
+            KiteRenderPath.NativeView
+        }
         KitePlayerVideo(
             player = composedKite,
             modifier = modifier,

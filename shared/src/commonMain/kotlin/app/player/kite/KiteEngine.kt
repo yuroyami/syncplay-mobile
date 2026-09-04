@@ -34,6 +34,13 @@ internal class KiteEngine(
     private val mediaResolver: KiteMediaResolver,
     /** Desktop passes true: it is the only engine there, so it must also be the default one. */
     override val isDefault: Boolean = false,
+    /**
+     * Desktop passes true. Since KitePlayer 0.0.21 the JVM native view is a real AWT canvas, and
+     * macOS routes a click to the topmost native view, so the room's controls, which all sit over
+     * the video, would be painted and never pressed. The Compose canvas is the only path this
+     * room can use there, whatever the two preferences say.
+     */
+    val forcesComposeCanvas: Boolean = false,
 ) : PlayerEngine {
 
     override val name: String = "KitePlayer"
