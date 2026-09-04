@@ -74,6 +74,9 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_leave_question
 import syncplaymobile.shared.generated.resources.room_overflow_leave_room
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import kotlin.math.roundToInt
 
 /**
  * Primary focus target for D-pad and TV use: the play key, or the add button before a file
@@ -127,7 +130,21 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                      * the no-video state stays invisible. */
                     val videoBackground by remember { VIDEO_BACKGROUND_COLOR.flow() }.collectAsState(initial = 0xFF000000.toInt())
                     viewmodel.player.VideoPlayer(
-                        modifier = Modifier.fillMaxSize().alpha(if (hasVideo) 1f else 0f).background(Color(videoBackground)),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            // Reported so picture-in-picture can morph out of the picture itself
+                            // instead of appearing from nowhere.
+                            .onGloballyPositioned { layout ->
+                                val origin = layout.positionInWindow()
+                                VideoBounds.report(
+                                    left = origin.x.roundToInt(),
+                                    top = origin.y.roundToInt(),
+                                    right = (origin.x + layout.size.width).roundToInt(),
+                                    bottom = (origin.y + layout.size.height).roundToInt(),
+                                )
+                            }
+                            .alpha(if (hasVideo) 1f else 0f)
+                            .background(Color(videoBackground)),
                         onPlayerReady = { platformCallback.mediaSessionInitialize() },
                     )
                 }
@@ -158,10 +175,16 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         ManagedRoomModal()
 
         val globalViewmodel = LocalGlobalViewmodel.current
-        LaunchedEffect(null) {
-            delay(600)
-            if (!soloMode) viewmodel.uiState.toggleUserInfo(true)
+        // The roster opens once, on the first room of the session, so a newcomer sees who is here.
+        // It waited on a magic delay and then opened on every room, including the second one in a
+        // row. It now waits for the thing it was really waiting for, which is the roster having
+        // someone in it, and only opens if this session has not seen a room yet.
+        val firstRoom = remember { !globalViewmodel.hasEnteredRoomOnce }
+        val roster by viewmodel.session.userList.collectAsState()
+        LaunchedEffect(firstRoom, soloMode, roster.isNotEmpty()) {
             globalViewmodel.hasEnteredRoomOnce = true
+            if (!firstRoom || soloMode || roster.isEmpty()) return@LaunchedEffect
+            viewmodel.uiState.toggleUserInfo(true)
         }
     }
 }

@@ -223,10 +223,27 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
 
     /** Builds the video child for the current glass setting and wires its surface callbacks. */
     private fun installSurfaceChild() {
+        // Every file load destroys and recreates the mpv core, and this used to tear the video view
+        // down with it. That threw away a perfectly good surface and left a black frame while the
+        // platform built another one, and it is also why playFile's surface re-assert never fired:
+        // a brand new child has no surface yet. A view of the right kind is kept and its surface
+        // handed to the new core instead. Only a change of glass setting, which needs the other
+        // kind of view, rebuilds anything.
+        val existing = surfaceChild
+        val wantsTexture = glassEnabledNow()
+        val rightKind = (existing is TextureView && wantsTexture) || (existing is SurfaceView && !wantsTexture)
+        if (existing != null && rightKind) {
+            mpvSurface?.takeIf { it.isValid }?.let { surface ->
+                attachSurface(surface)
+                setSurfaceSize(existing.width, existing.height)
+            }
+            return
+        }
+
         removeAllViews()
         val lp = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
-        surfaceChild = if (glassEnabledNow()) {
+        surfaceChild = if (wantsTexture) {
             TextureView(context).also { tv ->
                 tv.layoutParams = lp
                 tv.surfaceTextureListener = object : TextureView.SurfaceTextureListener {

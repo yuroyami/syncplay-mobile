@@ -61,6 +61,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import java.lang.ref.WeakReference
+import android.graphics.Rect
+import app.room.VideoBounds
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_pause
+import syncplaymobile.shared.generated.resources.room_play
 
 /**
  * Main Activity for the Syncplay Android application.
@@ -143,6 +149,14 @@ class SyncplayActivity : ComponentActivity() {
                 )
 
                 CrashOverlay()
+            }
+        }
+
+        // The room's own words for the two picture-in-picture actions, resolved once.
+        lifecycleScope.launch {
+            runCatching {
+                pipPauseLabel = getString(Res.string.room_pause)
+                pipPlayLabel = getString(Res.string.room_play)
             }
         }
 
@@ -285,6 +299,10 @@ class SyncplayActivity : ComponentActivity() {
      * Creates a PendingIntent that carries the intended action (0=pause, 1=play)
      * so the broadcast receiver knows what to do.
      */
+    /** Resolved once the loader answers; the English words stand in only until then. */
+    private var pipPauseLabel: String = "Pause"
+    private var pipPlayLabel: String = "Play"
+
     private fun buildPiPParams(isPlaying: Boolean = false): PictureInPictureParams {
 
         // When playing → show pause button (action=0 means pause)
@@ -297,13 +315,16 @@ class SyncplayActivity : ComponentActivity() {
             PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
         )
 
+        // The labels are the room's own words for the same two actions, so the window does not
+        // switch to English the moment it shrinks.
+        val label = if (isPlaying) pipPauseLabel else pipPlayLabel
         val action = RemoteAction(
             Icon.createWithResource(
                 this,
                 if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
             ),
-            if (isPlaying) "Pause" else "Play",
-            if (isPlaying) "Pause playback" else "Resume playback",
+            label,
+            label,
             pendingIntent
         )
 
@@ -313,6 +334,11 @@ class SyncplayActivity : ComponentActivity() {
         if (hasVideo) {
             // A video-shaped window instead of the system's square default.
             builder.setAspectRatio(android.util.Rational(16, 9))
+            // The picture's own rectangle, so entering and leaving morphs out of the video rather
+            // than appearing from nowhere. The room reports it as it lays the video layer out.
+            if (VideoBounds.known) {
+                builder.setSourceRectHint(Rect(VideoBounds.left, VideoBounds.top, VideoBounds.right, VideoBounds.bottom))
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // Home while playing keeps the picture on screen, the way video apps do.
                 builder.setAutoEnterEnabled(isPlaying)
@@ -491,11 +517,11 @@ class SyncplayActivity : ComponentActivity() {
      *  2. **User preference**: some users keep their media indexed in a specific file manager
      *     and want to browse there directly.
      *
-     * Note: `ACTION_GET_CONTENT` URIs are **not persistable** (unlike `ACTION_OPEN_DOCUMENT`
-     * results), so we skip [android.content.ContentResolver.takePersistableUriPermission]. The
-     * returned URI is readable for the activity's lifetime, which is sufficient for immediate
-     * playback; it may become invalid on process restart (acceptable trade-off — the FileKit
-     * path is already the recommended choice for persistent playlist entries).
+     * Note: an `ACTION_GET_CONTENT` grant is usually not persistable, unlike an
+     * `ACTION_OPEN_DOCUMENT` one, so the result handler asks for a lasting grant and carries on
+     * when the provider refuses. The URI is readable for this session either way, which is all
+     * immediate playback needs; the FileKit path remains the one to use for playlist entries that
+     * have to survive a restart.
      */
     internal val systemFilePickerLauncher = registerForActivityResult(
         object : ActivityResultContract<String, Uri?>() {
@@ -516,6 +542,14 @@ class SyncplayActivity : ComponentActivity() {
     ) { uri ->
         val callback = pendingSystemFilePickerCallback
         pendingSystemFilePickerCallback = null
+        // A GET_CONTENT grant usually cannot be kept, but some providers do allow it, and the ones
+        // that do give a playlist entry that still opens after a restart. Asking costs nothing:
+        // a provider that refuses throws, and the grant stays good for this session either way.
+        if (uri != null) {
+            runCatching {
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
         callback?.invoke(uri?.toString())
     }
 

@@ -163,5 +163,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         railActionsExpanded.value = false
         revealedImages.clear()
         mutedUsers.clear()
+        VideoBounds.forget()
     }
 }
