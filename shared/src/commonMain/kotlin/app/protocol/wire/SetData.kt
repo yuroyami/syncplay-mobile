@@ -28,6 +28,15 @@ data class SetData(
     val ready: ReadyData? = null,
     val playlistIndex: PlaylistIndexData? = null,
     val playlistChange: PlaylistChangeData? = null,
+    /**
+     * Inbound only. Our own server reads this; nothing may ever *send* it.
+     *
+     * The reference server's `handleSet` routes the `features` command to
+     * `Watcher.setFeatures`, a method `server.py` does not define, so a
+     * `Set{"features": ...}` raises AttributeError inside its reactor and drops the
+     * connection. `WireMessage` deliberately offers no builder for it, and
+     * `SetFeaturesIsInboundOnlyTest` keeps it that way.
+     */
     @Serializable(with = LenientRoomFeaturesSerializer::class)
     val features: RoomFeatures? = null
 )
