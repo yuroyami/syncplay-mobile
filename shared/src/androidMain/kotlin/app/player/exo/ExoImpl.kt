@@ -1,10 +1,8 @@
 package app.player.exo
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
-import android.media.AudioManager
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
@@ -37,6 +35,7 @@ import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.PlayerOptions
 import app.player.models.Track
+import app.player.models.TrackChoice
 import app.preferences.Preferences.EXO_MAX_BUFFER
 import app.preferences.Preferences.EXO_MIN_BUFFER
 import app.preferences.Preferences.EXO_SEEK_BUFFER
@@ -68,7 +67,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import app.uicomponents.glassEnabledNow
 
 class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
-    lateinit var audioManager: AudioManager
 
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null
@@ -86,7 +84,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         }
         val context = contextObtainer()
 
-        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         val options = PlayerOptions.get()
         /* Clamp the buffer values so DefaultLoadControl's invariants always hold even with an
@@ -172,6 +169,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                         announceFileLoaded()
                     }
                 }
+            }
+
+            /* Display only: the room shows a waiting indicator, nothing is broadcast from here. */
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                viewmodel.playerManager.isBuffering.value = playbackState == Player.STATE_BUFFERING
             }
 
             /* Tracks local pause/play transitions. */
@@ -341,8 +344,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         /* Clear only the override for the type being changed. */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
         when (type) {
-            TrackType.SUBTITLE -> playerManager.currentTrackChoices.lastSubtitleOverride = null
-            TrackType.AUDIO -> playerManager.currentTrackChoices.lastAudioOverride = null
+            TrackType.SUBTITLE -> playerManager.currentTrackChoices.subtitle = TrackChoice.Off
+            TrackType.AUDIO -> playerManager.currentTrackChoices.audio = TrackChoice.Off
         }
 
         if (exoTrack != null) {
@@ -351,8 +354,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 exoTrack.index
             )
             when (type) {
-                TrackType.SUBTITLE -> playerManager.currentTrackChoices.lastSubtitleOverride = override
-                TrackType.AUDIO -> playerManager.currentTrackChoices.lastAudioOverride = override
+                TrackType.SUBTITLE -> playerManager.currentTrackChoices.subtitle = TrackChoice.ByOverride(override)
+                TrackType.AUDIO -> playerManager.currentTrackChoices.audio = TrackChoice.ByOverride(override)
             }
             exoplayer?.trackSelector?.parameters = builder.addOverride(override).build()
         }
@@ -374,15 +377,14 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
                 var newParams = builder.build()
 
-                if (playerManager.currentTrackChoices.lastAudioOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(
-                        playerManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@withContext
-                    ).build()
-                }
-                if (playerManager.currentTrackChoices.lastSubtitleOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(
-                        playerManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@withContext
-                    ).build()
+                for (type in TrackType.entries) {
+                    val stored = playerManager.currentTrackChoices[type]
+                    val override = (stored as? TrackChoice.ByOverride)?.override as? TrackSelectionOverride
+                    if (override != null) {
+                        newParams = newParams.buildUpon().addOverride(override).build()
+                    } else if (stored == TrackChoice.Off) {
+                        newParams = newParams.buildUpon().clearOverridesOfType(type.getExoType()).build()
+                    }
                 }
                 trackSelectionParameters = newParams
             }

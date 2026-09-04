@@ -612,6 +612,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
 
+        playerManager.currentTrackChoices.remember(type, track)
         withContext(Dispatchers.Main.immediate) {
             when (type) {
                 TrackType.SUBTITLE -> {
@@ -676,17 +677,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
     }
 
-    /**
-     * Reapplies previously selected track choices.
-     *
-     * TODO: Implement track choice persistence for iOS VLC player.
-     */
+    /** Hands the remembered audio and subtitle picks back to the engine after a reload. */
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
-
-        }
-        //TODO Not implemented for iOS VLC player
+        reapplyIndexedTrackChoices()
     }
 
     /**
@@ -1012,6 +1006,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // We deliberately don't call vlcPlayer.isPlaying() — even though it would be
             // more accurate — because the delegate runs on libvlc's timer thread and that
             // method takes vlc_player_Lock, which asserts when timer.lock is held.
+            // Display only, and separate from isNowPlaying on purpose: the room shows a waiting
+            // indicator while VLCKit opens or refills, and still calls that state "playing".
+            playerManager.isBuffering.value =
+                newState == VLCMediaPlayerState.VLCMediaPlayerStateBuffering ||
+                    newState == VLCMediaPlayerState.VLCMediaPlayerStateOpening
+
             when (newState) {
                 VLCMediaPlayerState.VLCMediaPlayerStatePlaying -> {
                     // Swallow the transient Playing emitted while opening freshly injected

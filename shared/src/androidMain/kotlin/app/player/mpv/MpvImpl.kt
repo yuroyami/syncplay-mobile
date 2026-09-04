@@ -2,7 +2,6 @@ package app.player.mpv
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.media.AudioManager
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
@@ -53,7 +52,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
-    lateinit var audioManager: AudioManager
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver
     private var durationWaitJob: kotlinx.coroutines.Job? = null
@@ -64,7 +62,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
-        audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         copyAssets(ctx)
 
@@ -214,7 +211,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                         MPVLib.setPropertyString("sid", "no")
                     }
 
-                    playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
+                    playerManager.currentTrackChoices.remember(TrackType.SUBTITLE, track)
                 }
 
                 TrackType.AUDIO -> {
@@ -224,7 +221,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                         MPVLib.setPropertyString("aid", "no")
                     }
 
-                    playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
+                    playerManager.currentTrackChoices.remember(TrackType.AUDIO, track)
                 }
             }
         }
@@ -263,31 +260,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
-            val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
-            val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
-
-
-            val ccMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.SUBTITLE }
-            val audioMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.AUDIO }
-
-            val ccGet = ccMap?.firstOrNull { it.index == subIndex }
-            val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
-
-            with(playerManager.player) {
-                if (subIndex == -1) {
-                    selectTrack(null, TrackType.SUBTITLE)
-                } else if (ccGet != null) {
-                    selectTrack(ccGet, TrackType.SUBTITLE)
-                }
-
-                if (audioIndex == -1) {
-                    selectTrack(null, TrackType.AUDIO)
-                } else if (audioGet != null) {
-                    selectTrack(audioGet, TrackType.AUDIO)
-                }
-            }
-        }
+        withContext(Dispatchers.Main.immediate) { reapplyIndexedTrackChoices() }
     }
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
@@ -434,6 +407,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                     "pause" -> {
                         playerManager.isNowPlaying.value = !value //Just to inform UI
                     }
+                    // Already observed, never handled: this is mpv stalling on its cache, which
+                    // the room shows as a waiting indicator and never treats as a pause.
+                    "paused-for-cache" -> playerManager.isBuffering.value = value
                 }
             }
 

@@ -9,7 +9,9 @@ import app.player.models.MediaFile
 import app.player.models.MediaFile.Companion.mediaFromFile
 import app.player.models.MediaFile.Companion.mediaFromUrl
 import app.player.models.MediaFileLocation
+import app.player.models.PlayerOptions
 import app.player.models.Track
+import app.player.models.TrackChoice
 import app.player.resolver.mediaResolver
 import app.player.resolver.urlLooksLikeDirectMedia
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
@@ -108,6 +110,17 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     private var scopedFileAccessStarted: Boolean = false
 
     /**
+     * External subtitle files whose iOS scope is held open alongside the media's.
+     *
+     * A subtitle is picked separately from the video, so the media's grant says nothing about it,
+     * and engines read a subtitle lazily rather than slurping it at load time. Without this an
+     * iOS-side sideloaded subtitle resolved to a path the engine was then refused. More than one
+     * subtitle can be loaded for one video, so these are held as a set and released together with
+     * the media grant on teardown.
+     */
+    private val scopedSubtitleFiles = mutableListOf<PlatformFile>()
+
+    /**
      * A media replacement is one transaction: resolve metadata, publish it, stop/open the engine,
      * and announce it. Serializing the whole sequence prevents two playlist events from crossing
      * their state, native handles, or file-descriptor ownership between those stages.
@@ -138,6 +151,19 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         }
         scopedFile = null
         scopedFileAccessStarted = false
+        releaseScopedSubtitleAccess()
+    }
+
+    /** Claims the grant for a picked subtitle and keeps it for as long as the engine may read it. */
+    private fun beginScopedSubtitleAccess(file: PlatformFile) {
+        if (scopedSubtitleFiles.any { it == file }) return
+        val started = runCatching { file.startAccessingSecurityScopedResource() }.getOrDefault(false)
+        if (started) scopedSubtitleFiles += file
+    }
+
+    private fun releaseScopedSubtitleAccess() {
+        scopedSubtitleFiles.forEach { runCatching { it.stopAccessingSecurityScopedResource() } }
+        scopedSubtitleFiles.clear()
     }
 
     @UiThread
@@ -197,6 +223,48 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     abstract suspend fun reapplyTrackChoices()
 
+    /**
+     * Applies the preferred audio and subtitle languages to a freshly read track list.
+     *
+     * Only a track the user has not already chosen for this media is touched: the track panel
+     * re-reads the list right after every pick, and without that guard the preference would undo
+     * the pick the user just made. Engines whose tracks carry no language tag answer null and are
+     * left to their own native preference handling.
+     */
+    protected suspend fun applyPreferredLanguages(mediafile: MediaFile) {
+        val options = PlayerOptions.get()
+        val wanted = mapOf(
+            TrackType.AUDIO to options.audioPreference,
+            TrackType.SUBTITLE to options.ccPreference,
+        )
+        for ((type, language) in wanted) {
+            if (language == "und" || language.isBlank()) continue
+            if (playerManager.currentTrackChoices[type] != null) continue
+            mediafile.tracks
+                .firstOrNull { it.type == type && it.language?.contains(language, ignoreCase = true) == true }
+                ?.let { selectTrack(it, type) }
+        }
+    }
+
+    /**
+     * Restores index-addressed track picks (mpv, VLCKit, AVPlayer) by handing them back to
+     * [selectTrack]. An engine that stores an opaque override, as ExoPlayer does, restores it
+     * itself instead.
+     */
+    protected suspend fun reapplyIndexedTrackChoices() {
+        val tracks = playerManager.media.value?.tracks ?: return
+        for (type in TrackType.entries) {
+            when (val choice = playerManager.currentTrackChoices[type]) {
+                null -> {}
+                TrackChoice.Off -> selectTrack(null, type)
+                is TrackChoice.ByIndex -> tracks
+                    .firstOrNull { it.type == type && it.index == choice.index }
+                    ?.let { selectTrack(it, type) }
+                is TrackChoice.ByOverride -> {}
+            }
+        }
+    }
+
     suspend fun loadExternalSub(uri: PlatformFile) {
         if (!isInitialized) return
 
@@ -207,6 +275,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             if (isValidSubtitleFile(extension)) {
                 // An engine refusing the file must not throw out of the room's composition.
                 val loaded = try {
+                    beginScopedSubtitleAccess(uri)
                     loadExternalSubImpl(uri, extension)
                     true
                 } catch (cancelled: CancellationException) {
@@ -495,6 +564,15 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         // At the last item we stop rather than wrap to 0 — there is no "loop at end of playlist"
         // option, so looping would be wrong (PC returns here unless loopAtEndOfPlaylist is enabled).
         if (currentIndex + 1 >= playlistSize) return
+
+        // Everyone in the room hits the end of a file at nearly the same moment, so without a
+        // debounce each client sends its own advance and the room jumps several entries at once.
+        if (viewmodel.playlistManager.justChangedIndex(PLAYLIST_ADVANCE_NEAR_END_MS)) return
+
+        // Only the client actually playing the selected entry may advance it. A client that never
+        // resolved the file, or is watching something else entirely, has no standing to move the
+        // room on (PC's _notPlayingCurrentIndex).
+        if (!viewmodel.playlistManager.isPlayingSelectedEntry) return
 
         viewmodel.playlistManager.sendPlaylistSelection(currentIndex + 1)
     }

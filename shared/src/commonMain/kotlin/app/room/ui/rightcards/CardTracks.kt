@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +32,7 @@ import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.player.PlayerImpl
 import app.player.models.Track
+import app.player.models.TrackTrait
 import app.room.ui.bottombar.SubtitleSearchModal
 import app.theme.Space
 import app.theme.Type
@@ -44,6 +46,7 @@ import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Rule
+import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
 import app.uicomponents.controls.VerticalRule
 import app.uicomponents.frames.PanelFrame
@@ -64,6 +67,8 @@ import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_track
 import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
 import syncplaymobile.shared.generated.resources.room_sub_track_disable
 import syncplaymobile.shared.generated.resources.room_subtitle_track_selected
+import syncplaymobile.shared.generated.resources.room_track_trait_accessibility
+import syncplaymobile.shared.generated.resources.room_track_trait_forced
 import syncplaymobile.shared.generated.resources.room_tracks_none
 import syncplaymobile.shared.generated.resources.room_tracks_title
 
@@ -79,7 +84,8 @@ object CardTracks {
         val viewmodel = LocalRoomViewmodel.current
         val ui = LocalRoomUiState.current
         val scope = rememberCoroutineScope()
-        val media = viewmodel.media
+        // Observed, not read from the plain getter: a new file has to redraw this panel.
+        val media by viewmodel.playerManager.media.collectAsState()
         val audio = media?.tracks?.filter { it.type == PlayerImpl.TrackType.AUDIO } ?: emptyList()
         val subtitles = media?.tracks?.filter { it.type == PlayerImpl.TrackType.SUBTITLE } ?: emptyList()
         var showSearch by remember { mutableStateOf(false) }
@@ -161,10 +167,21 @@ object CardTracks {
     @Composable
     private fun TrackRow(index: Int, track: Track, onClick: () -> Unit) {
         val p = palette
+        val traitLabel = when (track.trait) {
+            TrackTrait.ACCESSIBILITY -> stringResource(Res.string.room_track_trait_accessibility)
+            TrackTrait.FORCED -> stringResource(Res.string.room_track_trait_forced)
+            null -> null
+        }
         ListRow(onClick = onClick, selected = track.selected, minHeight = 30.dp, horizontalPadding = Space.gap) {
             Text("$index", style = Type.value, color = p.inkDim, maxLines = 1, modifier = Modifier.width(16.dp))
             RowGap(Space.gapTight)
             Text(track.name, style = Type.value, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            // Many files name a captions track and a plain one alike, so what the file says the
+            // track is for is spelled out rather than left to the name.
+            if (traitLabel != null) {
+                RowGap(Space.gapTight)
+                Tag(traitLabel)
+            }
             if (track.selected) {
                 RowGap(Space.gapTight)
                 Icon(CheckGlyph, contentDescription = null, tint = p.accent, modifier = Modifier.size(16.dp))

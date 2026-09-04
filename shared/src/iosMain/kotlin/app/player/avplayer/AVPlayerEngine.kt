@@ -9,7 +9,6 @@ import app.player.PlayerImpl
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.PlayerImpl.TrackType
-import app.player.models.PlayerOptions
 import app.player.models.Track
 import app.room.OSDCategory
 import app.room.RoomViewmodel
@@ -35,6 +34,7 @@ import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.AVPlayerTimeControlStatusPaused
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
+import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.asset
 import platform.AVFoundation.availableMediaCharacteristicsWithMediaSelectionOptions
 import platform.AVFoundation.currentItem
@@ -181,6 +181,10 @@ object AVPlayerEngine: PlayerEngine {
                         // change), and treating that as playing would broadcast a phantom unpause.
                         val isPlaying = avPlayer?.timeControlStatus == AVPlayerTimeControlStatusPlaying
 
+                        // The same third status, told to the room as a waiting indicator only.
+                        viewmodel.playerManager.isBuffering.value =
+                            avPlayer?.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+
                         // A failed player or item pauses on its own; that is local news only.
                         val failure = avPlayer?.error ?: avMedia?.error
                         if (!isPlaying && failure != null) {
@@ -309,22 +313,7 @@ object AVPlayerEngine: PlayerEngine {
                 }
             }
 
-            // Auto-select tracks matching preferred language
-            val options = PlayerOptions.get()
-            if (options.audioPreference != "und") {
-                mediafile.tracks.firstOrNull { track ->
-                    track.type == TrackType.AUDIO &&
-                        (track as? AvTrack)?.sOption?.extendedLanguageTag
-                            ?.contains(options.audioPreference, ignoreCase = true) == true
-                }?.let { selectTrack(it, TrackType.AUDIO) }
-            }
-            if (options.ccPreference != "und") {
-                mediafile.tracks.firstOrNull { track ->
-                    track.type == TrackType.SUBTITLE &&
-                        (track as? AvTrack)?.sOption?.extendedLanguageTag
-                            ?.contains(options.ccPreference, ignoreCase = true) == true
-                }?.let { selectTrack(it, TrackType.SUBTITLE) }
-            }
+            applyPreferredLanguages(mediafile)
         }
 
         /**
@@ -334,6 +323,7 @@ object AVPlayerEngine: PlayerEngine {
         override suspend fun selectTrack(track: Track?, type: TrackType) {
             if (!isInitialized) return
 
+            playerManager.currentTrackChoices.remember(type, track)
             val avtrack = track as? AvTrack
 
             if (avtrack != null) {
@@ -368,9 +358,10 @@ object AVPlayerEngine: PlayerEngine {
             }
         }
 
-        /** No-op: track-choice persistence is not yet implemented for AVPlayer. */
+        /** Hands the remembered audio and subtitle picks back to the engine after a reload. */
         override suspend fun reapplyTrackChoices() {
             if (!isInitialized) return
+            reapplyIndexedTrackChoices()
         }
 
         /** AVPlayer cannot load external subtitles; the base class turns the failure into the subtitle error notice. */

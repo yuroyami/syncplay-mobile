@@ -2,6 +2,7 @@ package app.player.kite
 
 import app.player.PlayerImpl
 import app.player.models.Track
+import app.player.models.TrackTrait
 import io.github.yuroyami.kiteplayer.TrackId
 
 /**
@@ -18,4 +19,6 @@ class KiteTrack(
     override val index: Int,
     override val selected: Boolean,
     val trackId: TrackId,
+    override val language: String? = null,
+    override val trait: TrackTrait? = null,
 ) : Track()
