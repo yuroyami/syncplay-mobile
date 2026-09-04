@@ -198,9 +198,12 @@ class SyncplayServer(
             }
         } else {
             val conn = _connections[watcher] ?: return
-            // A non-controller gets its own state echoed back first, then the room's authoritative state.
-            conn.sendState(room.getPosition(), watcherPauseState, false, watcher, true)
-            conn.sendState(room.getPosition(), room.isPaused(), true, room.getSetBy(), true)
+            // A non-controller gets its own state echoed back first, then the room's authoritative
+            // state. getPosition() mutates, so read it once: calling it twice would let the first
+            // read pick a setBy and a fresh timestamp that the "authoritative" second read inherits.
+            val roomPosition = room.getPosition()
+            conn.sendState(roomPosition, watcherPauseState, false, watcher, true)
+            conn.sendState(roomPosition, room.isPaused(), true, room.getSetBy(), true)
         }
     }
 

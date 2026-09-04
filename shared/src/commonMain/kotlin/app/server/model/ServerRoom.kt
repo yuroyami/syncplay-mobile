@@ -24,23 +24,37 @@ open class ServerRoom(val name: String) {
     protected var _position: Double = 0.0
 
     /**
-     * Returns the current playback position, adjusted for elapsed time if playing.
-     * If watchers exist and the last update is stale (>1s), uses the slowest watcher's position.
-     * Port of Python's Room.getPosition().
+     * Whose position the room adopts when its own reading goes stale. Base rooms follow the
+     * slowest watcher; a controlled room follows the slowest controller.
      */
-    open fun getPosition(): Double {
+    protected open fun positionCandidates(): Collection<ServerWatcher> = _watchers.values
+
+    /**
+     * Current playback position, advanced by wall-clock while playing.
+     *
+     * **This call mutates the room.** When the reading is more than a second stale it adopts
+     * the slowest candidate's position and rewrites `_position`, `_setBy` and `_lastUpdate`.
+     * That is faithful to Python's `Room.getPosition()`, and it means two calls in a row do
+     * not return the same thing and the second one sees a `setBy` the first one chose. Read it
+     * once and reuse the value; use [peekPosition] when you only want to look.
+     */
+    fun getPosition(): Double {
         val age = currentTimeSeconds() - _lastUpdate
-        if (_watchers.isNotEmpty() && age > 1) {
-            val watcher = _watchers.values.minOrNull()
-            if (watcher != null) {
-                _setBy = watcher
-                _position = watcher.getPosition() ?: _position
+        if (age > 1) {
+            val slowest = positionCandidates().minOrNull()
+            if (slowest != null) {
+                _setBy = slowest
+                _position = slowest.getPosition() ?: _position
                 _lastUpdate = currentTimeSeconds()
                 return _position
             }
         }
         return _position + (if (_playState == STATE_PLAYING) age else 0.0)
     }
+
+    /** The same reading without adopting anyone. Safe to call as often as you like. */
+    fun peekPosition(): Double =
+        _position + (if (_playState == STATE_PLAYING) currentTimeSeconds() - _lastUpdate else 0.0)
 
     open fun setPaused(state: Int, setBy: ServerWatcher? = null) {
         _playState = state
@@ -98,5 +112,5 @@ open class ServerRoom(val name: String) {
 
     override fun toString(): String = name
 
-    private fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
+    protected fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
 }

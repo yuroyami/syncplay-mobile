@@ -1,7 +1,5 @@
 package app.server.model
 
-import app.utils.SyncClock
-
 /**
  * A password-protected room where only authenticated controllers can change playback state.
  * Port of Python's ControlledRoom class (syncplay-pc-src-master/syncplay/server.py).
@@ -12,22 +10,8 @@ class ControlledServerRoom(name: String) : ServerRoom(name) {
 
     private val _controllers = mutableMapOf<String, ServerWatcher>()
 
-    /**
-     * Uses the slowest controller's position instead of the slowest watcher's.
-     */
-    override fun getPosition(): Double {
-        val age = currentTimeSeconds() - _lastUpdate
-        if (_controllers.isNotEmpty() && age > 1) {
-            val watcher = _controllers.values.minOrNull()
-            if (watcher != null) {
-                _setBy = watcher
-                _position = watcher.getPosition() ?: _position
-                _lastUpdate = currentTimeSeconds()
-                return _position
-            }
-        }
-        return _position + (if (_playState == STATE_PLAYING) age else 0.0)
-    }
+    /** A controlled room follows the slowest controller, not the slowest watcher. */
+    override fun positionCandidates(): Collection<ServerWatcher> = _controllers.values
 
     fun addController(watcher: ServerWatcher) {
         _controllers[watcher.name] = watcher
@@ -77,5 +61,4 @@ class ControlledServerRoom(name: String) : ServerRoom(name) {
         _controllers.remove(watcher.name)
     }
 
-    private fun currentTimeSeconds(): Double = SyncClock.nowSeconds()
 }
