@@ -26,6 +26,7 @@ import app.room.models.BIDI_ISOLATE_END
 import app.room.models.BIDI_ISOLATE_START
 import app.room.toFileData
 import app.utils.loggy
+import app.utils.platformCallback
 import app.utils.timestampFromMillis
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
@@ -384,6 +385,8 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             network.tls = TlsState.TLS_YES
             try {
                 network.upgradeTls()
+                // Only now is the socket really encrypted; the room's lock reads this.
+                network.encrypted.value = true
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -392,6 +395,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 // coroutine's catch only covers SerializationException, so anything else here
                 // would crash the process. Treat the socket as dead and let the retry loop
                 // take over (it re-arms TLS_ASK itself).
+                network.encrypted.value = false
                 loggy("TLS upgrade failed: ${e.stackTraceToString()}")
                 val reason = e.message ?: e::class.simpleName ?: ""
                 val failure: suspend () -> String = { getString(Res.string.room_tls_handshake_failed, reason) }
@@ -417,10 +421,14 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         dispatcher.sendHello()
     }
 
-    // TODO: Copy +room:password to clipboard
     fun onNewControlledRoom(data: NewControlledRoom) {
         session.currentRoom = data.roomName
         session.currentOperatorPassword = data.password
+
+        /* The notice has always told the user this is on their clipboard. Now it is. What goes
+         * there is the operator join string, "room:password", which is the thing an operator
+         * pastes into the room field to authenticate on the way in. */
+        runCatching { platformCallback.copyText("${data.roomName}:${data.password}") }
 
         dispatcher.broadcastMessage(
             message = { getString(Res.string.room_on_newcontrolledroom, data.roomName, data.password) },
