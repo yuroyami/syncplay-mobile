@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.theme.Space
+import app.utils.isTelevision
 
 /** The room runs immersive, so hidden status bars report zero: the notch still needs the union. */
 @Composable
@@ -53,9 +54,13 @@ fun RoomFrame(
     bottom: (@Composable BoxScope.() -> Unit)? = null,
     center: (@Composable BoxScope.() -> Unit)? = null,
 ) {
-    val topInsets = roomTopInsets()
-    val sideInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
-    val bottomInsets = WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)
+    // A television cuts off the outer edge of the picture, and reports no insets saying so, so the
+    // room keeps its chrome inside the margin Android TV asks for (5 percent of a 960x540dp screen).
+    val tvSafe = if (isTelevision()) WindowInsets(left = 48.dp, top = 27.dp, right = 48.dp, bottom = 27.dp)
+                 else WindowInsets(0)
+    val topInsets = roomTopInsets().union(tvSafe.only(WindowInsetsSides.Top))
+    val sideInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal).union(tvSafe.only(WindowInsetsSides.Horizontal))
+    val bottomInsets = WindowInsets.safeGestures.only(WindowInsetsSides.Bottom).union(tvSafe.only(WindowInsetsSides.Bottom))
     val transport = Space.rowTall + Space.gapTight
     val density = LocalDensity.current
     var railWidth by remember { mutableStateOf(0.dp) }

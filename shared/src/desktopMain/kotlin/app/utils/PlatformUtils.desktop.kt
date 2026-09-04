@@ -72,6 +72,16 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
+/**
+ * The desktop has no single switch for this, so the locale's own short time pattern answers it:
+ * a pattern with an "a" field is a 12-hour one.
+ */
+actual fun deviceUses24HourClock(): Boolean = runCatching {
+    val format = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, java.util.Locale.getDefault())
+    val pattern = (format as? java.text.SimpleDateFormat)?.toPattern() ?: return@runCatching true
+    !pattern.contains("a", ignoreCase = true)
+}.getOrDefault(true)
+
 actual fun getFolderName(uri: String): String? =
     runCatching { File(uri).name.takeIf { it.isNotBlank() } }.getOrNull()
 
@@ -201,3 +211,6 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? =
     pendingDesktopJoin.also { pendingDesktopJoin = null }
 
 actual fun reducedMotion(): Boolean = false
+
+/** A desktop window is never subject to overscan. */
+actual fun isTelevision(): Boolean = false

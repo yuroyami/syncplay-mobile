@@ -85,6 +85,16 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
+/** Android states the mode on UiModeManager; a leanback launcher device answers television. */
+actual fun isTelevision(): Boolean = runCatching {
+    val modes = contextObtainer().getSystemService(android.app.UiModeManager::class.java)
+    modes?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
+}.getOrDefault(false)
+
+/** Android answers this directly, honouring both the locale and the user's own override. */
+actual fun deviceUses24HourClock(): Boolean =
+    runCatching { android.text.format.DateFormat.is24HourFormat(contextObtainer()) }.getOrDefault(true)
+
 actual fun getFolderName(uri: String): String? {
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
         uri.toUri(),

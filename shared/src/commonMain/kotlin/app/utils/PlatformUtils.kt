@@ -15,6 +15,18 @@ import io.ktor.client.HttpClient
 /** Current system time as Unix epoch milliseconds (UTC). */
 expect fun generateTimestampMillis(): Long
 
+/**
+ * Whether the app is running on a television. TVs cut off the outer edge of the picture
+ * (overscan), so the room keeps its chrome inside a safe margin there.
+ */
+expect fun isTelevision(): Boolean
+
+/**
+ * Whether the device is set to a 24-hour clock. Chat timestamps follow it, so a phone set to
+ * "2:05 PM" never gets "14:05" in the room.
+ */
+expect fun deviceUses24HourClock(): Boolean
+
 /** Global platform-specific callback handler for system-level operations.
  * Must be initialized before use. */
 lateinit var platformCallback: PlatformCallback

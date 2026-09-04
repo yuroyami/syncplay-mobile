@@ -66,6 +66,10 @@ import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.ifaddrs.getDeviceLocalIp
 import platform.posix.memcpy
+import platform.Foundation.NSDateFormatter
+import platform.Foundation.NSLocale
+import platform.Foundation.currentLocale
+import platform.Foundation.dateFormatFromTemplate
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
@@ -147,6 +151,16 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
 
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000.0).roundToLong()
+}
+
+/**
+ * iOS states this through the locale's own hour template: the format it hands back for "j" (the
+ * locale's preferred hour field) carries an "a" only on a 12-hour clock. This follows the
+ * Settings switch as well, because that switch changes the current locale's format.
+ */
+actual fun deviceUses24HourClock(): Boolean {
+    val format = NSDateFormatter.dateFormatFromTemplate("j", options = 0uL, locale = NSLocale.currentLocale)
+    return format?.contains("a") != true
 }
 
 actual fun getFileName(uri: PlatformFile): String? {
@@ -365,3 +379,6 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? {
 }
 
 actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
+
+/** iOS ships no television target here; tvOS would be its own build. */
+actual fun isTelevision(): Boolean = false

@@ -16,10 +16,21 @@ val appName: String = KiteBuildConfig.APP_NAME
 /** Marker annotation for protocol-related builders and scopes. */
 annotation class ProtocolApi
 
-/** Current local time as an "HH:MM:SS" string (e.g. "14:23:05"). */
+/**
+ * Current local time for a chat line, in the device's own clock format: "14:23" where the device
+ * is on a 24-hour clock, "2:23 PM" where it is not. Seconds are left out: a chat line is stamped
+ * to the minute everywhere else people read chat.
+ */
 fun generateClockstamp(): String {
     val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
-    return "${c.hour.fixDigits()}:${c.minute.fixDigits()}:${c.second.fixDigits()}"
+    if (deviceUses24HourClock()) return "${c.hour.fixDigits()}:${c.minute.fixDigits()}"
+    val suffix = if (c.hour < 12) "AM" else "PM"
+    val hour = when {
+        c.hour == 0 -> 12
+        c.hour > 12 -> c.hour - 12
+        else -> c.hour
+    }
+    return "$hour:${c.minute.fixDigits()} $suffix"
 }
 
 /** Pads an int to 2 digits with a leading zero (5 -> "05"). Used by [generateClockstamp]. */
