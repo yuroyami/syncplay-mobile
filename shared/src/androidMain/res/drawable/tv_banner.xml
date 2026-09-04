@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Background gradient matching app theme -->
+    <!-- The plate the launcher icon sits on: a light diagonal sweep, same as everywhere else.
+         It used to be a navy gradient that belonged to no part of the app. -->
     <item>
         <shape android:shape="rectangle">
             <gradient
                 android:angle="135"
-                android:startColor="#1A1A2E"
-                android:centerColor="#16213E"
-                android:endColor="#0F3460"
+                android:startColor="#B0B0B0"
+                android:centerColor="#F2F2F2"
+                android:endColor="#D8D8D8"
                 android:type="linear" />
             <corners android:radius="4dp" />
         </shape>

@@ -1,1 +1,21 @@
-<p>This is the UNOFFICIAL <i>Syncplay</i> client for Android. If you don't know Syncplay, have a look <a href='https://syncplay.pl/' target='_blank' rel='nofollow'>here</a>. <i>Syncplay</i> synchronizes playback on different devices and makes sure everyone is watching the same thing at the same second, even if they're miles away.</p><p>What Syncplay Desktop needed is a Mobile client, people are using phones more than ever, so I dedicated myself to bringing its functionality to Android while keeping it compatible and interoperable with the Desktop version ! That means, users with both Syncplay Desktop and Syncplay BETA on Android can watch together. It supports the chat functionality, and most video formats ! (Working on the FFmpeg integration as of now, to make sure everyone can play all various formats). It's still a work in progress and it's really early in the alpha phase. There are various stuff that are still missing but exist in the official release. I am working on it slowly.</p><p><br><b>Features:</b></p><ul><li>Flawless interoperability with Syncplay's official desktop client and other Syncplay BETA Android clients.</li><li>Same base functionality as Syncplay for Desktop. The Syncplay protocol was re-written from Python to Kotlin line by line.</li><li>Integrated lightning-speed video player, whose capabilities depend on your device.</li><li>Real-time chat functionality, with emojis support.</li><li>A huge set of settings and preferences to tweak and customize your client.</li><li>Supports all audio track formats.</li><li>Supports loading custom external subtitle files.</li><li>No delay or latency opening the app or the room.</li><li>App written in efficient native Kotlin code, reassurring the optimal performance.</li><li>Multi-language support (Available Language: English, Arabic. More languages on the way)</li></ul>
+<p>Synkplay keeps a video playing at the same second on everyone's screen. Pause, and it pauses for the whole room. Seek, and everyone lands in the same place. It is an unofficial client for <a href='https://syncplay.pl/' target='_blank' rel='nofollow'>Syncplay</a>, and it speaks the same protocol as the desktop client, so you can watch with people running either one.</p>
+
+<p>Play files from your own device, or paste a link. The video player is built in, with several engines to choose from: mpv, ExoPlayer and the experimental KitePlayer. Between them they cover nearly every container and codec, with external subtitles, chapters and picture in picture.</p>
+
+<p><b>What it does</b></p>
+<ul>
+<li>Synchronised play, pause and seek with everyone in the room.</li>
+<li>Chat, with GIFs, while you watch.</li>
+<li>A shared playlist the whole room moves through together.</li>
+<li>Subtitle search and download from OpenSubtitles, plus your own subtitle files.</li>
+<li>Host your own server from the app, with no account and no setup.</li>
+<li>Managed rooms, where one person holds the controls.</li>
+<li>Picture in picture, so the video stays while you do something else.</li>
+<li>Themes you can build yourself, and a settings screen that lets you tune almost everything.</li>
+<li>Eight languages, and more through Weblate.</li>
+</ul>
+
+<p><b>Privacy</b></p>
+<p>No account, no analytics, no advertising. The app talks to the server you choose to join, and to a service only when you use the feature that needs it.</p>
+
+<p>Free software under the AGPL 3.0. The source is at <a href='https://github.com/yuroyami/syncplay-mobile' target='_blank' rel='nofollow'>github.com/yuroyami/syncplay-mobile</a>.</p>

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/shared/src/androidMain/ic_launcher-playstore.png" width="160" alt="Synkplay">
+  <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="160" alt="Synkplay">
 </p>
 
 <h1 align="center">Synkplay</h1>

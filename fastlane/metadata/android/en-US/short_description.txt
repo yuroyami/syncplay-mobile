@@ -1,1 +1,1 @@
-synchronize media playback (video/audio) on multiple devices
+Watch videos together, in sync, on Android, iOS and desktop
