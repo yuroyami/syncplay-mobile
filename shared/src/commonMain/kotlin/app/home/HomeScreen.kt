@@ -134,13 +134,15 @@ import syncplaymobile.shared.generated.resources.home_password_if_any
 import syncplaymobile.shared.generated.resources.home_port
 import syncplaymobile.shared.generated.resources.home_shortcut_saved
 import app.utils.appName
+import app.protocol.OFFICIAL_SERVER_ADDRESS
+import app.protocol.OFFICIAL_SERVER_NAME
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
 /** The official server is one host; only the port varies, so the picker offers just these. */
 val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
-private const val OFFICIAL_HOST = "syncplay.pl"
+private const val OFFICIAL_HOST = OFFICIAL_SERVER_NAME
 private const val LOCAL_HOST = "127.0.0.1"
 
 /** Where the join goes: the official server, someone else's, or the one this app hosts. */
@@ -207,7 +209,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             mutableStateOf<ServerMode?>(
                                 when {
                                     !hasSavedConfig -> null
-                                    officialServers.contains("${config.ip.replace("151.80.32.178", OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
+                                    officialServers.contains("${config.ip.replace(OFFICIAL_SERVER_ADDRESS, OFFICIAL_HOST)}:${config.port}") -> ServerMode.Official
                                     config.ip == LOCAL_HOST || config.ip == "localhost" -> ServerMode.Host
                                     else -> ServerMode.Custom
                                 }

@@ -14,6 +14,7 @@ import app.preferences.set
 import app.preferences.value
 import app.protocol.ProtocolManager
 import app.protocol.Session
+import app.protocol.resolveServerEndpoint
 import app.protocol.event.RoomCallback
 import app.protocol.event.RoomEventDispatcher
 import app.protocol.models.TlsState
@@ -132,8 +133,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             joinConfig?.let {
                 launch {
-                    session.tlsPeerHost = joinConfig.ip.trim().ifEmpty { "syncplay.pl" }
-                    session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+                    val endpoint = resolveServerEndpoint(joinConfig.ip)
+                    session.tlsPeerHost = endpoint.certificateHost
+                    session.serverHost = endpoint.dialHost
                     session.serverPort = joinConfig.port
                     session.currentUsername = joinConfig.user
                     session.currentRoom = joinConfig.room

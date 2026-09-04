@@ -13,7 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class Session(val protocol: ProtocolManager) {
-    var serverHost: String = "151.80.32.178"
+    var serverHost: String = OFFICIAL_SERVER_ADDRESS
     var serverPort: Int = 8997
 
     /**
@@ -21,7 +21,7 @@ class Session(val protocol: ProtocolManager) {
      * name is collapsed to an IP before connecting. TLS checks the certificate against this and
      * sends it as SNI; the socket still dials [serverHost].
      */
-    var tlsPeerHost: String = "syncplay.pl"
+    var tlsPeerHost: String = OFFICIAL_SERVER_NAME
     var currentUsername: String = "Anonymous${(1000..9999).random()}"
     var currentRoom: String = "roomname"
     var currentPassword: String = ""

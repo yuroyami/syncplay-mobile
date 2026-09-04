@@ -58,6 +58,8 @@ import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_required_downgrade
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
+import app.protocol.OFFICIAL_SERVER_ADDRESS
+import app.protocol.OFFICIAL_SERVER_NAME
 
 /**
  * Handles incoming Syncplay protocol events, updating local state and broadcasting
@@ -339,7 +341,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             message = {
                 getString(
                     Res.string.room_attempting_connect,
-                    if (session.serverHost == "151.80.32.178") "syncplay.pl" else session.serverHost,
+                    if (session.serverHost == OFFICIAL_SERVER_ADDRESS) OFFICIAL_SERVER_NAME else session.serverHost,
                     session.serverPort.toString()
                 )
             },

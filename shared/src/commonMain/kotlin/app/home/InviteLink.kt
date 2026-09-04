@@ -1,5 +1,8 @@
 package app.home
 
+import app.protocol.OFFICIAL_SERVER_ADDRESS
+import app.protocol.OFFICIAL_SERVER_NAME
+
 /**
  * The room as one line someone can send.
  *
@@ -18,8 +21,8 @@ object InviteLink {
     private const val PREFIX = "$SCHEME://join"
 
     /** The official server is named, not resolved to the address the client happens to dial. */
-    private const val OFFICIAL_IP = "151.80.32.178"
-    private const val OFFICIAL_HOST = "syncplay.pl"
+    private const val OFFICIAL_IP = OFFICIAL_SERVER_ADDRESS
+    private const val OFFICIAL_HOST = OFFICIAL_SERVER_NAME
 
     /** Caps matching the join form, so a hostile link cannot hand the room a megabyte of name. */
     private const val MAX_NAME = 149

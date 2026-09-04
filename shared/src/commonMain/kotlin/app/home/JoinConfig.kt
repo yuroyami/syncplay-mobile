@@ -7,6 +7,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
+import app.protocol.OFFICIAL_SERVER_NAME
 
 /**
  * Configuration data for joining a Syncplay room.
@@ -26,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 data class JoinConfig(
     val user: String = "user" + (0..9999).random().toString(),
     val room: String = "room" + (0..9999).random().toString(),
-    val ip: String = "syncplay.pl",
+    val ip: String = OFFICIAL_SERVER_NAME,
     val port: Int = 8997,
     val pw: String = "",
     val operatorPassword: String = "",
