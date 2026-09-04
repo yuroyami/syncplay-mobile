@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.ClosedCaptionOff
 import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
+import io.github.vinceglb.filekit.readString
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FastForward
@@ -131,6 +132,10 @@ import syncplaymobile.shared.generated.resources.setting_clear_logs_dialog
 import syncplaymobile.shared.generated.resources.setting_clear_logs_summary
 import syncplaymobile.shared.generated.resources.setting_clear_logs_title
 import syncplaymobile.shared.generated.resources.setting_export_log_summary
+import syncplaymobile.shared.generated.resources.setting_export_settings_summary
+import syncplaymobile.shared.generated.resources.setting_export_settings_title
+import syncplaymobile.shared.generated.resources.setting_import_settings_summary
+import syncplaymobile.shared.generated.resources.setting_import_settings_title
 import syncplaymobile.shared.generated.resources.setting_export_log_title
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_a
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_b
@@ -1207,6 +1212,60 @@ object Preferences {
         "pref_max_buffer_size", "pref_min_buffer_size", "pref_seek_buffer_size",
         "pref_video_background_color", "pref_room_ui_opacity",
     )
+
+    /**
+     * Every setting the app shows, into a file. What stays behind is anything private: the
+     * install id, the saved join config, the server salt, the server password, watch positions.
+     */
+    val EXPORT_SETTINGS = Pref<String>("settings_export", "") {
+        title = Res.string.setting_export_settings_title
+        summary = Res.string.setting_export_settings_summary
+        icon = Icons.Filled.FileDownload
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = {
+                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val saver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
+                    scope.launch { file?.write(buildSettingsBackup().encodeToByteArray()) }
+                }
+                LaunchedEffect(null) {
+                    saver.launch(suggestedName = "${appName}Settings", extension = "json")
+                }
+            }
+        )
+    }
+
+    /**
+     * A settings file back in. A value that does not fit its setting is skipped rather than
+     * guessed at, because a settings file is a text file and someone will hand-edit one.
+     */
+    val IMPORT_SETTINGS = Pref<String>("settings_import", "") {
+        title = Res.string.setting_import_settings_title
+        summary = Res.string.setting_import_settings_summary
+        icon = Icons.Filled.FileUpload
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = {
+                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val picker = rememberFilePickerLauncher(type = FileKitType.File(listOf("json"))) { file ->
+                    if (file == null) return@rememberFilePickerLauncher
+                    scope.launch {
+                        val (values, outcome) = readSettingsBackup(file.readString())
+                        if (outcome.error != null) {
+                            loggy("Settings import refused: ${outcome.error}")
+                            return@launch
+                        }
+                        // One transaction: a half-applied settings file is worse than none.
+                        datastore.edit { preferences ->
+                            values.forEach { (pref, value) -> preferences[pref.anyKey] = value }
+                        }
+                        loggy("Settings imported: ${outcome.applied} applied, ${outcome.skipped} skipped")
+                    }
+                }
+                LaunchedEffect(null) { picker.launch() }
+            }
+        )
+    }
 
     val CLEAR_LOGS = Pref("log_clear", "") {
         title = Res.string.setting_clear_logs_title

@@ -19,6 +19,8 @@ import app.preferences.Preferences.CUSTOM_SEEK_FRONT
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.ERASE_SHORTCUTS
 import app.preferences.Preferences.DISABLE_FROSTED_GLASS
+import app.preferences.Preferences.EXPORT_SETTINGS
+import app.preferences.Preferences.IMPORT_SETTINGS
 import app.preferences.Preferences.EXPORT_LOGS
 import app.preferences.Preferences.FILE_MISMATCH_WARNING
 import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
@@ -162,6 +164,8 @@ val GLOBAL_ADVANCED = SettingCategory(
 ) {
     +DISABLE_FROSTED_GLASS
     group(Res.string.settings_group_logs) {
+        +EXPORT_SETTINGS
+        +IMPORT_SETTINGS
         +EXPORT_LOGS
         +CLEAR_LOGS
     }

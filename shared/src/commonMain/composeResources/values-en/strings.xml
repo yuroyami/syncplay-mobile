@@ -309,6 +309,10 @@
     <string name="setting_network_engine_netty">Netty (recommended)</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO (recommended)</string>
     <string name="setting_network_engine_ktor">Ktor (experimental)</string>
+    <string name="setting_export_settings_title">Export settings</string>
+    <string name="setting_export_settings_summary">Save every setting to a file.</string>
+    <string name="setting_import_settings_title">Import settings</string>
+    <string name="setting_import_settings_summary">Read settings back from a file.</string>
     <string name="setting_export_log_title">Export logs</string>
     <string name="setting_export_log_summary">Saves this session's log as a text file.</string>
     <string name="setting_clear_logs_title">Clear logs</string>
