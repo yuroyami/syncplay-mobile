@@ -106,6 +106,9 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_empty
 import syncplaymobile.shared.generated.resources.room_shared_playlist_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
 import syncplaymobile.shared.generated.resources.room_shared_playlist_urls
+import syncplaymobile.shared.generated.resources.room_shared_playlist_undo
+import androidx.compose.material.icons.filled.Undo
+import androidx.compose.runtime.collectAsState
 
 /** Which header key is unfolded, if any. */
 private enum class PlaylistGroup { Add, Shuffle, More }
@@ -163,6 +166,16 @@ object CardSharedPlaylist {
             actions = {
                 HeaderKey(AddGlyph, stringResource(Res.string.room_shared_playlist_add), group == PlaylistGroup.Add) { toggle(PlaylistGroup.Add) }
                 HeaderKey(Icons.Filled.Shuffle, stringResource(Res.string.room_shared_playlist_button_shuffle), group == PlaylistGroup.Shuffle) { toggle(PlaylistGroup.Shuffle) }
+                // Only there when there is something to take back: a shuffle, a clear or a
+                // wrong delete is one tap and reaches everyone.
+                val canUndo by playlist.canUndo.collectAsState()
+                if (canUndo) {
+                    HeaderKey(
+                        icon = Icons.Filled.Undo,
+                        name = stringResource(Res.string.room_shared_playlist_undo),
+                        open = false,
+                    ) { playlist.undoLastPlaylistChange() }
+                }
                 HeaderKey(MoreGlyph, stringResource(Res.string.room_shared_playlist_more), group == PlaylistGroup.More) { toggle(PlaylistGroup.More) }
             },
         ) {

@@ -115,6 +115,32 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         _pendingUntrusted.value = null
     }
 
+    /**
+     * The playlists this room had before the last few edits.
+     *
+     * A shuffle, a clear or a wrong delete is one tap and reaches everyone, and until now there
+     * was no way back except retyping the list. The stack is small on purpose: this is an undo,
+     * not a history.
+     */
+    private val undoStack = ArrayDeque<List<String>>()
+
+    private val _canUndo = MutableStateFlow(false)
+    val canUndo = _canUndo.asStateFlow()
+
+    /** Called before any edit that replaces the whole list. */
+    private fun rememberForUndo() {
+        undoStack.addLast(session.sharedPlaylist.toList())
+        while (undoStack.size > MAX_UNDO_STEPS) undoStack.removeFirst()
+        _canUndo.value = true
+    }
+
+    /** Puts the previous playlist back and tells the room. */
+    fun undoLastPlaylistChange() {
+        val previous = undoStack.removeLastOrNull() ?: return
+        _canUndo.value = undoStack.isNotEmpty()
+        viewmodel.networkManager.sendAsync(WireMessage.playlistChange(previous))
+    }
+
     /** Remembers a consented URL, forgetting the oldest past the cap so a long session stays bounded. */
     private fun rememberLocalUrl(url: String) {
         locallyAddedUrls.remove(url)
@@ -125,6 +151,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
     suspend fun shuffle(mode: Boolean) {
+        rememberForUndo()
         /* If the shared playlist is empty, do nothing */
         if (session.spIndex.intValue < 0 || session.sharedPlaylist.isEmpty()) return
 
@@ -189,6 +216,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
         if (merged.size == session.sharedPlaylist.size) return
         if (rejectsOversizedPlaylist(merged)) return
+        rememberForUndo()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(merged))
     }
 
@@ -278,12 +306,14 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /** Clears the shared playlist */
     fun clearPlaylist() {
         if (session.sharedPlaylist.isEmpty()) return
+        rememberForUndo()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(emptyList()))
     }
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
         if (i !in session.sharedPlaylist.indices) return
+        rememberForUndo()
         session.sharedPlaylist.removeAt(i)
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(session.sharedPlaylist.toList()))
 
@@ -460,6 +490,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     companion object {
+        /** How many playlist edits can be taken back. An undo, not a history. */
+        private const val MAX_UNDO_STEPS = 10
+
         private const val MAX_LOCAL_URLS = 500
 
         /**

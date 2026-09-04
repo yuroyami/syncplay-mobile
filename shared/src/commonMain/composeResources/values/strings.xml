@@ -660,6 +660,7 @@
     <string name="trusted_domains_clear">Clear</string>
     <string name="trusted_domains_remove">Remove</string>
     <string name="trusted_domains_empty">No domains yet. Nothing another user pushes will auto-load.</string>
+    <string name="room_shared_playlist_undo">Undo the last playlist change</string>
     <string name="room_shared_playlist_empty">The playlist is empty.</string>
     <string name="room_shared_playlist_add">Add</string>
     <string name="room_shared_playlist_more">More</string>
