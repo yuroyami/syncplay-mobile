@@ -609,8 +609,6 @@
     <string name="connect_watch_alone">Watch alone</string>
     <string name="connect_official">Official</string>
     <string name="connect_custom">Custom</string>
-    <string name="connect_custom_help">The address and port your host gave you.</string>
-    <string name="connect_password_help">Only if the server asks for one.</string>
     <string name="home_shortcut_saved">Shortcut saved: %1$s</string>
     <string name="tips_next">Next</string>
     <!-- Theming (design overhaul) -->
