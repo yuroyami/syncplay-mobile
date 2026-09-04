@@ -1,8 +1,22 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+/**
+ * Local overrides for the io.github.yuroyami libraries (KiteConfig, KitePlayer), off by default.
+ *
+ * They live here so those libraries can be iterated on without publishing, but as an always-on
+ * repository they were a silent trap: a stale local build quietly wins over Maven Central, and
+ * the difference only shows up as behaviour nobody can reproduce. Turn them on deliberately:
+ *
+ *     ./gradlew <task> -PuseMavenLocal=true
+ */
 pluginManagement {
+    // pluginManagement is evaluated before the rest of this script, so the flag is read here too.
+    val useMavenLocal = providers.gradleProperty("useMavenLocal").orNull.toBoolean()
     repositories {
-        mavenLocal {
-            content { includeGroupByRegex("io\\.github\\.yuroyami(\\..*)?") }
+        if (useMavenLocal) {
+            mavenLocal {
+                content { includeGroupByRegex("io\\.github\\.yuroyami(\\..*)?") }
+            }
         }
         mavenCentral()
         gradlePluginPortal()
@@ -12,9 +26,12 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    val useMavenLocal = providers.gradleProperty("useMavenLocal").orNull.toBoolean()
     repositories {
-        mavenLocal {
-            content { includeGroupByRegex("io\\.github\\.yuroyami(\\..*)?") }
+        if (useMavenLocal) {
+            mavenLocal {
+                content { includeGroupByRegex("io\\.github\\.yuroyami(\\..*)?") }
+            }
         }
         google()
         mavenCentral()
