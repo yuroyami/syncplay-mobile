@@ -25,10 +25,11 @@ fun Project.registerQualityGates() {
         registerLocaleParityGate(),
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
+        registerDestroyContractGate(),
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
-        description = "Runs every build-time gate: protocol throws, string resources, locale parity, dead resources."
+        description = "Runs every build-time gate: protocol throws, string resources, locale parity, dead resources, settings reachability, destroy contract."
         dependsOn(gates)
     }
     gradle.projectsEvaluated {
@@ -294,6 +295,68 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
     }
 }
 
+
+/**
+ * The engine destroy contract, enforced.
+ *
+ * Every `destroy()` must flip `isInitialized = false` first, then cancel `playerSupervisorJob`,
+ * and only then release the native engine. The order is not cosmetic: mpv's handle is
+ * process-global, so a position tracker that outlives teardown sails past its own guard and
+ * trips a native CHECK that aborts the process. On the other engines the same mistake is
+ * quieter, and only leaks the whole RoomViewmodel graph.
+ *
+ * A scan, because three of the five engines are iOS or Android actuals that no JVM test can
+ * construct, and this is exactly the kind of ordering a well-meaning edit reverses.
+ */
+private fun Project.registerDestroyContractGate(): TaskProvider<*> {
+    val engineRoots = listOf(
+        file("shared/src/commonMain/kotlin/app/player"),
+        file("shared/src/androidMain/kotlin/app/player"),
+        file("shared/src/iosMain/kotlin/app/player"),
+    ).filter { it.exists() }
+    val root = rootDir
+    return tasks.register("checkDestroyContract") {
+        group = GATE_GROUP
+        description = "Fails if a player engine's destroy() breaks the guard-then-cancel-then-release order."
+        inputs.files(engineRoots)
+        doLast {
+            val problems = mutableListOf<String>()
+            var checked = 0
+            engineRoots.forEach { dir ->
+                dir.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { f ->
+                    val lines = f.readLines()
+                    lines.forEachIndexed { i, line ->
+                        if (!line.contains("override suspend fun destroy()")) return@forEachIndexed
+                        checked++
+                        val where = f.relativeTo(root).path + ":" + (i + 1)
+                        // Read to the end of the function: the first line indented exactly as
+                        // the declaration and closing a brace.
+                        val indent = line.takeWhile { it == ' ' }
+                        val body = lines.drop(i + 1)
+                            .takeWhile { it.trimEnd() != "$indent}" }
+                            .map { it.substringBefore("//") }
+                        val guard = body.indexOfFirst { it.contains("isInitialized = false") }
+                        val cancel = body.indexOfFirst { it.contains("playerSupervisorJob.cancel()") }
+                        when {
+                            guard < 0 -> problems += "$where: never sets isInitialized = false"
+                            cancel < 0 -> problems += "$where: never cancels playerSupervisorJob"
+                            guard > cancel -> problems +=
+                                "$where: cancels playerSupervisorJob before dropping the isInitialized guard"
+                        }
+                    }
+                }
+            }
+            if (problems.isNotEmpty()) {
+                throw GradleException(
+                    "A player engine broke the destroy contract. It must flip the guard, then\n" +
+                        "cancel the supervisor, then release the engine:\n" +
+                        problems.joinToString("\n") { "  " + it }
+                )
+            }
+            logger.lifecycle("All " + checked + " engine destroy() bodies follow the contract.")
+        }
+    }
+}
 
 private fun List<File>.kotlinFiles(): List<File> =
     flatMap { if (it.isDirectory) it.walkTopDown().toList() else listOf(it) }
