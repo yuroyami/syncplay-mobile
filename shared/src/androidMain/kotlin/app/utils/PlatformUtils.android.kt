@@ -286,3 +286,11 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? = null
 actual fun reducedMotion(): Boolean = runCatching {
     android.provider.Settings.Global.getFloat(contextObtainer().contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 }.getOrDefault(false)
+
+actual fun localizedLanguageName(iso6391: String): String? {
+    val locale = java.util.Locale.forLanguageTag(iso6391)
+    val name = locale.getDisplayLanguage(java.util.Locale.getDefault())
+    // The JDK echoes the code back when it does not know the language.
+    if (name.isBlank() || name.equals(iso6391, ignoreCase = true)) return null
+    return name.replaceFirstChar { it.titlecase(java.util.Locale.getDefault()) }
+}

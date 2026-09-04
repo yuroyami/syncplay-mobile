@@ -253,6 +253,7 @@
     <string name="setting_display_language_title">Display language</string>
     <string name="setting_display_language_system">System language</string>
     <string name="setting_display_language_summry">Select your language of choice with which %1$s is displayed.</string>
+    <string name="setting_language_no_preference">No preference</string>
     <string name="setting_audio_default_language_title">Audio language</string>
     <string name="setting_audio_default_language_summry">Automatically load an audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_cc_default_language_title">Subtitle language</string>

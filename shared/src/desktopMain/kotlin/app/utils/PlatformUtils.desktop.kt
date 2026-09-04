@@ -214,3 +214,10 @@ actual fun reducedMotion(): Boolean = false
 
 /** A desktop window is never subject to overscan. */
 actual fun isTelevision(): Boolean = false
+
+actual fun localizedLanguageName(iso6391: String): String? {
+    val locale = java.util.Locale.forLanguageTag(iso6391)
+    val name = locale.getDisplayLanguage(java.util.Locale.getDefault())
+    if (name.isBlank() || name.equals(iso6391, ignoreCase = true)) return null
+    return name.replaceFirstChar { it.titlecase(java.util.Locale.getDefault()) }
+}
