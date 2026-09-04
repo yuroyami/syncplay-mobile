@@ -38,7 +38,7 @@ fun Project.registerQualityGates() {
     ) + registerDocVersionGates().take(1)
     tasks.register("qualityGates") {
         group = GATE_GROUP
-        description = "Runs every build-time gate: protocol throws, string resources, locale parity, dead resources, settings reachability, destroy contract."
+        description = "Runs all eight build-time gates: protocol throws, string resources, locale parity, dead resources, settings reachability, destroy contract, store metadata, doc versions."
         dependsOn(gates)
     }
     gradle.projectsEvaluated {
