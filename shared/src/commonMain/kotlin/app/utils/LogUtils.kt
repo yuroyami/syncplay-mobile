@@ -4,6 +4,15 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.plugins.logging.Logger as KtorLogger
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -32,6 +41,58 @@ private fun formatDate(millis: Long): String {
 
 private fun Int.pad() = toString().padStart(2, '0')
 
+/**
+ * What the pump accepts: a line to write, or a request to be told when everything queued
+ * before it has landed on disk.
+ */
+private sealed interface LogEntry {
+    data class Line(val timestamp: String, val date: String, val text: String) : LogEntry
+    data class Flush(val done: CompletableDeferred<Unit>) : LogEntry
+}
+
+private val logScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+private val logQueue = Channel<LogEntry>(Channel.UNLIMITED)
+
+/**
+ * One writer drains the queue on the IO dispatcher, batching whatever is already waiting into a
+ * single append per file. Started on the first [loggy] call and never restarted.
+ */
+private val logPump: Job by lazy {
+    logScope.launch {
+        val batch = mutableListOf<LogEntry>()
+        for (first in logQueue) {
+            batch.clear()
+            batch += first
+            while (true) batch += logQueue.tryReceive().getOrNull() ?: break
+            writeBatch(batch)
+        }
+    }
+}
+
+private fun writeBatch(batch: List<LogEntry>) {
+    val lines = batch.filterIsInstance<LogEntry.Line>()
+    if (lines.isNotEmpty()) {
+        synchronized(logLock) {
+            try {
+                val logDir = getLogDirectoryPath() ?: return@synchronized
+                for ((date, group) in lines.groupBy { it.date }) {
+                    val text = group.joinToString("") { "${it.timestamp} | ${it.text}\n" }
+                    appendToFile("$logDir/$date.log", text)
+                }
+            } catch (_: Exception) {
+                // Losing a log line must never take the app with it.
+            }
+        }
+    }
+    batch.filterIsInstance<LogEntry.Flush>().forEach { it.done.complete(Unit) }
+}
+
+/**
+ * Records a line. Cheap and non-blocking: the console print is immediate, the file write is
+ * handed to a writer on the IO dispatcher. It used to append to a file, line by line, under a
+ * lock, on whatever thread called it, which included the main thread and the serial protocol
+ * consumer.
+ */
 fun loggy(s: Any?) {
     val string = if (s is Exception) {
         s.stackTraceToString()
@@ -40,27 +101,32 @@ fun loggy(s: Any?) {
     }
 
     /* Always print to console (iOS: Xcode console, Android: logcat), including in release builds
-     * so runtime errors stay visible. The file write below preserves logs for export from settings. */
+     * so runtime errors stay visible. The queued file write preserves logs for export from settings. */
     Logger.e(string)
 
-    synchronized(logLock) {
-        try {
-            val logDir = getLogDirectoryPath() ?: return@synchronized
-            val millis = generateTimestampMillis()
-            val timestamp = formatTimestamp(millis)
-            val dateString = formatDate(millis)
-            val logFilePath = "$logDir/$dateString.log"
-
-            string.lines().forEach { line ->
-                appendToFile(logFilePath, "$timestamp | $line\n")
-            }
-        } catch (_: Exception) {
-            // Don't crash if logging fails
-        }
+    logPump // starts the writer on first use
+    val millis = generateTimestampMillis()
+    val timestamp = formatTimestamp(millis)
+    val date = formatDate(millis)
+    for (line in string.lines()) {
+        logQueue.trySend(LogEntry.Line(timestamp, date, line))
     }
 }
 
-/** Reads and returns all log file contents as a ByteArray (for export). */
+/** Suspends until every line queued so far is on disk. Export calls this before reading. */
+suspend fun flushLogs() {
+    logPump
+    val done = CompletableDeferred<Unit>()
+    if (logQueue.trySend(LogEntry.Flush(done)).isSuccess) done.await()
+}
+
+/** Every log file, concatenated, with anything still queued written out first. */
+suspend fun readLogsForExport(): ByteArray {
+    flushLogs()
+    return withContext(Dispatchers.IO) { logFile }
+}
+
+/** Reads and returns all log file contents as a ByteArray. Prefer [readLogsForExport]. */
 val logFile: ByteArray
     get() = synchronized(logLock) {
         try {

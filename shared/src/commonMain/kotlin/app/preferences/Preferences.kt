@@ -74,7 +74,7 @@ import app.utils.get
 import app.utils.clearLogs
 import app.utils.getMpvConfFilePath
 import app.utils.loggy
-import app.utils.logFile
+import app.utils.readLogsForExport
 import app.utils.readFileBytes
 import app.utils.writeFileBytes
 import app.utils.platform
@@ -1208,7 +1208,7 @@ object Preferences {
 
                 val logSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
                     scope.launch {
-                        file?.write(logFile)
+                        file?.write(readLogsForExport())
                     }
                 }
 
