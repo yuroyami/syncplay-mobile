@@ -5,13 +5,12 @@ import androidx.lifecycle.viewModelScope
 import app.player.models.MediaFile
 import app.preferences.Preferences
 import app.preferences.value
-import app.protocol.ProtocolManager.Companion.FASTFORWARD_BEHIND_THRESHOLD
-import app.protocol.ProtocolManager.Companion.FASTFORWARD_EXTRA_TIME
-import app.protocol.ProtocolManager.Companion.FASTFORWARD_RESET_THRESHOLD
-import app.protocol.ProtocolManager.Companion.FASTFORWARD_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
-import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
-import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
+import app.protocol.sync.SyncAction
+import app.protocol.sync.SyncContext
+import app.protocol.sync.SyncPrefs
+import app.protocol.sync.decideSync
+import app.protocol.sync.withIgnoringOnTheFly
 import app.protocol.Session
 import app.protocol.WireMessage
 import app.protocol.WireMessageHandler
@@ -81,30 +80,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         protocol.lastStateReceivedAt = SyncClock.now()
 
         val state = message.data
-        var position: Double? = null
-        var paused: Boolean? = null
-        var doSeek: Boolean? = null
-        var setBy: String? = null
-        var messageAge = 0.0
         var latencyCalculation: Double? = null
-
-        state.ignoringOnTheFly?.let { ignoringOnTheFly ->
-            if (ignoringOnTheFly.server != null) {
-                protocol.serverIgnFly = ignoringOnTheFly.server
-                protocol.clientIgnFly = 0
-            } else if (ignoringOnTheFly.client != null) {
-                if (protocol.clientIgnFly == ignoringOnTheFly.client) {
-                    protocol.clientIgnFly = 0
-                }
-            }
-        }
-
-        state.playstate?.let { playstate ->
-            position = playstate.position ?: 0.0
-            paused = playstate.paused
-            doSeek = playstate.doSeek
-            setBy = playstate.setBy
-        }
+        var messageAge = 0.0
 
         state.ping?.let { ping ->
             latencyCalculation = ping.latencyCalculation
@@ -115,133 +92,37 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             messageAge = protocol.pingService.forwardDelay
         }
 
-        if (position != null && paused != null && protocol.clientIgnFly == 0) {
-            // Match python: when the room is playing, the position the server sent us is
-            // already messageAge seconds stale, so the *current* expected position is
-            // position + messageAge. All threshold comparisons must use this aged value.
-            val agedPosition = if (paused) position else position + messageAge
+        // The decision itself is a pure function; see app.protocol.sync.SyncDecision. Everything
+        // it needs is gathered here, and everything it decides is applied below, in order.
+        protocol.syncState = protocol.syncState.withIgnoringOnTheFly(state.ignoringOnTheFly)
+        val outcome = decideSync(
+            playstate = state.playstate,
+            state = protocol.syncState,
+            ctx = SyncContext(
+                now = SyncClock.now(),
+                playerPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
+                hasMedia = viewmodel.media != null,
+                isInBackground = viewmodel.uiState.isInBackground,
+                supportsSpeedAdjustment = viewmodel.player.supportsSpeedAdjustment,
+                selfName = session.currentUsername,
+                followerInControlledRoom = session.isInControlledRoomWithoutController(),
+                prefs = SyncPrefs(
+                    rewind = Preferences.SYNC_REWIND.value(),
+                    fastForward = Preferences.SYNC_FASTFORWARD.value(),
+                    slowdown = Preferences.SYNC_SLOWDOWN.value(),
+                    dontSlowWithMe = Preferences.SYNC_DONT_SLOW_WITH_ME.value(),
+                ),
+                messageAge = messageAge,
+                rewindThreshold = protocol.rewindThreshold.toDouble(),
+            ),
+        )
+        protocol.syncState = outcome.state
+        outcome.actions.forEach { apply(it) }
 
-            // ONLY a genuine room-state transition: the last room pause-state we recorded
-            // differs from what the server just sent. Must NOT also test
-            // `paused == viewmodel.player.isPlaying()` — that fires on a local player/room
-            // divergence rather than a transition, so a stale async isPlaying() (VLCKit's)
-            // would re-fire the "X paused/unpaused" OSD on every 1 Hz State. Player drift is
-            // corrected by the rewind/fastforward/slowdown block and the channel-health
-            // collector, not by re-announcing here.
-            val pausedChanged = protocol.globalPaused != paused
-            // Position comes from the tracker cache, aged by the time since its sample while
-            // the engine plays, NOT from a live player probe. Two reasons:
-            //  1. PC parity — the reference client compares against its 100ms-polled cache
-            //     plus elapsed time, never a synchronous player query (client.py getPlayerPosition).
-            //  2. The protocol consumer must NEVER wait on the UI thread. On desktop, a
-            //     withContext(Main) here deadlocked the whole inbound pipeline when libVLC
-            //     was still initializing on the EDT at cold-start auto-join: the first State
-            //     suspended forever, every later message queued behind it, and the server
-            //     dropped us for not ACKing.
-            val diff = (viewmodel.playerManager.estimatedPositionMs() / 1000.0) - agedPosition
-
-            /* Updating Global State */
-            protocol.globalPaused = paused
-            protocol.globalPositionMs = agedPosition * 1000.0
-            protocol.lastGlobalPositionSetAt = SyncClock.now()
-
-            if (protocol.lastGlobalUpdate == null) {
-                if (viewmodel.media != null) {
-                    // Set the expected pause state BEFORE touching the player. The flow
-                    // collector watching PlayerManager.isNowPlaying will fire as soon as
-                    // the engine catches up with our pause()/play() — if expectedPaused
-                    // is still at its default when that happens, the collector treats it
-                    // as a divergence and re-broadcasts to the room, looping our own
-                    // first-sync back at the server.
-                    protocol.noteExpectedPlaybackState(paused = paused)
-                    val firstSeekMs = (agedPosition * 1000.0).toLong()
-                    // Fire-and-forget: the consumer must not suspend on the UI thread
-                    // (see the diff comment above). Ordering inside the launch is kept.
-                    viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                        viewmodel.player.seekTo(firstSeekMs)
-                        if (paused) viewmodel.player.pause() else viewmodel.player.play()
-                    }
-                }
-            }
-
-            protocol.lastGlobalUpdate = SyncClock.now()
-
-            if (doSeek == true && setBy != null) {
-                resetSpeedIfChanged()
-                callback.onSomeoneSeeked(setBy.take(MAX_USERNAME_CHARS), agedPosition)
-            }
-
-            /* Desync-correction logic (rewind / fastforward / slowdown) only makes sense
-             * when we actually have media loaded. With no media, currentPositionMs() is 0
-             * and `diff = 0 - agedPosition` looks like a multi-second lag, which triggers
-             * a phantom "fast-forwarded to match X" OSD even though there's no playback to
-             * adjust. Mirrors the PC client's `if self._player:` gate around the whole
-             * `_changePlayerStateAccordingToGlobalState` (client.py:459). The pause/play
-             * callbacks below still fire — those are informational and useful even without
-             * a file loaded ("X paused the room"). A backgrounded client is paused on purpose
-             * and catches up when it returns, so no correction runs there either. */
-            if (viewmodel.media != null && !viewmodel.uiState.isInBackground) {
-                /* Rewind check if someone is behind */
-                if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
-                    resetSpeedIfChanged()
-                    callback.onSomeoneBehind(setBy ?: "", agedPosition)
-                }
-
-                /* Fast-forward if persistently behind. PC gates this on !canControl(): only a
-                 * follower in a controlled (+) room force-fastforwards to keep up. In a normal
-                 * room everyone can control, so nobody force-fastforwards there (the room
-                 * follows the slowest member via rewind/slowdown). SYNC_DONT_SLOW_WITH_ME opts
-                 * in regardless. */
-                val canFastForward = Preferences.SYNC_FASTFORWARD.value()
-                        && (session.isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
-                if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
-                    val now = SyncClock.now()
-                    if (protocol.behindFirstDetected == null) {
-                        protocol.behindFirstDetected = now
-                    } else {
-                        val durationBehind = (now - protocol.behindFirstDetected!!).inWholeMilliseconds / 1000.0
-                        if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
-                            && diff < -FASTFORWARD_THRESHOLD
-                        ) {
-                            val ffTarget = agedPosition + FASTFORWARD_EXTRA_TIME
-                            callback.onSomeoneFastForwarded(setBy ?: "", ffTarget)
-                            protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
-                        }
-                    }
-                } else {
-                    protocol.behindFirstDetected = null
-                }
-
-                /* Slow down to cover time difference */
-                if (doSeek != true && !paused) {
-                    if (Preferences.SYNC_SLOWDOWN.value() && viewmodel.player.supportsSpeedAdjustment) {
-                        if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
-                            if (setBy != null && setBy != session.currentUsername) {
-                                viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
-                                protocol.speedChanged = true
-                                // PC's slowdown-notification: the room hears it, the user must too.
-                                val who = setBy.take(MAX_USERNAME_CHARS)
-                                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_notification, who) }
-                            }
-                        } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
-                            resetSpeedIfChanged()
-                        }
-                    } else if (protocol.speedChanged) {
-                        resetSpeedIfChanged()
-                    }
-                }
-            }
-
-            if (pausedChanged) {
-                if (paused) resetSpeedIfChanged()
-                val who = (setBy ?: "").take(MAX_USERNAME_CHARS)
-                if (!paused) callback.onSomeonePlayed(who)
-                if (paused) callback.onSomeonePaused(who)
-            }
-        }
-
-        // Acknowledge with our own State packet.
-        if (protocol.lastGlobalUpdate != null && position != null) {
+        /* Acknowledge with our own State packet. The gate is "the message carried a playstate
+         * at all", not "it carried a position": the reference client reads a missing position
+         * as zero, and a State whose playstate omits it still gets a positioned ACK. */
+        if (protocol.lastGlobalUpdate != null && state.playstate != null) {
             val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
                 // Use the room's *current* expected position, not the last 1 Hz snapshot —
                 // mirrors python's getGlobalPosition() extrapolation.
@@ -251,15 +132,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 // position instead of the engine's ~0, so we never drag the room back to us.
                 protocol.reportableStatePositionSec()
             }
-            /* `play` MUST be the state we just acknowledged from the server (`!paused`),
-             * NOT the transient `viewmodel.player.isPlaying()`. VLCKit 4's libvlc pause/play
-             * API is asynchronous: pause() returns before the player has transitioned, so
-             * isPlaying() right after pause() still reports true. ACKing that stale value
-             * would send State(play=true) when the server told us to pause, which the public
-             * Syncplay server reads as "this watcher is unpausing the room" and rebroadcasts.
-             * `!paused` is correct because we applied that state in the block above; a genuine
-             * application failure is caught later by the isNowPlaying StateFlow divergence in
-             * ProtocolManager, once the player has settled. */
+            /* `play` MUST be the state we just acknowledged from the server, NOT the transient
+             * viewmodel.player.isPlaying(). VLCKit 4's libvlc pause/play API is asynchronous:
+             * pause() returns before the player has transitioned, so isPlaying() right after
+             * pause() still reports true. ACKing that stale value would send State(play=true)
+             * when the server told us to pause, which the public Syncplay server reads as "this
+             * watcher is unpausing the room" and rebroadcasts. globalPaused is what the decision
+             * just recorded; a genuine application failure is caught later by the isNowPlaying
+             * divergence check in ProtocolManager, once the player has settled. */
             network.sendAsync(
                 protocol.buildStatePacket(
                     serverTime = latencyCalculation,
@@ -271,9 +151,11 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     doSeek = null,
                     position = ackPos,
                     isLocalStateChange = false,
-                    /* `paused` may be null here (the inbound playstate didn't carry one);
-                     * fall back to globalPaused which we treat as the current room state. */
-                    play = !(paused ?: protocol.globalPaused)
+                    /* The state we just acknowledged from the server. Falls back to
+                     * globalPaused only when the inbound playstate carried no pause field, or
+                     * when we skipped the decision because we are ignoring the server on the
+                     * fly and globalPaused is therefore still the room state we last agreed on. */
+                    play = !(state.playstate?.paused ?: protocol.globalPaused)
                 )
             )
         } else {
@@ -289,13 +171,39 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         }
     }
 
-    /** Back to 1.0x, with PC's revert-notification, whenever the slowdown ends for any reason. */
-    private fun resetSpeedIfChanged() {
-        if (!protocol.speedChanged) return
-        protocol.speedChanged = false
-        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-        viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_reverted) }
+    /** Carries out one decision. The order the actions arrive in is the order they must happen. */
+    private suspend fun apply(action: SyncAction) = when (action) {
+        is SyncAction.FirstSync -> {
+            /* Set the expected pause state BEFORE touching the player. The collector watching
+             * PlayerManager.isNowPlaying fires as soon as the engine catches up with our
+             * pause()/play(); if expectedPaused were still at its default then, it would read
+             * as a divergence and re-broadcast our own first sync back at the server. */
+            protocol.noteExpectedPlaybackState(paused = action.paused)
+            // Fire-and-forget: the consumer must not suspend on the UI thread. On desktop a
+            // withContext(Main) here deadlocked the inbound pipeline when libVLC still owned
+            // the EDT at cold-start auto-join. Ordering inside the launch is kept.
+            viewmodel.viewModelScope.launch(Dispatchers.Main) {
+                viewmodel.player.seekTo(action.seekToMs)
+                if (action.paused) viewmodel.player.pause() else viewmodel.player.play()
+            }
+            Unit
+        }
+        is SyncAction.SomeoneSeeked -> callback.onSomeoneSeeked(action.by, action.toSeconds)
+        is SyncAction.SomeoneBehind -> callback.onSomeoneBehind(action.by, action.toSeconds)
+        is SyncAction.SomeoneFastForwarded -> callback.onSomeoneFastForwarded(action.by, action.toSeconds)
+        is SyncAction.SomeonePlayed -> callback.onSomeonePlayed(action.by)
+        is SyncAction.SomeonePaused -> callback.onSomeonePaused(action.by)
+        is SyncAction.SlowDown -> {
+            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
+            // PC's slowdown notification: the room hears it, the user must too.
+            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_notification, action.by) }
+        }
+        SyncAction.RestoreSpeed -> {
+            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { getString(Res.string.room_slowdown_reverted) }
+        }
     }
+
 
     override suspend fun onSet(message: WireMessage.Set) {
         val set = message.data

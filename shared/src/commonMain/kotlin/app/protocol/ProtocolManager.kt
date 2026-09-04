@@ -9,6 +9,7 @@ import app.protocol.wire.PingData
 import app.protocol.wire.PlaystateData
 import app.protocol.wire.StateData
 import app.room.RoomViewmodel
+import app.protocol.sync.SyncState
 import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.atomicfu.atomic
@@ -110,6 +111,32 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     /** Timestamp when we first detected the client is behind. Null if not behind. */
     var behindFirstDetected: Instant? = null
+
+    /**
+     * The whole sync anchor as one value, which is what [app.protocol.sync.decideSync] reads and
+     * returns. The individual fields stay because the rest of the room reads them by name.
+     */
+    var syncState: SyncState
+        get() = SyncState(
+            serverIgnFly = serverIgnFly,
+            clientIgnFly = clientIgnFly,
+            globalPaused = globalPaused,
+            globalPositionMs = globalPositionMs,
+            lastGlobalPositionSetAt = lastGlobalPositionSetAt,
+            lastGlobalUpdate = lastGlobalUpdate,
+            behindFirstDetected = behindFirstDetected,
+            speedChanged = speedChanged,
+        )
+        set(value) {
+            serverIgnFly = value.serverIgnFly
+            clientIgnFly = value.clientIgnFly
+            globalPaused = value.globalPaused
+            globalPositionMs = value.globalPositionMs
+            lastGlobalPositionSetAt = value.lastGlobalPositionSetAt
+            lastGlobalUpdate = value.lastGlobalUpdate
+            behindFirstDetected = value.behindFirstDetected
+            speedChanged = value.speedChanged
+        }
 
     /** Set during room transitions to ignore stale packets from the previous room. */
     var isRoomChanging = false
@@ -507,25 +534,25 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         const val SEEK_THRESHOLD = 1L
 
         /** Playback speed used to gradually catch up when ahead of others. */
-        const val SLOWDOWN_RATE = 0.95
+        const val SLOWDOWN_RATE = app.protocol.sync.SLOWDOWN_RATE
 
         /** Time difference (seconds) at which slowdown kicks in. */
-        const val SLOWDOWN_THRESHOLD = 1.5
+        const val SLOWDOWN_THRESHOLD = app.protocol.sync.SLOWDOWN_THRESHOLD
 
         /** Time difference (seconds) at which speed reverts to normal. */
-        const val SLOWDOWN_RESET_THRESHOLD = 0.1
+        const val SLOWDOWN_RESET_THRESHOLD = app.protocol.sync.SLOWDOWN_RESET_THRESHOLD
 
         /** Time difference (seconds, negative/behind) at which fastforward detection starts. */
-        const val FASTFORWARD_BEHIND_THRESHOLD = 1.75
+        const val FASTFORWARD_BEHIND_THRESHOLD = app.protocol.sync.FASTFORWARD_BEHIND_THRESHOLD
 
         /** Time difference (seconds, behind) at which fastforward triggers after waiting. */
-        const val FASTFORWARD_THRESHOLD = 5.0
+        const val FASTFORWARD_THRESHOLD = app.protocol.sync.FASTFORWARD_THRESHOLD
 
         /** Extra time (seconds) added when fastforwarding to overshoot slightly. */
-        const val FASTFORWARD_EXTRA_TIME = 0.25
+        const val FASTFORWARD_EXTRA_TIME = app.protocol.sync.FASTFORWARD_EXTRA_TIME
 
         /** Cooldown (seconds) after a fastforward before it can trigger again. */
-        const val FASTFORWARD_RESET_THRESHOLD = 3.0
+        const val FASTFORWARD_RESET_THRESHOLD = app.protocol.sync.FASTFORWARD_RESET_THRESHOLD
 
         /** How often the list-probe coroutine fires an empty List to keep the channel warm. */
         const val LIST_PROBE_INTERVAL_SECONDS = 15L
