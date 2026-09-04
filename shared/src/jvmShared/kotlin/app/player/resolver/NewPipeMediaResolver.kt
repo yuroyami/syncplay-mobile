@@ -18,7 +18,7 @@ import okhttp3.Request as OkRequest
 import org.schabi.newpipe.extractor.downloader.Request as NpRequest
 import org.schabi.newpipe.extractor.downloader.Response as NpResponse
 
-/** Android resolver — pure JVM, no Python, no native binaries.
+/** The NewPipe resolver, shared by Android and desktop — pure JVM, no Python, no native binaries.
  *
  *  Supports YouTube, SoundCloud, PeerTube, Bandcamp and MediaCCC out of the box. NewPipe's
  *  `StreamInfo.getInfo(url)` auto-detects the service from the URL; if no service handles it
@@ -58,12 +58,12 @@ internal object NewPipeMediaResolver : MediaResolver {
     }
 
     private fun pickDirectUrl(info: StreamInfo): String? {
-        // Livestreams: HLS manifest. ExoPlayer, mpv and KitePlayer all parse HLS natively.
+        // Livestreams: HLS manifest. Every engine on both platforms parses HLS natively.
         if (info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM) {
             info.hlsUrl?.takeIf { it.isNotBlank() }?.let { return it }
         }
         // Combined audio+video streams — non-DASH-aware players (ExoPlayer w/o DASH module on
-        // some flavors, AVPlayer, VLCKit) need a single muxed source. videoOnlyStreams + audio are
+        // some flavors) need a single muxed source. videoOnlyStreams + audio are
         // intentionally skipped to avoid having to mux.
         info.videoStreams.orEmpty().bestPick()?.content?.let { return it }
         // SoundCloud and Bandcamp are advertised as supported and have no video at all, so their

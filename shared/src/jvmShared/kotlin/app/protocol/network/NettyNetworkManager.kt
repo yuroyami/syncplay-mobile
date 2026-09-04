@@ -25,8 +25,12 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
 /**
- * Netty-based [NetworkManager] for desktop: async TCP socket with TLS support (JDK TLS,
- * no Conscrypt needed on JVM desktop). Default network engine on desktop.
+ * Netty-based [NetworkManager] for the JVM platforms: async TCP socket with TLS support. The
+ * default network engine on both Android and desktop.
+ *
+ * This used to be two byte-identical files, which meant every Netty fix in the ledger had to land
+ * twice. The only real differences were socket tagging and waiting for Conscrypt, and both are
+ * behind [tagSocketThread] and [awaitTlsProviderReady] now.
  */
 class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
@@ -90,6 +94,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                 }
             })
 
+        tagSocketThread()
 
         val connected = withTimeout(CONNECT_TIMEOUT_MS) {
             suspendCancellableCoroutine<Channel> { cont ->
@@ -160,7 +165,13 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * the IP the socket dialled: without that check any certificate from anyone on the path
      * passed, and encryption bought nothing.
      */
-    override suspend fun upgradeTls() = suspendCancellableCoroutine<Unit> { cont ->
+    override suspend fun upgradeTls() {
+        // Android has to wait for Conscrypt; desktop's JDK provider is always there.
+        awaitTlsProviderReady()
+        return upgradeTlsNow()
+    }
+
+    private suspend fun upgradeTlsNow() = suspendCancellableCoroutine<Unit> { cont ->
         try {
             val sslContext = SslContextBuilder
                 .forClient()

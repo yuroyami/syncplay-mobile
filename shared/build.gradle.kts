@@ -79,6 +79,20 @@ kotlin {
     }
 
     sourceSets {
+        /**
+         * The JVM platforms' shared source set.
+         *
+         * Android and desktop are both the JVM and both run Netty and NewPipe, so code that is
+         * genuinely identical between them lived as two files that had to be edited twice. Every
+         * Netty fix in the ledger landed twice for exactly this reason.
+         *
+         * Only put something here when it is the same on both. Anything that reads SAF, a
+         * Context, Conscrypt or a security scope is Android's alone and stays there.
+         */
+        val jvmShared by creating { dependsOn(commonMain.get()) }
+        androidMain.get().dependsOn(jvmShared)
+        getByName("desktopMain").dependsOn(jvmShared)
+
         all {
             languageSettings {
                 optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
