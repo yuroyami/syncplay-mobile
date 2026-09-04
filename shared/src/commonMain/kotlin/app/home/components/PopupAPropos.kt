@@ -47,6 +47,19 @@ import syncplaymobile.shared.generated.resources.about_source_button
 import syncplaymobile.shared.generated.resources.about_tagline
 import syncplaymobile.shared.generated.resources.about_version_value
 import syncplaymobile.shared.generated.resources.connect_watch_alone
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import app.uicomponents.controls.ListRow
+import syncplaymobile.shared.generated.resources.about_licences_button
+import syncplaymobile.shared.generated.resources.about_licences_note
+import syncplaymobile.shared.generated.resources.about_licences_title
+import syncplaymobile.shared.generated.resources.about_update_available
+import syncplaymobile.shared.generated.resources.about_update_button
+import syncplaymobile.shared.generated.resources.about_update_checking
+import syncplaymobile.shared.generated.resources.about_update_current
+import syncplaymobile.shared.generated.resources.about_update_failed
 
 object PopupAPropos {
 
@@ -56,6 +69,8 @@ object PopupAPropos {
         val p = palette
         val globalViewmodel = LocalGlobalViewmodel.current
         val uriHandler = LocalUriHandler.current
+        val licencesOpen = remember { mutableStateOf(false) }
+        var updateState by remember { mutableStateOf<UpdateState>(UpdateState.Idle) }
 
         Modal(
             open = visibilityState.value,
@@ -102,9 +117,44 @@ object PopupAPropos {
                     SecondaryAction(stringResource(Res.string.about_report_button), onClick = { uriHandler.openUri(bugReportUrl()) }, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(Space.gapTight))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                    SecondaryAction(
+                        stringResource(Res.string.about_privacy_button),
+                        onClick = { uriHandler.openUri("https://github.com/yuroyami/syncplay-mobile/blob/master/PRIVACY_POLICY.md") },
+                        modifier = Modifier.weight(1f),
+                    )
+                    SecondaryAction(
+                        stringResource(Res.string.about_licences_button),
+                        onClick = { licencesOpen.value = true },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(Space.gapTight))
+                // Asked for, never automatic: a direct download has nothing else that would say a
+                // newer version exists.
                 SecondaryAction(
-                    stringResource(Res.string.about_privacy_button),
-                    onClick = { uriHandler.openUri("https://github.com/yuroyami/syncplay-mobile/blob/master/PRIVACY_POLICY.md") },
+                    text = when (val state = updateState) {
+                        UpdateState.Idle -> stringResource(Res.string.about_update_button)
+                        UpdateState.Checking -> stringResource(Res.string.about_update_checking)
+                        UpdateState.UpToDate -> stringResource(Res.string.about_update_current)
+                        UpdateState.Failed -> stringResource(Res.string.about_update_failed)
+                        is UpdateState.Newer -> stringResource(Res.string.about_update_available, state.version)
+                    },
+                    onClick = {
+                        val state = updateState
+                        if (state is UpdateState.Newer) {
+                            uriHandler.openUri(state.url)
+                        } else if (state != UpdateState.Checking) {
+                            updateState = UpdateState.Checking
+                            globalViewmodel.viewModelScope.launch {
+                                updateState = when (val result = UpdateCheck.latest()) {
+                                    UpdateCheck.Result.UpToDate -> UpdateState.UpToDate
+                                    UpdateCheck.Result.Unreachable -> UpdateState.Failed
+                                    is UpdateCheck.Result.Newer -> UpdateState.Newer(result.version, result.url)
+                                }
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(Space.gap))
@@ -116,6 +166,43 @@ object PopupAPropos {
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
+            }
+        }
+
+        LicencesModal(licencesOpen)
+    }
+
+    /** Where the update button is in its own little life. */
+    private sealed interface UpdateState {
+        data object Idle : UpdateState
+        data object Checking : UpdateState
+        data object UpToDate : UpdateState
+        data object Failed : UpdateState
+        data class Newer(val version: String, val url: String) : UpdateState
+    }
+
+    /** Every third-party piece inside the app, with its licence and a link to it. */
+    @Composable
+    private fun LicencesModal(open: MutableState<Boolean>) {
+        val p = palette
+        val uriHandler = LocalUriHandler.current
+        Modal(
+            open = open.value,
+            onDismiss = { open.value = false },
+            title = stringResource(Res.string.about_licences_title),
+            size = ModalSize.Panel,
+        ) {
+            Text(
+                text = stringResource(Res.string.about_licences_note),
+                style = Type.note,
+                color = p.inkDim,
+                modifier = Modifier.fillMaxWidth().padding(bottom = Space.gap),
+            )
+            attributions.forEach { item ->
+                ListRow(onClick = { uriHandler.openUri(item.url) }, horizontalPadding = Space.gapTight) {
+                    Text(item.name, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
+                    Text(item.licence, style = Type.value, color = p.inkDim, maxLines = 1)
+                }
             }
         }
     }
