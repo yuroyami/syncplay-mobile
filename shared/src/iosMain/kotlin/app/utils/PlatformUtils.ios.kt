@@ -69,7 +69,6 @@ import platform.posix.memcpy
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLocale
 import platform.Foundation.currentLocale
-import platform.Foundation.dateFormatFromTemplate
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
@@ -159,7 +158,7 @@ actual fun generateTimestampMillis(): Long {
  * Settings switch as well, because that switch changes the current locale's format.
  */
 actual fun deviceUses24HourClock(): Boolean {
-    val format = NSDateFormatter.dateFormatFromTemplate("j", options = 0uL, locale = NSLocale.currentLocale)
+    val format = NSDateFormatter.dateFormatFromTemplate("j", 0uL, NSLocale.currentLocale)
     return format?.contains("a") != true
 }
 

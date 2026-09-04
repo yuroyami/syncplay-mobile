@@ -103,6 +103,7 @@ import syncplaymobile.shared.generated.resources.room_gif_tab_gifs
 import syncplaymobile.shared.generated.resources.room_gif_tab_recents
 import syncplaymobile.shared.generated.resources.room_gif_tab_stickers
 import syncplaymobile.shared.generated.resources.room_gif_tab_trending
+import app.uicomponents.controls.touchTarget
 
 /** Source shown while the composer is empty; typed text becomes a search over the chosen type. */
 private enum class GifSource { TRENDING, RECENTS, FAVORITES }
@@ -126,6 +127,7 @@ private fun TypeSwitch(gifs: Boolean, onChange: (gifs: Boolean) -> Unit) {
             .height(Space.rowCompact)
             .clip(Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Switch) { Feedback.tick(); onChange(!gifs) }
+            .touchTarget()
             .hoverable(source)
             .semantics { contentDescription = if (gifs) gifLabel else stickerLabel }
             .controlStates(source, Radius.controlShape)

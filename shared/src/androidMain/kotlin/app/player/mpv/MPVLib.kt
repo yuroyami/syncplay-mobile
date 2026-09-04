@@ -54,6 +54,11 @@ object MPVLib {
         }
     }
 
+    /**
+     * Called from the native library, never from Kotlin. libplayer.so resolves these by name and
+     * signature (mpv_MPVLib_eventProperty_Sl and friends), so an unused-symbol sweep must leave
+     * them alone.
+     */
     @JvmStatic
     fun eventProperty(property: String, value: Long) {
         synchronized(observers) {
@@ -102,6 +107,11 @@ object MPVLib {
         }
     }
 
+    /**
+     * The log side of the same contract as [eventProperty]: libplayer.so looks these up by name at
+     * runtime (its symbol table carries mpv_MPVLib_logMessage_SiS), so nothing here has a Kotlin
+     * caller and none of it is dead. Removing any of it breaks mpv at load, not at compile time.
+     */
     private val log_observers = mutableListOf<LogObserver>()
 
     @JvmStatic

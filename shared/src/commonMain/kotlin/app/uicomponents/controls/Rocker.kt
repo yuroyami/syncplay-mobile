@@ -49,7 +49,7 @@ fun Rocker(
 
     Box(
         modifier = modifier
-            .touchTarget(minWidth = Space.touchMin, minHeight = Space.row)
+            .touchTarget()
             .toggleable(
                 value = on,
                 enabled = enabled,

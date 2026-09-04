@@ -47,6 +47,7 @@ import syncplaymobile.shared.generated.resources.room_chat_copied
 import syncplaymobile.shared.generated.resources.room_chat_image_hidden
 import syncplaymobile.shared.generated.resources.room_chat_show_image
 import app.uicomponents.AnimatedImage
+import syncplaymobile.shared.generated.resources.room_chat_image_from
 
 /** How chat text is drawn: the size preference (floored at 11), the outline and shadow switches. */
 class MessageStyle(fontSize: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
@@ -132,7 +133,9 @@ fun MessageRow(
                         /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
                         AnimatedImage(
                             url = message.content,
-                            contentDescription = null,
+                            // A chat image said nothing at all to a screen reader. Now it at
+                            // least says who sent it, which is what the eye gets too.
+                            contentDescription = stringResource(Res.string.room_chat_image_from, message.sender ?: ""),
                             contentScale = ContentScale.Crop,
                             alpha = imageAlpha,
                             modifier = Modifier.padding(top = 2.dp).size(96.dp).clip(Radius.controlShape),

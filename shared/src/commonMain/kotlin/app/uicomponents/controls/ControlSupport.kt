@@ -35,6 +35,8 @@ import app.preferences.Preferences
 import app.preferences.value
 import app.theme.palette
 import app.utils.platformCallback
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 
 /*
  * Shared behaviour for every drawn control: press feedback, the hover/focus/selected states,
@@ -79,7 +81,10 @@ fun Modifier.controlStates(
     val focusAlpha by animateFloatAsState(if (focused && enabled) 1f else 0f, Motion.quick(), label = "focus")
     val hoverAlpha by animateFloatAsState(if (hovered && enabled) 1f else 0f, Motion.quick(), label = "hover")
     val brand = p.brandField
-    return drawWithContent {
+    // Selection was drawn and never spoken, so a screen reader could not tell which playlist item
+    // is playing, which track is chosen or which theme is on. Every control that draws a selected
+    // state comes through here, so saying it once here covers all of them.
+    return semantics { this.selected = selected }.drawWithContent {
         val outline = shape.createOutline(size, layoutDirection, this)
         if (selected) drawOutline(outline, p.accent.copy(alpha = 0.08f))
         if (hoverAlpha > 0f) drawOutline(outline, p.ink.copy(alpha = 0.06f * hoverAlpha))
@@ -105,8 +110,13 @@ fun Modifier.controlStates(
     }
 }
 
-/** Expands the hit area past the visual bounds, centring the content. Never overlaps a neighbour. */
-fun Modifier.touchTarget(minWidth: Dp = Space.touchMin, minHeight: Dp = Space.row): Modifier = layout { measurable, constraints ->
+/**
+ * Expands the hit area past the visual bounds, centring the content. Never overlaps a neighbour.
+ *
+ * Both defaults are the platform minimum. The height used to default to a 42dp row, which is
+ * below it, so every caller that took the default got a target six points short.
+ */
+fun Modifier.touchTarget(minWidth: Dp = Space.touchMin, minHeight: Dp = Space.touchMin): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
     val w = maxOf(placeable.width, minWidth.roundToPx()).coerceAtMost(constraints.maxWidth)
     val h = maxOf(placeable.height, minHeight.roundToPx()).coerceAtMost(constraints.maxHeight)

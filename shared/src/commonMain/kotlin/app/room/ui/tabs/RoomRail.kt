@@ -68,6 +68,7 @@ import syncplaymobile.shared.generated.resources.room_share_invite
 import syncplaymobile.shared.generated.resources.room_share_invite_message
 import syncplaymobile.shared.generated.resources.room_rail_more
 import syncplaymobile.shared.generated.resources.room_shared_playlist
+import app.uicomponents.controls.touchTarget
 
 private class RailCell(val icon: ImageVector, val name: String, val active: Boolean = false, val onClick: () -> Unit)
 
@@ -170,6 +171,7 @@ private fun RailCell(cell: RailCell, horizontal: Boolean) {
         modifier = Modifier
             .size(Space.row)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); cell.onClick() }
+            .touchTarget()
             .hoverable(source)
             .semantics { contentDescription = cell.name; selected = cell.active }
             .controlStates(source, RectangleShape)

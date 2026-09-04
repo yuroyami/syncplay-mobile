@@ -53,6 +53,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_custom_skip_button
 import syncplaymobile.shared.generated.resources.room_jump_back
 import syncplaymobile.shared.generated.resources.room_jump_forward
+import app.uicomponents.controls.touchTarget
 
 /**
  * The transport at the centre of the video: the play key on the exact centre, the two jump keys
@@ -101,6 +102,7 @@ private fun JumpKey(icon: ImageVector, name: String, amount: String, onClick: ()
             .background(Color(0xFF15151A).copy(alpha = 0.55f))
             .border(Space.hair, p.rule, Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
+            .touchTarget()
             .hoverable(source)
             .semantics { contentDescription = name }
             .controlStates(source, Radius.controlShape)

@@ -76,7 +76,7 @@ fun RoomReadyButton() {
             .hoverable(source)
             .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source)
-            .touchTarget(minHeight = Space.row)
+            .touchTarget()
             .height(Space.rowCompact)
             .width(cellWidth)
             .clip(Radius.controlShape)

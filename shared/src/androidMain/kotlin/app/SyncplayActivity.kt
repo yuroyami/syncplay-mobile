@@ -8,9 +8,6 @@ import android.app.PictureInPictureParams
 import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.media.AudioManager
-import android.content.ClipboardManager
-import android.content.ClipData
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
@@ -18,9 +15,6 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.provider.Settings
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,9 +22,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
-import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
@@ -38,14 +30,12 @@ import app.home.HomeViewmodel
 import app.home.InviteLink
 import app.home.JoinConfig
 import app.player.Playback
-import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.arePreferencesLoaded
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
-import app.server.SyncplayServerService
 import app.utils.applyActivityUiProperties
 import app.utils.bindWatchdog
 import app.utils.changeLanguage

@@ -61,7 +61,6 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
-import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
@@ -97,6 +96,7 @@ import syncplaymobile.shared.generated.resources.room_user_ready_label
 import syncplaymobile.shared.generated.resources.room_roster_view_compact
 import syncplaymobile.shared.generated.resources.room_roster_view_files
 import syncplaymobile.shared.generated.resources.room_roster_view_standard
+import app.uicomponents.controls.touchTarget
 
 /** The three ways to read the roster. Persisted, so the panel opens the way it was left. */
 private enum class RosterView(val key: String, val icon: ImageVector, val label: StringResource) {
@@ -186,6 +186,7 @@ object CardUserInfo {
                 .size(Space.row)
                 .clip(Radius.controlShape)
                 .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onNext(next) }
+                .touchTarget()
                 .hoverable(source)
                 .semantics { contentDescription = name }
                 .controlStates(source, Radius.controlShape)

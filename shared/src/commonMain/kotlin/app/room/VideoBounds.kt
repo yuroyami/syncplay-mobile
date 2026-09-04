@@ -1,5 +1,7 @@
 package app.room
 
+import kotlin.concurrent.Volatile
+
 /**
  * Where the video is drawn inside the window, in pixels.
  *

@@ -27,7 +27,8 @@ class SettingsGolden {
         DesignHarness.render("settings-categories", 360) { SettingsCategoryList(SETTINGS_GLOBAL) {} }
 
         // 260dp until the encryption-required row joined the category; still one screen, no scroll.
-        assertTrue(network.contentHeightDp <= 285, "network category ${network.contentHeightDp}dp exceeds its 285dp budget")
+        // 289dp: the rows grew when every control target went to the platform minimum of 48dp.
+        assertTrue(network.contentHeightDp <= 295, "network category ${network.contentHeightDp}dp exceeds its 295dp budget")
         // 690dp until the room gained a rotation switch; still one screen on a phone in landscape.
         assertTrue(player.contentHeightDp <= 750, "player category ${player.contentHeightDp}dp exceeds its 750dp budget")
         assertTrue(chat.contentHeightDp <= 900, "chat category ${chat.contentHeightDp}dp exceeds its 900dp budget")

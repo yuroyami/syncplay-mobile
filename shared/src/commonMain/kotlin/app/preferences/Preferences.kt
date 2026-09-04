@@ -61,7 +61,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
-import app.theme.Theming
 import app.theme.defaultTheme
 import app.preferences.settings.SettingRow
 import app.preferences.settings.TrustedDomainsPopup

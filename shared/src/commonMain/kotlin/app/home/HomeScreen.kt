@@ -109,7 +109,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.connect_address_empty_error
@@ -117,12 +116,10 @@ import syncplaymobile.shared.generated.resources.connect_button_join
 import syncplaymobile.shared.generated.resources.connect_button_saveshortcut
 import syncplaymobile.shared.generated.resources.connect_choose_video_engine
 import syncplaymobile.shared.generated.resources.connect_custom
-import syncplaymobile.shared.generated.resources.connect_custom_help
 import syncplaymobile.shared.generated.resources.connect_host_mine
 import syncplaymobile.shared.generated.resources.connect_host_join_note
 import syncplaymobile.shared.generated.resources.connect_custom_tip
 import syncplaymobile.shared.generated.resources.connect_official
-import syncplaymobile.shared.generated.resources.connect_password_help
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
 import syncplaymobile.shared.generated.resources.connect_roomname
 import syncplaymobile.shared.generated.resources.connect_roomname_empty_error

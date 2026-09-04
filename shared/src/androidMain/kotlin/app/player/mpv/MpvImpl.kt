@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import app.R
 import app.player.PlayerImpl
 import app.player.models.Chapter

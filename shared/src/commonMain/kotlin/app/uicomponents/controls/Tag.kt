@@ -53,7 +53,7 @@ fun Tag(
 
     Box(
         modifier = modifier
-            .then(if (onToggle != null) Modifier.touchTarget(minHeight = Space.row) else Modifier)
+            .then(if (onToggle != null) Modifier.touchTarget() else Modifier)
             .then(
                 if (onToggle != null) Modifier
                     .toggleable(value = filled, enabled = enabled, role = Role.Button, interactionSource = source, indication = null) {
