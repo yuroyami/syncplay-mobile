@@ -19,7 +19,7 @@ import io.github.vinceglb.filekit.readString
 import io.github.vinceglb.filekit.writeString
 import app.preferences.set
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -93,13 +93,13 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      */
     data class UntrustedUrl(val url: String, val domain: String)
 
-    private val _pendingUntrusted = MutableStateFlow<UntrustedUrl?>(null)
-    val pendingUntrusted = _pendingUntrusted.asStateFlow()
+    val pendingUntrusted: StateFlow<UntrustedUrl?>
+        field = MutableStateFlow(null)
 
     /** Answers the prompt. [always] adds the host to the trusted list for good. */
     fun allowPendingUrl(always: Boolean) {
-        val pending = _pendingUntrusted.value ?: return
-        _pendingUntrusted.value = null
+        val pending = pendingUntrusted.value ?: return
+        pendingUntrusted.value = null
         if (always) {
             val existing = Preferences.TRUSTED_DOMAINS.value().trim()
             val updated = if (existing.isEmpty()) pending.domain else existing + "\n" + pending.domain
@@ -112,7 +112,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
     /** Declines. The file stays unplayed and nothing is remembered. */
     fun dismissPendingUrl() {
-        _pendingUntrusted.value = null
+        pendingUntrusted.value = null
     }
 
     /**
@@ -124,20 +124,20 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      */
     private val undoStack = ArrayDeque<List<String>>()
 
-    private val _canUndo = MutableStateFlow(false)
-    val canUndo = _canUndo.asStateFlow()
+    val canUndo: StateFlow<Boolean>
+        field = MutableStateFlow(false)
 
     /** Called before any edit that replaces the whole list. */
     private fun rememberForUndo() {
         undoStack.addLast(session.sharedPlaylist.toList())
         while (undoStack.size > MAX_UNDO_STEPS) undoStack.removeFirst()
-        _canUndo.value = true
+        canUndo.value = true
     }
 
     /** Puts the previous playlist back and tells the room. */
     fun undoLastPlaylistChange() {
         val previous = undoStack.removeLastOrNull() ?: return
-        _canUndo.value = undoStack.isNotEmpty()
+        canUndo.value = undoStack.isNotEmpty()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(previous))
     }
 
@@ -380,7 +380,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 val domain = extractDomain(fileName)
                 // Ask instead of refusing. The answer is the user's, and the safe default
                 // (nothing plays until they say so) is unchanged.
-                _pendingUntrusted.value = UntrustedUrl(fileName, domain)
+                pendingUntrusted.value = UntrustedUrl(fileName, domain)
                 val warning = getString(Res.string.room_untrusted_domain_warning, domain)
                 viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
                 return

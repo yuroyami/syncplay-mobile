@@ -78,6 +78,11 @@ kotlin {
         pod("VLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
 
+    /* Declaring a dependsOn edge by hand switches the default hierarchy template off, which
+     * silently detaches iosMain from the tree and loses every iOS actual. Asking for it
+     * explicitly keeps both. */
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         /**
          * The JVM platforms' shared source set.

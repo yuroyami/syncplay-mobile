@@ -13,7 +13,7 @@ import app.utils.loggy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -31,13 +31,13 @@ import kotlin.time.Duration.Companion.seconds
  */
 class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
-    private val _state = MutableStateFlow<AutoplayState>(AutoplayState.Idle)
-
     /** What the room should show about readiness right now. */
-    val state = _state.asStateFlow()
+    val state: StateFlow<AutoplayState>
+        field = MutableStateFlow<AutoplayState>(AutoplayState.Idle)
 
-    private val _summary = MutableStateFlow(ReadinessSummary(emptyList(), emptyList()))
-    val summary = _summary.asStateFlow()
+    /** Who the room is waiting for, if anyone. */
+    val summary: StateFlow<ReadinessSummary>
+        field = MutableStateFlow(ReadinessSummary(emptyList(), emptyList()))
 
     private var countdown: Job? = null
 
@@ -56,22 +56,22 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     fun evaluate() {
         if (viewmodel.isSoloMode) return
         val session = viewmodel.session
-        val summary = summariseReadiness(session.userList.value, session.currentUsername)
-        _summary.value = summary
+        val room = summariseReadiness(session.userList.value, session.currentUsername)
+        summary.value = room
 
         val counting = shouldCountDown(
             autoplayEnabled = Preferences.AUTOPLAY.value(),
             roomPaused = viewmodel.protocol.globalPaused,
             canControlRoom = !session.isInControlledRoomWithoutController(),
             selfReady = session.ready.value,
-            summary = summary,
+            summary = room,
         )
 
         if (!counting) {
             cancelCountdown()
-            _state.value = when {
-                summary.alone || summary.everyoneReady -> AutoplayState.Idle
-                else -> AutoplayState.Waiting(summary.notReady)
+            state.value = when {
+                room.alone || room.everyoneReady -> AutoplayState.Idle
+                else -> AutoplayState.Waiting(room.notReady)
             }
             return
         }
@@ -82,16 +82,16 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     private fun startCountdown() {
         countdown = vm.viewModelScope.launch {
             for (remaining in AUTOPLAY_COUNTDOWN_SECONDS downTo 1) {
-                _state.value = AutoplayState.CountingDown(remaining)
+                state.value = AutoplayState.CountingDown(remaining)
                 delay(1.seconds)
                 // Anything that changed the picture mid-count stops it: someone unreadied,
                 // someone left, the room started playing anyway.
                 if (!stillEligible()) {
-                    _state.value = AutoplayState.Idle
+                    state.value = AutoplayState.Idle
                     return@launch
                 }
             }
-            _state.value = AutoplayState.Idle
+            state.value = AutoplayState.Idle
             loggy("Autoplay: everyone is ready, starting the room")
             viewmodel.dispatcher.controlPlayback(Playback.PLAY, tellServer = true)
         }
@@ -99,14 +99,14 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
 
     private fun stillEligible(): Boolean {
         val session = viewmodel.session
-        val summary = summariseReadiness(session.userList.value, session.currentUsername)
-        _summary.value = summary
+        val room = summariseReadiness(session.userList.value, session.currentUsername)
+        summary.value = room
         return shouldCountDown(
             autoplayEnabled = Preferences.AUTOPLAY.value(),
             roomPaused = viewmodel.protocol.globalPaused,
             canControlRoom = !session.isInControlledRoomWithoutController(),
             selfReady = session.ready.value,
-            summary = summary,
+            summary = room,
         )
     }
 
@@ -117,6 +117,6 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
 
     override fun invalidate() {
         cancelCountdown()
-        _state.value = AutoplayState.Idle
+        state.value = AutoplayState.Idle
     }
 }

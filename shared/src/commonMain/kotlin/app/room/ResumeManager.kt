@@ -11,7 +11,7 @@ import app.preferences.set
 import app.preferences.value
 import app.utils.SyncClock
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Remembering where a file was left, and offering it back.
@@ -24,10 +24,9 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
-    private val _offer = MutableStateFlow<ResumePoint?>(null)
-
     /** A file the viewer has seen before, waiting on continue or start over. */
-    val offer = _offer.asStateFlow()
+    val offer: StateFlow<ResumePoint?>
+        field = MutableStateFlow(null)
 
     /** Called when a file finishes loading. Raises the question, or does not. */
     fun onMediaReady(fileName: String, durationMs: Long) {
@@ -38,19 +37,19 @@ class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(view
             // A file whose length we now know to be shorter than the remembered position is a
             // different file with the same name. Do not offer to seek past its end.
             if (point != null && (durationMs <= 0L || point.positionMs < durationMs)) {
-                _offer.value = point
+                offer.value = point
             }
         }
     }
 
     fun continueFromOffer() {
-        val point = _offer.value ?: return
-        _offer.value = null
+        val point = offer.value ?: return
+        offer.value = null
         viewmodel.dispatcher.seek(point.positionMs, recordUndo = false)
     }
 
     fun startOver() {
-        _offer.value = null
+        offer.value = null
     }
 
     /** Writes down where we are. Called on pause and on the way out of the room. */
@@ -70,6 +69,6 @@ class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     override fun invalidate() {
-        _offer.value = null
+        offer.value = null
     }
 }
