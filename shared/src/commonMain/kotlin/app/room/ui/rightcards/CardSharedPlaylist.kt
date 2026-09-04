@@ -214,7 +214,8 @@ object CardSharedPlaylist {
                 )
             }
             LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                itemsIndexed(items) { index, item ->
+                // A playlist may hold the same filename twice, so the position is part of the key.
+                itemsIndexed(items, key = { index, item -> "$index:$item" }) { index, item ->
                     ListRow(onClick = { itemActions = index }, selected = index == current) {
                         if (index == current) {
                             Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))

@@ -213,7 +213,18 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
 
         Selectable {
         LazyColumn(state = listState, contentPadding = PaddingValues(Space.gapTight), modifier = Modifier.fillMaxSize()) {
-            itemsIndexed(messages) { index, message ->
+            itemsIndexed(
+                items = messages,
+                key = { _, message -> message.id },
+                // Three shapes share this list. Naming them lets Compose reuse the right one.
+                contentType = { _, message ->
+                    when {
+                        message.isImageUrl -> "image"
+                        message.sender == null -> "system"
+                        else -> "chat"
+                    }
+                },
+            ) { index, message ->
                 /* Seen only while the HUD shows: it stays composed at alpha 0 when hidden, and
                  * marking then would defeat the fading layout. */
                 if (isHUDVisible) SideEffect { message.seen = true }

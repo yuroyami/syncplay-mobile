@@ -1,6 +1,7 @@
 package app.room.models
 
 import app.utils.generateClockstamp
+import kotlinx.atomicfu.atomic
 import kotlin.time.Clock
 
 /** Unicode BiDi "First Strong Isolate" (U+2068): text until the matching PDI resolves its
@@ -10,8 +11,14 @@ internal const val BIDI_ISOLATE_START = "\u2068"
 /** Unicode BiDi "Pop Directional Isolate" (U+2069): closes a [BIDI_ISOLATE_START] run. */
 internal const val BIDI_ISOLATE_END = "\u2069"
 
+/** Hands every message a stable identity, so a lazy list can key on it. */
+private val messageIds = atomic(0L)
+
 /** A single chat or system message and the data needed to render it. */
 data class Message(
+    /** Stable across recomposition and unique per message; the chat list keys on it. */
+    val id: Long = messageIds.incrementAndGet(),
+
     /** The sender of the message. Null when it's not a chat message */
     var sender: String? = null,
 
