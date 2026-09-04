@@ -38,6 +38,9 @@ kiteConfig {
     modules {
         shared = ":shared"
         androidApps(":androidApp")
+        // The desktop shell reads its identity back from this block, so it has to be in it.
+        // Its comments already said so; the registration was missing.
+        desktopApps(":desktopApp")
     }
 
     // SDK/toolchain values come from gradle.properties (single value source; the modules

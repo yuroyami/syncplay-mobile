@@ -10,6 +10,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -85,10 +86,73 @@ abstract class AndroidReleaseAllTask @Inject constructor(
         }
 
         val produced = out.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
+
+        // Nothing checked any of this before: an unsigned APK, or one left over from a version
+        // that no longer matches, would have been copied out and uploaded without a word.
+        verifyArtifacts(produced, v)
+
         logger.lifecycle("androidReleaseAll: done. ${produced.size} artifact(s) in AndroidAppOutput/:")
         produced.forEach { logger.lifecycle("    ${it.name}  (${it.length() / 1_000_000} MB)") }
     }
+
+    /**
+     * Refuses to finish on a set of artifacts that is not what a release is supposed to be: the
+     * expected count, every file named for this version, and every APK carrying a signature that
+     * apksigner accepts. A bundle is signed at upload, so only its name is checked.
+     */
+    private fun verifyArtifacts(produced: List<File>, version: String) {
+        val apks = produced.filter { it.name.endsWith(".apk") }
+        val aabs = produced.filter { it.name.endsWith(".aab") }
+
+        require(apks.size == EXPECTED_APKS) {
+            "androidReleaseAll: expected $EXPECTED_APKS APKs, found ${apks.size}: ${apks.map { it.name }}"
+        }
+        require(aabs.size == 1) {
+            "androidReleaseAll: expected 1 app bundle, found ${aabs.size}: ${aabs.map { it.name }}"
+        }
+        produced.forEach { file ->
+            require(version in file.name) {
+                "androidReleaseAll: ${file.name} does not carry version $version, so it is from another build"
+            }
+        }
+
+        val apksigner = findApksigner()
+        if (apksigner == null) {
+            logger.warn("androidReleaseAll: apksigner not found, signatures NOT verified. Set ANDROID_HOME.")
+            return
+        }
+        apks.forEach { apk ->
+            val out = java.io.ByteArrayOutputStream()
+            val result = execOps.exec {
+                commandLine(apksigner.absolutePath, "verify", "--print-certs", apk.absolutePath)
+                standardOutput = out
+                errorOutput = out
+                isIgnoreExitValue = true
+            }
+            require(result.exitValue == 0) {
+                "androidReleaseAll: ${apk.name} failed signature verification:\n${out.toString().trim()}"
+            }
+        }
+        logger.lifecycle("androidReleaseAll: ${apks.size} APK signature(s) verified.")
+    }
+
+    /** The newest apksigner in the local SDK, or null when there is no SDK to look in. */
+    private fun findApksigner(): File? {
+        val sdk = listOfNotNull(
+            System.getenv("ANDROID_HOME"),
+            System.getenv("ANDROID_SDK_ROOT"),
+        ).map(::File).firstOrNull { it.isDirectory } ?: return null
+
+        return File(sdk, "build-tools").listFiles()
+            ?.filter { it.isDirectory }
+            ?.sortedBy { it.name }
+            ?.reversed()
+            ?.map { File(it, "apksigner") }
+            ?.firstOrNull { it.canExecute() }
+    }
 }
+
+private const val EXPECTED_APKS = 6
 
 /** Registers `androidReleaseAll` on the root project. [version] comes from the
  *  root kiteConfig { } block: buildSrc compiles before plugins apply, so it
