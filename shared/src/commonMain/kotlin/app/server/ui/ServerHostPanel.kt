@@ -61,9 +61,10 @@ import app.utils.platform
 import app.utils.platformCallback
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.server_host_clients_connected
+import syncplaymobile.shared.generated.resources.server_host_clients
 import syncplaymobile.shared.generated.resources.server_host_config
 import syncplaymobile.shared.generated.resources.server_host_copy
 import syncplaymobile.shared.generated.resources.server_host_ios_paused
@@ -80,6 +81,18 @@ import syncplaymobile.shared.generated.resources.server_host_status_starting
 import syncplaymobile.shared.generated.resources.server_host_status_stopped
 import syncplaymobile.shared.generated.resources.server_host_stop
 import kotlin.time.Instant
+import app.server.ServerLogEvent
+import syncplaymobile.shared.generated.resources.server_log_joined
+import syncplaymobile.shared.generated.resources.server_log_disconnected
+import syncplaymobile.shared.generated.resources.server_log_timed_out
+import syncplaymobile.shared.generated.resources.server_log_bad_passwords
+import syncplaymobile.shared.generated.resources.server_log_shutting_down
+import syncplaymobile.shared.generated.resources.server_log_started
+import syncplaymobile.shared.generated.resources.server_log_stopped
+import syncplaymobile.shared.generated.resources.server_log_invalid_port
+import syncplaymobile.shared.generated.resources.server_log_start_failed
+import syncplaymobile.shared.generated.resources.server_log_stop_failed
+import syncplaymobile.shared.generated.resources.server_host_port_taken
 
 private const val LOG_LINES_SHOWN = 60
 
@@ -189,7 +202,7 @@ private fun AddressRow(address: String, label: String) {
 }
 
 @Composable
-private fun StatusRow(status: ServerStatus, clients: Int, detail: String?) {
+private fun StatusRow(status: ServerStatus, clients: Int, detail: ServerLogEvent?) {
     val p = palette
     val square = when (status) {
         ServerStatus.Stopped -> p.inkFaint
@@ -211,13 +224,32 @@ private fun StatusRow(status: ServerStatus, clients: Int, detail: String?) {
             RowGap(Space.gapTight + 2.dp)
             Text(label, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
             if (status == ServerStatus.Running) {
-                Text(stringResource(Res.string.server_host_clients_connected, clients), style = Type.value, color = p.inkDim)
+                Text(pluralStringResource(Res.plurals.server_host_clients, clients, clients), style = Type.value, color = p.inkDim)
             }
         }
         if (status == ServerStatus.Error && detail != null) {
-            Text(detail, style = Type.note, color = p.bad, modifier = Modifier.padding(bottom = Space.gapTight))
+            Text(serverLogText(detail), style = Type.note, color = p.bad, modifier = Modifier.padding(bottom = Space.gapTight))
         }
     }
+}
+
+/**
+ * The wording for one log event. The server records what happened, not how to say it, so the
+ * hosting screen is the only place that has to know the language.
+ */
+@Composable
+fun serverLogText(event: ServerLogEvent): String = when (event) {
+    is ServerLogEvent.Joined -> stringResource(Res.string.server_log_joined, event.user, event.room)
+    is ServerLogEvent.Disconnected -> stringResource(Res.string.server_log_disconnected, event.user)
+    is ServerLogEvent.TimedOut -> stringResource(Res.string.server_log_timed_out, event.user, event.seconds)
+    is ServerLogEvent.DroppedForBadPasswords -> stringResource(Res.string.server_log_bad_passwords, event.user, event.attempts)
+    ServerLogEvent.ShuttingDown -> stringResource(Res.string.server_log_shutting_down)
+    is ServerLogEvent.Started -> stringResource(Res.string.server_log_started, event.port)
+    ServerLogEvent.Stopped -> stringResource(Res.string.server_log_stopped)
+    is ServerLogEvent.InvalidPort -> stringResource(Res.string.server_log_invalid_port, event.port)
+    is ServerLogEvent.PortTaken -> stringResource(Res.string.server_host_port_taken, event.port)
+    is ServerLogEvent.StartFailed -> stringResource(Res.string.server_log_start_failed, event.reason)
+    is ServerLogEvent.StopFailed -> stringResource(Res.string.server_log_stop_failed, event.reason)
 }
 
 @Composable
@@ -235,7 +267,7 @@ private fun LogRow(entry: ServerLogEntry) {
         Box(Modifier.width(2.dp).fillMaxHeight().background(stub))
         RowGap(Space.gapTight + 2.dp)
         Text(clock(entry.timestamp), style = Type.value, color = p.inkFaint, modifier = Modifier.width(64.dp))
-        Text(entry.message, style = Type.note, color = if (entry.level == ServerLogLevel.Error) p.bad else p.ink)
+        Text(serverLogText(entry.event), style = Type.note, color = if (entry.level == ServerLogLevel.Error) p.bad else p.ink)
     }
 }
 

@@ -768,4 +768,30 @@
     <string name="engine_info_kiteplayer">Made by Synkplay's own developer on top of FFmpeg, and tuned for Synkplay. Still experimental: playback can misbehave, so switch engines if something looks off. Built into Synkplay: nothing extra to install.</string>
     <string name="engine_info_avplayer">Apple's system player. Very stable and battery friendly, but narrow: MP4, MOV and HLS with the codecs iOS ships, no external subtitles, no chapters. Built into Synkplay: nothing extra to install.</string>
     <string name="engine_info_vlckit">VideoLAN's libVLC 4 for iOS. Plays nearly every container and codec, external subtitles, chapters, picture in picture. The stable default on iOS. Built into Synkplay: nothing extra to install.</string>
+    <string name="room_track_trait_accessibility">Accessibility</string>
+    <string name="room_track_trait_forced">Forced</string>
+    <string name="setting_gif_recents_title">Remember recent GIFs</string>
+    <string name="setting_gif_recents_summary">One ID kept with the GIF service</string>
+    <string name="settings_color_follows_theme">Theme</string>
+    <string name="server_log_joined">%1$s joined the room %2$s</string>
+    <string name="server_log_disconnected">%1$s disconnected</string>
+    <string name="server_log_timed_out">%1$s timed out after %2$d seconds of silence</string>
+    <string name="server_log_bad_passwords">%1$s dropped after %2$d wrong operator passwords</string>
+    <string name="server_log_shutting_down">Server shutting down</string>
+    <string name="server_log_started">Server started on port %1$d</string>
+    <string name="server_log_stopped">Server stopped</string>
+    <string name="server_log_invalid_port">That is not a usable port: %1$s</string>
+    <string name="server_log_start_failed">Could not start: %1$s</string>
+    <string name="server_log_stop_failed">Could not stop: %1$s</string>
+    <string name="server_notification_title">%1$s server</string>
+    <string name="server_notification_channel_description">Shows while you are hosting a server</string>
+    <plurals name="server_notification_text">
+        <item quantity="one">Running on port %1$d, %2$d person connected</item>
+        <item quantity="other">Running on port %1$d, %2$d people connected</item>
+    </plurals>
+    <plurals name="server_host_clients">
+        <item quantity="one">%1$d person connected</item>
+        <item quantity="other">%1$d people connected</item>
+    </plurals>
+    <string name="room_notification_text">Room open</string>
 </resources>

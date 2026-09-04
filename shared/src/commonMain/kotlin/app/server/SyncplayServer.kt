@@ -78,7 +78,7 @@ class SyncplayServer(
 
         setWatcherRoom(watcher, truncatedRoom, asJoin = true)
         connectedClients.value = _connections.size
-        log("$uniqueName joined room '$truncatedRoom'")
+        log(ServerLogEvent.Joined(uniqueName, truncatedRoom))
     }
 
     fun setWatcherRoom(watcher: ServerWatcher, roomName: String, asJoin: Boolean = false) {
@@ -119,7 +119,7 @@ class SyncplayServer(
         _connections.remove(watcher)
         connectedClients.value = _connections.size
 
-        log("${watcher.name} disconnected")
+        log(ServerLogEvent.Disconnected(watcher.name))
     }
 
     /**
@@ -159,7 +159,7 @@ class SyncplayServer(
     private fun dropIfSilent(watcher: ServerWatcher): Boolean {
         val silentFor = ServerWatcher.currentTimeSeconds() - watcher.lastUpdatedOn
         if (silentFor <= config.protocolTimeoutSeconds) return false
-        log("${watcher.name} timed out after ${silentFor.toInt()}s of silence")
+        log(ServerLogEvent.TimedOut(watcher.name, silentFor.toInt()))
         val conn = _connections[watcher]
         removeWatcher(watcher)
         conn?.drop()
@@ -357,7 +357,7 @@ class SyncplayServer(
         val count = (authFailures[watcher] ?: 0) + 1
         authFailures[watcher] = count
         if (count >= MAX_AUTH_FAILURES) {
-            log("${watcher.name} dropped after $count failed operator passwords")
+            log(ServerLogEvent.DroppedForBadPasswords(watcher.name, count))
             removeWatcher(watcher)
             conn.drop()
         }
@@ -387,11 +387,11 @@ class SyncplayServer(
 
     // --- Logging ---
 
-    private fun log(message: String) {
-        loggy("SyncplayServer: $message")
+    private fun log(event: ServerLogEvent) {
+        loggy("SyncplayServer: $event")
         val entry = ServerLogEntry(
             timestamp = generateTimestampMillis(),
-            message = message
+            event = event,
         )
         // Bounded: the screen keeps its own capped copy, and a long-running host must not grow
         // this list (and copy it per line) for the life of the process.
@@ -403,7 +403,7 @@ class SyncplayServer(
      * [serverDispatcher] like every other mutation, so a Stop cannot race a tick or a join.
      */
     suspend fun shutdown() = onServerThread {
-        log("Server shutting down")
+        log(ServerLogEvent.ShuttingDown)
         for ((watcher, conn) in _connections.toMap()) {
             stopStateTimer(watcher)
             conn.drop()
@@ -423,23 +423,58 @@ class SyncplayServer(
 }
 
 /** How a log line is drawn: a join is good news, an error is red, the rest is quiet. */
-enum class ServerLogLevel {
-    Info, Ok, Error;
+enum class ServerLogLevel { Info, Ok, Error }
 
-    companion object {
-        fun of(message: String): ServerLogLevel {
-            val m = message.lowercase()
-            return when {
-                listOf("fail", "error", "invalid", "taken").any { it in m } -> Error
-                "joined" in m || "started" in m -> Ok
-                else -> Info
-            }
-        }
+/**
+ * One thing the hosted server did, as data rather than as an English sentence.
+ *
+ * The log is the whole body of the hosting screen, so it has to speak the app's language. Keeping
+ * the event and its values apart means the screen picks the wording, and the severity comes from
+ * the event itself instead of from sniffing the sentence for the word "error".
+ */
+sealed interface ServerLogEvent {
+
+    val level: ServerLogLevel get() = ServerLogLevel.Info
+
+    data class Joined(val user: String, val room: String) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Ok
+    }
+
+    data class Disconnected(val user: String) : ServerLogEvent
+
+    data class TimedOut(val user: String, val seconds: Int) : ServerLogEvent
+
+    data class DroppedForBadPasswords(val user: String, val attempts: Int) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Error
+    }
+
+    data object ShuttingDown : ServerLogEvent
+
+    data class Started(val port: Int) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Ok
+    }
+
+    data object Stopped : ServerLogEvent
+
+    data class InvalidPort(val port: String) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Error
+    }
+
+    data class PortTaken(val port: Int) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Error
+    }
+
+    data class StartFailed(val reason: String) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Error
+    }
+
+    data class StopFailed(val reason: String) : ServerLogEvent {
+        override val level get() = ServerLogLevel.Error
     }
 }
 
 data class ServerLogEntry(
     val timestamp: Long,
-    val message: String,
-    val level: ServerLogLevel = ServerLogLevel.of(message),
+    val event: ServerLogEvent,
+    val level: ServerLogLevel = event.level,
 )

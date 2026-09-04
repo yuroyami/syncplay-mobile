@@ -43,7 +43,7 @@ object ServerHostSession {
     val serverStatus = MutableStateFlow(ServerStatus.Stopped)
 
     /** One line of evidence for an error state, such as the port being taken. */
-    val statusDetail = MutableStateFlow<String?>(null)
+    val statusDetail = MutableStateFlow<ServerLogEvent?>(null)
     val connectedClients = MutableStateFlow(0)
     val deviceIpAddress = mutableStateOf<String?>(null)
 
@@ -66,7 +66,7 @@ object ServerHostSession {
 
         val portInt = Preferences.SERVER_PORT.value().trim().toIntOrNull()
         if (portInt == null || portInt !in 1..65535) {
-            fail("Invalid port number")
+            fail(ServerLogEvent.InvalidPort(Preferences.SERVER_PORT.value().trim()))
             return
         }
         // The salt is minted once and kept: a fresh one per start would silently invalidate every
@@ -118,7 +118,7 @@ object ServerHostSession {
                 newEngine.startListening(portInt)
                 serverStatus.value = ServerStatus.Running
                 deviceIpAddress.value = getDeviceIpAddress()
-                addLog("Server started on port $portInt", ServerLogLevel.Ok)
+                addLog(ServerLogEvent.Started(portInt))
 
                 launch {
                     publicIpLoading.value = true
@@ -142,7 +142,7 @@ object ServerHostSession {
                 engine = null
                 val message = e.message.orEmpty()
                 val taken = message.contains("in use", ignoreCase = true) || message.contains("EADDRINUSE", ignoreCase = true)
-                fail(if (taken) getString(Res.string.server_host_port_taken, portInt) else "Failed to start: $message")
+                fail(if (taken) ServerLogEvent.PortTaken(portInt) else ServerLogEvent.StartFailed(message))
             }
         }
     }
@@ -163,17 +163,17 @@ object ServerHostSession {
                 publicIpAddress.value = null
                 publicIpLoading.value = false
                 platformCallback.serverServiceStop()
-                addLog("Server stopped")
+                addLog(ServerLogEvent.Stopped)
             } catch (e: Exception) {
                 loggy("Server: Error stopping: ${e.message}")
-                addLog("Error stopping: ${e.message}", ServerLogLevel.Error)
+                addLog(ServerLogEvent.StopFailed(e.message.orEmpty()))
             }
         }
     }
 
-    private fun fail(message: String) {
-        addLog(message, ServerLogLevel.Error)
-        statusDetail.value = message
+    private fun fail(event: ServerLogEvent) {
+        addLog(event)
+        statusDetail.value = event
         serverStatus.value = ServerStatus.Error
     }
 
@@ -182,7 +182,7 @@ object ServerHostSession {
         while (serverLogs.size > LOG_CAP) serverLogs.removeAt(0)
     }
 
-    private fun addLog(message: String, level: ServerLogLevel = ServerLogLevel.Info) {
-        addEntry(ServerLogEntry(timestamp = generateTimestampMillis(), message = message, level = level))
+    private fun addLog(event: ServerLogEvent) {
+        addEntry(ServerLogEntry(timestamp = generateTimestampMillis(), event = event))
     }
 }
