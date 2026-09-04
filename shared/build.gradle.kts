@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.compose.plugin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kSerialization)
+    // Required by the Ktorfit plugin, which registers its code generator as a KSP processor.
     alias(libs.plugins.ksp)
     //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.ktorfit)
@@ -161,10 +162,11 @@ kotlin {
 
             /* Extended coroutine support for Android threading */
             implementation(libs.kotlin.coroutines.android)
-            implementation(libs.kotlin.coroutines.guava)
 
             /* Network and TLS */
-            implementation(libs.netty)
+            implementation(libs.netty.handler)
+            implementation(libs.netty.codec)
+            implementation(libs.netty.transport)
             implementation(libs.conscrypt) //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
@@ -189,7 +191,9 @@ kotlin {
             dependencies {
                 /* Network and TLS: same Netty engine as Android (pure JVM); TLS comes from the JDK,
                  * no Conscrypt needed on desktop. */
-                implementation(libs.netty)
+                implementation(libs.netty.handler)
+                implementation(libs.netty.codec)
+                implementation(libs.netty.transport)
 
 
                 /* YouTube/SoundCloud/PeerTube stream URL extractor (pure JVM, same as Android) */

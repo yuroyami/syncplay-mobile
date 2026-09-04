@@ -2,11 +2,11 @@
 #KMM-Plugins
 # 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
 kotlin = "2.4.10"
+ksp = "2.3.11"
 agp = "9.3.2"
 kiteconfig = "1.0.0"
 compose-multiplatform = "1.12.0"
 kSerialization = "1.11.0"
-ksp = "2.3.11"
 ktorfit = "2.7.5"
 
 #KMM-Libs
@@ -40,7 +40,6 @@ skiko = "0.150.1"
 
 #Android
 coreSplashscreen = "1.2.0"
-corePip = "1.0.0-alpha04"
 activityCompose = "1.13.0"
 documentfile = "1.1.0"
 appcompat = "1.8.0"
@@ -107,13 +106,11 @@ skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
 kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "koroutines" }
-kotlin-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "koroutines" }
 jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 jetpack-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 jetpack-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 jetpack-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-jetpack-pip = { module = "androidx.core:core-pip", version.ref = "corePip" }
 desugaring = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugaring" }
 m3-exo = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 m3-exo-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3" }
@@ -121,12 +118,16 @@ m3-exo-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "m
 m3-exo-rtsp = { module = "androidx.media3:media3-exoplayer-rtsp", version.ref = "media3" }
 m3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
 m3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
-m3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 m3-extractor = { module = "androidx.media3:media3-extractor", version.ref = "media3" }
 m3-decoder = { module = "androidx.media3:media3-decoder", version.ref = "media3" }
 m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "media3" }
 m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
-netty = { module = "io.netty:netty-all", version.ref = "netty" }
+# Only what the client and the built-in server actually use. netty-all pulls the whole family
+# (about forty jars) for the seventeen classes below: a bootstrap, a channel, the codec pair and
+# the TLS context builder.
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
+netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
+netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 kiteplayer-compose-ui = { module = "io.github.yuroyami:kiteplayer-compose-ui", version.ref = "kiteplayer" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
@@ -141,7 +142,7 @@ compose-multiplatform = [
 ktor = ["ktor-network", "ktor-network-tls"]
 media3 = [
     "m3-exo", "m3-exo-dash", "m3-exo-hls", "m3-exo-rtsp", "m3-datasource-okhttp",
-    "m3-ui", "m3-session", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
+    "m3-ui", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
 compose-unstyled = [
@@ -152,7 +153,7 @@ haze = ["haze", "haze-blur"]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]
-jetpack-androidx-extensions = ["jetpack-activity-compose", "jetpack-appcompat", "jetpack-core", "jetpack-documentfile", "jetpack-pip", "jetpack-splashscreen"]
+jetpack-androidx-extensions = ["jetpack-activity-compose", "jetpack-appcompat", "jetpack-core", "jetpack-documentfile", "jetpack-splashscreen"]
 
 [plugins] ########################################################################################
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.android.kmp.library).apply(false)
 
     alias(libs.plugins.kSerialization).apply(false)
+    // Ktorfit generates its API implementations through KSP; without this there is no createKlipyAPI.
     alias(libs.plugins.ksp).apply(false)
 
     alias(libs.plugins.ktorfit).apply(false)
