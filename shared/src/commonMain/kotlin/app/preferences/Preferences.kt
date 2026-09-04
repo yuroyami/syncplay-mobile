@@ -314,6 +314,9 @@ import syncplaymobile.shared.generated.resources.uisetting_system_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_system_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
+import androidx.compose.material.icons.filled.Gif
+import syncplaymobile.shared.generated.resources.setting_gif_recents_summary
+import syncplaymobile.shared.generated.resources.setting_gif_recents_title
 
 /** Common media languages with ISO 639-2 codes for audio/subtitle track selection. */
 private val mediaLanguageEntries = mapOf(
@@ -393,6 +396,17 @@ object Preferences {
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())
+
+    /**
+     * Whether the GIF panel may keep the same id with the GIF service from one launch to the next.
+     * On, the service can hand your own picks back under Recents. Off, a fresh id every launch, so
+     * nothing links two sessions, and Recents comes back empty.
+     */
+    val GIF_REMEMBER_RECENTS = Pref("pref_inroom_gif_remember_recents", true) {
+        title = Res.string.setting_gif_recents_title
+        summary = Res.string.setting_gif_recents_summary
+        icon = Icons.Filled.Gif
+    }
     /** When true, the "Undo Seek" action skips its confirmation dialog. Set by the dialog's
      * "Always do" button. No SettingConfig, so it never appears in the settings UI. */
     val UNDO_SEEK_NO_CONFIRM = Pref("misc_undo_seek_no_confirm", false)

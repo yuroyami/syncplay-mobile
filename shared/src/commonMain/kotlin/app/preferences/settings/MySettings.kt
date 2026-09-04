@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.VideoLabel
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CHAT_COLORS_ENTRY
 import app.preferences.Preferences.CLEAR_LOGS
+import app.preferences.Preferences.GIF_REMEMBER_RECENTS
 import app.preferences.Preferences.CC_LANG
 import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
@@ -182,6 +183,7 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
         +MSG_FONTSIZE
         +MSG_FADING_DURATION
         +MSG_MAXCOUNT
+        +GIF_REMEMBER_RECENTS
     }
     /* The notice switches the room reads; they had no row anywhere until now. */
     group(Res.string.settings_group_notices) {

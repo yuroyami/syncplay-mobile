@@ -2,6 +2,7 @@ package app.klipy
 
 import SyncplayMobile.shared.KiteBuildConfig
 import app.klipy.KlipyUtils.trending
+import app.preferences.Preferences.GIF_REMEMBER_RECENTS
 import app.preferences.Preferences.USER_ID
 import app.preferences.value
 import app.utils.httpClient
@@ -29,7 +30,16 @@ object KlipyUtils {
     private val klipyHttpClient by lazy { httpClient.config(additionalHttpConfig) }
     private val ktorfit by lazy { Ktorfit.Builder().baseUrl(BASE_URL).httpClient(klipyHttpClient).build() }
     private val klipy by lazy { ktorfit.createKlipyAPI() }
-    private val customerId by lazy { USER_ID.value() ?: Uuid.generateV4().toHexString() }
+    /** A fresh id for this launch, used whenever the persistent one is switched off. */
+    private val sessionId by lazy { Uuid.generateV4().toHexString() }
+
+    /**
+     * The id the GIF service sees. It is the app's own persisted id only while the user leaves
+     * "Remember recent GIFs" on; switching it off sends a per-launch id instead, so the service
+     * cannot join two sessions together, and Recents simply comes back empty.
+     */
+    private val customerId: String
+        get() = if (GIF_REMEMBER_RECENTS.value()) USER_ID.value() ?: sessionId else sessionId
 
     /**
      * Searches Klipy for GIFs or stickers.
