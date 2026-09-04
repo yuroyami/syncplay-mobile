@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       deploy_play_store:
-        description: 'Upload AAB to Google Play Store (beta)'
+        description: 'Upload AAB to Google Play'
         type: boolean
         default: true
+      play_track:
+        description: 'Which Play track to publish to'
+        type: choice
+        default: beta
+        options: [internal, alpha, beta, production]
       deploy_app_store:
         description: 'Upload IPA to App Store / TestFlight'
         type: boolean
@@ -15,6 +20,9 @@ on:
 permissions:
   contents: write
 
+# Every action is pinned to the commit its tag pointed at, with the tag kept as a comment.
+# A moving tag is a moving dependency: whoever controls it can change what runs here, and a
+# reproducible build cannot depend on something that changes underneath it (issue #105).
 env:
   # Skip `brew update` — slow and rarely needed since the macos runner image
   # ships current Homebrew + a recent formula snapshot.
@@ -32,37 +40,23 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       version_code: ${{ steps.version.outputs.version_code }}
+      application_id: ${{ steps.version.outputs.application_id }}
+      ios_min_version: ${{ steps.version.outputs.ios_min_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Extract version from build.gradle.kts
-        id: version
-        run: |
-          # The version lives in the kiteConfig { } block in the root build script,
-          # not in AppConfig.kt (the plugin owns it). The code follows KiteConfig's
-          # scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1).
-          VERSION=$(grep -E '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract version from the kiteConfig { } block in build.gradle.kts" >&2
-            exit 1
-          fi
-          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + v[0].zfill(3) + v[1].zfill(3) + v[2].zfill(2) + '0')")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
-          echo "Version: $VERSION (code: $VERSION_CODE)"
-
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
       # NDK is ~1GB and rarely changes (pinned in gradle.properties).
       # Skip the install on cache hit.
       - name: Cache Android NDK
         id: ndk-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ env.ANDROID_HOME }}/ndk/29.0.14206865
           key: android-ndk-29.0.14206865-${{ runner.os }}
@@ -73,7 +67,23 @@ jobs:
 
       # Gradle dependency cache + Gradle build cache + wrapper distribution.
       # Saves the dependency-download phase (~2-3 min on cold start).
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      # Ask Gradle for the identity rather than re-deriving it. The version code scheme belongs
+      # to KiteConfig, and a copy of it in bash can drift without anyone noticing.
+      - name: Read release identity
+        id: version
+        run: |
+          ./gradlew -q printReleaseIdentity | tee identity.env
+          sed -e 's/^VERSION=/version=/' \
+              -e 's/^VERSION_CODE=/version_code=/' \
+              -e 's/^APPLICATION_ID=/application_id=/' \
+              -e 's/^IOS_MIN_VERSION=/ios_min_version=/' \
+              identity.env >> "$GITHUB_OUTPUT"
+
+      # The release is only worth building if the things that gate its upload already hold.
+      - name: Verify release gates
+        run: ./gradlew qualityGates detekt
 
       # Native MPV build (FFmpeg, libass, harfbuzz, freetype, mbedtls, dav1d,
       # libplacebo, lua, fribidi, unibreak) cross-compiled for 4 ABIs.
@@ -85,7 +95,7 @@ jobs:
       # gradle.properties (NDK version) plus the AppConfig lib list.
       - name: Cache MPV native libs
         id: mpv-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: androidApp/src/main/libs
           key: mpv-libs-${{ runner.os }}-${{ hashFiles('buildscripts/mpv_*.sh', 'buildscripts/include/*.sh', 'buildscripts/scripts/*.sh', 'gradle.properties', 'buildSrc/src/main/kotlin/AppConfig.kt') }}
@@ -132,16 +142,27 @@ jobs:
         run: ./gradlew bundleFullRelease
 
       - name: Upload APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-full-apks
           path: androidApp/build/outputs/apk/full/release/*.apk
 
       - name: Upload AAB
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-aab
           path: androidApp/build/outputs/bundle/fullRelease/*.aab
+
+      # Without these a crash report from a release build is unreadable. They were produced on
+      # every build and then thrown away with the runner.
+      - name: Upload R8 mapping and native symbols
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-symbols
+          if-no-files-found: warn
+          path: |
+            androidApp/build/outputs/mapping/fullRelease/mapping.txt
+            androidApp/build/outputs/native-debug-symbols/fullRelease/native-debug-symbols.zip
 
   # ───────────────────────────────────────────────────────────────────────────
   # Android ExoOnly Build (exoOnly=true) → 1 universal APK
@@ -149,16 +170,16 @@ jobs:
   build-android-exo:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       - name: Decode keystore
         run: |
@@ -183,10 +204,54 @@ jobs:
         run: ./gradlew assembleExoOnlyRelease -PexoOnly=true
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-exo-apk
           path: androidApp/build/outputs/apk/exoOnly/release/*.apk
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Desktop → one installer per host OS. jpackage can only build for the OS it
+  # runs on, so this is a matrix rather than one job.
+  # ───────────────────────────────────────────────────────────────────────────
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            task: packageDmg
+            artifact: desktop-macos
+            path: desktopApp/build/compose/binaries/main/dmg/*.dmg
+          - os: windows-latest
+            task: packageMsi
+            artifact: desktop-windows
+            path: desktopApp/build/compose/binaries/main/msi/*.msi
+          - os: ubuntu-latest
+            task: packageDeb
+            artifact: desktop-linux
+            path: desktopApp/build/compose/binaries/main/deb/*.deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      # Nothing native is downloaded for desktop any more: the only engine is KitePlayer and its
+      # decoder rides inside the KiteCodec jar.
+      - name: Build installer
+        run: ./gradlew :desktopApp:${{ matrix.task }}
+
+      - name: Upload installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ matrix.artifact }}
+          if-no-files-found: error
+          path: ${{ matrix.path }}
 
   # ───────────────────────────────────────────────────────────────────────────
   # iOS Build → Archive + IPA + App Store upload
@@ -194,18 +259,18 @@ jobs:
   build-ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: latest-stable
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       - name: Create local.properties
         run: |
@@ -248,7 +313,7 @@ jobs:
       # with `Unable to load contents of file list ... .xcfilelist` (which is
       # what blocked the 2026-05-18 release run).
       - name: Cache CocoaPods spec repo
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cocoapods/repos
           key: cocoapods-repos-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
@@ -256,7 +321,7 @@ jobs:
             cocoapods-repos-${{ runner.os }}-
 
       - name: Cache CocoaPods downloads
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/Library/Caches/CocoaPods
           key: cocoapods-downloads-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
@@ -265,7 +330,7 @@ jobs:
 
       - name: Cache installed Pods
         id: pods-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: iosApp/Pods
           key: pods-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
@@ -356,7 +421,7 @@ jobs:
           echo "ipa_size=$(stat -f%z "$RUNNER_TEMP/$IPA_NAME")" >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ios-ipa
           path: ${{ steps.ipa.outputs.ipa_path }}
@@ -365,16 +430,17 @@ jobs:
   # Create GitHub Release + Upload artifacts + Update AltStore + Play Store
   # ───────────────────────────────────────────────────────────────────────────
   release:
-    needs: [build-android-full, build-android-exo, build-ios]
+    needs: [build-android-full, build-android-exo, build-desktop, build-ios]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build-android-full.outputs.version }}
       VERSION_CODE: ${{ needs.build-android-full.outputs.version_code }}
+      IOS_MIN_VERSION: ${{ needs.build-android-full.outputs.ios_min_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
 
@@ -384,13 +450,15 @@ jobs:
       # ── Google Play Store ──────────────────────────────────────────────────
       - name: Upload AAB to Google Play
         if: inputs.deploy_play_store
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.yuroyami.syncplay
           releaseFiles: artifacts/android-aab/*.aab
-          track: beta
+          # Was hardcoded to beta while the README told users Play carried the same build.
+          track: ${{ inputs.play_track }}
           status: completed
+          whatsNewDirectory: fastlane/metadata/android/en-US/changelogs
 
       # ── GitHub Release ─────────────────────────────────────────────────────
       - name: Collect release files
@@ -399,8 +467,27 @@ jobs:
           cp artifacts/android-full-apks/*.apk release-files/
           cp artifacts/android-exo-apk/*.apk release-files/
           cp artifacts/ios-ipa/*.ipa release-files/
+          # The desktop app has been packageable for a long time and shipped nowhere.
+          cp artifacts/desktop-macos/*.dmg release-files/ 2>/dev/null || echo "no macOS installer"
+          cp artifacts/desktop-windows/*.msi release-files/ 2>/dev/null || echo "no Windows installer"
+          cp artifacts/desktop-linux/*.deb release-files/ 2>/dev/null || echo "no Linux installer"
           echo "Release files:"
           ls -lh release-files/
+
+      # The notes come from CHANGELOG.md, which is written for people who use the app.
+      # --generate-notes would list commit subjects instead.
+      - name: Extract release notes
+        run: |
+          awk -v ver="## ${VERSION}" '
+            $0 == ver { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for ${VERSION}" >&2
+            exit 1
+          fi
+          cat release-notes.md
 
       - name: Create GitHub Release
         env:
@@ -408,7 +495,7 @@ jobs:
         run: |
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
-            --generate-notes \
+            --notes-file release-notes.md \
             release-files/*
 
       # ── AltStore JSON ──────────────────────────────────────────────────────
@@ -417,10 +504,14 @@ jobs:
           IPA_SIZE=$(stat -c%s "release-files/synkplay-${VERSION}-ios.ipa" 2>/dev/null || stat -f%z "release-files/synkplay-${VERSION}-ios.ipa")
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%S+00:00")
 
+          # Both of these were hardcoded empty, so every AltStore entry ever published said
+          # nothing about what changed and claimed no minimum iOS version.
           jq --arg ver "$VERSION" \
              --arg code "$VERSION_CODE" \
              --arg size "$IPA_SIZE" \
              --arg date "$DATE" \
+             --arg notes "$(cat release-notes.md)" \
+             --arg minos "$IOS_MIN_VERSION" \
              --arg url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/synkplay-${VERSION}-ios.ipa" \
              '
              .apps[0].versions = [{
@@ -429,8 +520,8 @@ jobs:
                version: $ver,
                buildVersion: $code,
                date: $date,
-               localizedDescription: "",
-               minOSVersion: ""
+               localizedDescription: $notes,
+               minOSVersion: $minos
              }] + .apps[0].versions
              ' altstore_yuroyami.json > altstore_tmp.json && mv altstore_tmp.json altstore_yuroyami.json
 
