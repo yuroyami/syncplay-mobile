@@ -51,6 +51,30 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 **`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), used by the root `kiteConfig { buildConfig { } }` block to emit the commonMain `EXOPLAYER_ONLY` field and by `androidApp` for flavor selection. `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv native build scripts, and ships no native *player* libraries. It is not free of native code: a release exoOnly APK carries `libffmpegJNI.so` from the ExoPlayer audio AAR, plus Conscrypt, DataStore and the AndroidX graphics-path library.
 
+**Build-time gates (`buildSrc/QualityGates.kt`, run by `./gradlew qualityGates` and by
+`:shared:check`).** Each exists because the thing it checks has already gone wrong, or because a
+standing decision was being kept by memory alone. Every one was verified by planting a violation.
+- `checkProtocolThrows` - inbound protocol code must throw `SerializationException` and nothing
+  else. A scan rather than a detekt rule: detekt's `ForbiddenMethodCall` needs type resolution the
+  plain task does not have, so as a rule it never fired.
+- `checkStringResources` - a duplicate string or plural key is a crash at first use, and this app
+  has shipped one. Deliberately no apostrophe rule: these are Compose Resources, not Android
+  `res/`.
+- `checkLocaleParity` - reports how far behind each locale is, fails on a key that exists in a
+  translation but not in `values-en`. `-PstrictLocales=true` also fails on missing keys.
+- `checkDeadResources` - strings and drawables nothing references. `synkplay_bg`/`synkplay_fg` are
+  excluded because KiteConfig reads them by path.
+- `checkSettingsReachable` - a preference that declares a title, summary and icon and is never
+  named outside its own declaration.
+- `checkDestroyContract` - every engine's `destroy()` flips `isInitialized` before cancelling
+  `playerSupervisorJob`.
+- `checkStoreMetadata` - Play's 500-character What's New limit, and a changelog file for the
+  version being built.
+
+**detekt and kover.** `config/detekt/detekt.yml` is almost entirely off; what is on maps to
+defects this repo had. `koverVerify` enforces a line-coverage floor over `app.protocol` and
+`app.server` only, currently 24 percent; it is a ratchet, raise it, never lower it.
+
 **buildSrc holds all non-trivial build logic; the four `build.gradle.kts` files stay declarative.**
 - `AppConfig.kt` - build helpers that are NOT app identity (identity now lives only in the root `kiteConfig { }` block): `SHARED_MODULE_NAME`, `localProperties(rootDir)` (signing secrets - caller must pass `rootDir` explicitly), the `exoOnly` flag + `resolveExoOnly(providers)`, Trinity brand colors (`0xFF9879EF` ultraviolet / `0xFFC331D8` orchid / `0xFFD86B75` coral, the three dominant stops of `art/synkplay_logo_palette.md`), `abiCodes`, `mpvLibs` (9 `.so` files), and the custom propagators `propagateTrinityColors()` (rewrites `ic_launcher_foreground.xml` gradient stops) + `propagateDefaultStrings()` (`values-en/strings.xml` → `values/strings.xml`); `propagateAllCustom()` runs them.
 - `NativeBuildConfig.kt` - mpv cross-compile `Exec` task (`runAndroidMpvNativeBuildScripts`, disabled on Windows), `validateNdk()`, plus the libc++ guards: `registerMpvLibcxxGuards()` (full flavor: `restoreMpvLibcxx` copies the NDK r29 `libc++_shared.so` next to the mpv libs, `verifyMpvLibcxx` greps for the `from_chars_floating` marker and fails packaging otherwise) and `registerExoOnlyLibcxxPrune()` (exoOnly reproducibility, issue #105).
@@ -66,6 +90,11 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 - The catalog is `AppIcon`; `logo.appiconset` is an unreferenced leftover. `kiteCheck` and `kiteVerify` pass clean on 1.0.0.
 
 **Launcher icon ownership (themed icon, issue #143).** KiteConfig owns every launcher asset: the per-density PNGs, the `mipmap-anydpi-v26` wrappers, and the `mipmap-anydpi-v33` wrappers whose `<monochrome>` layer (referencing `@mipmap/ic_launcher_foreground` - the launcher only uses its alpha) provides the Android 13+ themed icon. The canonical design artwork is the pure-vector `art/synkplay_logo.svg`, with the approved colors and gradient geometry recorded in `art/synkplay_logo_palette.md`; in-app rendering is the `SynkplayLogo` canvas composable (the packaged `synkplay_logo.xml` VectorDrawable is currently unreferenced, a delete candidate), while `synkplay_fg.png` is the transparent 1024×1024 KiteConfig raster used with the opaque `synkplay_bg.png` platform plate. Regeneration is ON-DEMAND via `kiteRewriteLogo` - normal builds never touch source icons. Do NOT hand-edit generated launcher files; edit the canonical SVG, regenerate the VectorDrawable and `synkplay_fg.png`, then rerun the task.
+
+**Release identity.** `./gradlew printReleaseIdentity` prints version, versionCode,
+applicationId and the iOS deployment target as `KEY=VALUE`. The release workflow reads it instead
+of re-deriving KiteConfig's version-code scheme in bash. `CHANGELOG.md` is where release notes
+live; the workflow fails if the version being built has no section in it.
 
 **Release artifacts.** `androidReleaseAll` (class + registration in `buildSrc/AndroidReleaseAllTask.kt`) shells out to **three** separate `./gradlew` runs to produce 7 files into `AndroidAppOutput/`: 5 full ABI-split release APKs, 1 exoOnly universal APK, 1 full AAB. Three processes are required because only one product flavor exists per Gradle invocation, and ABI splits and the AAB are mutually exclusive in one task graph (AGP issuetracker 402800800).
 
@@ -203,9 +232,40 @@ and plain text when off, `abortConnection()` when on. An unsolicited `TLS` messa
 | `WATCHDOG_INTERVAL_SECONDS` | 5 | Silent-disconnect watchdog tick |
 | `STATE_TIMEOUT_SECONDS` | 15 | No State for this long → reconnect |
 
+### The clock (`utils/SyncClock.kt`)
+
+Everything time-dependent in `app.protocol` and `app.server` reads `SyncClock`, never
+`Clock.System` or `generateTimestampMillis` directly. That is what lets a test install a
+`TestClock` and advance it instead of sleeping. UI, logging and file naming keep the wall clock,
+because nothing asserts on them.
+
+### Latency (`PingService`) and clock offset (`ClockOffsetEstimator`)
+
+`ClockOffsetEstimator` estimates how far our clock sits from the server's, Cristian-style from
+the timestamps already on the wire, filtered by minimum delay over a window of eight.
+**Nothing corrects playback from it yet**: it is measured and written to the log on every health
+tick so a real two-device session can say whether the numbers are sane. Moving the sync decision
+onto it is the step after that session.
+
 ### Latency (`PingService`)
 
 `RTT = now − echoedTimestamp`; `rtt = 0.85·rtt + 0.15·RTT` (EMA). `forwardDelay = avrRtt/2`, plus `(rtt − senderRtt)` when `senderRtt < rtt` (asymmetry: our upload is slower). Timestamps are full-precision seconds; negative RTT or senderRtt is ignored.
+
+### The sync decision (`protocol/sync/SyncDecision.kt`)
+
+**The algorithm is a pure function.** `decideSync(playstate, state, ctx)` takes what the server
+said plus a snapshot of where we are, and returns the next `SyncState` and a list of
+`SyncAction`. It touches no player, no socket, no preferences and no clock. `onState` gathers the
+snapshot, applies the actions in order, and owns the acknowledgement. The outbound half is
+`protocol/sync/PositionReport.kt`: `reportablePosition(inputs)` answers what position to
+advertise and whether load-masking stays armed.
+
+That split is what made the sync algorithm testable at all; before it, nothing could be called
+without building a whole `RoomViewmodel`. `SyncDecisionTest` and `PositionReportTest` are where
+the behaviour is pinned. When changing sync, change the function and the tests, not the handler.
+
+`ProtocolManager.syncState` projects the eight individual anchor fields into one `SyncState` and
+back, because the rest of the room reads them by name.
 
 ### State handler (`RoomServerMessageHandler.onState`)
 
@@ -290,6 +350,9 @@ the first-sync anchor, so the next server `State` hard-seeks and re-applies paus
 | `MediaFileWireExt.kt` | `MediaFile.toFileData()` applying `HASH_FILENAME`/`HASH_FILESIZE` privacy modes ('1' raw / '2' 12-char SHA-256 / sentinels). Unknown duration sent as `0.0`. |
 | `RoomScreenUI.kt` | The room: video layer (kept composed at alpha 0 when no video, glass-captured via a room-scoped `HazeState`), then the HUD on `RoomFrame`'s docks, then `NoticeHost` above everything. `EnterRoomMode(false)` locks phones landscape; the `tall` arrangement is chosen purely from the window (`containerSize`), and the rail runs horizontal under 480dp of height. Background tap is two-stage (IME open → clear focus only; otherwise hide HUD). HUD auto-hides after `HUD_AUTO_HIDE_SECONDS` unless a panel, the keyboard, a scrub or a draft holds it. PiP composes the video alone. |
 | `RoomFrame.kt` | The docks: rail at the top end (column, or a row on short windows), status line top centre, chat owning the start corner, side panels at `CenterEnd`, transport at the bottom, play key in the centre. Top chrome pads with `roomTopInsets()` = `statusBars union displayCutout.top` (immersive room reports 0 for hidden bars); sides pad the cutout, bottom pads `safeGestures`. |
+| `ReadinessManager.kt` | Who the room is waiting for and the autoplay countdown; decisions in `protocol/sync/Readiness.kt`. |
+| `ResumeManager.kt` | Where each file was left; store and policy in `player/ResumePositions.kt`. Offered only in solo mode. |
+| `SlashCommands.kt` / `SlashCommandRunner.kt` | The chat box's `/ready`, `/room`, `/seek`, `/op`, `/users`, `/help`. A command never reaches the wire. |
 | `RoomUiStateManager.kt` | HUD/panel/PiP/lock state + lifecycle forwarding: `visibleHUD`, `hudActivity`, seven mutually-exclusive side panels (`tabCard*`), `railActionsExpanded`, `tabLock`, `askLeave`, `scrubbing`, chat draft `msg`, `hasEnteredPipMode`; `onLifecycleStop` pauses unless in PiP. |
 
 **`room/ui/bottombar/`** - `RoomSectionBottomBar` (transport container; most controls only with video), `RoomSeekbar` (drawn `ScrubTrack` with chapter ticks and a buffered band; preview while dragging, one seek on release; `analyzeChapters`'s single caller), `RoomReadyButton` (measured two-word cell, hidden solo), `RoomControlPanel` (the control strip beside the rail: aspect key where the engine supports it, seek-to/undo/tracks/gestures/add-media launchers; tool panels and the strip close each other), `PanelChapters`, `PanelSubtitleSearch` (OpenSubtitles search with typed Success/Quota/Failed states), `RoomMediaAddButton`, `BlackContrastUnderlay`. Every seek path goes through the one dispatcher seek: announce, move, remember (`pendingSeekFromMs` single-use).
@@ -319,6 +382,31 @@ the first-sync anchor, so the next server `State` hard-seeks and re-applies paus
 ### UI components (`commonMain/app/uicomponents/`)
 
 `controls/` - the drawn control set with semantics built in: `Rocker` (toggle), `ScrubTrack` (slider with ticks, buffered band, progress semantics), `Stepper`, `Segmented` (radio-group semantics), `Field` (hairline text field with a name), `GlyphButton`, `ListRow`, `Actions`, `Tag`, `Timecode`, `HelpTip`, `Chevron`, `Swatch`, `Progress`, `Rule`, `Text` (auto-size capable), `Glyphs` (the drawn glyph set). `frames/` - `ScreenFrame`, `Modal` (the ONE modal/popup frame: Ask/Panel/full sizes plus a bottom sheet; scrolls, `imePadding`, Escape), `PanelFrame`, `Notice` (`NoticeQueue`, max 3 stacked; `NoticeHost` renders with live-region semantics). `GlassSurface.kt` - `Modifier.surface(tier, shape)` is the only glass entry; `GlassBackdrop` captures on demand (`GlassDemand` counter), the room supplies its own capture over the video layer via `glassBackdropLayer`; `DISABLE_FROSTED_GLASS` switches the whole system to solid panels. Also `SynkplayLogo` (canvas mark, Oklab-tuned dark lead-in), `Wordmark`, `WidthClass`, `AnimatedImage` (expect/actual, `onLoaded`), `MessagePalette`, `PopupMediaDirs`.
+
+### The glass layer (`uicomponents/GlassSurface.kt`)
+
+`Modifier.surface(tier, shape)` is the only way in. Four tiers:
+- **Flat** - a plain painted ground. No blur, no rim.
+- **Panel** - the backdrop blurred through Haze and tinted with the palette's panel colour, plus
+  a rim. This is the only tier that costs anything.
+- **Chrome** - no blur, a near-black gradient and the app's one shadow. Its colours are fixed
+  dark **on purpose**: chrome only ever floats over video, which the room pins dark whatever the
+  theme is.
+- **Scrim** - the dim under a modal.
+
+Three things are worth knowing before touching it:
+- **Capture is on demand.** `GlassBackdrop` counts callers through `LocalGlassDemand`; a hidden
+  HUD releases its claim and stops paying for a capture. The room supplies its own capture over
+  the video layer via `glassBackdropLayer`.
+- **Haze cannot blur a platform video view.** Over a `SurfaceView` or a `UIKitView` there is
+  nothing for it to sample, so the panel falls back to a plain tonal one. Below Android 12 and
+  with `DISABLE_FROSTED_GLASS` on, the whole system is solid panels.
+- **The wash follows the theme.** The inner tint, the sheen, the rim and the fallback gradient
+  all branch on `palette.isDark`. They used to be fixed white-on-black, which left a light theme
+  with no rim and a bruised foot.
+
+Never nest a Panel inside a Panel: `HazeInput.Sources` selects Behind on purpose, and glass
+sampling a capture that contains itself recurses until the render thread dies.
 
 ### Klipy (`commonMain/app/klipy/`)
 
@@ -367,6 +455,25 @@ iOS Swift bridges (registered at startup in `iosApp/iOSApp.swift`): `instantiate
 | KitePlayer (KiteCodec/FFmpeg) | Android, iOS, Desktop | ✓ | ✓ | (Android PiP) | Experimental everywhere, and the only desktop engine (default there). One `KiteImpl` in commonMain; hardware decode is MediaCodec / VideoToolbox inside FFmpeg with a measured software fallback. Presentation is `KitePlayerVideo` (native view or pure Compose, switched live by the in-room `KITE_COMPOSE_RENDERER` toggle; the JVM actual always answers pure Compose). Subtitles cover SubRip and WebVTT, embedded or external; styled ASS shows as a track but is not drawn. Speed 0.25x-4x pitch-preserved; no screenshot path; tracker 250 ms. Absent from `exoOnly` (its `libkitecodec_jni.so` is stripped) |
 
 **Engine badges** (home wheel, `PlayerEngine.isSystem`/`isDefault`/`isExperimental`, one badge per engine, ladder Unavailable > Experimental > Default > System): Android = ExoPlayer System, mpv Default, KitePlayer Experimental. iOS = AVPlayer System, VLCKit Default, KitePlayer Experimental. Desktop = KitePlayer Default. `isDefault` is also what `Preferences.PLAYER_ENGINE` resolves its default value from, so moving it moves the engine new installs get.
+
+**KitePlayer, for a new contributor.** It is the only engine written for this project and the
+only one on all three platforms, so it is where an unfamiliar reader gets stuck.
+- **What it is.** `KitePlayer` is a Compose video player from the `io.github.yuroyami` group on
+  Maven Central; `KiteCodec` is the FFmpeg-backed decoder inside it. Both are the owner's own
+  libraries, which is why `mavenLocal` exists at all (behind `-PuseMavenLocal=true`).
+- **One implementation.** `KiteImpl` lives in `commonMain` and is the whole engine for Android,
+  iOS and desktop. There is no per-platform engine class; only the presentation differs.
+- **Two ways to draw.** `KitePlayerVideo` picks a native surface or a pure-Compose renderer, and
+  the in-room `KITE_COMPOSE_RENDERER` toggle switches it live. The JVM actual always answers pure
+  Compose, because there is no native video view to host on desktop, and desktop frames come
+  through KiteCodec's CPU converter as one Skia raster each.
+- **Loading waits for the renderer.** Media loading stays suspended until the renderer reports
+  itself attached, so decoder selection cannot race video output.
+- **Hardware decode** is MediaCodec on Android and VideoToolbox on Apple, both inside FFmpeg,
+  with a measured software fallback.
+- **What it does not do.** No screenshot path, no iOS picture-in-picture controller, and styled
+  ASS subtitles appear as a track but are not drawn. It ships in the `full` flavor only; the
+  exoOnly build strips `libkitecodec_jni.so`.
 
 **iOS PiP** dispatches per engine in `ApplePlatformCallback.onPictureInPicture`: AVPlayer uses `AVPictureInPictureController(avPlayerLayer)`; VLCKit 4 uses its own `enter/exitPictureInPicture` via the `VlcDrawable` PiP protocol stack; **KitePlayer has no iOS PiP controller yet**. All gated on `AVPictureInPictureController.isPictureInPictureSupported()`.
 
