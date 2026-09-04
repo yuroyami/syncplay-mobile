@@ -68,6 +68,7 @@ import platform.ifaddrs.getDeviceLocalIp
 import platform.posix.memcpy
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSLocale
+import platform.Foundation.NSLocaleLanguageCode
 import platform.Foundation.currentLocale
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
@@ -383,7 +384,8 @@ actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
 actual fun isTelevision(): Boolean = false
 
 actual fun localizedLanguageName(iso6391: String): String? {
-    val name = NSLocale.currentLocale.localizedStringForLanguageCode(iso6391)
-    if (name.isNullOrBlank() || name.equals(iso6391, ignoreCase = true)) return null
-    return name.replaceFirstChar { it.uppercaseChar() }
+    val name: String? = NSLocale.currentLocale.displayNameForKey(NSLocaleLanguageCode, iso6391)
+    // Foundation hands the code straight back when it has no name for the language.
+    if (name.isNullOrBlank() || name.lowercase() == iso6391.lowercase()) return null
+    return name.replaceFirstChar { c -> c.uppercaseChar() }
 }
