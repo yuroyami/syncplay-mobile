@@ -106,30 +106,33 @@ live; the workflow fails if the version being built has no section in it.
 
 ## Key Dependencies
 
-| Category | Library | Version |
-|---|---|---|
-| Networking (client) | Ktor | 3.5.2 |
-| TLS (Android) | Netty (`netty-all`) | 4.1.131.Final |
-| TLS provider (Android) | Conscrypt | 2.7.0 |
-| Serialization | kotlinx-serialization-json | 1.11.0 |
-| HTTP/REST (Klipy, OpenSubtitles) | Ktorfit | 2.7.5 (compiler plugin pinned per Kotlin ABI: Kotlin 2.4.x → `2.3.5`) |
-| Persistence | DataStore (preferences-core) | 1.3.0-alpha10 |
-| Coroutines | kotlinx-coroutines | 1.11.0 |
-| Atomics | atomicfu | 0.33.0 |
-| Date/time | kotlinx-datetime | 0.8.0 |
-| Media (Android) | Media3 / ExoPlayer | 1.11.0 |
-| Media (iOS) | VLCKit (CocoaPods) | 4.0.0a19 |
-| Media (all) | KitePlayer (Maven Central) | 0.0.21 |
-| Images / GIF | Coil3 | 3.6.1 |
-| Frosted glass | Haze | 2.0.0-beta02 |
-| Theming | MaterialKolor | 5.0.1 |
-| Color picker | kolor-picker | 2.1.0 |
-| Logging | Kermit | 2.1.0 |
-| Navigation | Navigation3 (runtime/ui) | 1.2.0-alpha04 / 1.2.0-alpha02 |
-| Hashing | KotlinCrypto (md/sha1/sha2/digest) | 0.8.0 |
-| Files | FileKit | 0.15.0 |
-| Stream resolver (Android) | NewPipe Extractor | v0.24.6 |
-| Skiko (force-pinned) | skiko | 0.150.1 |
+Generated from `gradle/libs.versions.toml` and `gradle.properties`. Run `./gradlew
+updateDocVersions` after a bump; `checkDocVersions` fails the build when this drifts.
+
+<!-- versions:begin -->
+Kotlin 2.4.10, AGP 9.3.2, Compose Multiplatform 1.12.0, Gradle 9.7.1, NDK 29.0.14206865.
+
+| Library | Version |
+|---|---|
+| Ktor | 3.5.2 |
+| Netty | 4.1.131.Final |
+| Conscrypt | 2.7.0 |
+| kotlinx-serialization-json | 1.11.0 |
+| Ktorfit | 2.7.5 |
+| DataStore | 1.3.0-alpha10 |
+| kotlinx-coroutines | 1.11.0 |
+| kotlinx-datetime | 0.8.0 |
+| Media3 / ExoPlayer | 1.11.0 |
+| VLCKit (iOS) | 4.0.0a19 |
+| KitePlayer | 0.0.21 |
+| Coil3 | 3.6.1 |
+| Haze | 2.0.0-beta02 |
+| MaterialKolor | 5.0.1 |
+| Kermit | 2.1.0 |
+| detekt | 1.23.8 |
+| kover | 0.9.9 |
+| skiko (force-pinned) | 0.150.1 |
+<!-- versions:end -->
 
 `skiko` is force-pinned across all configurations because its native binary must match what Compose was compiled against; bump it when compose-multiplatform is upgraded. The ExoPlayer FFmpeg audio renderer ships as a local AAR (`libs/libffmpeg_media3exo_1.8.0.aar`). On iOS, YouTubeKit is a Swift Package Manager package wired in via the Xcode project, not declared here.
 
