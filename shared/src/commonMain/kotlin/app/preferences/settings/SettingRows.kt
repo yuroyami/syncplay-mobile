@@ -85,6 +85,8 @@ import syncplaymobile.shared.generated.resources.settings_value_on
 import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
+import app.uicomponents.CHAT_COLOR_FOLLOWS_THEME
+import syncplaymobile.shared.generated.resources.settings_color_follows_theme
 
 /** Semantic density choices a host can vary. Never font sizes. */
 @Immutable
@@ -202,7 +204,11 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
             }
 
             extra is PrefExtraConfig.ColorPick -> {
-                val color = Color((value as? Int) ?: (pref.default as Int))
+                val stored = (value as? Int) ?: (pref.default as Int)
+                // No pick yet: the row draws the palette colour actually in use and says so,
+                // rather than showing the stored sentinel as a transparent black square.
+                val followsTheme = stored == CHAT_COLOR_FOLLOWS_THEME
+                val color = if (followsTheme) extra.themeRole(palette) else Color(stored)
                 val inline = LocalInlineEditor.current
                 val onColor: (Color) -> Unit = { c -> scope.launch { pref.setAny(c.toArgb()) } }
                 val onReset: () -> Unit = { scope.launch { pref.setAny(pref.default as Int) } }
@@ -214,7 +220,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     icon?.invoke()
                     RowLabel(title)
                     RowGap()
-                    RowValue(color.hex())
+                    RowValue(if (followsTheme) stringResource(Res.string.settings_color_follows_theme) else color.hex())
                     RowGap()
                     Swatch(color, onClick = edit, enabled = enabled)
                 }

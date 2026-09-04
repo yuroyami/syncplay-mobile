@@ -27,6 +27,7 @@ import app.room.models.Message
 import app.room.roomTopInsets
 import app.theme.Motion
 import app.theme.Space
+import app.theme.palette
 import kotlinx.coroutines.delay
 
 /**
@@ -41,7 +42,7 @@ fun FadingMessageLayout() {
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
     if (isHUDVisible) return
 
-    val chatPalette = LocalChatPalette.current
+    val chatPalette = LocalChatPalette.current.resolve(palette)
     val holdSeconds by MSG_FADING_DURATION.watchPref()
     val maxCount by MSG_MAXCOUNT.watchPref()
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()

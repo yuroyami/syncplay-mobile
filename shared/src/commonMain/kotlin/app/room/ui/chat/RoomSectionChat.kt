@@ -194,7 +194,8 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     // A muted peer's lines are dropped from the list rather than blanked, so grouping and the
     // time gutter read as if they were never sent.
     val messages = remember(allMessages, muted.size) { allMessages.filter { it.sender == null || it.sender !in muted } }
-    val chatPalette = LocalChatPalette.current
+    // Resolved here: this is where the palette in force is known (dark over video).
+    val chatPalette = LocalChatPalette.current.resolve(palette)
 
     val bgOpacity by MSG_BG_OPACITY.watchPref()
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()

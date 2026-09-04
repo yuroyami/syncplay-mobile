@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.sp
 import app.room.models.BIDI_ISOLATE_END
 import app.room.models.BIDI_ISOLATE_START
 import app.room.models.Message
-import app.room.models.MessagePalette
+import app.room.models.ResolvedMessagePalette
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
@@ -66,7 +66,7 @@ private const val GROUP_WINDOW_MS = 60_000L
 fun MessageRow(
     message: Message,
     previous: Message?,
-    chatPalette: MessagePalette,
+    chatPalette: ResolvedMessagePalette,
     style: MessageStyle,
     modifier: Modifier = Modifier,
     imageAlpha: Float = 1f,

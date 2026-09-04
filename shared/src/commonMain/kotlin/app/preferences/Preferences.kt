@@ -2,6 +2,7 @@ package app.preferences
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Gif
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.BookmarkRemove
@@ -156,6 +157,7 @@ import syncplaymobile.shared.generated.resources.settings_show_descriptions_titl
 import syncplaymobile.shared.generated.resources.settings_haptics_controls_summary
 import syncplaymobile.shared.generated.resources.settings_haptics_controls_title
 import app.preferences.settings.SETTINGS_GLOBAL
+import app.uicomponents.CHAT_COLOR_FOLLOWS_THEME
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_summary
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_title
 import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
@@ -169,6 +171,8 @@ import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.setting_resetdefault_title
 import syncplaymobile.shared.generated.resources.setting_tls_summary
 import syncplaymobile.shared.generated.resources.setting_room_portrait_summary
+import syncplaymobile.shared.generated.resources.setting_gif_recents_summary
+import syncplaymobile.shared.generated.resources.setting_gif_recents_title
 import syncplaymobile.shared.generated.resources.setting_room_portrait_title
 import syncplaymobile.shared.generated.resources.setting_tls_required_detail
 import syncplaymobile.shared.generated.resources.setting_tls_required_summary
@@ -314,9 +318,6 @@ import syncplaymobile.shared.generated.resources.uisetting_system_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_system_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
-import androidx.compose.material.icons.filled.Gif
-import syncplaymobile.shared.generated.resources.setting_gif_recents_summary
-import syncplaymobile.shared.generated.resources.setting_gif_recents_title
 
 /** Common media languages with ISO 639-2 codes for audio/subtitle track selection. */
 private val mediaLanguageEntries = mapOf(
@@ -699,41 +700,41 @@ object Preferences {
         }
     }
 
-    val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", Theming.MSG_TIMESTAMP.toArgb()) {
+    val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_timestamp_color_title
         summary = Res.string.uisetting_timestamp_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.inkFaint })
     }
-    val COLOR_SELFTAG = Pref("pref_inroom_color_selftag", Theming.MSG_SELF_TAG.toArgb()) {
+    val COLOR_SELFTAG = Pref("pref_inroom_color_selftag", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_self_color_title
         summary = Res.string.uisetting_self_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.accent })
     }
-    val COLOR_FRIENDTAG = Pref("pref_inroom_color_friendtag", Theming.MSG_FRIEND_TAG.toArgb()) {
+    val COLOR_FRIENDTAG = Pref("pref_inroom_color_friendtag", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_friend_color_title
         summary = Res.string.uisetting_friend_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.ok })
     }
-    val COLOR_SYSTEMMSG = Pref("pref_inroom_color_systemmsg", Theming.MSG_SYSTEM.toArgb()) {
+    val COLOR_SYSTEMMSG = Pref("pref_inroom_color_systemmsg", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_system_color_title
         summary = Res.string.uisetting_system_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.inkDim })
     }
-    val COLOR_USERMSG = Pref("pref_inroom_color_usermsg", Theming.MSG_CHAT.toArgb()) {
+    val COLOR_USERMSG = Pref("pref_inroom_color_usermsg", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_human_color_title
         summary = Res.string.uisetting_human_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.ink })
     }
-    val COLOR_ERRORMSG = Pref("pref_inroom_color_errormsg", Theming.MSG_ERROR.toArgb()) {
+    val COLOR_ERRORMSG = Pref("pref_inroom_color_errormsg", CHAT_COLOR_FOLLOWS_THEME) {
         title = Res.string.uisetting_error_color_title
         summary = Res.string.uisetting_error_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.bad })
     }
 
     /** ------------ Hosted server (persisted so a host does not retype them) ------------ */
@@ -1109,7 +1110,7 @@ object Preferences {
         title = Res.string.uisetting_video_bg_color_title
         summary = Res.string.uisetting_video_bg_color_summary
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick
+        extraConfig = PrefExtraConfig.ColorPick()
     }
 
     /** ------------ Advanced -------------*/
