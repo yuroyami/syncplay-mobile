@@ -118,6 +118,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 /* Block the unpause — set as ready instead, and say so where the user is looking. */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
                 viewmodel.session.ready.value = true
+                viewmodel.readiness.evaluate()
                 network.sendAsync(WireMessage.readiness(isReady = true, manuallyInitiated = true))
                 broadcastMessage(isChat = false) { getString(Res.string.room_set_as_ready) }
                 viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_set_as_ready) }

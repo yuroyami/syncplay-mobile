@@ -98,6 +98,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /** Manages the shared playlist and all playlist-related functionality */
     val playlistManager: SharedPlaylistManager by lazy { SharedPlaylistManager(this) }
 
+    /** Who the room is waiting for, and the countdown once it is waiting for nobody. */
+    val readiness: ReadinessManager by lazy { ReadinessManager(this) }
+
     /**
      * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
      * Used for tracking and potentially reverting seek operations.

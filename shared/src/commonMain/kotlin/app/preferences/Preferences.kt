@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.SpatialAudio
@@ -184,6 +185,8 @@ import syncplaymobile.shared.generated.resources.setting_unpause_action_if_min_u
 import syncplaymobile.shared.generated.resources.setting_unpause_action_if_others_ready
 import syncplaymobile.shared.generated.resources.setting_unpause_action_if_ready
 import syncplaymobile.shared.generated.resources.setting_unpause_action_summary
+import syncplaymobile.shared.generated.resources.setting_autoplay_summary
+import syncplaymobile.shared.generated.resources.setting_autoplay_title
 import syncplaymobile.shared.generated.resources.setting_unpause_action_title
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_summary
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_title
@@ -477,6 +480,12 @@ object Preferences {
         title = Res.string.setting_ready_firsthand_title
         summary = Res.string.setting_ready_firsthand_summary
         icon = Icons.Filled.TaskAlt
+    }
+    /** Start the room on its own once everyone with a file says they are ready. */
+    val AUTOPLAY = Pref("pref_inroom_autoplay", false) {
+        title = Res.string.setting_autoplay_title
+        summary = Res.string.setting_autoplay_summary
+        icon = Icons.Filled.PlayCircle
     }
     val UNPAUSE_ACTION = Pref("pref_unpause_action", "IfOthersReady") {
         title = Res.string.setting_unpause_action_title

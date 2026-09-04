@@ -266,6 +266,12 @@
     <string name="setting_playback_buffer_summary">Buffer used after a seek or an unpause.</string>
     <string name="setting_ready_firsthand_title">Set as ready first-hand</string>
     <string name="setting_ready_firsthand_summary">You are marked ready on entering a room.</string>
+    <string name="setting_autoplay_title">Start on its own</string>
+    <string name="setting_autoplay_summary">Play once everyone is ready.</string>
+    <string name="room_waiting_for_one">Waiting for %1$s</string>
+    <string name="room_waiting_for_many">Waiting for %1$d people</string>
+    <string name="room_everyone_ready">Everyone is ready (%1$d)</string>
+    <string name="room_starting_in">Starting in %1$d</string>
     <string name="setting_unpause_action_title">Readiness unpause action</string>
     <string name="setting_unpause_action_summary">What must be true before play unpauses.</string>
     <string name="setting_unpause_action_if_ready">Unpause if already set as ready</string>

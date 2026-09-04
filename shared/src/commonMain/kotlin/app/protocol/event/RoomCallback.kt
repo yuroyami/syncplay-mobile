@@ -85,6 +85,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
+        // A pause is what makes a countdown possible at all, so re-read the room.
+        viewmodel.readiness.evaluate()
+
         if (pauser.isNotSelf()) {
             hapticIf(HAPTIC_ON_PAUSED)
             // Snap to the room's *current* expected position, not the last 1 Hz snapshot —
@@ -111,6 +114,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun onSomeonePlayed(player: String) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
+
+        // The room is moving; nothing left to count down to.
+        viewmodel.readiness.evaluate()
 
         if (player.isNotSelf()) {
             hapticIf(HAPTIC_ON_PLAYED)
@@ -306,6 +312,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // onDisconnected/onConnectionFailed and on ProtocolManager.invalidate(), so it
         // never leaks into solo mode or after the user leaves the room.
         protocol.startChannelHealthMonitoring()
+
+        // Watches the roster so the room can say who it is waiting for, and start on its own
+        // once it is waiting for nobody.
+        viewmodel.readiness.start()
 
         val initialReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
         network.sendAsync(WireMessage.readiness(isReady = initialReady, manuallyInitiated = false))

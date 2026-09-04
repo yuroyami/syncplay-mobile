@@ -36,6 +36,11 @@ import app.uicomponents.controls.Tag
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import app.protocol.sync.AutoplayState
+import syncplaymobile.shared.generated.resources.room_everyone_ready
+import syncplaymobile.shared.generated.resources.room_starting_in
+import syncplaymobile.shared.generated.resources.room_waiting_for_many
+import syncplaymobile.shared.generated.resources.room_waiting_for_one
 import syncplaymobile.shared.generated.resources.room_connecting
 import syncplaymobile.shared.generated.resources.room_connection_encrypted
 import syncplaymobile.shared.generated.resources.room_connection_plaintext
@@ -57,6 +62,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     val connectionState by viewmodel.networkManager.state.collectAsState()
     val userList by viewmodel.session.userList.collectAsState()
     val encrypted by viewmodel.networkManager.encrypted.collectAsState()
+    val autoplay by viewmodel.readiness.state.collectAsState()
+    val readiness by viewmodel.readiness.summary.collectAsState()
 
     // The server's list includes us; while joining, show one instead of a flash of zero.
     val totalUsers = when {
@@ -69,8 +76,21 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         ConnectionState.CONNECTING, ConnectionState.SCHEDULING_RECONNECT -> p.accent
         ConnectionState.DISCONNECTED -> p.bad
     }
+    /* Connected and idle, the line says who the room is waiting for. That is more useful than
+     * a head count, which the roster already shows. */
+    val readinessLine: String? = when {
+        connectionState != ConnectionState.CONNECTED -> null
+        autoplay is AutoplayState.CountingDown ->
+            stringResource(Res.string.room_starting_in, (autoplay as AutoplayState.CountingDown).secondsLeft)
+        readiness.alone -> null
+        readiness.notReady.size == 1 -> stringResource(Res.string.room_waiting_for_one, readiness.notReady.single())
+        readiness.notReady.size > 1 -> stringResource(Res.string.room_waiting_for_many, readiness.notReady.size)
+        else -> stringResource(Res.string.room_everyone_ready, readiness.participantCount)
+    }
+
     val state = when (connectionState) {
-        ConnectionState.CONNECTED -> pluralStringResource(Res.plurals.room_user_count, totalUsers, totalUsers)
+        ConnectionState.CONNECTED -> readinessLine
+            ?: pluralStringResource(Res.plurals.room_user_count, totalUsers, totalUsers)
         ConnectionState.CONNECTING -> stringResource(Res.string.room_connecting)
         ConnectionState.SCHEDULING_RECONNECT -> stringResource(Res.string.room_reconnecting)
         ConnectionState.DISCONNECTED -> stringResource(Res.string.room_ping_disconnected)
