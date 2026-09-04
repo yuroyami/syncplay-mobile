@@ -46,6 +46,11 @@ import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.watchPref
 import app.room.RoomViewmodel
 import app.theme.Radius
+import app.room.SlashCommand
+import app.room.parseSlashCommand
+import app.room.runSlashCommand
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
@@ -135,6 +140,8 @@ fun ChatComposer(
         if (!isHUDVisible) focusManager.clearFocus(force = true)
     }
 
+    val chatScope = rememberCoroutineScope()
+
     fun send() {
         /* The cap is the server's own limit, floored at 1 so a hostile zero cannot eat every
          * message. Nothing is stripped: the JSON layer escapes backslashes itself. */
@@ -147,7 +154,14 @@ fun ChatComposer(
             viewmodel.dispatchOSD(OSDCategory.WARNING) { getString(Res.string.room_chat_too_long, length, maxLen) }
             return
         }
-        viewmodel.dispatcher.sendMessage(text)
+        /* A slash command is carried out here and never reaches the room, so a typo is
+         * nobody else's business. Anything else is an ordinary message. */
+        val command = parseSlashCommand(text)
+        if (command == SlashCommand.NotACommand) {
+            viewmodel.dispatcher.sendMessage(text)
+        } else {
+            chatScope.launch { viewmodel.runSlashCommand(command) }
+        }
         viewmodel.uiState.msg.value = ""
         viewmodel.uiState.gifPanelVisible.value = false
     }

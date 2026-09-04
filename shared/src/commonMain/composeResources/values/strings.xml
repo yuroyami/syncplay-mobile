@@ -565,6 +565,11 @@
     <string name="room_locked_surface">Locked screen. Activate to show the unlock key.</string>
     <string name="room_connection_encrypted">Encrypted connection</string>
     <string name="room_connection_plaintext">Unencrypted connection</string>
+    <string name="room_command_help">Commands: %1$s</string>
+    <string name="room_command_unknown">There is no /%1$s. Type /help for the list.</string>
+    <string name="room_command_bad_argument">/%1$s needs %2$s.</string>
+    <string name="room_command_users">In the room: %1$s</string>
+    <string name="room_command_needs_media">Open a file first.</string>
     <string name="room_connecting">Connecting</string>
     <string name="room_reconnecting">Reconnecting</string>
     <string name="room_alone">Nobody else is here yet.</string>
