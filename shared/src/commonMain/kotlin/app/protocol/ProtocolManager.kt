@@ -3,6 +3,7 @@ package app.protocol
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.protocol.models.ConnectionState
+import app.protocol.models.ClockOffsetEstimator
 import app.protocol.models.PingService
 import app.protocol.wire.IgnoringOnTheFlyData
 import app.protocol.wire.PingData
@@ -107,6 +108,15 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     var awaitingRoomResyncDeadline: Instant? = null
 
     var pingService = PingService()
+
+    /**
+     * How far our clock sits from the server's, from the timestamps already on the wire.
+     *
+     * Measured and reported, not yet acted on: replacing the threshold ladder with a rate
+     * controller driven by this is the step after a real two-device session, and the point of
+     * measuring first is that the session can say whether the numbers are sane.
+     */
+    val clockOffset = ClockOffsetEstimator()
 
     /** Tracks whether playback speed has been adjusted for desync correction. */
     var speedChanged = false
@@ -235,6 +245,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 // state, or a flip that arrived while nothing was collecting, would sit there
                 // silently, so the same comparison runs on this tick too.
                 broadcastPlaybackDivergence(viewmodel.playerManager.isNowPlaying.value)
+
+                /* The clock estimate, written down every tick. Nothing acts on it; it is here so
+                 * a real two-device session can read the log and say whether it is sane before
+                 * the sync decision is moved onto it. */
+                if (clockOffset.settled) {
+                    loggy(
+                        "Clock offset: ${(clockOffset.offsetSeconds * 1000).toInt()}ms " +
+                            "(best round trip ${(clockOffset.bestRoundTripSeconds * 1000).toInt()}ms, " +
+                            "spread ${(clockOffset.dispersionSeconds * 1000).toInt()}ms)"
+                    )
+                }
 
                 val last = lastStateReceivedAt ?: continue
                 val elapsedSec = (SyncClock.now() - last).inWholeSeconds
@@ -365,6 +386,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * algorithm once States resume), and [pingService] intact.
      */
     fun resetSyncAnchorForReconnect() {
+        clockOffset.reset()
         lastGlobalUpdate = null
         lastGlobalPositionSetAt = null
         serverIgnFly = 0

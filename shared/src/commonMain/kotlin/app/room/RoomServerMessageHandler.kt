@@ -86,6 +86,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             ping.clientLatencyCalculation?.let { timestamp ->
                 val serverRtt = ping.serverRtt ?: return@let
                 protocol.pingService.receiveMessage(timestamp, serverRtt)
+                // Measured, not acted on: see ProtocolManager.clockOffset.
+                protocol.clockOffset.observe(
+                    ourSendTime = timestamp,
+                    serverSendTime = ping.latencyCalculation ?: 0.0,
+                    ourReceiveTime = SyncClock.nowSeconds(),
+                )
             }
             messageAge = protocol.pingService.forwardDelay
         }
