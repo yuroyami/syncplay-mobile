@@ -12,6 +12,7 @@ import app.utils.PLAYLIST_MAX_CHARACTERS
 import app.utils.PLAYLIST_MAX_ITEMS
 import app.utils.appName
 import app.utils.playlistIsValid
+import app.utils.generateTimestampMillis
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
@@ -43,6 +44,29 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * remote URLs and skips the redundant reload when our own index echo returns.
      */
     private var lastLoadedSource: String? = null
+
+    /**
+     * When the playlist index last moved, from any source. Auto-advance refuses to fire again
+     * within the near-end window: at the end of a file every client in the room reaches EOF at
+     * about the same moment, and without this each one sends its own "next item", walking the room
+     * several entries forward at once. Mirrors PC's notJustChangedPlaylist.
+     */
+    private var lastIndexChangeAtMs: Long = 0L
+
+    /** True while the index has just moved, so an end-of-file advance must stand down. */
+    fun justChangedIndex(withinMs: Long): Boolean =
+        lastIndexChangeAtMs != 0L && generateTimestampMillis() - lastIndexChangeAtMs < withinMs
+
+    /** The playlist entry currently selected, or null when the playlist has no selection. */
+    val selectedEntry: String?
+        get() = session.sharedPlaylist.getOrNull(session.spIndex.intValue)
+
+    /**
+     * True when this client is playing the entry the playlist currently points at. Compared on the
+     * playlist's own string, which is its unit of identity for both filenames and URLs.
+     */
+    val isPlayingSelectedEntry: Boolean
+        get() = lastLoadedSource != null && lastLoadedSource == selectedEntry
 
     /** The index [lastLoadedSource] was loaded from, so a playlist with the same name twice can move between them. */
     private var lastLoadedIndex: Int = -1
@@ -243,6 +267,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * drives the (synchronized) load on every client including us. In solo mode there is no
      * server round-trip, so we apply the selection directly. */
     fun sendPlaylistSelection(i: Int) {
+        lastIndexChangeAtMs = generateTimestampMillis()
         if (viewmodel.isSoloMode) {
             viewmodel.viewModelScope.launch { changePlaylistSelection(i) }
             return
@@ -268,6 +293,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     suspend fun changePlaylistSelection(index: Int) {
         if (index !in session.sharedPlaylist.indices) return /* In rare cases when this was called on an empty/short list */
         session.spIndex.intValue = index
+        lastIndexChangeAtMs = generateTimestampMillis()
         val target = session.sharedPlaylist[index]
         // Name AND index: a playlist holding the same filename twice could not move between the
         // two entries, because the name alone always matched what was already loaded.
