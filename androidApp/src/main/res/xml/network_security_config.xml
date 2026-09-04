@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app plays media URLs and joins servers the user types, so arbitrary hosts (LAN IPs, plain
+  HTTP streams) must stay reachable. What must never downgrade is the app's own backends: those
+  carry the OpenSubtitles key, the Klipy key and the update check.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- The app's own services. HTTPS only, no downgrade, no user CAs. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">opensubtitles.com</domain>
+        <domain includeSubdomains="true">klipy.com</domain>
+        <domain includeSubdomains="true">ipify.org</domain>
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
