@@ -26,7 +26,10 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.chromeSurface
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
@@ -34,6 +37,8 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_connecting
+import syncplaymobile.shared.generated.resources.room_connection_encrypted
+import syncplaymobile.shared.generated.resources.room_connection_plaintext
 import syncplaymobile.shared.generated.resources.room_user_count
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
 import syncplaymobile.shared.generated.resources.room_reconnect_now
@@ -51,6 +56,7 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     val p = palette
     val connectionState by viewmodel.networkManager.state.collectAsState()
     val userList by viewmodel.session.userList.collectAsState()
+    val encrypted by viewmodel.networkManager.encrypted.collectAsState()
 
     // The server's list includes us; while joining, show one instead of a flash of zero.
     val totalUsers = when {
@@ -86,6 +92,19 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(6.dp).background(square, Radius.tightShape))
+        // Whether anyone between you and the server can read the room, said plainly.
+        if (connectionState == ConnectionState.CONNECTED) {
+            RowGap(Space.gapTight)
+            Icon(
+                imageVector = if (encrypted) Icons.Filled.Lock else Icons.Filled.LockOpen,
+                contentDescription = stringResource(
+                    if (encrypted) Res.string.room_connection_encrypted
+                    else Res.string.room_connection_plaintext
+                ),
+                tint = if (encrypted) p.ok else p.inkDim,
+                modifier = Modifier.size(14.dp),
+            )
+        }
         RowGap(Space.gapTight + 2.dp)
         Text(
             text = viewmodel.session.currentRoom,

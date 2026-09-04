@@ -49,6 +49,13 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     /** TLS_NO = plain TCP, TLS_YES = encrypted, TLS_ASK = negotiate with server. */
     var tls: TlsState = TlsState.TLS_NO
 
+    /**
+     * Whether this socket is actually encrypted, for the room to show. Distinct from [tls],
+     * which flips to TLS_YES the moment we commit to the upgrade so a second TLS message is
+     * ignored. This only becomes true once the handshake has really completed.
+     */
+    val encrypted = MutableStateFlow(false)
+
     enum class NetworkEngine {
         KTOR,    // cross-platform, no TLS
         NETTY,   // Android, TLS
@@ -66,6 +73,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         terminateExistingConnection()
         state.value = ConnectionState.DISCONNECTED
         tls = TlsState.TLS_NO
+        encrypted.value = false
     }
 
     /**
@@ -78,6 +86,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         if (viewmodel.isSoloMode) return
 
         terminateExistingConnection()
+        encrypted.value = false
         viewmodel.callback.onConnectionAttempt()
         state.value = ConnectionState.CONNECTING
         armHandshakeDeadline()
