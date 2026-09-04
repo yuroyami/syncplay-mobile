@@ -61,58 +61,9 @@ object AppConfig {
     )
 
     /* ── Propagation: trinity colors → Android vector drawable gradients ────────────────────────── */
-    fun Project.propagateTrinityColors() {
-        val hex1 = "#FF${TRINITY_1.toString(16).takeLast(6).uppercase()}"
-        val hex2 = "#FF${TRINITY_2.toString(16).takeLast(6).uppercase()}"
-        val hex3 = "#FF${TRINITY_3.toString(16).takeLast(6).uppercase()}"
-
-        val fgFile = File("${rootDir}/shared/src/androidMain/res/drawable/ic_launcher_foreground.xml")
-        if (fgFile.exists()) {
-            val original = fgFile.readText()
-            val updated = original
-                .replace(Regex("""(<item android:offset="0" android:color=")#[0-9A-Fa-f]+("/>)""")) { m ->
-                    "${m.groupValues[1]}$hex1${m.groupValues[2]}"
-                }
-                .replace(Regex("""(<item android:offset="0.5" android:color=")#[0-9A-Fa-f]+("/>)""")) { m ->
-                    "${m.groupValues[1]}$hex2${m.groupValues[2]}"
-                }
-                .replace(Regex("""(<item android:offset="0.9" android:color=")#[0-9A-Fa-f]+("/>)""")) { m ->
-                    "${m.groupValues[1]}$hex3${m.groupValues[2]}"
-                }
-            if (updated != original) {
-                fgFile.writeText(updated)
-                logger.lifecycle("✅ ic_launcher_foreground.xml trinity colors updated")
-            }
-        }
-    }
-
-    /* ── Propagation: values-en/strings.xml → values/strings.xml (default fallback) ─────────────── */
-    fun Project.propagateDefaultStrings() {
-        val resDir = File("${rootDir}/shared/src/commonMain/composeResources")
-        val src = File(resDir, "values-en/strings.xml")
-        val dst = File(resDir, "values/strings.xml")
-        val untranslatable = File(resDir, "values/strings_untranslatable.xml")
-        if (!src.exists()) return
-        // A key declared in strings_untranslatable.xml must not also land in values/strings.xml:
-        // two default-qualifier declarations of one key make the resource resolver throw on
-        // every device whose language has no translation of it (issue #151).
-        val reserved = if (untranslatable.exists()) {
-            Regex("""<string(?:-array)?\s+name="([^"]+)"""").findAll(untranslatable.readText()).map { it.groupValues[1] }.toSet()
-        } else emptySet()
-        val nameOf = Regex("""^\s*<string\s+name="([^"]+)"""")
-        val filtered = src.readLines().filterNot { line ->
-            nameOf.find(line)?.groupValues?.get(1) in reserved
-        }
-        val text = filtered.joinToString("\n") + "\n"
-        if (!dst.exists() || dst.readText() != text) {
-            dst.writeText(text)
-            logger.lifecycle("✅ Default strings fallback synced from values-en")
-        }
-    }
-
-    /* ── Master propagation: invoke all custom (non-plugin) SSOT propagators ────────────────────── */
-    fun Project.propagateAllCustom() {
-        propagateTrinityColors()
-        propagateDefaultStrings()
-    }
+    /**
+     * The two source rewrites this repo does for itself now live in PropagationTasks as real
+     * Gradle tasks, with declared inputs and outputs, instead of running at configuration time on
+     * every invocation.
+     */
 }

@@ -27,6 +27,16 @@ android {
     buildToolsVersion = providers.gradleProperty("android.buildToolsVersion").get()
     ndkVersion = ndkRequired
 
+    // :shared holds essentially all the code, and lint stopped at this module's four files. With
+    // dependency checking on, one run covers both, which is also what makes the repo's lint.xml
+    // suppression apply to the code it was written for.
+    lint {
+        checkDependencies = true
+        xmlReport = true
+        htmlReport = true
+        abortOnError = false
+    }
+
     signingConfigs {
         file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
             create("synkplay_keystore") {

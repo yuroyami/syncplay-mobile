@@ -53,7 +53,7 @@ kiteConfig {
     ios {
         // Compatibility assertion for the universal AppIcon installer only (matches the
         // cocoapods deploymentTarget in :shared); it does not configure Xcode.
-        deploymentTarget = "14.0"
+        deploymentTarget = "14.1"
 
         // Mutation stays on-demand in KiteConfig: this block only ARMS kiteRewriteXcode;
         // normal builds never rewrite sources. Run it after every version bump.

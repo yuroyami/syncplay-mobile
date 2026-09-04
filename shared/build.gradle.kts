@@ -29,6 +29,18 @@ kotlin {
         compileSdk { version = release(kiteConfig.compileSdk.get()) }
         minSdk = kiteConfig.minSdk.get()
         androidResources { enable = true }
+
+        // This module holds essentially all the code, and produced no lint task at all, which is
+        // also what made the repo's lint.xml suppression apply to nothing.
+        lint {
+            xmlReport = true
+            htmlReport = true
+            abortOnError = false
+            checkDependencies = false
+        }
+
+        // commonTest compiled but never ran against the Android actuals. It does now.
+        withHostTest { }
     }
 
     // Desktop (JVM) target — Windows/macOS/Linux via Compose for Desktop, hosted by :desktopApp.
@@ -54,7 +66,7 @@ kotlin {
         summary = "${kiteConfig.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
-        ios.deploymentTarget = "14.0"
+        ios.deploymentTarget = "14.1"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = AppConfig.SHARED_MODULE_NAME
@@ -233,9 +245,10 @@ configurations.configureEach {
     resolutionStrategy.force("org.jetbrains.skiko:skiko:${libs.versions.skiko.get()}")
 }
 
-// Custom (non-plugin) propagators: Trinity color XML rewrite + default-strings fallback.
-with(AppConfig) {
-    propagateAllCustom()
+// The repo's two source rewrites, as tasks with declared inputs and outputs. The strings one is
+// wired into resource preparation; the launcher colours are on demand (syncTrinityColors).
+with(PropagationTasks) {
+    registerPropagationTasks()
 }
 
 ktorfit {
@@ -248,10 +261,6 @@ ktorfit {
 
 tasks.register("propagateSSOT") {
     group = "syncplay"
-    description = "Run custom non-plugin propagators (Trinity colors, logo imageset, default-strings fallback)."
-    doLast {
-        with(AppConfig) {
-            project.propagateAllCustom()
-        }
-    }
+    description = "Runs both source propagators: the launcher's brand colours and the default-strings fallback."
+    dependsOn("syncTrinityColors", "syncDefaultStrings")
 }
