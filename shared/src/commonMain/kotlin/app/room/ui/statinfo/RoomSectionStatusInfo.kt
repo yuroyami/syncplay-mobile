@@ -26,10 +26,10 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.chromeSurface
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
+import app.uicomponents.controls.Icon
+import app.uicomponents.controls.LockGlyph
+import app.uicomponents.controls.UnlockGlyph
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
@@ -96,7 +96,7 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         if (connectionState == ConnectionState.CONNECTED) {
             RowGap(Space.gapTight)
             Icon(
-                imageVector = if (encrypted) Icons.Filled.Lock else Icons.Filled.LockOpen,
+                imageVector = if (encrypted) LockGlyph else UnlockGlyph,
                 contentDescription = stringResource(
                     if (encrypted) Res.string.room_connection_encrypted
                     else Res.string.room_connection_plaintext

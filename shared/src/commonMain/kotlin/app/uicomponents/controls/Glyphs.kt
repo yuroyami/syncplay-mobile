@@ -106,3 +106,28 @@ val MoreGlyph: ImageVector by lazy {
         closedFill(9f, 14f, 11f, 14f, 11f, 16f, 9f, 16f)
     }
 }
+
+/** A closed padlock: a body and a shackle that comes all the way down. */
+val LockGlyph: ImageVector by lazy {
+    stroked("lock") {
+        line(5f, 9.5f, 15f, 9.5f, 15f, 16.5f, 5f, 16.5f, 5f, 9.5f)
+        path(stroke = SolidColor(androidx.compose.ui.graphics.Color.Black), strokeLineWidth = 1.5f, strokeLineCap = StrokeCap.Butt, strokeLineJoin = StrokeJoin.Miter) {
+            moveTo(7.5f, 9.5f)
+            lineTo(7.5f, 7f)
+            arcTo(2.5f, 2.5f, 0f, false, true, 12.5f, 7f)
+            lineTo(12.5f, 9.5f)
+        }
+    }
+}
+
+/** An open padlock: the same body, the shackle left hanging clear on one side. */
+val UnlockGlyph: ImageVector by lazy {
+    stroked("unlock") {
+        line(5f, 9.5f, 15f, 9.5f, 15f, 16.5f, 5f, 16.5f, 5f, 9.5f)
+        path(stroke = SolidColor(androidx.compose.ui.graphics.Color.Black), strokeLineWidth = 1.5f, strokeLineCap = StrokeCap.Butt, strokeLineJoin = StrokeJoin.Miter) {
+            moveTo(7.5f, 9.5f)
+            lineTo(7.5f, 7f)
+            arcTo(2.5f, 2.5f, 0f, false, true, 12.5f, 7f)
+        }
+    }
+}
