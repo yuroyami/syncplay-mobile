@@ -5,8 +5,6 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import app.uicomponents.controls.Icon
-import app.uicomponents.controls.Text
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect

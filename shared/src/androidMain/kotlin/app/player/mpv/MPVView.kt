@@ -110,7 +110,7 @@ class MPVView(context: Context, attrs: AttributeSet) : FrameLayout(context, attr
             Property("video_tscale_param2", "tscale-param2")
         )
 
-        for ((preference_name, mpv_option) in opts) {
+        for ((_, mpv_option) in opts) {
             MPVLib.setOptionString(mpv_option, "")
         }
 

@@ -27,14 +27,12 @@ import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_not_ready_set_by
 import syncplaymobile.shared.generated.resources.room_ready_set_by
 import syncplaymobile.shared.generated.resources.room_slowdown_notification
 import syncplaymobile.shared.generated.resources.room_slowdown_reverted
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Client-side implementation of [WireMessageHandler].

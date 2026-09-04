@@ -1,0 +1,142 @@
+# Detekt for this codebase, not detekt in general.
+#
+# Nearly everything detekt ships with is off. What is on are the rules that map to a defect this
+# repository actually had, plus one custom rule enforcing the standing decision that inbound
+# protocol code must throw SerializationException and nothing else.
+
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+# Everything below is off unless it is turned back on by name.
+comments:
+  active: false
+complexity:
+  active: true
+  ComplexCondition:
+    active: false
+  LongMethod:
+    active: true
+    threshold: 120
+    excludes: ['**/commonTest/**', '**/desktopTest/**', '**/*Screen.kt', '**/ui/**']
+  LongParameterList:
+    active: false
+  TooManyFunctions:
+    active: false
+  NestedBlockDepth:
+    active: false
+  CyclomaticComplexMethod:
+    active: false
+  LargeClass:
+    active: false
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    # The ledger's rule: no GlobalScope. PlayerManager.invalidate is the one deliberate
+    # exception, because teardown must outlive the ViewModel scope that is being cancelled.
+    active: true
+    excludes: ['**/player/PlayerManager.kt']
+  RedundantSuspendModifier:
+    active: false
+  SuspendFunWithFlowReturnType:
+    active: true
+
+empty-blocks:
+  active: true
+  EmptyCatchBlock:
+    active: false      # a documented swallow is a real pattern here
+  EmptyFunctionBlock:
+    active: false
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false      # engine and transport code catches broadly on purpose
+  SwallowedException:
+    active: false
+  ThrowingExceptionsWithoutMessageOrCause:
+    active: false
+  PrintStackTrace:
+    active: true
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    # Composables are PascalCase by convention; tests read as sentences here on purpose.
+    ignoreAnnotated: ['Composable']
+    excludes: ['**/commonTest/**', '**/desktopTest/**', '**/androidHostTest/**']
+    functionPattern: '[a-z][a-zA-Z0-9_]*'
+  ConstructorParameterNaming:
+    active: false      # _name and friends mirror the Python port
+  ClassNaming:
+    active: true
+  VariableNaming:
+    active: false      # _position and friends mirror the Python port
+  TopLevelPropertyNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+  InvalidPackageDeclaration:
+    active: false      # the KMP source layout is not one-package-per-directory
+
+performance:
+  active: true
+  SpreadOperator:
+    active: false
+  ForEachOnRange:
+    active: false
+
+potential-bugs:
+  active: true
+  UnsafeCallOnNullableType:
+    active: false
+  LateinitUsage:
+    active: false
+  UnreachableCode:
+    active: true
+  ImplicitDefaultLocale:
+    active: true
+  EqualsAlwaysReturnsTrueOrFalse:
+    active: true
+  WrongEqualsTypeParameter:
+    active: true
+
+style:
+  active: true
+  NewLineAtEndOfFile:
+    active: false      # formatting, not correctness
+  LoopWithTooManyJumpStatements:
+    active: false
+  UseRequire:
+    active: false
+  UnusedParameter:
+    active: false      # overrides and expect/actual pairs carry parameters they do not use
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  MaxLineLength:
+    active: false
+  WildcardImport:
+    active: true
+  UnusedImports:
+    active: true
+  UnusedPrivateMember:
+    active: true
+  UnusedPrivateProperty:
+    active: true
+  ForbiddenComment:
+    active: false
+  ThrowsCount:
+    active: false
+  SerialVersionUIDInSerializableClass:
+    active: false
+  UseCheckOrError:
+    active: false
+  DataClassContainsFunctions:
+    active: false

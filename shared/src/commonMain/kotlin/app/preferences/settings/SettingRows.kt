@@ -113,6 +113,10 @@ val LocalInlineEditor = staticCompositionLocalOf<InlineEditorHost?> { null }
  * The console row for one entry: label left, value in the fixed column, control after it. The
  * row kind follows the value type and the control, exactly as DESIGN/PREF_SYSTEM lists them.
  */
+/* One `when` over nine row kinds, all sharing the same dozen locals. Splitting each branch into
+ * its own composable would mean threading eight parameters into each of nine functions, which
+ * reads worse than the table does. */
+@Suppress("LongMethod")
 @Composable
 fun SettingEntry.Render(highlighted: Boolean = false) {
     val cfg = pref.config ?: return

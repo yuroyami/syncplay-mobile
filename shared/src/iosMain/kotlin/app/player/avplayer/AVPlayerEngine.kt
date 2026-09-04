@@ -40,7 +40,6 @@ import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
 import platform.AVFoundation.mediaSelectionGroupForMediaCharacteristic
 import platform.AVFoundation.pause
-import platform.AVFoundation.play
 import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.seekableTimeRanges
@@ -382,7 +381,8 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
             detachTimeControlObserver()
-            val nsUrl = NSURL.URLWithString(location.url) ?: throw Exception()
+            val nsUrl = NSURL.URLWithString(location.url)
+                ?: throw IllegalArgumentException("Not a URL AVPlayer can open: ${location.url}")
             avMedia = AVPlayerItem(uRL = nsUrl)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
             attachTimeControlObserver()

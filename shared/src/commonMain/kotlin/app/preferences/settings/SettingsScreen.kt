@@ -19,8 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import app.LocalGlobalViewmodel
 import app.uicomponents.LocalWidthClass
@@ -44,7 +42,6 @@ import syncplaymobile.shared.generated.resources.settings_title
 fun SettingsScreenUI(categoryKey: String?) {
     val backstack = LocalGlobalViewmodel.current.backstack
     val categories = SETTINGS_GLOBAL
-    val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
     val widthClass = LocalWidthClass.current
     val expanded = widthClass == WidthClass.Expanded
     val density = SettingsDensity(showRowIcons = widthClass != WidthClass.Compact)

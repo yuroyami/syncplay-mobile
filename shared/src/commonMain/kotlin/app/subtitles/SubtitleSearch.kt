@@ -167,8 +167,7 @@ object SubtitleSearch {
                 SubtitleDownloadResult.Failed
             }
         } catch (e: Exception) {
-            loggy("SubtitleSearch download error: ${e.message}")
-            e.printStackTrace()
+            loggy(e)
             SubtitleDownloadResult.Failed
         }
     }

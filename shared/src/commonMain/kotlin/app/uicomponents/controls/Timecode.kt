@@ -1,6 +1,5 @@
 package app.uicomponents.controls
 
-import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color

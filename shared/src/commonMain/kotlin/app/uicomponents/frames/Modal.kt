@@ -121,7 +121,6 @@ internal fun ModalFrame(
     val p = palette
     val density = LocalDensity.current
     val window = LocalWindowInfo.current.containerSize
-    val windowWidth = with(density) { window.width.toDp() }
     val windowHeight = with(density) { window.height.toDp() }
     val sheet = size != ModalSize.Ask && LocalWidthClass.current == WidthClass.Compact
     val visible = remember { MutableTransitionState(false) }.apply { targetState = true }

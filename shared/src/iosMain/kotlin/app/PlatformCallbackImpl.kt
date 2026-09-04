@@ -75,8 +75,6 @@ object ApplePlatformCallback : PlatformCallback {
         }
     }
 
-    private const val MAX_VOLUME = 100
-
     /** iOS brightness is a normalized 0.0–1.0 value. */
     private const val MAX_BRIGHTNESS = 1.0f
 

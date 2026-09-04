@@ -47,7 +47,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import platform.AVFAudio.AVAudioSession
 import platform.Foundation.NSNotification
 import platform.Foundation.NSNumber
 import platform.Foundation.NSURL

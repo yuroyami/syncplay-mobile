@@ -18,10 +18,21 @@ plugins {
     alias(libs.plugins.ksp).apply(false)
 
     alias(libs.plugins.ktorfit).apply(false)
+
+    // Static analysis and coverage. Both are configured for this repo, not generically:
+    // see config/detekt/detekt.yml and the kover block below.
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 // KiteConfig applies app identity in AGP finalizeDsl (AFTER module DSL blocks), so the
 // exoOnly applicationId swap must happen here, not inside androidApp's defaultConfig.
+/**
+ * The coverage floor for app.protocol and app.server. Raise it when a pass adds tests; never
+ * lower it to make a build pass.
+ */
+val COVERAGE_FLOOR = 30
+
 val exoOnly = AppConfig.resolveExoOnly(providers)
 val localProperties = AppConfig.localProperties(rootDir)
 
@@ -118,3 +129,124 @@ kiteConfig {
 }
 
 registerAndroidReleaseAllTask(kiteConfig.version.get())
+
+/**
+ * Static analysis, aimed at this codebase. The rule set in `config/detekt/detekt.yml` is almost
+ * entirely off; what is on maps to defects this repo actually had.
+ *
+ * The inbound-throws rule lives in [checkProtocolThrows] rather than here, because detekt's
+ * ForbiddenMethodCall needs type resolution that the plain detekt task does not have, so it
+ * would have passed silently forever.
+ */
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    source.setFrom(
+        files(
+            "shared/src/commonMain/kotlin",
+            "shared/src/androidMain/kotlin",
+            "shared/src/desktopMain/kotlin",
+            "shared/src/iosMain/kotlin",
+            "shared/src/commonTest/kotlin",
+            "shared/src/desktopTest/kotlin",
+            "androidApp/src/main/java",
+            "desktopApp/src/main/kotlin",
+        )
+    )
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "21"
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
+        xml.required.set(false)
+        txt.required.set(false)
+    }
+}
+
+/**
+ * Coverage, scoped to the two packages where a gap is a real risk: the protocol and the hosted
+ * server. Everything else (UI, platform actuals, build glue) is excluded, because measuring it
+ * would only produce a number nobody can act on.
+ */
+kover {
+    reports {
+        filters {
+            includes {
+                classes("app.protocol.*", "app.server.*")
+            }
+            excludes {
+                // Generated, or a platform actual that cannot run on the JVM.
+                classes("*\$\$serializer", "*ComposableSingletons*", "*_Factory*")
+            }
+        }
+        verify {
+            rule("protocol and server line coverage") {
+                bound {
+                    minValue.set(COVERAGE_FLOOR)
+                    coverageUnits.set(kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE)
+                }
+            }
+        }
+    }
+}
+
+
+/**
+ * The tolerant-deserialization rule, enforced.
+ *
+ * Anything malformed arriving from the wire must throw SerializationException, because that is
+ * the only type the skip-a-poisoned-line catch covers. `error()` and `check()` throw
+ * IllegalStateException, which kills the whole inbound pipeline and drops the connection over
+ * one bad line.
+ *
+ * This is a scan rather than a detekt rule on purpose: detekt's ForbiddenMethodCall needs type
+ * resolution the plain task does not have, so it never fired.
+ */
+val protocolThrowSources = listOf(
+    "shared/src/commonMain/kotlin/app/protocol",
+    "shared/src/commonMain/kotlin/app/server/ClientConnection.kt",
+)
+
+val checkProtocolThrows by tasks.registering {
+    group = "verification"
+    description = "Fails if inbound protocol code throws anything but SerializationException."
+    val sources = protocolThrowSources.map { file(it) }
+    val root = rootDir
+    inputs.files(sources)
+    outputs.upToDateWhen { false }
+    doLast {
+        val banned = Regex("""(^|[^\w."])(error|check|checkNotNull|require|requireNotNull)\s*\(""")
+        val offenders = sources
+            .flatMap { f -> if (f.isDirectory) f.walkTopDown().toList() else listOf(f) }
+            .filter { it.isFile && it.extension == "kt" }
+            .flatMap { f ->
+                f.readLines().withIndex()
+                    .filter { (_, line) ->
+                        val code = line.substringBefore("//").trim()
+                        // A declaration named error() is our own builder, not kotlin.error.
+                        !code.startsWith("*") &&
+                            !code.contains("fun error(") &&
+                            banned.containsMatchIn(code)
+                    }
+                    .map { (i, line) -> f.relativeTo(root).path + ":" + (i + 1) + ": " + line.trim() }
+            }
+        if (offenders.isNotEmpty()) {
+            throw GradleException(
+                buildString {
+                    appendLine("Inbound protocol code must throw SerializationException, nothing else.")
+                    appendLine("These throw IllegalStateException or IllegalArgumentException instead,")
+                    appendLine("which the skip-a-poisoned-line catch does not cover:")
+                    offenders.forEach { appendLine("  " + it) }
+                }
+            )
+        }
+    }
+}
+
+// The root project has no `check`; hang it off the module that owns the code instead.
+gradle.projectsEvaluated {
+    project(":shared").tasks.findByName("check")?.dependsOn(checkProtocolThrows)
+}

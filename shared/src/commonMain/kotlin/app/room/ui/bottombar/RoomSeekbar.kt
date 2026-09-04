@@ -59,7 +59,6 @@ import kotlin.math.roundToLong
 @Composable
 fun RoomSeekbar(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
-    val p = palette
     val density = LocalDensity.current
     val scope = rememberCoroutineScope { Dispatchers.Main }
     /* Collected only while the HUD shows. The bar stays composed at alpha 0 when hidden, so a

@@ -36,8 +36,8 @@ object MpvFileUtils {
                 ins.copyTo(out)
                 loggy("Copied asset file: $filename")
             } catch (e: IOException) {
-                e.printStackTrace()
                 loggy("Failed to copy asset file: $filename")
+                loggy(e)
             } finally {
                 ins?.close()
                 out?.close()

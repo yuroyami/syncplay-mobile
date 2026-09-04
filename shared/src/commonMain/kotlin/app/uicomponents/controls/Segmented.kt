@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.getValue
