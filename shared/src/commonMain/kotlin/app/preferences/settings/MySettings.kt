@@ -72,6 +72,7 @@ import app.preferences.Preferences.SYNC_REWIND
 import app.preferences.Preferences.AUTOPLAY
 import app.preferences.Preferences.SYNC_FASTFORWARD_THRESHOLD
 import app.preferences.Preferences.SYNC_REWIND_THRESHOLD
+import app.preferences.Preferences.USER_TIME_OFFSET
 import app.preferences.Preferences.SYNC_SLOWDOWN_THRESHOLD
 import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
@@ -172,6 +173,7 @@ val INROOM_SYNC = SettingCategory(
 ) {
     +SYNC_DONT_SLOW_WITH_ME
     +AUTOPLAY
+    +USER_TIME_OFFSET
     // Each threshold sits under the switch it belongs to, and greys out with it.
     +SYNC_FASTFORWARD
     +SYNC_FASTFORWARD_THRESHOLD

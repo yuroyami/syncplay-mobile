@@ -123,3 +123,61 @@ class PositionReportTest {
         assertEquals(104.0, r.positionSeconds, "masking with a stale snapshot would still drag the room")
     }
 }
+
+/**
+ * A per-user offset for two rips of the same film that differ by an intro or a logo card. It
+ * must shift what we do locally and nothing the room sees, or one person's offset would drag
+ * everybody.
+ */
+class UserOffsetTest {
+
+    private val t0 = kotlin.time.Instant.fromEpochMilliseconds(1_700_000_000_000L)
+
+    private fun inputs(localMs: Double, offset: Double, deadline: kotlin.time.Instant? = null) =
+        PositionInputs(
+            now = t0,
+            globalPositionMs = 100_000.0,
+            globalPositionSetAt = t0,
+            globalPaused = false,
+            hasMedia = true,
+            isInBackground = false,
+            localPositionMs = localMs,
+            durationMs = 7_200_000.0,
+            awaitingRoomResyncDeadline = deadline,
+            userOffsetSeconds = offset,
+        )
+
+    @Test
+    fun what_we_advertise_is_our_position_less_our_own_offset() {
+        // Our copy runs 12s ahead, so at 112s we are showing the room's 100s.
+        val r = reportablePosition(inputs(localMs = 112_000.0, offset = 12.0))
+        assertEquals(100.0, r.positionSeconds, 1e-9)
+    }
+
+    @Test
+    fun a_negative_offset_works_the_other_way() {
+        val r = reportablePosition(inputs(localMs = 88_000.0, offset = -12.0))
+        assertEquals(100.0, r.positionSeconds, 1e-9)
+    }
+
+    @Test
+    fun no_offset_changes_nothing() {
+        val r = reportablePosition(inputs(localMs = 42_000.0, offset = 0.0))
+        assertEquals(42.0, r.positionSeconds, 1e-9)
+    }
+
+    @Test
+    fun convergence_is_judged_in_the_rooms_frame_not_ours() {
+        // Our copy runs 12s ahead. At 112s we are exactly on the room's 100s, so a load that
+        // has caught up must stop masking even though the raw numbers differ by twelve seconds.
+        val r = reportablePosition(inputs(localMs = 112_000.0, offset = 12.0, deadline = t0 + 20.seconds))
+        assertFalse(r.keepMasking, "an offset must not look like a permanent desync")
+        assertEquals(100.0, r.positionSeconds, 1e-9)
+    }
+
+    @Test
+    fun the_room_still_looks_desynced_when_it_genuinely_is() {
+        val r = reportablePosition(inputs(localMs = 5_000.0, offset = 12.0, deadline = t0 + 20.seconds))
+        assertTrue(r.keepMasking)
+    }
+}

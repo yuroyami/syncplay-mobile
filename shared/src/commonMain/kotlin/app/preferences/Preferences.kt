@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.MoreTime
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.SlowMotionVideo
@@ -322,6 +323,8 @@ import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_thresho
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_threshold_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_threshold_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_threshold_title
+import syncplaymobile.shared.generated.resources.uisetting_user_offset_summary
+import syncplaymobile.shared.generated.resources.uisetting_user_offset_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
@@ -684,6 +687,22 @@ object Preferences {
         dependencyEnable = { SYNC_FASTFORWARD.value() }
 
         extraConfig = PrefExtraConfig.Slider(minValue = 20, maxValue = 200, unit = "ds")
+    }
+
+    /**
+     * How far our copy of the file runs ahead of the room's, in tenths of a second, offset by
+     * 600 so the slider can cover minus sixty to plus sixty seconds.
+     *
+     * Two rips of the same film differ by an intro, a logo card, a few frames of black. The
+     * desktop client has had a per-user offset forever; this is the same idea, and it shifts
+     * only what we do locally.
+     */
+    val USER_TIME_OFFSET = Pref("pref_inroom_user_time_offset", 600) {
+        title = Res.string.uisetting_user_offset_title
+        summary = Res.string.uisetting_user_offset_summary
+        icon = Icons.Filled.MoreTime
+
+        extraConfig = PrefExtraConfig.Slider(minValue = 0, maxValue = 1200, unit = "ds")
     }
 
     val SYNC_DONT_SLOW_WITH_ME = Pref("pref_inroom_sync_dont_slow_with_me", false) {

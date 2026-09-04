@@ -53,6 +53,15 @@ data class SyncContext(
     val prefs: SyncPrefs,
     /** Seconds the inbound position is already stale, from the ping service. */
     val messageAge: Double,
+    /**
+     * How far our copy of the file runs ahead of the room's, in seconds.
+     *
+     * Two rips of the same film can differ by an intro, a logo card or a few frames of black.
+     * A positive offset means our copy needs to sit that much further in to show the same
+     * picture. It shifts only what we do locally; the position we advertise is converted back
+     * so the rest of the room is unaffected.
+     */
+    val userOffsetSeconds: Double = 0.0,
     /** The three drift thresholds, in seconds. Defaults match the reference client. */
     val rewindThreshold: Double = REWIND_THRESHOLD,
     val slowdownThreshold: Double = SLOWDOWN_THRESHOLD,
@@ -117,8 +126,10 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
     }
 
     // When the room is playing, the position the server sent is already messageAge seconds
-    // stale, so the position to compare against is position + messageAge.
-    val agedPosition = if (paused) position else position + ctx.messageAge
+    // stale, so the position to compare against is position + messageAge. The user's own offset
+    // shifts that to where *our* copy should be.
+    val roomPosition = if (paused) position else position + ctx.messageAge
+    val agedPosition = roomPosition + ctx.userOffsetSeconds
 
     /* ONLY a genuine room-state transition: the last room pause-state we recorded differs from
      * what the server just sent. Deliberately not compared against a live isPlaying(): that
@@ -130,7 +141,8 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
     val actions = mutableListOf<SyncAction>()
     var next = state.copy(
         globalPaused = paused,
-        globalPositionMs = agedPosition * 1000.0,
+        // The anchor stays in the room's own frame; the offset is ours alone.
+        globalPositionMs = roomPosition * 1000.0,
         lastGlobalPositionSetAt = ctx.now,
     )
 

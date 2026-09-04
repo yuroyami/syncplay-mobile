@@ -4,6 +4,8 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.protocol.models.ConnectionState
 import app.protocol.models.ClockOffsetEstimator
+import app.preferences.Preferences
+import app.preferences.value
 import app.protocol.models.PingService
 import app.protocol.wire.IgnoringOnTheFlyData
 import app.protocol.wire.PingData
@@ -436,6 +438,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         localPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
         durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble(),
         awaitingRoomResyncDeadline = awaitingRoomResyncDeadline,
+        // The slider stores tenths offset by 600, so its middle is no shift at all.
+        userOffsetSeconds = (Preferences.USER_TIME_OFFSET.value() - 600) / 10.0,
     )
 
     fun extrapolatedGlobalPositionMs(): Double = extrapolatedGlobalPositionMs(positionInputs())

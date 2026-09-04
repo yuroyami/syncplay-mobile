@@ -33,6 +33,11 @@ data class PositionInputs(
     val durationMs: Double,
     /** Non-null while a fresh load is still settling; the instant masking gives up. */
     val awaitingRoomResyncDeadline: Instant?,
+    /**
+     * How far our copy runs ahead of the room's, in seconds. Subtracted from what we advertise,
+     * so a room full of people with different rips still agrees on one position.
+     */
+    val userOffsetSeconds: Double = 0.0,
 )
 
 /** The position to send, and whether masking should stay armed. */
@@ -59,17 +64,20 @@ fun reportablePosition(inputs: PositionInputs): PositionReport {
     // Paused in the background: the room must not adopt a frozen watcher as its slowest.
     if (inputs.isInBackground) return PositionReport(globalMs / 1000.0, keepMasking = true)
 
+    // What the room should hear: our position, less the offset that is ours alone.
+    val localAsRoomSeesIt = inputs.localPositionMs / 1000.0 - inputs.userOffsetSeconds
+
     val deadline = inputs.awaitingRoomResyncDeadline
-        ?: return PositionReport(inputs.localPositionMs / 1000.0, keepMasking = false)
+        ?: return PositionReport(localAsRoomSeesIt, keepMasking = false)
 
     val thresholdMs = SEEK_THRESHOLD_SECONDS * 1000.0
-    val converged = abs(inputs.localPositionMs - globalMs) <= thresholdMs
+    val converged = abs(localAsRoomSeesIt * 1000.0 - globalMs) <= thresholdMs
     // A file shorter than the room position can never catch up; a mismatched file does this.
     val cannotCatchUp = inputs.durationMs > 0.0 && globalMs >= inputs.durationMs - thresholdMs
     val timedOut = inputs.now >= deadline
 
     return if (converged || cannotCatchUp || timedOut) {
-        PositionReport(inputs.localPositionMs / 1000.0, keepMasking = false)
+        PositionReport(localAsRoomSeesIt, keepMasking = false)
     } else {
         PositionReport(globalMs / 1000.0, keepMasking = true)
     }

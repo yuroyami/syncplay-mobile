@@ -394,3 +394,44 @@ class SyncThresholdTest {
         assertEquals(t0, started.state.behindFirstDetected, "8s behind is past it")
     }
 }
+
+/** The offset shifts where we aim, and leaves the room's own anchor alone. */
+class UserOffsetDecisionTest {
+
+    private val t0 = kotlin.time.Instant.fromEpochMilliseconds(1_700_000_000_000L)
+
+    private fun ctx(playerSeconds: Double, offset: Double) = SyncContext(
+        now = t0,
+        playerPositionMs = playerSeconds * 1000.0,
+        hasMedia = true,
+        isInBackground = false,
+        supportsSpeedAdjustment = true,
+        selfName = "me",
+        followerInControlledRoom = false,
+        prefs = SyncPrefs(rewind = true, fastForward = true, slowdown = true, dontSlowWithMe = false),
+        messageAge = 0.0,
+        userOffsetSeconds = offset,
+    )
+
+    private fun playstate() = app.protocol.wire.PlaystateData(position = 100.0, paused = false, setBy = "peer")
+
+    @Test
+    fun the_first_sync_seeks_to_the_room_plus_our_offset() {
+        val out = decideSync(playstate(), SyncState(), ctx(playerSeconds = 0.0, offset = 12.0))
+        assertEquals(112_000L, out.actions.filterIsInstance<SyncAction.FirstSync>().single().seekToMs)
+    }
+
+    @Test
+    fun the_anchor_stays_in_the_rooms_frame_so_nobody_else_is_shifted() {
+        val out = decideSync(playstate(), SyncState(), ctx(playerSeconds = 0.0, offset = 12.0))
+        assertEquals(100_000.0, out.state.globalPositionMs, "the offset is ours alone")
+    }
+
+    @Test
+    fun sitting_exactly_on_our_offset_is_not_a_desync() {
+        val anchored = SyncState(globalPaused = false, lastGlobalUpdate = t0 - 10.seconds)
+        val out = decideSync(playstate(), anchored, ctx(playerSeconds = 112.0, offset = 12.0))
+        assertTrue(out.actions.none { it is SyncAction.SomeoneBehind })
+        assertTrue(out.actions.none { it is SyncAction.SlowDown })
+    }
+}
