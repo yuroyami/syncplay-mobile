@@ -82,7 +82,14 @@ fun RoomSeekbar(modifier: Modifier) {
         chapterListVersion++
     }
     val chapters = remember(media?.fileName, chapterListVersion) { media?.chapters?.toList() ?: emptyList() }
-    val bufferedMs by viewmodel.playerManager.timeBufferedMillis.collectAsState()
+    /* Gated the same way the position is, and for the same reason. ExoPlayer is the only engine
+     * that reports a buffered position, and it reports it from the same loop, so a plain collect
+     * put the whole bar back on the recomposition list twice a second behind a hidden HUD. */
+    val bufferedState = remember { mutableLongStateOf(viewmodel.playerManager.timeBufferedMillis.value) }
+    LaunchedEffect(hudVisible) {
+        if (hudVisible) viewmodel.playerManager.timeBufferedMillis.collect { bufferedState.longValue = it }
+    }
+    val bufferedMs = bufferedState.longValue
     val showMarks by SHOW_CHAPTER_DOTS.watchPref()
     val marksClickable by CHAPTER_DOTS_CLICKABLE.watchPref()
 

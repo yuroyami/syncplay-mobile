@@ -311,9 +311,23 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     private val outbound = Channel<Outbound>(capacity = Channel.UNLIMITED)
 
+    /**
+     * Lines handed in but not yet processed.
+     *
+     * [inboundLines] has to be unbounded: dropping a protocol line would leave the room acting on
+     * a state that never arrived, so backpressure is not an option here. That leaves the depth as
+     * the thing to watch. A server sending faster than this client can parse, forever, is either
+     * broken or hostile, and the queue is the only place that shows up before the process runs
+     * out of memory.
+     */
+    private val inboundBacklog = atomic(0)
+
     init {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
-            for (line in inboundLines) processPacket(line)
+            for (line in inboundLines) {
+                inboundBacklog.decrementAndGet()
+                processPacket(line)
+            }
         }
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
             for (item in outbound) {
@@ -337,7 +351,14 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * threads (Netty event loop / Ktor reader / SwiftNIO callback) — must not block.
      */
     fun handlePacket(jsonString: String) {
-        inboundLines.trySend(jsonString)
+        if (inboundLines.trySend(jsonString).isSuccess) {
+            // On the crossing only, so the counter stays an honest count of what is pending and
+            // the drop happens once rather than on every line after it.
+            if (inboundBacklog.incrementAndGet() == MAX_INBOUND_BACKLOG + 1) {
+                loggy("Inbound backlog passed $MAX_INBOUND_BACKLOG lines; dropping the connection.")
+                terminateExistingConnection()
+            }
+        }
     }
 
     /**
@@ -491,6 +512,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         /** Socket open, optional TLS, Hello and its reply must all land within this. */
         val HANDSHAKE_TIMEOUT = 20.seconds
+
+        /**
+         * How many unparsed inbound lines may wait before the peer is treated as hostile.
+         * Generous: a busy room's join burst is a few dozen lines, not thousands.
+         */
+        const val MAX_INBOUND_BACKLOG = 5_000
 
         val WRITE_TIMEOUT = 10.seconds
         const val WRITE_RETRIES = 3
