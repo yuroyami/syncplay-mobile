@@ -87,7 +87,12 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
      name or the IP the socket dialled. A failure throws; the caller reports it.
      */
     override func upgradeTls() async throws {
-        guard let channel = channel else { return }
+        // Returning here used to report a completed handshake, so the caller set `encrypted` and
+        // showed the room's lock over a socket that had no TLS on it at all. There is nothing to
+        // upgrade without a channel: say so.
+        guard let channel = channel else {
+            throw NetworkManager.SocketGoneException().asError()
+        }
         let configuration = TLSConfiguration.makeClientConfiguration()
         let sslContext = try NIOSSLContext(configuration: configuration)
         let peerHost = self.viewmodel.session.tlsPeerHost
@@ -116,10 +121,9 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         guard context.channel === channel else { return }
         var buffer = self.unwrapInboundIn(data)
-        let readableBytes = buffer.readableBytes
-        let data = buffer.readData(length: readableBytes)!
-
-        if let received = String(data: data, encoding: .utf8) {
+        // readString decodes straight out of the buffer. Going through Data first copied every
+        // inbound line twice before anything looked at it.
+        if let received = buffer.readString(length: buffer.readableBytes) {
             self.handlePacket(jsonString: received)
         }
     }
@@ -166,17 +170,30 @@ private final class BoundedLineFrameDecoder: ByteToMessageDecoder {
 
     private let maxLength: Int
 
+    /**
+     How many bytes past the reader index have already been searched. `decode` is called again on
+     every socket read with everything buffered so far, so without this a message that arrives in
+     forty segments is scanned from the top forty times. NIO's own `LineBasedFrameDecoder` keeps
+     the same bookmark for the same reason.
+     */
+    private var scannedBytes: Int = 0
+
     init(maxLength: Int) {
         self.maxLength = maxLength
     }
 
     func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
-        guard let newlineIndex = buffer.readableBytesView.firstIndex(of: UInt8(ascii: "\n")) else {
+        let view = buffer.readableBytesView
+        let alreadyScanned = min(scannedBytes, view.count)
+        let searchFrom = view.index(view.startIndex, offsetBy: alreadyScanned)
+        guard let newlineIndex = view[searchFrom...].firstIndex(of: UInt8(ascii: "\n")) else {
+            scannedBytes = view.count
             if buffer.readableBytes > maxLength {
                 throw LineTooLongError(bytes: buffer.readableBytes)
             }
             return .needMoreData
         }
+        scannedBytes = 0
         // The view's indices are the buffer's own, so the line runs from the reader index to the newline.
         let lineLength = newlineIndex - buffer.readerIndex
         // A line that arrives complete is still a line: the ceiling is about what one message

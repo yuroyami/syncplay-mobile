@@ -10,11 +10,15 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.writeStringUtf8
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import app.protocol.models.ConnectionState
 
 /**
@@ -31,29 +35,71 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     private var connection: Connection? = null
 
+    /** The reader coroutine for the current socket, so teardown can actually stop it. */
+    private var readerJob: Job? = null
+
+    /**
+     * Guards the handover between a finished dial and a teardown that arrived while it was still
+     * dialling. Both write the same three fields from different coroutines.
+     */
+    private val socketLock = SynchronizedObject()
+
+    /** False from the moment a teardown starts until the next dial claims the manager. */
+    private var accepting = false
+
     /**
      * Opens the TCP socket and launches a reader coroutine that feeds each inbound line to
      * [handlePacket]. A failure to open throws, and [connect] turns that into onConnectionFailed.
      */
     override suspend fun connectSocket() {
         withContext(Dispatchers.IO) {
+            synchronized(socketLock) { accepting = true }
             val sm = SelectorManager(Dispatchers.IO)
-            selector = sm
-            val sock = aSocket(sm)
-                .tcp()
-                .connect(
-                    hostname = viewmodel.session.serverHost,
-                    port = viewmodel.session.serverPort
-                ) {
-                    socketTimeout = 10000
+            /* Nothing is published until the dial returns. Assigning the selector first meant a
+             * teardown landing mid-dial closed it, and then the dial finished and overwrote the
+             * cleared fields with a socket bound to a dead selector, which nothing ever closed.
+             *
+             * The dial is also bounded here. socketTimeout is a read/write option, not a connect
+             * deadline, so against a host that swallows the SYN this sat for the operating
+             * system's own timeout (over a minute) while the 20 s handshake deadline tore the
+             * connection state down underneath it. Netty and SwiftNIO both bound their dial. */
+            val sock = try {
+                withTimeout(CONNECT_TIMEOUT_MS) {
+                    aSocket(sm)
+                        .tcp()
+                        .connect(
+                            hostname = viewmodel.session.serverHost,
+                            port = viewmodel.session.serverPort
+                        ) {
+                            socketTimeout = 10000
+                        }
                 }
-            socket = sock
+            } catch (e: Throwable) {
+                runCatching { sm.close() }
+                throw e
+            }
             val conn = sock.connection()
-            connection = conn
+
+            val claimed = synchronized(socketLock) {
+                if (accepting) {
+                    selector = sm
+                    socket = sock
+                    connection = conn
+                    true
+                } else {
+                    false
+                }
+            }
+            if (!claimed) {
+                // Torn down while we were dialling. This socket belongs to nobody.
+                runCatching { sock.close() }
+                runCatching { sm.close() }
+                return@withContext
+            }
 
             // The reader lives on IO, never the main dispatcher, and only reports the loss of
             // the socket it was reading: our own teardown of a previous socket is not news.
-            viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            readerJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
                 try {
                     // readLineStrict suspends until a full line arrives, draining the
                     // socket at line granularity with no artificial pacing. Pacing here
@@ -68,6 +114,8 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                     }
                     lost(sock)
                 } catch (e: CancellationException) {
+                    // A cancelled reader still owns its socket; nothing else closes it.
+                    runCatching { sock.close() }
                     throw e
                 } catch (e: Exception) {
                     loggy("Ktor reader ended: ${e.message}")
@@ -91,13 +139,22 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     /** Closes the socket (errors ignored) and the selector behind it, clearing every reference. */
     override fun terminateExistingConnection() {
-        val sock = socket
-        socket = null
-        connection = null
+        val (sock, sel) = synchronized(socketLock) {
+            accepting = false
+            val s = socket
+            val l = selector
+            socket = null
+            connection = null
+            selector = null
+            s to l
+        }
+        // Closing the socket normally ends readLineStrict, but a reader parked on a socket that
+        // never errors would otherwise outlive the connection it belongs to.
+        readerJob?.cancel()
+        readerJob = null
         runCatching { sock?.close() }
         // The selector owns a thread; one per connection attempt used to leak for the process life.
-        runCatching { selector?.close() }
-        selector = null
+        runCatching { sel?.close() }
     }
 
     /** Writes a UTF-8 string and flushes; a failure throws so the caller can retry or queue. */
@@ -118,6 +175,9 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     }
 
     private companion object {
+        /** Matches the Netty client's dial deadline. */
+        const val CONNECT_TIMEOUT_MS = 10_000L
+
         const val MAX_LINE_BYTES = 65536L
     }
 }

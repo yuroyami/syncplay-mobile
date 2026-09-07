@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +50,10 @@ fun SettingsScreenUI(categoryKey: String?) {
     val index = settingsIndex(categories)
     val hits = remember(query, index) { index.search(query) }
     val scroll = rememberScrollState()
+    /* Through derivedStateOf, so this scope wakes when the answer flips rather than on every
+     * pixel of scroll. Reading scroll.value straight into a parameter recomposed the whole
+     * settings screen for the length of a fling. */
+    val scrolled by remember { derivedStateOf { scroll.value > 0 } }
 
     val current = open ?: if (expanded) categories.first() else null
     val title = if (!expanded && current != null) current.title(strings) else strings.settingsTitle
@@ -60,7 +65,7 @@ fun SettingsScreenUI(categoryKey: String?) {
                 if (!expanded && open != null) { open = null; highlight = null }
                 else backstack.removeLastOrNull()
             },
-            scrolled = scroll.value > 0,
+            scrolled = scrolled,
         ) {
             if (expanded) {
                 Row(Modifier.fillMaxSize()) {

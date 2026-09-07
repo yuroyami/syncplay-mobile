@@ -37,6 +37,11 @@ open class ServerRoomManager {
     /** Moves a watcher to a new room, removing it from the old one and creating the target if needed. */
     open fun moveWatcher(watcher: ServerWatcher, roomName: String) {
         val truncated = roomName.take(MAX_ROOM_NAME_LENGTH)
+        /* Moving to the room you are already in is not a move. Done literally, the last watcher
+         * in a room left it, the room was deleted for being empty, and a fresh one took its
+         * place: the playlist, the selected index, the position and every registered controller
+         * gone, on a client re-sending the room it is already in. */
+        if (watcher.room?.name == truncated) return
         removeWatcher(watcher)
         val room = getOrCreateRoom(truncated)
         room.addWatcher(watcher)
@@ -109,6 +114,10 @@ class PublicServerRoomManager : ServerRoomManager() {
     }
 
     override fun moveWatcher(watcher: ServerWatcher, roomName: String) {
+        // Same guard as the base, and it has to be here too: the "left" broadcast below happens
+        // before super runs, so without it a self-move told the room the watcher had gone and
+        // then never announced them back.
+        if (watcher.room?.name == roomName.take(MAX_ROOM_NAME_LENGTH)) return
         val oldRoom = watcher.room
         if (oldRoom != null) {
             val leftEvent = UserEvent(left = JsonPrimitive(true))

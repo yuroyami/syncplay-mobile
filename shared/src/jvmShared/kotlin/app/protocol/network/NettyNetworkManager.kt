@@ -7,7 +7,6 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelPipeline
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.nio.NioEventLoopGroup
@@ -43,11 +42,13 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * Event loop group backing [channel]. Must be shut down together with the channel:
      * each group owns native NIO threads, so a group released later than its channel leaks
      * those threads for the process lifetime.
+     *
+     * Volatile for the same reason [channel] is: it is written on the connect coroutine and read
+     * by [terminateExistingConnection], which the channel watchdog and the handshake deadline
+     * both call from coroutines of their own.
      */
+    @Volatile
     private var group: EventLoopGroup? = null
-
-    /** Channel pipeline; the SSL handler is inserted here during TLS upgrade. */
-    lateinit var pipeline: ChannelPipeline
 
     /**
      * Opens a TCP connection to the Syncplay server. Bootstraps a NIO client with string
@@ -56,14 +57,17 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * which [connect] turns into onConnectionFailed.
      */
     override suspend fun connectSocket() {
-        val group: EventLoopGroup = NioEventLoopGroup()
+        // One thread, explicitly. The no-argument constructor sizes the group at twice the core
+        // count, which on a phone spins up sixteen NIO threads to service the one socket this
+        // client ever opens, and does it again on every reconnect attempt.
+        val group: EventLoopGroup = NioEventLoopGroup(1)
         this.group = group
         val b = Bootstrap()
         b.group(group)
             .channel(NioSocketChannel::class.java)
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
-                    pipeline = ch.pipeline()
+                    val pipeline = ch.pipeline()
                     // 64 KiB line cap, matching the built-in server's framer. Must stay large
                     // enough for a fat List response (big room plus a playlist near the protocol's
                     // 10000-char limit); a smaller cap overflows the decoder and loops reconnects.
@@ -106,7 +110,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                     if (future.isSuccess) cont.resume(f.channel())
                     else cont.resumeWithException(future.cause() ?: IOException("Connect failed"))
                 }
-                cont.invokeOnCancellation { f.cancel(true) }
+                cont.invokeOnCancellation {
+                    // Losing the race means the connect already succeeded, so cancelling the
+                    // future does nothing and the socket would be left open with nothing holding
+                    // it: `channel` is only assigned after this block returns.
+                    if (!f.cancel(true)) f.channel()?.close()
+                }
             }
         }
         channel = connected
@@ -148,10 +157,15 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     override suspend fun writeActualString(s: String) {
         val ch = channel ?: throw SocketGoneException()
         suspendCancellableCoroutine<Unit> { cont ->
-            ch.writeAndFlush(s).addListener { future ->
+            val f = ch.writeAndFlush(s)
+            f.addListener { future ->
                 if (future.isSuccess) cont.resume(Unit)
                 else cont.resumeWithException(future.cause() ?: IOException("Write failed"))
             }
+            // The caller writes under a timeout. Without this the timeout only abandoned the
+            // wait: the write stayed queued and still went out, so the caller's retry put the
+            // same line on the wire a second time.
+            cont.invokeOnCancellation { f.cancel(false) }
         }
     }
 
@@ -174,6 +188,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     private suspend fun upgradeTlsNow() = suspendCancellableCoroutine<Unit> { cont ->
         try {
+            // Off the current channel, not off a field the ChannelInitializer wrote: that field
+            // tracked whichever channel was initialised last, so after a torn-down connect the
+            // SSL handler went into a dead pipeline.
+            val pipeline = channel?.pipeline() ?: throw SocketGoneException()
             val sslContext = SslContextBuilder
                 .forClient()
                 .startTls(false)

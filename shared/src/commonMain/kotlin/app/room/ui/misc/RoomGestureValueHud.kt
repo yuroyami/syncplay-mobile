@@ -44,15 +44,20 @@ sealed interface GestureReadout {
      * 0 to 1 across the engine's gain range; null where the engine cannot amplify, and then there
      * is no second bar at all.
      */
-    class Level(val kind: GestureValueKind, val display: Int, val fraction: Float, val gain: Float? = null) : GestureReadout
+    data class Level(val kind: GestureValueKind, val display: Int, val fraction: Float, val gain: Float? = null) : GestureReadout
 
     /** [deltaSeconds] is the accumulated double-tap chain, null for a long press preview. */
-    class Seek(val deltaSeconds: Int?, val targetMs: Long, val fraction: Float?) : GestureReadout
+    data class Seek(val deltaSeconds: Int?, val targetMs: Long, val fraction: Float?) : GestureReadout
 }
 
 /**
  * The gesture readout, in the notice channel's own shape and place: below the status line, on the
  * chrome tier. Feed it the live value and null when the gesture ends; it lingers, then fades.
+ *
+ * The two readouts above are data classes on purpose. A swipe builds a fresh one on every pointer
+ * sample, and with identity equality every one of those looked like a change: this composable
+ * could never skip, and the effect below was cancelled and relaunched sixty times a second for a
+ * number that had not moved.
  */
 @Composable
 fun RoomGestureReadout(active: GestureReadout?, modifier: Modifier = Modifier) {

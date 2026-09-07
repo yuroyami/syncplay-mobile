@@ -146,7 +146,13 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()
     return when (preferredEngine) {
-        "swiftnio" -> instantiateSwiftNioNetworkManager!!(this)
+        // The factory is registered from Swift at startup, and swiftnio is the iOS default, so a
+        // build whose bridge never registered used to crash on the way into every room. Ktor is a
+        // worse engine, not a broken one: fall back to it and say so in the log.
+        "swiftnio" -> instantiateSwiftNioNetworkManager?.invoke(this) ?: run {
+            loggy("SwiftNIO bridge is not registered; falling back to the Ktor transport.")
+            KtorNetworkManager(this)
+        }
         else -> KtorNetworkManager(this)
     }
 }

@@ -271,7 +271,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             while (isActive) {
                 delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
                 if (network.state.value == ConnectionState.CONNECTED) {
-                    network.send(WireMessage.listRequest())
+                    // Fire-and-forget: awaiting the write measured the next interval from when
+                    // the previous one landed, so a slow socket stretched a 15 s keepalive well
+                    // past the server's own tolerance and the probe stopped keeping anything warm.
+                    network.sendAsync(WireMessage.listRequest())
                 }
             }
         }

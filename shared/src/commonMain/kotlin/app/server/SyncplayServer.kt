@@ -1,7 +1,11 @@
 package app.server
 
+import app.protocol.WireMessage
 import app.protocol.models.RoomFeatures
+import app.protocol.wire.FileData
+import app.protocol.wire.Room
 import app.protocol.wire.UserEvent
+import app.protocol.wire.UserSetData
 import app.server.model.ControlledServerRoom
 import app.server.model.NotControlledRoomException
 import app.server.model.RoomPasswordProvider
@@ -14,6 +18,7 @@ import app.utils.SyncClock
 import app.utils.loggy
 import app.utils.playlistIsValid
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,14 +131,18 @@ class SyncplayServer(
 
     fun removeWatcher(watcher: ServerWatcher?) {
         if (watcher == null) return
-        val room = watcher.room ?: return
+        /* The registration record is [_connections], not the watcher's room. Reading the room
+         * here made every line below conditional on something the room manager itself clears, so
+         * a watcher without one would keep its state timer, its connection entry and its place in
+         * the connected count. Removing from the map first is also what keeps the person leaving
+         * out of their own departure broadcast. */
+        if (_connections.remove(watcher) == null) return
+        connectedClients.value = _connections.size
 
         stopStateTimer(watcher)
-        sendLeftMessage(watcher)
+        if (watcher.room != null) sendLeftMessage(watcher)
         roomManager.removeWatcher(watcher)
         authFailures.remove(watcher)
-        _connections.remove(watcher)
-        connectedClients.value = _connections.size
 
         log(ServerLogEvent.Disconnected(watcher.name))
     }
@@ -157,13 +166,31 @@ class SyncplayServer(
         stateTimerJobs[watcher] = scope.launch(serverDispatcher) {
             // Initial forced state update, then one every SERVER_STATE_INTERVAL_MS.
             delay(100)
-            sendState(watcher, doSeek = true, forcedUpdate = true)
+            tickState(watcher, doSeek = true, forcedUpdate = true)
 
             while (isActive) {
                 delay(SERVER_STATE_INTERVAL_MS)
-                sendState(watcher, doSeek = false, forcedUpdate = false)
+                tickState(watcher, doSeek = false, forcedUpdate = false)
                 if (dropIfSilent(watcher)) break
             }
+        }
+    }
+
+    /**
+     * One State tick that cannot kill its own timer.
+     *
+     * A throw out of [sendState] used to end the timer coroutine for good. The socket stayed
+     * open, State stopped flowing, and because the silence check lives in the same loop the
+     * watcher was never timed out either: an invisible member of the room, still counted, still
+     * holding a name. One bad tick is not a reason to stop.
+     */
+    private fun tickState(watcher: ServerWatcher, doSeek: Boolean, forcedUpdate: Boolean) {
+        try {
+            sendState(watcher, doSeek = doSeek, forcedUpdate = forcedUpdate)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            loggy("Server: State to ${watcher.name} failed: ${e.message}")
         }
     }
 
@@ -233,46 +260,71 @@ class SyncplayServer(
             version = watcher.version,
             features = watcher.features
         )
-        roomManager.broadcast(watcher) { w ->
-            if (w != watcher) {
-                _connections[w]?.sendUserSetting(watcher.name, watcher.room, null, event)
-            }
-        }
-        roomManager.broadcastRoom(watcher) { w ->
-            _connections[w]?.sendSetReady(watcher.name, watcher.isReady(), false)
-        }
+        fanOut(watcher, roomOnly = false, userSettingMessage(watcher, null, event)) { it != watcher }
+        fanOut(watcher, roomOnly = true, readinessMessage(watcher, manuallyInitiated = false))
     }
 
+    /**
+     * Encodes [message] once and writes the same line to every recipient.
+     *
+     * Each `send…` on [ClientConnection] builds its own payload objects and runs the serializer,
+     * so a broadcast used to do both once per watcher for JSON that is identical for all of them.
+     * A playlist edit is the worst case: the protocol allows 10000 characters, so a ten-person
+     * room re-encoded roughly a hundred kilobytes of the same string, on the one thread that
+     * serves every client.
+     */
+    private inline fun fanOut(
+        sender: ServerWatcher,
+        roomOnly: Boolean,
+        message: WireMessage,
+        crossinline include: (ServerWatcher) -> Boolean = { true },
+    ) {
+        val line = message.toJson()
+        val write: (ServerWatcher) -> Unit = { w -> if (include(w)) _connections[w]?.sendEncoded(line) }
+        if (roomOnly) roomManager.broadcastRoom(sender, write) else roomManager.broadcast(sender, write)
+    }
+
+    private fun readinessMessage(watcher: ServerWatcher, manuallyInitiated: Boolean, setBy: String? = null) =
+        WireMessage.readiness(
+            isReady = watcher.isReady() ?: false,
+            manuallyInitiated = manuallyInitiated,
+            username = watcher.name,
+            setBy = setBy,
+        )
+
+    private fun userSettingMessage(watcher: ServerWatcher, file: FileData?, event: UserEvent?) =
+        WireMessage.userBroadcast(
+            mapOf(
+                watcher.name to UserSetData(
+                    room = watcher.room?.let { Room(it.name) },
+                    file = file,
+                    event = event,
+                )
+            )
+        )
+
     private fun sendRoomSwitchMessage(watcher: ServerWatcher) {
-        roomManager.broadcast(watcher) { w ->
-            _connections[w]?.sendUserSetting(watcher.name, watcher.room, null, null)
-        }
-        roomManager.broadcastRoom(watcher) { w ->
-            _connections[w]?.sendSetReady(watcher.name, watcher.isReady(), false)
-        }
+        fanOut(watcher, roomOnly = false, userSettingMessage(watcher, null, null))
+        fanOut(watcher, roomOnly = true, readinessMessage(watcher, manuallyInitiated = false))
     }
 
     private fun sendLeftMessage(watcher: ServerWatcher) {
         val event = UserEvent(left = JsonPrimitive(true))
-        roomManager.broadcast(watcher) { w ->
-            _connections[w]?.sendUserSetting(watcher.name, watcher.room, null, event)
-        }
+        // Not to the person leaving: their socket is already gone, and the join path has always
+        // excluded the joiner from its own announcement.
+        fanOut(watcher, roomOnly = false, userSettingMessage(watcher, null, event)) { it != watcher }
     }
 
     fun sendFileUpdate(watcher: ServerWatcher) {
         val file = watcher.file ?: return
-        roomManager.broadcast(watcher) { w ->
-            _connections[w]?.sendUserSetting(watcher.name, watcher.room, file, null)
-        }
+        fanOut(watcher, roomOnly = false, userSettingMessage(watcher, file, null))
     }
 
     // --- Chat ---
 
     fun sendChat(watcher: ServerWatcher, message: String) {
         val truncated = message.take(config.maxChatMessageLength)
-        roomManager.broadcastRoom(watcher) { w ->
-            _connections[w]?.sendChatMessage(watcher.name, truncated)
-        }
+        fanOut(watcher, roomOnly = true, WireMessage.chatBroadcast(username = watcher.name, message = truncated))
     }
 
     // --- Readiness ---
@@ -285,17 +337,17 @@ class SyncplayServer(
                 for (watcherToSet in room.getWatchers()) {
                     if (watcherToSet.name == username) {
                         watcherToSet.ready = isReady
-                        roomManager.broadcastRoom(watcherToSet) { w ->
-                            _connections[w]?.sendSetReady(watcherToSet.name, watcherToSet.isReady(), manuallyInitiated, watcher.name)
-                        }
+                        fanOut(
+                            watcherToSet,
+                            roomOnly = true,
+                            readinessMessage(watcherToSet, manuallyInitiated, setBy = watcher.name),
+                        )
                     }
                 }
             }
         } else {
             watcher.ready = isReady
-            roomManager.broadcastRoom(watcher) { w ->
-                _connections[w]?.sendSetReady(watcher.name, watcher.isReady(), manuallyInitiated)
-            }
+            fanOut(watcher, roomOnly = true, readinessMessage(watcher, manuallyInitiated))
         }
     }
 
@@ -308,9 +360,7 @@ class SyncplayServer(
         // client could make the server relay megabyte broadcasts to every watcher.
         if (room.canControl(watcher) && playlistIsValid(files)) {
             room.setPlaylist(files, watcher)
-            roomManager.broadcastRoom(watcher) { w ->
-                _connections[w]?.sendPlaylist(watcher.name, files)
-            }
+            fanOut(watcher, roomOnly = true, WireMessage.playlistChange(files = files, user = watcher.name))
             /* A shorter list can leave the selection pointing past the end. Correct it here
              * rather than letting every client work it out, or they work it out differently. */
             val stored = room.getPlaylistIndex()
@@ -318,9 +368,7 @@ class SyncplayServer(
                 val corrected = files.lastIndex.takeIf { it >= 0 }
                 if (corrected != null) {
                     room.setPlaylistIndex(corrected, watcher)
-                    roomManager.broadcastRoom(watcher) { w ->
-                        _connections[w]?.sendPlaylistIndex(watcher.name, corrected)
-                    }
+                    fanOut(watcher, roomOnly = true, WireMessage.playlistIndex(index = corrected, user = watcher.name))
                 }
             }
         } else {
@@ -338,9 +386,7 @@ class SyncplayServer(
         val valid = index in room.getPlaylist().indices
         if (room.canControl(watcher) && valid) {
             room.setPlaylistIndex(index, watcher)
-            roomManager.broadcastRoom(watcher) { w ->
-                _connections[w]?.sendPlaylistIndex(watcher.name, index)
-            }
+            fanOut(watcher, roomOnly = true, WireMessage.playlistIndex(index = index, user = watcher.name))
         } else {
             room.getPlaylistIndex()?.let {
                 _connections[watcher]?.sendPlaylistIndex(room.name, it)

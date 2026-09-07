@@ -1,5 +1,6 @@
 package app.player
 
+import app.utils.generateTimestampMillis
 import app.utils.platformCallback
 
 /**
@@ -10,7 +11,9 @@ import app.utils.platformCallback
  * volume). Above 100 is the engine's gain, where the engine can amplify: VLCKit and mpv go to
  * 200 natively, ExoPlayer to 200 through a loudness effect, KitePlayer and AVPlayer stop at 100.
  */
-class VolumeLadder(val deviceOwnsBase: Boolean, val gainMax: Int) {
+class VolumeLadder(val deviceSteps: Int, val gainMax: Int) {
+    /** True where the platform lets the app move the device's own music stream. */
+    val deviceOwnsBase: Boolean get() = deviceSteps > 0
     val max: Int get() = gainMax.coerceAtLeast(BASE_MAX)
     val hasGain: Boolean get() = gainMax > BASE_MAX
 
@@ -22,8 +25,31 @@ class VolumeLadder(val deviceOwnsBase: Boolean, val gainMax: Int) {
 /** Reads and writes the ladder for one engine, routing the base and the gain to where they live. */
 class VolumeController(private val player: PlayerImpl) {
 
+    private var cachedLadder: VolumeLadder? = null
+    private var cachedAtMs: Long = 0L
+
+    /**
+     * The ladder, rebuilt at most every [LADDER_TTL_MS].
+     *
+     * It was a plain getter, and reading it asks the platform how many steps the device's volume
+     * has, which on Android is a binder call to the audio service. A volume swipe reads this on
+     * every pointer sample and then writes through [set], which used to ask again on the way
+     * down, so one finger movement crossed the process boundary three or four times. Nothing it
+     * describes changes faster than a headset being plugged in.
+     */
     val ladder: VolumeLadder
-        get() = VolumeLadder(deviceOwnsBase = platformCallback.deviceVolumeSteps() > 0, gainMax = player.gainMax)
+        get() {
+            val now = generateTimestampMillis()
+            val cached = cachedLadder
+            if (cached != null && now - cachedAtMs < LADDER_TTL_MS) return cached
+            return VolumeLadder(
+                deviceSteps = platformCallback.deviceVolumeSteps(),
+                gainMax = player.gainMax,
+            ).also {
+                cachedLadder = it
+                cachedAtMs = now
+            }
+        }
 
     /** The ladder position, 0 to [VolumeLadder.max]: the base, or the gain once the base is full. */
     fun current(): Int {
@@ -48,7 +74,7 @@ class VolumeController(private val player: PlayerImpl) {
 
     private fun base(ladder: VolumeLadder): Int {
         if (!ladder.deviceOwnsBase) return player.getEngineVolume()
-        val steps = platformCallback.deviceVolumeSteps().coerceAtLeast(1)
+        val steps = ladder.deviceSteps.coerceAtLeast(1)
         return platformCallback.getDeviceVolume() * VolumeLadder.BASE_MAX / steps
     }
 
@@ -59,7 +85,12 @@ class VolumeController(private val player: PlayerImpl) {
         }
         // The engine's own output stays at full so the device's stream is the only thing heard moving.
         player.setEngineVolume(VolumeLadder.BASE_MAX)
-        val steps = platformCallback.deviceVolumeSteps().coerceAtLeast(1)
+        val steps = ladder.deviceSteps.coerceAtLeast(1)
         platformCallback.setDeviceVolume((percent * steps + VolumeLadder.BASE_MAX / 2) / VolumeLadder.BASE_MAX)
+    }
+
+    private companion object {
+        /** Long enough to cover a whole swipe, short enough that plugging in a headset lands. */
+        const val LADDER_TTL_MS = 500L
     }
 }

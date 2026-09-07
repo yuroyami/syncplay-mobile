@@ -80,6 +80,15 @@ class ClientConnection(
     }
 
     /**
+     * Writes a line the caller has already encoded. A broadcast sends byte-identical JSON to
+     * every watcher, so the server encodes it once and hands the same string to each connection
+     * instead of running the serializer once per recipient.
+     */
+    fun sendEncoded(json: String) {
+        sendFn(json)
+    }
+
+    /**
      * Set by the first drop. The mailbox behind this connection may already hold lines that
      * arrived before the drop, and dispatching those puts a watcher back in a room the server
      * has just thrown out of it.

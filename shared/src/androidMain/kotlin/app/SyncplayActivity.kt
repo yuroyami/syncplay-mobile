@@ -257,6 +257,20 @@ class SyncplayActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
 
+        /* Registered here and not in onResume: entering picture-in-picture pauses the activity
+         * while leaving it started, so an onResume/onPause pairing tore the receiver down at the
+         * exact moment the PiP window's own play and pause buttons started firing at it.
+         *
+         * Not exported on every API level, not only on 13 and up: below Tiramisu the
+         * two-argument call registers an exported receiver, so any app on the device could
+         * broadcast the action and pause the room. ContextCompat carries the flag back. */
+        ContextCompat.registerReceiver(
+            this,
+            pipBroadcastReceiver,
+            IntentFilter(PIP_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
             val room = roomViewmodel ?: return@launch
@@ -390,16 +404,6 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun onResume() {
         super.onResume()
-        /* Not exported on every API level, not only on 13 and up: below Tiramisu the
-         * two-argument call registers an exported receiver, so any app on the device could
-         * broadcast the action and pause the room. ContextCompat carries the flag back. */
-        ContextCompat.registerReceiver(
-            this,
-            pipBroadcastReceiver,
-            IntentFilter(PIP_ACTION),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
-
         /** Applying track choices again so the player doesn't forget about track choices **/
         lifecycleScope.launch {
             val room = roomViewmodel ?: return@launch
@@ -482,8 +486,8 @@ class SyncplayActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStop() {
+        super.onStop()
         runCatching { unregisterReceiver(pipBroadcastReceiver) }
     }
 

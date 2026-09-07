@@ -56,6 +56,11 @@ private const val PLAYLIST_ADVANCE_MIN_DURATION_MS = 10_000L
  *  callback (e.g. from a load error) does not skip ahead. */
 private const val PLAYLIST_ADVANCE_NEAR_END_MS = 5_000L
 
+/** How slowly the position tracker ticks while the engine is not playing. A stopped playhead
+ *  needs a heartbeat, not a poll: it only has to notice a position the seek path somehow did not
+ *  record for itself. */
+private val IDLE_TRACKER_INTERVAL = 1.seconds
+
 /** The actual platform-agnostic interface for video/audio playback in Syncplay.
  * Engines: ExoPlayer/mpv/KitePlayer (Android), AVPlayer/VLCKit/KitePlayer (iOS)*/
 abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine) {
@@ -587,7 +592,13 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     playerManager.samplePosition(currentPositionMs())
                     playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
                 }
-                delay(trackerJobInterval)
+                /* The fast rate only earns its keep while frames are moving. A paused engine's
+                 * position does not change, and estimatedPositionMs() returns the last sample
+                 * verbatim when isNowPlaying is false, so polling it four times a second bought
+                 * nothing and cost a main-thread engine call each time (a JNI property read on
+                 * mpv, an ObjC array bridge on AVPlayer). Seeks sample on their own path, so a
+                 * paused playhead still moves the instant someone drags it. */
+                delay(if (playerManager.isNowPlaying.value) trackerJobInterval else IDLE_TRACKER_INTERVAL)
             }
         }
     }

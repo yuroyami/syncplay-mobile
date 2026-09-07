@@ -115,22 +115,34 @@ class SettingsHit(
     val summary: String,
 )
 
-/** The index over a resolved category set. Composable because titles are resources. */
+/**
+ * The index over a resolved category set. Composable because titles are resources.
+ *
+ * Remembered on the two things it depends on. Unremembered, it walked every category and every
+ * preference and built a fresh [SettingsHit] for each one on every recomposition of the settings
+ * screen, which includes every pixel of scroll, and the search below could never reuse its result
+ * because the list it keyed on was a new object each time.
+ */
 @Composable
-fun settingsIndex(categories: List<SettingCategory>): List<SettingsHit> = buildList {
-    for (category in categories) {
-        val categoryTitle = category.title(strings)
-        for (entry in category.entries) {
-            val cfg = entry.pref.config ?: continue
-            add(
-                SettingsHit(
-                    category = category,
-                    entry = entry,
-                    categoryTitle = categoryTitle,
-                    title = cfg.title(strings),
-                    summary = cfg.summary?.invoke(strings).orEmpty(),
-                )
-            )
+fun settingsIndex(categories: List<SettingCategory>): List<SettingsHit> {
+    val resolved = strings
+    return remember(categories, resolved) {
+        buildList {
+            for (category in categories) {
+                val categoryTitle = category.title(resolved)
+                for (entry in category.entries) {
+                    val cfg = entry.pref.config ?: continue
+                    add(
+                        SettingsHit(
+                            category = category,
+                            entry = entry,
+                            categoryTitle = categoryTitle,
+                            title = cfg.title(resolved),
+                            summary = cfg.summary?.invoke(resolved).orEmpty(),
+                        )
+                    )
+                }
+            }
         }
     }
 }

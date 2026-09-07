@@ -108,6 +108,12 @@ fun RoomSeekbar(modifier: Modifier) {
         else chapters.filter { it.timeOffsetMillis / 1000 != 0L }
             .map { it to (it.timeOffsetMillis.toFloat() / durationMs).coerceIn(0f, 1f) }
     }
+    /* The tick positions, hoisted out of the per-tick body. ScrubTrack takes a plain List, so a
+     * fresh one built here every time the playhead moved forced the whole track (semantics,
+     * gesture and key modifiers included) to rebuild two to four times a second. */
+    val tickFractions: List<Float> = remember(marks, showMarks) {
+        if (showMarks) marks.map { it.second } else emptyList()
+    }
     val activeMark = marks.indexOfLast { it.second <= fraction }
     val chapterUnderPlayhead = marks.getOrNull(activeMark)?.first
 
@@ -128,7 +134,12 @@ fun RoomSeekbar(modifier: Modifier) {
     val measurer = rememberTextMeasurer()
     // timestampFromMillis pads to mm:ss under an hour and to hh:mm:ss from there.
     val widest = if (!known || durationMs >= 3_600_000L) "00:00:00" else "00:00"
-    val timeWidth = with(density) { measurer.measure(widest, Type.value).size.width.toDp() }
+    // Remembered on what it actually depends on: the string, the type role and the density. It is
+    // one of two constant strings, so measuring it again on every position tick bought nothing.
+    val timeStyle = Type.value
+    val timeWidth = remember(widest, density, measurer, timeStyle) {
+        with(density) { measurer.measure(widest, timeStyle).size.width.toDp() }
+    }
 
     Row(modifier.then(keys), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(timeWidth), contentAlignment = Alignment.CenterEnd) { Timecode(shownMs) }
@@ -137,7 +148,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 value = fraction,
                 enabled = known,
                 modifier = Modifier.onSizeChanged { trackWidthPx = it.width },
-                ticks = if (showMarks) marks.map { it.second } else emptyList(),
+                ticks = tickFractions,
                 activeTick = if (showMarks) activeMark else -1,
                 buffered = if (known && bufferedMs > 0L) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else null,
                 keyStep = 0f,

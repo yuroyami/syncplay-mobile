@@ -199,10 +199,16 @@ private fun ActionLabel(text: String, color: Color, modifier: Modifier = Modifie
         // Measure before choosing the label's height. Foundation autosize in a wrapping button
         // can otherwise size its parent using a different font from the one it finally draws.
         val labelConstraints = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
-        val fontSize = (0..8).map { lerp(style.fontSize, minFontSize, it / 8f) }.firstOrNull { candidate ->
-            val layout = measurer.measure(AnnotatedString(text), style.copy(fontSize = candidate), constraints = labelConstraints)
-            layout.lineCount <= 2 && !layout.hasVisualOverflow
-        } ?: minFontSize
+        /* Remembered on everything the answer depends on. Every action in the app runs this, and
+         * unremembered it laid the label out up to nine times per composition, each with its own
+         * style copy and annotated string, for a result that only moves when the text or the box
+         * does. Nine candidates also overflow the measurer's own cache, so nothing there caught it. */
+        val fontSize = remember(text, labelConstraints, style, minFontSize, measurer) {
+            (0..8).map { lerp(style.fontSize, minFontSize, it / 8f) }.firstOrNull { candidate ->
+                val layout = measurer.measure(AnnotatedString(text), style.copy(fontSize = candidate), constraints = labelConstraints)
+                layout.lineCount <= 2 && !layout.hasVisualOverflow
+            } ?: minFontSize
+        }
         // At the readable floor, wrapping further is preferable to truncating the action.
         Text(text, color = color, style = style.copy(fontSize = fontSize))
     }

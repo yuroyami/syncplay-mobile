@@ -15,6 +15,7 @@ import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -53,6 +54,7 @@ actual class ServerNetworkEngine actual constructor(
 
         acceptJob = scope.launch(Dispatchers.IO) {
             try {
+                var consecutiveFailures = 0
                 while (isActive) {
                     // One client failing to be accepted must not end the server. Before this, a
                     // single throw from accept() took the whole listener down silently.
@@ -61,9 +63,20 @@ actual class ServerNetworkEngine actual constructor(
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        loggy("Server: accept failed: ${e.message}")
+                        /* A failure that repeats is a different thing from a failure that
+                         * happens: a listening socket in a bad state, or no file descriptors
+                         * left, fails instantly and forever. Retrying it with no pause burned a
+                         * core and wrote a log line per attempt. Back off, then give up. */
+                        consecutiveFailures++
+                        loggy("Server: accept failed (${consecutiveFailures}): ${e.message}")
+                        if (consecutiveFailures >= MAX_CONSECUTIVE_ACCEPT_FAILURES) {
+                            loggy("Server: giving up on the listener after $consecutiveFailures failed accepts")
+                            break
+                        }
+                        delay(ACCEPT_RETRY_DELAY_MS)
                         continue
                     }
+                    consecutiveFailures = 0
                     serve(clientSocket)
                 }
             } finally {
@@ -148,5 +161,11 @@ actual class ServerNetworkEngine actual constructor(
     private companion object {
         /** Matches the Netty framers: a line with no newline in 64 KiB is not this protocol. */
         const val MAX_LINE_CHARS = 65536
+
+        /** Pause between accept attempts once one has failed. */
+        const val ACCEPT_RETRY_DELAY_MS = 250L
+
+        /** After this many failures in a row the listener is not coming back. */
+        const val MAX_CONSECUTIVE_ACCEPT_FAILURES = 20
     }
 }

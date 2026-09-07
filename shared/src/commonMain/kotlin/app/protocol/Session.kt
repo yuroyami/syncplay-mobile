@@ -50,7 +50,15 @@ class Session(val protocol: ProtocolManager) {
     private val outboundQueueLock = Mutex()
 
     suspend fun queueOutbound(json: String) {
-        outboundQueueLock.withLock { outboundQueue.add(json) }
+        outboundQueueLock.withLock {
+            outboundQueue.add(json)
+            // The one collection here that used to have no ceiling, and it grows fastest exactly
+            // when the network is worst: every failed write appends. A long outage with an active
+            // chat or playlist used to build a backlog that was then fired at the server in one
+            // burst on reconnect, which is a good way to be dropped again. The oldest entries go
+            // first; a chat line from ten minutes ago is not worth the reconnection.
+            while (outboundQueue.size > MAX_QUEUED_OUTBOUND) outboundQueue.removeAt(0)
+        }
     }
 
     /** Atomically snapshots and empties the queue. */
@@ -101,6 +109,9 @@ class Session(val protocol: ProtocolManager) {
 
         /** The chat log keeps this many lines; older ones fall off the top. */
         const val MAX_MESSAGES = 1000
+
+        /** Packets held for replay while disconnected. Older ones fall off the front. */
+        const val MAX_QUEUED_OUTBOUND = 200
 
         /**
          * PC's MAX_ROOM_NAME_LENGTH, and where the server cuts. A managed name is the base plus

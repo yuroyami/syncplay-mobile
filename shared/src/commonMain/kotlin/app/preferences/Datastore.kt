@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
@@ -38,7 +41,11 @@ val datastoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 /** True once the first read off disk has landed, so nothing has to block waiting for it. */
 private val preferencesLoaded = CompletableDeferred<Unit>()
 
+@Volatile
 private var cachedStateFlow: StateFlow<Preferences>? = null
+
+/** Guards the one-time build of [cachedStateFlow]. */
+private val stateFlowLock = SynchronizedObject()
 
 /**
  * Non-null when the settings on disk could not be used and the app is running on defaults.
@@ -60,18 +67,24 @@ var preferencesLoadFailure: Throwable? = null
  * answer is already here.
  */
 val datastoreStateFlow: StateFlow<Preferences>
-    get() = cachedStateFlow ?: datastore.data.stateIn(
-        scope = datastoreScope,
-        started = SharingStarted.Eagerly,
-        initialValue = runBlocking {
-            runCatching { datastore.data.first() }.getOrElse { failure ->
-                preferencesLoadFailure = failure
-                emptyPreferences()
-            }
-        },
-    ).also {
-        cachedStateFlow = it
-        preferencesLoaded.complete(Unit)
+    get() = cachedStateFlow ?: synchronized(stateFlowLock) {
+        // Double-checked under the lock: the warm-up thread and the first main-thread reader
+        // arrive together on iOS and desktop, which have no splash to hold them apart. Without
+        // this both built their own eagerly-collected flow, so the store was read off disk twice
+        // and one of the two collectors leaked for the life of the process.
+        cachedStateFlow ?: datastore.data.stateIn(
+            scope = datastoreScope,
+            started = SharingStarted.Eagerly,
+            initialValue = runBlocking {
+                runCatching { datastore.data.first() }.getOrElse { failure ->
+                    preferencesLoadFailure = failure
+                    emptyPreferences()
+                }
+            },
+        ).also {
+            cachedStateFlow = it
+            preferencesLoaded.complete(Unit)
+        }
     }
 
 /**
@@ -94,8 +107,10 @@ suspend fun awaitPreferences() = preferencesLoaded.await()
  * Only tests install a second store in one process; without this the first one won a whole JVM.
  */
 fun resetPreferencesForTesting() {
-    cachedStateFlow = null
-    preferencesLoadFailure = null
+    synchronized(stateFlowLock) {
+        cachedStateFlow = null
+        preferencesLoadFailure = null
+    }
 }
 
 /**

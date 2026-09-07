@@ -198,7 +198,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * and the pause between attempts doubles up to [MAX_RECONNECT_INTERVAL], so a server that is
      * down does not keep the radio busy every two seconds for hours.
      */
-    fun reconnect() {
+    fun reconnect(skipFirstBackoff: Boolean = false) {
         if (reconnectionJob?.isActive == true) return
 
         reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
@@ -207,15 +207,20 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             // Runs once per reconnect campaign (the isActive guard above prevents re-entry).
             viewmodel.protocol.resetSyncAnchorForReconnect()
             var attempt = 0
+            var skipBackoff = skipFirstBackoff
             while (isActive && state.value != ConnectionState.CONNECTED) {
                 state.value = ConnectionState.SCHEDULING_RECONNECT
-                // Clamp the user-configurable interval: it can be 0, which would otherwise
-                // spin a tight zero-delay reconnect loop hammering the server and the CPU.
-                // Clamping the Duration (not the raw pref number) keeps this agnostic to
-                // whether the pref reads back as Int or Long.
-                val base = RECONNECTION_INTERVAL.value().seconds.coerceAtLeast(MIN_RECONNECT_INTERVAL)
-                val backoff = (base * (1 shl attempt.coerceAtMost(5))).coerceAtMost(MAX_RECONNECT_INTERVAL)
-                delay(backoff)
+                if (skipBackoff) {
+                    skipBackoff = false
+                } else {
+                    // Clamp the user-configurable interval: it can be 0, which would otherwise
+                    // spin a tight zero-delay reconnect loop hammering the server and the CPU.
+                    // Clamping the Duration (not the raw pref number) keeps this agnostic to
+                    // whether the pref reads back as Int or Long.
+                    val base = RECONNECTION_INTERVAL.value().seconds.coerceAtLeast(MIN_RECONNECT_INTERVAL)
+                    val backoff = (base * (1 shl attempt.coerceAtMost(5))).coerceAtMost(MAX_RECONNECT_INTERVAL)
+                    delay(backoff)
+                }
                 if (!isActive || state.value == ConnectionState.CONNECTED) break
                 // connect() flips state to CONNECTING; on success the onConnected callback
                 // sets CONNECTED. On failure (sync, async, or the handshake deadline) the state
@@ -231,18 +236,19 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     /**
      * Retries at once instead of waiting out the backoff. The running campaign is dropped first,
      * so the next attempt starts now rather than after the delay it was already sleeping through.
+     *
+     * This runs as the campaign, not beside it. It used to launch its own untracked coroutine,
+     * which nothing could cancel: [abortConnection] exists to end a campaign for good (a server
+     * that refuses TLS when the user demands it), and that orphan survived the abort and started
+     * a fresh campaign anyway. Two quick taps also produced two concurrent connects, because the
+     * guard below reads a state the launched coroutine had not reached yet.
      */
     fun reconnectNow() {
         if (viewmodel.isSoloMode) return
         if (state.value == ConnectionState.CONNECTED || state.value == ConnectionState.CONNECTING) return
         reconnectionJob?.cancel()
         reconnectionJob = null
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            connect(announceTlsCheck = false)
-            // Whatever the outcome, the ordinary loop takes over from here.
-            state.first { it != ConnectionState.CONNECTING }
-            if (state.value != ConnectionState.CONNECTED) reconnect()
-        }
+        reconnect(skipFirstBackoff = true)
     }
 
     /**
@@ -389,6 +395,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * [Session.queueOutbound] for replay on reconnect. With no socket at all the write is not
      * retried: the packet is queued (if queueable) and the connection loss is left to the
      * transport's own callback, so a burst of sends cannot start a burst of reconnects.
+     *
+     * Two of the three outcomes end the attempt rather than repeat it. A retry only makes sense
+     * when the transport told us the bytes did not go out; a timeout cannot say that, so it is
+     * treated as a lost socket instead of being written again.
      */
     private suspend fun transmitPacket(json: String, queueable: Boolean) {
         val finalOut = json + "\r\n"
@@ -404,7 +414,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 if (queueable) viewmodel.session.queueOutbound(json)
                 return
             } catch (e: TimeoutCancellationException) {
-                loggy("Write timed out: ${e.message}")
+                /* Not retried, deliberately. A timeout says the wait was abandoned, not that the
+                 * bytes stayed home: the write is already queued in the transport and may well
+                 * land. Sending the same line again duplicated a chat message or a playlist edit
+                 * on the server, and on the Ktor path a half-written line followed by a whole one
+                 * framed as a single frame, which nothing can parse. A socket that cannot absorb
+                 * one line in ten seconds is gone; treat it that way. */
+                loggy("Write timed out after ${WRITE_TIMEOUT.inWholeSeconds}s: ${e.message}")
+                if (queueable) viewmodel.session.queueOutbound(json)
+                onError()
+                return
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

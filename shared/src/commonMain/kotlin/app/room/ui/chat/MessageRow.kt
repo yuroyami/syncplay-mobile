@@ -44,9 +44,15 @@ import app.LocalRoomViewmodel
 import app.utils.platformCallback
 import app.uicomponents.AnimatedImage
 
-/** How chat text is drawn: the size preference (floored at 5), the outline and shadow switches. */
-class MessageStyle(fontSize: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
-    val fontSize = fontSize.coerceAtLeast(5)
+/**
+ * How chat text is drawn: the size preference (floored at 5), the outline and shadow switches.
+ *
+ * A data class so two of these compare by what they say. The chat box builds one in its own body
+ * and hands it to every visible row, so with identity equality a new instance arrived on every
+ * recomposition and no row in the list could skip, however little had changed.
+ */
+data class MessageStyle(private val requestedFontSize: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
+    val fontSize = requestedFontSize.coerceAtLeast(5)
 }
 
 private const val GROUP_WINDOW_MS = 60_000L

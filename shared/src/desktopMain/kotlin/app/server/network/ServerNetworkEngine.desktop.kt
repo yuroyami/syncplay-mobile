@@ -6,6 +6,8 @@ import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel as NettyChannel
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelOption
+import io.netty.channel.WriteBufferWaterMark
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
@@ -48,11 +50,22 @@ actual class ServerNetworkEngine actual constructor(
 
     actual suspend fun startListening(port: Int) {
         bossGroup = NioEventLoopGroup(1)
-        workerGroup = NioEventLoopGroup()
+        // Two, not the default of twice the core count. This server hosts a handful of
+        // friends, and every extra loop is a thread that exists for the life of the host.
+        workerGroup = NioEventLoopGroup(2)
 
         val bootstrap = ServerBootstrap()
         bootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel::class.java)
+            .option(ChannelOption.SO_BACKLOG, ACCEPT_BACKLOG)
+            .childOption(ChannelOption.SO_KEEPALIVE, true)
+            /* Gives isWritable a meaning. Without a watermark a client that stops reading just
+             * accumulates: the server writes a State every second plus every broadcast, and the
+             * heap grows for as long as that client's socket stays open. */
+            .childOption(
+                ChannelOption.WRITE_BUFFER_WATER_MARK,
+                WriteBufferWaterMark(WRITE_WATERMARK_LOW, WRITE_WATERMARK_HIGH),
+            )
             .childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     val pipeline = ch.pipeline()
@@ -65,7 +78,17 @@ actual class ServerNetworkEngine actual constructor(
                             val connection = ClientConnection(
                                 server = server,
                                 sendFn = { line ->
-                                    ctx.channel().writeAndFlush(line + "\r\n")
+                                    val ch = ctx.channel()
+                                    if (ch.isWritable) {
+                                        ch.writeAndFlush(line + "\r\n")
+                                    } else {
+                                        /* Past the high watermark this client has a quarter of a
+                                         * megabyte of unread lines queued for it, which is about
+                                         * a thousand State messages. It is not slow, it is gone;
+                                         * writing more only costs the host memory. */
+                                        loggy("Server: dropping ${ch.remoteAddress()}, outbound buffer full")
+                                        ch.close()
+                                    }
                                 },
                                 dropFn = {
                                     ctx.channel().close()
@@ -139,5 +162,16 @@ actual class ServerNetworkEngine actual constructor(
         bossGroup = null
 
         loggy("Server: Stopped")
+    }
+
+    private companion object {
+        /** Pending connections the OS may hold before the accept loop reaches them. */
+        const val ACCEPT_BACKLOG = 64
+
+        /** Netty reports the channel writable again once the queue falls back to this. */
+        const val WRITE_WATERMARK_LOW = 32 * 1024
+
+        /** Above this many unflushed bytes for one client, the client is not reading. */
+        const val WRITE_WATERMARK_HIGH = 256 * 1024
     }
 }
