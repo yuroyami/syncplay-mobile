@@ -108,7 +108,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         armHandshakeDeadline()
 
         try {
-            connectSocket()
+            connectSocketOrFallback()
 
             if (tls == TlsState.TLS_ASK) {
                 send(WireMessage.tlsRequest())
@@ -120,6 +120,31 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
             viewmodel.callback.onConnectionFailed()
+        }
+    }
+
+    /**
+     * Dials, and on failure dials the session's fallback address once.
+     *
+     * Only the official server has a fallback, and only because it is dialled by name: a network
+     * whose DNS is broken or blocked can still reach the address the app was built with. A
+     * fallback that works is kept for the rest of the session, so later reconnects go straight
+     * to it. TLS is unaffected either way, because the certificate is checked against the name
+     * the user typed, never against whatever the socket dialled.
+     */
+    private suspend fun connectSocketOrFallback() {
+        try {
+            connectSocket()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val fallback = viewmodel.session.fallbackHost
+            if (fallback == null || fallback == viewmodel.session.serverHost) throw e
+            loggy("Dialling ${viewmodel.session.serverHost} failed (${e.message}); trying $fallback")
+            // Whatever the failed attempt left behind goes before the next one starts.
+            terminateExistingConnection()
+            viewmodel.session.serverHost = fallback
+            connectSocket()
         }
     }
 

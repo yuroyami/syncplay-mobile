@@ -22,6 +22,13 @@ class Session(val protocol: ProtocolManager) {
      * sends it as SNI; the socket still dials [serverHost].
      */
     var tlsPeerHost: String = OFFICIAL_SERVER_NAME
+
+    /**
+     * An address to dial when [serverHost] cannot be reached, or null when there is nothing else
+     * to try. Only the official server has one: it is dialled by name, and this is the address it
+     * answered on when the app was built, for a network whose DNS is the thing that is broken.
+     */
+    var fallbackHost: String? = OFFICIAL_SERVER_ADDRESS
     var currentUsername: String = "Anonymous${(1000..9999).random()}"
     var currentRoom: String = "roomname"
     var currentPassword: String = ""

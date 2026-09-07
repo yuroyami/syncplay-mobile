@@ -101,7 +101,23 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
         tagSocketThread()
 
-        val connected = withTimeout(CONNECT_TIMEOUT_MS) {
+        val connected = try {
+            dial(b)
+        } catch (e: Throwable) {
+            // A dial that fails leaves this group with nothing to serve. It used to sit there
+            // holding its NIO thread until the next connect attempt tore it down on the way in.
+            if (this.group === group) {
+                this.group = null
+                runCatching { group.shutdownGracefully() }
+            }
+            throw e
+        }
+        channel = connected
+        loggy("$connected")
+    }
+
+    private suspend fun dial(b: Bootstrap): Channel =
+        withTimeout(CONNECT_TIMEOUT_MS) {
             suspendCancellableCoroutine<Channel> { cont ->
                 val f = b.connect(viewmodel.session.serverHost, viewmodel.session.serverPort)
                 f.addListener { future ->
@@ -118,9 +134,6 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                 }
             }
         }
-        channel = connected
-        loggy("$connected")
-    }
 
     /**
      * The socket went away under us. Only the current channel counts: our own teardown of a

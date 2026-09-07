@@ -139,6 +139,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     val endpoint = resolveServerEndpoint(joinConfig.ip)
                     session.tlsPeerHost = endpoint.certificateHost
                     session.serverHost = endpoint.dialHost
+                    session.fallbackHost = endpoint.fallbackDialHost
                     session.serverPort = joinConfig.port
                     session.currentUsername = joinConfig.user
                     session.currentRoom = joinConfig.room

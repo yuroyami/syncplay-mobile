@@ -2,6 +2,7 @@ package app.protocol
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * The one place the dialled address and the verified certificate name are allowed to differ.
@@ -11,18 +12,24 @@ import kotlin.test.assertEquals
 class ServerEndpointTest {
 
     @Test
-    fun the_official_name_dials_its_address_but_verifies_its_name() {
+    fun the_official_name_is_dialled_by_name_and_keeps_its_address_as_a_fallback() {
         val e = resolveServerEndpoint("syncplay.pl")
-        assertEquals(OFFICIAL_SERVER_ADDRESS, e.dialHost)
+        assertEquals(
+            OFFICIAL_SERVER_NAME,
+            e.dialHost,
+            "an address literal is unreachable on an IPv6-only network; ask DNS",
+        )
         assertEquals("syncplay.pl", e.certificateHost, "the certificate is issued to the name")
+        assertEquals(OFFICIAL_SERVER_ADDRESS, e.fallbackDialHost, "for a network whose DNS is the broken part")
     }
 
     @Test
     fun a_blank_host_is_the_official_server_not_a_connection_to_nowhere() {
         for (blank in listOf("", "   ", "\t")) {
             val e = resolveServerEndpoint(blank)
-            assertEquals(OFFICIAL_SERVER_ADDRESS, e.dialHost, "blank input must not dial the empty string")
+            assertEquals(OFFICIAL_SERVER_NAME, e.dialHost, "blank input must not dial the empty string")
             assertEquals(OFFICIAL_SERVER_NAME, e.certificateHost)
+            assertEquals(OFFICIAL_SERVER_ADDRESS, e.fallbackDialHost)
         }
     }
 
@@ -53,5 +60,12 @@ class ServerEndpointTest {
         val e = resolveServerEndpoint(OFFICIAL_SERVER_ADDRESS)
         assertEquals(OFFICIAL_SERVER_ADDRESS, e.dialHost)
         assertEquals(OFFICIAL_SERVER_ADDRESS, e.certificateHost)
+    }
+
+    @Test
+    fun only_the_official_server_has_anything_to_fall_back_to() {
+        assertNull(resolveServerEndpoint("syncplay.example.org").fallbackDialHost)
+        assertNull(resolveServerEndpoint("10.0.0.5").fallbackDialHost)
+        assertNull(resolveServerEndpoint(OFFICIAL_SERVER_ADDRESS).fallbackDialHost)
     }
 }
