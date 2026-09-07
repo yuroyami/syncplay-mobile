@@ -595,13 +595,18 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     playerManager.samplePosition(currentPositionMs())
                     playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
                 }
-                /* The fast rate only earns its keep while frames are moving. A paused engine's
+                /* The fast rate only earns its keep while something is moving. A paused engine's
                  * position does not change, and estimatedPositionMs() returns the last sample
                  * verbatim when isNowPlaying is false, so polling it four times a second bought
                  * nothing and cost a main-thread engine call each time (a JNI property read on
                  * mpv, an ObjC array bridge on AVPlayer). Seeks sample on their own path, so a
-                 * paused playhead still moves the instant someone drags it. */
-                delay(if (playerManager.isNowPlaying.value) trackerJobInterval else IDLE_TRACKER_INTERVAL)
+                 * paused playhead still moves the instant someone drags it.
+                 *
+                 * Buffering counts as moving. Every engine reports itself not-playing while it
+                 * refills, and that is exactly when the buffered band this loop feeds is the only
+                 * thing on screen with anything to say. */
+                val active = playerManager.isNowPlaying.value || playerManager.isBuffering.value
+                delay(if (active) trackerJobInterval else IDLE_TRACKER_INTERVAL)
             }
         }
     }

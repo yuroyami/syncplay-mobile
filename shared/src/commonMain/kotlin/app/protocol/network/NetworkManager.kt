@@ -18,6 +18,8 @@ import app.utils.loggy
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -89,6 +91,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         terminateExistingConnection()
         generation.incrementAndGet()
+        consecutiveWriteTimeouts.value = 0
         encrypted.value = false
 
         /* Before the socket, not after an answer. A refusal here has cost nothing; the same
@@ -136,6 +139,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         try {
             connectSocket()
         } catch (e: CancellationException) {
+            throw e
+        } catch (e: SocketGoneException) {
+            // This attempt was superseded by a newer one, not refused by the host. Dialling the
+            // fallback here would swap the session onto a pinned address for no reason.
             throw e
         } catch (e: Exception) {
             val fallback = viewmodel.session.fallbackHost
@@ -208,6 +215,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     abstract suspend fun upgradeTls()
 
+    /* Volatile: written from the main thread (the room's reconnect action), from transport
+     * threads (onDisconnected, onConnectionFailed) and from inside a campaign that aborts itself. */
+    @Volatile
     private var reconnectionJob: Job? = null
 
     /**
@@ -226,7 +236,11 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     fun reconnect(skipFirstBackoff: Boolean = false) {
         if (reconnectionJob?.isActive == true) return
 
-        reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        /* Started lazily and only after the field holds it. Launched eagerly, the body could
+         * reach abortConnection() before the assignment landed: the abort then cancelled and
+         * cleared whatever was there before, and this assignment stored a campaign nothing had
+         * aborted, which went on retrying a server that had just refused the connection for good. */
+        val campaign = viewmodel.viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
             // Drop the stale sync anchor so the first State on the new socket re-anchors the
             // player to the authoritative room position (mirrors PC's _performRetryStateReset).
             // Runs once per reconnect campaign (the isActive guard above prevents re-entry).
@@ -256,6 +270,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 attempt++
             }
         }
+        reconnectionJob = campaign
+        campaign.start()
     }
 
     /**
@@ -390,8 +406,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         }
     }
 
+    /**
+     * The write path's version of a lost socket, branching the way the transports' own `lost()`
+     * callbacks do. Reporting a disconnection for a handshake that never connected told the room
+     * it was reconnecting to something it had never reached.
+     */
     private fun onError() {
-        viewmodel.callback.onDisconnected()
+        when (state.value) {
+            ConnectionState.CONNECTING -> viewmodel.callback.onConnectionFailed()
+            else -> viewmodel.callback.onDisconnected()
+        }
     }
 
     /**
@@ -447,7 +471,11 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * which has no outbound queue at all. Chat/playlist/ready ARE legitimate to replay.
      */
     private fun WireMessage.isQueueable(): Boolean =
-        this !is WireMessage.Hello && this !is WireMessage.State && this !is WireMessage.TLS
+        this !is WireMessage.Hello && this !is WireMessage.State && this !is WireMessage.TLS &&
+            // Nor the keepalive probe: it asks for a roster that will be stale by the time
+            // anything replays it, and one probe every fifteen seconds could otherwise push a
+            // real chat line off the front of a full queue.
+            this !is WireMessage.ListRequest
 
     /**
      * Appends CRLF and writes to the socket with a 10 s timeout, retrying up to three times
@@ -460,6 +488,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * when the transport told us the bytes did not go out; a timeout cannot say that, so it is
      * treated as a lost socket instead of being written again.
      */
+    /** Write timeouts since the last write that landed. Reset by a success and by a new socket. */
+    private val consecutiveWriteTimeouts = atomic(0)
+
     private suspend fun transmitPacket(json: String, queueable: Boolean) {
         val finalOut = json + "\r\n"
         var attempt = 0
@@ -469,6 +500,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
+                consecutiveWriteTimeouts.value = 0
                 return
             } catch (_: SocketGoneException) {
                 if (queueable) viewmodel.session.queueOutbound(json)
@@ -478,11 +510,18 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                  * bytes stayed home: the write is already queued in the transport and may well
                  * land. Sending the same line again duplicated a chat message or a playlist edit
                  * on the server, and on the Ktor path a half-written line followed by a whole one
-                 * framed as a single frame, which nothing can parse. A socket that cannot absorb
-                 * one line in ten seconds is gone; treat it that way. */
+                 * framed as a single frame, which nothing can parse.
+                 *
+                 * It is not treated as a dead socket either. One stall is a congested link or a
+                 * radio waking up, and the channel watchdog already declares a genuinely silent
+                 * server dead after fifteen seconds. Only a run of them says the socket is gone. */
                 loggy("Write timed out after ${WRITE_TIMEOUT.inWholeSeconds}s: ${e.message}")
                 if (queueable) viewmodel.session.queueOutbound(json)
-                onError()
+                if (consecutiveWriteTimeouts.incrementAndGet() >= WRITE_TIMEOUTS_BEFORE_LOSS) {
+                    loggy("$WRITE_TIMEOUTS_BEFORE_LOSS writes in a row timed out; treating the socket as gone.")
+                    consecutiveWriteTimeouts.value = 0
+                    onError()
+                }
                 return
             } catch (e: CancellationException) {
                 throw e
@@ -520,6 +559,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         const val MAX_INBOUND_BACKLOG = 5_000
 
         val WRITE_TIMEOUT = 10.seconds
+
+        /** Consecutive write timeouts that together mean the socket, not the moment, is the problem. */
+        const val WRITE_TIMEOUTS_BEFORE_LOSS = 3
         const val WRITE_RETRIES = 3
         const val WRITE_RETRY_PAUSE_MS = 250L
         const val LOGGED_LINE_MAX = 300

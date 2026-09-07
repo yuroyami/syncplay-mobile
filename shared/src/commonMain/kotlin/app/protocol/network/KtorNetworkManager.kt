@@ -13,6 +13,7 @@ import io.ktor.utils.io.writeStringUtf8
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -40,12 +41,19 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     /**
      * Guards the handover between a finished dial and a teardown that arrived while it was still
-     * dialling. Both write the same three fields from different coroutines.
+     * dialling. Both write the same four fields from different coroutines.
      */
     private val socketLock = SynchronizedObject()
 
-    /** False from the moment a teardown starts until the next dial claims the manager. */
-    private var accepting = false
+    /**
+     * Which dial owns the manager.
+     *
+     * A counter, not a flag. With a flag, a slow dial could still claim the fields after a
+     * teardown had cleared them and a second dial had already filled them in: the second dial's
+     * socket and selector were then referenced by nothing, and its selector owns a thread.
+     * Every dial takes a number and only publishes if it is still the current one.
+     */
+    private var dialSerial = 0
 
     /**
      * Opens the TCP socket and launches a reader coroutine that feeds each inbound line to
@@ -53,7 +61,7 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
      */
     override suspend fun connectSocket() {
         withContext(Dispatchers.IO) {
-            synchronized(socketLock) { accepting = true }
+            val serial = synchronized(socketLock) { ++dialSerial }
             val sm = SelectorManager(Dispatchers.IO)
             /* Nothing is published until the dial returns. Assigning the selector first meant a
              * teardown landing mid-dial closed it, and then the dial finished and overwrote the
@@ -80,26 +88,10 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
             }
             val conn = sock.connection()
 
-            val claimed = synchronized(socketLock) {
-                if (accepting) {
-                    selector = sm
-                    socket = sock
-                    connection = conn
-                    true
-                } else {
-                    false
-                }
-            }
-            if (!claimed) {
-                // Torn down while we were dialling. This socket belongs to nobody.
-                runCatching { sock.close() }
-                runCatching { sm.close() }
-                return@withContext
-            }
-
             // The reader lives on IO, never the main dispatcher, and only reports the loss of
-            // the socket it was reading: our own teardown of a previous socket is not news.
-            readerJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            // the socket it was reading: our own teardown of a previous socket is not news. It is
+            // built lazily so it can be published under the same lock as the socket it reads.
+            val reader = viewmodel.viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
                 try {
                     // readLineStrict suspends until a full line arrives, draining the
                     // socket at line granularity with no artificial pacing. Pacing here
@@ -114,7 +106,8 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                     }
                     lost(sock)
                 } catch (e: CancellationException) {
-                    // A cancelled reader still owns its socket; nothing else closes it.
+                    // Belt and braces: the teardown that cancels this also closes the socket, but
+                    // a reader cancelled any other way would otherwise leave it open.
                     runCatching { sock.close() }
                     throw e
                 } catch (e: Exception) {
@@ -122,6 +115,29 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                     lost(sock)
                 }
             }
+
+            val claimed = synchronized(socketLock) {
+                if (dialSerial == serial) {
+                    selector = sm
+                    socket = sock
+                    connection = conn
+                    readerJob = reader
+                    true
+                } else {
+                    false
+                }
+            }
+            if (!claimed) {
+                // Superseded while we were dialling. This socket belongs to nobody.
+                reader.cancel()
+                runCatching { sock.close() }
+                runCatching { sm.close() }
+                // Thrown, not returned: connect() reads a normal return as a live socket and goes
+                // on to send Hello into nothing, then sits in CONNECTING until the handshake
+                // deadline. A throw is the honest answer and the fallback dial can act on it.
+                throw SocketGoneException()
+            }
+            reader.start()
         }
     }
 
@@ -139,19 +155,21 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     /** Closes the socket (errors ignored) and the selector behind it, clearing every reference. */
     override fun terminateExistingConnection() {
-        val (sock, sel) = synchronized(socketLock) {
-            accepting = false
+        val (sock, sel, reader) = synchronized(socketLock) {
+            // Retires whatever dial is in flight, so it cannot publish over this teardown.
+            dialSerial++
             val s = socket
             val l = selector
+            val r = readerJob
             socket = null
             connection = null
             selector = null
-            s to l
+            readerJob = null
+            Triple(s, l, r)
         }
         // Closing the socket normally ends readLineStrict, but a reader parked on a socket that
         // never errors would otherwise outlive the connection it belongs to.
-        readerJob?.cancel()
-        readerJob = null
+        reader?.cancel()
         runCatching { sock?.close() }
         // The selector owns a thread; one per connection attempt used to leak for the process life.
         runCatching { sel?.close() }

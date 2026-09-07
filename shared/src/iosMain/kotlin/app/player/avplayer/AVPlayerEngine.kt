@@ -241,6 +241,11 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         override suspend fun destroy() {
+            /* Before the guard, deliberately. This observer is registered from the injection path
+             * rather than from initialize(), so an engine that never reached initialised would
+             * otherwise leave NSNotificationCenter holding the block, and through it the whole
+             * room, for the life of the process. */
+            detachEndOfItemObserver()
             if (!isInitialized) return
             // Destroy contract shared with the Android engines: drop the guard first, then
             // cancel the supervisor so the 250ms position tracker stops polling the
@@ -248,9 +253,8 @@ object AVPlayerEngine: PlayerEngine {
             isInitialized = false
             playerSupervisorJob.cancel()
 
-            // This used to remove the AVPlayer as an observer, which it never was: the only
-            // notification registration this engine holds is the end-of-item one below.
-            detachEndOfItemObserver()
+            // The old line here removed the AVPlayer as a notification observer, which it never
+            // was: the only registration this engine holds is the end-of-item one, taken back above.
             detachTimeControlObserver()
             avPlayer?.pause()
             avPlayerLayer?.player = null
@@ -423,17 +427,12 @@ object AVPlayerEngine: PlayerEngine {
             attachEndOfItemObserver()
         }
 
-        /**
-         * Wakes the readiness wait in [parseMedia].
-         *
-         * That wait can sit for ten seconds, and it runs while the media transaction mutex is
-         * held. Teardown waits for that same mutex, so leaving a room during a slow load blocked
-         * the exit for the whole ten seconds, and the next room then waited behind the leftover
-         * teardown before it could build its own engine.
-         */
-        override fun onClosing() {
-            playerSupervisorJob.cancel()
-        }
+        /* The readiness wait in parseMedia checks isClosing on every turn, which is what wakes
+         * it: that wait can sit for ten seconds while holding the media transaction mutex, and
+         * teardown waits for the same mutex, so leaving a room during a slow load used to block
+         * the exit for all of it and leave the next room queued behind the teardown. No onClosing
+         * override is needed for that, and cancelling the supervisor here would flip the engine's
+         * scopes dead while isInitialized was still true, which is the destroy contract inverted. */
 
         override suspend fun parseMedia(media: MediaFile) {
             hookPlayerAgain()

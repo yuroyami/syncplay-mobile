@@ -105,12 +105,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         val connected = try {
             dial(b)
         } catch (e: Throwable) {
-            // A dial that fails leaves this group with nothing to serve. It used to sit there
-            // holding its NIO thread until the next connect attempt tore it down on the way in.
-            if (this.group === group) {
-                this.group = null
-                runCatching { group.shutdownGracefully() }
-            }
+            /* A dial that fails leaves this group with nothing to serve. It used to sit there
+             * holding its NIO thread until the next connect attempt tore it down on the way in.
+             * Shut down unconditionally: if a newer attempt has already claimed the field, this
+             * group is doubly orphaned and would otherwise never be released at all. */
+            if (this.group === group) this.group = null
+            runCatching { group.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
             throw e
         }
         channel = connected

@@ -51,8 +51,8 @@ import app.uicomponents.AnimatedImage
  * and hands it to every visible row, so with identity equality a new instance arrived on every
  * recomposition and no row in the list could skip, however little had changed.
  */
-data class MessageStyle(private val requestedFontSize: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
-    val fontSize = requestedFontSize.coerceAtLeast(5)
+data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
+    val fontSize = fontSizePreference.coerceAtLeast(5)
 }
 
 private const val GROUP_WINDOW_MS = 60_000L

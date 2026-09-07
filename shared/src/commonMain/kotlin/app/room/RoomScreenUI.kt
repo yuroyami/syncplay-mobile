@@ -18,7 +18,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -323,13 +322,13 @@ private fun RoomHud(
     // The HUD stays composed and fades: chat state survives a hide.
     val hudAlpha = animateFloatAsState(if (isHUDVisible) 1f else 0f, Motion.quick())
     val density = LocalDensity.current
-    val ime = WindowInsets.ime
-    /* Both of these are read through a derived value or inside a layer block, never straight into
-     * this scope. The alpha animates for the length of the fade and the keyboard inset animates
-     * for the length of the keyboard, and reading either one here recomposed the whole HUD on
-     * every frame of it. What this scope actually needs is two booleans that flip once. */
+    /* hudHidden goes through derivedStateOf so the glass suspension only wakes this scope when
+     * the answer flips, rather than on every frame of the fade. The keyboard flag deliberately
+     * does not: WindowInsets.ime is snapshot-backed on Android, and a derived read that turned
+     * out not to be on another platform would freeze this at its first value, which auto-hides
+     * the HUD over an open keyboard. Not worth the frames. */
     val hudHidden by remember { derivedStateOf { hudAlpha.value == 0f } }
-    val isKeyboardOpen by remember(ime, density) { derivedStateOf { ime.getBottom(density) > 0 } }
+    val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
     HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo)
 
     // While the HUD is faded out its glass releases the capture; it re-arms as the fade begins.
@@ -337,7 +336,11 @@ private fun RoomHud(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer { alpha = hudAlpha.value }
+            /* Modifier.alpha, not a graphicsLayer block. It looks like the same thing with the
+             * read deferred, but alpha() clips to the layer and skips the layer entirely at 1f,
+             * which is the steady state; a raw graphicsLayer would keep a full-screen offscreen
+             * layer under the whole HUD, glass surfaces and all, for the life of the room. */
+            .alpha(hudAlpha.value)
             .then(
                 if (isHUDVisible) Modifier.pointerInput(playerIsReady) {
                     detectTapGestures(onTap = {

@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.Dimension
 import java.awt.Toolkit
 import kotlin.math.roundToInt
@@ -48,6 +49,9 @@ var globalViewmodel: SyncplayViewmodel? by mutableStateOf(null)
 
 /** Process-lifetime scope for fire-and-forget UI work (keyboard shortcuts). */
 private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+/** How long --media waits for a room's player before giving up. */
+private const val MEDIA_WAIT_TIMEOUT_MS = 120_000L
 
 /** Where the volume was before M muted it, so M again brings it back. */
 private var mutedFrom: Int? = null
@@ -152,10 +156,20 @@ private fun parseJoinArgs(args: Array<String>) {
     value("--media")?.let { url ->
         val autoplay = args.contains("--autoplay")
         mainScope.launch {
-            var vm = globalViewmodel?.roomWeakRef?.get()
-            while (vm == null || !vm.playerManager.isPlayerReady.value) {
-                delay(500)
-                vm = globalViewmodel?.roomWeakRef?.get()
+            /* Bounded. This runs on the main dispatcher and mainScope is never cancelled, so
+             * without a ceiling a --media argument on a launch that never reaches a room left a
+             * twice-a-second poll running on the UI thread for the life of the app. */
+            val vm = withTimeoutOrNull(MEDIA_WAIT_TIMEOUT_MS) {
+                var found = globalViewmodel?.roomWeakRef?.get()
+                while (found == null || !found.playerManager.isPlayerReady.value) {
+                    delay(500)
+                    found = globalViewmodel?.roomWeakRef?.get()
+                }
+                found
+            }
+            if (vm == null) {
+                loggy("--media: no room player appeared within ${MEDIA_WAIT_TIMEOUT_MS / 1000}s; giving up.")
+                return@launch
             }
             vm.player.injectVideoURL(url)
 

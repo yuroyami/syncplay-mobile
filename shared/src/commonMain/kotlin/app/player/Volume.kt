@@ -1,7 +1,9 @@
 package app.player
 
-import app.utils.generateTimestampMillis
 import app.utils.platformCallback
+import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * One volume ladder with two rungs.
@@ -25,8 +27,12 @@ class VolumeLadder(val deviceSteps: Int, val gainMax: Int) {
 /** Reads and writes the ladder for one engine, routing the base and the gain to where they live. */
 class VolumeController(private val player: PlayerImpl) {
 
+    /* Volatile: read from the pointer handler during a swipe and from composition. */
+    @Volatile
     private var cachedLadder: VolumeLadder? = null
-    private var cachedAtMs: Long = 0L
+
+    @Volatile
+    private var cachedAt: TimeSource.Monotonic.ValueTimeMark? = null
 
     /**
      * The ladder, rebuilt at most every [LADDER_TTL_MS].
@@ -39,15 +45,17 @@ class VolumeController(private val player: PlayerImpl) {
      */
     val ladder: VolumeLadder
         get() {
-            val now = generateTimestampMillis()
             val cached = cachedLadder
-            if (cached != null && now - cachedAtMs < LADDER_TTL_MS) return cached
+            val at = cachedAt
+            // Monotonic, not the wall clock: a clock that steps backwards makes an elapsed time
+            // negative, which reads as "still fresh" and freezes the ladder until it catches up.
+            if (cached != null && at != null && at.elapsedNow() < LADDER_TTL) return cached
             return VolumeLadder(
                 deviceSteps = platformCallback.deviceVolumeSteps(),
                 gainMax = player.gainMax,
             ).also {
                 cachedLadder = it
-                cachedAtMs = now
+                cachedAt = TimeSource.Monotonic.markNow()
             }
         }
 
@@ -91,6 +99,6 @@ class VolumeController(private val player: PlayerImpl) {
 
     private companion object {
         /** Long enough to cover a whole swipe, short enough that plugging in a headset lands. */
-        const val LADDER_TTL_MS = 500L
+        val LADDER_TTL = 500.milliseconds
     }
 }
