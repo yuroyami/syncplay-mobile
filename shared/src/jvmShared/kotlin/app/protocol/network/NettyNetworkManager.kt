@@ -23,6 +23,7 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -202,9 +203,25 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * passed, and encryption bought nothing.
      */
     override suspend fun upgradeTls() {
-        // Android has to wait for Conscrypt; desktop's JDK provider is always there.
-        awaitTlsProviderReady()
-        return upgradeTlsNow()
+        /* Bounded, the way the SwiftNIO side already bounds its own handshake. This runs on the
+         * serial inbound consumer, so a handshake that never settles stops every packet behind
+         * it; the channel close from the handshake deadline does eventually fail the promise, but
+         * waiting for the provider happens before any handler is in the pipeline, where closing
+         * the channel cannot reach it. Measured against the official server the whole upgrade is
+         * about a second.
+         *
+         * The timeout is turned into an ordinary exception on the way out. TimeoutCancellationException
+         * is a CancellationException, and the caller rethrows those by contract, which would take
+         * the inbound consumer down with it and leave the connection unable to read anything again. */
+        try {
+            withTimeout(TLS_UPGRADE_TIMEOUT_MS) {
+                // Android has to wait for Conscrypt; desktop's JDK provider is always there.
+                awaitTlsProviderReady()
+                upgradeTlsNow()
+            }
+        } catch (e: TimeoutCancellationException) {
+            throw IOException("TLS upgrade did not complete within ${TLS_UPGRADE_TIMEOUT_MS}ms", e)
+        }
     }
 
     private suspend fun upgradeTlsNow() = suspendCancellableCoroutine<Unit> { cont ->
@@ -255,6 +272,9 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             }
 
         const val CONNECT_TIMEOUT_MS = 10_000L
+
+        /** Ceiling on waiting for the TLS provider and the handshake together. */
+        const val TLS_UPGRADE_TIMEOUT_MS = 15_000L
 
         /** Ceiling on how long a shut-down event loop group may take to actually stop. */
         const val GROUP_SHUTDOWN_TIMEOUT_MS = 2_000L

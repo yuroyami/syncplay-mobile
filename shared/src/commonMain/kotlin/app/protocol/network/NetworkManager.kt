@@ -118,12 +118,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
          * from settings, which is what a report of a flaky join actually needs to carry. */
         handshakeStartedAt = TimeSource.Monotonic.markNow()
         try {
-            /* Bounded here as well as inside each transport. A dial is the one phase that can
-             * stall without anything to notice it: the socket is not open, so no read ever
-             * arrives, and a transport whose own deadline does not fire leaves the whole
-             * handshake budget to a single connect that is going nowhere. Measured against the
-             * official server, a working dial is about a second. */
-            withTimeout(DIAL_BUDGET) { connectSocketOrFallback() }
+            connectSocketOrFallback()
             loggy("Handshake: socket open after ${sinceHandshakeStart()}")
 
             if (tls == TlsState.TLS_ASK) {
@@ -171,7 +166,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     private suspend fun connectSocketOrFallback() {
         try {
-            connectSocket()
+            dialWithBudget()
         } catch (e: CancellationException) {
             throw e
         } catch (e: SocketGoneException) {
@@ -191,9 +186,20 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             // Whatever the failed attempt left behind goes before the next one starts.
             terminateExistingConnection()
             viewmodel.session.serverHost = fallback
-            connectSocket()
+            dialWithBudget()
         }
     }
+
+    /**
+     * One dial, with a ceiling above the transport's own.
+     *
+     * A dial is the one phase that can stall with nothing to notice it: the socket is not open,
+     * so no read ever arrives, and a transport whose own deadline does not fire leaves the entire
+     * handshake budget to a connect that is going nowhere. Per dial rather than around the pair,
+     * so a slow name failure cannot eat the fallback's turn. Measured against the official server
+     * a working dial is about a second.
+     */
+    private suspend fun dialWithBudget() = withTimeout(DIAL_BUDGET) { connectSocket() }
 
 
     private var handshakeDeadlineJob: Job? = null
