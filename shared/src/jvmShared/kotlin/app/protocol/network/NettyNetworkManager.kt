@@ -17,6 +17,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder
 import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
+import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
 import java.io.IOException
 import kotlin.coroutines.resume
@@ -58,6 +59,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * which [connect] turns into onConnectionFailed.
      */
     override suspend fun connectSocket() {
+        loggy("Handshake: entering the transport after ${sinceHandshakeStart()}")
         // One thread, explicitly. The no-argument constructor sizes the group at twice the core
         // count, which on a phone spins up sixteen NIO threads to service the one socket this
         // client ever opens, and does it again on every reconnect attempt.
@@ -101,10 +103,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             })
 
         tagSocketThread()
+        loggy("Handshake: bootstrap ready after ${sinceHandshakeStart()}, dialling ${viewmodel.session.serverHost}:${viewmodel.session.serverPort}")
 
         val connected = try {
-            dial(b)
+            dial(b).also { loggy("Handshake: dial returned after ${sinceHandshakeStart()}") }
         } catch (e: Throwable) {
+            loggy("Handshake: dial failed after ${sinceHandshakeStart()} (${e::class.simpleName}: ${e.message})")
             /* A dial that fails leaves this group with nothing to serve. It used to sit there
              * holding its NIO thread until the next connect attempt tore it down on the way in.
              * Shut down unconditionally: if a newer attempt has already claimed the field, this
@@ -209,10 +213,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             // tracked whichever channel was initialised last, so after a torn-down connect the
             // SSL handler went into a dead pipeline.
             val pipeline = channel?.pipeline() ?: throw SocketGoneException()
-            val sslContext = SslContextBuilder
-                .forClient()
-                .startTls(false)
-                .build()
+            val sslContext = sharedClientSslContext()
 
             val peerHost = viewmodel.session.tlsPeerHost
             val handler = sslContext.newHandler(
@@ -234,6 +235,25 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     }
 
     private companion object {
+        /**
+         * One client TLS context for the whole process, built on first use.
+         *
+         * It was rebuilt for every upgrade, and a fresh context carries a fresh session cache, so
+         * every reconnect paid for a full handshake. Reusing it lets the JDK resume the session
+         * it already has for this host, which is the difference between two round trips and one.
+         * The context is immutable and safe to share; only the per-channel handler is new.
+         */
+        @Volatile
+        private var clientSslContext: SslContext? = null
+
+        private val sslContextLock = Any()
+
+        fun sharedClientSslContext(): SslContext =
+            clientSslContext ?: synchronized(sslContextLock) {
+                clientSslContext ?: SslContextBuilder.forClient().startTls(false).build()
+                    .also { clientSslContext = it }
+            }
+
         const val CONNECT_TIMEOUT_MS = 10_000L
 
         /** Ceiling on how long a shut-down event loop group may take to actually stop. */

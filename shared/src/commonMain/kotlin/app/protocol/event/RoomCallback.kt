@@ -277,7 +277,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     }
 
     suspend fun onConnected() {
-        loggy("SYNCPLAY Protocol: Connected!")
+        loggy("SYNCPLAY Protocol: Connected! Handshake took ${network.sinceHandshakeStart()}")
 
         network.state.value = ConnectionState.CONNECTED
 
@@ -375,7 +375,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     }
 
     suspend fun onReceivedTLS(supported: Boolean) {
-        loggy("SYNCPLAY Protocol: Received TLS...")
+        loggy("Handshake: TLS answer ($supported) after ${network.sinceHandshakeStart()}")
 
         if (supported) {
             dispatcher.broadcastMessage(message = { Localization.strings.roomTlsSupported }, isChat = false)
@@ -384,6 +384,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 network.upgradeTls()
                 // Only now is the socket really encrypted; the room's lock reads this.
                 network.encrypted.value = true
+                loggy("Handshake: TLS established after ${network.sinceHandshakeStart()}")
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

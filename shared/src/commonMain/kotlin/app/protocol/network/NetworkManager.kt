@@ -20,6 +20,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlin.concurrent.Volatile
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -110,20 +112,52 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         state.value = ConnectionState.CONNECTING
         armHandshakeDeadline()
 
+        /* Phase timings, always on. A handshake against the official server is three round
+         * trips and takes seconds even when it works, so "it did not connect" needs to say which
+         * part was slow. These are a handful of lines per connection and the log is exportable
+         * from settings, which is what a report of a flaky join actually needs to carry. */
+        handshakeStartedAt = TimeSource.Monotonic.markNow()
         try {
-            connectSocketOrFallback()
+            /* Bounded here as well as inside each transport. A dial is the one phase that can
+             * stall without anything to notice it: the socket is not open, so no read ever
+             * arrives, and a transport whose own deadline does not fire leaves the whole
+             * handshake budget to a single connect that is going nowhere. Measured against the
+             * official server, a working dial is about a second. */
+            withTimeout(DIAL_BUDGET) { connectSocketOrFallback() }
+            loggy("Handshake: socket open after ${sinceHandshakeStart()}")
 
             if (tls == TlsState.TLS_ASK) {
                 send(WireMessage.tlsRequest())
+                loggy("Handshake: TLS request sent after ${sinceHandshakeStart()}")
             } else {
                 viewmodel.dispatcher.sendHello()
+                loggy("Handshake: Hello sent after ${sinceHandshakeStart()}")
             }
+        } catch (e: TimeoutCancellationException) {
+            /* Caught before CancellationException on purpose: the dial budget above throws this,
+             * and a TimeoutCancellationException rethrown from here would cancel the reconnect
+             * campaign that called connect(), ending every further attempt. It is our own
+             * deadline firing, not the caller giving up. */
+            loggy("Handshake: dial gave up after ${sinceHandshakeStart()}")
+            terminateExistingConnection()
+            viewmodel.callback.onConnectionFailed()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            loggy("Handshake: failed after ${sinceHandshakeStart()}")
             loggy(e.stackTraceToString())
             viewmodel.callback.onConnectionFailed()
         }
+    }
+
+    /** When the current handshake began, for the phase timings in the log. */
+    @Volatile
+    private var handshakeStartedAt: TimeSource.Monotonic.ValueTimeMark? = null
+
+    /** How long the current handshake has been running, as a printable string. */
+    fun sinceHandshakeStart(): String {
+        val started = handshakeStartedAt ?: return "?"
+        return "${started.elapsedNow().inWholeMilliseconds}ms"
     }
 
     /**
@@ -147,13 +181,20 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         } catch (e: Exception) {
             val fallback = viewmodel.session.fallbackHost
             if (fallback == null || fallback == viewmodel.session.serverHost) throw e
-            loggy("Dialling ${viewmodel.session.serverHost} failed (${e.message}); trying $fallback")
+            /* Only when the name could not be resolved. The fallback exists for a broken or
+             * blocked resolver, and nothing else: a host that resolves fine and then refuses or
+             * ignores the connection will do exactly the same on its other address, so trying it
+             * only spends a second dial timeout before reporting the failure the caller already
+             * had. That doubled the time to the retry that usually works. */
+            if (!isNameResolutionFailure(e)) throw e
+            loggy("Could not resolve ${viewmodel.session.serverHost} (${e.message}); trying $fallback")
             // Whatever the failed attempt left behind goes before the next one starts.
             terminateExistingConnection()
             viewmodel.session.serverHost = fallback
             connectSocket()
         }
     }
+
 
     private var handshakeDeadlineJob: Job? = null
 
@@ -247,6 +288,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             viewmodel.protocol.resetSyncAnchorForReconnect()
             var attempt = 0
             var skipBackoff = skipFirstBackoff
+            // How long the attempt that just failed took. The pause before the next one counts
+            // it, so an attempt that already spent twenty seconds does not then wait again.
+            var lastAttemptTook: Duration = Duration.ZERO
             while (isActive && state.value != ConnectionState.CONNECTED) {
                 state.value = ConnectionState.SCHEDULING_RECONNECT
                 if (skipBackoff) {
@@ -258,15 +302,24 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     // whether the pref reads back as Int or Long.
                     val base = RECONNECTION_INTERVAL.value().seconds.coerceAtLeast(MIN_RECONNECT_INTERVAL)
                     val backoff = (base * (1 shl attempt.coerceAtMost(5))).coerceAtMost(MAX_RECONNECT_INTERVAL)
-                    delay(backoff)
+                    /* Measured from the start of the failed attempt, not from its end. The point
+                     * of the pause is to stop hammering a server that is refusing us, and a
+                     * handshake that hung for twenty seconds has paid that many times over: the
+                     * old form added the full backoff on top, so a first attempt that stalled and
+                     * a second that would have worked were twenty-two seconds apart. An attempt
+                     * that fails instantly still waits the whole thing. */
+                    val remaining = backoff - lastAttemptTook
+                    if (remaining > Duration.ZERO) delay(remaining)
                 }
                 if (!isActive || state.value == ConnectionState.CONNECTED) break
                 // connect() flips state to CONNECTING; on success the onConnected callback
                 // sets CONNECTED. On failure (sync, async, or the handshake deadline) the state
                 // lands back on DISCONNECTED. Either way, wait for it before trying again, or a
                 // slow handshake gets torn down by its own retry.
+                val startedAt = TimeSource.Monotonic.markNow()
                 connect(announceTlsCheck = false)
                 state.first { it != ConnectionState.CONNECTING }
+                lastAttemptTook = startedAt.elapsedNow()
                 attempt++
             }
         }
@@ -551,6 +604,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         /** Socket open, optional TLS, Hello and its reply must all land within this. */
         val HANDSHAKE_TIMEOUT = 20.seconds
+
+        /**
+         * Ceiling on the dial alone, above each transport's own connect timeout so it only fires
+         * when that one did not. Against the official server a working dial is about a second.
+         */
+        val DIAL_BUDGET = 12.seconds
 
         /**
          * How many unparsed inbound lines may wait before the peer is treated as hostile.

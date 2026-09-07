@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.TimeSource
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.withTimeoutOrNull
+import app.utils.loggy
 import kotlin.concurrent.Volatile
 
 class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
@@ -116,9 +120,28 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         @Volatile
         private var pendingDestroy: Job? = null
 
+        /**
+         * Waits for the previous room's engine to finish tearing down, but not forever.
+         *
+         * The next room builds its engine behind this and only then opens its connection, so a
+         * teardown that hangs used to mean a room that never connected at all, with nothing on
+         * screen to say why. mpv's handle is process-global and that is the reason to wait; a
+         * teardown still running after this has stopped being worth waiting for, and going ahead
+         * is a better failure than never joining.
+         */
         suspend fun awaitPendingDestroy() {
-            pendingDestroy?.join()
+            val pending = pendingDestroy ?: return
+            val waited = TimeSource.Monotonic.markNow()
+            val finished = withTimeoutOrNull(TEARDOWN_WAIT) { pending.join() } != null
+            if (finished) {
+                loggy("Previous player torn down in ${waited.elapsedNow().inWholeMilliseconds}ms")
+            } else {
+                loggy("Previous player still tearing down after ${TEARDOWN_WAIT.inWholeSeconds}s; starting the room anyway")
+            }
             pendingDestroy = null
         }
+
+        /** How long a new room waits for the last one's engine before going ahead without it. */
+        private val TEARDOWN_WAIT = 6.seconds
     }
 }

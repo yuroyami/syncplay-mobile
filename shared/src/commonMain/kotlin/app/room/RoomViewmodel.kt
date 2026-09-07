@@ -26,6 +26,7 @@ import app.utils.instantiateNetworkManager
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
 import app.utils.loggy
+import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.StateFlow
@@ -104,6 +105,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     val seeks = mutableStateListOf<Pair<Long, Long>>()
 
     init {
+        // From landing in the room to the first packet, in the log. A report of a flaky join
+        // needs to say whether the wait was the engine, the dial, or the server.
+        val roomEnteredAt = TimeSource.Monotonic.markNow()
         viewModelScope.launch(Dispatchers.IO) {
             val playerInitialization = launch {
                 // The previous room's engine may still be tearing down (mpv's handle is
@@ -128,6 +132,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 }
                 playerManager.player = engine.createImpl(this@RoomViewmodel)
                 playerManager.isPlayerReady.value = true
+                loggy("Room: ${engine.name} ready ${roomEnteredAt.elapsedNow().inWholeMilliseconds}ms after entering the room")
             }
 
             joinConfig?.let {
@@ -135,7 +140,12 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     // Initial State/playlist messages can read player capabilities or load
                     // media immediately. Publish the player before opening that inbound path.
                     playerInitialization.join()
-                    if (!playerManager.isPlayerReady.value) return@launch
+                    if (!playerManager.isPlayerReady.value) {
+                        // No engine, so no connection is ever attempted. Say so: the room would
+                        // otherwise sit there looking disconnected with nothing explaining it.
+                        loggy("Room: no player engine, so the room will not connect")
+                        return@launch
+                    }
                     val endpoint = resolveServerEndpoint(joinConfig.ip)
                     session.tlsPeerHost = endpoint.certificateHost
                     session.serverHost = endpoint.dialHost
@@ -150,6 +160,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
                     // connect() decides TLS from the settings and this transport, and refuses
                     // outright when encryption is required and cannot be had.
+                    loggy("Room: connecting ${roomEnteredAt.elapsedNow().inWholeMilliseconds}ms after entering the room")
                     networkManager.connect()
                 }
             }
