@@ -4,6 +4,7 @@ import app.server.ClientConnection
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
+import java.util.concurrent.TimeUnit
 import io.netty.channel.Channel as NettyChannel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
@@ -156,8 +157,12 @@ actual class ServerNetworkEngine actual constructor(
         serverChannel?.close()?.sync()
         serverChannel = null
 
-        workerGroup?.shutdownGracefully()
-        bossGroup?.shutdownGracefully()
+        /* No quiet period: the listening channel and every client channel are already closed
+         * above, so there is nothing left to wind down gracefully. The default two seconds kept
+         * the old event loops alive past the end of stop(), and a restart on the same port then
+         * ran a second pair of groups alongside them. */
+        workerGroup?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        bossGroup?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         workerGroup = null
         bossGroup = null
 
@@ -173,5 +178,8 @@ actual class ServerNetworkEngine actual constructor(
 
         /** Above this many unflushed bytes for one client, the client is not reading. */
         const val WRITE_WATERMARK_HIGH = 256 * 1024
+
+        /** Ceiling on how long a shut-down event loop group may take to actually stop. */
+        const val GROUP_SHUTDOWN_TIMEOUT_SECONDS = 2L
     }
 }

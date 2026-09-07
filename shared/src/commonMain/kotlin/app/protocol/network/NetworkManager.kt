@@ -404,6 +404,20 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
+     * Fire-and-forget [sendRaw]: same writer, same order, nobody waits.
+     *
+     * The reconnect replay uses this. Awaiting each line meant the whole replay ran on the serial
+     * inbound consumer, which is also the only thing that stamps the freshness clock the channel
+     * watchdog reads. A slow socket with a few lines queued could therefore hold the consumer
+     * past fifteen seconds while State packets piled up unread, and the watchdog would call a
+     * perfectly healthy connection dead.
+     */
+    fun sendRawAsync(json: String, queueable: Boolean) {
+        if (viewmodel.isSoloMode) return
+        outbound.trySend(Outbound(json, queueable, null, generation.value))
+    }
+
+    /**
      * Hello must never be queued (the handshake re-runs on reconnect). State must never be
      * queued either: it carries a position/seek that was true the instant the socket died,
      * but the app owns the player so by reconnect the playhead has moved — replaying a frozen

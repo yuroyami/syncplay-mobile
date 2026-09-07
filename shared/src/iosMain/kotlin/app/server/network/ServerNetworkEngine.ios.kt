@@ -4,6 +4,7 @@ import app.server.ClientConnection
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -37,6 +38,15 @@ actual class ServerNetworkEngine actual constructor(
     private var selectorManager: SelectorManager? = null
     private var acceptJob: Job? = null
 
+    /**
+     * The listening socket, held so [stop] can close it itself.
+     *
+     * It used to be closed only by the accept loop's own `finally`, which [stop] cancels without
+     * waiting for. The port was therefore still bound when stop returned, and starting the server
+     * again straight away could be refused for an address already in use.
+     */
+    private var listeningSocket: ServerSocket? = null
+
     /** Live client coroutines. Guarded: entries are added on the accept loop and removed on whatever thread finishes one. */
     private val clientsLock = SynchronizedObject()
     private val clientJobs = mutableListOf<Job>()
@@ -48,6 +58,7 @@ actual class ServerNetworkEngine actual constructor(
         val selector = SelectorManager(Dispatchers.IO)
         selectorManager = selector
         val serverSocket = aSocket(selector).tcp().bind("0.0.0.0", port)
+        listeningSocket = serverSocket
 
         isRunning = true
         loggy("Server: Listening on port $port")
@@ -148,6 +159,11 @@ actual class ServerNetworkEngine actual constructor(
 
         acceptJob?.cancel()
         acceptJob = null
+
+        // Before the selector, and here rather than only in the accept loop's finally, so the
+        // port is free by the time this returns.
+        runCatching { listeningSocket?.close() }
+        listeningSocket = null
 
         val jobs = synchronized(clientsLock) { clientJobs.toList().also { clientJobs.clear() } }
         for (job in jobs) job.cancel()

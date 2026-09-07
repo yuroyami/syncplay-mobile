@@ -67,8 +67,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         data.username?.let { session.currentUsername = it.take(MAX_USERNAME_CHARS) }
         session.roomFeatures = data.features
 
-        // Ask for the user list right away — the server will send a `List` reply.
-        network.send(WireMessage.listRequest())
+        // Ask for the user list right away — the server will send a `List` reply. Fire and
+        // forget: the answer arrives on the wire, and this runs on the serial inbound consumer,
+        // which must not sit on a write while State packets queue behind it.
+        network.sendAsync(WireMessage.listRequest())
         callback.onConnected()
 
         // The server's message of the day, shown in chat like PC does (it may carry an update

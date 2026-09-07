@@ -4,6 +4,7 @@ import app.protocol.models.ConnectionState
 import app.room.RoomViewmodel
 import app.utils.loggy
 import io.netty.bootstrap.Bootstrap
+import java.util.concurrent.TimeUnit
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
@@ -160,8 +161,11 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         } catch (e: Exception) {
             loggy("Channel close failed: ${e.message}")
         } finally {
-            // Release the NIO threads with the channel — see [group].
-            group?.shutdownGracefully()
+            /* Release the NIO threads with the channel — see [group]. No quiet period: the
+             * channel is closed on the line above, so there is nothing to wind down, and the
+             * default two seconds is longer than the shortest reconnect interval, which left
+             * every retry running its group alongside the one before it. */
+            group?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)
             group = null
         }
     }
@@ -231,5 +235,8 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     private companion object {
         const val CONNECT_TIMEOUT_MS = 10_000L
+
+        /** Ceiling on how long a shut-down event loop group may take to actually stop. */
+        const val GROUP_SHUTDOWN_TIMEOUT_MS = 2_000L
     }
 }

@@ -302,7 +302,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // Atomic snapshot-and-clear under the queue's lock — a failed transmit during the
         // replay loop below re-queues safely without racing the drain.
         val drained = session.drainOutbound()
-        for (m in drained) network.sendRaw(m, queueable = true)
+        // Not awaited, one by one: this runs on the serial inbound consumer, and waiting here
+        // stops that consumer reading State packets, which is what the channel watchdog counts.
+        for (m in drained) network.sendRawAsync(m, queueable = true)
 
         // Mirror python's reIdentifyAsController — after every (re)connect, if we're
         // in a controlled room and we know the operator password, re-auth so the server
