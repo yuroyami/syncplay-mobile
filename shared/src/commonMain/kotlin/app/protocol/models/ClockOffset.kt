@@ -61,11 +61,18 @@ class ClockOffsetEstimator(
         window.addLast(Sample(roundTrip, serverSendTime + roundTrip / 2 - ourReceiveTime))
         while (window.size > windowSize) window.removeFirst()
 
-        val best = window.minBy { it.roundTripSeconds }
+        // One pass, not three: the best sample and the spread of the window come out together.
+        var best = window.first()
+        var lowestOffset = best.offsetSeconds
+        var highestOffset = best.offsetSeconds
+        for (sample in window) {
+            if (sample.roundTripSeconds < best.roundTripSeconds) best = sample
+            if (sample.offsetSeconds < lowestOffset) lowestOffset = sample.offsetSeconds
+            if (sample.offsetSeconds > highestOffset) highestOffset = sample.offsetSeconds
+        }
         offsetSeconds = best.offsetSeconds
         bestRoundTripSeconds = best.roundTripSeconds
-        dispersionSeconds =
-            (window.maxOf { it.offsetSeconds } - window.minOf { it.offsetSeconds })
+        dispersionSeconds = highestOffset - lowestOffset
     }
 
     /** Forgets everything. A new socket is a new path, so the old window means nothing. */

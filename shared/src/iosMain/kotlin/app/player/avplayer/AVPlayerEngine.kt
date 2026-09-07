@@ -31,6 +31,7 @@ import platform.AVFoundation.AVMediaTypeAudio
 import platform.AVFoundation.AVMediaTypeText
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
@@ -57,6 +58,7 @@ import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSError
 import platform.Foundation.NSKeyValueObservingOptionNew
 import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
@@ -156,6 +158,35 @@ object AVPlayerEngine: PlayerEngine {
             observerAttached = false
         }
 
+        /** The end-of-item registration for the current item, so it can be taken back. */
+        private var endOfItemObserver: Any? = null
+
+        /**
+         * Tells the base class when the item finishes.
+         *
+         * AVPlayer has no state callback that says "ended": KVO on `timeControlStatus` reports a
+         * finished item as merely paused. Without this notification `onPlaybackEnded` was never
+         * reached on this engine at all, so the shared playlist simply stopped at the end of every
+         * entry while the other engines moved the room on.
+         */
+        private fun attachEndOfItemObserver() {
+            detachEndOfItemObserver()
+            val item = avMedia ?: return
+            endOfItemObserver = NSNotificationCenter.defaultCenter.addObserverForName(
+                name = AVPlayerItemDidPlayToEndTimeNotification,
+                `object` = item,
+                queue = NSOperationQueue.mainQueue,
+            ) { _ ->
+                playerManager.isNowPlaying.value = false
+                onPlaybackEnded()
+            }
+        }
+
+        private fun detachEndOfItemObserver() {
+            endOfItemObserver?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
+            endOfItemObserver = null
+        }
+
 
         /**
          * KVO Observer for AVPlayer timeControlStatus changes
@@ -217,8 +248,9 @@ object AVPlayerEngine: PlayerEngine {
             isInitialized = false
             playerSupervisorJob.cancel()
 
-            avPlayer?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
-
+            // This used to remove the AVPlayer as an observer, which it never was: the only
+            // notification registration this engine holds is the end-of-item one below.
+            detachEndOfItemObserver()
             detachTimeControlObserver()
             avPlayer?.pause()
             avPlayerLayer?.player = null
@@ -378,6 +410,7 @@ object AVPlayerEngine: PlayerEngine {
             avMedia = AVPlayerItem(asset)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
             attachTimeControlObserver()
+            attachEndOfItemObserver()
         }
 
         override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
@@ -387,6 +420,19 @@ object AVPlayerEngine: PlayerEngine {
             avMedia = AVPlayerItem(uRL = nsUrl)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
             attachTimeControlObserver()
+            attachEndOfItemObserver()
+        }
+
+        /**
+         * Wakes the readiness wait in [parseMedia].
+         *
+         * That wait can sit for ten seconds, and it runs while the media transaction mutex is
+         * held. Teardown waits for that same mutex, so leaving a room during a slow load blocked
+         * the exit for the whole ten seconds, and the next room then waited behind the leftover
+         * teardown before it could build its own engine.
+         */
+        override fun onClosing() {
+            playerSupervisorJob.cancel()
         }
 
         override suspend fun parseMedia(media: MediaFile) {
@@ -394,6 +440,7 @@ object AVPlayerEngine: PlayerEngine {
 
             withTimeoutOrNull(10.seconds) {
                 while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
+                    if (!isInitialized || isClosing) return@withTimeoutOrNull
                     delay(250)
                 }
             }

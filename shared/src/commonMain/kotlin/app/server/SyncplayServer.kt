@@ -485,9 +485,17 @@ class SyncplayServer(
             timestamp = SyncClock.nowMillis(),
             event = event,
         )
-        // Bounded: the screen keeps its own capped copy, and a long-running host must not grow
-        // this list (and copy it per line) for the life of the process.
-        serverLog.update { current -> (current + entry).takeLast(LOG_CAP) }
+        /* Bounded: the screen keeps its own capped copy, and a long-running host must not grow
+         * this list for the life of the process. Under the cap the list is copied once, not
+         * twice: the old form built the concatenation and then a second list from its tail, on
+         * the one thread that serves every client. */
+        serverLog.update { current ->
+            if (current.size < LOG_CAP) current + entry
+            else ArrayList<ServerLogEntry>(LOG_CAP).apply {
+                addAll(current.subList(current.size - LOG_CAP + 1, current.size))
+                add(entry)
+            }
+        }
     }
 
     /**

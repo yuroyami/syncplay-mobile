@@ -186,6 +186,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     /** Called before teardown waits on [mediaInjectionMutex], so an engine can wake load waiters. */
     protected open fun onClosing() = Unit
 
+    /** True once teardown has started. An engine waiting on a load should give up when it is. */
+    protected val isClosing: Boolean get() = closing.value
+
     abstract suspend fun configurableSettings(): SettingCategory?
 
     abstract suspend fun hasMedia(): Boolean

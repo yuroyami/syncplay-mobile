@@ -14,6 +14,8 @@ import app.utils.loggy
 import app.utils.platformCallback
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import kotlinx.atomicfu.atomic
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -51,11 +53,27 @@ object ServerHostSession {
     /** Log lines for the screen, capped at [LOG_CAP], oldest dropped first. */
     val serverLogs = mutableStateListOf<ServerLogEntry>()
 
+    /* Volatile: [scope] is Dispatchers.IO, so the start coroutine writes these and the stop
+     * coroutine reads them on different threads. */
+    @Volatile
     private var server: SyncplayServer? = null
+
+    @Volatile
     private var engine: ServerNetworkEngine? = null
 
     /** Parent of the log and client-count collectors, cancelled on stop and on a failed start. */
+    @Volatile
     private var collectorsJob: Job? = null
+
+    /**
+     * Which start attempt is the current one.
+     *
+     * Start and stop are both coroutines, so a stop can land in the middle of a start. Without
+     * this the stop tore the half-built server down and set Stopped, and then the start coroutine
+     * carried on and announced Running over it, leaving the panel claiming a server that had
+     * already been shut down. Every stop retires the number the running start is holding.
+     */
+    private val startGeneration = atomic(0)
 
     fun startServer() {
         // Starting counts too: a second tap mid-start used to build a second server and orphan the first.
@@ -84,6 +102,7 @@ object ServerHostSession {
         serverStatus.value = ServerStatus.Starting
         statusDetail.value = null
 
+        val generation = startGeneration.incrementAndGet()
         scope.launch {
             var newServer: SyncplayServer? = null
             var newEngine: ServerNetworkEngine? = null
@@ -109,6 +128,16 @@ object ServerHostSession {
                 newEngine = ServerNetworkEngine(newServer, scope)
                 engine = newEngine
                 newEngine.startListening(portInt)
+                if (startGeneration.value != generation) {
+                    // Stopped while we were binding. Undo this start rather than announcing it.
+                    collectorsJob?.cancel()
+                    collectorsJob = null
+                    runCatching { newEngine.stop() }
+                    runCatching { newServer.shutdown() }
+                    server = null
+                    engine = null
+                    return@launch
+                }
                 serverStatus.value = ServerStatus.Running
                 deviceIpAddress.value = getDeviceIpAddress()
                 addLog(ServerLogEvent.Started(portInt))
@@ -141,6 +170,9 @@ object ServerHostSession {
     }
 
     fun stopServer() {
+        // Retires whatever start is in flight, so a start that finishes after this does not
+        // announce itself as Running.
+        startGeneration.incrementAndGet()
         scope.launch {
             try {
                 collectorsJob?.cancel()

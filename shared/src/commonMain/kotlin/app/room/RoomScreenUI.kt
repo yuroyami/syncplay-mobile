@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -319,17 +321,23 @@ private fun RoomHud(
     }
 
     // The HUD stays composed and fades: chat state survives a hide.
-    val hudAlpha by animateFloatAsState(if (isHUDVisible) 1f else 0f, Motion.quick())
+    val hudAlpha = animateFloatAsState(if (isHUDVisible) 1f else 0f, Motion.quick())
     val density = LocalDensity.current
-    val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
+    val ime = WindowInsets.ime
+    /* Both of these are read through a derived value or inside a layer block, never straight into
+     * this scope. The alpha animates for the length of the fade and the keyboard inset animates
+     * for the length of the keyboard, and reading either one here recomposed the whole HUD on
+     * every frame of it. What this scope actually needs is two booleans that flip once. */
+    val hudHidden by remember { derivedStateOf { hudAlpha.value == 0f } }
+    val isKeyboardOpen by remember(ime, density) { derivedStateOf { ime.getBottom(density) > 0 } }
     HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo)
 
     // While the HUD is faded out its glass releases the capture; it re-arms as the fade begins.
-    CompositionLocalProvider(LocalGlassSuspended provides (hudAlpha == 0f)) {
+    CompositionLocalProvider(LocalGlassSuspended provides hudHidden) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .alpha(hudAlpha)
+            .graphicsLayer { alpha = hudAlpha.value }
             .then(
                 if (isHUDVisible) Modifier.pointerInput(playerIsReady) {
                     detectTapGestures(onTap = {

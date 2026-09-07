@@ -26,20 +26,24 @@ private val logLock = SynchronizedObject()
 /** Max number of days to keep log files before auto-cleanup. */
 private const val LOG_RETENTION_DAYS = 7
 
-/** Formats epoch millis into "yyyy-MM-dd HH:mm:ss" style timestamp string */
-private fun formatTimestamp(millis: Long): String {
-    val instant = Instant.fromEpochMilliseconds(millis)
-    val ldt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${ldt.year}-${ldt.month.number.pad()}-${ldt.day.pad()} " +
-            "${ldt.hour.pad()}:${ldt.minute.pad()}:${ldt.second.pad()}"
+/** The date and the timestamp of one instant, worked out together. */
+private class Stamped(val date: String, val timestamp: String)
+
+/**
+ * Formats one instant into its "yyyy-MM-dd" file name and its "yyyy-MM-dd HH:mm:ss" line prefix.
+ *
+ * One conversion, not two. These were separate functions and every log line called both, so each
+ * line built two Instants, two LocalDateTimes and asked the platform for the system time zone
+ * twice, for a date that is the first ten characters of the timestamp.
+ */
+private fun stamp(millis: Long): Stamped {
+    val ldt = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault())
+    val date = "${ldt.year}-${ldt.month.number.pad()}-${ldt.day.pad()}"
+    return Stamped(date, "$date ${ldt.hour.pad()}:${ldt.minute.pad()}:${ldt.second.pad()}")
 }
 
 /** Formats epoch millis into "yyyy-MM-dd" date string for log file naming */
-private fun formatDate(millis: Long): String {
-    val instant = Instant.fromEpochMilliseconds(millis)
-    val ldt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${ldt.year}-${ldt.month.number.pad()}-${ldt.day.pad()}"
-}
+private fun formatDate(millis: Long): String = stamp(millis).date
 
 private fun Int.pad() = toString().padStart(2, '0')
 
@@ -108,11 +112,9 @@ fun loggy(s: Any?) {
     Logger.e(string)
 
     logPump // starts the writer on first use
-    val millis = generateTimestampMillis()
-    val timestamp = formatTimestamp(millis)
-    val date = formatDate(millis)
-    for (line in string.lines()) {
-        logQueue.trySend(LogEntry.Line(timestamp, date, line))
+    val stamped = stamp(generateTimestampMillis())
+    for (line in string.lineSequence()) {
+        logQueue.trySend(LogEntry.Line(stamped.timestamp, stamped.date, line))
     }
 }
 

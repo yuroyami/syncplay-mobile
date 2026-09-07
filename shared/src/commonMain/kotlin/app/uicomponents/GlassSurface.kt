@@ -133,9 +133,20 @@ fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge =
 fun Modifier.chromeSurface(shape: Shape = Radius.panelShape): Modifier = this
     .shadow(20.dp, shape)
     .clip(shape)
-    .background(Brush.verticalGradient(listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))))
+    .background(CHROME_BODY)
     // Fixed on purpose: chrome only ever floats over video, which the room pins dark.
     .border(width = 1.dp, brush = OVER_VIDEO_RIM, shape = shape)
+
+/**
+ * The chrome body, built once.
+ *
+ * Its colours never depend on the theme, and this is not a composable, so nothing memoised it: a
+ * colour list and a gradient were allocated at every call site on every recomposition, and the
+ * call sites include the scrub bubble, which recomposes for the length of a drag.
+ */
+private val CHROME_BODY: Brush = Brush.verticalGradient(
+    listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))
+)
 
 /** A blur this wide is what buys readability on a translucent panel with a low tint. */
 private val GLASS_BLUR_RADIUS = 40.dp

@@ -76,15 +76,19 @@ open class ServerRoomManager {
     /** Returns a unique username, appending underscores when the requested name is already taken. */
     fun findFreeUsername(username: String, maxLength: Int): String {
         var name = username.take(maxLength)
+        // A set, and each name lowercased once. The membership test below runs in a loop, so as a
+        // list it was a linear scan per underscore, and the lowercasing was redone every time.
         val allNames = _rooms.values
-            .flatMap { it.getWatchers() }
-            .map { it.name.lowercase() }
+            .flatMapTo(mutableSetOf()) { room -> room.getWatchers().map { it.name.lowercase() } }
 
-        if (name.lowercase() in allNames && name.endsWith("_")) {
+        var lowered = name.lowercase()
+        if (lowered in allNames && name.endsWith("_")) {
             name = name.trimEnd('_').ifEmpty { "_" }
+            lowered = name.lowercase()
         }
-        while (name.lowercase() in allNames) {
+        while (lowered in allNames) {
             name += "_"
+            lowered += "_"
         }
         return name
     }
