@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Synkplay app badge — neutral edge and shadow</title>
+  <defs>
+    <path id="tile" d="M312 88H712C856 88 928 160 928 304V704C928 848 856 920 712 920H312C168 920 96 848 96 704V304C96 160 168 88 312 88Z"/>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="13"/>
+    </filter>
+    <filter id="contactShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7F7F7"/>
+      <stop offset="1" stop-color="#888888"/>
+    </linearGradient>
+  </defs>
+  <use href="#tile" fill="black" opacity="0.18" transform="translate(0 16)" filter="url(#softShadow)"/>
+  <use href="#tile" fill="black" opacity="0.15" transform="translate(0 5)" filter="url(#contactShadow)"/>
+  <use href="#tile" fill="url(#edge)" transform="translate(0 3)"/>
+</svg>

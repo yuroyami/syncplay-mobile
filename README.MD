@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="art/synkplay_app_badge_512.png" width="180" height="180" alt="Synkplay logo on its original white-grey background with rounded app badge corners">
+</p>
+
+<p align="center">
   <img src="art/readme-feature.webp" width="960" alt="Synkplay banner with Android and macOS screenshots: watch together on phones and computers">
 </p>
 
