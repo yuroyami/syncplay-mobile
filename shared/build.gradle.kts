@@ -15,6 +15,12 @@ plugins {
     alias(libs.plugins.kover)
 }
 
+// CocoaPods records the custom header path in its generated definition, but does not
+// track that header's contents. Regenerate both bindings when the native bridge changes.
+tasks.matching { it.name.startsWith("cinteropVLCKit") }.configureEach {
+    inputs.file(layout.projectDirectory.file("src/nativeInterop/cinterop/VlcClock.h"))
+}
+
 kotlin {
     jvmToolchain(21)
 

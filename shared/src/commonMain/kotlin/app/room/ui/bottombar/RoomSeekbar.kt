@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.padding
 import app.i18n.strings
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.LocalRoomUiState
 import app.player.models.Chapter
+import app.player.models.MediaFile
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.watchPref
@@ -77,11 +80,11 @@ fun RoomSeekbar(modifier: Modifier) {
      * engines know the chapters only after the container is parsed, and the snapshot below
      * is taken after each run rather than once per file name. */
     var chapterListVersion by remember { mutableIntStateOf(0) }
-    LaunchedEffect(media?.fileName, durationMs > 0L) {
+    LaunchedEffect(media?.location, durationMs > 0L) {
         viewmodel.player.analyzeChapters(media ?: return@LaunchedEffect)
         chapterListVersion++
     }
-    val chapters = remember(media?.fileName, chapterListVersion) { media?.chapters?.toList() ?: emptyList() }
+    val chapters = remember(media?.location, chapterListVersion) { media?.chapters?.toList() ?: emptyList() }
     /* Gated the same way the position is, and for the same reason. ExoPlayer is the only engine
      * that reports a buffered position, and it reports it from the same loop, so a plain collect
      * put the whole bar back on the recomposition list twice a second behind a hidden HUD. */
@@ -93,11 +96,15 @@ fun RoomSeekbar(modifier: Modifier) {
     val showMarks by SHOW_CHAPTER_DOTS.watchPref()
     val marksClickable by CHAPTER_DOTS_CLICKABLE.watchPref()
 
-    var dragging by remember { mutableStateOf(false) }
-    var preview by remember { mutableFloatStateOf(0f) }
-    var dragFromMs by remember { mutableLongStateOf(0L) }
+    var dragging by remember(media?.location) { mutableStateOf(false) }
+    var preview by remember(media?.location) { mutableFloatStateOf(0f) }
+    var dragFromMs by remember(media?.location) { mutableLongStateOf(0L) }
+    var dragMedia by remember(media?.location) { mutableStateOf<MediaFile?>(null) }
     var trackWidthPx by remember { mutableIntStateOf(0) }
-    var showChapters by remember { mutableStateOf(false) }
+    var showChapters by remember(media?.location) { mutableStateOf(false) }
+    DisposableEffect(media?.location) {
+        onDispose { viewmodel.uiState.scrubbing.value = false }
+    }
     val hasChapterList = viewmodel.player.supportsChapters && chapters.isNotEmpty()
 
     val known = durationMs > 0L
@@ -151,43 +158,50 @@ fun RoomSeekbar(modifier: Modifier) {
     Row(modifier.then(keys), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(timeWidth), contentAlignment = Alignment.CenterEnd) { Timecode(shownMs) }
         Box(Modifier.weight(1f).padding(horizontal = Space.gap)) {
-            ScrubTrack(
-                value = fraction,
-                enabled = known,
-                modifier = Modifier.onSizeChanged { trackWidthPx = it.width },
-                ticks = tickFractions,
-                activeTick = if (showMarks) activeMark else -1,
-                buffered = if (known && bufferedMs > 0L) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else null,
-                keyStep = 0f,
-                describe = { f -> formatTimecode((f * durationMs).roundToLong()) },
-                name = strings.roomSeekbarName,
-                onLongPress = if (hasChapterList) ({ showChapters = true }) else null,
-                onValueChange = { f ->
-                    if (!dragging) {
-                        dragging = true
-                        viewmodel.uiState.scrubbing.value = true
-                        // The origin is captured before the engine moves, on the first drag event.
-                        dragFromMs = viewmodel.player.currentPositionMs()
-                    }
-                    preview = f
-                },
-                onValueChangeFinished = {
-                    if (!dragging) return@ScrubTrack
-                    dragging = false
-                    viewmodel.uiState.scrubbing.value = false
-                    val targetMs = (preview * durationMs).roundToLong()
-                    // A release on a chapter mark jumps to it: a 20dp target around a 1dp mark.
-                    val hitRadius = with(density) { 10.dp.toPx() }
-                    val hit = if (showMarks && marksClickable && trackWidthPx > 0) {
-                        marks.firstOrNull { abs(it.second - preview) * trackWidthPx <= hitRadius }
-                    } else null
-                    if (hit != null) {
-                        scope.launch(Dispatchers.Main.immediate) { viewmodel.player.jumpToChapter(hit.first) }
-                    } else {
-                        viewmodel.dispatcher.seek(targetMs, fromMs = dragFromMs)
-                    }
-                },
-            )
+            // A file replacement cancels the old pointer gesture, including same-name files.
+            key(media?.location) {
+                ScrubTrack(
+                    value = fraction,
+                    enabled = known,
+                    modifier = Modifier.onSizeChanged { trackWidthPx = it.width },
+                    ticks = tickFractions,
+                    activeTick = if (showMarks) activeMark else -1,
+                    buffered = if (known && bufferedMs > 0L) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else null,
+                    keyStep = 0f,
+                    describe = { f -> formatTimecode((f * durationMs).roundToLong()) },
+                    name = strings.roomSeekbarName,
+                    onLongPress = if (hasChapterList) ({ showChapters = true }) else null,
+                    onValueChange = { f ->
+                        if (media == null || viewmodel.playerManager.media.value !== media) return@ScrubTrack
+                        if (!dragging) {
+                            dragging = true
+                            dragMedia = media
+                            viewmodel.uiState.scrubbing.value = true
+                            // The origin is captured before the engine moves, on the first drag event.
+                            dragFromMs = viewmodel.player.currentPositionMs()
+                        }
+                        preview = f
+                    },
+                    onValueChangeFinished = {
+                        if (!dragging) return@ScrubTrack
+                        dragging = false
+                        viewmodel.uiState.scrubbing.value = false
+                        if (dragMedia == null || viewmodel.playerManager.media.value !== dragMedia) return@ScrubTrack
+                        dragMedia = null
+                        val targetMs = (preview * durationMs).roundToLong()
+                        // A release on a chapter mark jumps to it: a 20dp target around a 1dp mark.
+                        val hitRadius = with(density) { 10.dp.toPx() }
+                        val hit = if (showMarks && marksClickable && trackWidthPx > 0) {
+                            marks.firstOrNull { abs(it.second - preview) * trackWidthPx <= hitRadius }
+                        } else null
+                        if (hit != null) {
+                            scope.launch(Dispatchers.Main.immediate) { viewmodel.player.jumpToChapter(hit.first) }
+                        } else {
+                            viewmodel.dispatcher.seek(targetMs, fromMs = dragFromMs)
+                        }
+                    },
+                )
+            }
 
             if (dragging && known && trackWidthPx > 0) {
                 ScrubBubble(

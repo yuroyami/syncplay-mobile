@@ -31,7 +31,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,6 +60,7 @@ import app.uicomponents.controls.ChevronDirection
 import app.uicomponents.controls.Feedback
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -82,7 +82,6 @@ private class SeekMark(val at: Offset, val forward: Boolean, val id: Int)
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
-    val scope = rememberCoroutineScope()
     val p = palette
     val gesturesEnabled by GESTURES.watchPref()
     val doubletapEnabled by DOUBLETAP_SEEK.watchPref()
@@ -92,6 +91,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
     val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
+    val media by viewmodel.playerManager.media.collectAsState()
+    val latestDurationMs by rememberUpdatedState(durationMs)
+    val latestForwardJump by rememberUpdatedState(forwardJump)
+    val latestBackwardJump by rememberUpdatedState(backwardJump)
 
     /* The system edge guards, read through rememberUpdatedState: the handlers below are long
      * lived and would keep composition-time values across a rotation, which restarts nothing
@@ -104,18 +107,18 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
     val edgeGuardFraction = 0.08f
 
-    var readout by remember { mutableStateOf<GestureReadout?>(null) }
+    var readout by remember(media?.location) { mutableStateOf<GestureReadout?>(null) }
 
     // The double-tap chain: origin captured on the first tap, committed once after the window.
-    var chainSteps by remember { mutableIntStateOf(0) }
-    var chainOriginMs by remember { mutableLongStateOf(0L) }
-    var chainVersion by remember { mutableIntStateOf(0) }
-    var seekMark by remember { mutableStateOf<SeekMark?>(null) }
+    var chainSteps by remember(media?.location) { mutableIntStateOf(0) }
+    var chainOriginMs by remember(media?.location) { mutableLongStateOf(0L) }
+    var chainVersion by remember(media?.location) { mutableIntStateOf(0) }
+    var seekMark by remember(media?.location) { mutableStateOf<SeekMark?>(null) }
     var markId by remember { mutableIntStateOf(0) }
 
     // The long press preview: the landing point moves while the finger stays down.
-    var previewMs by remember { mutableStateOf<Long?>(null) }
-    var pressOriginMs by remember { mutableLongStateOf(0L) }
+    var previewMs by remember(media?.location) { mutableStateOf<Long?>(null) }
+    var pressOriginMs by remember(media?.location) { mutableLongStateOf(0L) }
 
     // The zone wash shows on the first drag, and again after a gesture preference changes.
     var washSeen by remember(gesturesEnabled, swipeEnabled) { mutableStateOf(false) }
@@ -128,15 +131,16 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     var lastAppliedBrightness by remember { mutableFloatStateOf(0f) }
     var lastAppliedVolume by remember { mutableIntStateOf(0) }
 
-    fun chainDeltaSeconds(steps: Int) = if (steps >= 0) steps * forwardJump else steps * backwardJump
-    fun fractionOf(ms: Long): Float? = if (durationMs > 0L) (ms.toFloat() / durationMs).coerceIn(0f, 1f) else null
-    fun clampToMedia(ms: Long): Long = if (durationMs > 0L) ms.coerceIn(0L, durationMs) else ms.coerceAtLeast(0L)
+    fun chainDeltaSeconds(steps: Int) = if (steps >= 0) steps * latestForwardJump else steps * latestBackwardJump
+    fun fractionOf(ms: Long): Float? = if (latestDurationMs > 0L) (ms.toFloat() / latestDurationMs).coerceIn(0f, 1f) else null
+    fun clampToMedia(ms: Long): Long = if (latestDurationMs > 0L) ms.coerceIn(0L, latestDurationMs) else ms.coerceAtLeast(0L)
 
     /* One engine seek and one announcement per chain, through the dispatcher's seek path, so the
      * pending origin stays single use and the room never hears four seeks for four taps. */
-    LaunchedEffect(chainVersion) {
+    LaunchedEffect(media?.location, chainVersion) {
         if (chainSteps == 0) return@LaunchedEffect
         delay(CHAIN_WINDOW_MS)
+        if (media == null || viewmodel.playerManager.media.value !== media) return@LaunchedEffect
         val target = clampToMedia(chainOriginMs + chainDeltaSeconds(chainSteps) * 1000L)
         chainSteps = 0
         viewmodel.dispatcher.seek(target, fromMs = chainOriginMs)
@@ -159,32 +163,44 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             modifier = Modifier.fillMaxSize().then(
                 if (!isHUDVisible) {
                     Modifier
-                        .pointerInput(seekGestures) {
+                        .pointerInput(seekGestures, media?.location) {
                             detectTapGestures(
                                 onPress = { offset ->
                                     if (!seekGestures) return@detectTapGestures
-                                    val forward = offset.x > size.width * 0.5f
-                                    val job = scope.launch {
-                                        delay(LONG_PRESS_MS)
-                                        Feedback.light()
-                                        pressOriginMs = viewmodel.player.currentPositionMs()
-                                        var target = pressOriginMs
-                                        val step = (if (forward) forwardJump else -backwardJump) * 1000L
-                                        while (isActive) {
-                                            target = clampToMedia(target + step)
-                                            previewMs = target
-                                            readout = GestureReadout.Seek(null, target, fractionOf(target))
-                                            delay(LONG_PRESS_STEP_MS)
+                                    val pressedMedia = viewmodel.playerManager.media.value
+                                        ?: return@detectTapGestures
+                                    coroutineScope {
+                                        val forward = offset.x > size.width * 0.5f
+                                        // A preview belongs to this press. Pointer cancellation or
+                                        // media replacement must cancel its repeating child too.
+                                        val job = launch {
+                                            delay(LONG_PRESS_MS)
+                                            Feedback.light()
+                                            pressOriginMs = viewmodel.player.currentPositionMs()
+                                            var target = pressOriginMs
+                                            val step = (if (forward) latestForwardJump else -latestBackwardJump) * 1000L
+                                            while (isActive) {
+                                                target = clampToMedia(target + step)
+                                                previewMs = target
+                                                readout = GestureReadout.Seek(null, target, fractionOf(target))
+                                                delay(LONG_PRESS_STEP_MS)
+                                            }
                                         }
-                                    }
-                                    tryAwaitRelease()
-                                    job.cancel()
-                                    val landing = previewMs
-                                    if (landing != null) {
-                                        previewMs = null
-                                        viewmodel.dispatcher.seek(landing, fromMs = pressOriginMs)
-                                        Feedback.medium()
-                                        readout = null
+                                        try {
+                                            val released = tryAwaitRelease()
+                                            job.cancel()
+                                            val landing = previewMs
+                                            if (released && landing != null &&
+                                                viewmodel.playerManager.media.value === pressedMedia
+                                            ) {
+                                                viewmodel.dispatcher.seek(landing, fromMs = pressOriginMs)
+                                                Feedback.medium()
+                                            }
+                                        } finally {
+                                            job.cancel()
+                                            if (previewMs != null) readout = null
+                                            previewMs = null
+                                        }
                                     }
                                 },
                                 onDoubleTap = if (seekGestures) {

@@ -1,18 +1,23 @@
 package app.player.vlc
 
 import app.player.Playback
+import cocoapods.VLCKit.SyncplayVlcCurrentTimeMs
 import cocoapods.VLCKit.VLCDrawableProtocol
 import cocoapods.VLCKit.VLCPictureInPictureDrawableProtocol
 import cocoapods.VLCKit.VLCPictureInPictureMediaControllingProtocol
 import cocoapods.VLCKit.VLCPictureInPictureWindowControllingProtocol
 import kotlinx.cinterop.CValue
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import platform.CoreGraphics.CGRect
+import platform.Foundation.NSOrderedSame
 import platform.UIKit.UIView
 import platform.UIKit.UIViewAutoresizingFlexibleHeight
 import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import platform.darwin.NSObject
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 /**
  * Bridge object that wires a [UIView] up as a VLCKit 4 video output AND a Picture-in-Picture
@@ -29,9 +34,9 @@ import platform.darwin.NSObject
  * incompatible Kotlin/Native overload semantics, so we wrap a plain UIView (`containerView`) and
  * forward into it. The VLCMediaPlayer drawable is THIS object, not the underlying view.
  *
- * The media-controlling callbacks are invoked by VLCKit on whichever thread it pleases, so we
- * always hop to the main thread for any actual VLC API calls and read state via fast snapshot
- * lookups (length / time / isPlaying are cheap, main-thread-safe getters in VLCKit 4).
+ * The Apple PiP integration invokes its synchronous media getters on Main. Commands explicitly
+ * enter the player's Main scope, while mediaTime uses the adapter's native clock and seek guard.
+ * It must not return VLCKit's independently cached `time` property.
  *
  * @param containerView The UIView VLCKit will render into via [addSubview]. We forward
  *                      [VLCDrawableProtocol]'s addSubview/bounds calls to this view.
@@ -46,6 +51,33 @@ internal class VlcDrawable(
     VLCDrawableProtocol,
     VLCPictureInPictureDrawableProtocol,
     VLCPictureInPictureMediaControllingProtocol {
+
+    private var disposed = false
+    private var pendingSeek: VlcSeekCompletion? = null
+    private var pendingSeekJob: Job? = null
+
+    private fun isCurrentDrawable(): Boolean = !disposed && impl.vlcDrawable === this
+
+    /** Break the native PiP controller -> drawable -> controller retain cycle on Main. */
+    fun dispose() {
+        if (disposed) return
+        disposed = true
+        finishPendingSeek(VlcSeekCompletion.Result.CANCELLED)
+        onPipStateChanged = null
+        val controller = pipController
+        pipController = null
+        controller?.setStateChangeEventHandler(null)
+        controller?.stopPictureInPicture()
+    }
+
+    private fun finishPendingSeek(result: VlcSeekCompletion.Result) {
+        val job = pendingSeekJob
+        val completion = pendingSeek
+        pendingSeekJob = null
+        pendingSeek = null
+        job?.cancel()
+        completion?.finish(result)
+    }
 
     /**
      * The PiP window controller VLCKit hands us via [pictureInPictureReady]. Becomes non-null
@@ -71,14 +103,9 @@ internal class VlcDrawable(
     // (`UIView?`) — the override signature must match exactly. We just no-op on null,
     // since VLCKit will never actually pass nil here in practice.
     override fun addSubview(view: UIView?) {
-        if (view == null) return
-        // VLCKit hands us a brand-new render view on every (re)bind — first attach, each
-        // foreground recovery (UIApplicationDidBecomeActive) and each PiP stop. Drop any
-        // previously attached render view first, otherwise repeated lock/unlock or PiP
-        // cycles stack abandoned render surfaces on top of each other inside the
-        // container (the topmost — possibly blank — one wins, and the dead ones leak).
-        // containerView is dedicated to VLC's output, so clearing all its subviews here
-        // is safe.
+        if (view == null || !isCurrentDrawable()) return
+        // A newly created native output can attach another window here. The container
+        // belongs exclusively to VLC. Drawable assignment alone does not promise a new view.
         containerView.subviews.forEach { (it as? UIView)?.removeFromSuperview() }
         // Size the render view to fill the container, and pin it there with an
         // autoresizing mask so subsequent rotations / layout passes keep it stretched.
@@ -102,9 +129,14 @@ internal class VlcDrawable(
 
     override fun pictureInPictureReady(): (VLCPictureInPictureWindowControllingProtocol?) -> Unit =
         { controller ->
-            pipController = controller
-            controller?.setStateChangeEventHandler { isStarted ->
-                onPipStateChanged?.invoke(isStarted)
+            if (isCurrentDrawable()) {
+                if (pipController !== controller) pipController?.setStateChangeEventHandler(null)
+                pipController = controller
+                controller?.setStateChangeEventHandler { isStarted ->
+                    if (isCurrentDrawable() && pipController === controller) {
+                        onPipStateChanged?.invoke(isStarted)
+                    }
+                }
             }
         }
 
@@ -119,32 +151,87 @@ internal class VlcDrawable(
 
     override fun play() {
         impl.playerScopeMain.launch(Dispatchers.Main.immediate) {
+            if (!isCurrentDrawable() || !impl.isInitialized) return@launch
             impl.viewmodel.dispatcher.controlPlayback(Playback.PLAY, tellServer = true)
         }
     }
 
     override fun pause() {
         impl.playerScopeMain.launch(Dispatchers.Main.immediate) {
+            if (!isCurrentDrawable() || !impl.isInitialized) return@launch
             impl.viewmodel.dispatcher.controlPlayback(Playback.PAUSE, tellServer = true)
         }
     }
 
     override fun seekBy(offset: Long, completion: (() -> Unit)?) {
-        impl.playerScopeMain.launch(Dispatchers.Main.immediate) {
-            impl.viewmodel.dispatcher.seekBy((offset / 1000L).toInt())
+        finishPendingSeek(VlcSeekCompletion.Result.SUPERSEDED)
+        lateinit var request: VlcSeekCompletion
+        request = VlcSeekCompletion {
+            if (pendingSeek === request) pendingSeek = null
             completion?.invoke()
+        }
+        pendingSeek = request
+        val player = impl.vlcPlayer
+        val media = player?.media
+        if (!isCurrentDrawable() || !impl.isInitialized || player == null || media == null) {
+            request.finish(VlcSeekCompletion.Result.UNAVAILABLE)
+            return
+        }
+
+        val job = impl.playerScopeMain.launch {
+            try {
+                if (!isCurrentDrawable() || !impl.isInitialized || impl.vlcPlayer !== player ||
+                    player.media?.compare(media) != NSOrderedSame
+                ) {
+                    request.finish(VlcSeekCompletion.Result.UNAVAILABLE)
+                    return@launch
+                }
+                // Preserve millisecond offsets and await actual local submission, not a
+                // dispatcher coroutine merely being scheduled. Native completion is separate.
+                if (impl.viewmodel.dispatcher.seekByMillis(offset) == null) {
+                    request.finish(VlcSeekCompletion.Result.UNAVAILABLE)
+                    return@launch
+                }
+                val seekRevision = impl.seekRevision
+                val commandRevision = impl.commandRevision
+                request.await(
+                    isCurrent = {
+                        isCurrentDrawable() && impl.isInitialized && impl.vlcPlayer === player &&
+                            player.media?.compare(media) == NSOrderedSame &&
+                            impl.seekRevision == seekRevision && impl.commandRevision == commandRevision
+                    },
+                    targetMs = { impl.lastSeekRequestTargetMs },
+                    nativePositionMs = {
+                        // An old input's coincidentally close clock is not completion of
+                        // a command still waiting for startup. Timeout only releases PiP's
+                        // callback; it does not cancel the room's deferred seek intent.
+                        if (impl.hasPendingSeek) null
+                        else SyncplayVlcCurrentTimeMs(player).takeIf { it >= 0L }
+                    }
+                )
+            } finally {
+                request.finish(VlcSeekCompletion.Result.CANCELLED)
+            }
+        }
+        pendingSeekJob = job
+        // The scope can be canceled before the body starts, so its finally alone is insufficient.
+        job.invokeOnCompletion {
+            dispatch_async(dispatch_get_main_queue()) {
+                request.finish(VlcSeekCompletion.Result.CANCELLED)
+                if (pendingSeekJob === job) pendingSeekJob = null
+            }
         }
     }
 
     override fun mediaLength(): Long =
-        impl.vlcMedia?.length?.value()?.longValue ?: 0L
+        if (isCurrentDrawable()) impl.playerManager.timeFullMillis.value.coerceAtLeast(0L) else 0L
 
     override fun mediaTime(): Long =
-        impl.vlcPlayer?.time?.value()?.longValue ?: 0L
+        if (isCurrentDrawable()) impl.currentPositionMs() else 0L
 
     override fun isMediaSeekable(): Boolean =
-        impl.vlcPlayer?.isSeekable() == true
+        isCurrentDrawable() && impl.vlcPlayer?.isSeekable() == true
 
     override fun isMediaPlaying(): Boolean =
-        impl.vlcPlayer?.isPlaying() == true
+        isCurrentDrawable() && impl.vlcPlayer?.isPlaying() == true
 }

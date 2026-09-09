@@ -43,6 +43,7 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
             Feedback.tick()
             onDismiss()
             viewmodel.viewModelScope.launch {
+                if (media == null || viewmodel.playerManager.media.value !== media) return@launch
                 viewmodel.player.skipChapter()
                 viewmodel.dispatchOSD { Localization.strings.roomChaptersSkip }
             }
@@ -57,6 +58,7 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
                 Feedback.tick()
                 onDismiss()
                 viewmodel.viewModelScope.launch {
+                    if (media == null || viewmodel.playerManager.media.value !== media) return@launch
                     viewmodel.player.jumpToChapter(chapter)
                     viewmodel.dispatchOSD { Localization.strings.roomChaptersJump(chapter.name) }
                 }
