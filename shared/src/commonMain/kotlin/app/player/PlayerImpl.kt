@@ -29,6 +29,7 @@ import app.utils.getFileName
 import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.platform
+import app.utils.platformFileAt
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.startAccessingSecurityScopedResource
 import io.github.vinceglb.filekit.stopAccessingSecurityScopedResource
@@ -310,7 +311,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         if (!isInitialized || !hasMedia()) return false
         return try {
             val extension = filename.substringAfterLast('.', "srt").lowercase()
-            loadExternalSubImpl(PlatformFile(path), extension)
+            loadExternalSubImpl(platformFileAt(path), extension)
             true
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -482,6 +483,14 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun isSeekable(): Boolean
 
     /**
+     * Validate a user seek before announcing it to peers. Engines may normalize the target or
+     * reject an unavailable input, but must not move playback here. A deferred startup seek can
+     * still be clamped again once its native duration becomes known.
+     */
+    @UiThread
+    open suspend fun prepareSeekTarget(targetMs: Long): Long? = targetMs
+
+    /**
      * Every engine calls this first. The tracker cache takes the target at once, so the very next
      * State ACK advertises where the engine is heading rather than a sample from before the seek,
      * which the server would otherwise adopt as the room's slowest position.
@@ -588,13 +597,18 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     val shouldTrackTimeManually: Boolean
         get() = trackerJobInterval != 0.seconds
 
+    /** Engines with an unknown native sample can skip publishing instead of refreshing stale time. */
+    protected open suspend fun updatePlaybackProgress() {
+        if (isSeekable()) {
+            playerManager.samplePosition(currentPositionMs())
+            playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
+        }
+    }
+
     private val playerTrackerJob by lazy {
         playerScopeMain.launch {
             while (isActive) {
-                if (isSeekable()) {
-                    playerManager.samplePosition(currentPositionMs())
-                    playerManager.timeBufferedMillis.value = bufferedPositionMs() ?: -1L
-                }
+                updatePlaybackProgress()
                 /* The fast rate only earns its keep while something is moving. A paused engine's
                  * position does not change, and estimatedPositionMs() returns the last sample
                  * verbatim when isNowPlaying is false, so polling it four times a second bought

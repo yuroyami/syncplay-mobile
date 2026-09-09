@@ -2,6 +2,7 @@ package app.protocol
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
+import app.player.models.MediaFile
 import app.protocol.models.ConnectionState
 import app.protocol.models.ClockOffsetEstimator
 import app.preferences.Preferences
@@ -13,6 +14,9 @@ import app.protocol.wire.PlaystateData
 import app.protocol.wire.StateData
 import app.room.RoomViewmodel
 import app.protocol.sync.SyncState
+import app.protocol.sync.LocalSeek
+import app.protocol.sync.LocalStateIntent
+import app.protocol.sync.LocalStateIntents
 import app.protocol.sync.reportablePosition
 import app.protocol.sync.extrapolatedGlobalPositionMs
 import app.protocol.sync.PositionInputs
@@ -52,8 +56,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     /**
      * Prevents responding to our own state changes until the server acknowledges them.
-     * Atomic because both [buildStatePacket] (called from `ioDispatcher` on every user
-     * action) and the player polling loop can race on the increment-and-send sequence.
+     * Packet construction and enqueue now share [syncLock] with inbound counter updates;
+     * atomic access also supports readers outside that transaction.
      */
     private val _clientIgnFly = atomic(0)
     var clientIgnFly: Int
@@ -163,6 +167,73 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * function and the reads around it are plain.
      */
     val syncLock = SynchronizedObject()
+
+    private val localStateIntents = LocalStateIntents()
+    private var intentMedia: MediaFile? = null
+    private var intentRoom: String? = null
+
+    val localStateRevision: Long get() = synchronized(syncLock) { localStateIntents.revision }
+
+    fun isLocalStateRevisionCurrent(revision: Long): Boolean = synchronized(syncLock) {
+        localStateIntents.isCurrent(revision)
+    }
+
+    /** A queued local seek belongs to this media and room, never to a replacement. */
+    private fun refreshLocalIntentContext() {
+        if (intentMedia !== viewmodel.media || intentRoom != session.currentRoom) {
+            localStateIntents.clear()
+            intentMedia = viewmodel.media
+            intentRoom = session.currentRoom
+        }
+    }
+
+    fun clearLocalStateIntents() = synchronized(syncLock) {
+        localStateIntents.clear()
+        intentMedia = viewmodel.media
+        intentRoom = session.currentRoom
+    }
+
+    /** Capture intent and enqueue in one transaction; the network writer already owns IO. */
+    fun sendLocalState(position: Double, play: Boolean, seek: LocalSeek? = null) = synchronized(syncLock) {
+        if (viewmodel.isSoloMode) return@synchronized
+        refreshLocalIntentContext()
+        localStateIntents.offer(LocalStateIntent(position, play, seek))
+        flushPendingLocalState(serverTime = null)
+        Unit
+    }
+
+    /** Called after adopting inbound ignore counters, before deciding obsolete corrections. */
+    fun flushPendingLocalState(serverTime: Double?): Boolean = synchronized(syncLock) {
+        refreshLocalIntentContext()
+        val intent = localStateIntents.takeReady(clientIgnFly == 0 || serverIgnFly != 0)
+            ?: return@synchronized false
+        val packet = buildStatePacket(serverTime, intent.seek?.let { true }, intent.positionSeconds, true, intent.playing)
+        localStateIntents.sent(intent, clientIgnFly, SyncClock.nowMillis())
+        viewmodel.networkManager.sendAsync(packet)
+        true
+    }
+
+    /** Capture origin before a newly flushed seek can replace its in-flight metadata. */
+    fun consumeLocalSeekEcho(state: StateData): LocalSeek? = synchronized(syncLock) {
+        refreshLocalIntentContext()
+        val playstate = state.playstate
+        val seek = if (playstate?.doSeek == true && playstate.setBy == session.currentUsername) {
+            localStateIntents.consumeSeekEcho(
+                playstate.position ?: 0.0, state.ignoringOnTheFly?.client, SyncClock.nowMillis(),
+            )
+        } else null
+        // An unrelated old self-seek echo can reuse counter one after a later send. Leave that
+        // later origin intact when the echoed target does not match it.
+        if (clientIgnFly == 0 && !(playstate?.doSeek == true && playstate.setBy == session.currentUsername)) {
+            localStateIntents.forgetAcknowledgedSeek()
+        }
+        seek
+    }
+
+    /** The gate, counter snapshot and queue insertion share the same lock as inbound State. */
+    fun sendStateAcknowledgement(serverTime: Double?, position: Double?, play: Boolean?) = synchronized(syncLock) {
+        viewmodel.networkManager.sendAsync(buildStatePacket(serverTime, null, position, false, play))
+    }
 
     /**
      * Set during a room transition so the events it causes are not broadcast as divergence.
@@ -347,15 +418,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         if (isPlaying == expectedPlaying) return
 
         expectedPaused = !isPlaying
-        viewmodel.networkManager.sendAsync(
-            buildStatePacket(
-                serverTime = null,
-                doSeek = null,
-                position = reportableStatePositionSec(),
-                isLocalStateChange = true,
-                play = isPlaying
-            )
-        )
+        sendLocalState(position = reportableStatePositionSec(), play = isPlaying)
     }
 
     /** Cancels the channel-health coroutines. Safe to call multiple times. */
@@ -387,6 +450,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     override fun invalidate() {
         stopChannelHealthMonitoring()
+        clearLocalStateIntents()
         lastStateReceivedAt = null
         lastGlobalUpdate = null
         session = Session(this)
@@ -428,6 +492,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * algorithm once States resume), and [pingService] intact.
      */
     fun resetSyncAnchorForReconnect() = synchronized(syncLock) {
+        clearLocalStateIntents()
         endRoomChange()
         clockOffset.reset()
         lastGlobalUpdate = null
@@ -502,6 +567,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     fun markAwaitingRoomResync() {
+        clearLocalStateIntents()
         awaitingRoomResyncDeadline = SyncClock.now() + AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS.seconds
     }
 
@@ -514,7 +580,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * seconds: the protocol depends on sub-second precision for both the desync-detection
      * algorithm on the server and for `min(watchers)` not picking us as the slowest.
      */
-    fun buildStatePacket(
+    private fun buildStatePacket(
         serverTime: Double?,
         doSeek: Boolean?,
         position: Double?,

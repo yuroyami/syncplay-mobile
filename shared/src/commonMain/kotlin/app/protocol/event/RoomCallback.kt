@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import app.protocol.OFFICIAL_SERVER_ADDRESS
 import app.protocol.OFFICIAL_SERVER_NAME
 import app.protocol.sync.roomToLocalMs
+import app.protocol.sync.LocalSeek
 
 /**
  * Handles incoming Syncplay protocol events, updating local state and broadcasting
@@ -152,30 +153,22 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
     }
 
-    fun onSomeoneSeeked(seeker: String, toPosition: Double) {
+    fun onSomeoneSeeked(seeker: String, toPosition: Double, localSeek: LocalSeek? = null) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
         if (seeker.isNotSelf()) hapticIf(HAPTIC_ON_SEEKED)
         onMainThread {
-            // Read-and-consume the pending pre-seek position for self-seeks. Consuming it
-            // (resetting to the sentinel) is what defuses a phantom duplicate echo: if a
-            // stray second self doSeek arrives, the sentinel is already spent, so we fall
-            // back to the live position for `from` — making `from ≈ to`, which the noOpSeek
-            // guard below then suppresses instead of rendering "jumped from <stale> to <now>".
-            val oldPosMs = if (seeker.isSelf() && dispatcher.pendingSeekFromMs != RoomEventDispatcher.NO_PENDING_SEEK) {
-                dispatcher.pendingSeekFromMs.also { dispatcher.pendingSeekFromMs = RoomEventDispatcher.NO_PENDING_SEEK }
-            } else {
-                viewmodel.player.currentPositionMs()
-            }
+            // A newer gesture can already be on screen when this echo renders. Its origin
+            // belongs to the sent intent, captured on the inbound thread before the next send.
+            if (seeker.isSelf() && localSeek == null) return@onMainThread
+            val oldPosMs = localSeek?.fromMs ?: viewmodel.player.currentPositionMs()
             // toPosition is full-precision seconds. Multiply *as Double* before truncating
             // to Long ms — `toPosition.toLong() * 1000L` first truncates fractional seconds
             // and loses up to 999 ms.
             val newPosMs = (toPosition * 1000.0).toLong()
 
-            // Same media gate as elsewhere — VLCKit 4 alpha crashes on seekTo with no
-            // media loaded. Self-seeks already match the local position so they're a
-            // no-op, but a remote peer's seek arriving while we have no file open would
-            // otherwise crash on iOS.
+            // A remote seek can only move a loaded file. Self-seeks were submitted
+            // locally already; their echo records the origin without moving again.
             if (seeker.isNotSelf() && viewmodel.media != null) viewmodel.player.seekTo(newPosMs)
 
             // Suppress no-op seeks: if the from/to positions are within a second, the
@@ -199,7 +192,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
              * by the local user. Seeks coming from other users are still applied above
              * (via player.seekTo for the non-self case) but we don't allow undoing them —
              * doing so would let one user broadcast a counter-seek that surprises others. */
-            if (seeker.isSelf()) {
+            if (seeker.isSelf() && localSeek?.recordUndo == true) {
                 viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
             }
         }

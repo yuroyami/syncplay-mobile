@@ -8,6 +8,7 @@ import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.sync.SyncAction
+import app.protocol.sync.LocalSeek
 import app.protocol.sync.SyncContext
 import app.protocol.sync.SyncPrefs
 import app.protocol.sync.decideSync
@@ -112,15 +113,26 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
          * Read, decide and write back are one step. The anchor is eight fields written back as a
          * whole, so a reconnect or a file load landing between the read and the write would be
          * erased. Nothing in here suspends. */
+        var localSeek: LocalSeek? = null
+        var sentPendingIntent = false
+        var decisionMedia: MediaFile? = null
+        var decisionRevision = 0L
         val outcome = synchronized(protocol.syncLock) {
+            decisionMedia = viewmodel.media
             protocol.syncState = protocol.syncState.withIgnoringOnTheFly(state.ignoringOnTheFly)
+            localSeek = protocol.consumeLocalSeekEcho(state)
+            // A second user seek must survive the first seek's forced echo. The latest queued
+            // intent carries this ACK and re-arms the existing ignore gate before deciding any
+            // obsolete inbound correction. Nothing here waits for the main thread or the socket.
+            sentPendingIntent = protocol.flushPendingLocalState(latencyCalculation)
+            decisionRevision = protocol.localStateRevision
             decideSync(
                 playstate = state.playstate,
                 state = protocol.syncState,
                 ctx = SyncContext(
                     now = SyncClock.now(),
                     playerPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
-                    hasMedia = viewmodel.media != null,
+                    hasMedia = decisionMedia != null,
                     isInBackground = viewmodel.uiState.isInBackground,
                     supportsSpeedAdjustment = viewmodel.player.supportsSpeedAdjustment,
                     selfName = session.currentUsername,
@@ -140,7 +152,20 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 ),
             ).also { protocol.syncState = it.state }
         }
-        outcome.actions.forEach { apply(it) }
+        outcome.actions.forEach { action ->
+            // Local origin metadata was matched to the sent packet before a newer seek flushed.
+            // Unmatched self echoes are duplicates/overrides, not new gestures to undo.
+            if (action !is SyncAction.SomeoneSeeked || action.by != session.currentUsername) {
+                apply(action, decisionMedia, decisionRevision)
+            }
+        }
+        localSeek?.let { seek ->
+            viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
+                if (viewmodel.media !== decisionMedia) return@launch
+                callback.onSomeoneSeeked(session.currentUsername, seek.toMs / 1000.0, seek)
+            }
+        }
+        if (sentPendingIntent) return
 
         /* Acknowledge with our own State packet. The gate is "the message carried a playstate
          * at all", not "it carried a position": the reference client reads a missing position
@@ -163,67 +188,65 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
              * watcher is unpausing the room" and rebroadcasts. globalPaused is what the decision
              * just recorded; a genuine application failure is caught later by the isNowPlaying
              * divergence check in ProtocolManager, once the player has settled. */
-            network.sendAsync(
-                protocol.buildStatePacket(
-                    serverTime = latencyCalculation,
-                    // Mobile owns its embedded player, so every real seek is announced explicitly
-                    // via dispatcher.sendSeek. There is no out-of-band seek to discover, so this
-                    // periodic ACK never re-derives one — it omits doSeek, like the PC client
-                    // (whose ACK compares the player against itself, never against the inbound
-                    // server position).
-                    doSeek = null,
-                    position = ackPos,
-                    isLocalStateChange = false,
-                    /* The state we just acknowledged from the server. Falls back to
-                     * globalPaused only when the inbound playstate carried no pause field, or
-                     * when we skipped the decision because we are ignoring the server on the
-                     * fly and globalPaused is therefore still the room state we last agreed on. */
-                    play = !(state.playstate?.paused ?: protocol.globalPaused)
-                )
+            protocol.sendStateAcknowledgement(
+                serverTime = latencyCalculation,
+                // Mobile owns its embedded player, so every real seek is announced explicitly
+                // via dispatcher.sendSeek. There is no out-of-band seek to discover, so this
+                // periodic ACK never re-derives one — it omits doSeek, like the PC client
+                // (whose ACK compares the player against itself, never against the inbound
+                // server position).
+                position = ackPos,
+                /* The state we just acknowledged from the server. Falls back to
+                 * globalPaused only when the inbound playstate carried no pause field, or
+                 * when we skipped the decision because we are ignoring the server on the
+                 * fly and globalPaused is therefore still the room state we last agreed on. */
+                play = !(state.playstate?.paused ?: protocol.globalPaused)
             )
         } else {
-            network.sendAsync(
-                protocol.buildStatePacket(
-                    serverTime = latencyCalculation,
-                    doSeek = null,
-                    position = null,
-                    isLocalStateChange = false,
-                    play = null
-                )
+            protocol.sendStateAcknowledgement(
+                serverTime = latencyCalculation,
+                position = null,
+                play = null
             )
         }
     }
 
     /** Carries out one decision. The order the actions arrive in is the order they must happen. */
-    private suspend fun apply(action: SyncAction) = when (action) {
-        is SyncAction.FirstSync -> {
-            /* Set the expected pause state BEFORE touching the player. The collector watching
-             * PlayerManager.isNowPlaying fires as soon as the engine catches up with our
-             * pause()/play(); if expectedPaused were still at its default then, it would read
-             * as a divergence and re-broadcast our own first sync back at the server. */
-            protocol.noteExpectedPlaybackState(paused = action.paused)
-            // Fire-and-forget: the consumer must not suspend on the UI thread. On desktop a
-            // withContext(Main) here deadlocked the inbound pipeline when libVLC still owned
-            // the EDT at cold-start auto-join. Ordering inside the launch is kept.
-            viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                viewmodel.player.seekTo(action.seekToMs)
-                if (action.paused) viewmodel.player.pause() else viewmodel.player.play()
+    private fun apply(action: SyncAction, media: MediaFile?, revision: Long) {
+        // The serial inbound consumer never waits on Main. Commands retain the media they were
+        // decided for: a queued correction cannot seek or pause a newly installed file.
+        viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
+            if (viewmodel.media !== media) return@launch
+            // A local command can land after the decision but before this Main task. Its seek
+            // or pause must win. Speed actions still apply: the reducer already changed its
+            // speedChanged flag, so dropping only the native half could leave rate at 0.95.
+            val changesTransport = action !is SyncAction.SlowDown && action != SyncAction.RestoreSpeed
+            if (changesTransport && !protocol.isLocalStateRevisionCurrent(revision)) return@launch
+            when (action) {
+                is SyncAction.FirstSync -> {
+                    /* Set the expected pause state BEFORE touching the player. The collector watching
+                     * PlayerManager.isNowPlaying fires as soon as the engine catches up with our
+                     * pause()/play(); if expectedPaused were still at its default then, it would read
+                     * as a divergence and re-broadcast our own first sync back at the server. */
+                    protocol.noteExpectedPlaybackState(paused = action.paused)
+                    viewmodel.player.seekTo(action.seekToMs)
+                    if (action.paused) viewmodel.player.pause() else viewmodel.player.play()
+                }
+                is SyncAction.SomeoneSeeked -> callback.onSomeoneSeeked(action.by, action.toSeconds)
+                is SyncAction.SomeoneBehind -> callback.onSomeoneBehind(action.by, action.toSeconds)
+                is SyncAction.SomeoneFastForwarded -> callback.onSomeoneFastForwarded(action.by, action.toSeconds)
+                is SyncAction.SomeonePlayed -> callback.onSomeonePlayed(action.by)
+                is SyncAction.SomeonePaused -> callback.onSomeonePaused(action.by)
+                is SyncAction.SlowDown -> {
+                    viewmodel.player.setSpeed(SLOWDOWN_RATE)
+                    // PC's slowdown notification: the room hears it, the user must too.
+                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownNotification(action.by) }
+                }
+                SyncAction.RestoreSpeed -> {
+                    viewmodel.player.setSpeed(1.0)
+                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownReverted }
+                }
             }
-            Unit
-        }
-        is SyncAction.SomeoneSeeked -> callback.onSomeoneSeeked(action.by, action.toSeconds)
-        is SyncAction.SomeoneBehind -> callback.onSomeoneBehind(action.by, action.toSeconds)
-        is SyncAction.SomeoneFastForwarded -> callback.onSomeoneFastForwarded(action.by, action.toSeconds)
-        is SyncAction.SomeonePlayed -> callback.onSomeonePlayed(action.by)
-        is SyncAction.SomeonePaused -> callback.onSomeonePaused(action.by)
-        is SyncAction.SlowDown -> {
-            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
-            // PC's slowdown notification: the room hears it, the user must too.
-            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownNotification(action.by) }
-        }
-        SyncAction.RestoreSpeed -> {
-            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownReverted }
         }
     }
 

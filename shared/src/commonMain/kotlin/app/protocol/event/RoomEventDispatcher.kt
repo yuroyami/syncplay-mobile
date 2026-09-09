@@ -13,18 +13,20 @@ import app.protocol.Session
 import app.protocol.WireMessage
 import app.protocol.models.RoomFeatures
 import app.protocol.sync.localToRoomSeconds
+import app.protocol.sync.LocalSeek
 import app.protocol.wire.HelloData
 import app.protocol.wire.Room
 import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.room.models.collapsedForChat
-import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.md5
 import app.utils.platformCallback
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /**
@@ -54,49 +56,16 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         )
     }
 
-    /**
-     * The player position (ms) from *before* the most recent user-initiated seek.
-     * Used for the "X seeked from A to B" OSD/chat message and for the Undo Seek history.
-     *
-     * Callers must set this *before* moving the player (slider, popup, chapter, fast-seek
-     * button), since once the player has moved, `currentPositionMs()` returns the
-     * post-seek value. [sendSeek] auto-fills it as a fallback if it hasn't been set
-     * during this user gesture, but that captures the post-seek position when the
-     * caller already nudged the player first — so prefer setting it explicitly.
-     *
-     * Single-use: [RoomCallback.onSomeoneSeeked] consumes it (resets to the [NO_PENDING_SEEK]
-     * sentinel) the first time it renders a self-seek. Without this, a stray second self
-     * doSeek echo would re-render the SAME stale `from` while `to` advanced with playback,
-     * producing a phantom duplicate "X jumped from A to B". A negative sentinel (never a
-     * legitimate playhead, unlike 0 which is a valid "seek from the very start") tells the
-     * reader to fall back to the live position so the duplicate collapses into a no-op.
-     */
-    var pendingSeekFromMs: Long = NO_PENDING_SEEK
-
-    fun sendSeek(newPosMs: Long) {
+    /** Announce this exact gesture; queued seeks retain their own origin for the self echo. */
+    fun sendSeek(newPosMs: Long, fromMs: Long, recordUndo: Boolean = true) {
         if (viewmodel.isSoloMode) return
-
-        viewmodel.viewModelScope.launch(ioDispatcher) {
-            // A seek never changes pause state (so we don't touch protocol.expectedPaused here),
-            // which means the truthful `play` value is the room's already-known intent — NOT a
-            // live `player.isPlaying()` probe. On VLCKit 4 that probe returns the stale
-            // pre-transition value right after a pause, so seeking while paused could emit
-            // play=true and make the server broadcast a spurious "X played" to every peer.
-            // expectedPlaying reflects local intent immediately (no round-trip lag, unlike
-            // globalPaused which only updates from inbound server State).
-            val playing = viewmodel.protocol.expectedPlaying
-            network.send(
-                viewmodel.protocol.buildStatePacket(
-                    serverTime = null,
-                    doSeek = true,
-                    // In room time: the room hears where everyone else should be, not where
-                    // this viewer's own copy happens to be.
-                    position = localToRoomSeconds(newPosMs, viewmodel.protocol.userTimeOffsetSeconds()),
-                    isLocalStateChange = true,
-                    play = playing
-                )
-            )
-        }
+        // Capture and enqueue before moving the engine. Independent IO launches could reorder
+        // this seek with the next pause/seek even though the socket writer itself is ordered.
+        viewmodel.protocol.sendLocalState(
+            position = localToRoomSeconds(newPosMs, viewmodel.protocol.userTimeOffsetSeconds()),
+            play = viewmodel.protocol.expectedPlaying,
+            seek = LocalSeek(fromMs, newPosMs, recordUndo),
+        )
     }
 
     fun sendMessage(msg: String) {
@@ -135,19 +104,10 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         // and broadcasts a redundant State packet.
         viewmodel.protocol.noteExpectedPlaybackState(paused = !playback.play)
 
-        /* Skip the engine call when no media is loaded. On VLCKit 4 alpha (iOS),
-         * libvlc_media_player_play(_p_mi) segfaults with `_p_mi = NULL` when invoked
-         * on a player that has no media — VLCMediaPlayer dispatches the play to its
-         * private libdispatch queue from inside `[VLCMediaPlayer play]`, and by the
-         * time the queue dequeues the block, libvlc_media_player_play does an unguarded
-         * deref at offset 0x58 of the (NULL) media-player handle. Symptom path is a
-         * ~3s-after-launch crash when the room broadcasts a "playing" state (e.g. on
-         * auto-rejoin via JoinConfig) before any media has been loaded. Mirrors the PC
-         * client's `if self._player:` gate in `updateGlobalState` (client.py:459) — we
-         * just substitute `viewmodel.media` for it because our `viewmodel.player` is
-         * never null. Server-side State broadcast still happens below if `tellServer`
-         * is set: the user's intent gets recorded for peers even when local playback
-         * can't honor it. */
+        /* Skip native playback without media. The bundled VLCKit cookie-jar patch
+         * dereferences the media descriptor inside native play before validating it;
+         * the player handle itself need not be null. VLCKit's queued play makes that
+         * boundary asynchronous. The user's room intent is still announced below. */
         if (viewmodel.media != null) {
             // A pause is the natural place to write down where we are.
             if (playback == Playback.PAUSE) viewmodel.resume.record()
@@ -173,20 +133,11 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             }
         }
 
-        viewmodel.viewModelScope.launch(ioDispatcher) {
-            // While a fresh file is still catching up to the room, this advertises the room
-            // position rather than the engine's ~0 (mirrors PC getCalculatedPosition).
-            val posSec = viewmodel.protocol.reportableStatePositionSec()
-            network.send(
-                viewmodel.protocol.buildStatePacket(
-                    serverTime = null,
-                    doSeek = null,
-                    position = posSec,
-                    isLocalStateChange = true,
-                    play = playback.play
-                )
-            )
-        }
+        // During loading this advertises the room position instead of the engine's ~0.
+        viewmodel.protocol.sendLocalState(
+            position = viewmodel.protocol.reportableStatePositionSec(),
+            play = playback.play,
+        )
     }
 
     /**
@@ -229,14 +180,17 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
      */
     fun seek(targetMs: Long, fromMs: Long? = null, recordUndo: Boolean = true) {
         // Chat commands and hardware media keys remain reachable during room startup.
-        if (!viewmodel.playerManager.isPlayerReady.value || viewmodel.media == null) return
-        viewmodel.player.playerScopeMain.launch { seekNow(targetMs, fromMs, recordUndo) }
+        if (!viewmodel.playerManager.isPlayerReady.value) return
+        val media = viewmodel.media ?: return
+        viewmodel.player.playerScopeMain.launch {
+            if (viewmodel.media !== media) return@launch
+            seekNow(targetMs, fromMs, recordUndo)
+        }
     }
 
     /** Announces and records a seek whose move the engine makes on its own (a chapter jump). */
     fun announceSeek(targetMs: Long, fromMs: Long) {
-        pendingSeekFromMs = fromMs
-        sendSeek(targetMs)
+        sendSeek(targetMs, fromMs)
         rememberForUndo(fromMs, targetMs)
     }
 
@@ -244,10 +198,25 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     fun seekFrwrd() = seekBy(Preferences.SEEK_FORWARD_JUMP.value())
 
     fun seekBy(deltaSeconds: Int) {
-        if (!viewmodel.playerManager.isPlayerReady.value || viewmodel.media == null) return
+        if (!viewmodel.playerManager.isPlayerReady.value) return
+        val media = viewmodel.media ?: return
         viewmodel.player.playerScopeMain.launch {
+            if (viewmodel.media !== media) return@launch
+            seekByMillis(deltaSeconds * 1000L)
+        }
+    }
+
+    /**
+     * Submits a relative seek in main-thread request order, preserving subsecond offsets from
+     * system controls. Returns the clamped target after [app.player.PlayerImpl.seekTo] returns,
+     * or null when the player is unavailable. This reports submission, not native completion.
+     */
+    suspend fun seekByMillis(deltaMs: Long): Long? {
+        val media = viewmodel.media ?: return null
+        return withContext(Dispatchers.Main.immediate) {
+            if (!viewmodel.playerManager.isPlayerReady.value || viewmodel.media !== media) return@withContext null
             val currentMs = viewmodel.player.currentPositionMs()
-            seekNow(currentMs + deltaSeconds * 1000L, currentMs, recordUndo = true)
+            seekNow(currentMs + deltaMs, currentMs, recordUndo = true)
         }
     }
 
@@ -257,16 +226,20 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         seek(targetMs = seek.first, fromMs = seek.second, recordUndo = false)
     }
 
-    private suspend fun seekNow(targetMs: Long, fromMs: Long?, recordUndo: Boolean) {
-        // Nothing to seek without media, and VLCKit 4 crashes on a seek with no media loaded.
-        if (viewmodel.media == null) return
-        val origin = fromMs ?: viewmodel.player.currentPositionMs()
+    private suspend fun seekNow(targetMs: Long, fromMs: Long?, recordUndo: Boolean): Long? {
+        // Prepare only for the currently loaded file; an unavailable seek must not move peers.
+        if (!viewmodel.playerManager.isPlayerReady.value) return null
+        val media = viewmodel.media ?: return null
+        val player = viewmodel.player
+        val origin = fromMs ?: player.currentPositionMs()
         val duration = viewmodel.playerManager.timeFullMillis.value
         val target = if (duration > 0L) targetMs.coerceIn(0L, duration) else targetMs.coerceAtLeast(0L)
-        pendingSeekFromMs = origin
-        sendSeek(target)
-        viewmodel.player.seekTo(target)
-        if (recordUndo) rememberForUndo(origin, target)
+        val preparedTarget = player.prepareSeekTarget(target) ?: return null
+        if (viewmodel.media !== media || viewmodel.player !== player || !viewmodel.playerManager.isPlayerReady.value) return null
+        sendSeek(preparedTarget, origin, recordUndo)
+        player.seekTo(preparedTarget)
+        if (recordUndo) rememberForUndo(origin, preparedTarget)
+        return preparedTarget
     }
 
     /** Online the inbound echo records the seek; solo mode has no echo, so it is recorded here. */
@@ -297,8 +270,5 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     companion object {
         /** Static feature manifest the client advertises in its `Hello`. */
         val clientFeatures = RoomFeatures()
-
-        /** Sentinel for [pendingSeekFromMs] meaning "no unconsumed user seek". */
-        const val NO_PENDING_SEEK: Long = -1L
     }
 }
