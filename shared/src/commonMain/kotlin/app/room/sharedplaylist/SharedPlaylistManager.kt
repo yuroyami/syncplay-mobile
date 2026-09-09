@@ -17,10 +17,10 @@ import app.utils.playlistIsValid
 import app.utils.generateTimestampMillis
 import app.utils.urlHost
 import app.utils.urlPath
+import app.utils.writeTextCompat
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
-import io.github.vinceglb.filekit.writeString
 import app.preferences.set
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -419,7 +419,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val snapshot = session.sharedPlaylist.toList()
         if (snapshot.isEmpty()) return
         viewmodel.viewModelScope.launch(ioDispatcher) {
-            val saved = runCatching { destination.writeString(snapshot.joinToString("\n")) }.isSuccess
+            val saved = runCatching { destination.writeTextCompat(snapshot.joinToString("\n")) }.isSuccess
             viewmodel.dispatchOSD {
                 if (saved) Localization.strings.roomSharedPlaylistExported else Localization.strings.roomSharedPlaylistExportFailed
             }

@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import app.i18n.strings
 import app.utils.ioDispatcher
+import app.utils.rememberFileSaver
+import app.utils.writeBytesCompat
 import io.github.vinceglb.filekit.readString
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Face
@@ -89,12 +91,9 @@ import app.utils.readFileBytes
 import app.utils.writeFileBytes
 import app.utils.platform
 import app.utils.platformCallback
-import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import io.github.vinceglb.filekit.readBytes
-import io.github.vinceglb.filekit.write
 import kotlinx.coroutines.launch
 import app.preferences.settings.SETTINGS_GLOBAL
 import app.theme.Type
@@ -993,12 +992,12 @@ object Preferences {
                 var result by remember { mutableStateOf<String?>(null) }
                 val done = strings.settingsExportDone
                 val failed = strings.settingsFileError
-                val saver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
-                    if (file == null) return@rememberFileSaverLauncher
+                val saver = rememberFileSaver { file ->
+                    if (file == null) return@rememberFileSaver
                     scope.launch {
                         // Writing a file can fail for a dozen reasons, and silence looks
                         // exactly like success.
-                        result = runCatching { file.write(buildSettingsBackup().encodeToByteArray()) }
+                        result = runCatching { file.writeBytesCompat(buildSettingsBackup().encodeToByteArray()) }
                             .fold(onSuccess = { done }, onFailure = { failed })
                     }
                 }
@@ -1075,9 +1074,9 @@ object Preferences {
             composable = {
                 val scope = rememberCoroutineScope { ioDispatcher }
 
-                val logSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
+                val logSaver = rememberFileSaver { file ->
                     scope.launch {
-                        file?.write(readLogsForExport())
+                        file?.writeBytesCompat(readLogsForExport())
                     }
                 }
 
@@ -1156,14 +1155,14 @@ object Preferences {
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
                 val scope = rememberCoroutineScope { ioDispatcher }
-                val saver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
-                    if (file == null) return@rememberFileSaverLauncher
+                val saver = rememberFileSaver { file ->
+                    if (file == null) return@rememberFileSaver
                     scope.launch {
                         runCatching {
                             val src = getMpvConfFilePath()
                             val bytes = src?.let { readFileBytes(it) }
                             if (bytes != null) {
-                                file.write(bytes)
+                                file.writeBytesCompat(bytes)
                                 loggy("mpv.conf exported (${bytes.size} bytes)")
                             } else {
                                 loggy("mpv.conf export: no config file to export yet.")

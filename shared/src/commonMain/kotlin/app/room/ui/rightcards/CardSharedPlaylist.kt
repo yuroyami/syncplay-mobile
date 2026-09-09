@@ -71,13 +71,12 @@ import app.utils.appName
 import app.utils.getText
 import app.utils.ioDispatcher
 import app.utils.playlistExs
+import app.utils.rememberFileSaver
 import app.utils.videoFileKitType
-import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import syncplaymobile.shared.generated.resources.cancel
@@ -118,8 +117,8 @@ object CardSharedPlaylist {
             if (file != null) playlist.loadPlaylistLocally(file, alsoShuffle = shouldShuffle)
             shouldShuffle = false
         }
-        val playlistSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
-            file ?: return@rememberFileSaverLauncher
+        val playlistSaver = rememberFileSaver { file ->
+            file ?: return@rememberFileSaver
             playlist.savePlaylistLocally(file)
         }
 

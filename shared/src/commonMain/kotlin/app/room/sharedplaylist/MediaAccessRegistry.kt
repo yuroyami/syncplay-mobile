@@ -4,14 +4,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.preferences.Preferences
 import app.preferences.datastore
+import app.utils.durableBookmark
+import app.utils.platformFileAt
+import app.utils.platformFileFromBookmark
+import app.utils.stillExists
 import kotlinx.coroutines.flow.first
 import app.preferences.set
 import app.preferences.value
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.bookmarkData
-import io.github.vinceglb.filekit.exists
-import io.github.vinceglb.filekit.fromBookmarkData
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.path
 import kotlinx.serialization.builtins.MapSerializer
@@ -37,7 +38,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  *  - **Android**: SAF `content://` URIs from `ACTION_OPEN_DOCUMENT(_TREE)` are revocable and do
  *    not survive a process restart unless the app calls `takePersistableUriPermission`.
  *
- * FileKit's [bookmarkData]/[fromBookmarkData] abstract both: on iOS they create/resolve a
+ * [durableBookmark]/[platformFileFromBookmark] abstract both: on iOS they create/resolve a
  * security-scoped bookmark; on Android `bookmarkData` takes the persistable permission and
  * returns the URI bytes. We persist those opaque bytes (Base64) in DataStore and resolve them
  * back to a ready-to-open [PlatformFile] at playback time. This is why a path string captured
@@ -68,7 +69,7 @@ object MediaAccessRegistry {
      */
     suspend fun rememberDirectory(dir: PlatformFile) {
         val id = dir.path
-        runCatching { dir.bookmarkData().bytes }
+        runCatching { dir.durableBookmark() }
             .onSuccess { putBookmark(DIR_BOOKMARKS, id, it) }
             .onFailure { loggy("MediaAccessRegistry: failed to bookmark directory $id — ${it.message}") }
 
@@ -86,7 +87,7 @@ object MediaAccessRegistry {
         for (file in files) {
             val name = file.name
             if (name.isBlank()) continue
-            runCatching { file.bookmarkData().bytes }
+            runCatching { file.durableBookmark() }
                 .onSuccess { bookmarks[name] = it }
                 .onFailure { loggy("MediaAccessRegistry: failed to bookmark file $name — ${it.message}") }
         }
@@ -131,21 +132,21 @@ object MediaAccessRegistry {
     /** Resolves the stored bookmark for [filename] and confirms the target still exists. */
     private suspend fun directFile(filename: String): PlatformFile? {
         val bytes = readBookmark(FILE_BOOKMARKS, filename) ?: return null
-        val file = runCatching { PlatformFile.fromBookmarkData(bytes) }.getOrNull() ?: return null
+        val file = runCatching { platformFileFromBookmark(bytes) }.getOrNull() ?: return null
         // exists() can throw on a stale/revoked handle; treat that as "still try it" only when
         // the check itself failed to run, but treat a definitive `false` as not-found.
-        val present = runCatching { file.exists() }.getOrElse { true }
+        val present = runCatching { file.stillExists() }.getOrElse { true }
         return if (present) file else null
     }
 
     /** Resolves a media-directory handle from its bookmark, falling back to the raw id. */
     private suspend fun resolveDirectory(dirId: String): PlatformFile? {
         readBookmark(DIR_BOOKMARKS, dirId)?.let { bytes ->
-            runCatching { PlatformFile.fromBookmarkData(bytes) }.getOrNull()?.let { return it }
+            runCatching { platformFileFromBookmark(bytes) }.getOrNull()?.let { return it }
         }
         // Legacy entries (added before bookmarking existed) or same-session Android URIs: best
         // effort. On iOS this won't be accessible, and indexMediaTree will simply yield nothing.
-        return runCatching { PlatformFile(dirId) }.getOrNull()
+        return runCatching { platformFileAt(dirId) }.getOrNull()
     }
 
     /* ----------------------------- Maintenance ----------------------------- */

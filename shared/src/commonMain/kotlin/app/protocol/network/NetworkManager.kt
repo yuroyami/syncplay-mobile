@@ -63,9 +63,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     val encrypted = MutableStateFlow(false)
 
     enum class NetworkEngine {
-        KTOR,    // cross-platform, no TLS
-        NETTY,   // Android, TLS
-        SWIFTNIO // iOS, TLS
+        KTOR,     // cross-platform, no TLS
+        NETTY,    // Android and desktop, TLS
+        SWIFTNIO, // iOS, TLS
+        WEBSOCKET // web, encrypted only when the page is served over https
     }
 
     /** Thrown by [writeActualString] when there is no socket at all: not a retry case. */
