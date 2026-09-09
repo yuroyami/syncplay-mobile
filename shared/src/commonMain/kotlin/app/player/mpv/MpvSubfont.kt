@@ -2,10 +2,9 @@ package app.player.mpv
 
 import app.utils.fileExists
 import app.utils.getMpvConfFilePath
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.writeFileBytes
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import syncplaymobile.shared.generated.resources.Res
 
@@ -28,7 +27,7 @@ suspend fun installMpvSubfontIfNeeded() {
     val configDir = getMpvConfFilePath()?.substringBeforeLast('/') ?: return
     val dest = "$configDir/subfont.ttf"
     if (fileExists(dest)) return
-    withContext(Dispatchers.IO) {
+    withContext(ioDispatcher) {
         try {
             val bytes = Res.readBytes("files/subfont.ttf")
             writeFileBytes(dest, bytes)

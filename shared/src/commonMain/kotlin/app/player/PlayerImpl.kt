@@ -26,6 +26,7 @@ import app.room.RoomViewmodel
 import app.utils.Platform
 import app.utils.ccExs
 import app.utils.getFileName
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.platform
 import io.github.vinceglb.filekit.PlatformFile
@@ -35,7 +36,6 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -73,7 +73,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     protected val playerSupervisorJob = SupervisorJob()
     val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
-    val playerScopeIO = CoroutineScope(Dispatchers.IO + playerSupervisorJob)
+    val playerScopeIO = CoroutineScope(ioDispatcher + playerSupervisorJob)
 
     //TODO
     open val canChangeAspectRatio: Boolean = true

@@ -33,8 +33,7 @@ import app.uicomponents.controls.RowLabel
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import app.utils.ioDispatcher
 import kotlinx.coroutines.launch
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.save
@@ -47,7 +46,7 @@ import syncplaymobile.shared.generated.resources.save
 fun TrustedDomainsPopup(visibilityState: MutableState<Boolean>) {
     if (!visibilityState.value) return
     val p = palette
-    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val scope = rememberCoroutineScope { ioDispatcher }
     val domains = remember {
         mutableStateListOf<String>().apply {
             addAll(Preferences.TRUSTED_DOMAINS.value().split("\n", ",").map { it.trim() }.filter { it.isNotEmpty() }.distinct())

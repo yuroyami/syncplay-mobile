@@ -48,17 +48,37 @@ kotlin {
     // Desktop (JVM) target — Windows/macOS/Linux via Compose for Desktop, hosted by :desktopApp.
     jvm("desktop")
 
+    /* Web (browser), through Kotlin/Wasm; the app shell is :webApp.
+     *
+     * Compose Multiplatform's web target is Beta while the other three are stable, so treat a
+     * failure here as the target's, not the app's. Two things a browser genuinely cannot do are
+     * kept out of the way rather than worked around: it has no raw TCP socket, so the Syncplay
+     * protocol needs a WebSocket transport, and it has no native decoder, so the four existing
+     * engines do not exist here. Everything that depends on either lives in nonWebMain. */
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
+
     // Activating iOS targets (iosMain)
     listOf(
         iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
         iosArm64()
     ).forEach {
+        val podSdk = if (it.name == "iosArm64") "iphoneos" else "iphonesimulator"
         it.compilations.getByName("main") {
             @Suppress("unused") val nsKVO by cinterops.creating {
                 defFile("src/nativeInterop/cinterop/NSKeyValueObserving.def")
             }
             @Suppress("unused") val ifaddrsInterop by cinterops.creating {
                 defFile("src/nativeInterop/cinterop/ifaddrs.def")
+            }
+            cinterops.configureEach {
+                if (name == "VLCKit") {
+                    // libVLC's C headers use <vlc/...> and the bridge uses <VLCMediaPlayer.h>.
+                    // Resolve both from the same framework copied by this target's podBuild task.
+                    compilerOpts("-I${project.file("build/cocoapods/synthetic/ios/build/Debug-$podSdk/XCFrameworkIntermediates/VLCKit/VLCKit.framework/Headers")}")
+                }
             }
         }
     }
@@ -75,7 +95,11 @@ kotlin {
             isStatic = false
         }
 
-        pod("VLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
+        pod("VLCKit") {
+            version = libs.versions.libvlc.ios.get()
+            // Keep the live clock bridge in this binding so it uses the exact bundled headers.
+            headers = project.file("src/nativeInterop/cinterop/VlcClock.h").absolutePath
+        }
     }
 
     /* Declaring a dependsOn edge by hand switches the default hierarchy template off, which
@@ -84,6 +108,20 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        /**
+         * Everything except the browser: Android, iOS and desktop.
+         *
+         * Common code is what all four targets can run. This is what the other three can run and
+         * the web cannot, which is a real category, not a dumping ground: a TCP socket, a native
+         * player engine, a filesystem, a thread that may block. Adding the web target is what
+         * made the distinction necessary. Before it, "not common" and "one platform" were the
+         * only two options.
+         *
+         * Ask one question before putting something here: would this compile in a browser? If it
+         * would, it belongs in commonMain.
+         */
+        val nonWebMain by creating { dependsOn(commonMain.get()) }
+
         /**
          * The JVM platforms' shared source set.
          *
@@ -94,12 +132,21 @@ kotlin {
          * Only put something here when it is the same on both. Anything that reads SAF, a
          * Context, Conscrypt or a security scope is Android's alone and stays there.
          */
-        val jvmShared by creating { dependsOn(commonMain.get()) }
+        val jvmShared by creating { dependsOn(nonWebMain) }
 
         /* Where the Lyricist processor writes Strings.kt and the per-locale objects. */
         commonMain.get().kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
         androidMain.get().dependsOn(jvmShared)
         getByName("desktopMain").dependsOn(jvmShared)
+        iosMain.get().dependsOn(nonWebMain)
+
+        /* The test side mirrors the main side: a test that blocks a thread cannot run in a
+         * browser, so it lives here rather than in commonTest. Coverage is unaffected, the
+         * desktop run still executes all of it. */
+        val nonWebTest by creating { dependsOn(commonTest.get()) }
+        listOf("desktopTest", "iosTest", "androidHostTest").forEach { name ->
+            findByName(name)?.dependsOn(nonWebTest)
+        }
 
         all {
             languageSettings {
@@ -137,9 +184,6 @@ kotlin {
 
             /* JSON serializer/deserializer to communicate with Syncplay servers */
             implementation(libs.kotlinx.serialization.json)
-
-            /* Network client */
-            implementation(libs.bundles.ktor)
 
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */
             implementation(libs.uriKmp)
@@ -182,11 +226,6 @@ kotlin {
             /* Atomics (used only for logs at the moment) */
             implementation(libs.atomicfu)
 
-            /* KitePlayerVideo, the runtime-choice layer: one coordinate re-exports both
-             * rendering products plus KitePlayer's default assembly, facade and core API.
-             * The in-room renderer toggle rides its path parameter. */
-            implementation(libs.kiteplayer.compose)
-
             /* Coil for async image loading (GIF panel) */
             implementation(libs.bundles.coil)
 
@@ -194,6 +233,28 @@ kotlin {
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.ktorfit)
+        }
+
+        nonWebMain.dependencies {
+            /* Ktor raw TCP sockets, for the Ktor client transport and the iOS server engine.
+             * The artifact does publish a web build, but its sockets are Node's, not a
+             * browser's, so this stays out of commonMain. */
+            implementation(libs.bundles.ktor)
+
+            /* KitePlayerVideo, the runtime-choice layer: one coordinate re-exports both
+             * rendering products plus KitePlayer's default assembly, facade and core API.
+             * The in-room renderer toggle rides its path parameter. Its decoder is FFmpeg
+             * through JNI and cinterop, so there is no web build of it to depend on. */
+            implementation(libs.kiteplayer.compose)
+        }
+
+        getByName("wasmJsMain").dependencies {
+            /* The browser's own fetch(), behind the same Ktor client the app already uses. */
+            implementation(libs.ktor.client.js)
+
+            /* window, document, localStorage, WebSocket. Kotlin/JS gets these from the stdlib;
+             * Kotlin/Wasm moved them into their own artifact. */
+            implementation(libs.kotlinx.browser)
         }
 
         androidMain.dependencies {

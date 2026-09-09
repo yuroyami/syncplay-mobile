@@ -66,9 +66,8 @@ import app.uicomponents.controls.Swatch
 import app.uicomponents.controls.hex
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
+import app.utils.ioDispatcher
 import com.kborowy.colorpicker.KolorPicker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.collectLatest
@@ -124,7 +123,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
     LocalPrefsState.current.value
     val enabled = isEnabled()
     val value by pref.watchAny()
-    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val scope = rememberCoroutineScope { ioDispatcher }
     val density = LocalSettingsDensity.current
     val showDescriptions by Preferences.SHOW_SETTING_DESCRIPTIONS.watchPref()
     val title = cfg.title(strings)
@@ -222,8 +221,8 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                         val resetColor = if (pref.default == CHAT_COLOR_FOLLOWS_THEME) extra.themeRole(palette) else Color(pref.default as Int)
                         InlineColorPage(
                             summary, color,
-                            onColor = { c -> editorScope.launch(Dispatchers.IO) { pref.setAny(c.toArgb()) } },
-                            onReset = { editorScope.launch(Dispatchers.IO) { pref.setAny(pref.default as Int) } },
+                            onColor = { c -> editorScope.launch(ioDispatcher) { pref.setAny(c.toArgb()) } },
+                            onReset = { editorScope.launch(ioDispatcher) { pref.setAny(pref.default as Int) } },
                             resetColor = resetColor,
                         )
                     }

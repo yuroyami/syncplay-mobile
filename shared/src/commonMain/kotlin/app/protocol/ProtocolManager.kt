@@ -17,12 +17,11 @@ import app.protocol.sync.reportablePosition
 import app.protocol.sync.extrapolatedGlobalPositionMs
 import app.protocol.sync.PositionInputs
 import app.utils.SyncClock
+import app.utils.ioDispatcher
 import app.utils.loggy
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +52,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     /**
      * Prevents responding to our own state changes until the server acknowledges them.
-     * Atomic because both [buildStatePacket] (called from `Dispatchers.IO` on every user
+     * Atomic because both [buildStatePacket] (called from `ioDispatcher` on every user
      * action) and the player polling loop can race on the increment-and-send sequence.
      */
     private val _clientIgnFly = atomic(0)
@@ -267,7 +266,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
         val network = viewmodel.networkManager
 
-        listProbeJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        listProbeJob = viewmodel.viewModelScope.launch(ioDispatcher) {
             while (isActive) {
                 delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
                 if (network.state.value == ConnectionState.CONNECTED) {
@@ -279,7 +278,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             }
         }
 
-        watchdogJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        watchdogJob = viewmodel.viewModelScope.launch(ioDispatcher) {
             while (isActive) {
                 delay(WATCHDOG_INTERVAL_SECONDS.seconds)
                 if (network.state.value != ConnectionState.CONNECTED) continue
@@ -316,7 +315,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         // React to engine-reported pause changes via the StateFlow they all update.
         // Suppress the very first emission (the StateFlow's current value at collection
         // time, not a change) and any emission matching our [expectedPaused] expectation.
-        playbackBroadcastJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        playbackBroadcastJob = viewmodel.viewModelScope.launch(ioDispatcher) {
             var seenInitial = false
             viewmodel.playerManager.isNowPlaying.collect { isPlaying ->
                 if (!seenInitial) {

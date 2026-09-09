@@ -8,8 +8,6 @@ import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -56,7 +54,7 @@ private sealed interface LogEntry {
     data class Flush(val done: CompletableDeferred<Unit>) : LogEntry
 }
 
-private val logScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+private val logScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 private val logQueue = Channel<LogEntry>(Channel.UNLIMITED)
 
 /**
@@ -128,7 +126,7 @@ suspend fun flushLogs() {
 /** Every log file, concatenated, with anything still queued written out first. */
 suspend fun readLogsForExport(): ByteArray {
     flushLogs()
-    return withContext(Dispatchers.IO) { logFile }
+    return withContext(ioDispatcher) { logFile }
 }
 
 /** Reads and returns all log file contents as a ByteArray. Prefer [readLogsForExport]. */

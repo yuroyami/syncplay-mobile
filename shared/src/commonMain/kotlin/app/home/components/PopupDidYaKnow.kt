@@ -21,8 +21,7 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.utils.appName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import app.utils.ioDispatcher
 import kotlinx.coroutines.launch
 import syncplaymobile.shared.generated.resources.okay
 
@@ -48,7 +47,7 @@ object PopupDidYaKnow {
             size = ModalSize.Ask,
             actions = {
                 SecondaryAction(strings.tipsDontshowmetips, onClick = {
-                    viewmodel.viewModelScope.launch(Dispatchers.IO) { Preferences.NEVER_SHOW_TIPS.set(true) }
+                    viewmodel.viewModelScope.launch(ioDispatcher) { Preferences.NEVER_SHOW_TIPS.set(true) }
                     state.value = false
                 })
                 SecondaryAction(strings.tipsNext, onClick = { if (tips.isNotEmpty()) tipIndex = (tipIndex + 1) % tips.size })

@@ -7,8 +7,8 @@ import app.Screen
 import app.home.components.UpdateCheckController
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
+import app.utils.ioDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -19,7 +19,7 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /** Saves the configuration when remembering is on, then opens the room; null joins alone. */
     suspend fun joinRoom(joinConfig: JoinConfig?) {
-        withContext(Dispatchers.IO) { joinConfig?.save() }
+        withContext(ioDispatcher) { joinConfig?.save() }
         withContext(Dispatchers.Main) { backStack.add(Screen.Room(joinConfig)) }
     }
 

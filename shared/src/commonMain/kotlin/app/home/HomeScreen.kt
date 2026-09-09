@@ -117,11 +117,11 @@ import app.utils.ExitRoomMode
 import app.utils.Platform
 import app.utils.availablePlatformPlayerEngines
 import app.utils.consumePendingShortcut
+import app.utils.ioDispatcher
 import app.utils.platform
 import app.utils.platformCallback
 import app.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -212,7 +212,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
     LaunchedEffect(null) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             delay(1000)
             // A few first launches, then the tips leave on their own; the popup's own switch
             // silences them for good.
@@ -488,7 +488,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
-                                viewmodel.viewModelScope.launch(Dispatchers.IO) {
+                                viewmodel.viewModelScope.launch(ioDispatcher) {
                                     if (engine.isAvailable) PLAYER_ENGINE.set(engine.name) else viewmodel.snackIt(unavailable)
                                 }
                             },

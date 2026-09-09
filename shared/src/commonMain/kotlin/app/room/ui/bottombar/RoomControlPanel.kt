@@ -56,9 +56,8 @@ import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
+import app.utils.ioDispatcher
 import app.utils.timestampFromMillis
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 /*
@@ -107,7 +106,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
     ) {
         if (viewmodel.player.canChangeAspectRatio) {
             GlyphButton(Icons.Filled.AspectRatio, name = strings.roomAspectRatio, size = Space.glyphLarge) {
-                scope.launch(Dispatchers.IO) {
+                scope.launch(ioDispatcher) {
                     val label = viewmodel.player.switchAspectRatio()
                     if (label.isNotBlank()) viewmodel.dispatchOSD { label }
                 }

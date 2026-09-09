@@ -36,6 +36,8 @@ ktor = "3.5.2"
 koroutines = "1.11.0"
 datetime = "0.8.0"
 atomicfu = "0.33.0"
+# DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
+kotlinxBrowser = "0.5.0"
 coil = "3.6.1"
 # Skiko: Compose 1.12.0-beta02 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
 # Pin to the more recent (Compose's), explicitly forced so neither side regresses
@@ -110,6 +112,9 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+# Browser HTTP engine. One artifact serves both Kotlin/JS and Kotlin/Wasm.
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
 lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" }
 lyricist-processor-xml = { module = "cafe.adriel.lyricist:lyricist-processor-xml", version.ref = "lyricist" }

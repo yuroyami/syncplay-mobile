@@ -23,9 +23,9 @@ import app.player.resolver.extractYtId
 import app.player.resolver.mediaResolver
 import app.player.resolver.urlLooksLikeDirectMedia
 import app.utils.getText
+import app.utils.platformFileAt
 import app.utils.playlistExs
 import app.utils.videoFileKitType
-import io.github.vinceglb.filekit.PlatformFile
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -136,7 +136,7 @@ object CardAddMedia {
                         Feedback.tick(); close()
                         platformCallback.launchSystemFilePicker { uri ->
                             uri ?: return@launchSystemFilePicker
-                            viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(PlatformFile(uri)) }
+                            viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(platformFileAt(uri)) }
                         }
                     }
                 }

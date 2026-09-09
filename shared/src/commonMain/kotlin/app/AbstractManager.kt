@@ -2,8 +2,8 @@ package app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.utils.ioDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -23,5 +23,5 @@ abstract class AbstractManager(val vm: ViewModel) {
 
     /** Returns the job so a caller that has to stop its own work later can hold it. */
     inline fun onIOThread(crossinline block: suspend () -> Unit): Job =
-        vm.viewModelScope.launch(Dispatchers.IO) { block() }
+        vm.viewModelScope.launch(ioDispatcher) { block() }
 }

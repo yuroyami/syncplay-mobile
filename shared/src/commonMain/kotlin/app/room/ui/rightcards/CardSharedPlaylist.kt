@@ -69,6 +69,7 @@ import app.uicomponents.frames.ModalSize
 import app.uicomponents.frames.PanelFrame
 import app.utils.appName
 import app.utils.getText
+import app.utils.ioDispatcher
 import app.utils.playlistExs
 import app.utils.videoFileKitType
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
@@ -78,8 +79,6 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLaunche
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import kotlin.time.Clock
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.delete
@@ -102,13 +101,13 @@ object CardSharedPlaylist {
     @Composable
     fun SharedPlaylistCard(shape: Shape = Radius.panelShape) {
         val viewmodel = LocalRoomViewmodel.current
-        val scope = rememberCoroutineScope { Dispatchers.IO }
+        val scope = rememberCoroutineScope { ioDispatcher }
         val playlist = viewmodel.playlistManager
         val p = palette
 
         val mediaFilePicker = rememberFilePickerLauncher(type = videoFileKitType, mode = FileKitMode.Multiple()) { files ->
             if (files.isNullOrEmpty()) return@rememberFilePickerLauncher
-            viewmodel.viewModelScope.launch(Dispatchers.IO) { playlist.addFiles(files) }
+            viewmodel.viewModelScope.launch(ioDispatcher) { playlist.addFiles(files) }
         }
         val mediaDirectoryPicker = rememberDirectoryPickerLauncher { directory ->
             directory ?: return@rememberDirectoryPickerLauncher

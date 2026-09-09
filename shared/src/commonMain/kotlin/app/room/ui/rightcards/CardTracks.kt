@@ -52,10 +52,9 @@ import app.uicomponents.controls.Text
 import app.uicomponents.controls.VerticalRule
 import app.uicomponents.frames.PanelFrame
 import app.utils.ccExs
+import app.utils.ioDispatcher
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 /**
@@ -79,7 +78,7 @@ object CardTracks {
         // A side panel, not a modal: the picker can launch straight away (FileKit #575 is a modal race).
         val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
             file?.let {
-                scope.launch(Dispatchers.IO) {
+                scope.launch(ioDispatcher) {
                     viewmodel.player.loadExternalSub(it)
                     viewmodel.media?.let { m -> viewmodel.player.analyzeTracks(m) }
                 }

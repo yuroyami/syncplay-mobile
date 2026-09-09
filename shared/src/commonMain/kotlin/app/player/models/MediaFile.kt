@@ -5,11 +5,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import app.i18n.Localization
 import app.utils.getFileName
 import app.utils.getFileSize
+import app.utils.ioDispatcher
 import com.eygraber.uri.Uri
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import syncplaymobile.shared.generated.resources.undefined
 
@@ -37,7 +36,7 @@ data class MediaFile(
     companion object {
         suspend fun PlatformFile.mediaFromFile(): MediaFile {
             val loc = MediaFileLocation.Local(this)
-           return withContext(Dispatchers.IO) {
+           return withContext(ioDispatcher) {
                MediaFile().apply {
                    location = loc
 
@@ -49,7 +48,7 @@ data class MediaFile(
 
         suspend fun String.mediaFromUrl(): MediaFile {
             val loc = MediaFileLocation.Remote(this)
-            return withContext(Dispatchers.IO) {
+            return withContext(ioDispatcher) {
                 MediaFile().apply {
                     location = loc
 

@@ -8,8 +8,9 @@ use `gradlew.bat` in place of `./gradlew`.
 | Location | Responsibility |
 |---|---|
 | [`shared/`](../shared) | Compose UI, room state, protocol, sync decisions and built-in server; platform integrations live in their source sets |
+| [`shared/src/nonWebMain/`](../shared/src/nonWebMain) | Everything the browser cannot run: TCP sockets, the KitePlayer engine, blocking reads |
 | [`shared/src/jvmShared/`](../shared/src/jvmShared) | Netty client and NewPipe resolver shared by Android and desktop |
-| [`androidApp/`](../androidApp), [`iosApp/`](../iosApp), [`desktopApp/`](../desktopApp) | Platform application shells |
+| [`androidApp/`](../androidApp), [`iosApp/`](../iosApp), [`desktopApp/`](../desktopApp), [`webApp/`](../webApp) | Platform application shells |
 | [`buildSrc/`](../buildSrc) | Release tasks, dependency reporting and quality gates |
 
 The networking protocol is a Kotlin port of the official Syncplay client. `RoomViewmodel` owns
@@ -115,6 +116,48 @@ there is no separate native-player download task. Desktop rendering uses the Com
 so the room controls can receive input over video. Add `-PdebugProtocol=true` to a Gradle
 invocation when investigating wire traffic.
 
+## Web
+
+Early scaffolding. The target builds and the interface runs in a browser, but it cannot reach a
+server and cannot play video yet. Treat it as a place to work, not a client to use.
+
+```sh
+./gradlew :webApp:wasmJsBrowserDevelopmentRun
+```
+
+That serves the app on a local development port with hot reload. For a static bundle:
+
+| Purpose | Command | Output directory |
+|---|---|---|
+| Development bundle | `./gradlew :webApp:wasmJsBrowserDevelopmentWebpack` | `webApp/build/dist/wasmJs/developmentExecutable/` |
+| Production bundle | `./gradlew :webApp:wasmJsBrowserDistribution` | `webApp/build/dist/wasmJs/productionExecutable/` |
+
+Compile without bundling while working on shared code:
+
+```sh
+./gradlew :shared:compileKotlinWasmJs
+```
+
+Two gaps are deliberate and both need real work rather than configuration.
+
+- **Nothing to connect to.** A browser tab cannot open a TCP socket, which is what the Syncplay
+  protocol runs on. `WebSocketNetworkManager` sends the same CRLF-delimited JSON over a WebSocket
+  instead, and no Syncplay server answers that today. The two ways forward are a bridge process
+  that translates WebSocket to TCP, or a WebSocket listener added beside the TCP one in this
+  app's own built-in server. The second needs no hosted infrastructure.
+- **Nothing to play with.** All four existing engines decode natively. The web engine wraps the
+  browser's own `<video>` element, and the element is not attached yet: `WebVideoImpl` satisfies
+  the player contract and records state so the rest of the app runs. Attaching it means one
+  element placed through Compose Multiplatform's `HtmlElementView`.
+
+Some features are absent by nature rather than unfinished: hosting a server, the stream-URL
+resolvers, folder scanning for shared playlists, and any filesystem access, so logs, downloaded
+subtitles and resume positions have nowhere to go. Settings do persist, in the browser's
+localStorage.
+
+Compose Multiplatform's web target is Beta while the other three are stable. A failure that shows
+up only in the browser is the target's before it is the app's.
+
 ## Player capabilities
 
 Choose the engine on Home before joining. The room creates that engine once; in-room settings
@@ -146,6 +189,7 @@ Do not infer a bundled decoder's license from the Kotlin wrapper's license.
 ```sh
 ./gradlew :shared:desktopTest :shared:testAndroidHostTest
 ./gradlew qualityGates detekt koverVerify
+./gradlew :shared:compileKotlinWasmJs
 ```
 
 The shared tests run against both desktop and Android host implementations. They cover sync

@@ -40,6 +40,7 @@ enum class Platform(val label: String, val color: Color) {
     Android(label = "Android", color = Color(0xFF32DE84)),
     IOS(label = "iOS", color = Color(0xFFA2AAAD)),
     Desktop(label = "Desktop", color = Color(0xFF5A7CFF)),
+    Web(label = "Web", color = Color(0xFFE8A33D)),
 }
 
 /** The platform this build runs on. */

@@ -19,11 +19,10 @@ import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.room.models.collapsedForChat
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.md5
 import app.utils.platformCallback
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -77,7 +76,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        viewmodel.viewModelScope.launch(ioDispatcher) {
             // A seek never changes pause state (so we don't touch protocol.expectedPaused here),
             // which means the truthful `play` value is the room's already-known intent — NOT a
             // live `player.isPlaying()` probe. On VLCKit 4 that probe returns the stale
@@ -174,7 +173,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             }
         }
 
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        viewmodel.viewModelScope.launch(ioDispatcher) {
             // While a fresh file is still catching up to the room, this advertises the room
             // position rather than the engine's ~0 (mirrors PC getCalculatedPosition).
             val posSec = viewmodel.protocol.reportableStatePositionSec()

@@ -12,6 +12,7 @@ import app.room.RoomViewmodel
 import app.utils.PLAYLIST_MAX_CHARACTERS
 import app.utils.PLAYLIST_MAX_ITEMS
 import app.utils.appName
+import app.utils.ioDispatcher
 import app.utils.playlistIsValid
 import app.utils.generateTimestampMillis
 import app.utils.urlHost
@@ -23,8 +24,6 @@ import io.github.vinceglb.filekit.writeString
 import app.preferences.set
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -396,7 +395,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
         // A peer's selection arrives on the main thread; resolving may walk every remembered
         // media folder, which on a SAF tree is seconds of IO.
-        val resolved = withContext(Dispatchers.IO) { MediaAccessRegistry.resolvePlayableFile(fileName) }
+        val resolved = withContext(ioDispatcher) { MediaAccessRegistry.resolvePlayableFile(fileName) }
         if (resolved != null) {
             lastLoadedSource = fileName
             viewmodel.player.injectVideoFile(resolved)
@@ -419,7 +418,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     fun savePlaylistLocally(destination: PlatformFile) {
         val snapshot = session.sharedPlaylist.toList()
         if (snapshot.isEmpty()) return
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        viewmodel.viewModelScope.launch(ioDispatcher) {
             val saved = runCatching { destination.writeString(snapshot.joinToString("\n")) }.isSuccess
             viewmodel.dispatchOSD {
                 if (saved) Localization.strings.roomSharedPlaylistExported else Localization.strings.roomSharedPlaylistExportFailed
@@ -432,7 +431,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * @param alsoShuffle whether to shuffle the loaded entries before broadcasting.
      */
     fun loadPlaylistLocally(source: PlatformFile, alsoShuffle: Boolean) {
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        viewmodel.viewModelScope.launch(ioDispatcher) {
             val content = runCatching { source.readString() }.getOrNull() ?: return@launch
             val lines = content.split("\n").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
             if (lines.isEmpty()) return@launch

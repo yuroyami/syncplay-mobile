@@ -34,10 +34,9 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.utils.appName
+import app.utils.ioDispatcher
 import com.eygraber.uri.Uri
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 object PopupMediaDirs {
@@ -50,7 +49,7 @@ object PopupMediaDirs {
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
         val p = palette
-        val scope = rememberCoroutineScope { Dispatchers.IO }
+        val scope = rememberCoroutineScope { ioDispatcher }
         val dirs by Preferences.MEDIA_DIRECTORIES.watchPref()
         val askClear = remember { mutableStateOf(false) }
 

@@ -8,10 +8,9 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import app.utils.ioDispatcher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +20,6 @@ import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
-import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
 /**
@@ -35,7 +33,7 @@ lateinit var datastore: DataStore<Preferences>
  * Process-lifetime coroutine scope for DataStore. Never cancelled. Uses [SupervisorJob] so one
  * failed child doesn't tear down the others.
  */
-val datastoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+val datastoreScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
 
 /** True once the first read off disk has landed, so nothing has to block waiting for it. */
@@ -72,18 +70,32 @@ val datastoreStateFlow: StateFlow<Preferences>
         // arrive together on iOS and desktop, which have no splash to hold them apart. Without
         // this both built their own eagerly-collected flow, so the store was read off disk twice
         // and one of the two collectors leaked for the life of the process.
-        cachedStateFlow ?: datastore.data.stateIn(
-            scope = datastoreScope,
-            started = SharingStarted.Eagerly,
-            initialValue = runBlocking {
+        cachedStateFlow ?: run {
+            // Null only in a browser, where blocking the one thread would freeze the page.
+            val upfront = readBlockingOrNull {
                 runCatching { datastore.data.first() }.getOrElse { failure ->
                     preferencesLoadFailure = failure
                     emptyPreferences()
                 }
-            },
-        ).also {
-            cachedStateFlow = it
-            preferencesLoaded.complete(Unit)
+            }
+            datastore.data.stateIn(
+                scope = datastoreScope,
+                started = SharingStarted.Eagerly,
+                initialValue = upfront ?: emptyPreferences(),
+            ).also {
+                cachedStateFlow = it
+                if (upfront != null) {
+                    preferencesLoaded.complete(Unit)
+                } else {
+                    // The gate opens when the first real value lands instead. awaitPreferences()
+                    // is still what holds the first frame, so nothing draws against defaults.
+                    datastoreScope.launch {
+                        runCatching { datastore.data.first() }
+                            .onFailure { failure -> preferencesLoadFailure = failure }
+                        preferencesLoaded.complete(Unit)
+                    }
+                }
+            }
         }
     }
 

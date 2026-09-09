@@ -15,14 +15,13 @@ import app.server.model.ServerConfig.Companion.MAX_ROOM_NAME_LENGTH
 import app.server.model.ServerConfig.Companion.SERVER_STATE_INTERVAL_MS
 import app.server.model.ServerWatcher
 import app.utils.SyncClock
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.playlistIsValid
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +47,7 @@ class SyncplayServer(
      * touched by two threads at once. `limitedParallelism(1)` runs at most one task at a time and
      * establishes the happens-before edges needed for visibility.
      */
-    val serverDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+    val serverDispatcher: CoroutineDispatcher = ioDispatcher.limitedParallelism(1)
 
     /** Runs [block] confined to [serverDispatcher] so it can safely touch shared state. */
     suspend fun <T> onServerThread(block: suspend () -> T): T =

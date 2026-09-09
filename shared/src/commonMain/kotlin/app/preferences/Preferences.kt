@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import app.i18n.strings
+import app.utils.ioDispatcher
 import io.github.vinceglb.filekit.readString
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Face
@@ -94,8 +95,6 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.write
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import app.preferences.settings.SETTINGS_GLOBAL
 import app.theme.Type
@@ -990,7 +989,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val scope = rememberCoroutineScope { ioDispatcher }
                 var result by remember { mutableStateOf<String?>(null) }
                 val done = strings.settingsExportDone
                 val failed = strings.settingsFileError
@@ -1022,7 +1021,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val scope = rememberCoroutineScope { ioDispatcher }
                 var result by remember { mutableStateOf<String?>(null) }
                 val s = strings
                 val picker = rememberFilePickerLauncher(type = FileKitType.File(listOf("json"))) { file ->
@@ -1074,7 +1073,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val scope = rememberCoroutineScope { ioDispatcher }
 
                 val logSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
                     scope.launch {
@@ -1121,7 +1120,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val scope = rememberCoroutineScope { ioDispatcher }
                 val picker = rememberFilePickerLauncher(type = FileKitType.File()) { file ->
                     if (file == null) return@rememberFilePickerLauncher
                     scope.launch {
@@ -1156,7 +1155,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val scope = rememberCoroutineScope { ioDispatcher }
                 val saver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
                     if (file == null) return@rememberFileSaverLauncher
                     scope.launch {

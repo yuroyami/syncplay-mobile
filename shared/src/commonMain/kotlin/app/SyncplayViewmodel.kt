@@ -17,8 +17,7 @@ import app.theme.SaveableTheme
 import app.theme.SaveableTheme.Companion.toTheme
 import app.theme.defaultTheme
 import app.utils.WeakRef
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import app.utils.ioDispatcher
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.SharingStarted.Companion.Lazily
 import kotlinx.coroutines.flow.StateFlow
@@ -71,12 +70,12 @@ class SyncplayViewmodel : ViewModel() {
      * The currently active theme.
      */
     val currentTheme: StateFlow<SaveableTheme> = CURRENT_THEME.flow()
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
         .map { it.toTheme().migrated() }
         .stateIn(scope = viewModelScope, started = Eagerly, defaultTheme)
 
     val customThemes = CUSTOM_THEMES.flow()
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
         .map { stringSet ->
             stringSet.map { it.toTheme() }.toList()
         }
@@ -84,7 +83,7 @@ class SyncplayViewmodel : ViewModel() {
 
 
     fun changeTheme(theme: SaveableTheme) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             CURRENT_THEME.set(theme.asString())
         }
     }
@@ -93,7 +92,7 @@ class SyncplayViewmodel : ViewModel() {
      * @return true if theme is saved, false if it already exists
      */
     suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             val themeJson = theme.asString()
 
             val customThemes = CUSTOM_THEMES.value().toMutableSet()
@@ -108,7 +107,7 @@ class SyncplayViewmodel : ViewModel() {
     }
 
     fun deleteTheme(theme: SaveableTheme) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val themeJson = theme.asString()
             val customThemes = CUSTOM_THEMES.value().toMutableSet()
             customThemes.remove(themeJson)
@@ -125,7 +124,7 @@ class SyncplayViewmodel : ViewModel() {
      * Replaces [old] with [new] in one datastore write, so a fast save cannot lose the theme
      * between a delete and an add. Refused when [new] already exists as another theme.
      */
-    suspend fun replaceTheme(old: SaveableTheme, new: SaveableTheme): Boolean = withContext(Dispatchers.IO) {
+    suspend fun replaceTheme(old: SaveableTheme, new: SaveableTheme): Boolean = withContext(ioDispatcher) {
         val oldJson = old.asString()
         val newJson = new.asString()
         val customThemes = CUSTOM_THEMES.value().toMutableSet()
@@ -139,7 +138,7 @@ class SyncplayViewmodel : ViewModel() {
 
     init {
         //Generate a unique ID for the user and persist, to use it for Klipy API only.
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val userId = USER_ID.value()
             if (userId == null) USER_ID.set(Uuid.generateV7().toHexString())
         }

@@ -10,6 +10,7 @@ import app.server.network.ServerNetworkEngine
 import app.utils.generateTimestampMillis
 import app.utils.getDeviceIpAddress
 import app.utils.httpClient
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.platformCallback
 import io.ktor.client.request.get
@@ -17,8 +18,6 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.atomicfu.atomic
 import kotlin.concurrent.Volatile
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +35,7 @@ enum class ServerStatus {
 
 object ServerHostSession {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
     private const val LOG_CAP = 500
 
     val serverStatus = MutableStateFlow(ServerStatus.Stopped)
@@ -53,7 +52,7 @@ object ServerHostSession {
     /** Log lines for the screen, capped at [LOG_CAP], oldest dropped first. */
     val serverLogs = mutableStateListOf<ServerLogEntry>()
 
-    /* Volatile: [scope] is Dispatchers.IO, so the start coroutine writes these and the stop
+    /* Volatile: [scope] is ioDispatcher, so the start coroutine writes these and the stop
      * coroutine reads them on different threads. */
     @Volatile
     private var server: SyncplayServer? = null

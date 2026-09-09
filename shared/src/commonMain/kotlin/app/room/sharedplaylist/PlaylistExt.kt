@@ -7,7 +7,7 @@ import io.github.vinceglb.filekit.PlatformFile
  * `filename → durable bookmark bytes` for every playable media file found
  * (see [app.utils.isPlayableMediaFilename]).
  *
- * The returned bytes are whatever [PlatformFile.Companion.fromBookmarkData] can later resolve on
+ * The returned bytes are whatever [app.utils.platformFileFromBookmark] can later resolve on
  * the same platform:
  *  - **iOS**: a security-scoped bookmark for each file, created while the directory's scope is
  *    held (so descendants are reachable). Resolvable independently afterwards.

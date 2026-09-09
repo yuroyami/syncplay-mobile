@@ -14,6 +14,7 @@ import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.syncplayJson
 import app.room.RoomViewmodel
+import app.utils.ioDispatcher
 import app.utils.loggy
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
@@ -23,7 +24,6 @@ import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
@@ -206,7 +206,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     private fun armHandshakeDeadline() {
         handshakeDeadlineJob?.cancel()
-        handshakeDeadlineJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        handshakeDeadlineJob = viewmodel.viewModelScope.launch(ioDispatcher) {
             delay(HANDSHAKE_TIMEOUT)
             if (state.value == ConnectionState.CONNECTING) {
                 loggy("Handshake timed out after ${HANDSHAKE_TIMEOUT.inWholeSeconds}s")
@@ -287,7 +287,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
          * reach abortConnection() before the assignment landed: the abort then cancelled and
          * cleared whatever was there before, and this assignment stored a campaign nothing had
          * aborted, which went on retrying a server that had just refused the connection for good. */
-        val campaign = viewmodel.viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+        val campaign = viewmodel.viewModelScope.launch(ioDispatcher, start = CoroutineStart.LAZY) {
             // Drop the stale sync anchor so the first State on the new socket re-anchors the
             // player to the authoritative room position (mirrors PC's _performRetryStateReset).
             // Runs once per reconnect campaign (the isActive guard above prevents re-entry).
@@ -404,7 +404,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 processPacket(line)
             }
         }
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+        viewmodel.viewModelScope.launch(ioDispatcher) {
             for (item in outbound) {
                 try {
                     if (item.generation != generation.value) {

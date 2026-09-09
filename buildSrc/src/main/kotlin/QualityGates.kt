@@ -60,8 +60,11 @@ fun Project.registerQualityGates() {
 private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
     val sources = listOf(
         file("shared/src/commonMain/kotlin/app/protocol"),
+        // Transports live per source set now: Ktor sockets in nonWebMain, WebSocket in wasmJs.
+        file("shared/src/nonWebMain/kotlin/app/protocol"),
+        file("shared/src/wasmJsMain/kotlin/app/protocol"),
         file("shared/src/commonMain/kotlin/app/server/ClientConnection.kt"),
-    )
+    ).filter { it.exists() }
     val root = rootDir
     return tasks.register("checkProtocolThrows") {
         group = GATE_GROUP
@@ -256,12 +259,15 @@ private fun Project.registerDeadResourceGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
     val codeRoots = listOf(
         file("shared/src/commonMain/kotlin"),
+        file("shared/src/nonWebMain/kotlin"),
         file("shared/src/androidMain/kotlin"),
         file("shared/src/desktopMain/kotlin"),
         file("shared/src/iosMain/kotlin"),
+        file("shared/src/wasmJsMain/kotlin"),
         file("androidApp/src/main"),
         file("desktopApp/src/main"),
-    )
+        file("webApp/src/wasmJsMain"),
+    ).filter { it.exists() }
     return tasks.register("checkDeadResources") {
         group = GATE_GROUP
         description = "Reports string and drawable resources nothing references."
@@ -332,9 +338,11 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
     val settingsDir = file("shared/src/commonMain/kotlin/app/preferences/settings")
     val engineDirs = listOf(
         file("shared/src/commonMain/kotlin/app"),
+        file("shared/src/nonWebMain/kotlin/app"),
         file("shared/src/androidMain/kotlin/app"),
         file("shared/src/iosMain/kotlin/app"),
         file("shared/src/desktopMain/kotlin/app"),
+        file("shared/src/wasmJsMain/kotlin/app"),
     ).filter { it.exists() }
     return tasks.register("checkSettingsReachable") {
         group = GATE_GROUP
@@ -385,10 +393,16 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
  * construct, and this is exactly the kind of ordering a well-meaning edit reverses.
  */
 private fun Project.registerDestroyContractGate(): TaskProvider<*> {
+    // Every source set that can hold an engine. nonWebMain and wasmJsMain joined the list when
+    // the web target arrived: KitePlayer moved out of commonMain that day, and without them the
+    // gate would have quietly stopped checking it.
     val engineRoots = listOf(
         file("shared/src/commonMain/kotlin/app/player"),
+        file("shared/src/nonWebMain/kotlin/app/player"),
         file("shared/src/androidMain/kotlin/app/player"),
         file("shared/src/iosMain/kotlin/app/player"),
+        file("shared/src/desktopMain/kotlin/app/player"),
+        file("shared/src/wasmJsMain/kotlin/app/player"),
     ).filter { it.exists() }
     val root = rootDir
     return tasks.register("checkDestroyContract") {

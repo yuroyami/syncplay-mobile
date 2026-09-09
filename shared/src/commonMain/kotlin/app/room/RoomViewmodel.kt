@@ -25,10 +25,9 @@ import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
+import app.utils.ioDispatcher
 import app.utils.loggy
 import kotlin.time.TimeSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -108,7 +107,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         // From landing in the room to the first packet, in the log. A report of a flaky join
         // needs to say whether the wait was the engine, the dial, or the server.
         val roomEnteredAt = TimeSource.Monotonic.markNow()
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val playerInitialization = launch {
                 // The previous room's engine may still be tearing down (mpv's handle is
                 // process-global); never build the next one over it.

@@ -55,9 +55,8 @@ import app.uicomponents.controls.RowValue
 import app.uicomponents.controls.SearchGlyph
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
+import app.utils.ioDispatcher
 import app.utils.localizedLanguageName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -105,7 +104,7 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
     var searchJob by remember { mutableStateOf<Job?>(null) }
     fun runSearch() {
         searchJob?.cancel()
-        searchJob = scope.launch(Dispatchers.IO) {
+        searchJob = scope.launch(ioDispatcher) {
             searching = true
             when (val outcome = SubtitleSearch.search(query, languageCode)) {
                 is SubtitleSearchOutcome.Results -> { results = outcome.items; error = null }
@@ -176,7 +175,7 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
                     // What this subtitle was searched for. A download takes seconds, and the room
                     // can move to the next file inside them.
                     val forMedia = viewmodel.media?.location?.commonUri
-                    scope.launch(Dispatchers.IO) {
+                    scope.launch(ioDispatcher) {
                         when (val outcome = SubtitleSearch.download(result.fileId)) {
                             is SubtitleDownloadResult.Success -> {
                                 if (viewmodel.media?.location?.commonUri != forMedia) {
