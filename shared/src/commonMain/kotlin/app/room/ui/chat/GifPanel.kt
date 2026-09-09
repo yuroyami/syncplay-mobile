@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -34,6 +35,7 @@ import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.Segmented
 import app.uicomponents.controls.Feedback
+import app.uicomponents.controls.FontSizeRange
 import app.theme.Motion
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.semantics.semantics
@@ -105,7 +107,7 @@ internal enum class GifSource { TRENDING, RECENTS, FAVORITES }
  * the two words beside it. One tap flips it, so it needs no more width than the words.
  */
 @Composable
-private fun TypeSwitch(gifs: Boolean, onChange: (gifs: Boolean) -> Unit) {
+private fun TypeSwitch(gifs: Boolean, modifier: Modifier = Modifier, onChange: (gifs: Boolean) -> Unit) {
     val p = palette
     val source = remember { MutableInteractionSource() }
     // The track grows with the text beside it, or two lines of large type clip against it.
@@ -116,7 +118,7 @@ private fun TypeSwitch(gifs: Boolean, onChange: (gifs: Boolean) -> Unit) {
     val stickerLabel = strings.roomGifTabStickers
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = Space.rowCompact)
             .clip(Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Switch) { Feedback.tick(); onChange(!gifs) }
@@ -134,18 +136,15 @@ private fun TypeSwitch(gifs: Boolean, onChange: (gifs: Boolean) -> Unit) {
         }
         RowGap(Space.gapTight)
         Column(Modifier.height(trackHeight), verticalArrangement = Arrangement.SpaceBetween) {
-            Text(gifLabel, style = Type.group, color = if (gifs) p.accent else p.inkDim, maxLines = 1)
-            Text(stickerLabel, style = Type.group, color = if (gifs) p.inkDim else p.accent, maxLines = 1)
+            Text(gifLabel, style = Type.group, color = if (gifs) p.accent else p.inkDim, maxLines = 1, autoSize = FontSizeRange(Type.group.fontSize))
+            Text(stickerLabel, style = Type.group, color = if (gifs) p.inkDim else p.accent, maxLines = 1, autoSize = FontSizeRange(Type.group.fontSize))
         }
     }
 }
 
-/** Under this drawer width the switch and the source row stack; a phone's chat column lands here. */
-private val HEADER_ONE_ROW_MIN = 340.dp
-
 /**
- * The type switch and the source row. One row when there is room for both; stacked when there
- * is not, so the three source labels keep their words instead of shrinking against the hairlines.
+ * Keep all selectors in one row so narrow chat drawers leave more height for the results.
+ * The switch takes at most 30 percent of the width; all labels shrink when space is tight.
  */
 @Composable
 internal fun GifDrawerHeader(
@@ -155,40 +154,28 @@ internal fun GifDrawerHeader(
     onSource: (GifSource) -> Unit,
 ) {
     val sources = GifSource.entries
-    val switch: @Composable () -> Unit = {
-        TypeSwitch(gifs = type == KlipyMediaType.GIF) { gifs -> onType(if (gifs) KlipyMediaType.GIF else KlipyMediaType.STICKER) }
-    }
-    val segmented: @Composable (Modifier) -> Unit = { m ->
-        Segmented(
-            options = listOf(
-                strings.roomGifTabTrending,
-                strings.roomGifTabRecents,
-                strings.roomGifTabFavorites,
-            ),
-            selected = sources.indexOf(source),
-            onSelect = { onSource(sources[it]) },
-            modifier = m,
-            autoSize = true,
-        )
-    }
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        if (maxWidth < HEADER_ONE_ROW_MIN) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-                verticalArrangement = Arrangement.spacedBy(Space.gapTight),
-            ) {
-                switch()
-                segmented(Modifier.fillMaxWidth())
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-                horizontalArrangement = Arrangement.spacedBy(Space.gap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                switch()
-                segmented(Modifier.weight(1f))
-            }
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(Space.gapTight)) {
+        val switchMaxWidth = maxWidth * 0.3f
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TypeSwitch(
+                gifs = type == KlipyMediaType.GIF,
+                modifier = Modifier.widthIn(max = switchMaxWidth),
+            ) { gifs -> onType(if (gifs) KlipyMediaType.GIF else KlipyMediaType.STICKER) }
+            Segmented(
+                options = listOf(
+                    strings.roomGifTabTrending,
+                    strings.roomGifTabRecents,
+                    strings.roomGifTabFavorites,
+                ),
+                selected = sources.indexOf(source),
+                onSelect = { onSource(sources[it]) },
+                modifier = Modifier.weight(1f),
+                autoSize = true,
+            )
         }
     }
 }

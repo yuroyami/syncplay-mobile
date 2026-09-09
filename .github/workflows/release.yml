@@ -266,6 +266,7 @@ jobs:
     runs-on: macos-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      version_code: ${{ steps.version.outputs.version_code }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -286,22 +287,18 @@ jobs:
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOP
 
-      # Stamp the iOS version from the kiteConfig { } block into the Xcode project
-      # BEFORE xcodebuild reads it. KiteConfig only rewrites the pbxproj when
-      # kiteRewriteXcode is run by hand, so a forgotten run would ship the previous
-      # version; stamping here makes CI authoritative regardless of what is committed.
+      # Let KiteConfig stamp its resolved iOS version and rebuild counter before Xcode
+      # reads them. The same model supplies the build number for the AltStore feed.
       - name: Stamp iOS version from SSOT
         id: version
         run: |
-          VERSION=$(grep -E '^[[:space:]]+version[[:space:]]*=[[:space:]]*"' build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract version from the kiteConfig { } block in build.gradle.kts" >&2
+          ./gradlew -q kiteRewriteXcode printReleaseIdentity > identity.env
+          VERSION=$(sed -n 's/^IOS_VERSION=//p' identity.env)
+          VERSION_CODE=$(sed -n 's/^IOS_BUILD_NUMBER=//p' identity.env)
+          if [ -z "$VERSION" ] || [ -z "$VERSION_CODE" ]; then
+            echo "::error::KiteConfig did not provide the iOS release identity" >&2
             exit 1
           fi
-          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + v[0].zfill(3) + v[1].zfill(3) + v[2].zfill(2) + '0')")
-          PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
-          sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $VERSION;/g" "$PBXPROJ"
-          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = $VERSION_CODE;/g" "$PBXPROJ"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "iOS version stamped: $VERSION (build $VERSION_CODE)"
@@ -496,7 +493,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.build-android-full.outputs.version }}
-      VERSION_CODE: ${{ needs.build-android-full.outputs.version_code }}
+      IOS_BUILD_NUMBER: ${{ needs.build-ios.outputs.version_code }}
       IOS_MIN_VERSION: ${{ needs.build-android-full.outputs.ios_min_version }}
     steps:
       # The whole history, because the notes measure the changelog from the previous tag.
@@ -562,7 +559,7 @@ jobs:
           # Both of these were hardcoded empty, so every AltStore entry ever published said
           # nothing about what changed and claimed no minimum iOS version.
           jq --arg ver "$VERSION" \
-             --arg code "$VERSION_CODE" \
+             --arg code "$IOS_BUILD_NUMBER" \
              --arg size "$IPA_SIZE" \
              --arg date "$DATE" \
              --arg notes "$(cat release-notes.md)" \

@@ -95,6 +95,7 @@ fun RoomChatSection(modifier: Modifier) {
                     query = msg,
                     onGifSelected = { gifUrl ->
                         viewmodel.dispatcher.sendMessage(gifUrl)
+                        viewmodel.uiState.msg.value = ""
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
                     modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp),

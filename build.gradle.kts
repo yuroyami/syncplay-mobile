@@ -43,7 +43,10 @@ val localProperties = AppConfig.localProperties(rootDir)
 
 kiteConfig {
     appName = "Synkplay"
-    version = "0.24.0"
+    version("0.24.1") {
+        android { reupload = 1 }
+        ios { reupload = 1 }
+    }
     jvmTarget = 21
 
     id(if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay") {
@@ -207,7 +210,7 @@ kover {
 }
 
 // Build-time gates live in buildSrc/src/main/kotlin/QualityGates.kt.
-registerQualityGates()
+registerQualityGates(kiteConfig.versionCode.get().toString())
 
 /**
  * Release identity, printed once, for anything outside Gradle that needs it.
@@ -218,22 +221,23 @@ registerQualityGates()
  */
 tasks.register("printReleaseIdentity") {
     group = "help"
-    description = "Prints version, versionCode, applicationId and the iOS deployment target as KEY=VALUE."
+    description = "Prints release versions, platform build numbers, applicationId and the iOS deployment target as KEY=VALUE."
     val version = kiteConfig.version.get()
-    val appId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
+    val versionCode = kiteConfig.versionCode.get()
+    val iosVersion = kiteConfig.iosMarketingVersion.get()
+    val iosBuildNumber = kiteConfig.iosBuildNumber.get()
+    val appId = kiteConfig.androidApplicationId.get()
     // Read from the pbxproj, which is what Xcode and the App Store actually see; KiteConfig's
     // ios block only asserts against it.
     val iosMinimum = file("iosApp/iosApp.xcodeproj/project.pbxproj").readLines()
         .firstNotNullOfOrNull { line ->
             Regex("""IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);""").find(line)?.groupValues?.get(1)
         } ?: "14.1"
-    // KiteConfig's scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1).
-    val parts = version.split(".")
-    val versionCode = "1" + parts[0].padStart(3, '0') + parts[1].padStart(3, '0') +
-        parts[2].padStart(2, '0') + "0"
     doLast {
         println("VERSION=$version")
         println("VERSION_CODE=$versionCode")
+        println("IOS_VERSION=$iosVersion")
+        println("IOS_BUILD_NUMBER=$iosBuildNumber")
         println("APPLICATION_ID=$appId")
         println("IOS_MIN_VERSION=$iosMinimum")
     }

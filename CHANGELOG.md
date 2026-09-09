@@ -2,6 +2,18 @@
 
 Written for people who use the app. The full engineering history is in the commit log.
 
+## 0.24.1
+
+- iOS reapplies screen-on protection on every room entry and when the app becomes active, including during KitePlayer playback.
+- Switching from VLC to KitePlayer no longer lets VLC clear the app's screen-on protection.
+- GIF/sticker and source controls now share one row, leaving more room for GIF results.
+- Sending a GIF or sticker clears its search text from the chat input.
+- iOS VLC reads playback time directly from the engine, preventing stalled time notifications from freezing the seek bar and pulling the room backward.
+- VLC foreground and audio recovery no longer overwrite newer play/pause commands.
+- Rapid seeks retain the latest room update, and iOS VLC waits for a replacement file to accept its initial seek.
+- iOS VLC fixes Picture-in-Picture seek completion and restores saved-position offers when watching alone.
+- Changing files cancels unfinished seek gestures so they cannot move the new video.
+
 ## 0.24.0
 
 ### The new look

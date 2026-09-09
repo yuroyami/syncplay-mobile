@@ -6,13 +6,12 @@ import shared
 @main
 struct iOSApp: App {
 
-    /// Runs before the UI: disables the idle timer (screen-on during playback), initializes the
-    /// DataStore, and registers the SwiftNIO / YouTubeKit factory bridges. Each bridge exists
-    /// because the underlying library is pure Swift with no ObjC surface, so Kotlin/Native
-    /// can't instantiate it via cinterop and instead calls a registered factory closure.
-    init() {
-        UIApplication.shared.isIdleTimerDisabled = true
+    @Environment(\.scenePhase) private var scenePhase
 
+    /// Runs before the UI: initializes the DataStore and registers the SwiftNIO / YouTubeKit
+    /// factory bridges. These libraries are pure Swift with no ObjC surface, so Kotlin/Native
+    /// calls a registered factory closure instead of instantiating them through cinterop.
+    init() {
         DatastoreInitKt.initializeDS()
 
         SwiftNioNetworkManagerKt.instantiateSwiftNioNetworkManager = { (roomViewmodel: RoomViewmodel) -> NetworkManager in
@@ -30,6 +29,19 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             SyncplayScreen().ignoresSafeArea(.all)
+                .onAppear {
+                    updateIdleTimer(for: scenePhase)
+                }
         }
+        .onChange(of: scenePhase) { phase in
+            updateIdleTimer(for: phase)
+        }
+    }
+
+    /// Apply after a scene exists and reapply on every activation, rather than only in init.
+    /// This app-wide policy also covers KitePlayer's custom renderer. Reading scenePhase at
+    /// App scope keeps the display awake while any scene is active and releases it otherwise.
+    private func updateIdleTimer(for phase: ScenePhase) {
+        UIApplication.shared.isIdleTimerDisabled = phase == .active
     }
 }

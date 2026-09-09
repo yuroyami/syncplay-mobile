@@ -19,7 +19,7 @@ import javax.inject.Inject
  * `./gradlew` sub-builds. Two processes are mandatory: -PexoOnly flips the whole project
  * model, so there is one flavor per invocation. The full APK and the AAB share one
  * invocation now that there are no ABI splits (that was what kept them apart, AGP
- * issuetracker 402800800). Full rationale: CLAUDE.md "Release artifacts".
+ * issuetracker 402800800).
  */
 abstract class AndroidReleaseAllTask @Inject constructor(
     private val execOps: ExecOperations,

@@ -18,9 +18,9 @@ the room managers; the sync decision is a pure function in `app.protocol.sync.Sy
 Netty handles client TCP/TLS on Android and desktop, SwiftNIO on iOS. The shared Ktor transport
 is a fallback without opportunistic TLS; the built-in server does not offer TLS.
 
-Read [`CLAUDE.md`](../CLAUDE.md) for the full architecture and [`AGENTS.md`](../AGENTS.md) for
-the repository's documentation rules. The maintainer's local `MASTER_LEDGER.md`, when present,
-records open defects and owner decisions.
+Read [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the ground rules, the gate commands, the
+source-set rules and the traps worth knowing before you change anything. Open work lives in
+the issue tracker.
 
 ## Toolchain
 
@@ -201,7 +201,7 @@ Desktop design tests also render real composables; their images appear in
 `qualityGates` checks source and resource invariants; `detekt` uses the repository's focused
 configuration. `koverVerify` enforces the protocol/server coverage floor in the root build file.
 Keep that floor as a ratchet. When dependency versions change, run `./gradlew updateDocVersions`
-to update the generated table in `CLAUDE.md`.
+to refresh the generated version tables.
 
 Host tests do not prove native decoder behavior, PiP, background/interruption handling,
 lock-screen controls, television remote navigation, or two-device synchronization. Use a real

@@ -26,7 +26,7 @@ private fun org.gradle.api.Task.alwaysRun() {
 }
 
 /** Every gate, in one place, hung off the module that owns the code. */
-fun Project.registerQualityGates() {
+fun Project.registerQualityGates(androidVersionCode: String) {
     val gates = listOf(
         registerProtocolThrowsGate(),
         registerStringResourceGate(),
@@ -35,7 +35,7 @@ fun Project.registerQualityGates() {
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
-        registerStoreMetadataGate(),
+        registerStoreMetadataGate(androidVersionCode),
     ) + registerDocVersionGates().take(1)
     tasks.register("qualityGates") {
         group = GATE_GROUP
@@ -456,9 +456,8 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
  * Also checks that a changelog exists for the version being built, since a release with no notes
  * is one of the two things standing between this app and a tagged version.
  */
-private fun Project.registerStoreMetadataGate(): TaskProvider<*> {
+private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider<*> {
     val metadata = file("fastlane/metadata/android/en-US")
-    val versionCode = releaseVersionCode()
     return tasks.register("checkStoreMetadata") {
         group = GATE_GROUP
         description = "Fails if Play store copy is over the limit or the version has no changelog."
@@ -496,21 +495,11 @@ private fun Project.registerStoreMetadataGate(): TaskProvider<*> {
     }
 }
 
-/** KiteConfig's version code scheme: 1 | major(3) | minor(3) | patch(2) | rebuild(1). */
-private fun Project.releaseVersionCode(): String {
-    val version = Regex("""\n\s+version\s*=\s*"([^"]+)"""")
-        .find(file("build.gradle.kts").readText())?.groupValues?.get(1)
-        ?: error("no version in the kiteConfig block")
-    val parts = version.split(".")
-    return "1" + parts[0].padStart(3, '0') + parts[1].padStart(3, '0') +
-        parts[2].padStart(2, '0') + "0"
-}
-
 /**
  * Keeps the version numbers written in the docs honest.
  *
- * The dependency table in CLAUDE.md and the toolchain line beside it were typed by hand, which
- * means they were right on the day they were written and drifting ever since. This reads
+ * Dependency tables in the documentation were typed by hand, which means they were right on
+ * the day they were written and drifting ever since. This reads
  * `gradle/libs.versions.toml` and rewrites the numbers between the markers.
  *
  * `checkDocVersions` fails when they have drifted; `updateDocVersions` fixes them.
@@ -583,6 +572,9 @@ private fun Project.registerDocVersionGates(): List<TaskProvider<*>> {
     val check = tasks.register("checkDocVersions") {
         group = GATE_GROUP
         description = "Fails when the version table in CLAUDE.md has drifted from the catalog."
+        // The maintainer may remove the optional architecture document. Keep checking
+        // its version block whenever it exists without making its removal break builds.
+        onlyIf { doc.isFile }
         alwaysRun()
         doLast {
             val text = doc.readText()

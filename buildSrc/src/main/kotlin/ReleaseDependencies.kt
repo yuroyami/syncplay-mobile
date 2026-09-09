@@ -6,7 +6,7 @@ import java.io.File
 /**
  * Every version number the build pins, read once from where each one actually lives: the
  * version catalog, gradle.properties, the Gradle wrapper, the Swift package lock and the
- * CocoaPods lock. The CLAUDE.md version table and the release page's
+ * CocoaPods lock. The documentation version tables and the release page's
  * dependency table both come from here, so the two cannot disagree.
  */
 internal class ToolVersions(root: File) {

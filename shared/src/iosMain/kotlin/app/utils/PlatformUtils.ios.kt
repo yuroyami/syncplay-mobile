@@ -244,6 +244,8 @@ private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
 @Composable
 actual fun EnterRoomMode(portrait: Boolean) {
     LaunchedEffect(portrait) {
+        // Reassert on every room entry, even when the app never left the foreground.
+        UIApplication.sharedApplication.idleTimerDisabled = true
         applyOrientationMask(
             if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
         )
