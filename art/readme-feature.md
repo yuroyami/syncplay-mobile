@@ -1,6 +1,6 @@
 # README feature graphic
 
-[readme-feature.webp](readme-feature.webp) is the 1600 × 800 README banner (107,450 bytes).
+[readme-feature.webp](readme-feature.webp) is the 1600 × 800 README banner.
 Its three screens show the actual Android portrait, Android landscape and macOS captures
 in [screenshots/](screenshots/README.md). The macOS image was supplied by the maintainer.
 
@@ -10,26 +10,47 @@ in [screenshots/](screenshots/README.md). The macOS image was supplied by the ma
 bash art/render-readme-feature.sh
 ```
 
-Requires ImageMagick. The script inserts the original PNG captures into
-[readme-feature-frame.webp](readme-feature-frame.webp), scales them proportionally, adds black
-padding where needed, clips them inside the bezels, then exports WebP at quality 92.
-The full screenshots remain available separately in the README.
+Requires ImageMagick. The script starts with [readme-feature-background.webp](readme-feature-background.webp),
+resizes each original PNG proportionally, then builds its bezel from the resulting screen
+dimensions. There is no contain box, added padding, crop-to-fill, or stretching. Only the
+screen corners are rounded. The original captures, including the macOS title bar and any
+black bars already present in the captured player, remain unchanged.
 
-The surrounding frame artwork was revised with the **built-in image-generation tool** on
-2026-09-07. Its generated screen contents were cleared; the final screens are composed from
-the original captures by the script, so no generated interface labels or controls are used.
-The separate [Play Store artwork](play-store/README.md) uses a simpler design.
+The working canvas is 1774 × 887. Positions refer to the top-left of each screen:
 
-## Frame revision prompt
+| Capture | Screen position | Resized screen | Bezel per side | Outer frame |
+|---|---|---|---|---|
+| macOS | 845, 139 | 744 × 427 | 12 px | 768 × 451 |
+| Android landscape | 650, 619 | 420 × 189 | 10 px | 440 × 209 |
+| Android portrait | 1552, 369 | 189 × 420 | 10 px | 209 × 440 |
 
-Reference 1 was the previous README banner. References 2–4 were
-`android-portrait.png`, `android-landscape.png` and `macos.png`, respectively.
-The tool output supplied the surrounding frame layout; the rebuild step above supplies the
-final screen pixels.
+Both phones use the same scale and 20:9 display proportions, rotated between orientations.
+The desktop height is rounded to the nearest pixel. Screen widths, positions, bezel widths,
+and corner radii are set in the `prepare_device` calls; heights are always calculated from
+the screenshots. A bounds check rejects any device that would extend beyond the canvas.
 
-Use case: compositing.
-Edit target: reference image 1, the existing Synkplay README banner.
-Supporting inserts: reference image 2 is the real Android portrait Home screenshot; reference image 3 is the real Android landscape room screenshot; reference image 4 is the user's real macOS desktop room screenshot.
-Change only the screen contents and the minimum frame geometry needed to fit these real screenshots. Preserve the existing banner background, logo, exact typography, all copy, colors, framing style, lighting and composition. Keep the result a 2:1 landscape banner. The left side must remain visually unchanged: Synkplay; Your video. Everyone in sync.; Watch together on phones and computers.
-Compositing assignment: put reference image 4 into the largest landscape frame at upper right, reference image 3 into the small landscape frame below it, and reference image 2 into the portrait phone on the far right. Remove every trace of the previous paper-boat and moon illustration from inside the screens. Fit each entire actual screenshot without stretching. The desktop screenshot includes the real macOS title bar; retain it. Adjust the phone portrait frame to a taller/narrower proportion so the full Home screenshot fits. Adjust the small landscape frame to the actual wide phone ratio. Keep the three screens and connecting line on the right side, away from the copy.
-Critical invariants: These are real app screenshots, not prompts to redraw the interface. Faithfully composite their actual image content including its real video frame and exact app controls. Do not invent, retouch, replace, omit or restyle app controls, labels or typography. Do not turn the screenshots into illustrations. No fake UI, no replacement media artwork, no additional text or device frames. Preserve screenshot detail as well as the target resolution allows. Output only the revised finished banner.
+The script exports the finished banner at WebP quality 92 and also rebuilds
+[readme-feature-frame.webp](readme-feature-frame.webp), an empty-frame preview. That preview
+is an output, not a source with fixed screen openings. PNG intermediates and the lossless
+WebP background avoid repeated compression during rebuilding.
+
+The full screenshots remain available separately in the README. The separate
+[Play Store artwork](play-store/README.md) uses a simpler design.
+
+## Background repair, 2026-09-11
+
+The **built-in image-generation tool** removed the old mismatched device frames and connecting
+lines from the previous empty-frame artwork, reconstructing the plum background while
+preserving the branding and copy. The prompt below produced the background only. The rebuild
+script supplies all final device geometry, connectors, and actual screenshot pixels; no
+generated screen content or interface labels are used.
+
+### Prompt
+
+Use case: precise-object-edit.
+Asset type: existing Synkplay README banner, background repair for accurate device-frame compositing.
+Input image 1 is the edit target, the existing 1774 by 887 banner with three EMPTY black device frames.
+Primary request: Remove all three device frames and their black interiors, shadows, highlights, AND the thin luminous connecting lines and dots below them. Seamlessly reconstruct the existing dark plum abstract wing-texture background behind those removed objects. The result must be this same banner's background and existing left-hand branding/copy only, with a clean empty right-hand area ready for separately composited real screenshots.
+Critical invariants: preserve the image's exact 2:1 aspect ratio, original composition, color palette, textured purple wing shapes, subtle existing lighting, logo, typography, left-hand copy and their positions. Do not shift or resize anything that is being retained.
+Keep text verbatim: "Synkplay"; "Your video."; "Everyone in sync."; "Watch together on phones and computers."
+Do not add any screens, bezels, frames, devices, stands, UI, symbols, connector lines, dots, text or decoration. Reconstruct only the background where the removed devices and lines were. Maintain the original visual identity and low-key dark plum look. Output one finished seamless 2:1 banner background at high resolution.
