@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="art/readme-feature.webp" width="960" alt="Synkplay banner with Android and macOS screenshots: watch together on phones and computers. Available on Android and iOS through Google Play and the App Store. Compatible with original official Syncplay for PC: syncplay.pl and github.com/Syncplay/syncplay.">
+  <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner with Android and macOS screenshots: watch together on phones and computers. Available on Android and iOS through Google Play and the App Store. Compatible with original official Syncplay for PC: syncplay.pl and github.com/Syncplay/syncplay.">
 </p>
 
 <p align="center">

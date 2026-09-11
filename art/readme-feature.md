@@ -11,6 +11,8 @@ bash art/render-readme-feature.sh
 ```
 
 Requires ImageMagick and librsvg's `rsvg-convert`; the typeface is bundled in the repository.
+The renderer also updates the README banner URL with a version derived from the finished
+image's pixels, so changed artwork gets a fresh URL instead of reusing a cached image.
 The script starts with [readme-feature-background.webp](readme-feature-background.webp),
 resizes each original PNG proportionally, then builds its bezel from the resulting screen
 dimensions. There is no contain box, added padding, crop-to-fill, or stretching. Only the

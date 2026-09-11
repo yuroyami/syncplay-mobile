@@ -112,3 +112,13 @@ magick "$render_tmp/frame.png" -colorspace sRGB -strip -quality 92 \
   -define webp:method=6 "$art_dir/readme-feature-frame.webp"
 magick "$render_tmp/banner.png" -filter Lanczos -resize 1600x800 \
   -colorspace sRGB -strip -quality 92 -define webp:method=6 "$art_dir/readme-feature.webp"
+
+# Give changed artwork a new README URL so cached images cannot hide an update.
+banner_version="$(magick identify -format '%#' "$art_dir/readme-feature.webp")"
+banner_version="${banner_version:0:12}"
+awk -v version="$banner_version" '{
+  sub(/src="art\/readme-feature\.webp(\?v=[^"]*)?"/,
+      "src=\"art/readme-feature.webp?v=" version "\"")
+  print
+}' "$art_dir/../README.MD" > "$render_tmp/README.MD"
+cat "$render_tmp/README.MD" > "$art_dir/../README.MD"
