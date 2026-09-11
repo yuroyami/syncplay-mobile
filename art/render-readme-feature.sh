@@ -7,7 +7,23 @@ render_tmp="$(mktemp -d "${TMPDIR:-/tmp}/synkplay-hero.XXXXXX")"
 trap 'rm -rf -- "$render_tmp"' EXIT
 
 canvas_size=1774x887
-magick "$art_dir/readme-feature-background.webp" "$render_tmp/banner.png"
+bash "$art_dir/render-readme-availability.sh"
+# Keep the official logo's original colors and shape; only resize its actual pixels.
+magick "$art_dir/third-party/syncplay/logo.png" -filter Lanczos -resize 44x44 \
+  "$render_tmp/syncplay-logo.png"
+# Reuse the README's store artwork at equal sizes, preserving its 10:3 proportions.
+for badge in google-play app-store; do
+  magick "$art_dir/badges/$badge.png" -filter Lanczos -resize 240x \
+    "$render_tmp/$badge.png"
+done
+magick "$art_dir/readme-feature-background.webp" "$art_dir/readme-feature-availability.webp" \
+  -geometry +72+596 -compose Over -composite \
+  "$render_tmp/google-play.png" -geometry +84+654 -compose Over -composite \
+  "$render_tmp/app-store.png" -geometry +348+654 -compose Over -composite \
+  "$art_dir/readme-feature-footer.webp" \
+  -geometry +129+752 -compose Over -composite \
+  "$render_tmp/syncplay-logo.png" -geometry +84+764 -compose Over -composite \
+  "$render_tmp/banner.png"
 cp "$render_tmp/banner.png" "$render_tmp/frame.png"
 
 # Sizes and positions below describe the screen, not an independently sized box.
