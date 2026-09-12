@@ -157,6 +157,8 @@ if (exoOnly) {
 }
 
 androidComponents {
+    // KiteConfig 1.0 reapplies the major SDK during finalization, resetting the minor version.
+    finalizeDsl { it.compileSdkMinor = providers.gradleProperty("android.compileSdkMinor").get().toInt() }
     onVariants { variant ->
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {

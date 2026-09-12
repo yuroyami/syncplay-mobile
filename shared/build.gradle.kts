@@ -1,3 +1,4 @@
+import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension
 import io.github.yuroyami.kiteconfig.kiteConfig
 
 plugins {
@@ -13,6 +14,17 @@ plugins {
     alias(libs.plugins.ktorfit)
     // Coverage, measured on the desktop test run; the report is configured in the root build.
     alias(libs.plugins.kover)
+}
+
+// Apply the minor SDK after KiteConfig 1.0 has finalized the major version.
+extensions.configure<KotlinMultiplatformAndroidComponentsExtension> {
+    finalizeDsl { dsl ->
+        dsl.compileSdk {
+            version = release(kiteConfig.compileSdk.get()) {
+                minorApiLevel = providers.gradleProperty("android.compileSdkMinor").get().toInt()
+            }
+        }
+    }
 }
 
 // CocoaPods records the custom header path in its generated definition, but does not
@@ -252,6 +264,7 @@ kotlin {
              * The in-room renderer toggle rides its path parameter. Its decoder is FFmpeg
              * through JNI and cinterop, so there is no web build of it to depend on. */
             implementation(libs.kiteplayer.compose)
+            implementation(libs.kiteplayer.audioviz)
         }
 
         getByName("wasmJsMain").dependencies {

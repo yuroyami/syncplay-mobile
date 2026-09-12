@@ -1,12 +1,15 @@
 package app.player.kite
 
 import androidx.annotation.UiThread
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import app.i18n.Localization
 import app.player.PlayerImpl
@@ -16,6 +19,7 @@ import app.player.models.MediaFileLocation
 import app.player.models.Track
 import app.player.models.TrackTrait
 import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
+import app.preferences.Preferences.KITE_AUDIO_VIZ
 import app.preferences.Preferences.KITE_DEBUG_STATS
 import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
 import app.preferences.Preferences.KITE_EQ_CONTRAST
@@ -33,6 +37,9 @@ import app.preferences.settings.SettingCategory
 import app.preferences.settings.withControl
 import app.preferences.value
 import app.preferences.watchPref
+import io.github.yuroyami.kiteplayer.audioviz.KiteAudioViz
+import io.github.yuroyami.kiteplayer.audioviz.isAudioOnly
+import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
 import app.room.OSDCategory
@@ -65,6 +72,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -343,6 +352,7 @@ internal class KiteImpl(
         // Runtime: flipping it recomposes VideoPlayer, which swaps the presentation over the
         // running player (KitePlayerVideo path change; the engine keeps position and play state).
         +KITE_COMPOSE_RENDERER
+        +KITE_AUDIO_VIZ
         // Runtime settings: the callbacks reach the live engine immediately. Subtitle size is
         // the shared player setting; a second slider here fought it on every file load.
         +KITE_SUBTITLE_DELAY_MS.withControl(PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
@@ -680,16 +690,32 @@ internal class KiteImpl(
         } else {
             KiteRenderPath.NativeView
         }
-        KitePlayerVideo(
-            player = composedKite,
-            modifier = modifier,
-            path = path,
-            onRendererAttached = { presented ->
-                if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
-                    onPlayerReady()
+        val audioVizEnabled by KITE_AUDIO_VIZ.watchPref()
+        Box(modifier) {
+            // Keep output attached across music/video changes and while the visualizer is disabled.
+            KitePlayerVideo(
+                player = composedKite,
+                modifier = Modifier.fillMaxSize(),
+                path = path,
+                onRendererAttached = { presented ->
+                    if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
+                        onPlayerReady()
+                    }
+                },
+            )
+            if (audioVizEnabled) composedKite?.let { player ->
+                val audioOnly by remember(player) {
+                    player.state.map { it.isAudioOnly }.distinctUntilChanged()
+                }.collectAsState(initial = player.state.value.isAudioOnly)
+                // Listen before media opens so short clips retain their first audio buffers.
+                // Disabling the preference detaches the tap as well as removing the drawing.
+                val viz = rememberAudioVizState(player)
+                LaunchedEffect(viz) { viz.directed = true }
+                if (audioOnly) {
+                    KiteAudioViz(viz, Modifier.fillMaxSize())
                 }
-            },
-        )
+            }
+        }
     }
 
     /** KitePlayer's gain stage stops at unity: above it is refused, not clipped, so there is no gain rung. */

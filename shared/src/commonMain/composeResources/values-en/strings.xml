@@ -380,6 +380,8 @@
     <string name="uisetting_resetdefault_title">Reset default settings</string>
     <string name="uisetting_resetdefault_summary">Reset the settings on this screen.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
+    <string name="uisetting_kite_audio_viz_title">Audio visualizer</string>
+    <string name="uisetting_kite_audio_viz_summary">Show animated visuals for music and other audio-only media.</string>
     <string name="uisetting_kite_compose_renderer_title">Compose renderer</string>
     <string name="uisetting_kite_compose_renderer_summary">Draws video as Compose content. Switches live.</string>
     <string name="uisetting_kite_hw_title">Hardware acceleration</string>

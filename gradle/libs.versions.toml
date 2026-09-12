@@ -59,7 +59,7 @@ newpipeExtractor = "v0.26.5"
 
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
-kiteplayer = "0.0.23"
+kiteplayer = "0.0.24"
 # libmpv for Android, prebuilt by libmpvKt. Resolved from https://yuroyami.github.io/maven (declared
 # in settings.gradle.kts); -PuseMavenLocal=true overrides it while a new version is published
 # locally but not yet served there.
@@ -150,6 +150,7 @@ netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
 netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
+kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }
 libmpvkt = { module = "io.github.yuroyami:libmpvkt", version.ref = "libmpvkt" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 

@@ -752,6 +752,11 @@ object Preferences {
     val USER_INFO_VIEW = Pref("pref_inroom_user_info_view", "standard")
 
     /** ------------ KitePlayer Settings -------------*/
+    val KITE_AUDIO_VIZ = Pref("pref_kite_audio_viz", true) {
+        title = { it.uisettingKiteAudioVizTitle }
+        summary = { it.uisettingKiteAudioVizSummary }
+        icon = Icons.Filled.MusicNote
+    }
     val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
         title = { it.uisettingKiteComposeRendererTitle }
         summary = { it.uisettingKiteComposeRendererSummary }
