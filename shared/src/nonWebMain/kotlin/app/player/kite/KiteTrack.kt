@@ -21,4 +21,7 @@ class KiteTrack(
     val trackId: TrackId,
     override val language: String? = null,
     override val trait: TrackTrait? = null,
+    override val channelCount: Int? = null,
+    override val codec: String? = null,
+    override val videoDescription: String? = null,
 ) : Track()

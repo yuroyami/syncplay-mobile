@@ -21,6 +21,10 @@ class ExoTrack(
      * guessed from the track name.
      */
     override val language: String? get() = format.language
+    override val channelCount: Int? get() = format.channelCount.takeIf { it > 0 }
+    override val codec: String? get() = format.sampleMimeType?.substringAfter('/')
+    override val videoDescription: String? get() =
+        if (format.width > 0 && format.height > 0) "${format.width} × ${format.height}" else null
 
     override val trait: TrackTrait?
         get() = when {

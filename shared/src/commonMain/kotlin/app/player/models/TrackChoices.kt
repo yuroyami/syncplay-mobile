@@ -29,16 +29,19 @@ class TrackChoices {
 
     var audio: TrackChoice? = null
     var subtitle: TrackChoice? = null
+    var video: TrackChoice? = null
 
     operator fun get(type: TrackType): TrackChoice? = when (type) {
         TrackType.AUDIO -> audio
         TrackType.SUBTITLE -> subtitle
+        TrackType.VIDEO -> video
     }
 
     operator fun set(type: TrackType, choice: TrackChoice?) {
         when (type) {
             TrackType.AUDIO -> audio = choice
             TrackType.SUBTITLE -> subtitle = choice
+            TrackType.VIDEO -> video = choice
         }
     }
 

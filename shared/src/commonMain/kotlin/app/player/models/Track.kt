@@ -31,6 +31,10 @@ abstract class Track {
      * own native preference handling instead.
      */
     open val language: String? get() = null
+    open val channelCount: Int? get() = null
+    open val channelLayout: String? get() = null
+    open val codec: String? get() = null
+    open val videoDescription: String? get() = null
 }
 
 /** The kinds of track a platform marks as serving a purpose beyond a plain language choice. */

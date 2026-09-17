@@ -69,7 +69,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     val playerManager: PlayerManager = viewmodel.playerManager
 
     enum class TrackType {
-        AUDIO, SUBTITLE
+        AUDIO, SUBTITLE, VIDEO
     }
 
     protected val playerSupervisorJob = SupervisorJob()
@@ -80,6 +80,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     open val canChangeAspectRatio: Boolean = true
     abstract val supportsChapters: Boolean
     open val supportsPictureInPicture: Boolean = true
+    open val supportsVideoTrackSelection: Boolean = false
+    open val supportsAudioVisualization: Boolean = false
 
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true
@@ -284,19 +286,13 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     loggy("External subtitle load failed: ${e.stackTraceToString()}")
                     false
                 }
-                viewmodel.dispatchOSD {
-                    if (loaded) Localization.strings.roomSelectedSub(filename)
-                    else Localization.strings.roomSelectedSubError
-                }
+                if (loaded) viewmodel.dispatchOSD { Localization.strings.roomSelectedSub(filename) }
+                else viewmodel.dispatchWarning { Localization.strings.roomSelectedSubError }
             } else {
-                viewmodel.dispatchOSD {
-                    Localization.strings.roomSelectedSubError
-                }
+                viewmodel.dispatchWarning { Localization.strings.roomSelectedSubError }
             }
         } else {
-            viewmodel.dispatchOSD {
-                Localization.strings.roomSubErrorLoadVidFirst
-            }
+            viewmodel.dispatchWarning { Localization.strings.roomSubErrorLoadVidFirst }
         }
     }
 
@@ -413,9 +409,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     throw cancellation
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    viewmodel.dispatchOSD {
-                        Localization.strings.roomMsgProblemLoadingFile
-                    }
+                    viewmodel.dispatchWarning { Localization.strings.roomMsgProblemLoadingFile }
                 }
             }
         }

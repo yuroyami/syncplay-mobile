@@ -1,6 +1,8 @@
 package app.player.kite
 
 import androidx.annotation.UiThread
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -19,7 +21,7 @@ import app.player.models.MediaFileLocation
 import app.player.models.Track
 import app.player.models.TrackTrait
 import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
-import app.preferences.Preferences.KITE_AUDIO_VIZ
+import app.preferences.Preferences.AUDIO_VISUALIZATION
 import app.preferences.Preferences.KITE_DEBUG_STATS
 import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
 import app.preferences.Preferences.KITE_EQ_CONTRAST
@@ -38,7 +40,7 @@ import app.preferences.settings.withControl
 import app.preferences.value
 import app.preferences.watchPref
 import io.github.yuroyami.kiteplayer.audioviz.KiteAudioViz
-import io.github.yuroyami.kiteplayer.audioviz.isAudioOnly
+import app.player.models.shouldShowAudioVisualization
 import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
@@ -148,6 +150,8 @@ internal class KiteImpl(
     override val trackerJobInterval: Duration = 250.milliseconds
 
     /** Chapters ride the snapshot since KitePlayer 0.0.5, so the UI may offer chapter jumps. */
+    override val supportsVideoTrackSelection = true
+    override val supportsAudioVisualization = true
     override val supportsChapters: Boolean = true
 
     /** Real since KitePlayer 0.0.5: a pitch-preserving tempo stage within 0.25x to 4x. */
@@ -352,7 +356,6 @@ internal class KiteImpl(
         // Runtime: flipping it recomposes VideoPlayer, which swaps the presentation over the
         // running player (KitePlayerVideo path change; the engine keeps position and play state).
         +KITE_COMPOSE_RENDERER
-        +KITE_AUDIO_VIZ
         // Runtime settings: the callbacks reach the live engine immediately. Subtitle size is
         // the shared player setting; a second slider here fought it on every file load.
         +KITE_SUBTITLE_DELAY_MS.withControl(PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
@@ -419,29 +422,44 @@ internal class KiteImpl(
         val tracks = kite?.state?.value?.tracks ?: return
         mediafile.tracks.clear()
 
+        tracks.video.filterNot { it.isCoverArt }.forEachIndexed { position, info ->
+            mediafile.tracks.add(KiteTrack(
+                name = info.title ?: info.codec,
+                type = TrackType.VIDEO,
+                index = position,
+                selected = info.id == tracks.selectedVideo,
+                trackId = info.id,
+                codec = info.codec,
+                videoDescription = info.videoSize?.let { "${it.width} × ${it.height}" },
+            ))
+        }
         tracks.audio.forEachIndexed { position, info ->
             mediafile.tracks.add(
                 KiteTrack(
-                    name = info.label,
+                    name = info.title?.takeIf { it.isNotBlank() } ?: info.language ?: info.codec,
                     type = TrackType.AUDIO,
                     index = position,
                     selected = info.id == tracks.selectedAudio,
                     trackId = info.id,
                     language = info.language,
                     trait = info.traitOrNull(),
+                    channelCount = info.channels,
+                    codec = info.codec,
                 ),
             )
         }
         tracks.subtitles.forEachIndexed { position, info ->
             mediafile.tracks.add(
                 KiteTrack(
-                    name = info.label,
+                    name = info.title?.takeIf { it.isNotBlank() } ?: info.language ?: info.codec,
                     type = TrackType.SUBTITLE,
                     index = position,
                     selected = info.id == tracks.selectedSubtitle,
                     trackId = info.id,
                     language = info.language,
                     trait = info.traitOrNull(),
+                    channelCount = info.channels,
+                    codec = info.codec,
                 ),
             )
         }
@@ -459,6 +477,7 @@ internal class KiteImpl(
     override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
         val kind = when (type) {
+            TrackType.VIDEO -> TrackKind.Video
             TrackType.AUDIO -> TrackKind.Audio
             TrackType.SUBTITLE -> TrackKind.Subtitle
         }
@@ -690,7 +709,7 @@ internal class KiteImpl(
         } else {
             KiteRenderPath.NativeView
         }
-        val audioVizEnabled by KITE_AUDIO_VIZ.watchPref()
+        val audioVizEnabled by AUDIO_VISUALIZATION.watchPref()
         Box(modifier) {
             // Keep output attached across music/video changes and while the visualizer is disabled.
             KitePlayerVideo(
@@ -703,15 +722,29 @@ internal class KiteImpl(
                     }
                 },
             )
+            composedKite?.let { player ->
+                val videoDisabled by remember(player) {
+                    player.state.map { it.tracks.video.isNotEmpty() && it.tracks.selectedVideo == null }
+                        .distinctUntilChanged()
+                }.collectAsState(initial = false)
+                // A retained renderer frame must not remain visible after the video track is disabled.
+                if (videoDisabled) Box(Modifier.fillMaxSize().background(Color.Black))
+            }
             if (audioVizEnabled) composedKite?.let { player ->
-                val audioOnly by remember(player) {
-                    player.state.map { it.isAudioOnly }.distinctUntilChanged()
-                }.collectAsState(initial = player.state.value.isAudioOnly)
+                val showVisualization by remember(player) {
+                    player.state.map { snapshot ->
+                        shouldShowAudioVisualization(
+                            enabled = true,
+                            audioSelected = snapshot.tracks.selectedAudio != null,
+                            videoSelected = snapshot.tracks.video.any { !it.isCoverArt && it.id == snapshot.tracks.selectedVideo },
+                        )
+                    }.distinctUntilChanged()
+                }.collectAsState(initial = false)
                 // Listen before media opens so short clips retain their first audio buffers.
                 // Disabling the preference detaches the tap as well as removing the drawing.
                 val viz = rememberAudioVizState(player)
                 LaunchedEffect(viz) { viz.directed = true }
-                if (audioOnly) {
+                if (showVisualization) {
                     KiteAudioViz(viz, Modifier.fillMaxSize())
                 }
             }

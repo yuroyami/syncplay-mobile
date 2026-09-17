@@ -42,6 +42,9 @@ import cocoapods.VLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.VLCKit.VLCMediaPlayerState
 import cocoapods.VLCKit.VLCMediaPlayerTrack
 import cocoapods.VLCKit.VLCMediaTrackTypeAudio
+import cocoapods.VLCKit.VLCMediaTrackTypeVideo
+import cocoapods.VLCKit.videoTracks
+import cocoapods.VLCKit.deselectAllVideoTracks
 import cocoapods.VLCKit.VLCMediaTrackTypeText
 import cocoapods.VLCKit.VLCTime
 import cocoapods.VLCKit.audioTracks
@@ -83,6 +86,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     internal var vlcDrawable: VlcDrawable? = null
 
+    override val supportsVideoTrackSelection = true
     override val supportsChapters: Boolean = true
 
     /**
@@ -444,28 +448,23 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         withContext(Dispatchers.Main.immediate) {
             viewmodel.media?.tracks?.clear()
 
-            vlcPlayer!!.audioTracks.forEachIndexed { i, raw ->
-                val track = raw as? VLCMediaPlayerTrack ?: return@forEachIndexed
-                viewmodel.media?.tracks?.add(
-                    VlcKitTrack(
+            listOf(
+                TrackType.AUDIO to vlcPlayer!!.audioTracks,
+                TrackType.SUBTITLE to vlcPlayer!!.textTracks,
+                TrackType.VIDEO to vlcPlayer!!.videoTracks,
+            ).forEach { (type, tracks) ->
+                tracks.forEachIndexed { i, raw ->
+                    val track = raw as? VLCMediaPlayerTrack ?: return@forEachIndexed
+                    mediafile.tracks.add(VlcKitTrack(
                         name = track.trackName,
-                        type = TrackType.AUDIO,
+                        type = type,
                         index = i,
-                        selected = track.isSelected()
-                    )
-                )
-            }
-
-            vlcPlayer!!.textTracks.forEachIndexed { i, raw ->
-                val track = raw as? VLCMediaPlayerTrack ?: return@forEachIndexed
-                viewmodel.media?.tracks?.add(
-                    VlcKitTrack(
-                        name = track.trackName,
-                        type = TrackType.SUBTITLE,
-                        index = i,
-                        selected = track.isSelected()
-                    )
-                )
+                        language = track.language,
+                        channelCount = track.audio?.channelsNumber?.toInt()?.takeIf { it > 0 },
+                        codec = track.codecName(),
+                        selected = track.isSelected(),
+                    ))
+                }
             }
         }
     }
@@ -485,6 +484,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         playerManager.currentTrackChoices.remember(type, track)
         withContext(Dispatchers.Main.immediate) {
             when (type) {
+                TrackType.VIDEO -> {
+                    if (track != null) vlcPlayer?.selectTrackAtIndex(track.index.toLong(), VLCMediaTrackTypeVideo)
+                    else vlcPlayer?.deselectAllVideoTracks()
+                }
                 TrackType.SUBTITLE -> {
                     val index = track?.index ?: -1
                     if (index >= 0) {

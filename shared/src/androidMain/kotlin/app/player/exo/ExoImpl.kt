@@ -63,6 +63,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     var exoplayer: ExoPlayer? = null
     private lateinit var exoView: PlayerView
 
+    override val supportsVideoTrackSelection = true
     override val supportsChapters: Boolean = false
 
     override val trackerJobInterval: Duration = 500.milliseconds
@@ -305,7 +306,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             for (group in tracks.groups) {
                 val trackGroup = group.mediaTrackGroup
                 val trackType = group.type
-                if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
+                if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT || trackType == C.TRACK_TYPE_VIDEO) {
                     for (i in (0 until trackGroup.length)) {
                         val format = trackGroup.getFormat(i)
                         val index = trackGroup.indexOf(format)
@@ -313,7 +314,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                         val exoTrack = ExoTrack(
                             trackGroup = trackGroup,
                             format = format,
-                            name = "${format.label} [${format.language?.uppercase() ?: "UND"}]",
+                            name = format.label?.takeIf { it.isNotBlank() } ?: format.language ?: format.sampleMimeType?.substringAfter('/') ?: "",
                             type = trackType.toCommonType(),
                             index = index,
                             selected = group.isTrackSelected(index)
@@ -344,6 +345,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             when (type) {
                 TrackType.SUBTITLE -> playerManager.currentTrackChoices.subtitle = TrackChoice.Off
                 TrackType.AUDIO -> playerManager.currentTrackChoices.audio = TrackChoice.Off
+                TrackType.VIDEO -> playerManager.currentTrackChoices.video = TrackChoice.Off
             }
             return
         }
@@ -352,6 +354,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         when (type) {
             TrackType.SUBTITLE -> playerManager.currentTrackChoices.subtitle = TrackChoice.ByOverride(override)
             TrackType.AUDIO -> playerManager.currentTrackChoices.audio = TrackChoice.ByOverride(override)
+            TrackType.VIDEO -> playerManager.currentTrackChoices.video = TrackChoice.ByOverride(override)
         }
         // And undo the disable, or picking a track after switching off would show nothing.
         exoplayer?.trackSelector?.parameters =
@@ -557,6 +560,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     private fun TrackType.getExoType(): Int {
         return when (this) {
+            TrackType.VIDEO -> C.TRACK_TYPE_VIDEO
             TrackType.AUDIO -> C.TRACK_TYPE_AUDIO
             TrackType.SUBTITLE -> C.TRACK_TYPE_TEXT
         }
@@ -564,6 +568,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     private fun Int.toCommonType(): TrackType {
         return when (this) {
+            C.TRACK_TYPE_VIDEO -> TrackType.VIDEO
             C.TRACK_TYPE_AUDIO -> TrackType.AUDIO
             C.TRACK_TYPE_TEXT -> TrackType.SUBTITLE
             else -> TrackType.SUBTITLE

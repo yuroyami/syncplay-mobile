@@ -32,3 +32,12 @@ class AvTrack(
             else -> null
         }
 }
+
+
+class AvVideoTrack(
+    override val index: Int,
+    override val selected: Boolean,
+) : Track() {
+    override val name: String = "Video"
+    override val type = PlayerImpl.TrackType.VIDEO
+}

@@ -9,6 +9,10 @@ import app.player.PlayerEngine
 import app.player.PlayerImpl
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
+import platform.AVFoundation.tracks
+import platform.AVFoundation.mediaType
+import platform.AVFoundation.AVPlayerItemTrack
+import platform.AVFoundation.AVMediaTypeVideo
 import app.player.PlayerImpl.TrackType
 import app.player.models.Track
 import app.room.OSDCategory
@@ -323,6 +327,12 @@ object AVPlayerEngine: PlayerEngine {
 
             viewmodel.media?.tracks?.clear()
 
+            avPlayer?.currentItem?.tracks?.filterIsInstance<AVPlayerItemTrack>()
+                ?.filter { it.assetTrack?.mediaType == AVMediaTypeVideo }
+                ?.forEachIndexed { i, itemTrack ->
+                    mediafile.tracks.add(AvVideoTrack(i, itemTrack.enabled))
+                }
+
             //Groups
             val asset = avPlayer?.currentItem?.asset ?: return
             val characteristics = asset.availableMediaCharacteristicsWithMediaSelectionOptions.map { it as AVMediaCharacteristic }
@@ -335,7 +345,7 @@ object AVPlayerEngine: PlayerEngine {
                             AvTrack(
                                 sOption = option,
                                 sGroup = group,
-                                name = option.displayName + " [${option.extendedLanguageTag}]",
+                                name = option.displayName,
                                 index = i,
                                 type = if (option.mediaType == AVMediaTypeAudio) TrackType.AUDIO else TrackType.SUBTITLE,
                                 // What is playing, not what the file suggests: comparing against
@@ -359,6 +369,12 @@ object AVPlayerEngine: PlayerEngine {
             if (!isInitialized) return
 
             playerManager.currentTrackChoices.remember(type, track)
+            if (type == TrackType.VIDEO) {
+                avPlayer?.currentItem?.tracks?.filterIsInstance<AVPlayerItemTrack>()
+                    ?.filter { it.assetTrack?.mediaType == AVMediaTypeVideo }
+                    ?.forEachIndexed { i, itemTrack -> itemTrack.enabled = i == track?.index }
+                return
+            }
             val avtrack = track as? AvTrack
 
             if (avtrack != null) {
@@ -371,6 +387,7 @@ object AVPlayerEngine: PlayerEngine {
                     val group = asset.mediaSelectionGroupForMediaCharacteristic(characteristic)
 
                     when (type) {
+                        TrackType.VIDEO -> Unit
                         TrackType.AUDIO -> {
                             val isAudio = group?.options?.any { (it as? AVMediaSelectionOption)?.mediaType == AVMediaTypeAudio }
                             if (isAudio == true) {
@@ -522,6 +539,7 @@ object AVPlayerEngine: PlayerEngine {
             //TODO
         }
 
+        override val supportsVideoTrackSelection = true
         override val supportsChapters = false
 
         override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
