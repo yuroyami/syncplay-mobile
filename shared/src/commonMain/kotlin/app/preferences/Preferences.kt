@@ -475,18 +475,6 @@ object Preferences {
         )
     }
 
-    /**
-     * How much of the picture's height, as a percentage, chat keeps clear at the bottom so it
-     * does not sit on the subtitles (issue 160). Zero lets chat use the full height.
-     */
-    val CHAT_SUBTITLE_CLEARANCE = Pref("pref_inroom_chat_subtitle_clearance", 15) {
-        title = { it.uisettingChatClearanceTitle }
-        summary = { it.uisettingChatClearanceSummary }
-        icon = Icons.Filled.Subtitles
-
-        extraConfig = PrefExtraConfig.Slider(minValue = 0, maxValue = 40, unit = "%", zeroMeansOff = true)
-    }
-
     val SYNC_DONT_SLOW_WITH_ME = Pref("pref_inroom_sync_dont_slow_with_me", false) {
         title = { it.uisettingSyncDontSlowWithMeTitle }
         summary = { it.uisettingSyncDontSlowWithMeSummary }
@@ -690,7 +678,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30, unit = "s")
     }
-    val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
+    val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", false) {
         title = { it.uisettingCustomSeekFrontTitle }
         summary = { it.uisettingCustomSeekFrontSummary }
         icon = Icons.Filled.Update
@@ -751,12 +739,13 @@ object Preferences {
     /** Compact or expanded roster (stored as "standard"); legacy "files" falls back to expanded. */
     val USER_INFO_VIEW = Pref("pref_inroom_user_info_view", "standard")
 
-    /** ------------ KitePlayer Settings -------------*/
-    val KITE_AUDIO_VIZ = Pref("pref_kite_audio_viz", true) {
+    /** Kept under the old key so existing visualizer choices survive the capability migration. */
+    val AUDIO_VISUALIZATION = Pref("pref_kite_audio_viz", true) {
         title = { it.uisettingKiteAudioVizTitle }
         summary = { it.uisettingKiteAudioVizSummary }
         icon = Icons.Filled.MusicNote
     }
+    /** ------------ KitePlayer Settings -------------*/
     val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
         title = { it.uisettingKiteComposeRendererTitle }
         summary = { it.uisettingKiteComposeRendererSummary }
@@ -1115,7 +1104,7 @@ object Preferences {
      * without mpv never see it; there [getMpvConfFilePath] returns null and this is a no-op.
      *
      * The new config takes effect the next time mpv is initialized (e.g. after loading a video
-     * fresh) because `MPVLib.setOptionString("config-dir", ...)` is read at init() time.
+     * fresh) because mpv reads its config dir only when a core starts.
      */
     val MPV_IMPORT_CONF = Pref<String>("mpv_import_conf", "") {
         title = { it.uisettingMpvImportConfTitle }

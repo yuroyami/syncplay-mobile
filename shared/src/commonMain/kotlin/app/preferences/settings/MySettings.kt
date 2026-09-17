@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
+import app.preferences.Preferences.AUDIO_VISUALIZATION
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CHAT_COLORS_ENTRY
 import app.preferences.Preferences.CLEAR_LOGS
@@ -47,7 +48,6 @@ import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
-import app.preferences.Preferences.CHAT_SUBTITLE_CLEARANCE
 import app.preferences.Preferences.MEDIA_DIRECTORIES
 import app.preferences.Preferences.RESUME_PLAYBACK
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
@@ -181,7 +181,6 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
 ) {
     group({ it.settingsGroupMessages }) {
         +CHAT_COLORS_ENTRY
-        +CHAT_SUBTITLE_CLEARANCE
         +MSG_OUTLINE_THICKNESS
         +MSG_SHADOW_ACTIVATE
         +MSG_BOX_ACTION
@@ -283,11 +282,12 @@ val SETTINGS_ROOM: List<SettingCategory> = listOf(
 )
 
 /** The room's categories, with the active engine's rows folded into the player category. */
-fun roomSettings(engine: SettingCategory?): List<SettingCategory> {
-    if (engine == null) return SETTINGS_ROOM
+fun roomSettings(engine: SettingCategory?, supportsAudioVisualization: Boolean = false): List<SettingCategory> {
+    if (engine == null && !supportsAudioVisualization) return SETTINGS_ROOM
     val player = SettingCategory(INROOM_PLAYER_SETTINGS.key, INROOM_PLAYER_SETTINGS.title, INROOM_PLAYER_SETTINGS.icon) {
         INROOM_PLAYER_SETTINGS.groups.forEach { include(it) }
-        include(SettingGroup(engine.title, engine.entries))
+        if (supportsAudioVisualization) +AUDIO_VISUALIZATION
+        if (engine != null) include(SettingGroup(engine.title, engine.entries))
     }
     return SETTINGS_ROOM.map { if (it === INROOM_PLAYER_SETTINGS) player else it }
     }
