@@ -16,7 +16,7 @@ plugins {
     alias(libs.plugins.kover)
 }
 
-// Apply the minor SDK after KiteConfig 1.0 has finalized the major version.
+// KiteConfig exposes only the major SDK; keep AGP on the required 37.2 API.
 extensions.configure<KotlinMultiplatformAndroidComponentsExtension> {
     finalizeDsl { dsl ->
         dsl.compileSdk {
@@ -34,8 +34,6 @@ tasks.matching { it.name.startsWith("cinteropVLCKit") }.configureEach {
 }
 
 kotlin {
-    jvmToolchain(21)
-
     compilerOptions {
         freeCompilerArgs.addAll(
             "-Xexplicit-backing-fields",
@@ -46,8 +44,6 @@ kotlin {
 
     android {
         namespace = "app"
-        compileSdk { version = release(kiteConfig.compileSdk.get()) }
-        minSdk = kiteConfig.minSdk.get()
         androidResources { enable = true }
 
         // This module holds essentially all the code, and produced no lint task at all, which is
@@ -171,13 +167,10 @@ kotlin {
                 optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
                 optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("kotlin.RequiresOptIn")
-                optIn("kotlin.experimental.ExperimentalNativeApi")
                 optIn("kotlin.uuid.ExperimentalUuidApi")
                 optIn("kotlin.ExperimentalUnsignedTypes")
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.io.encoding.ExperimentalEncodingApi")
-                optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
-                optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
             }
         }
@@ -299,9 +292,9 @@ kotlin {
             /* ExoPlayer's FFmpeg-powered audio renderer extension (this does not need to be updated with every media3 release)  */
             implementation(files(File(projectDir, "libs/libffmpeg_media3exo_1.8.0.aar")))
 
-            /* libmpv for Android, prebuilt: mpv, FFmpeg, libass and libplacebo in one AAR from
-             * libmpvKt. The exoOnly flavor keeps this dependency so the engine code compiles;
-             * androidApp strips every library in it at packaging time. */
+            /* libmpv for Android, prebuilt by libmpvKt (mpv, FFmpeg, libass and libplacebo), with its
+             * typed API and the view that hosts the video. The exoOnly flavor keeps both so the engine
+             * code compiles; androidApp strips every native library they bring at packaging time. */
             implementation(libs.libmpvkt)
 
             /* YT/SoundCloud/PeerTube stream URL extractor (no Python, pure JVM) */
@@ -362,6 +355,12 @@ kotlin {
  * compose-multiplatform. Full rationale: CLAUDE.md "Key Dependencies". */
 configurations.configureEach {
     resolutionStrategy.force("org.jetbrains.skiko:skiko:${libs.versions.skiko.get()}")
+}
+
+/* The live subtitle test spends a unit of the key's small daily quota, so it runs only on request:
+ * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest */
+tasks.withType<Test>().configureEach {
+    systemProperty("synkplay.liveSubtitles", providers.gradleProperty("liveSubtitles").isPresent)
 }
 
 // The repo's two source rewrites, as tasks with declared inputs and outputs. The strings one is
