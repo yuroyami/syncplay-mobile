@@ -27,6 +27,7 @@ import app.utils.platformFileAt
 import app.utils.playlistExs
 import app.utils.mediaFileKitType
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +49,6 @@ import app.theme.palette
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.BackGlyph
 import app.uicomponents.controls.CloseGlyph
-import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.Field
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Icon
@@ -108,6 +108,7 @@ object CardAddMedia {
     @Composable
     fun AddMediaBody(linkMode: Boolean, onLinkMode: (Boolean) -> Unit, onClose: () -> Unit) {
         val viewmodel = LocalRoomViewmodel.current
+        val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
         fun close() = onClose()
 
         val mediaPicker = rememberFilePickerLauncher(type = mediaFileKitType) { file ->
@@ -126,23 +127,23 @@ object CardAddMedia {
         } else {
             Column {
                 RouteRow(Icons.Filled.FolderOpen, strings.roomRouteDevice, strings.roomRouteDeviceNote) {
-                    Feedback.tick(); mediaPicker.launch()
+                    mediaPicker.launch()
                 }
                 RouteRow(Icons.Filled.Link, strings.roomRouteLink, supportedSites(strings)) {
-                    Feedback.tick(); onLinkMode(true)
+                    onLinkMode(true)
                 }
                 if (platform == Platform.Android) {
                     RouteRow(Icons.Filled.Cloud, strings.roomRouteShare, strings.roomRouteShareNote) {
-                        Feedback.tick(); close()
+                        close()
                         platformCallback.launchSystemFilePicker { uri ->
                             uri ?: return@launchSystemFilePicker
                             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(platformFileAt(uri)) }
                         }
                     }
                 }
-                if (!viewmodel.isSoloMode) {
+                if (!viewmodel.isSoloMode && sharedPlaylists) {
                     RouteRow(Icons.AutoMirrored.Filled.PlaylistAdd, strings.roomRoutePlaylist, strings.roomRoutePlaylistNote) {
-                        Feedback.tick(); playlistPicker.launch()
+                        playlistPicker.launch()
                     }
                 }
             }
