@@ -60,10 +60,9 @@ newpipeExtractor = "v0.26.5"
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
 kiteplayer = "0.0.25"
-# libmpv for Android, prebuilt by libmpvKt. Resolved from https://yuroyami.github.io/maven (declared
-# in settings.gradle.kts); -PuseMavenLocal=true overrides it while a new version is published
-# locally but not yet served there.
-libmpvkt = "0.1.0"
+# libmpv for Android. Version 0.2.0 is unpublished and resolves from Maven Local by default.
+# settings.gradle.kts restricts this local override to libmpvKt 0.2.0.
+libmpvkt = "0.2.0"
 
 #iOS (VLCKit pod)
 libvlc-ios = "4.0.0a19"
@@ -152,6 +151,7 @@ conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscry
 kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
 kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }
 libmpvkt = { module = "io.github.yuroyami:libmpvkt", version.ref = "libmpvkt" }
+libmpvkt-view = { module = "io.github.yuroyami:libmpvkt-view", version.ref = "libmpvkt" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
 #Desktop

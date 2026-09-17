@@ -156,12 +156,10 @@ These have all bitten someone. In each case the obvious change is the wrong chan
 ### Engine lifecycle
 
 - **Destroy in one order: disable the engine, cancel its supervisor job, then release the native
-  handle.** One engine crashes hard if its position tracker outlives teardown. A gate enforces
+  handle.** A position tracker that outlives teardown reaches a released engine. A gate enforces
   this.
-- Detach the process-global observer list before destroying the mpv view. mpv keeps one core per
-  process, so a leftover observer outlives the room.
-- The mpv log and event callbacks look like dead Kotlin. The native library resolves them by name
-  at runtime. Deleting them compiles cleanly and breaks mpv at load.
+- Stop an mpv core's flows before that core closes. Every file starts a new core, and the old
+  core's last events (an end of file, a shutdown) must not reach the next file.
 - ExoPlayer's audio focus handling stays off. Turning it on lets a focus loss auto-pause
   broadcast a pause to the whole room.
 - The base seek refuses while backgrounded, and every override calls it.

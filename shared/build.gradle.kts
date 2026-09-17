@@ -296,6 +296,7 @@ kotlin {
              * typed API and the view that hosts the video. The exoOnly flavor keeps both so the engine
              * code compiles; androidApp strips every native library they bring at packaging time. */
             implementation(libs.libmpvkt)
+            implementation(libs.libmpvkt.view)
 
             /* YT/SoundCloud/PeerTube stream URL extractor (no Python, pure JVM) */
             implementation(libs.newpipe.extractor)

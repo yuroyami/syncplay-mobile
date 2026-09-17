@@ -9,7 +9,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.mpv
 
 /**
- * MPV engine descriptor (Android). Backed by native libmpv via [MpvImpl]/[MPVView].
+ * MPV engine descriptor (Android). Backed by libmpv from libmpvKt, through [MpvImpl].
  *
  * Available and the default engine only in the `full` build flavor (when EXOPLAYER_ONLY is false);
  * absent in `exoOnly` builds, which ship no native player libraries.

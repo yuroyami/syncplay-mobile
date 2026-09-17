@@ -20,8 +20,8 @@ import syncplaymobile.shared.generated.resources.Res
  *
  * Idempotent: a single [fileExists] check after the first install. Must run before `loadfile`,
  * because mpv configures libass fonts at playback start. mpv must also be told `config=yes`
- * (Android `MPVView`) or libmpv's builtin profile leaves config loading off and mpv never scans
- * its config dir for this file.
+ * (Android `MpvImpl` does it by giving `MpvOptions` a config dir) or libmpv's builtin profile
+ * leaves config loading off and mpv never scans its config dir for this file.
  */
 suspend fun installMpvSubfontIfNeeded() {
     val configDir = getMpvConfFilePath()?.substringBeforeLast('/') ?: return

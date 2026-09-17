@@ -1,20 +1,19 @@
 package app.player.mpv
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.view.LayoutInflater
+import android.os.Build
 import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import app.R
 import app.i18n.Localization
 import app.player.PlayerImpl
 import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
+import app.player.models.PlayerOptions
 import app.player.models.Track
 import app.player.mpv.MpvFileUtils.copyAssets
 import app.player.mpv.MpvFileUtils.resolveUri
@@ -32,82 +31,104 @@ import app.preferences.settings.enabledWhen
 import app.preferences.settings.withControl
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.uicomponents.glassEnabledNow
+import app.utils.loggy
 import app.utils.playableUri
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.yuroyami.libmpvkt.MPVLib
+import io.github.yuroyami.libmpvkt.EndFileReason
+import io.github.yuroyami.libmpvkt.HwdecMode
+import io.github.yuroyami.libmpvkt.IdleMode
+import io.github.yuroyami.libmpvkt.KeepOpenMode
+import io.github.yuroyami.libmpvkt.Mpv
+import io.github.yuroyami.libmpvkt.MpvCommands
+import io.github.yuroyami.libmpvkt.MpvEvent
+import io.github.yuroyami.libmpvkt.MpvProperties
+import io.github.yuroyami.libmpvkt.SubAddMode
+import io.github.yuroyami.libmpvkt.TrackSelection
+import io.github.yuroyami.libmpvkt.VideoOutput
+import io.github.yuroyami.libmpvkt.VideoSyncMode
+import io.github.yuroyami.libmpvkt.getOrNull
+import io.github.yuroyami.libmpvkt.getOrThrow
+import io.github.yuroyami.libmpvkt.view.MpvOptions
+import io.github.yuroyami.libmpvkt.view.MpvView
+import io.github.yuroyami.libmpvkt.view.SurfaceType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import kotlin.concurrent.Volatile
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import io.github.yuroyami.libmpvkt.TrackType as MpvTrackType
 
 class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
-    var mpvPos = 0L
-    private lateinit var observer: MPVLib.EventObserver
-    private var durationWaitJob: kotlinx.coroutines.Job? = null
-    lateinit var mpvView: MPVView
-    private lateinit var ctx: Context
+    override val supportsVideoTrackSelection = true
     override val supportsChapters: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
 
+    private lateinit var mpvView: MpvView
+    private lateinit var ctx: Context
+
+    /** The running core. Every file starts a new one, so this changes with each load. */
+    @Volatile
+    private var core: Mpv? = null
+
+    /** Collects [core]'s events and properties. Cancelled before that core closes. */
+    private var coreJob: Job? = null
+
+    /** The last `time-pos` mpv reported, in ms, for when a direct read fails. */
+    @Volatile
+    private var mpvPos = 0L
+
+    private var durationWaitJob: Job? = null
+
     override fun initialize() {
         ctx = mpvView.context.applicationContext
-
         copyAssets(ctx)
-
-        // A recreated view means a new surface for a core that already exists. libmpv's handle
-        // is process-global, so the only clean way to rehost it is the same destroy-then-create
-        // every file load already does; a second create over a live core aborts.
-        if (isInitialized) {
-            removeObserver()
-            MPVLib.destroy()
-        }
-        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-        // The gain rung: mpv clamps volume at 130 by default.
-        runCatching { MPVLib.setPropertyInt("volume-max", gainMax) }
+        startCore()
         isInitialized = true
-        mpvObserverAttach()
+        startTrackingProgress()
     }
 
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Flip the guards and stop the position tracker BEFORE tearing libmpv down. MPVLib is a
-        // process-global static handle (g_mpv); once mpvView.destroy() nulls it, any lingering
-        // tracker call (isSeekable()/currentPositionMs(), polled every 500ms) would sail past its
-        // `if (!isInitialized)` guard and trip the native CHECK_MPV_INIT(), aborting with "libmpv is
-        // not initialized". Setting isInitialized=false makes per-method guards bail; cancelling the
-        // supervisor job stops the tracker's next tick. mpv is the one engine that hard-crashes here
-        // because its calls go through a global handle, not a nullable per-instance player.
+        // The guards go first: the position tracker polls every 500 ms, and a call that arrives after
+        // the core is gone must find no core. A core that closes under a call throws, and withCore
+        // absorbs that.
         isInitialized = false
         playerSupervisorJob.cancel()
 
         withContext(Dispatchers.Main) {
-            // Detach the observer first: MPVLib.observers is a process-global static list, so an
-            // un-removed observer keeps this MpvImpl (and its RoomViewmodel graph) reachable past
-            // teardown until the next attach replaces it.
-            removeObserver()
+            releaseCore()
             mpvView.destroy()
         }
     }
 
-    @SuppressLint("InflateParams")
     @Composable
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                mpvView = LayoutInflater.from(context).inflate(R.layout.mpvview, null) as MPVView
+                // A recreated view takes over from the old one, and the old view's core closes with it.
+                if (::mpvView.isInitialized) {
+                    releaseCore()
+                    mpvView.destroy()
+                }
+                mpvView = MpvView(context)
                 initialize()
                 onPlayerReady()
-                return@AndroidView mpvView
+                mpvView
             },
-            update = {
-
-            }
         )
     }
 
@@ -117,27 +138,31 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         icon = Icons.Filled.SettingsInputComponent
     ) {
         +MPV_HARDWARE_ACCELERATION.withControl(PrefExtraConfig.BooleanCallback { b ->
-            MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
+            withCore { it[MpvProperties.Hwdec] = if (b) HwdecMode.Auto else HwdecMode.No }
         })
         +MPV_GPU_NEXT.withControl(PrefExtraConfig.BooleanCallback { b ->
-            MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
+            // A core without a surface must keep vo=null. The next core starts with the new choice.
+            withCore { if (it.attachedSurface != null) it[MpvProperties.Vo] = if (b) VideoOutput.GpuNext else VideoOutput.Gpu }
         })
         +MPV_VIDSYNC.withControl(PrefExtraConfig.MultiChoice(
-            entries = { MPVView.vidsyncEntries.zip(MPVView.vidsyncEntries).toMap() },
-            onItemChosen = { videoSync -> MPVLib.setOptionString("video-sync", videoSync) }
+            entries = { vidsyncEntries.associateWith { it } },
+            onItemChosen = { videoSync ->
+                VideoSyncMode.entries.firstOrNull { it.mpvName == videoSync }
+                    ?.let { mode -> withCore { it[MpvProperties.VideoSync] = mode } }
+            }
         ))
         +MPV_INTERPOLATION.withControl(PrefExtraConfig.BooleanCallback { b ->
-            MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
+            withCore { it[MpvProperties.Interpolation] = b }
         }).enabledWhen {
             val currentVidSyncMode = MPV_VIDSYNC.value()
             currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
         }
         +MPV_PROFILE.withControl(PrefExtraConfig.MultiChoice(
-            entries = { MPVView.profileEntries.zip(MPVView.profileEntries).toMap() },
-            onItemChosen = { profile -> MPVLib.setOptionString("profile", profile) }
+            entries = { profileEntries.associateWith { it } },
+            onItemChosen = { profile -> withCore { it.command(MpvCommands.applyProfile(profile)) } }
         ))
         +MPV_DEBUG_MODE.withControl(PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
-            MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
+            withCore { it.command(MpvCommands.scriptBinding("stats/display-page-$itemChosen")) }
         })
         // mpv.conf import/export, attached to the engine category so it only shows with mpv.
         +MPV_IMPORT_CONF
@@ -147,15 +172,14 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
         return withContext(Dispatchers.Main.immediate) {
-            val c = MPVLib.getPropertyInt("playlist-count")
-            c != null && c > 0
+            (withCore { it[MpvProperties.PlaylistCount].getOrNull() } ?: 0L) > 0L
         }
     }
 
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
         return withContext(Dispatchers.Main.immediate) {
-            !mpvView.paused
+            withCore { it[MpvProperties.Pause].getOrNull() != true } ?: false
         }
     }
 
@@ -164,31 +188,27 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         withContext(Dispatchers.Main.immediate) {
             playerManager.media.value?.tracks?.clear()
 
-            // Because events are async, properties can disappear at any moment, so prefer
-            // null-safe reads (?: return/continue) over !! which would crash mid-analysis.
-            val count = MPVLib.getPropertyInt("track-list/count") ?: return@withContext
-            for (i in 0 until count) {
-                val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
-                if (type != "audio" && type != "sub") continue
-                val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
-                val lang = MPVLib.getPropertyString("track-list/$i/lang")
-                val title = MPVLib.getPropertyString("track-list/$i/title")
-                val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
-
-                /** Speculating the track name based on whatever info there is on it */
-                val trackName = when {
-                    !title.isNullOrEmpty() && !lang.isNullOrEmpty() -> "$title [$lang]"
-                    !title.isNullOrEmpty() -> "$title [UND]"
-                    !lang.isNullOrEmpty() -> "Track [$lang]"
-                    else -> "Track $mpvId [UND]"
+            val tracks = withCore { it[MpvProperties.TrackList].getOrNull() } ?: return@withContext
+            for (track in tracks) {
+                val type = when (track.type) {
+                    MpvTrackType.Audio -> TrackType.AUDIO
+                    MpvTrackType.Sub -> TrackType.SUBTITLE
+                    MpvTrackType.Video -> if (track.isAlbumArt) continue else TrackType.VIDEO
                 }
+
+                val trackName = track.title?.takeIf { it.isNotBlank() } ?: track.lang ?: track.codec ?: ""
 
                 playerManager.media.value?.tracks?.add(
                     MpvTrack(
                         name = trackName,
-                        type = if (type == "audio") TrackType.AUDIO else TrackType.SUBTITLE,
-                        index = mpvId,
-                        selected = selected
+                        type = type,
+                        index = track.id,
+                        selected = track.selected,
+                        language = track.lang,
+                        channelCount = track.demuxChannelCount,
+                        channelLayout = track.demuxChannels,
+                        codec = track.codec,
+                        videoDescription = track.demuxHeight?.let { "${it}p" },
                     )
                 )
             }
@@ -198,30 +218,13 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
+            val selection = track?.let { TrackSelection.Id(it.index) } ?: TrackSelection.No
             when (type) {
-                TrackType.SUBTITLE -> {
-                    if (track != null) {
-                        MPVLib.setPropertyInt("sid", track.index)
-                    } else {
-                        MPVLib.setPropertyString("sid", "no")
-                    }
-
-                    playerManager.currentTrackChoices.remember(TrackType.SUBTITLE, track)
-                }
-
-                TrackType.AUDIO -> {
-                    if (track != null) {
-                        MPVLib.setPropertyInt("aid", track.index)
-                    } else {
-                        MPVLib.setPropertyString("aid", "no")
-                    }
-
-                    playerManager.currentTrackChoices.remember(TrackType.AUDIO, track)
-                }
-
-                // This engine reports no video track selection, so the card never offers it.
-                TrackType.VIDEO -> Unit
+                TrackType.SUBTITLE -> withCore { it[MpvProperties.Sid] = selection }
+                TrackType.AUDIO -> withCore { it[MpvProperties.Aid] = selection }
+                TrackType.VIDEO -> withCore { it[MpvProperties.Vid] = selection }
             }
+            playerManager.currentTrackChoices.remember(type, track)
         }
     }
 
@@ -230,17 +233,13 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mediafile.chapters.clear()
 
         withContext(Dispatchers.Main.immediate) {
-            val count = MPVLib.getPropertyInt("chapter-list/count") ?: return@withContext
-
-            for (i in 0 until count) {
-                val title = MPVLib.getPropertyString("chapter-list/$i/title")
-                val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: continue
-
+            val chapters = withCore { it[MpvProperties.ChapterList].getOrNull() } ?: return@withContext
+            chapters.forEachIndexed { i, chapter ->
                 mediafile.chapters.add(
                     Chapter(
                         index = i,
-                        name = title ?: "Chapter $i",
-                        timeOffsetMillis = (time * 1000).roundToLong()
+                        name = chapter.title ?: "Chapter $i",
+                        timeOffsetMillis = (chapter.timeSeconds * 1000).roundToLong()
                     )
                 )
             }
@@ -252,7 +251,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         super.jumpToChapter(chapter)
 
         withContext(Dispatchers.Main.immediate) {
-            MPVLib.setPropertyInt("chapter", chapter.index)
+            withCore { it[MpvProperties.Chapter] = chapter.index.toLong() }
         }
     }
 
@@ -268,42 +267,35 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             // scheme, so resolveUri's `when(scheme)` fell through to null) and the content:// uri
             // for picker results.
             ctx.resolveUri(uri.playableUri)?.let { subUri ->
-                MPVLib.command(arrayOf("sub-add", subUri, "cached"))
+                // A file mpv refuses throws here, so the caller reports a failure, not a success.
+                withCore { it.command(MpvCommands.subAdd(subUri, SubAddMode.Cached)).getOrThrow() }
             }
         }
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         installMpvSubfontIfNeeded()
-        ctx.resolveUri(location.file.uri)?.let {
-            if (isInitialized) MPVLib.destroy()
-            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-            mpvObserverAttach()
-            mpvView.playFile(it)
-        }
+        ctx.resolveUri(location.file.uri)?.let { playOnFreshCore(it) }
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
         installMpvSubfontIfNeeded()
-        if (isInitialized) MPVLib.destroy()
-        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-        mpvObserverAttach()
-        mpvView.playFile(location.url)
+        playOnFreshCore(location.url)
     }
 
     override suspend fun pause() {
         if (!isInitialized) return
-        mpvView.paused = true
+        withCore { it[MpvProperties.Pause] = true }
     }
 
     override suspend fun play() {
         if (!isInitialized) return
-        mpvView.paused = false
+        withCore { it[MpvProperties.Pause] = false }
     }
 
     override suspend fun setSpeed(speed: Double) {
         if (!isInitialized) return
-        MPVLib.setPropertyDouble("speed", speed)
+        withCore { it[MpvProperties.Speed] = speed }
     }
 
     override suspend fun isSeekable(): Boolean {
@@ -311,7 +303,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         return withContext(Dispatchers.Main.immediate) {
             // Only report non-seekable when mpv explicitly says so (e.g. live streams); default to
             // seekable if the property isn't available yet so the position tracker keeps polling.
-            MPVLib.getPropertyBoolean("seekable") ?: true
+            withCore { it[MpvProperties.Seekable].getOrNull() } ?: true
         }
     }
 
@@ -319,58 +311,56 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        // Seek with sub-second precision via the double property. mpvView.timePos is INT-backed
-        // (whole seconds), which would snap seeks/chapter-jumps to a second boundary and disagree
-        // with the fractional position currentPositionMs() reports.
-        MPVLib.setPropertyDouble("time-pos", toPositionMs.toDouble() / 1000.0)
+        // time-pos is a double, so seeks and chapter jumps keep their sub-second precision.
+        withCore { it[MpvProperties.TimePos] = toPositionMs / 1000.0 }
     }
 
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
-        // The observed `time-pos` (mpvPos) arrives as INT64, quantized to whole seconds, because
-        // mpv's JNI doesn't push double-format property updates. Read the precise fractional value
-        // directly so position reports aren't a 1-second sawtooth that nudges the sync layer into
-        // corrective micro-seeks. Fall back to mpvPos if unavailable.
-        val precise = MPVLib.getPropertyDouble("time-pos")
+        // A direct read is fresher than the observed value, which stays as the fallback.
+        val precise = withCore { it[MpvProperties.TimePos].getOrNull() }
         return if (precise != null) (precise * 1000.0).toLong() else mpvPos
     }
 
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return ""
         return withContext(Dispatchers.Main.immediate) {
-            val currentAspect = MPVLib.getPropertyString("video-aspect-override")
-            val currentPanscan = MPVLib.getPropertyDouble("panscan")
+            withCore { mpv ->
+                // mpv prints this option with %f, so its values compare as the strings below.
+                val currentAspect = mpv.getString("video-aspect-override")
+                val currentPanscan = mpv[MpvProperties.Panscan].getOrNull()
 
-            // mpv value to the spoken label; the last entry is pan-and-scan rather than a ratio.
-            val aspectRatios = listOf(
-                "-1.000000" to Localization.strings.roomAspectOriginal,
-                "1.777778" to Localization.strings.roomAspectRatioLabel("16:9"),
-                "1.600000" to Localization.strings.roomAspectRatioLabel("16:10"),
-                "1.333333" to Localization.strings.roomAspectRatioLabel("4:3"),
-                "2.350000" to Localization.strings.roomAspectRatioLabel("2.35:1"),
-                "panscan" to Localization.strings.roomAspectPanscan,
-            )
+                // mpv value to the spoken label; the last entry is pan-and-scan rather than a ratio.
+                val aspectRatios = listOf(
+                    "-1.000000" to Localization.strings.roomAspectOriginal,
+                    "1.777778" to Localization.strings.roomAspectRatioLabel("16:9"),
+                    "1.600000" to Localization.strings.roomAspectRatioLabel("16:10"),
+                    "1.333333" to Localization.strings.roomAspectRatioLabel("4:3"),
+                    "2.350000" to Localization.strings.roomAspectRatioLabel("2.35:1"),
+                    "panscan" to Localization.strings.roomAspectPanscan,
+                )
 
-            var enablePanscan = false
-            val nextAspect = if (currentPanscan == 1.0) {
-                aspectRatios[0]
-            } else if (currentAspect == "2.350000") {
-                enablePanscan = true
-                aspectRatios[5]
-            } else {
-                // An unknown current value (a user config) restarts the cycle at the first ratio.
-                aspectRatios.getOrElse(aspectRatios.indexOfFirst { it.first == currentAspect } + 1) { aspectRatios[1] }
-            }
+                var enablePanscan = false
+                val nextAspect = if (currentPanscan == 1.0) {
+                    aspectRatios[0]
+                } else if (currentAspect == "2.350000") {
+                    enablePanscan = true
+                    aspectRatios[5]
+                } else {
+                    // An unknown current value (a user config) restarts the cycle at the first ratio.
+                    aspectRatios.getOrElse(aspectRatios.indexOfFirst { it.first == currentAspect } + 1) { aspectRatios[1] }
+                }
 
-            if (enablePanscan) {
-                MPVLib.setPropertyString("video-aspect-override", "-1")
-                MPVLib.setPropertyDouble("panscan", 1.0)
-            } else {
-                MPVLib.setPropertyString("video-aspect-override", nextAspect.first)
-                MPVLib.setPropertyDouble("panscan", 0.0)
-            }
+                if (enablePanscan) {
+                    mpv.setString("video-aspect-override", "-1")
+                    mpv[MpvProperties.Panscan] = 1.0
+                } else {
+                    mpv.setString("video-aspect-override", nextAspect.first)
+                    mpv[MpvProperties.Panscan] = 0.0
+                }
 
-            return@withContext nextAspect.second
+                nextAspect.second
+            } ?: ""
         }
     }
 
@@ -383,100 +373,174 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 else -> 1.0 - (16 - newSize) * (1.0 / 16)
             }
 
-            MPVLib.setPropertyDouble("sub-scale", s)
+            withCore { it[MpvProperties.SubScale] = s }
         }
     }
 
-    private fun mpvObserverAttach() {
-        removeObserver()
+    /** Every file starts on a fresh core, as it always has here. The view hands it the surface. */
+    @UiThread
+    private fun playOnFreshCore(pathOrUrl: String) {
+        startCore()
+        mpvView.playFile(pathOrUrl).getOrThrow()
+    }
 
-        observer = object : MPVLib.EventObserver {
-            override fun eventProperty(property: String) {}
+    /**
+     * Starts a new core on [mpvView]. The view hands the old core's surface to the new one and closes
+     * the old core in the background, after its flows stop here.
+     */
+    @UiThread
+    private fun startCore() {
+        releaseCore()
+        mpvView.initialize(startOptions())
+        val mpv = mpvView.mpv ?: return
+        // Set after the start, as they always were, so a user's mpv.conf cannot override them.
+        val playerOptions = PlayerOptions.get()
+        mpv[MpvProperties.SavePositionOnQuit] = false
+        mpv[MpvProperties.Idle] = IdleMode.Once
+        mpv[MpvProperties.Alang] = languages(playerOptions.audioPreference)
+        mpv[MpvProperties.Slang] = languages(playerOptions.ccPreference)
+        mpv[MpvProperties.Pause] = true
+        // The gain rung: mpv clamps volume at 130 by default.
+        mpv[MpvProperties.VolumeMax] = gainMax.toDouble()
+        core = mpv
+        watch(mpv)
+    }
 
-            override fun eventProperty(property: String, value: Long) {
-                when (property) {
-                    "time-pos" -> mpvPos = value * 1000
-                    "duration" -> playerManager.timeFullMillis.value = value * 1000
-                }
-            }
+    /** How each core starts, from the mpv settings. Everything else keeps libmpvKt's phone defaults. */
+    private fun startOptions() = MpvOptions(
+        configDir = ctx.filesDir,
+        cacheDir = ctx.cacheDir,
+        // TextureView keeps the picture in the view tree, so Haze can blur it under glass.
+        // SurfaceView can use a hardware overlay (less power, no GPU copy) but no in-app effect sees it.
+        surfaceType = if (glassEnabledNow()) SurfaceType.Texture else SurfaceType.Surface,
+        vo = if (MPV_GPU_NEXT.value()) VideoOutput.GpuNext else VideoOutput.Gpu,
+        hwdec = if (MPV_HARDWARE_ACCELERATION.value()) HwdecMode.Auto else HwdecMode.No,
+        profile = MPV_PROFILE.value(),
+        videoSync = VideoSyncMode.entries.firstOrNull { it.mpvName == MPV_VIDSYNC.value() } ?: VideoSyncMode.Audio,
+        interpolation = MPV_INTERPOLATION.value(),
+        tlsCaFile = File(ctx.filesDir, "cacert.pem"),
+        demuxerMaxBytes = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64L else 32L) * 1024 * 1024,
+        inputDefaultBindings = true,
+        // The room hears that a file ended through EndFile, which keep-open would hold back.
+        keepOpen = KeepOpenMode.No,
+    )
 
-            override fun eventProperty(property: String, value: Boolean) {
-                when (property) {
-                    "pause" -> {
-                        playerManager.isNowPlaying.value = !value //Just to inform UI
-                    }
-                    // Already observed, never handled: this is mpv stalling on its cache, which
-                    // the room shows as a waiting indicator and never treats as a pause.
-                    "paused-for-cache" -> playerManager.isBuffering.value = value
-                }
-            }
+    /** A language preference as mpv's list: "eng,jpn" is two entries, and an empty one is none. */
+    private fun languages(preference: String) = preference.split(',').map(String::trim).filter(String::isNotEmpty)
 
-            override fun eventProperty(property: String, value: String) {}
-            override fun eventProperty(property: String, value: Double) {}
+    /**
+     * Forgets the running core and stops its flows, so none of its last events reach the next core.
+     * The view closes that core on a thread of its own, so it is paused first to stay silent until then.
+     */
+    private fun releaseCore() {
+        coreJob?.cancel()
+        coreJob = null
+        core?.let { old -> runCatching { old[MpvProperties.Pause] = true } }
+        core = null
+        mpvPos = 0L
+    }
 
-            override fun event(eventId: Int) {
-                when (eventId) {
-                    MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
-                        if (viewmodel.isSoloMode) return
-                        // One wait per file: a fast second load cancels the first file's waiter,
-                        // which would otherwise announce the new file with the old one's timing.
-                        durationWaitJob?.cancel()
-                        durationWaitJob = playerScopeIO.launch {
-                            // timeFullMillis is wiped to 0 on every inject (PlayerImpl.installMedia),
-                            // so this genuinely waits for THIS file's duration event. Before that
-                            // wipe existed, the previous file's stale duration made the wait exit
-                            // instantly on 2nd+ injections and the room got announced stale
-                            // metadata (old name/size/duration). Bounded wait: files with no
-                            // detectable duration (live streams) still announce, with 0.
-                            var waitedMs = 0L
-                            while (isActive && playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
-                                delay(50)
-                                waitedMs += 50
-                            }
-                            if (!isActive) return@launch
-                            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
-                            announceFileLoaded()
-                        }
-                    }
-
-                    MPVLib.MpvEvent.MPV_EVENT_END_FILE -> {
-                        playerScopeMain.launch {
-                            // The event carries no reason through the JNI, so the position says
-                            // whether this was the end of the file. Anything else (a decode
-                            // error, a stop) ends locally: the room is told nothing.
-                            val dur = playerManager.timeFullMillis.value
-                            val pos = playerManager.timeCurrentMillis.value
-                            val atEnd = dur > 0L && pos >= dur - 1500L
-                            if (!atEnd) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
-                            pause()
-                            if (atEnd) onPlaybackEnded()
-                        }
-                    }
+    /** Follows [mpv]'s events and the four properties the room shows, until [releaseCore]. */
+    private fun watch(mpv: Mpv) {
+        val job = SupervisorJob(playerSupervisorJob)
+        coreJob = job
+        val scope = CoroutineScope(Dispatchers.Default + job)
+        // Events have no replay. An undispatched start subscribes before the caller's loadfile goes out.
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            mpv.events.collect { event ->
+                when (event) {
+                    is MpvEvent.StartFile -> if (!viewmodel.isSoloMode) announceWhenDurationKnown(scope)
+                    is MpvEvent.EndFile -> scope.launch(Dispatchers.Main) { onFileEnded(event.reason) }
+                    else -> Unit
                 }
             }
         }
-
-        mpvView.addObserver(observer)
-
-        startTrackingProgress()
+        scope.follow(mpv, mpv.observe(MpvProperties.TimePos)) { if (it != null) mpvPos = (it * 1000).toLong() }
+        scope.follow(mpv, mpv.observe(MpvProperties.Duration)) {
+            if (it != null) playerManager.timeFullMillis.value = (it * 1000).toLong()
+        }
+        // Just to inform the UI.
+        scope.follow(mpv, mpv.observe(MpvProperties.Pause)) { if (it != null) playerManager.isNowPlaying.value = !it }
+        // mpv stalling on its cache, which the room shows as a waiting indicator and never treats as a pause.
+        scope.follow(mpv, mpv.observe(MpvProperties.PausedForCache)) {
+            if (it != null) playerManager.isBuffering.value = it
+        }
     }
 
-    fun removeObserver() {
-        if (::observer.isInitialized) {
-            mpvView.removeObserver(observer)
+    /** Collects [flow] in this scope. A flow that fails ends there, with a log line unless its core closed. */
+    private fun <T> CoroutineScope.follow(mpv: Mpv, flow: Flow<T>, action: (T) -> Unit) = launch {
+        flow.catch { if (!mpv.isClosed) loggy("mpv: an observed property failed: ${it.message}") }
+            .collect { action(it) }
+    }
+
+    /**
+     * Announces the file once mpv knows its duration. One wait per file: the next core cancels it,
+     * so a fast second load cannot announce the new file with the old one's timing.
+     */
+    private fun announceWhenDurationKnown(scope: CoroutineScope) {
+        durationWaitJob?.cancel()
+        durationWaitJob = scope.launch {
+            // timeFullMillis is wiped to 0 on every inject (PlayerImpl.installMedia), so this really
+            // waits for THIS file's duration; a stale one used to announce the old name, size and
+            // duration. Bounded: a file with no duration (a live stream) still announces, with 0.
+            var waitedMs = 0L
+            while (isActive && playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
+                delay(50)
+                waitedMs += 50
+            }
+            if (!isActive) return@launch
+            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
+            announceFileLoaded()
+        }
+    }
+
+    /**
+     * Only a real end of the file reaches the room. mpv also reports Eof when a stream drops early, so
+     * the position has to agree. Anything else (a decode error, a stop) ends locally, and the room is
+     * told nothing.
+     */
+    private suspend fun onFileEnded(reason: EndFileReason) {
+        val dur = playerManager.timeFullMillis.value
+        val pos = playerManager.timeCurrentMillis.value
+        val atEnd = reason == EndFileReason.Eof && dur > 0L && pos >= dur - 1500L
+        if (!atEnd) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+        pause()
+        if (atEnd) onPlaybackEnded()
+    }
+
+    /**
+     * Runs [block] on the running core, or does nothing when there is none. A core that closes during
+     * the call throws, and a late call has nothing left to do, so that reads as no core too.
+     */
+    private inline fun <T> withCore(block: (Mpv) -> T): T? {
+        val mpv = core ?: return null
+        return try {
+            block(mpv)
+        } catch (e: IllegalStateException) {
+            if (mpv.isClosed) null else throw e
         }
     }
 
     /* mpv's own volume property is the whole ladder: 0 to 100 is its output, 100 to 200 is
-     * amplification once volume-max has been raised at init. */
-    override fun getEngineVolume(): Int = (MPVLib.getPropertyInt("volume") ?: 100).coerceIn(0, 100)
+     * amplification once volume-max has been raised at start. */
+    override fun getEngineVolume(): Int = currentVolume().coerceIn(0, 100)
     override fun setEngineVolume(percent: Int) {
-        MPVLib.setPropertyInt("volume", percent.coerceIn(0, 100))
+        withCore { it[MpvProperties.Volume] = percent.coerceIn(0, 100).toDouble() }
     }
 
     override val gainMax: Int = 200
-    override fun getGain(): Int = (MPVLib.getPropertyInt("volume") ?: 100).coerceIn(100, gainMax)
+    override fun getGain(): Int = currentVolume().coerceIn(100, gainMax)
     override fun setGain(percent: Int) {
-        MPVLib.setPropertyInt("volume", percent.coerceIn(100, gainMax))
+        withCore { it[MpvProperties.Volume] = percent.coerceIn(100, gainMax).toDouble() }
+    }
+
+    /** mpv's volume as a whole percent, 100 when there is no core. */
+    private fun currentVolume(): Int = (withCore { it[MpvProperties.Volume].getOrNull() } ?: 100.0).toInt()
+
+    private companion object {
+        /** The video-sync modes the setting offers, in mpv's order. */
+        val vidsyncEntries = VideoSyncMode.entries.map { it.mpvName }
+
+        val profileEntries = listOf("fast", "high-quality", "gpu-hq", "low-latency", "sw-fast")
     }
 }
