@@ -1,0 +1,3 @@
+Music gets animated visuals in KitePlayer. Audio-only media enables the visualizer automatically; turn it off in the room's player settings.
+
+Updated KitePlayer and mpv playback libraries.

@@ -44,7 +44,7 @@ val localProperties = AppConfig.localProperties(rootDir)
 kiteConfig {
     appName = "Synkplay"
     appId = "com.yuroyami.syncplay"
-    version = "0.24.1"
+    version = "0.25.0"
     // Sync updates Xcode before it opens; builds apply only their platform's changes.
     autoApply = true
 
