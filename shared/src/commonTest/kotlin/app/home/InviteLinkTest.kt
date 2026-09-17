@@ -11,6 +11,21 @@ import kotlin.test.assertTrue
  * and round-trips exactly.
  */
 class InviteLinkTest {
+    @Test fun httpsSharingRoundTripsWithoutExposingAnEmbeddedWebsite() {
+        val original = JoinConfig(room = "salon & thé", ip = "syncplay.pl", port = 8999, pw = "a+b?&")
+        val link = InviteLink.shareUrl(original)
+        assertTrue(link.startsWith(InviteLink.SHARE_PAGE + "#"))
+        assertTrue("syncplay.pl" !in link)
+        val parsed = InviteLink.parse(link)!!
+        assertEquals(original.room, parsed.room)
+        assertEquals(original.ip, parsed.ip)
+        assertEquals(original.pw, parsed.pw)
+        assertEquals(original.port, parsed.port)
+        assertNull(InviteLink.parse(InviteLink.SHARE_PAGE + "#invalid!!!"))
+        assertNull(InviteLink.parse("https://evil.example/join/#" + link.substringAfter('#')))
+        assertNull(InviteLink.parse("synkplay://wrong?room=r"))
+    }
+
 
     @Test
     fun `a built link parses back to the same room`() {

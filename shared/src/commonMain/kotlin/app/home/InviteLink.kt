@@ -3,6 +3,7 @@ package app.home
 import app.protocol.OFFICIAL_SERVER_ADDRESS
 import app.protocol.OFFICIAL_SERVER_NAME
 import app.protocol.Session
+import kotlin.io.encoding.Base64
 
 /**
  * The room as one line someone can send.
@@ -20,6 +21,10 @@ object InviteLink {
 
     const val SCHEME = "synkplay"
     private const val PREFIX = "$SCHEME://join"
+    const val SHARE_PAGE = "https://yuroyami.github.io/syncplay-mobile/join/"
+
+    /** HTTPS is clickable in messengers; the fragment keeps room credentials out of web requests. */
+    fun shareUrl(config: JoinConfig): String = SHARE_PAGE + "#" + Base64.UrlSafe.encode(build(config).encodeToByteArray())
 
     /** The official server is named, not resolved to the address the client happens to dial. */
     private const val OFFICIAL_IP = OFFICIAL_SERVER_ADDRESS
@@ -47,7 +52,14 @@ object InviteLink {
      */
     fun parse(raw: String): JoinConfig? {
         val trimmed = raw.trim()
-        if (!trimmed.startsWith("$SCHEME://", ignoreCase = true)) return null
+        if (trimmed.length > 16_384) return null
+        if (trimmed.startsWith("$SHARE_PAGE#", ignoreCase = true)) {
+            val decoded = runCatching {
+                Base64.UrlSafe.decode(trimmed.substringAfter('#')).decodeToString(throwOnInvalidSequence = true)
+            }.getOrNull() ?: return null
+            return if (decoded.startsWith("$PREFIX?", ignoreCase = true)) parse(decoded) else null
+        }
+        if (!trimmed.startsWith("$PREFIX?", ignoreCase = true)) return null
         val query = trimmed.substringAfter('?', "")
         if (query.isEmpty()) return null
 
