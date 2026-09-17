@@ -24,6 +24,7 @@
     <string name="connect_roomname_empty_error">房间名称不能为空</string>
     <string name="connect_address_empty_error">服务器地址不应为空</string>
     <string name="connect_port_empty_error">请输入端口号！</string>
+    <string name="connect_port_range_error">端口必须在 1 到 65535 之间。</string>
     <string name="home_ip_address">IP地址</string>
     <string name="home_port">端口</string>
     <string name="home_password_if_any">密码（如果有）</string>
@@ -309,7 +310,7 @@
     <string name="uisetting_haptic_on_playlist_title">播放列表已更新</string>
     <string name="uisetting_haptic_on_seeked_summary">有人在视频中跳转时振动。</string>
     <string name="uisetting_haptic_on_seeked_title">有人跳转</string>
-    <string name="uisetting_osd_duration_summary">房间事件和警告在屏幕上停留多少秒。设为 0 则不显示。</string>
+    <string name="uisetting_osd_duration_summary">房间通知在屏幕上停留多少秒。设为 0 时只显示警告。</string>
     <string name="uisetting_osd_duration_title">房间提示显示时长</string>
     <string name="uisetting_show_chapter_dots_summary">在进度条上标出章节。</string>
     <string name="uisetting_show_chapter_dots_title">显示章节标记</string>
@@ -389,6 +390,7 @@
     <string name="room_chat_image_from">%1$s 发送的图片</string>
     <string name="room_chat_image_hidden">图片已隐藏。点按可从 %1$s 加载。</string>
     <string name="room_chat_input">消息</string>
+    <string name="room_chat_new_messages">新消息</string>
     <string name="room_chat_show_image">显示来自 %1$s 的图片</string>
     <string name="room_chat_too_long">消息过长：%1$d / %2$d 个字符。</string>
     <string name="room_command_bad_argument">/%1$s 需要 %2$s。</string>
@@ -473,6 +475,11 @@
     <string name="room_shared_playlist_limit">共享播放列表已达上限（%1$d 项 / %2$d 字符）</string>
     <string name="room_shared_playlist_more">更多</string>
     <string name="room_shared_playlist_undo">撤销上次播放列表改动</string>
+    <string name="room_shared_playlist_move_up">上移</string>
+    <string name="room_shared_playlist_move_down">下移</string>
+    <string name="room_shared_playlist_restore_title">恢复播放列表？</string>
+    <string name="room_shared_playlist_restore_body">连接中断了，房间恢复后播放列表是空的。</string>
+    <string name="room_shared_playlist_restore">恢复</string>
     <string name="room_shared_playlist_urls">网址，每行一个</string>
     <string name="room_slowdown_notification">正在放慢以同步 %1$s</string>
     <string name="room_slowdown_reverted">已恢复正常速度</string>
@@ -624,8 +631,6 @@
     <string name="ui_setting_mpv_vidsync_detail">除 audio 外的选项在超过 60 Hz 的屏幕上可能出问题。遇到时把设备刷新率调低。</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_categ_notices">提示</string>
-    <string name="uisetting_chat_clearance_summary">在聊天下方保留这个比例的屏幕高度，让字幕不被挡住。设为 0 则聊天可以贴到屏幕底部。</string>
-    <string name="uisetting_chat_clearance_title">聊天下方给字幕留出的空间</string>
     <string name="uisetting_chat_colors_entry_summary">设置聊天消息各部分的颜色</string>
     <string name="uisetting_doubletap_seek_detail">关闭后，单击不再等待第二次点击，去掉那一小段延迟。</string>
     <string name="uisetting_kite_audio_delay_summary">调整画面时序以补偿音频延迟。正值让画面更早出现，负值更晚。1000 毫秒为一秒。</string>

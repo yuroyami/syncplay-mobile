@@ -30,6 +30,7 @@
     <string name="connect_roomname_empty_error">Raumname sollte nicht leer sein</string>
     <string name="connect_address_empty_error">Serveradresse sollte nicht leer sein</string>
     <string name="connect_port_empty_error">Port eingeben!</string>
+    <string name="connect_port_range_error">Der Port muss zwischen 1 und 65535 liegen.</string>
 
     <string name="home_ip_address">IP-Adresse</string>
     <string name="home_port">Port</string>
@@ -319,7 +320,7 @@
     <string name="uisetting_haptic_on_playlist_title">Playlist aktualisiert</string>
     <string name="uisetting_haptic_on_seeked_summary">Vibrieren, wenn jemand im Video spult.</string>
     <string name="uisetting_haptic_on_seeked_title">Jemand hat gespult</string>
-    <string name="uisetting_osd_duration_summary">Wie viele Sekunden Raumereignisse und Warnungen auf dem Bildschirm bleiben. 0 blendet sie aus.</string>
+    <string name="uisetting_osd_duration_summary">Wie viele Sekunden Raumhinweise auf dem Bildschirm bleiben. Bei 0 erscheinen nur Warnungen.</string>
     <string name="uisetting_osd_duration_title">Anzeigedauer von Hinweisen</string>
     <string name="uisetting_show_chapter_dots_summary">Markiert Kapitel auf der Zeitleiste.</string>
     <string name="uisetting_show_chapter_dots_title">Kapitelmarkierungen anzeigen</string>
@@ -399,6 +400,7 @@
     <string name="room_chat_image_from">Bild von %1$s</string>
     <string name="room_chat_image_hidden">Bild ausgeblendet. Tippen, um es von %1$s zu laden.</string>
     <string name="room_chat_input">Nachricht</string>
+    <string name="room_chat_new_messages">Neue Nachrichten</string>
     <string name="room_chat_show_image">Bild von %1$s anzeigen</string>
     <string name="room_chat_too_long">Nachricht zu lang: %1$d von %2$d Zeichen.</string>
     <string name="room_command_bad_argument">/%1$s braucht %2$s.</string>
@@ -483,6 +485,11 @@
     <string name="room_shared_playlist_limit">Grenze der geteilten Playlist erreicht (%1$d Einträge / %2$d Zeichen)</string>
     <string name="room_shared_playlist_more">Mehr</string>
     <string name="room_shared_playlist_undo">Letzte Playlist-Änderung rückgängig</string>
+    <string name="room_shared_playlist_move_up">Nach oben</string>
+    <string name="room_shared_playlist_move_down">Nach unten</string>
+    <string name="room_shared_playlist_restore_title">Playlist wiederherstellen?</string>
+    <string name="room_shared_playlist_restore_body">Die Verbindung war unterbrochen, und der Raum ist mit einer leeren Playlist zurückgekommen.</string>
+    <string name="room_shared_playlist_restore">Wiederherstellen</string>
     <string name="room_shared_playlist_urls">URLs, eine pro Zeile</string>
     <string name="room_slowdown_notification">Wird langsamer, um zu %1$s zu passen</string>
     <string name="room_slowdown_reverted">Wieder normale Geschwindigkeit</string>
@@ -634,8 +641,6 @@
     <string name="ui_setting_mpv_vidsync_detail">Alles außer audio kann bei Displays über 60 Hz Probleme machen. Dann die Bildwiederholrate des Geräts senken.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_categ_notices">Hinweise</string>
-    <string name="uisetting_chat_clearance_summary">Hält diesen Anteil der Bildschirmhöhe unter dem Chat frei, damit Untertitel sichtbar bleiben. 0 lässt den Chat bis zum unteren Rand reichen.</string>
-    <string name="uisetting_chat_clearance_title">Platz unter dem Chat für Untertitel</string>
     <string name="uisetting_chat_colors_entry_summary">Farbe für jeden Teil der Chatnachrichten festlegen</string>
     <string name="uisetting_doubletap_seek_detail">Aus entfernt die kurze Verzögerung nach einem einzelnen Tippen, während die App auf ein zweites wartet.</string>
     <string name="uisetting_kite_audio_delay_summary">Passt das Bildtiming an eine Tonverzögerung an. Positive Werte zeigen das Bild früher, negative später. 1000 ms sind eine Sekunde.</string>

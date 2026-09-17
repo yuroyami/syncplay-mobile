@@ -24,6 +24,7 @@
     <string name="connect_roomname_empty_error">Название комнаты не должно быть пустым</string>
     <string name="connect_address_empty_error">Адрес сервера не должен быть пустым</string>
     <string name="connect_port_empty_error">Введите порт!</string>
+    <string name="connect_port_range_error">Порт должен быть от 1 до 65535.</string>
     <string name="home_ip_address">IP-адрес</string>
     <string name="home_port">Порт</string>
     <string name="home_password_if_any">Пароль (если есть)</string>
@@ -334,7 +335,7 @@
     <string name="uisetting_swipe_gestures_title">Жесты свайпа</string>
     <string name="uisetting_swipe_gestures_summary">Слева яркость, справа громкость.</string>
     <string name="uisetting_osd_duration_title">Время показа уведомлений комнаты</string>
-    <string name="uisetting_osd_duration_summary">Сколько секунд события комнаты и предупреждения остаются на экране. 0 скрывает их.</string>
+    <string name="uisetting_osd_duration_summary">Сколько секунд уведомления комнаты остаются на экране. При 0 показываются только предупреждения.</string>
     <string name="room_roster_duration">Длительность: %1$s</string>
     <string name="room_roster_size">Размер: %1$s</string>
 
@@ -401,6 +402,7 @@
     <string name="room_chat_image_from">Изображение от %1$s</string>
     <string name="room_chat_image_hidden">Изображение скрыто. Нажмите, чтобы загрузить с %1$s.</string>
     <string name="room_chat_input">Сообщение</string>
+    <string name="room_chat_new_messages">Новые сообщения</string>
     <string name="room_chat_show_image">Показать изображение с %1$s</string>
     <string name="room_chat_too_long">Сообщение слишком длинное: %1$d из %2$d символов.</string>
     <string name="room_command_bad_argument">/%1$s требует %2$s.</string>
@@ -485,6 +487,11 @@
     <string name="room_shared_playlist_limit">Достигнут предел общего плейлиста (%1$d элементов / %2$d символов)</string>
     <string name="room_shared_playlist_more">Ещё</string>
     <string name="room_shared_playlist_undo">Отменить последнее изменение плейлиста</string>
+    <string name="room_shared_playlist_move_up">Переместить выше</string>
+    <string name="room_shared_playlist_move_down">Переместить ниже</string>
+    <string name="room_shared_playlist_restore_title">Восстановить плейлист?</string>
+    <string name="room_shared_playlist_restore_body">Соединение прервалось, и комната вернулась с пустым плейлистом.</string>
+    <string name="room_shared_playlist_restore">Восстановить</string>
     <string name="room_shared_playlist_urls">Ссылки, по одной в строке</string>
     <string name="room_slowdown_notification">Замедляемся, чтобы догнать %1$s</string>
     <string name="room_slowdown_reverted">Обычная скорость</string>
@@ -636,8 +643,6 @@
     <string name="ui_setting_mpv_vidsync_detail">Всё кроме audio может давать проблемы на экранах выше 60 Гц. Тогда снизьте частоту обновления устройства.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_categ_notices">Уведомления</string>
-    <string name="uisetting_chat_clearance_summary">Оставляет этот процент высоты экрана свободным под чатом, чтобы субтитры было видно. 0 позволяет чату доходить до низа.</string>
-    <string name="uisetting_chat_clearance_title">Место под чатом для субтитров</string>
     <string name="uisetting_chat_colors_entry_summary">Задайте цвет каждой части сообщений чата</string>
     <string name="uisetting_doubletap_seek_detail">Выключено убирает короткую задержку после одиночного нажатия, пока приложение ждёт второго.</string>
     <string name="uisetting_kite_audio_delay_summary">Подстраивает время картинки под задержку звука. Положительные значения показывают картинку раньше, отрицательные позже. 1000 мс это секунда.</string>

@@ -30,6 +30,7 @@
     <string name="connect_roomname_empty_error">اسم الغرفة لا يجب أن يكون فارغاً</string>
     <string name="connect_address_empty_error">عنوان الخادم لا يجب أن يكون فارغاً</string>
     <string name="connect_port_empty_error">أدخل المنفذ!</string>
+    <string name="connect_port_range_error">يجب أن يكون المنفذ بين 1 و65535.</string>
 
     <string name="home_ip_address">عنوان IP</string>
     <string name="home_port">المنفذ</string>
@@ -320,7 +321,7 @@
     <string name="uisetting_haptic_on_playlist_title">تحديث قائمة التشغيل</string>
     <string name="uisetting_haptic_on_seeked_summary">اهتزاز عند تقديم/ترجيع شخص ما في الفيديو.</string>
     <string name="uisetting_haptic_on_seeked_title">تقديم/ترجيع من شخص</string>
-    <string name="uisetting_osd_duration_summary">كم ثانية تبقى أحداث الغرفة والتحذيرات على الشاشة. القيمة 0 تخفي هذه التنبيهات.</string>
+    <string name="uisetting_osd_duration_summary">كم ثانية تبقى تنبيهات الغرفة على الشاشة. عند 0 تظهر التحذيرات فقط.</string>
     <string name="uisetting_osd_duration_title">مدة عرض تنبيهات الغرفة</string>
     <string name="uisetting_show_chapter_dots_summary">يعلّم الفصول على شريط التقدم.</string>
     <string name="uisetting_show_chapter_dots_title">إظهار علامات الفصول</string>
@@ -401,6 +402,7 @@
     <string name="room_chat_image_from">صورة أرسلها %1$s</string>
     <string name="room_chat_image_hidden">الصورة مخفية. اضغط لتحميلها من %1$s.</string>
     <string name="room_chat_input">رسالة</string>
+    <string name="room_chat_new_messages">رسائل جديدة</string>
     <string name="room_chat_show_image">اعرض الصورة من %1$s</string>
     <string name="room_chat_too_long">الرسالة طويلة: %1$d من %2$d حرفًا.</string>
     <string name="room_command_bad_argument">‏/%1$s يحتاج %2$s.</string>
@@ -485,6 +487,11 @@
     <string name="room_shared_playlist_limit">بلغت قائمة التشغيل المشتركة حدّها (%1$d عنصرًا / %2$d حرفًا)</string>
     <string name="room_shared_playlist_more">المزيد</string>
     <string name="room_shared_playlist_undo">تراجع عن آخر تغيير في القائمة</string>
+    <string name="room_shared_playlist_move_up">نقل لأعلى</string>
+    <string name="room_shared_playlist_move_down">نقل لأسفل</string>
+    <string name="room_shared_playlist_restore_title">استعادة قائمة التشغيل؟</string>
+    <string name="room_shared_playlist_restore_body">انقطع الاتصال، وعادت الغرفة بقائمة تشغيل فارغة.</string>
+    <string name="room_shared_playlist_restore">استعادة</string>
     <string name="room_shared_playlist_urls">روابط، رابط في كل سطر</string>
     <string name="room_slowdown_notification">نُبطئ لمجاراة %1$s</string>
     <string name="room_slowdown_reverted">عادت السرعة إلى طبيعتها</string>
@@ -636,8 +643,6 @@
     <string name="ui_setting_mpv_vidsync_detail">أي خيار غير audio قد يسبب مشاكل على الشاشات فوق 60 هرتز. اخفض معدل تحديث الجهاز إن حدث ذلك.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_categ_notices">التنبيهات</string>
-    <string name="uisetting_chat_clearance_summary">اترك هذه النسبة من ارتفاع الشاشة خالية أسفل الدردشة لتبقى الترجمات مرئية. القيمة 0 تسمح للدردشة بالوصول إلى أسفل الشاشة.</string>
-    <string name="uisetting_chat_clearance_title">مساحة تحت الدردشة للترجمات</string>
     <string name="uisetting_chat_colors_entry_summary">اضبط لون كل جزء من رسائل الدردشة</string>
     <string name="uisetting_doubletap_seek_detail">الإيقاف يزيل التأخير القصير الذي يتبع النقرة الواحدة بينما ينتظر التطبيق نقرة ثانية.</string>
     <string name="uisetting_kite_audio_delay_summary">اضبط توقيت الصورة لتعويض تأخير الصوت. القيم الموجبة تُظهر الصورة أبكر؛ والسالبة تُظهرها أمتأخرًا. 1000 مللي ثانية تساوي ثانية.</string>

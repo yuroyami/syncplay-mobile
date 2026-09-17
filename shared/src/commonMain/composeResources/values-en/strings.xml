@@ -35,6 +35,7 @@
     <string name="connect_roomname_empty_error">Roomname shouldn't be empty</string>
     <string name="connect_address_empty_error">Server Address shouldn't be empty</string>
     <string name="connect_port_empty_error">Enter port!</string>
+    <string name="connect_port_range_error">The port must be between 1 and 65535.</string>
 
     <string name="home_ip_address">IP Address</string>
     <string name="home_port">Port</string>
@@ -325,8 +326,6 @@
     <string name="uisetting_sync_fastforward_threshold_summary">How many seconds behind the room your video must be before it jumps forward to catch up. Default: 5.0 seconds.</string>
     <string name="uisetting_user_offset_title">Playback time offset</string>
     <string name="uisetting_user_offset_summary">Align a different cut of the video with the room. Use +10.0 s if your file has a 10-second extra intro; use -10.0 s if that intro is missing from your file. 0.0 s means no offset. Only your playback position changes.</string>
-    <string name="uisetting_chat_clearance_title">Space below chat for subtitles</string>
-    <string name="uisetting_chat_clearance_summary">Keep this percentage of the screen height clear below chat so subtitles remain visible. 0 allows chat to reach the bottom of the screen.</string>
     <string name="uisetting_sync_rewind_title">Rewind when ahead</string>
     <string name="uisetting_sync_rewind_summary">Jump your video back when you are farther ahead of the room than the rewind threshold.</string>
     <string name="uisetting_sync_dont_slow_with_me_title">Don't wait for my device</string>
@@ -381,7 +380,7 @@
     <string name="uisetting_resetdefault_summary">Reset the settings on this screen.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_kite_audio_viz_title">Audio visualizer</string>
-    <string name="uisetting_kite_audio_viz_summary">Show animated visuals for music and other audio-only media.</string>
+    <string name="uisetting_kite_audio_viz_summary">Show animated visuals while audio plays and no video track is selected.</string>
     <string name="uisetting_kite_compose_renderer_title">Compose renderer</string>
     <string name="uisetting_kite_compose_renderer_summary">Draws video as Compose content. Switches live.</string>
     <string name="uisetting_kite_hw_title">Hardware acceleration</string>
@@ -453,7 +452,7 @@
     <string name="room_msg_resolved_url">Resolved: %1$s</string>
 
     <string name="uisetting_osd_duration_title">Room notice display time</string>
-    <string name="uisetting_osd_duration_summary">How many seconds room events and warnings stay on screen. 0 hides these notices.</string>
+    <string name="uisetting_osd_duration_summary">How many seconds room notices stay on screen. At 0, only warnings show.</string>
 
     <!-- OSD message control settings (mirrors Syncplay PC's "Messages" tab toggles) -->
     <string name="uisetting_osd_sameroom_title">Events from your room</string>
@@ -595,6 +594,7 @@
     <string name="room_gif_failed">Could not load. Check the connection.</string>
     <string name="room_gif_retry">Retry</string>
     <string name="room_chat_input">Message</string>
+    <string name="room_chat_new_messages">New messages</string>
     <!-- Media intake (design overhaul) -->
     <string name="room_route_device">From this device</string>
     <string name="room_route_device_note">Pick a video or audio file</string>
@@ -646,6 +646,11 @@
     <string name="trusted_domains_remove">Remove</string>
     <string name="trusted_domains_empty">No domains yet. Nothing another user pushes will auto-load.</string>
     <string name="room_shared_playlist_undo">Undo the last playlist change</string>
+    <string name="room_shared_playlist_move_up">Move up</string>
+    <string name="room_shared_playlist_move_down">Move down</string>
+    <string name="room_shared_playlist_restore_title">Restore the playlist?</string>
+    <string name="room_shared_playlist_restore_body">The connection dropped, and the room came back with an empty playlist.</string>
+    <string name="room_shared_playlist_restore">Restore</string>
     <string name="room_shared_playlist_empty">The playlist is empty.</string>
     <string name="room_shared_playlist_add">Add</string>
     <string name="room_shared_playlist_more">More</string>
@@ -688,6 +693,16 @@
     <string name="engine_info_kiteplayer">Made by Synkplay's own developer on top of FFmpeg, and tuned for Synkplay. Still experimental: playback can misbehave, so switch engines if something looks off. Built into Synkplay: nothing extra to install.</string>
     <string name="engine_info_avplayer">Apple's system player. Very stable and battery friendly, but narrow: MP4, MOV and HLS with the codecs iOS ships, no external subtitles, no chapters. Built into Synkplay: nothing extra to install.</string>
     <string name="engine_info_vlckit">VideoLAN's libVLC 4 for iOS. Plays nearly every container and codec, external subtitles, chapters, picture in picture. The stable default on iOS. Built into Synkplay: nothing extra to install.</string>
+    <string name="room_track_tab_audio">Audio</string>
+    <string name="room_track_tab_subtitles">Subtitles</string>
+    <string name="room_track_tab_video">Video</string>
+    <string name="room_video_off">Disable Video</string>
+    <string name="room_visualization_when_video_off">Available when video is disabled</string>
+    <string name="room_track_unknown_language">Unspecified language</string>
+    <string name="room_track_import">Import</string>
+    <string name="room_track_search">Search</string>
+    <string name="room_seek_go">Go</string>
+    <string name="room_seek_show_button">Show in player</string>
     <string name="room_track_trait_accessibility">Accessibility</string>
     <string name="room_track_trait_forced">Forced</string>
     <string name="setting_gif_recents_title">Remember recent GIFs</string>

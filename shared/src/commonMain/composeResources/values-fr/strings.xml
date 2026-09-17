@@ -30,6 +30,7 @@
     <string name="connect_roomname_empty_error">Le nom de la salle ne doit pas être vide</string>
     <string name="connect_address_empty_error">L'adresse du serveur ne doit pas être vide</string>
     <string name="connect_port_empty_error">Entrez un port !</string>
+    <string name="connect_port_range_error">Le port doit être compris entre 1 et 65535.</string>
 
     <string name="home_ip_address">Adresse IP</string>
     <string name="home_port">Port</string>
@@ -331,7 +332,7 @@
 
     <!-- UI settings: HUD and OSD -->
     <string name="uisetting_osd_duration_title">Durée d'affichage des avis</string>
-    <string name="uisetting_osd_duration_summary">Combien de secondes les événements de la salle et les avertissements restent à l'écran. 0 les masque.</string>
+    <string name="uisetting_osd_duration_summary">Combien de secondes les notifications de la salle restent à l'écran. À 0, seuls les avertissements s'affichent.</string>
 
     <!-- UI settings: haptics -->
     <string name="uisetting_haptic_on_joined_title">Quelqu'un a rejoint</string>
@@ -416,6 +417,7 @@
     <string name="room_chat_image_from">Image envoyée par %1$s</string>
     <string name="room_chat_image_hidden">Image masquée. Touchez pour la charger depuis %1$s.</string>
     <string name="room_chat_input">Message</string>
+    <string name="room_chat_new_messages">Nouveaux messages</string>
     <string name="room_chat_show_image">Afficher l'image de %1$s</string>
     <string name="room_chat_too_long">Message trop long : %1$d sur %2$d caractères.</string>
     <string name="room_command_bad_argument">/%1$s a besoin de %2$s.</string>
@@ -500,6 +502,11 @@
     <string name="room_shared_playlist_limit">Limite de la playlist partagée atteinte (%1$d éléments / %2$d caractères)</string>
     <string name="room_shared_playlist_more">Plus</string>
     <string name="room_shared_playlist_undo">Annuler le dernier changement de playlist</string>
+    <string name="room_shared_playlist_move_up">Monter</string>
+    <string name="room_shared_playlist_move_down">Descendre</string>
+    <string name="room_shared_playlist_restore_title">Restaurer la liste de lecture ?</string>
+    <string name="room_shared_playlist_restore_body">La connexion a été coupée et la salle est revenue avec une liste de lecture vide.</string>
+    <string name="room_shared_playlist_restore">Restaurer</string>
     <string name="room_shared_playlist_urls">URL, une par ligne</string>
     <string name="room_slowdown_notification">Ralentissement pour rester avec %1$s</string>
     <string name="room_slowdown_reverted">Retour à la vitesse normale</string>
@@ -651,8 +658,6 @@
     <string name="ui_setting_mpv_vidsync_detail">Tout autre choix qu'audio peut poser problème sur les écrans au-dessus de 60 Hz. Dans ce cas, baissez le taux de rafraîchissement.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
     <string name="uisetting_categ_notices">Notifications</string>
-    <string name="uisetting_chat_clearance_summary">Laisse ce pourcentage de la hauteur d'écran libre sous le chat pour que les sous-titres restent visibles. 0 laisse le chat descendre jusqu'en bas.</string>
-    <string name="uisetting_chat_clearance_title">Espace sous le chat pour les sous-titres</string>
     <string name="uisetting_chat_colors_entry_summary">Définir la couleur de chaque partie des messages</string>
     <string name="uisetting_doubletap_seek_detail">Désactivé supprime le court délai après une seule touche pendant que l'application attend la seconde.</string>
     <string name="uisetting_kite_audio_delay_summary">Ajuste le timing de l'image pour compenser un décalage audio. Les valeurs positives affichent l'image plus tôt, négatives plus tard. 1000 ms font une seconde.</string>
