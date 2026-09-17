@@ -43,61 +43,59 @@ val localProperties = AppConfig.localProperties(rootDir)
 
 kiteConfig {
     appName = "Synkplay"
-    version("0.24.1") {
-        android { reupload = 1 }
-        ios { reupload = 1 }
-    }
-    jvmTarget = 21
+    appId = "com.yuroyami.syncplay"
+    version = "0.24.1"
+    // Sync updates Xcode before it opens; builds apply only their platform's changes.
+    autoApply = true
 
-    id(if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay") {
-        ios { suffix = ".iosApp" }
-        desktop { suffix = ".desktop" }
-    }
+    // Both shared and webApp use KMP; generated app configuration belongs in shared.
+    modules { shared = ":shared" }
 
-    modules {
-        shared = ":shared"
-        androidApps(":androidApp")
-        // The desktop shell reads its identity back from this block, so it has to be in it.
-        // Its comments already said so; the registration was missing.
-        desktopApps(":desktopApp")
+    jvm {
+        toolchain = providers.gradleProperty("org.gradle.toolchains.jvm.version").map(String::toInt)
+        target = toolchain
     }
 
-    // SDK/toolchain values come from gradle.properties (single value source; the modules
-    // read the same keys). compileSdk >= 33 also makes the logo sync emit the themed-icon
-    // monochrome wrappers (issue #143).
     android {
-        compileSdk = providers.gradleProperty("android.compileSdk").get().toInt()
-        minSdk = providers.gradleProperty("android.minSdk").get().toInt()
-        targetSdk = providers.gradleProperty("android.targetSdk").get().toInt()
+        if (exoOnly) appId = "com.reddnek.syncplay"
+        version { rebuild = 1 }
+        sdk(
+            min = providers.gradleProperty("android.minSdk").get().toInt(),
+            target = providers.gradleProperty("android.targetSdk").get().toInt(),
+            compile = providers.gradleProperty("android.compileSdk").get().toInt(),
+        )
         ndk = providers.gradleProperty("android.ndkVersion").get()
+        logo { foregroundScale = 0.5 }
     }
 
     ios {
-        // Compatibility assertion for the universal AppIcon installer only (matches the
-        // cocoapods deploymentTarget in :shared); it does not configure Xcode.
-        deploymentTarget = "14.1"
-
-        // Mutation stays on-demand in KiteConfig: this block only ARMS kiteRewriteXcode;
-        // normal builds never rewrite sources. Run it after every version bump.
-        rewrite { }
+        appId { suffix = ".iosApp" }
+        version { rebuild = 1 }
+        infoPlist {
+            proMotion = true
+            nonExemptEncryption = false
+        }
     }
 
-    // Same rule as ios { rewrite }: this arms kiteRewriteLogo, it does not run it.
+    desktop {
+        appId { suffix = ".desktop" }
+    }
+
     logo {
-        foreground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/synkplay_fg.png")
-        background = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/synkplay_bg.png")
-        android { safeZone = 0.5 }
-        rewrite { replaceOld = true }
+        foreground = file("shared/src/commonMain/composeResources/drawable/synkplay_fg.png")
+        background = image(file("shared/src/commonMain/composeResources/drawable/synkplay_bg.png"))
+    }
+
+    optIns {
+        add("kotlinx.cinterop.BetaInteropApi")
     }
 
     buildConfig {
         includeIdentity = false
-        // className is left at its default, KiteBuildConfig, since 1.0.0: no clash
-        // with the BuildConfig that AGP generates.
+        // KiteBuildConfig avoids AGP's generated BuildConfig name.
         packageName = "SyncplayMobile.shared"
-//
-        stringField("APP_NAME", kiteConfig.appName.get())
-        stringField("APP_VERSION", kiteConfig.version.get())
+        stringField("APP_NAME", kiteConfig.appName)
+        stringField("APP_VERSION", kiteConfig.version)
         // NOT "DEBUG": KiteConfig generates a PUBLIC object, so every field becomes a property on the
         // exported ObjC header, and Xcode defines DEBUG=1 in Debug configs, so "BOOL DEBUG"
         // preprocesses to "BOOL 1" and every iOS Debug build fails to precompile the module.
@@ -120,7 +118,7 @@ kiteConfig {
         // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
         booleanField(
             "DEBUG_SYNCPLAY_PROTOCOL",
-            providers.gradleProperty("debugProtocol").orNull?.toBoolean() ?: false,
+            providers.gradleProperty("debugProtocol").map(String::toBoolean).orElse(false),
         )
         booleanField("EXOPLAYER_ONLY", exoOnly)
         stringField("KLIPY_API_KEY", localProperties.getProperty("yuroyami.keyKlipyApi") ?: "")
@@ -168,7 +166,7 @@ detekt {
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    jvmTarget = "21"
+    jvmTarget = kiteConfig.jvmTarget.get().toString()
     reports {
         html.required.set(true)
         sarif.required.set(true)
@@ -227,8 +225,7 @@ tasks.register("printReleaseIdentity") {
     val iosVersion = kiteConfig.iosMarketingVersion.get()
     val iosBuildNumber = kiteConfig.iosBuildNumber.get()
     val appId = kiteConfig.androidApplicationId.get()
-    // Read from the pbxproj, which is what Xcode and the App Store actually see; KiteConfig's
-    // ios block only asserts against it.
+    // Xcode owns the deployment target; KiteConfig reads it instead of duplicating it.
     val iosMinimum = file("iosApp/iosApp.xcodeproj/project.pbxproj").readLines()
         .firstNotNullOfOrNull { line ->
             Regex("""IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);""").find(line)?.groupValues?.get(1)

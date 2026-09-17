@@ -293,7 +293,7 @@ private fun Project.registerDeadResourceGate(): TaskProvider<*> {
                     .none { Regex("""\b${Regex.escape(it)}\b""").containsMatchIn(code) }
             }.sorted()
             /* KiteConfig reads these by path when it regenerates launcher assets; no Kotlin
-             * ever names them, and deleting them would break kiteRewriteLogo. */
+             * ever names them, and deleting them would break kiteApply. */
             val ownedByKiteConfig = setOf("synkplay_bg", "synkplay_fg")
             val drawables = File(resourceRoot, "drawable").listFiles().orEmpty()
                 .filter { it.isFile }
@@ -384,10 +384,10 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
  * The engine destroy contract, enforced.
  *
  * Every `destroy()` must flip `isInitialized = false` first, then cancel `playerSupervisorJob`,
- * and only then release the native engine. The order is not cosmetic: mpv's handle is
- * process-global, so a position tracker that outlives teardown sails past its own guard and
- * trips a native CHECK that aborts the process. On the other engines the same mistake is
- * quieter, and only leaks the whole RoomViewmodel graph.
+ * and only then release the native engine. The order is not cosmetic: a position tracker that
+ * outlives teardown sails past its own guard into a released engine. When mpv's handle was
+ * process-global that aborted the process; the same mistake still leaks the whole RoomViewmodel
+ * graph on every engine.
  *
  * A scan, because three of the five engines are iOS or Android actuals that no JVM test can
  * construct, and this is exactly the kind of ordering a well-meaning edit reverses.

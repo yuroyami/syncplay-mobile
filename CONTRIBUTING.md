@@ -48,10 +48,17 @@ Other commands worth knowing:
 ./gradlew :desktopApp:run              # run the desktop app
 ./gradlew printReleaseIdentity         # version, version code, application id, iOS target
 ./gradlew updateDocVersions            # after a dependency bump, or checkDocVersions fails
+./gradlew kitePlan                     # preview identity and asset changes
+./gradlew kiteApplyIos                 # update Xcode before archiving outside the Gradle IDE
+./gradlew kiteCheck                    # check the resolved cross-platform configuration
 ./gradlew androidReleaseAll            # both Android APKs and the bundle
 ```
 
 Add `-PdebugProtocol=true` to any desktop task to log the wire traffic.
+
+KiteConfig 2.0.1 applies identity and icons automatically. Gradle IDE sync updates the Xcode
+project; opening Xcode alone does not. Versions and platform rebuild counters live in the root
+`kiteConfig` block. JVM levels are shared there, and app modules/locales are detected automatically.
 
 ## 3. What the gates check, and why each one exists
 

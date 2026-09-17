@@ -292,7 +292,7 @@ jobs:
       - name: Stamp iOS version from SSOT
         id: version
         run: |
-          ./gradlew -q kiteRewriteXcode printReleaseIdentity > identity.env
+          ./gradlew -q kiteApplyIos printReleaseIdentity > identity.env
           VERSION=$(sed -n 's/^IOS_VERSION=//p' identity.env)
           VERSION_CODE=$(sed -n 's/^IOS_BUILD_NUMBER=//p' identity.env)
           if [ -z "$VERSION" ] || [ -z "$VERSION_CODE" ]; then

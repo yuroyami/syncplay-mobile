@@ -1,10 +1,10 @@
 [versions] #####################################################
 #KMM-Plugins
 # 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 ksp = "2.3.11"
 agp = "9.3.2"
-kiteconfig = "1.0.0"
+kiteconfig = "2.0.1"
 compose-multiplatform = "1.12.0"
 kSerialization = "1.11.0"
 detekt = "1.23.8"
@@ -18,16 +18,16 @@ lyricist = "1.9.0"
 compose-multiplatform-icons = "1.7.3"
 compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
-navigation3Runtime = "1.2.0-alpha04"
-navigation3Ui = "1.2.0-alpha02"
+navigation3Runtime = "1.2.0-beta01"
+navigation3Ui = "1.2.0-beta01"
 compose-unstyled = "2.9.2"
 # Backdrop blur. Built against Kotlin 2.4.10 + Compose Multiplatform 1.12.0, both of which
 # this project already runs, and publishes exactly our four targets (no iosX64, which we
 # don't declare either).
-haze = "2.0.0-beta02"
+haze = "2.0.0-beta03"
 kermit = "2.1.0"
 krypto = "0.8.0"
-datastore = "1.3.0-alpha10"
+datastore = "1.3.0-alpha11"
 filekit = "0.15.0"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
@@ -38,7 +38,7 @@ datetime = "0.8.0"
 atomicfu = "0.33.0"
 # DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
 kotlinxBrowser = "0.5.0"
-coil = "3.6.1"
+coil = "3.6.2"
 # Skiko: Compose 1.12.0-beta02 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
 # Pin to the more recent (Compose's), explicitly forced so neither side regresses
 # silently when either library is bumped. Bump this to whatever the new Compose
@@ -59,7 +59,7 @@ newpipeExtractor = "v0.26.5"
 
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
-kiteplayer = "0.0.24"
+kiteplayer = "0.0.25"
 # libmpv for Android, prebuilt by libmpvKt. Resolved from https://yuroyami.github.io/maven (declared
 # in settings.gradle.kts); -PuseMavenLocal=true overrides it while a new version is published
 # locally but not yet served there.

@@ -7,10 +7,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-kotlin {
-    jvmToolchain(21)
-}
-
 dependencies {
     implementation(project(":shared"))
     implementation(compose.desktop.currentOs)
@@ -43,7 +39,7 @@ compose.desktop {
             includeAllModules = true
 
             macOS {
-                // bundleID comes from kiteConfig { id { desktop { suffix } } }.
+                // The bundle ID comes from KiteConfig; macOS still needs a 1.x package version.
                 // jpackage rejects 0.x.y: macOS CFBundleVersion must start at 1.
                 packageVersion = kiteConfig.version.map {
                     if (it.startsWith("0.")) "1." + it.removePrefix("0.") else it
@@ -54,9 +50,6 @@ compose.desktop {
                 // Stable GUID so MSI upgrades replace the previous install instead of duplicating it.
                 upgradeUuid = "9E2B62D1-5C3A-4A8F-9C41-3B7E2B0C11D7"
                 perUserInstall = true
-            }
-            linux {
-                packageName = kiteConfig.appName.get().lowercase()
             }
         }
     }

@@ -9,22 +9,11 @@ plugins {
 // Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
 val exoOnly = AppConfig.resolveExoOnly(providers)
 
-// Nothing native is compiled here: mpv arrives prebuilt inside the libmpvkt AAR. AGP still wants
-// an NDK to strip the packaged libraries and to extract native symbols for the release mapping,
-// which is why the pin stays.
-val ndkRequired = kiteConfig.ndk.get()
-
-kotlin {
-    jvmToolchain(21)
-}
-
 android {
     namespace = "androidApp"
-    compileSdk = kiteConfig.compileSdk.get()
     // Pinned for reproducible builds (issue #105): AGP's default build-tools can resolve
     // differently on a clean CI checkout.
     buildToolsVersion = providers.gradleProperty("android.buildToolsVersion").get()
-    ndkVersion = ndkRequired
 
     // :shared holds essentially all the code, and lint stopped at this module's four files. With
     // dependency checking on, one run covers both, which is also what makes the repo's lint.xml
@@ -53,8 +42,6 @@ android {
         // applicationId / versionCode / versionName / manifestPlaceholders[appName] are applied
         // by KiteConfig in AGP finalizeDsl (AFTER this block) from the root kiteConfig { } config;
         // the exoOnly applicationId swap lives THERE, a module-level override here cannot win.
-        minSdk = kiteConfig.minSdk.get()
-        targetSdk = kiteConfig.targetSdk.get()
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
@@ -157,7 +144,7 @@ if (exoOnly) {
 }
 
 androidComponents {
-    // KiteConfig 1.0 reapplies the major SDK during finalization, resetting the minor version.
+    // KiteConfig applies the major SDK; AGP needs the minor level restored afterward.
     finalizeDsl { it.compileSdkMinor = providers.gradleProperty("android.compileSdkMinor").get().toInt() }
     onVariants { variant ->
         variant.outputs.forEach { output ->
