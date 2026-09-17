@@ -50,19 +50,25 @@ const val PLAYLIST_MAX_CHARACTERS = 10000
 fun playlistIsValid(files: List<String>): Boolean =
     files.size <= PLAYLIST_MAX_ITEMS && files.sumOf { it.length } <= PLAYLIST_MAX_CHARACTERS
 
-/** Supported video file extensions, used as the FileKit picker filter. */
+/** Supported video file extensions. */
 val vidExs = listOf(
     "mp4", "3gp", "av1", "mkv", "m4v", "mov", "wmv", "flv", "avi", "webm",
     "ogg", "ogv", "mpeg", "mpg", "m2v", "ts", "mts", "m2ts", "vob",
-    "divx", "xvid", "asf", "rm", "rmvb", "qt", "f4v", "mxf", "m1v", "m2v",
+    "divx", "xvid", "asf", "rm", "rmvb", "qt", "f4v", "mxf", "m1v",
     "3g2", "mpg2", "mpg4", "h264", "h265", "hevc", "mjpeg", "mjpg", "mod",
     "tod", "dat", "wma", "wav", "amv", "mtv", "swf"
 )
 
+/** Supported audio file extensions. */
+val audioExs = listOf("mp3", "m4a", "aac", "flac", "alac", "aiff", "aif", "opus", "mka", "oga", "wv", "ape", "mp2")
+
+/** Every media extension the app accepts. Audio plays too, with cover art or the visualizer. */
+val mediaExs = vidExs + audioExs
+
 /**
- * Returns a [FileKitType.File] configured for picking video files.
+ * Returns a [FileKitType.File] configured for picking media files.
  *
- * On Android, the full [vidExs] list is used as a MIME-extension filter so only matching files
+ * On Android, the full [mediaExs] list is used as a MIME-extension filter so only matching files
  * appear selectable in the SAF picker.
  *
  * On iOS, the extensions filter is OMITTED. Reason: FileKit maps each extension to a UTType via
@@ -74,25 +80,19 @@ val vidExs = listOf(
  * extensions makes FileKit use `UTTypeItem` (all files pickable), and the player layer
  * (AVPlayer / VLCKit / mpv) naturally rejects unsupported formats downstream.
  */
-val videoFileKitType: FileKitType
-    get() = if (platform == Platform.IOS) FileKitType.File() else FileKitType.File(extensions = vidExs)
-
-/**
- * List of supported audio file extensions. Used (together with [vidExs]) to decide whether a
- * file discovered while indexing a media directory belongs in the shared playlist.
- */
-val audioExs = listOf("mp3", "m4a", "aac", "flac", "alac", "aiff", "aif", "opus", "mka", "oga", "wv", "ape", "mp2")
+val mediaFileKitType: FileKitType
+    get() = if (platform == Platform.IOS) FileKitType.File() else FileKitType.File(extensions = mediaExs)
 
 /**
  * Whether a filename (with extension) names a media file we are willing to put into / resolve
- * from the shared playlist. Matches video ([vidExs]) and audio ([audioExs]) extensions,
- * case-insensitively. Files without a recognized extension are ignored so directory indexing
- * doesn't pull in `.nfo`, `.jpg`, `.txt`, etc.
+ * from the shared playlist. Matches every [mediaExs] extension, case-insensitively. Files
+ * without a recognized extension are ignored so directory indexing doesn't pull in `.nfo`,
+ * `.jpg`, `.txt`, etc.
  */
 fun isPlayableMediaFilename(filename: String): Boolean {
     val ext = filename.substringAfterLast('.', "").lowercase()
     if (ext.isEmpty()) return false
-    return ext in vidExs || ext in audioExs
+    return ext in mediaExs
 }
 
 /** Supported subtitle/closed-caption file extensions, used as the FileKit picker filter. */

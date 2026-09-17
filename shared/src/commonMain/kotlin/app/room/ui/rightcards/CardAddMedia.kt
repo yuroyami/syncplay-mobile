@@ -25,7 +25,7 @@ import app.player.resolver.urlLooksLikeDirectMedia
 import app.utils.getText
 import app.utils.platformFileAt
 import app.utils.playlistExs
-import app.utils.videoFileKitType
+import app.utils.mediaFileKitType
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -110,7 +110,7 @@ object CardAddMedia {
         val viewmodel = LocalRoomViewmodel.current
         fun close() = onClose()
 
-        val videoPicker = rememberFilePickerLauncher(type = videoFileKitType) { file ->
+        val mediaPicker = rememberFilePickerLauncher(type = mediaFileKitType) { file ->
             close()
             file ?: return@rememberFilePickerLauncher
             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
@@ -126,7 +126,7 @@ object CardAddMedia {
         } else {
             Column {
                 RouteRow(Icons.Filled.FolderOpen, strings.roomRouteDevice, strings.roomRouteDeviceNote) {
-                    Feedback.tick(); videoPicker.launch()
+                    Feedback.tick(); mediaPicker.launch()
                 }
                 RouteRow(Icons.Filled.Link, strings.roomRouteLink, supportedSites(strings)) {
                     Feedback.tick(); onLinkMode(true)

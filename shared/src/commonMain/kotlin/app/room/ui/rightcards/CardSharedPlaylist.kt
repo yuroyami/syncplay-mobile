@@ -72,7 +72,7 @@ import app.utils.getText
 import app.utils.ioDispatcher
 import app.utils.playlistExs
 import app.utils.rememberFileSaver
-import app.utils.videoFileKitType
+import app.utils.mediaFileKitType
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -104,7 +104,7 @@ object CardSharedPlaylist {
         val playlist = viewmodel.playlistManager
         val p = palette
 
-        val mediaFilePicker = rememberFilePickerLauncher(type = videoFileKitType, mode = FileKitMode.Multiple()) { files ->
+        val mediaFilePicker = rememberFilePickerLauncher(type = mediaFileKitType, mode = FileKitMode.Multiple()) { files ->
             if (files.isNullOrEmpty()) return@rememberFilePickerLauncher
             viewmodel.viewModelScope.launch(ioDispatcher) { playlist.addFiles(files) }
         }

@@ -1,7 +1,6 @@
 package app.room.ui.rightcards
 
-import app.utils.audioExs
-import app.utils.vidExs
+import app.utils.mediaExs
 
 /**
  * The title used by the compact roster. This changes presentation only; the actual filename
@@ -13,7 +12,7 @@ internal fun compactRosterFileName(filename: String): String {
     val extensionAt = title.lastIndexOf('.')
     if (extensionAt > 0) {
         val extension = title.substring(extensionAt + 1).lowercase()
-        if (extension in vidExs || extension in audioExs) {
+        if (extension in mediaExs) {
             title = title.substring(0, extensionAt).trimEnd()
         }
     }

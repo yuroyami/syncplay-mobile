@@ -3,8 +3,7 @@ package app.room
 import app.room.ui.rightcards.compactRosterFileName
 import app.room.ui.rightcards.abbreviateRosterFileName
 import app.utils.FileComparison
-import app.utils.audioExs
-import app.utils.vidExs
+import app.utils.mediaExs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -25,7 +24,7 @@ class RosterFileNameTest {
 
     @Test
     fun `all recognized video and audio extensions are removed case insensitively`() {
-        (vidExs + audioExs).forEach { extension ->
+        mediaExs.forEach { extension ->
             assertEquals("Episode.03", compactRosterFileName("Episode.03.${extension.uppercase()}"))
         }
     }
