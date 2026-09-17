@@ -1,6 +1,16 @@
 package app.server.model
 
 import app.server.SyncplayServer
+import app.protocol.sync.PendingSeekPositions
+import app.protocol.sync.PositionInputs
+import app.protocol.sync.SyncAction
+import app.protocol.sync.SyncContext
+import app.protocol.sync.SyncPrefs
+import app.protocol.sync.SyncState
+import app.protocol.sync.decideSync
+import app.protocol.sync.reportablePosition
+import app.protocol.wire.FileData
+import app.protocol.wire.PlaystateData
 import app.utils.SyncClock
 import app.utils.TestClock
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
  * [ServerRoom.getPosition] adopts the slowest watcher and rewrites the room's own state, which
@@ -93,5 +104,39 @@ class ServerRoomPositionTest {
             first, second,
             "the first read reset _lastUpdate, so the second no longer carries the same age"
         )
+    }
+
+    @Test
+    fun a_seek_ack_from_a_client_waiting_on_main_cannot_rewind_the_seeker() {
+        val room = ServerRoom("r")
+        val a = room.joinAt("A", 100.0)
+        val b = room.joinAt("B", 100.0)
+        a.setFile(FileData(name = "movie", duration = 7_200.0))
+        b.setFile(FileData(name = "movie", duration = 7_200.0))
+        a.updateState(position = 600.0, paused = false, doSeek = true, messageAge = 0.0)
+
+        val pending = PendingSeekPositions()
+        pending.begin(SyncAction.SomeoneSeeked("A", 600.0), "B")
+        val ack = reportablePosition(PositionInputs(
+            now = SyncClock.now(), globalPositionMs = 600_000.0, globalPositionSetAt = SyncClock.now(),
+            globalPaused = false, hasMedia = true, isInBackground = false,
+            localPositionMs = 100_000.0, durationMs = 7_200_000.0, awaitingRoomResyncDeadline = null,
+            pendingSeekPositionMs = pending.current?.targetMs,
+        ))
+        b.updateState(ack.positionSeconds, paused = false, doSeek = null, messageAge = 0.0)
+        clock.advanceSeconds(1.1)
+        val position = room.getPosition()
+        assertEquals(601.1, position, 0.001, "B must not reintroduce its cached 100-second position")
+
+        val response = decideSync(
+            PlaystateData(position = position, paused = false, doSeek = false, setBy = room.getSetBy()?.name),
+            SyncState(globalPaused = false, lastGlobalUpdate = SyncClock.now()),
+            SyncContext(
+                now = SyncClock.now(), playerPositionMs = 601_100.0, hasMedia = true,
+                isInBackground = false, supportsSpeedAdjustment = true, selfName = "A",
+                followerInControlledRoom = false, prefs = SyncPrefs(true, true, true, false), messageAge = 0.0,
+            ),
+        )
+        assertTrue(response.actions.none { it is SyncAction.SomeoneBehind })
     }
 }

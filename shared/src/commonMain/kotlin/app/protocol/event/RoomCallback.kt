@@ -1,5 +1,6 @@
 package app.protocol.event
 
+import androidx.annotation.UiThread
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.i18n.Localization
@@ -153,74 +154,53 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
     }
 
+    /** The handler owns Main dispatch and protects the target until this call returns. */
+    @UiThread
     fun onSomeoneSeeked(seeker: String, toPosition: Double, localSeek: LocalSeek? = null) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
         if (seeker.isNotSelf()) hapticIf(HAPTIC_ON_SEEKED)
-        onMainThread {
-            // A newer gesture can already be on screen when this echo renders. Its origin
-            // belongs to the sent intent, captured on the inbound thread before the next send.
-            if (seeker.isSelf() && localSeek == null) return@onMainThread
-            val oldPosMs = localSeek?.fromMs ?: viewmodel.player.currentPositionMs()
-            // toPosition is full-precision seconds. Multiply *as Double* before truncating
-            // to Long ms — `toPosition.toLong() * 1000L` first truncates fractional seconds
-            // and loses up to 999 ms.
-            val newPosMs = (toPosition * 1000.0).toLong()
+        // A self echo records the sent gesture; an unmatched duplicate must not invent an origin.
+        if (seeker.isSelf() && localSeek == null) return
+        val oldPosMs = localSeek?.fromMs ?: viewmodel.player.currentPositionMs()
+        // Multiply before truncating so subsecond seek targets survive the conversion.
+        val newPosMs = (toPosition * 1000.0).toLong()
 
-            // A remote seek can only move a loaded file. Self-seeks were submitted
-            // locally already; their echo records the origin without moving again.
-            if (seeker.isNotSelf() && viewmodel.media != null) viewmodel.player.seekTo(newPosMs)
+        if (seeker.isNotSelf() && viewmodel.media != null) viewmodel.player.seekTo(newPosMs)
 
-            // Suppress no-op seeks: if the from/to positions are within a second, the
-            // user-visible message would render as "X to X" or "X to X+0:01" with the
-            // playhead not appearing to have moved. These slip through when the server
-            // reflects a doSeek=true that landed close to the current position (rare
-            // edge cases like a controller force-syncing the room to its own pos).
-            // Showing the OSD/chat for a visually-zero seek is more confusing than
-            // helpful, and recording it in the Undo Seek history would let the user
-            // "undo" something that never happened.
-            val noOpSeek = abs(oldPosMs - newPosMs) < SEEK_NOOP_THRESHOLD_MS
-            if (noOpSeek) return@onMainThread
-
-            val osdMessage: suspend () -> String = {
-                Localization.strings.roomSeeked(seeker.isolated(), timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
-            }
-            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
-            viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = seeker, getter = osdMessage)
-
-            /* Only record this seek for the local "Undo Seek" history if it was initiated
-             * by the local user. Seeks coming from other users are still applied above
-             * (via player.seekTo for the non-self case) but we don't allow undoing them —
-             * doing so would let one user broadcast a counter-seek that surprises others. */
-            if (seeker.isSelf() && localSeek?.recordUndo == true) {
-                viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
-            }
+        // Apply the seek even when it is too small to announce or record for undo.
+        if (abs(oldPosMs - newPosMs) < SEEK_NOOP_THRESHOLD_MS) return
+        val osdMessage: suspend () -> String = {
+            Localization.strings.roomSeeked(seeker.isolated(), timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
         }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = seeker, getter = osdMessage)
+
+        // Undo belongs to the person who sought, not to every receiver of the room update.
+        if (seeker.isSelf() && localSeek?.recordUndo == true) viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
     }
 
+    @UiThread
     fun onSomeoneBehind(behinder: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
         if (behinder.isNotSelf()) {
-            onMainThread {
-                viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                val osdMessage: suspend () -> String = { Localization.strings.roomRewinded(behinder.isolated()) }
-                dispatcher.broadcastMessage(message = osdMessage, isChat = false)
-                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
-            }
+            viewmodel.player.seekTo((toPosition * 1000L).toLong())
+            val osdMessage: suspend () -> String = { Localization.strings.roomRewinded(behinder.isolated()) }
+            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
         }
     }
 
+    @UiThread
     fun onSomeoneFastForwarded(setBy: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: Fast-forwarding to $toPosition due to time difference with $setBy")
 
         if (setBy.isNotSelf()) {
-            onMainThread {
-                viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                val osdMessage: suspend () -> String = { Localization.strings.roomFastforwarded(setBy.isolated()) }
-                dispatcher.broadcastMessage(message = osdMessage, isChat = false)
-                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
-            }
+            viewmodel.player.seekTo((toPosition * 1000L).toLong())
+            val osdMessage: suspend () -> String = { Localization.strings.roomFastforwarded(setBy.isolated()) }
+            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+            viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
         }
     }
 
@@ -332,6 +312,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // A countdown outliving the connection would start playback into a room we have left.
         viewmodel.readiness.stop()
         network.state.value = ConnectionState.DISCONNECTED
+        viewmodel.playlistManager.noteConnectionLost()
         val osdMessage: suspend () -> String = { Localization.strings.roomConnectionFailed }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
@@ -345,6 +326,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         protocol.stopChannelHealthMonitoring()
         viewmodel.readiness.stop()
         network.state.value = ConnectionState.DISCONNECTED
+        viewmodel.playlistManager.noteConnectionLost()
         val osdMessage: suspend () -> String = { Localization.strings.roomAttemptingReconnection }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)

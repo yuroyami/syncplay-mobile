@@ -20,6 +20,9 @@ import app.protocol.sync.LocalStateIntents
 import app.protocol.sync.reportablePosition
 import app.protocol.sync.extrapolatedGlobalPositionMs
 import app.protocol.sync.PositionInputs
+import app.protocol.sync.PendingSeekPosition
+import app.protocol.sync.PendingSeekPositions
+import app.protocol.sync.SyncAction
 import app.utils.SyncClock
 import app.utils.ioDispatcher
 import app.utils.loggy
@@ -169,6 +172,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     val syncLock = SynchronizedObject()
 
     private val localStateIntents = LocalStateIntents()
+    private val pendingSeekPositions = PendingSeekPositions()
     private var intentMedia: MediaFile? = null
     private var intentRoom: String? = null
 
@@ -182,6 +186,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     private fun refreshLocalIntentContext() {
         if (intentMedia !== viewmodel.media || intentRoom != session.currentRoom) {
             localStateIntents.clear()
+            pendingSeekPositions.clear()
             intentMedia = viewmodel.media
             intentRoom = session.currentRoom
         }
@@ -189,6 +194,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     fun clearLocalStateIntents() = synchronized(syncLock) {
         localStateIntents.clear()
+        pendingSeekPositions.clear()
         intentMedia = viewmodel.media
         intentRoom = session.currentRoom
     }
@@ -197,6 +203,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     fun sendLocalState(position: Double, play: Boolean, seek: LocalSeek? = null) = synchronized(syncLock) {
         if (viewmodel.isSoloMode) return@synchronized
         refreshLocalIntentContext()
+        pendingSeekPositions.clear()
         localStateIntents.offer(LocalStateIntent(position, play, seek))
         flushPendingLocalState(serverTime = null)
         Unit
@@ -235,6 +242,18 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         viewmodel.networkManager.sendAsync(buildStatePacket(serverTime, null, position, false, play))
     }
 
+    val isSeekPending: Boolean get() = synchronized(syncLock) { pendingSeekPositions.current != null }
+
+    fun queueSeekPosition(action: SyncAction): PendingSeekPosition? = synchronized(syncLock) {
+        refreshLocalIntentContext()
+        if (viewmodel.media == null || viewmodel.uiState.isInBackground) return@synchronized null
+        pendingSeekPositions.begin(action, session.currentUsername)
+    }
+
+    fun completeSeekPosition(command: PendingSeekPosition) = synchronized(syncLock) {
+        pendingSeekPositions.complete(command)
+    }
+
     /**
      * Set during a room transition so the events it causes are not broadcast as divergence.
      *
@@ -265,6 +284,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     val supportsChat = MutableStateFlow(true)
     val supportsManagedRooms = MutableStateFlow(false)
+    val supportsSharedPlaylists = MutableStateFlow(true)
 
     val isManagedRoom = MutableStateFlow(false)
 
@@ -545,6 +565,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble(),
         awaitingRoomResyncDeadline = awaitingRoomResyncDeadline,
         userOffsetSeconds = userTimeOffsetSeconds(),
+        pendingSeekPositionMs = pendingSeekPositions.current?.targetMs,
     )
 
     /**
@@ -556,14 +577,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      */
     fun userTimeOffsetSeconds(): Double = (Preferences.USER_TIME_OFFSET.value() - 600) / 10.0
 
-    fun extrapolatedGlobalPositionMs(): Double = extrapolatedGlobalPositionMs(positionInputs())
+    fun extrapolatedGlobalPositionMs(): Double = synchronized(syncLock) {
+        extrapolatedGlobalPositionMs(positionInputs())
+    }
 
-    fun reportableStatePositionSec(): Double {
+    fun reportableStatePositionSec(): Double = synchronized(syncLock) {
+        refreshLocalIntentContext()
         val report = reportablePosition(positionInputs())
         // Single volatile write, and only to disarm: see the field's own note on why this is
         // one field rather than a pair.
         if (!report.keepMasking) awaitingRoomResyncDeadline = null
-        return report.positionSeconds
+        report.positionSeconds
     }
 
     fun markAwaitingRoomResync() {

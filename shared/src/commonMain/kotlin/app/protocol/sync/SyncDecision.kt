@@ -67,6 +67,8 @@ data class SyncContext(
     val rewindThreshold: Double = REWIND_THRESHOLD,
     val slowdownThreshold: Double = SLOWDOWN_THRESHOLD,
     val fastForwardThreshold: Double = FASTFORWARD_THRESHOLD,
+    /** The position cache still belongs to a seek that Main has not applied. */
+    val seekPending: Boolean = false,
 )
 
 /** What the handler should do, in the order given. */
@@ -163,7 +165,7 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
     /* Desync correction only makes sense with media loaded. With none, the engine reads 0 and
      * diff looks like multi-second lag, which used to fire a phantom catch-up notice. A
      * backgrounded client is paused on purpose and catches up when it returns. */
-    if (ctx.hasMedia && !ctx.isInBackground) {
+    if (ctx.hasMedia && !ctx.isInBackground && !ctx.seekPending) {
         if (diff > ctx.rewindThreshold && doSeek != true && ctx.prefs.rewind) {
             if (next.speedChanged) { actions += SyncAction.RestoreSpeed; next = next.copy(speedChanged = false) }
             actions += SyncAction.SomeoneBehind(setBy ?: "", agedPosition)

@@ -38,6 +38,8 @@ data class PositionInputs(
      * so a room full of people with different rips still agrees on one position.
      */
     val userOffsetSeconds: Double = 0.0,
+    /** Accepted seek whose player command is still queued on Main. */
+    val pendingSeekPositionMs: Long? = null,
 )
 
 /** The position to send, and whether masking should stay armed. */
@@ -63,6 +65,11 @@ fun reportablePosition(inputs: PositionInputs): PositionReport {
 
     // Paused in the background: the room must not adopt a frozen watcher as its slowest.
     if (inputs.isInBackground) return PositionReport(globalMs / 1000.0, keepMasking = true)
+
+    // The seek ACK can run before Main updates the position cache. Never acknowledge the old timeline.
+    inputs.pendingSeekPositionMs?.let { target ->
+        return PositionReport(localToRoomSeconds(target, inputs.userOffsetSeconds), keepMasking = true)
+    }
 
     // What the room should hear: our position, less the offset that is ours alone.
     val localAsRoomSeesIt = localToRoomSeconds(inputs.localPositionMs.toLong(), inputs.userOffsetSeconds)

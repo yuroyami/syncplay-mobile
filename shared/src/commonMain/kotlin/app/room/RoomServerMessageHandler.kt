@@ -9,6 +9,7 @@ import app.preferences.value
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.sync.SyncAction
 import app.protocol.sync.LocalSeek
+import app.protocol.sync.PendingSeekPosition
 import app.protocol.sync.SyncContext
 import app.protocol.sync.SyncPrefs
 import app.protocol.sync.decideSync
@@ -117,7 +118,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         var sentPendingIntent = false
         var decisionMedia: MediaFile? = null
         var decisionRevision = 0L
-        val outcome = synchronized(protocol.syncLock) {
+        var pendingActions: List<Pair<SyncAction, PendingSeekPosition?>> = emptyList()
+        synchronized(protocol.syncLock) {
             decisionMedia = viewmodel.media
             protocol.syncState = protocol.syncState.withIgnoringOnTheFly(state.ignoringOnTheFly)
             localSeek = protocol.consumeLocalSeekEcho(state)
@@ -149,14 +151,19 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     slowdownThreshold = Preferences.SYNC_SLOWDOWN_THRESHOLD.value() / 10.0,
                     fastForwardThreshold = Preferences.SYNC_FASTFORWARD_THRESHOLD.value() / 10.0,
                     userOffsetSeconds = protocol.userTimeOffsetSeconds(),
+                    seekPending = protocol.isSeekPending,
                 ),
-            ).also { protocol.syncState = it.state }
+            ).also { outcome ->
+                protocol.syncState = outcome.state
+                // Publish every accepted target before an ACK can release the server's stale-report gate.
+                pendingActions = outcome.actions.map { it to protocol.queueSeekPosition(it) }
+            }
         }
-        outcome.actions.forEach { action ->
+        pendingActions.forEach { (action, pendingSeek) ->
             // Local origin metadata was matched to the sent packet before a newer seek flushed.
             // Unmatched self echoes are duplicates/overrides, not new gestures to undo.
             if (action !is SyncAction.SomeoneSeeked || action.by != session.currentUsername) {
-                apply(action, decisionMedia, decisionRevision)
+                apply(action, decisionMedia, decisionRevision, pendingSeek)
             }
         }
         localSeek?.let { seek ->
@@ -212,10 +219,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     /** Carries out one decision. The order the actions arrive in is the order they must happen. */
-    private fun apply(action: SyncAction, media: MediaFile?, revision: Long) {
+    private fun apply(action: SyncAction, media: MediaFile?, revision: Long, pendingSeek: PendingSeekPosition?) {
         // The serial inbound consumer never waits on Main. Commands retain the media they were
         // decided for: a queued correction cannot seek or pause a newly installed file.
-        viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
+        val job = viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
             if (viewmodel.media !== media) return@launch
             // A local command can land after the decision but before this Main task. Its seek
             // or pause must win. Speed actions still apply: the reducer already changed its
@@ -248,6 +255,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 }
             }
         }
+        // Also runs when cancellation prevents the Main task from starting at all.
+        if (pendingSeek != null) job.invokeOnCompletion { protocol.completeSeekPosition(pendingSeek) }
     }
 
 
@@ -485,6 +494,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             session.sharedPlaylist.clear()
             session.sharedPlaylist.addAll(files)
         }
+        viewmodel.playlistManager.onServerPlaylist(user)
         callback.onPlaylistUpdated(user)
     }
 
