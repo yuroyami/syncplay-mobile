@@ -6,6 +6,7 @@ import app.utils.httpClient
 import app.utils.loggy
 import app.utils.writeTextFile
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -25,44 +26,11 @@ import kotlinx.serialization.json.Json
 object SubtitleSearch {
     private const val BASE_URL = "https://api.opensubtitles.com/api/v1/"
 
-    /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`). */
-    private val API_KEY = KiteBuildConfig.OPENSUBTITLES_API_KEY
-
     /** Internal, not private: the model test pins THIS configuration rather than a copy of it. */
     internal val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    private val client by lazy {
-        httpClient.config {
-            /* Surface 4xx/5xx as ResponseException. Without this (Ktor 3 defaults to false) the
-             * call validator never fires and the lenient Json below silently parses the error body
-             * as an empty response, so searches come back empty with no log entry. With this on,
-             * the catch block writes the real cause (e.g. 406 quota exceeded, 401 bad key). */
-            expectSuccess = true
-
-            install(ContentNegotiation) {
-                json(json)
-            }
-
-            /* Re-installing DefaultRequest does NOT replace the base client's block — both config
-             * lambdas run in install order on one builder, so header() APPENDS and the UA would
-             * stack ("SynkplayMobile/x.y.z; Synkplay vx.y.z", observed in the wire log). headers[]
-             * (set) runs after the base block and overwrites its UA with the exact "Name vX.Y.Z"
-             * form OpenSubtitles requires. */
-            defaultRequest {
-                headers[HttpHeaders.UserAgent] = "Synkplay v${KiteBuildConfig.APP_VERSION}"
-                header("Api-Key", API_KEY)
-                header(HttpHeaders.Accept, "application/json")
-            }
-        }
-    }
-
-    private val api: OpenSubtitlesAPI by lazy {
-        Ktorfit.Builder()
-            .baseUrl(BASE_URL)
-            .httpClient(client)
-            .build()
-            .createOpenSubtitlesAPI()
-    }
+    /** The app's one client, on the shared transport, saving into the subtitle cache folder. */
+    private val service by lazy { SubtitleService(BASE_URL, httpClient) { getCacheDirectoryPath("subtitles") } }
 
     /**
      * Cleans a media filename for subtitle searching.
@@ -78,6 +46,51 @@ object SubtitleSearch {
             .trim()
     }
 
+    /** See [SubtitleService.search]. */
+    suspend fun search(query: String, language: String = "en"): SubtitleSearchOutcome = service.search(query, language)
+
+    /** See [SubtitleService.download]. */
+    suspend fun download(fileId: Int): SubtitleDownloadResult = service.download(fileId)
+}
+
+/**
+ * The OpenSubtitles client itself. The app keeps one in [SubtitleSearch]; a test builds its own
+ * against a local server, so the request the app really sends is checked without the network.
+ */
+internal class SubtitleService(baseUrl: String, transport: HttpClient, private val cacheDir: () -> String?) {
+
+    /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`). */
+    private val apiKey = KiteBuildConfig.OPENSUBTITLES_API_KEY
+
+    private val client = transport.config {
+        /* Surface 4xx/5xx as ResponseException. Without this (Ktor 3 defaults to false) the
+         * call validator never fires and the lenient Json below silently parses the error body
+         * as an empty response, so searches come back empty with no log entry. With this on,
+         * the catch block writes the real cause (e.g. 406 quota exceeded, 401 bad key). */
+        expectSuccess = true
+
+        install(ContentNegotiation) {
+            json(SubtitleSearch.json)
+        }
+
+        /* Re-installing DefaultRequest does NOT replace the base client's block: both config
+         * lambdas run in install order on one builder, so header() APPENDS and the UA would
+         * stack ("SynkplayMobile/x.y.z; Synkplay vx.y.z", observed in the wire log). headers[]
+         * (set) runs after the base block and overwrites its UA with the exact "Name vX.Y.Z"
+         * form OpenSubtitles requires. */
+        defaultRequest {
+            headers[HttpHeaders.UserAgent] = "Synkplay v${KiteBuildConfig.APP_VERSION}"
+            header("Api-Key", apiKey)
+            header(HttpHeaders.Accept, "application/json")
+        }
+    }
+
+    private val api: OpenSubtitlesAPI = Ktorfit.Builder()
+        .baseUrl(baseUrl)
+        .httpClient(client)
+        .build()
+        .createOpenSubtitlesAPI()
+
     /**
      * Searches for subtitles by query, most-downloaded first. [language] is one or more
      * comma-separated ISO 639-1 codes; the sentinel "all" (or a blank value) drops the language
@@ -86,7 +99,7 @@ object SubtitleSearch {
     suspend fun search(query: String, language: String = "en"): SubtitleSearchOutcome {
         return try {
             // Doc rules: languages lower-case, comma-separated, alphabetically sorted. "all" (or
-            // empty) becomes null, which omits the filter — the API then returns all languages.
+            // empty) becomes null, which omits the filter, so the API returns every language.
             val languages: String? = language.split(',')
                 .map { it.trim().lowercase() }
                 .filter { it.isNotEmpty() && it != "all" }
@@ -130,7 +143,7 @@ object SubtitleSearch {
             val info = api.requestDownload(OpenSubtitlesDownloadRequest(fileId = fileId))
             loggy("SubtitleSearch: download link acquired, quota remaining=${info.remaining} (resets ${info.resetTime})")
             if (info.link.isEmpty()) {
-                loggy("SubtitleSearch: no link in download response — ${info.message}")
+                loggy("SubtitleSearch: no link in download response: ${info.message}")
                 return SubtitleDownloadResult.Failed
             }
 
@@ -138,10 +151,10 @@ object SubtitleSearch {
             val subtitleContent = client.get(info.link).bodyAsText()
 
             // The cache, not the log folder: a log export must never carry subtitle files along.
-            val dir = getCacheDirectoryPath("subtitles") ?: return SubtitleDownloadResult.Failed
-            // The server controls file_name — never let it traverse out of our directory.
+            val dir = cacheDir() ?: return SubtitleDownloadResult.Failed
+            // The server controls file_name, so nothing it sends may leave our directory.
             val filename = info.fileName.substringAfterLast('/').substringAfterLast('\\')
-                .ifBlank { "subtitle_$fileId.srt" }
+                .takeUnless { it.isBlank() || it == "." || it == ".." } ?: "subtitle_$fileId.srt"
             val path = "$dir/$filename"
             // Overwrite, not append: appending would concatenate two copies of the same
             // subtitle, which players parse as one broken cue.
@@ -154,9 +167,9 @@ object SubtitleSearch {
             // fields ({"requests":N,"remaining":0,"message":"...","reset_time":"..."}).
             if (e.response.status == HttpStatusCode.NotAcceptable) {
                 val quota = runCatching {
-                    json.decodeFromString<OpenSubtitlesDownloadResponse>(e.response.bodyAsText())
+                    SubtitleSearch.json.decodeFromString<OpenSubtitlesDownloadResponse>(e.response.bodyAsText())
                 }.getOrNull()
-                loggy("SubtitleSearch: download quota exhausted — ${quota?.message}")
+                loggy("SubtitleSearch: download quota exhausted: ${quota?.message}")
                 // Quota windows are daily; if the error body didn't parse, "24 hours" beats
                 // rendering "Resets in ." in the OSD.
                 SubtitleDownloadResult.QuotaExceeded(

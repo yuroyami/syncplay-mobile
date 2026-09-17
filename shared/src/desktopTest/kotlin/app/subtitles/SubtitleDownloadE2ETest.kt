@@ -2,23 +2,25 @@ package app.subtitles
 
 import app.utils.readFile
 import kotlinx.coroutines.runBlocking
-import kotlin.test.Ignore
+import org.junit.Assume.assumeTrue
 import kotlin.test.Test
 
 /**
- * Live end-to-end probe of the OpenSubtitles search+download pipeline (network required).
+ * Live end-to-end probe of the OpenSubtitles search and download pipeline (network required).
  * Exercises the exact commonMain code path the in-app subtitle search uses, including the
- * app's only Ktorfit @Body POST — the call that silently died with "Fail to prepare request
+ * app's only Ktorfit @Body POST: the call that silently died with "Fail to prepare request
  * body for sending / Content-Type: null" until requestDownload declared its Content-Type.
  *
- * @Ignore because it needs network and consumes 1 unit of the key's daily download quota
- * (5/day free) per run. Remove the annotation to re-verify the pipeline manually.
+ * Off unless asked for, because it needs the network and spends one unit of the key's daily
+ * download quota (5/day free) per run:
+ * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest
+ * [SubtitleServiceTest] checks the same requests on every run, against a local server.
  */
 class SubtitleDownloadE2ETest {
 
-    @Ignore
     @Test
     fun searchThenDownload() = runBlocking {
+        assumeTrue("live run not requested (-PliveSubtitles)", System.getProperty("synkplay.liveSubtitles") == "true")
         val results = when (val outcome = SubtitleSearch.search("big buck bunny", "en")) {
             is SubtitleSearchOutcome.Results -> outcome.items
             is SubtitleSearchOutcome.Failed -> error("search failed: ${outcome.reason}")
@@ -39,7 +41,7 @@ class SubtitleDownloadE2ETest {
             is SubtitleDownloadResult.QuotaExceeded ->
                 error("quota exceeded (resets in ${outcome.resetTime})")
             SubtitleDownloadResult.Failed ->
-                error("download FAILED — check loggy output above for the real cause")
+                error("download FAILED: check loggy output above for the real cause")
         }
     }
 }
