@@ -1,5 +1,8 @@
 package app.room.ui.chat
 
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -25,7 +28,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,11 +64,24 @@ import app.uicomponents.controls.SendGlyph
 import app.utils.Platform
 import app.utils.platform
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import app.uicomponents.controls.Icon
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.Text
 
 /** The chat dock: the composer on top, then either the message list or the GIF drawer. */
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
+    val density = LocalDensity.current
     val isChatSupported by viewmodel.protocol.supportsChat.collectAsState()
     val gifPanelVisible by viewmodel.uiState.gifPanelVisible.collectAsState()
     val msg by viewmodel.uiState.msg.collectAsState()
@@ -98,13 +113,19 @@ fun RoomChatSection(modifier: Modifier) {
                         viewmodel.uiState.msg.value = ""
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
-                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp),
+                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp)
+                        .onSizeChanged { size ->
+                            viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
+                        },
                     isHUDVisible = isHUDVisible,
                 )
             } else {
                 ChatBox(
                     viewmodel = viewmodel,
-                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp),
+                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp)
+                        .onSizeChanged { size ->
+                            viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
+                        },
                     isHUDVisible = isHUDVisible,
                 )
             }
@@ -215,10 +236,31 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
 
     Box(modifier.background(if (hasVideo) Color(50, 50, 50, bgOpacity) else Color.Transparent, Radius.panelShape)) {
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))
-        var previousSize by remember { mutableStateOf(messages.size) }
-        LaunchedEffect(messages.size) {
-            if (messages.size > previousSize) listState.animateScrollToItem(messages.lastIndex)
-            previousSize = messages.size
+        val scope = rememberCoroutineScope()
+        /* The list follows the newest line until the reader scrolls it out of view. Only a scroll the
+         * reader makes decides that: the list's own animation to a new message does not count. */
+        var following by remember { mutableStateOf(true) }
+        var unseen by remember { mutableIntStateOf(0) }
+        var ownScrolls by remember { mutableIntStateOf(0) }
+        suspend fun toNewest() {
+            if (messages.isEmpty()) return
+            ownScrolls++
+            try {
+                listState.animateScrollToItem(messages.lastIndex)
+            } finally {
+                ownScrolls--
+            }
+        }
+        LaunchedEffect(listState) {
+            snapshotFlow { listState.isScrollInProgress }.collect { scrolling ->
+                if (scrolling || ownScrolls > 0) return@collect
+                following = listState.showsLastItem()
+                if (following) unseen = 0
+            }
+        }
+        LaunchedEffect(messages.lastOrNull()?.id) {
+            if (messages.isEmpty()) return@LaunchedEffect
+            if (following) toNewest() else unseen++
         }
 
         Selectable {
@@ -249,6 +291,14 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
             }
         }
         }
+
+        if (unseen > 0 && !following) {
+            NewMessagesMarker(Modifier.align(Alignment.BottomCenter).padding(bottom = Space.gapTight)) {
+                following = true
+                unseen = 0
+                scope.launch { toNewest() }
+            }
+        }
     }
 }
 
@@ -256,4 +306,31 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
 @Composable
 private fun Selectable(content: @Composable () -> Unit) {
     if (platform == Platform.Desktop) SelectionContainer(content = content) else content()
+}
+
+/** The newest line is at least partly on screen, or there is nothing to show. */
+private fun LazyListState.showsLastItem(): Boolean {
+    val info = layoutInfo
+    val last = info.visibleItemsInfo.lastOrNull() ?: return true
+    return last.index >= info.totalItemsCount - 1
+}
+
+/** The way back down after reading up the list, shown only once something new arrived below. */
+@Composable
+internal fun NewMessagesMarker(modifier: Modifier, onClick: () -> Unit) {
+    val p = palette
+    val ink = p.inkOn(p.accent)
+    Row(
+        modifier
+            .clip(Radius.panelShape)
+            .background(p.accent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = Space.rowCompact)
+            .padding(horizontal = Space.gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = ink, modifier = Modifier.size(Space.glyph))
+        RowGap(Space.gapTight)
+        Text(strings.roomChatNewMessages, style = Type.note, color = ink, maxLines = 1)
+    }
 }

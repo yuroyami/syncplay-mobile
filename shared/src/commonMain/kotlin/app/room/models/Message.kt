@@ -4,6 +4,8 @@ import app.utils.generateClockstamp
 import app.utils.urlHost
 import kotlinx.atomicfu.atomic
 import kotlin.time.Clock
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /** Unicode BiDi "First Strong Isolate" (U+2068): text until the matching PDI resolves its
  *  direction on its own without reordering surrounding text. */
@@ -44,6 +46,8 @@ data class Message(
 
     /** Arrival time on the wall clock, for the one-minute grouping rule. */
     val epochMs: Long = Clock.System.now().toEpochMilliseconds(),
+    /** Expiry must survive HUD recomposition and wall-clock corrections. */
+    val receivedAt: TimeMark = TimeSource.Monotonic.markNow(),
 ) {
 
     /** Whether this message has been seen. */

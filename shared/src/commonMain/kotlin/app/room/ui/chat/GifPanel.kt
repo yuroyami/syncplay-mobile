@@ -298,10 +298,10 @@ fun GifPanel(
                 )
                 else -> LazyVerticalGrid(
                     state = gridState,
-                    columns = GridCells.Adaptive(minSize = 80.dp),
-                    contentPadding = PaddingValues(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    columns = GridCells.Fixed(CHAT_MEDIA_COLUMNS),
+                    contentPadding = PaddingValues(CHAT_MEDIA_GAP),
+                    horizontalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
+                    verticalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
                 ) {
                     items(results, key = { it.id }) { media ->
                         /* Fixed width and height on the tile: an empty UIImageView reports zero

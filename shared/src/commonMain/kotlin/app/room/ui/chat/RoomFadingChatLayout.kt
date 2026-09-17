@@ -23,6 +23,8 @@ import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import app.preferences.watchPref
 import app.room.models.Message
+import app.room.models.fadingMessages
+import kotlin.time.Duration.Companion.seconds
 import app.theme.Motion
 import app.theme.Space
 import app.theme.Type
@@ -60,20 +62,24 @@ fun FadingMessageLayout() {
     val messages by viewmodel.session.messageSequence.collectAsState()
     var shown by remember { mutableStateOf<List<Message>>(emptyList()) }
     var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(messages.size) {
-        val recent = messages.filter { !it.isMainUser && !it.seen }.takeLast(maxCount)
-        if (recent.isEmpty()) return@LaunchedEffect
-        shown = recent
-        visible = true
-        delay(holdSeconds * 1000L)
-        visible = false
+    val muted = viewmodel.uiState.mutedUsers.toSet()
+    LaunchedEffect(messages, holdSeconds, maxCount, muted) {
+        val hold = holdSeconds.coerceAtLeast(0).seconds
+        while (true) {
+            val recent = fadingMessages(messages, hold, maxCount, muted)
+            visible = recent.isNotEmpty()
+            if (!visible) break
+            shown = recent
+            val nextExpiry = recent.minOf { (hold - it.receivedAt.elapsedNow()).inWholeMilliseconds }
+            delay(nextExpiry.coerceAtLeast(1) + 1)
+        }
     }
 
     Column(modifier = Modifier.widthIn(max = Space.noticeWidth).fillMaxWidth()) {
         AnimatedVisibility(visible = visible, enter = fadeIn(Motion.quick()), exit = fadeOut(Motion.move())) {
             Column {
                 shown.forEachIndexed { index, message ->
-                    MessageRow(message, shown.getOrNull(index - 1), chatPalette, style)
+                    MessageRow(message, shown.getOrNull(index - 1), chatPalette, style, imageAlpha = if (visible) 1f else 0f)
                 }
             }
         }

@@ -57,9 +57,6 @@ data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val sh
 
 private const val GROUP_WINDOW_MS = 60_000L
 
-/** A chat image reads at a glance without taking the column. Halfway between the old 64 and 96. */
-private val CHAT_IMAGE_SIZE = 80.dp
-
 /**
  * One chat line in one of two shapes. A person: the name in the tag colour, the message under it,
  * no bubble; a second message from the same person inside a minute drops the repeated name. An
@@ -142,7 +139,7 @@ fun MessageRow(
                             contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
                             contentScale = ContentScale.Crop,
                             alpha = imageAlpha,
-                            modifier = Modifier.padding(top = 2.dp).size(CHAT_IMAGE_SIZE).clip(Radius.controlShape),
+                            modifier = Modifier.padding(top = 2.dp).size(LocalChatMediaSize.current).clip(Radius.controlShape),
                         )
                     } else {
                         /* A peer's link is not fetched on sight: that would hand their chosen host
