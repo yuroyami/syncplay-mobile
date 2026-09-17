@@ -259,6 +259,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
                 var password by remember(savedConfig) { mutableStateOf(config.pw) }
                 var error by remember { mutableStateOf<JoinError?>(null) }
+                // The hosted port is edited in the hosting panel, so an error about it clears from there.
+                LaunchedEffect(hostPort) { if (error == JoinError.PortRange && mode == ServerMode.Host) error = null }
 
                 val usernameFocus = remember { FocusRequester() }
                 val roomFocus = remember { FocusRequester() }
@@ -280,14 +282,17 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     username.isBlank() -> JoinError.Username
                     room.isBlank() -> JoinError.Room
                     mode == null -> JoinError.ServerChoice
-                    mode == ServerMode.Host -> null
+                    // The hosting panel's port field is free text, so the hosted port is checked here too.
+                    mode == ServerMode.Host -> if (parsePort(hostPort) == null) JoinError.PortRange else null
                     address.isBlank() -> JoinError.Address
-                    port.isBlank() || port.toIntOrNull() == null -> JoinError.Port
+                    port.isBlank() -> JoinError.Port
+                    // A port outside 1 to 65535 opens a room whose reconnect loop can never succeed.
+                    parsePort(port) == null -> JoinError.PortRange
                     else -> null
                 }
                 fun currentConfig() = when (mode) {
-                    ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, hostPort.trim().toIntOrNull() ?: 8999, hostPassword)
-                    else -> JoinConfig(username, room, address, port.toInt(), password)
+                    ServerMode.Host -> JoinConfig(username, room, LOCAL_HOST, parsePort(hostPort) ?: 8999, hostPassword)
+                    else -> JoinConfig(username, room, address, port.trim().toInt(), password)
                 }.sanitised()
 
                 /* The four blocks of the form. Each is one composable so the three arrangements
@@ -454,11 +459,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                             focusRequester = passwordFocus,
                                             name = strings.homePasswordIfAny,
                                         )
-                                        val serverError = error?.takeIf { it == JoinError.Address || it == JoinError.Port }
+                                        val serverError = error?.takeIf { it == JoinError.Address || it == JoinError.Port || it == JoinError.PortRange }
                                         if (serverError != null) Text(serverError.message(strings), style = Type.note, color = p.bad)
                                     }
                                     ServerMode.Host -> {
                                         Text(strings.connectHostJoinNote("$LOCAL_HOST:$hostPort"), style = Type.note, color = p.inkDim)
+                                        if (error == JoinError.PortRange) Text(JoinError.PortRange.message(strings), style = Type.note, color = p.bad)
                                         ServerHostPanel(Modifier.fillMaxWidth())
                                     }
                                 }
@@ -853,7 +859,7 @@ private fun FormField(
 private const val TIPS_MAX_SHOWINGS = 3
 
 /** Which field the join form is complaining about. The wording comes from the current language. */
-private enum class JoinError { Username, Room, ServerChoice, Address, Port }
+private enum class JoinError { Username, Room, ServerChoice, Address, Port, PortRange }
 
 private fun JoinError.message(s: AppStrings): String = when (this) {
     JoinError.Username -> s.connectUsernameEmptyError
@@ -861,4 +867,5 @@ private fun JoinError.message(s: AppStrings): String = when (this) {
     JoinError.ServerChoice -> s.connectServerPickError
     JoinError.Address -> s.connectAddressEmptyError
     JoinError.Port -> s.connectPortEmptyError
+    JoinError.PortRange -> s.connectPortRangeError
 }

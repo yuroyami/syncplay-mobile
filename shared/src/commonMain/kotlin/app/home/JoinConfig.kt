@@ -68,3 +68,6 @@ data class JoinConfig(
         }
     }
 }
+
+/** The port in [text], or null when it is not a whole number from 1 to 65535. */
+fun parsePort(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..65535 }
