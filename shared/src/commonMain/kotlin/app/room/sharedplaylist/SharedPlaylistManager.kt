@@ -1,5 +1,6 @@
 package app.room.sharedplaylist
 
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.i18n.Localization
@@ -109,6 +110,64 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         pendingUntrusted.value = null
     }
 
+    /** The server said it has no shared playlists, so nothing about one is sent to it. */
+    private val playlistsRefused: Boolean
+        get() = !session.roomFeatures.supportsSharedPlaylists
+
+    /** A list the room lost to a dropped connection, with the entry that was selected in it. */
+    data class LostPlaylist(val entries: List<String>, val index: Int)
+
+    /** Set while the room offers a lost list back. It asks once. */
+    val restoreOffer: StateFlow<LostPlaylist?>
+        field = MutableStateFlow(null)
+
+    /** The list as it stood when the connection dropped, held until the room's first list after it. */
+    private var heldAcrossDrop: LostPlaylist? = null
+
+    /** The connection dropped: hold the list, so a room that comes back without it can have it back. */
+    fun noteConnectionLost() {
+        if (heldAcrossDrop == null && session.sharedPlaylist.isNotEmpty()) {
+            heldAcrossDrop = LostPlaylist(session.sharedPlaylist.toList(), session.spIndex.intValue)
+        }
+    }
+
+    /**
+     * The server replaced the list. The loaded entry is found again in it, so an index that follows
+     * that entry does not reload the file, and a room that came back empty is offered its list.
+     */
+    fun onServerPlaylist(setBy: String) {
+        realignLoadedIndex()
+        val held = heldAcrossDrop ?: return
+        heldAcrossDrop = null
+        if (!cameBackEmpty(held.entries, session.sharedPlaylist, setBy)) return
+        // Undo brings it back too, for whoever dismisses the question and then changes their mind.
+        undoStack.addLast(held.entries)
+        while (undoStack.size > MAX_UNDO_STEPS) undoStack.removeFirst()
+        canUndo.value = true
+        restoreOffer.value = held
+    }
+
+    /** Puts the lost list back with its selection, unless someone filled the room meanwhile. */
+    fun restoreLostPlaylist() {
+        val lost = restoreOffer.value ?: return
+        restoreOffer.value = null
+        if (playlistsRefused || session.sharedPlaylist.isNotEmpty()) return
+        viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lost.entries))
+        if (lost.index in lost.entries.indices) viewmodel.networkManager.sendAsync(WireMessage.playlistIndex(lost.index))
+    }
+
+    fun dismissRestoreOffer() {
+        restoreOffer.value = null
+    }
+
+    /** Finds the loaded entry in a new list: its own place if it is still there, or its first one. */
+    private fun realignLoadedIndex() {
+        val source = lastLoadedSource ?: return
+        val list = session.sharedPlaylist
+        if (lastLoadedIndex in list.indices && list[lastLoadedIndex] == source) return
+        lastLoadedIndex = list.indexOf(source)
+    }
+
     /**
      * The playlists this room had before the last few edits.
      *
@@ -130,6 +189,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
     /** Puts the previous playlist back and tells the room. */
     fun undoLastPlaylistChange() {
+        if (playlistsRefused) return
         val previous = undoStack.removeLastOrNull() ?: return
         canUndo.value = undoStack.isNotEmpty()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(previous))
@@ -145,6 +205,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
     suspend fun shuffle(mode: Boolean) {
+        if (playlistsRefused) return
         rememberForUndo()
         /* If the shared playlist is empty, do nothing */
         if (session.spIndex.intValue < 0 || session.sharedPlaylist.isEmpty()) return
@@ -190,7 +251,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (playlistIsValid(files)) return false
         val warning: suspend () -> String =
             { Localization.strings.roomSharedPlaylistLimit(PLAYLIST_MAX_ITEMS, PLAYLIST_MAX_CHARACTERS) }
-        viewmodel.dispatchOSD(getter = warning)
+        viewmodel.dispatchWarning(warning)
         viewmodel.dispatcher.broadcastMessage(message = warning, isChat = false, isError = true)
         return true
     }
@@ -198,6 +259,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /** Adds URLs from the url adding popup, de-duplicating against the existing list and within
      *  the incoming batch itself. */
     fun addURLs(urls: List<String>) {
+        if (playlistsRefused) return
         val merged = session.sharedPlaylist.toMutableList()
         for (raw in urls) {
             val url = raw.trim()
@@ -228,6 +290,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * straight from the live (still-scoped) [PlatformFile] for an instant start.
      */
     suspend fun addFiles(files: List<PlatformFile>) {
+        if (playlistsRefused) return
         val playlistWasEmpty = session.sharedPlaylist.isEmpty() && session.spIndex.intValue == -1
 
         // Collect the genuinely-new files, de-duplicating against the existing playlist and
@@ -266,6 +329,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * names to the playlist, and — if nothing was playing — starts the first one.
      */
     suspend fun addFolderToPlaylist(dir: PlatformFile) {
+        if (playlistsRefused) return
         MediaAccessRegistry.rememberDirectory(dir)
 
         val index = dir.indexMediaTree()
@@ -299,14 +363,14 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
     /** Clears the shared playlist */
     fun clearPlaylist() {
-        if (session.sharedPlaylist.isEmpty()) return
+        if (playlistsRefused || session.sharedPlaylist.isEmpty()) return
         rememberForUndo()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(emptyList()))
     }
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
-        if (i !in session.sharedPlaylist.indices) return
+        if (playlistsRefused || i !in session.sharedPlaylist.indices) return
         rememberForUndo()
         session.sharedPlaylist.removeAt(i)
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(session.sharedPlaylist.toList()))
@@ -329,10 +393,32 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
     }
 
+    /**
+     * Moves one entry and tells the room. The selection keeps its entry, and nobody's file reloads:
+     * the loaded index follows the move here, and every other client finds it again in the new list.
+     */
+    fun moveItem(from: Int, to: Int) {
+        val list = session.sharedPlaylist
+        if (playlistsRefused || from !in list.indices || to !in list.indices || from == to) return
+        rememberForUndo()
+        val reordered = list.toList().moved(from, to)
+        val current = session.spIndex.intValue
+        Snapshot.withMutableSnapshot {
+            list.clear()
+            list.addAll(reordered)
+        }
+        if (lastLoadedIndex >= 0) lastLoadedIndex = lastLoadedIndex.afterMove(from, to)
+        val selected = current.afterMove(from, to)
+        session.spIndex.intValue = selected
+        viewmodel.networkManager.sendAsync(WireMessage.playlistChange(reordered))
+        if (selected != current && selected >= 0) viewmodel.networkManager.sendAsync(WireMessage.playlistIndex(selected))
+    }
+
     /** Selects a playlist item. Online, this announces the index to the server, whose echo
      * drives the (synchronized) load on every client including us. In solo mode there is no
      * server round-trip, so we apply the selection directly. */
     fun sendPlaylistSelection(i: Int) {
+        if (playlistsRefused) return
         lastIndexChangeAtMs = generateTimestampMillis()
         if (viewmodel.isSoloMode) {
             viewmodel.viewModelScope.launch { changePlaylistSelection(i) }
@@ -410,7 +496,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         } else {
             { Localization.strings.roomSharedPlaylistNotFound(appName) }
         }
-        viewmodel.dispatchOSD(getter = message)
+        viewmodel.dispatchWarning(message)
         viewmodel.dispatcher.broadcastMessage(message = message, isChat = false)
     }
 
@@ -420,9 +506,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (snapshot.isEmpty()) return
         viewmodel.viewModelScope.launch(ioDispatcher) {
             val saved = runCatching { destination.writeTextCompat(snapshot.joinToString("\n")) }.isSuccess
-            viewmodel.dispatchOSD {
-                if (saved) Localization.strings.roomSharedPlaylistExported else Localization.strings.roomSharedPlaylistExportFailed
-            }
+            if (saved) viewmodel.dispatchOSD { Localization.strings.roomSharedPlaylistExported }
+            else viewmodel.dispatchWarning { Localization.strings.roomSharedPlaylistExportFailed }
         }
     }
 
@@ -431,6 +516,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * @param alsoShuffle whether to shuffle the loaded entries before broadcasting.
      */
     fun loadPlaylistLocally(source: PlatformFile, alsoShuffle: Boolean) {
+        if (playlistsRefused) return
         viewmodel.viewModelScope.launch(ioDispatcher) {
             val content = runCatching { source.readString() }.getOrNull() ?: return@launch
             val lines = content.split("\n").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()

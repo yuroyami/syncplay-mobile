@@ -41,6 +41,7 @@ class Session(val protocol: ProtocolManager) {
         set(value) {
             protocol.supportsChat.value = value.supportsChat
             protocol.supportsManagedRooms.value = value.supportsManagedRooms
+            protocol.supportsSharedPlaylists.value = value.supportsSharedPlaylists
             field = value
         }
 
