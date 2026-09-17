@@ -218,6 +218,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
                     playerManager.currentTrackChoices.remember(TrackType.AUDIO, track)
                 }
+
+                // This engine reports no video track selection, so the card never offers it.
+                TrackType.VIDEO -> Unit
             }
         }
     }
