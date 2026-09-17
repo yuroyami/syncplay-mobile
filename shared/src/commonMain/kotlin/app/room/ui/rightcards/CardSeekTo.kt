@@ -2,19 +2,15 @@ package app.room.ui.rightcards
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -24,11 +20,15 @@ import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.i18n.Localization
 import app.i18n.strings
+import app.preferences.Preferences.CUSTOM_SEEK_FRONT
 import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import app.preferences.set
+import androidx.compose.runtime.rememberCoroutineScope
+import app.uicomponents.controls.Rocker
+import app.uicomponents.controls.Rule
 import app.preferences.value
 import app.preferences.watchPref
 import app.room.RoomViewmodel
-import app.theme.Motion
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
@@ -40,9 +40,7 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelFrame
 import app.utils.timestampFromMillis
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import syncplaymobile.shared.generated.resources.done
 
 /**
  * Seek to a position, as a side panel over the video instead of a dialog. One timecode field:
@@ -55,10 +53,10 @@ object CardSeekTo {
     fun SeekToPanel(shape: Shape) {
         val viewmodel = LocalRoomViewmodel.current
         val ui = LocalRoomUiState.current
-        val p = palette
         val focusManager = LocalFocusManager.current
         var digits by remember { mutableStateOf("") }
-        val focus = remember { FocusRequester() }
+        val scope = rememberCoroutineScope()
+        val showShortcut by CUSTOM_SEEK_FRONT.watchPref()
         val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
         val customSkipLabel = strings.roomCustomSkipButton(timestampFromMillis(customSkipAmount * 1000L))
 
@@ -78,12 +76,6 @@ object CardSeekTo {
             viewmodel.dispatchOSD { Localization.strings.roomSeekTopositionSuccess(timestampFromMillis(result)) }
         }
 
-        // Focus lands after the panel has slid in, so the keyboard does not fight the animation.
-        LaunchedEffect(Unit) {
-            delay(Motion.moveMs.toLong() + 50)
-            runCatching { focus.requestFocus() }
-        }
-
         PanelFrame(
             title = strings.roomSeekTopositionTitle,
             modifier = Modifier.fillMaxWidth(),
@@ -91,29 +83,13 @@ object CardSeekTo {
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = strings.actionClose, onClick = ::close) },
         ) {
-            Column(Modifier.padding(Space.gutter)) {
-                Field(
-                    value = format(digits),
-                    onValueChange = { digits = it.filter(Char::isDigit).takeLast(6) },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = "00:00:00",
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done,
-                    onImeAction = { if (digits.isNotEmpty()) commit() else focusManager.clearFocus(true) },
-                    focusRequester = focus,
-                    showClear = false,
-                    textStyle = Type.display.copy(textAlign = TextAlign.Center),
-                    name = strings.roomSeekTopositionTitle,
-                )
-                Spacer(Modifier.height(Space.gapTight))
-                Text(strings.roomSeekTopositionHint, style = Type.note, color = p.inkDim)
-                Spacer(Modifier.height(Space.gutter))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SecondaryAction(customSkipLabel, modifier = Modifier.weight(1f), onClick = { close(); viewmodel.customSkip() })
-                    Spacer(Modifier.padding(horizontal = Space.gapTight))
-                    AccentAction(strings.done, modifier = Modifier.weight(1f), enabled = digits.isNotEmpty(), onClick = ::commit)
-                }
-            }
+            SeekControls(
+                value = format(digits), onValue = { digits = it.filter(Char::isDigit).takeLast(6) },
+                canSeek = digits.isNotEmpty(), onSeek = ::commit,
+                skipLabel = customSkipLabel, onSkip = { close(); viewmodel.customSkip() },
+                showShortcut = showShortcut,
+                onShowShortcut = { scope.launch { CUSTOM_SEEK_FRONT.set(it) } },
+            )
         }
     }
 
@@ -122,6 +98,33 @@ object CardSeekTo {
         if (digits.isEmpty()) return ""
         val padded = digits.padStart(6, '0')
         return padded.substring(0, 2) + ":" + padded.substring(2, 4) + ":" + padded.substring(4, 6)
+    }
+}
+
+@Composable
+internal fun SeekControls(
+    value: String, onValue: (String) -> Unit, canSeek: Boolean, onSeek: () -> Unit,
+    skipLabel: String, onSkip: () -> Unit, showShortcut: Boolean, onShowShortcut: (Boolean) -> Unit,
+) {
+    Column(Modifier.padding(Space.gap)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
+            Field(value = value, onValueChange = onValue, modifier = Modifier.weight(1f),
+                placeholder = "00:00:00", keyboardType = KeyboardType.Number, imeAction = ImeAction.Done,
+                onImeAction = { if (canSeek) onSeek() }, showClear = false,
+                textStyle = Type.label.copy(textAlign = TextAlign.Center), name = strings.roomSeekTopositionTitle)
+            AccentAction(strings.roomSeekGo, enabled = canSeek, onClick = onSeek)
+        }
+        Text(strings.roomSeekTopositionHint, style = Type.note, color = palette.inkDim,
+            modifier = Modifier.padding(vertical = Space.gapTight))
+        Rule()
+        Row(Modifier.fillMaxWidth().padding(top = Space.gap), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
+            SecondaryAction(skipLabel, modifier = Modifier.weight(1f), onClick = onSkip)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(strings.roomSeekShowButton, style = Type.note, color = palette.inkDim)
+                Rocker(showShortcut, onShowShortcut, name = strings.roomSeekShowButton)
+            }
+        }
     }
 }
 

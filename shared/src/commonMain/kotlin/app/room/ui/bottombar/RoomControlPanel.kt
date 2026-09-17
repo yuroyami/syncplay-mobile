@@ -122,7 +122,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         val last = viewmodel.seeks.lastOrNull()
         UndoSeekKey(target = last?.first) {
             when {
-                last == null -> viewmodel.dispatchOSD { Localization.strings.roomNoRecentSeek }
+                last == null -> viewmodel.dispatchWarning { Localization.strings.roomNoRecentSeek }
                 undoNoConfirm -> undo(last)
                 else -> pendingUndoSeek = last
             }
@@ -130,12 +130,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
         /* Gesture switches live here, not in settings, so they can be flipped mid-playback. */
         GlyphButton(Icons.Filled.TouchApp, name = strings.roomGesturesPanelTitle, size = Space.glyphLarge) {
-            Feedback.tick()
             cardController.toggleGestures()
         }
 
         GlyphButton(Icons.Filled.Subtitles, name = strings.roomTracks, size = Space.glyphLarge) {
-            Feedback.tick()
             if (cardController.tabCardTracks.value) {
                 cardController.toggleTracks(false)
                 return@GlyphButton

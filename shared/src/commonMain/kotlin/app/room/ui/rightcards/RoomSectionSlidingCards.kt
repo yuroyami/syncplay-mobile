@@ -50,6 +50,7 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val ui = LocalRoomUiState.current
     val stateUserInfo by ui.tabCardUserInfo.collectAsState()
     val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
+    val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val stateTracks by ui.tabCardTracks.collectAsState()
     val stateGestures by ui.tabCardGestures.collectAsState()
@@ -69,7 +70,7 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
         PanelSlot(Modifier.weight(1f).then(if (tall) Modifier.fillMaxWidth() else Modifier.width(panelWidth)), enter, exit) {
             if (!viewmodel.isSoloMode) {
                 AnimatedVisibility(stateUserInfo, Modifier.fillMaxHeight(), enter, exit) { CardUserInfo.UserInfoCard(shape) }
-                AnimatedVisibility(statePlaylist, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
+                AnimatedVisibility(statePlaylist && sharedPlaylists, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
             }
             AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
             // The tool panels below wrap their content instead of filling the dock.

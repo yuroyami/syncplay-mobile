@@ -14,7 +14,6 @@ import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
 import app.theme.Space
 import app.theme.palette
-import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.RowLabel
@@ -40,7 +39,6 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
 
     Modal(open = true, onDismiss = onDismiss, title = strings.roomChapters, size = ModalSize.Panel, inset = false) {
         ListRow(onClick = {
-            Feedback.tick()
             onDismiss()
             viewmodel.viewModelScope.launch {
                 if (media == null || viewmodel.playerManager.media.value !== media) return@launch
@@ -55,7 +53,6 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
         Rule()
         chapters.forEach { chapter ->
             ListRow(onClick = {
-                Feedback.tick()
                 onDismiss()
                 viewmodel.viewModelScope.launch {
                     if (media == null || viewmodel.playerManager.media.value !== media) return@launch

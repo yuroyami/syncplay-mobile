@@ -230,9 +230,16 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     fun dispatchOSD(getter: suspend () -> String) = dispatchNotice(NoticeSeverity.Info, getter)
 
-    /** The hold comes from the notice duration preference; zero switches notices off. */
+    /** Something the person asked for failed or was refused. No notice switch hides it. */
+    fun dispatchWarning(getter: suspend () -> String) = dispatchNotice(NoticeSeverity.Warn, getter)
+
+    /**
+     * The hold comes from the notice duration preference. Zero switches routine notices off, and a
+     * warning still gets the default hold: zero asks for less chatter, not for hidden problems.
+     */
     private fun dispatchNotice(severity: NoticeSeverity, getter: suspend () -> String) {
-        val holdMs = Preferences.OSD_DURATION.value() * 1000L
+        val chosenMs = Preferences.OSD_DURATION.value() * 1000L
+        val holdMs = if (severity == NoticeSeverity.Warn) maxOf(chosenMs, Preferences.OSD_DURATION.default * 1000L) else chosenMs
         if (holdMs <= 0L) return
         viewModelScope.launch { notices.post(getter(), severity, holdMs) }
     }

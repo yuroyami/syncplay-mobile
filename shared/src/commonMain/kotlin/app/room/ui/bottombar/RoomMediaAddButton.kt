@@ -63,12 +63,13 @@ fun RoomMediaAddButton() {
     val ui = LocalRoomUiState.current
     val p = palette
     val hasVideo by viewmodel.hasVideo.collectAsState()
-    var open by remember { mutableStateOf(false) }
+    val open by ui.mediaAddExpanded.collectAsState()
     var linkMode by remember { mutableStateOf(false) }
-    LaunchedEffect(hasVideo) { if (hasVideo) { open = false; linkMode = false } }
+    LaunchedEffect(hasVideo) { if (hasVideo) { ui.collapseMediaAdd(); linkMode = false } }
 
     // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.
     val initialFocus = LocalRoomInitialFocus.current
+    LaunchedEffect(open) { if (!open) linkMode = false }
     val expanded = !hasVideo && open
     /* One block that is the key and the card. A single progress value drives its width, its
      * height and both contents' alpha from the same frame: both contents are measured up front,
@@ -95,8 +96,7 @@ fun RoomMediaAddButton() {
                                 ui.toggleAddMedia()
                             } else {
                                 // The card needs the room's right side to itself.
-                                ui.closeSidePanels()
-                                open = true
+                                ui.expandMediaAdd()
                             }
                         },
                     )
@@ -120,10 +120,10 @@ fun RoomMediaAddButton() {
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.weight(1f),
                                 )
-                                GlyphButton(CloseGlyph, name = strings.actionClose) { open = false; linkMode = false }
+                                GlyphButton(CloseGlyph, name = strings.actionClose) { ui.collapseMediaAdd(); linkMode = false }
                             }
                             Rule()
-                            CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { open = false; linkMode = false })
+                            CardAddMedia.AddMediaBody(linkMode = linkMode, onLinkMode = { linkMode = it }, onClose = { ui.collapseMediaAdd(); linkMode = false })
                         }
                     }
                 }

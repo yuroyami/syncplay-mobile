@@ -1,5 +1,7 @@
 package app
 
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.player.avplayer.AVPlayerEngine
@@ -125,9 +127,15 @@ object ApplePlatformCallback : PlatformCallback {
         UIApplication.sharedApplication.shortcutItems = emptyList<UIApplicationShortcutItem>()
     }
 
+    private var hapticGenerator: UIImpactFeedbackGenerator? = null
+
     override fun performHapticFeedback() {
-        val generator = UIImpactFeedbackGenerator(UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium)
-        generator.impactOccurred()
+        dispatch_async(dispatch_get_main_queue()) {
+            val generator = hapticGenerator ?: UIImpactFeedbackGenerator(UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium)
+                .also { hapticGenerator = it }
+            generator.prepare()
+            generator.impactOccurred()
+        }
     }
 
     /**

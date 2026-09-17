@@ -1,5 +1,8 @@
 package app.room
 
+import app.room.ui.chat.LocalChatMediaSize
+import app.room.ui.chat.chatMediaCellSize
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,6 +49,7 @@ import app.preferences.Preferences.ROOM_ALLOW_PORTRAIT
 import app.preferences.flow
 import app.preferences.watchPref
 import app.room.ui.bottombar.BlackContrastUnderlay
+import app.room.ui.bottombar.TopContrastUnderlay
 import app.room.ui.bottombar.RoomBottomBarSection
 import app.room.ui.chat.FadingMessageLayout
 import app.room.ui.chat.RoomChatSection
@@ -107,6 +111,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
     val initialFocusRequester = remember { FocusRequester() }
+    val measuredChatMediaSize by viewmodel.uiState.chatMediaSizeDp.collectAsState()
     val window = LocalWindowInfo.current.containerSize
     val tall = window.height > window.width
     // A window under 480dp tall cannot hold the rail as a column beside the transport.
@@ -123,6 +128,9 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     // the app-wide one they kept the whole-screen backdrop capturing for nothing.
     val roomGlassDemand = remember { GlassDemand() }
     CompositionLocalProvider(
+        LocalChatMediaSize provides if (measuredChatMediaSize > 0f) measuredChatMediaSize.dp else chatMediaCellSize(with(LocalDensity.current) {
+            window.width.toDp() * if (tall) 1f else 0.36f
+        }),
         LocalRoomUiState provides viewmodel.uiState,
         LocalRoomInitialFocus provides initialFocusRequester,
         LocalHazeState provides roomHazeState,
@@ -191,6 +199,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         ManagedRoomModal()
         UntrustedUrlAsk(viewmodel)
         ResumeAsk(viewmodel)
+        PlaylistRestoreAsk(viewmodel)
 
         val globalViewmodel = LocalGlobalViewmodel.current
         // The roster opens once, on the first room of the session, so a newcomer sees who is here.
@@ -237,6 +246,26 @@ private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
             style = Type.note,
             color = palette.inkDim,
         )
+    }
+}
+
+/** The room came back from a dropped connection without its playlist. It asks once. */
+@Composable
+private fun PlaylistRestoreAsk(viewmodel: RoomViewmodel) {
+    val offer by viewmodel.playlistManager.restoreOffer.collectAsState()
+    if (offer == null) return
+    val playlist = viewmodel.playlistManager
+    Modal(
+        open = true,
+        onDismiss = { playlist.dismissRestoreOffer() },
+        title = strings.roomSharedPlaylistRestoreTitle,
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(text = strings.no, onClick = { playlist.dismissRestoreOffer() })
+            PrimaryAction(text = strings.roomSharedPlaylistRestore, onClick = { playlist.restoreLostPlaylist() })
+        },
+    ) {
+        Text(text = strings.roomSharedPlaylistRestoreBody, style = Type.note, color = palette.inkDim)
     }
 }
 
@@ -361,7 +390,10 @@ private fun RoomHud(
             }
             .onPreviewKeyEvent { ui.noteHudActivity(); false },
     ) {
-        if (hasVideo) BlackContrastUnderlay()
+        if (hasVideo) {
+            BlackContrastUnderlay()
+            TopContrastUnderlay()
+        }
         RoomFrame(
             tall = tall,
             railHorizontal = railHorizontal,

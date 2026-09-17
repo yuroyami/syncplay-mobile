@@ -9,7 +9,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import app.room.roomTopInsets
 
 /**
  * Shading under the transport so white glyphs survive bright video: black rising to 70 percent
@@ -30,6 +32,30 @@ fun BlackContrastUnderlay(modifier: Modifier = Modifier) {
                         endY = size.height,
                     ),
                     topLeft = Offset(0f, top),
+                    size = Size(size.width, h),
+                )
+            }
+    )
+}
+
+/**
+ * The same shading for the top row: black at 60 percent under the notch and the status line,
+ * gone 96dp below them, so the room name and the rail survive a white frame.
+ */
+@Composable
+fun TopContrastUnderlay(modifier: Modifier = Modifier) {
+    val notch = roomTopInsets().getTop(LocalDensity.current)
+    Box(
+        modifier
+            .fillMaxSize()
+            .drawBehind {
+                val h = (notch + 96.dp.toPx()).coerceAtMost(size.height)
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent),
+                        startY = 0f,
+                        endY = h,
+                    ),
                     size = Size(size.width, h),
                 )
             }

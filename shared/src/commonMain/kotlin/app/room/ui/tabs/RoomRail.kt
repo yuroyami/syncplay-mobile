@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,7 +66,7 @@ private class RailCell(val icon: ImageVector, val name: String, val active: Bool
 /**
  * The rail: 42dp cells on the chrome tier. The panel cells come first. The room actions (PiP,
  * managed room, leave) start folded behind one More cell; the first tap unfolds them with a
- * slide and they stay out for the rest of the room session. Vertical at the end edge when the
+ * slide and fold after six seconds without input. Vertical at the end edge when the
  * window is tall enough for the column, a row at the top end otherwise.
  */
 @Composable
@@ -78,8 +80,18 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val managedRooms by viewmodel.protocol.supportsManagedRooms.collectAsState()
+    val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
     val inviteMessage = strings.roomShareInviteMessage(viewmodel.session.currentRoom)
     val expanded by ui.railActionsExpanded.collectAsState()
+    val activity by ui.hudActivity.collectAsState()
+    val managing by ui.managedRoom.collectAsState()
+    val leaving by ui.askLeave.collectAsState()
+    LaunchedEffect(expanded, activity, managing, leaving) {
+        if (expanded && !managing && !leaving) {
+            delay(6_000)
+            ui.railActionsExpanded.value = false
+        }
+    }
     // Starts at the session's value, so a rebuilt rail (rotation) does not replay the unfold.
     val unfolded = remember { MutableTransitionState(expanded) }
     unfolded.targetState = expanded
@@ -89,7 +101,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
             add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs) { ui.toggleRoomPreferences() })
         }
         if (!solo) {
-            if (playerIsReady) {
+            if (playerIsReady && sharedPlaylists) {
                 add(RailCell(Icons.AutoMirrored.Filled.PlaylistPlay, strings.roomSharedPlaylist, statePlaylist) { ui.toggleSharedPlaylist() })
             }
             add(RailCell(Icons.Filled.Groups, strings.roomCardTitleUserInfo, stateUserInfo) { ui.toggleUserInfo() })
@@ -108,7 +120,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
             // nobody has to read five fields down a phone line.
             add(RailCell(Icons.Filled.Share, strings.roomShareInvite) {
                 viewmodel.joinConfig?.let { config ->
-                    platformCallback.shareText(inviteMessage + "\n" + InviteLink.build(config))
+                    platformCallback.shareText(inviteMessage + "\n" + InviteLink.shareUrl(config))
                 }
             })
         }

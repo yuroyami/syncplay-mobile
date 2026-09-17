@@ -36,6 +36,8 @@ import app.theme.TRINITY
 import app.theme.DAYLIGHT
 import org.jetbrains.skia.EncodedImageFormat
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import javax.swing.SwingUtilities
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -109,6 +111,14 @@ object DesignHarness {
         }
     }
 
+    /** Scene creation, measurement and disposal share the same thread as Compose's callbacks. */
+    internal fun <T> onUiThread(action: () -> T): T {
+        if (SwingUtilities.isEventDispatchThread()) return action()
+        var result: kotlin.Result<T>? = null
+        SwingUtilities.invokeAndWait { result = runCatching(action) }
+        return result!!.getOrThrow()
+    }
+
     fun render(
         name: String,
         widthDp: Int,
@@ -123,19 +133,20 @@ object DesignHarness {
         initDatastore()
         val density = Density(2f, fontScale)
         var measuredPx = 0
-        val scene = ImageComposeScene(
+        val scene = onUiThread { ImageComposeScene(
             width = (widthDp * density.density).toInt(),
             height = (heightDp * density.density).toInt(),
             density = density,
+            coroutineContext = Dispatchers.Main.immediate,
         ) {
             Frame(theme, overVideo, language) {
                 Box(Modifier.width(widthDp.dp).onSizeChanged { measuredPx = it.height }) { content() }
             }
-        }
+        } }
         return try {
-            var image = scene.render(0L)
+            var image = onUiThread { scene.render(0L) }
             // Animations and resource loading need frames; 30 x 16ms covers every entrance.
-            repeat(30) { i -> image = scene.render((i + 1) * 16_000_000L) }
+            repeat(30) { i -> image = onUiThread { scene.render((i + 1) * 16_000_000L) } }
             val suffix = buildString {
                 append("-${widthDp}dp")
                 if (fontScale != 1f) append("-fs${fontScale}")
@@ -147,9 +158,10 @@ object DesignHarness {
             image.encodeToData(EncodedImageFormat.PNG)?.bytes?.let(file::writeBytes)
             val heightDpMeasured = (measuredPx / density.density).toInt()
             println("GOLDEN $name$suffix height=${heightDpMeasured}dp -> ${file.absolutePath}")
-            Result(file, heightDpMeasured, scene.semanticsOwners.flatMap { textLayouts(it.unmergedRootSemanticsNode) })
+            val layouts = onUiThread { scene.semanticsOwners.flatMap { textLayouts(it.unmergedRootSemanticsNode) } }
+            Result(file, heightDpMeasured, layouts)
         } finally {
-            scene.close()
+            onUiThread { scene.close() }
         }
     }
 

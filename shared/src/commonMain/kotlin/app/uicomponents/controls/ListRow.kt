@@ -60,7 +60,7 @@ fun ListRow(
                         enabled = enabled,
                         role = Role.Button,
                         onLongClick = onLongClick,
-                        onClick = { onClick?.invoke() },
+                        onClick = { onClick?.let { Feedback.tick(); it() } },
                     )
                     .hoverable(source, enabled)
                 else Modifier

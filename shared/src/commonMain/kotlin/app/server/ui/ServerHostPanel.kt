@@ -48,7 +48,6 @@ import app.theme.Space
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.DestructiveAction
-import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.GroupHeading
 import app.uicomponents.controls.PrimaryAction
@@ -164,7 +163,6 @@ private fun AddressRow(address: String, label: String) {
         }
         GlyphButton(Icons.Filled.ContentCopy, name = strings.serverHostCopy) {
             platformCallback.copyText(address)
-            Feedback.tick()
         }
         GlyphButton(Icons.Filled.Share, name = strings.serverHostShare) {
             platformCallback.shareText(address)

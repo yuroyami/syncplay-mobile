@@ -26,8 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import app.preferences.Preferences
-import app.preferences.watchPref
 import app.theme.Space
 import app.utils.isTelevision
 
@@ -90,16 +88,10 @@ fun RoomFrame(
             ) { status() }
         }
         if (chat != null) {
-            /* Subtitles are drawn by the engine at the foot of the picture, and chat used to sit
-             * straight on top of them (issue 160). This is the band chat stays out of. It is a
-             * percentage rather than a fixed height because where an engine puts its subtitles
-             * follows the picture, not the window. */
-            val clearance by Preferences.CHAT_SUBTITLE_CLEARANCE.watchPref()
-            val chatHeight = 1f - (clearance / 100f)
             Box(
                 Modifier.align(Alignment.TopStart).focusGroup()
                     .then(if (tall) Modifier.fillMaxWidth() else Modifier.fillMaxWidth(0.36f))
-                    .fillMaxHeight(chatHeight.coerceIn(0.3f, 1f))
+                    .fillMaxHeight()
                     .windowInsetsPadding(topInsets)
                     .padding(top = if (tall) Space.row + Space.gap else Space.gapTight, bottom = transport)
                     .windowInsetsPadding(bottomInsets),

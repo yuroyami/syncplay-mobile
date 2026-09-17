@@ -1,6 +1,7 @@
 package app
 
 import app.utils.platformCallback
+import app.utils.loggy
 import app.home.InviteLink
 import app.home.JoinConfig
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,7 +75,8 @@ val pendingShortcutJoinConfig = MutableStateFlow<JoinConfig?>(null)
 
 /** Parses a Quick Action shortcut's room config and posts it to [pendingShortcutJoinConfig]. */
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
-    println("HANDLE AMIGO SHORTCUT $shortcut")
+    // Only the arrival: the type string is the whole join config, both passwords included.
+    loggy("Quick Action shortcut received")
     runCatching {
         val joinConfig = Json.decodeFromString<JoinConfig>(shortcut.type)
         pendingShortcutJoinConfig.value = joinConfig

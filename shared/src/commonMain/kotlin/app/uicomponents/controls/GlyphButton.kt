@@ -71,7 +71,7 @@ fun GlyphButton(
         modifier = modifier
             .size(target)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
             .hoverable(source, enabled)
             .semantics { contentDescription = name }
             .controlStates(source, Radius.controlShape, enabled = enabled)

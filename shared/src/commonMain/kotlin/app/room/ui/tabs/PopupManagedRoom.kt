@@ -72,18 +72,13 @@ fun ManagedRoomModal() {
         open = true,
         onDismiss = ::close,
         title = strings.roomManagedRoom,
-        size = ModalSize.Ask,
+        size = ModalSize.Panel,
         actions = {
             SecondaryAction(strings.cancel, onClick = ::close)
             AccentAction(strings.okay, onClick = ::send, enabled = input.isNotBlank())
         },
     ) {
-        Segmented(
-            options = listOf(strings.roomOverflowCreateManagedRoom, strings.roomOverflowIdentifyAsOperator),
-            selected = if (create) 0 else 1,
-            onSelect = { create = it == 0 },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ManagedRoomTabs(create, onCreate = { create = it })
         Spacer(Modifier.height(Space.gap))
         Text(
             text = if (create) strings.roomManagedRoomPopupCreate else strings.roomManagedRoomPopupPwIdentifyAsOperator,
@@ -97,4 +92,13 @@ fun ManagedRoomModal() {
             Field(value = password, onValueChange = { password = it }, imeAction = ImeAction.Done, onImeAction = { if (password.isNotBlank()) send() }, name = strings.roomOverflowIdentifyAsOperator)
         }
     }
+}
+
+@Composable
+internal fun ManagedRoomTabs(create: Boolean, onCreate: (Boolean) -> Unit) {
+    Segmented(
+        options = listOf(strings.roomOverflowCreateManagedRoom, strings.roomOverflowIdentifyAsOperator),
+        selected = if (create) 0 else 1, onSelect = { onCreate(it == 0) },
+        modifier = Modifier.fillMaxWidth(), autoSize = true,
+    )
 }

@@ -42,7 +42,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val tabCardSeekTo = MutableStateFlow(false)
     val tabCardAddMedia = MutableStateFlow(false)
 
-    /** The rail's room actions, folded behind More until the first tap, for this room session. */
+    /** The rail's room actions, folded after a short period without input. */
     val railActionsExpanded = MutableStateFlow(false)
     val tabLock = MutableStateFlow(false)
 
@@ -50,6 +50,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
+    val chatMediaSizeDp = MutableStateFlow(0f)
 
     /**
      * Image URLs the user tapped to load. Chat does not fetch a peer's image host on sight, so
@@ -80,12 +81,14 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** One side panel at a time: opening one closes the others, and a tool panel closes the strip. */
     private fun openSide(target: MutableStateFlow<Boolean>, forcedState: Boolean?) {
-        target.value = forcedState ?: !target.value
-        if (target.value) {
-            sidePanels.forEach { if (it !== target) it.value = false }
-            if (toolPanels.any { it === target }) controlPanel.value = false
-        }
+        panelCoordinator.open(target, forcedState)
+        if (target.value && toolPanels.any { it === target }) controlPanel.value = false
     }
+
+    private val panelCoordinator by lazy { SidePanelCoordinator(sidePanels) }
+    val mediaAddExpanded get() = panelCoordinator.mediaExpanded
+    fun expandMediaAdd() = panelCoordinator.expandMedia()
+    fun collapseMediaAdd(restore: Boolean = true) = panelCoordinator.collapseMedia(restore)
 
     /** Whether any of the seven side panels is showing. */
     val anySidePanelOpen: Boolean
@@ -96,7 +99,10 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     fun toggleControlPanel(forcedState: Boolean? = null) {
         controlPanel.value = forcedState ?: !controlPanel.value
-        if (controlPanel.value) toolPanels.forEach { it.value = false }
+        if (controlPanel.value) {
+            collapseMediaAdd(restore = false)
+            toolPanels.forEach { it.value = false }
+        }
     }
 
     fun toggleUserInfo(forcedState: Boolean? = null) = openSide(tabCardUserInfo, forcedState)
@@ -161,9 +167,11 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         hasEnteredPipMode.value = false
         visibleHUD.value = true
         gifPanelVisible.value = false
+        chatMediaSizeDp.value = 0f
         scrubbing.value = false
         sidePanels.forEach { it.value = false }
         railActionsExpanded.value = false
+        collapseMediaAdd(restore = false)
         revealedImages.clear()
         mutedUsers.clear()
         VideoBounds.forget()

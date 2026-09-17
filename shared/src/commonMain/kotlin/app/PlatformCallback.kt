@@ -90,13 +90,7 @@ interface PlatformCallback {
      */
     fun onPictureInPicture(enable: Boolean)
 
-    /**
-     * Triggers a haptic feedback vibration using the platform's vibration API directly.
-     *
-     * This bypasses Compose's [LocalHapticFeedback] which relies on View.performHapticFeedback()
-     * and can silently fail when the system "Touch feedback" setting is disabled —
-     * a setting independent of the ringer mode.
-     */
+    /** Delivers a touch-feedback pulse on the platform UI thread, respecting device settings. */
     fun performHapticFeedback()
 
     /**

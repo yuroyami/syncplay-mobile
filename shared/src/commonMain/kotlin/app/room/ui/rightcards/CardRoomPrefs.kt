@@ -43,7 +43,7 @@ object CardRoomPrefs {
         val host = remember { InlineEditorHost { page -> pages.add(page) } }
 
         LaunchedEffect(Unit) {
-            categories = roomSettings(viewmodel.player.configurableSettings())
+            categories = roomSettings(viewmodel.player.configurableSettings(), viewmodel.player.supportsAudioVisualization)
         }
 
         val title = pages.lastOrNull()?.title ?: open?.title?.invoke(strings) ?: strings.roomCardTitleInRoomPrefs

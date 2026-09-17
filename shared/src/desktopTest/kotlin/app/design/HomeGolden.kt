@@ -44,6 +44,7 @@ import syncplaymobile.shared.generated.resources.exoplayer
 import syncplaymobile.shared.generated.resources.kiteplayer
 import syncplaymobile.shared.generated.resources.mpv
 import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -88,26 +89,26 @@ class HomeGolden {
         DesignHarness.initDatastore()
         val densityValue = if (w > 1400 || h > 1400) 1f else 2f
         val density = Density(densityValue, fontScale)
-        val scene = ImageComposeScene(width = (w * densityValue).toInt(), height = (h * densityValue).toInt(), density = density) {
+        val scene = DesignHarness.onUiThread { ImageComposeScene(width = (w * densityValue).toInt(), height = (h * densityValue).toInt(), density = density, coroutineContext = Dispatchers.Main.immediate) {
             DesignHarness.Frame(TRINITY) {
                 Box(Modifier.size(w.dp, h.dp)) {
                     HomeScreenUI(remember { HomeViewmodel(mutableStateListOf(Screen.Home)) })
                 }
             }
-        }
+        } }
         return try {
-            var image = scene.render(0L)
-            repeat(30) { i -> image = scene.render((i + 1) * 16_000_000L) }
+            var image = DesignHarness.onUiThread { scene.render(0L) }
+            repeat(30) { i -> image = DesignHarness.onUiThread { scene.render((i + 1) * 16_000_000L) } }
             val suffix = if (fontScale != 1f) "-fs$fontScale" else ""
             val file = File(DesignHarness.outDir, "home-$name-${w}x${h}$suffix.png")
             image.encodeToData(EncodedImageFormat.PNG)?.bytes?.let(file::writeBytes)
             val texts = mutableListOf<TextLayoutResult>()
             val joins = mutableListOf<Rect>()
-            scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joins) }
+            DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joins) } }
             println("GOLDEN ${file.name} join=${joins.firstOrNull()}")
             Home(file, texts, joins.firstOrNull(), (h * densityValue).toInt())
         } finally {
-            scene.close()
+            DesignHarness.onUiThread { scene.close() }
         }
     }
 
@@ -213,29 +214,31 @@ class HomeGolden {
         DesignHarness.initDatastore()
         for (w in listOf(284, 324, 393)) {
             val density = Density(2f, 1f)
-            val scene = ImageComposeScene(width = w * 2, height = 200, density = density) {
+            val scene = DesignHarness.onUiThread { ImageComposeScene(width = w * 2, height = 200, density = density, coroutineContext = Dispatchers.Main.immediate) {
                 DesignHarness.Frame(TRINITY) {
                     Box(Modifier.size(w.dp, 100.dp).padding(Space.gutter)) { JoinRow(onJoin = {}, onSaveShortcut = {}) }
                 }
-            }
+            } }
             try {
-                var image = scene.render(0L)
-                repeat(10) { i -> image = scene.render((i + 1) * 16_000_000L) }
+                var image = DesignHarness.onUiThread { scene.render(0L) }
+                repeat(10) { i -> image = DesignHarness.onUiThread { scene.render((i + 1) * 16_000_000L) } }
                 File(DesignHarness.outDir, "join-row-${w}dp.png").writeBytes(image.encodeToData(EncodedImageFormat.PNG)!!.bytes)
                 // The saver is a 48dp square at the row's end, inside the gutter.
                 val x = (w - Space.gutter.value - 24f) * 2f
                 val y = (Space.gutter.value + 24f) * 2f
-                scene.sendPointerEvent(PointerEventType.Press, Offset(x, y))
-                scene.sendPointerEvent(PointerEventType.Release, Offset(x, y))
-                repeat(30) { i -> image = scene.render((i + 11) * 16_000_000L) }
+                DesignHarness.onUiThread {
+                    scene.sendPointerEvent(PointerEventType.Press, Offset(x, y))
+                    scene.sendPointerEvent(PointerEventType.Release, Offset(x, y))
+                }
+                repeat(30) { i -> image = DesignHarness.onUiThread { scene.render((i + 11) * 16_000_000L) } }
                 File(DesignHarness.outDir, "join-row-${w}dp-open.png").writeBytes(image.encodeToData(EncodedImageFormat.PNG)!!.bytes)
                 val texts = mutableListOf<TextLayoutResult>()
-                scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, mutableListOf()) }
+                DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, mutableListOf()) } }
                 val explanation = texts.firstOrNull { it.layoutInput.text.text.startsWith("Save this setup") }
                 assertNotNull(explanation, "join-row-${w}dp-open: the saver did not unfold")
                 if (w >= 324) assertTrue(!explanation.isLineEllipsized(0), "join-row-${w}dp-open: the explanation is cut")
             } finally {
-                scene.close()
+                DesignHarness.onUiThread { scene.close() }
             }
         }
     }

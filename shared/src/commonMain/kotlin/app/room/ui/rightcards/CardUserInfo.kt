@@ -64,7 +64,6 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.controls.Chevron
 import app.uicomponents.controls.ChevronDirection
-import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
@@ -90,7 +89,8 @@ object CardUserInfo {
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
         val me = vm.session.currentUsername
-        val canSetReady = users.any { it.name == me && it.isController }
+        // Only where the server says controllers may set other people's readiness.
+        val canSetReady = vm.session.roomFeatures.setOthersReadiness && users.any { it.name == me && it.isController }
         UserRosterPanel(
             users = users,
             me = me,
@@ -181,7 +181,7 @@ private fun RosterViewSwitcher(compact: Boolean, onCompactChange: (Boolean) -> U
             name = if (isCompact) strings.roomRosterViewStandard else strings.roomRosterViewCompact,
             modifier = Modifier.semantics { stateDescription = current },
             tint = palette.accent,
-            onClick = { Feedback.tick(); onCompactChange(!compact) },
+            onClick = { onCompactChange(!compact) },
         )
     }
 }

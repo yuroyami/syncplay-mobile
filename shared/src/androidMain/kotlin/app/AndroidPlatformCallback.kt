@@ -5,6 +5,10 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.media.AudioAttributes
+import android.os.VibratorManager
+import android.os.VibrationAttributes
+import android.view.HapticFeedbackConstants
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -183,11 +187,25 @@ internal class AndroidPlatformCallback(
     }
 
     override fun performHapticFeedback() {
-        val vibrator = appContext.getSystemService(Vibrator::class.java) ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-        } else {
-            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+        val a = activity ?: return
+        a.runOnUiThread {
+            // The view uses the device's own touch-feedback effect and fallback policy.
+            if (a.window.decorView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)) return@runOnUiThread
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                appContext.getSystemService(VibratorManager::class.java)?.defaultVibrator
+            } else appContext.getSystemService(Vibrator::class.java)
+            if (vibrator?.hasVibrator() != true) return@runOnUiThread
+            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+            } else VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE)
+            // An unclassified vibration can be treated as an alert and suppressed during playback.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
+            } else {
+                vibrator.vibrate(effect, AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            }
         }
     }
 

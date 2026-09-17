@@ -147,7 +147,7 @@ expect fun fileExists(path: String): Boolean
 /**
  * Returns the absolute path where mpv looks for its user configuration file, or null on
  * platforms with no mpv engine. On Android this resolves to `{filesDir}/mpv.conf`, the
- * `config-dir` mpv is initialized with in MPVView.
+ * `config-dir` every mpv core starts with (see `MpvImpl`).
  */
 expect fun getMpvConfFilePath(): String?
 
