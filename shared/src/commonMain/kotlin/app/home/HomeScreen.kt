@@ -15,6 +15,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -63,13 +64,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -543,11 +544,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 // The centred two-column block keeps an even gutter all round; the rest take the tier's.
                 val evenGutter = arrangement == FormArrangement.TwoColumns
                 val blockGap by animateDpAsState(metrics.blockGap, Motion.move(), label = "blockGap")
-                /* Tapping the background dismisses the keyboard. It is not a control, so it is
-                 * hidden from assistive tech rather than announced as an unnamed button. */
-                val clearFocus = Modifier
-                    .clickable(interactionSource = null, indication = null) { focusManager.clearFocus(force = true) }
-                    .clearAndSetSemantics { }
+                /* Tapping the background dismisses the keyboard. A bare tap detector, not
+                 * `clickable`: it adds no semantics and no focus stop, so a screen reader and a
+                 * D-pad meet only the controls. The form sits inside this modifier, so clearing
+                 * semantics here would hide every control from a screen reader. */
+                val clearFocus = Modifier.pointerInput(focusManager) {
+                    detectTapGestures { focusManager.clearFocus(force = true) }
+                }
                 /* imePadding before verticalScroll: the keyboard shortens the scroll container,
                  * not the form, and the container keeps the focused field in view. The form
                  * scrolls as one piece, so two columns always scroll together. */

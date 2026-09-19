@@ -67,8 +67,8 @@ import kotlin.test.assertTrue
  * The insets come from Compose internals (`InternalComposeUiApi`), the only door the harness has
  * to a keyboard. A Compose upgrade that moves them breaks this file at compile time, not the app.
  *
- * What surrounds focus is checked here too: the IME actions and the background tap that closes
- * the keyboard.
+ * What surrounds focus is checked here too: the IME actions, the background tap that closes the
+ * keyboard, and that a screen reader still reaches the form behind that tap.
  */
 @OptIn(InternalComposeUiApi::class)
 class HomeFocusTest {
@@ -213,6 +213,24 @@ class HomeFocusTest {
             assertTrue(sawPaired && sawStacked, "the series never crossed the short tier, so it proved nothing")
             form.insert(USERNAME, "X")
             assertEquals("caXret", form.text(USERNAME))
+        }
+    }
+
+    /** The background tap that closes the keyboard must not hide the form it sits behind. */
+    @Test
+    fun aScreenReaderReachesTheFieldsAndTheJoinKey() {
+        withHome(PHONE) { form ->
+            val nodes = form.screenReaderNodes()
+            for (value in listOf("yuroyami", "movie-night")) {
+                assertTrue(
+                    nodes.any { it.config.getOrNull(SemanticsProperties.EditableText)?.text == value },
+                    "no editable '$value' in the merged tree:\n${form.describe(nodes)}",
+                )
+            }
+            assertTrue(
+                nodes.any { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == JOIN } == true },
+                "no '$JOIN' in the merged tree:\n${form.describe(nodes)}",
+            )
         }
     }
 
@@ -523,6 +541,18 @@ class HomeFocusTest {
             val root = field(name)
             return (listOf(root) + descendants(root)).firstOrNull { it.config.getOrNull(SemanticsProperties.EditableText) != null }
                 ?: error("$name has no editor. ${dump()}")
+        }
+
+        /** The merged tree, which is the one a screen reader reads. */
+        fun screenReaderNodes(): List<SemanticsNode> = DesignHarness.onUiThread {
+            scene.semanticsOwners.flatMap { listOf(it.rootSemanticsNode) + descendants(it.rootSemanticsNode) }
+        }
+
+        fun describe(nodes: List<SemanticsNode>): String = nodes.joinToString("\n") { node ->
+            val desc = node.config.getOrNull(SemanticsProperties.ContentDescription)
+            val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
+            val edit = node.config.getOrNull(SemanticsProperties.EditableText)?.text
+            "desc=$desc text=$text edit=$edit bounds=${node.boundsInRoot}"
         }
 
         private fun descendants(node: SemanticsNode): List<SemanticsNode> =
