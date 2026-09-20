@@ -213,27 +213,51 @@ private data class EngineStory(val description: String, val rows: List<Pair<Stri
 
 /**
  * The facts per engine. The verdicts are what the bundled libraries can do, not what a given
- * file needs: mpv, KitePlayer and VLCKit carry dav1d and libass, ExoPlayer and AVPlayer decode
- * video on the device's own chips and draw ASS as plain text. Picture in picture is the one
- * ability that depends on the platform, not the engine: KitePlayer has it on Android only.
+ * file needs: mpv, KitePlayer and VLCKit carry the full FFmpeg with dav1d and libass, so they
+ * share one list of formats. ExoPlayer and AVPlayer decode video on the device's own chips and
+ * draw ASS as plain text. Picture in picture is the one ability that depends on the platform,
+ * not the engine: KitePlayer has it on Android only.
  */
 private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
-    fun rows(chapters: Can, styledSubs: Can, subtitleFiles: Can, mkv: Can, av1: Can, pip: Can) = listOf(
-        s.engineCanChapters to chapters,
-        s.engineCanStyledSubs to styledSubs,
-        s.engineCanSubtitleFiles to subtitleFiles,
-        s.engineCanMkv to mkv,
-        (if (av1 == Can.Device) s.engineCanAv1Device else s.engineCanAv1) to av1,
-        s.engineCanPip to pip,
-    )
     val yes = Can.Yes
     val no = Can.No
+    val device = Can.Device
+    val ffmpeg = listOf(
+        s.engineCanChapters to yes,
+        s.engineCanStyledSubs to yes,
+        s.engineCanSubtitleFiles to yes,
+        s.engineCanAllMedia to yes,
+    )
     return when (engine.name.lowercase()) {
-        "exoplayer" -> EngineStory(s.engineDescExoplayer, rows(no, no, yes, yes, Can.Device, yes))
-        "mpv" -> EngineStory(s.engineDescMpv, rows(yes, yes, yes, yes, yes, yes))
-        "kiteplayer" -> EngineStory(s.engineDescKiteplayer, rows(yes, yes, yes, yes, yes, if (platform == Platform.Android) yes else no))
-        "avplayer" -> EngineStory(s.engineDescAvplayer, rows(no, no, no, no, Can.Device, yes))
-        "vlckit" -> EngineStory(s.engineDescVlckit, rows(yes, yes, yes, yes, yes, yes))
+        "exoplayer" -> EngineStory(
+            s.engineDescExoplayer,
+            listOf(
+                s.engineCanChapters to no,
+                s.engineCanStyledSubs to no,
+                s.engineCanSubtitleFilesBoth to yes,
+                s.engineCanAllAudio to yes,
+                s.engineCanVideoDevice to device,
+                s.engineCanAv1Device to device,
+                s.engineCanPip to yes,
+            ),
+        )
+        "mpv" -> EngineStory(s.engineDescMpv, ffmpeg + (s.engineCanPip to yes) + (s.engineCanInterpolation to yes))
+        "kiteplayer" -> EngineStory(
+            s.engineDescKiteplayer,
+            ffmpeg + (s.engineCanPip to if (platform == Platform.Android) yes else no) + (s.engineCanVisualizer to yes),
+        )
+        "avplayer" -> EngineStory(
+            s.engineDescAvplayer,
+            listOf(
+                s.engineCanChapters to no,
+                s.engineCanStyledSubs to no,
+                s.engineCanSubtitleFiles to no,
+                s.engineCanMkv to no,
+                s.engineCanAv1Device to device,
+                s.engineCanPip to yes,
+            ),
+        )
+        "vlckit" -> EngineStory(s.engineDescVlckit, ffmpeg + (s.engineCanPip to yes))
         else -> null
     }
 }
