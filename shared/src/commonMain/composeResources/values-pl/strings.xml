@@ -741,6 +741,10 @@
     <string name="room_tv_videos_permission">Synkplay potrzebuje uprawnienia, aby wyświetlić filmy na tym urządzeniu.</string>
     <string name="room_tv_videos_empty_hint">Skopiuj film na to urządzenie, a następnie otwórz tę listę ponownie.</string>
     <string name="room_tv_videos_allow">Zezwól na dostęp</string>
+    <string name="room_visualizer_summary">Rysuje dźwięk zamiast obrazu</string>
+    <string name="room_visualizer_director">Reżyser</string>
+    <string name="room_visualizer_director_summary">Zmienia wzór wraz z muzyką</string>
+    <string name="room_visualizer_pattern">Wzór</string>
     <string-array name="tips">
         <item>Aby wspólne listy odtwarzania działały, %1$s musi wiedzieć, gdzie przechowywane są twoje pliki multimedialne. Dodaj swoje foldery z mediami w 'Ustawienia > Ogólne > Katalogi mediów dla wspólnej listy odtwarzania'.</item>
         <item>Chcesz używać odtwarzacza wideo solo? Wybierz odtwarzacz, stuknij w logo %1$s powyżej, a następnie wybierz 'Tryb offline'.</item>

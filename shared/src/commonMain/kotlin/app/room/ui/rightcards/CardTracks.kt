@@ -25,7 +25,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +38,7 @@ import app.i18n.strings
 import app.player.PlayerImpl.TrackType
 import app.player.models.Track
 import app.player.models.TrackTrait
+import app.player.models.VisualizerControls
 import app.player.models.channelBadge
 import app.player.models.codecBadge
 import app.player.models.trackLanguage
@@ -59,6 +59,7 @@ import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Segmented
+import app.uicomponents.controls.Stepper
 import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelFrame
@@ -79,12 +80,34 @@ object CardTracks {
         var showSearch by remember { mutableStateOf(false) }
         var selecting by remember { mutableStateOf(false) }
         val visualization by AUDIO_VISUALIZATION.watchPref()
+        val visualizer by viewmodel.player.visualizer.collectAsState()
         val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
             file?.let {
                 scope.launch(ioDispatcher) {
                     viewmodel.player.loadExternalSub(it)
                     viewmodel.media?.let { current -> viewmodel.player.analyzeTracks(current) }
                 }
+            }
+        }
+        fun choose(track: Track?, type: TrackType) {
+            val current = media
+            if (selecting || current == null) return
+            selecting = true
+            viewmodel.viewModelScope.launch {
+                try {
+                    if (viewmodel.media !== current) return@launch
+                    viewmodel.player.selectTrack(track, type)
+                    if (viewmodel.media === current) {
+                        viewmodel.player.analyzeTracks(current)
+                        if (track != null && current.tracks.any { it.type == type && it.index == track.index && it.selected }) {
+                            when (type) {
+                                TrackType.AUDIO -> viewmodel.dispatchOSD { Localization.strings.roomAudioTrackSelected(track.name) }
+                                TrackType.SUBTITLE -> viewmodel.dispatchOSD { Localization.strings.roomSubtitleTrackSelected(track.name) }
+                                TrackType.VIDEO -> Unit
+                            }
+                        }
+                    }
+                } finally { selecting = false }
             }
         }
         PanelFrame(
@@ -97,30 +120,15 @@ object CardTracks {
                 supportsVideo = viewmodel.player.supportsVideoTrackSelection,
                 supportsVisualization = viewmodel.player.supportsAudioVisualization,
                 visualization = visualization,
-                onVisualization = { scope.launch { AUDIO_VISUALIZATION.set(it) } },
-                enabled = !selecting,
-                onChoose = { track, type ->
-                    val current = media
-                    if (!selecting && current != null) {
-                        selecting = true
-                        viewmodel.viewModelScope.launch {
-                            try {
-                                if (viewmodel.media !== current) return@launch
-                                viewmodel.player.selectTrack(track, type)
-                                if (viewmodel.media === current) {
-                                    viewmodel.player.analyzeTracks(current)
-                                    if (track != null && current.tracks.any { it.type == type && it.index == track.index && it.selected }) {
-                                        when (type) {
-                                            TrackType.AUDIO -> viewmodel.dispatchOSD { Localization.strings.roomAudioTrackSelected(track.name) }
-                                            TrackType.SUBTITLE -> viewmodel.dispatchOSD { Localization.strings.roomSubtitleTrackSelected(track.name) }
-                                            TrackType.VIDEO -> Unit
-                                        }
-                                    }
-                                }
-                            } finally { selecting = false }
-                        }
-                    }
+                visualizer = visualizer,
+                onVisualization = { on ->
+                    scope.launch { AUDIO_VISUALIZATION.set(on) }
+                    // The visualizer draws in place of the picture, so turning it on turns the
+                    // video off. Turning it off leaves the video off: the list brings it back.
+                    if (on && media?.tracks?.any { it.type == TrackType.VIDEO && it.selected } == true) choose(null, TrackType.VIDEO)
                 },
+                enabled = !selecting,
+                onChoose = ::choose,
                 onImport = { subtitlePicker.launch() },
                 onSearch = { showSearch = true },
             )
@@ -135,7 +143,7 @@ internal fun TrackControls(
     tracks: List<Track>, supportsVideo: Boolean, supportsVisualization: Boolean,
     visualization: Boolean, onVisualization: (Boolean) -> Unit,
     onChoose: (Track?, TrackType) -> Unit, onImport: () -> Unit, onSearch: () -> Unit,
-    enabled: Boolean = true, initialType: TrackType = TrackType.AUDIO,
+    enabled: Boolean = true, initialType: TrackType = TrackType.AUDIO, visualizer: VisualizerControls? = null,
 ) {
     val types = listOf(TrackType.AUDIO, TrackType.SUBTITLE) +
         if (supportsVideo || supportsVisualization) listOf(TrackType.VIDEO) else emptyList()
@@ -149,20 +157,6 @@ internal fun TrackControls(
     Column(Modifier.fillMaxSize()) {
         Segmented(labels, types.indexOf(selectedType), { active = types[it] },
             Modifier.fillMaxWidth().padding(Space.gapTight), autoSize = true)
-        if (selectedType == TrackType.VIDEO && supportsVisualization) {
-            // The visualizer only draws with the picture off, so it stays locked while a video track plays.
-            val vizAvailable = tracks.none { it.type == TrackType.VIDEO && it.selected }
-            Row(Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-                verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(strings.uisettingKiteAudioVizTitle, style = Type.value,
-                        color = if (vizAvailable) Color.Unspecified else palette.disabled)
-                    Text(strings.roomVisualizationWhenVideoOff, style = Type.note,
-                        color = if (vizAvailable) palette.inkDim else palette.disabled)
-                }
-                Rocker(visualization, onVisualization, enabled = vizAvailable, name = strings.uisettingKiteAudioVizTitle)
-            }
-        }
         if (selectedType == TrackType.SUBTITLE) {
             Row(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight), horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                 SecondaryAction(strings.roomTrackImport, modifier = Modifier.weight(1f), onClick = onImport)
@@ -173,6 +167,11 @@ internal fun TrackControls(
         val shown = tracks.filter { it.type == selectedType }
         val listState = key(selectedType) { rememberLazyListState() }
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
+            // The rows scroll with the list: a phone's card is short, and as a fixed header they
+            // pushed the pattern stepper and the tracks out of the card.
+            if (selectedType == TrackType.VIDEO && supportsVisualization) item {
+                Column { VisualizerRows(tracks, visualization, onVisualization, visualizer) }
+            }
             if (selectedType == TrackType.SUBTITLE || selectedType == TrackType.VIDEO && supportsVideo) item {
                 ListRow(onClick = { onChoose(null, selectedType) }, enabled = enabled,
                     selected = shown.none { it.selected }, minHeight = Space.row, horizontalPadding = Space.gap) {
@@ -191,6 +190,40 @@ internal fun TrackControls(
                 TrackRow(track, enabled) { onChoose(track, selectedType) }
             }
         }
+    }
+}
+
+/**
+ * The visualizer's rows on the video tab. The switch shows what is on screen, not the stored
+ * value: with a video track selected nothing is drawn, whatever the switch says. On turns the
+ * video off. The director and pattern rows appear only while something is drawn.
+ */
+@Composable
+internal fun VisualizerRows(tracks: List<Track>, visualization: Boolean, onVisualization: (Boolean) -> Unit, visualizer: VisualizerControls?) {
+    val drawing = visualization && tracks.none { it.type == TrackType.VIDEO && it.selected }
+    SwitchRow(strings.uisettingKiteAudioVizTitle, strings.roomVisualizerSummary, drawing, onVisualization)
+    if (drawing && visualizer != null) {
+        SwitchRow(strings.roomVisualizerDirector, strings.roomVisualizerDirectorSummary, visualizer.directed) { visualizer.directed = it }
+        // The stepper under its label, not beside it: a dock is 240 to 340dp wide and the
+        // stepper keeps its minimum width, so side by side the label wrapped.
+        Column(Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight)) {
+            Text(strings.roomVisualizerPattern, style = Type.value)
+            Stepper(visualizer.drawings, visualizer.showing, visualizer::show, Modifier.fillMaxWidth(),
+                wrap = true, autoSize = true, name = strings.roomVisualizerPattern)
+        }
+    }
+}
+
+/** A title and a note on the left, a rocker on the right. */
+@Composable
+private fun SwitchRow(title: String, note: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
+        verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = Type.value)
+            Text(note, style = Type.note, color = palette.inkDim)
+        }
+        Rocker(on, onChange, name = title)
     }
 }
 

@@ -730,6 +730,10 @@
     <string name="room_tv_videos_permission">يحتاج Synkplay إلى إذن لعرض مقاطع الفيديو على هذا الجهاز.</string>
     <string name="room_tv_videos_empty_hint">انسخ مقطع فيديو إلى هذا الجهاز، ثم افتح هذه القائمة مرة أخرى.</string>
     <string name="room_tv_videos_allow">السماح بالوصول</string>
+    <string name="room_visualizer_summary">يرسم الصوت بدل الصورة</string>
+    <string name="room_visualizer_director">المخرج</string>
+    <string name="room_visualizer_director_summary">يغيّر النمط مع الموسيقى</string>
+    <string name="room_visualizer_pattern">النمط</string>
     <string-array name="tips">
         <item>لكي تعمل قوائم التشغيل المشتركة، يحتاج %1$s لمعرفة مكان تخزين ملفات الوسائط. أضف مجلدات الوسائط في 'الإعدادات > عام > مجلدات الوسائط لقائمة التشغيل المشتركة'.</item>
         <item>تريد استخدام مشغل الفيديو بمفردك؟ اختر مشغلاً، اضغط على شعار %1$s في الأعلى، ثم اختر 'الوضع غير المتصل'.</item>

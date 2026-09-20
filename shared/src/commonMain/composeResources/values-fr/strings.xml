@@ -745,6 +745,10 @@
     <string name="room_tv_videos_permission">Synkplay a besoin d'une autorisation pour lister les vidéos de cet appareil.</string>
     <string name="room_tv_videos_empty_hint">Copiez une vidéo sur cet appareil, puis rouvrez cette liste.</string>
     <string name="room_tv_videos_allow">Autoriser l’accès</string>
+    <string name="room_visualizer_summary">Dessine le son à la place de l'image</string>
+    <string name="room_visualizer_director">Réalisateur</string>
+    <string name="room_visualizer_director_summary">Change de motif avec la musique</string>
+    <string name="room_visualizer_pattern">Motif</string>
     <string-array name="tips">
         <item>Pour que les playlists partagées fonctionnent, %1$s doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
         <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo %1$s, puis choisissez 'Mode hors ligne'.</item>

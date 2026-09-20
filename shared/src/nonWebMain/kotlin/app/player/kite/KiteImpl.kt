@@ -9,7 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -22,6 +24,8 @@ import app.player.models.Track
 import app.player.models.TrackTrait
 import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
 import app.preferences.Preferences.AUDIO_VISUALIZATION
+import app.preferences.Preferences.KITE_AUDIO_VIZ_DIRECTOR
+import app.preferences.Preferences.KITE_AUDIO_VIZ_DRAWING
 import app.preferences.Preferences.KITE_DEBUG_STATS
 import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
 import app.preferences.Preferences.KITE_EQ_CONTRAST
@@ -40,7 +44,10 @@ import app.preferences.settings.withControl
 import app.preferences.value
 import app.preferences.watchPref
 import io.github.yuroyami.kiteplayer.audioviz.KiteAudioViz
+import app.player.models.VisualizerControls
 import app.player.models.shouldShowAudioVisualization
+import app.preferences.set
+import io.github.yuroyami.kiteplayer.audioviz.AudioVizState
 import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
@@ -73,7 +80,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -115,6 +124,10 @@ internal class KiteImpl(
      * snapshot identity, so the construction thread cannot matter.
      */
     private val kiteFlow = MutableStateFlow<KitePlayer?>(null)
+
+    /** Set by the video composable while the visualizer state exists, cleared when it goes. */
+    private val visualizerFlow = MutableStateFlow<VisualizerControls?>(null)
+    override val visualizer: StateFlow<VisualizerControls?> get() = visualizerFlow
 
     private var kite: KitePlayer?
         get() = kiteFlow.value
@@ -743,7 +756,19 @@ internal class KiteImpl(
                 // Listen before media opens so short clips retain their first audio buffers.
                 // Disabling the preference detaches the tap as well as removing the drawing.
                 val viz = rememberAudioVizState(player)
-                LaunchedEffect(viz) { viz.directed = true }
+                val scope = rememberCoroutineScope()
+                LaunchedEffect(viz) {
+                    // Zero waits for a musical boundary however long that takes, and plenty of
+                    // music offers none for minutes; the sample uses the same number.
+                    viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
+                    viz.catalogue.firstOrNull { it.name == KITE_AUDIO_VIZ_DRAWING.value() }?.let { viz.drawing = it }
+                    viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
+                }
+                DisposableEffect(viz) {
+                    val controls = KiteVisualizerControls(viz, scope)
+                    visualizerFlow.value = controls
+                    onDispose { visualizerFlow.compareAndSet(controls, null) }
+                }
                 if (showVisualization) {
                     KiteAudioViz(viz, Modifier.fillMaxSize())
                 }
@@ -762,5 +787,25 @@ internal class KiteImpl(
     private companion object {
         /** How long a load waits for the renderer before failing instead of wedging the mutex. */
         const val RENDERER_ATTACH_TIMEOUT_MS = 15_000L
+
+        /** Longest the director holds one drawing with no boundary before the next beat changes it. */
+        const val DIRECTOR_MAX_HOLD_SECONDS = 30f
     }
+}
+
+/** The tracks card's view of the visualizer: reads are snapshot state, writes also persist the pick. */
+private class KiteVisualizerControls(private val viz: AudioVizState, private val scope: CoroutineScope) : VisualizerControls {
+    override val drawings: List<String> = viz.catalogue.map { it.name }
+    override val showing: Int get() = viz.catalogue.indexOf(viz.showing)
+    override fun show(index: Int) {
+        val drawing = viz.catalogue.getOrNull(index) ?: return
+        viz.drawing = drawing
+        scope.launch { KITE_AUDIO_VIZ_DRAWING.set(drawing.name) }
+    }
+    override var directed: Boolean
+        get() = viz.directed
+        set(value) {
+            viz.directed = value
+            scope.launch { KITE_AUDIO_VIZ_DIRECTOR.set(value) }
+        }
 }

@@ -13,6 +13,7 @@ import app.player.models.MediaFileLocation
 import app.player.models.PlayerOptions
 import app.player.models.Track
 import app.player.models.TrackChoice
+import app.player.models.VisualizerControls
 import app.player.resolver.mediaResolver
 import app.player.resolver.urlLooksLikeDirectMedia
 import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
@@ -36,6 +37,8 @@ import io.github.vinceglb.filekit.stopAccessingSecurityScopedResource
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -82,6 +85,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     open val supportsPictureInPicture: Boolean = true
     open val supportsVideoTrackSelection: Boolean = false
     open val supportsAudioVisualization: Boolean = false
+
+    /** The visualizer's knobs while it is drawing, null otherwise. Only KitePlayer has any. */
+    open val visualizer: StateFlow<VisualizerControls?> = MutableStateFlow(null)
 
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true

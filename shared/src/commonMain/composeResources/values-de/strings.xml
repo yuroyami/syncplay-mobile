@@ -728,6 +728,10 @@
     <string name="room_tv_videos_permission">Synkplay braucht die Berechtigung, die Videos auf diesem Gerät aufzulisten.</string>
     <string name="room_tv_videos_empty_hint">Kopiere ein Video auf dieses Gerät und öffne diese Liste erneut.</string>
     <string name="room_tv_videos_allow">Zugriff erlauben</string>
+    <string name="room_visualizer_summary">Zeichnet den Ton anstelle des Bildes</string>
+    <string name="room_visualizer_director">Regie</string>
+    <string name="room_visualizer_director_summary">Wechselt das Muster mit der Musik</string>
+    <string name="room_visualizer_pattern">Muster</string>
     <string-array name="tips">
         <item>Damit gemeinsame Playlists funktionieren, muss %1$s wissen, wo Ihre Mediendateien gespeichert sind. Fügen Sie Ihre Medienordner unter 'Einstellungen > Allgemein > Medienverzeichnisse für gemeinsame Playlist' hinzu.</item>
         <item>Möchten Sie den Video-Player solo verwenden? Wählen Sie einen Player, tippen Sie auf das %1$s-Logo oben und wählen Sie dann 'Offline-Modus'.</item>

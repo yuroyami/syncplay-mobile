@@ -710,7 +710,6 @@
     <string name="room_track_tab_subtitles">Subtitles</string>
     <string name="room_track_tab_video">Video</string>
     <string name="room_video_off">Disable Video</string>
-    <string name="room_visualization_when_video_off">Available when video is disabled</string>
     <string name="room_track_unknown_language">Unspecified language</string>
     <string name="room_track_import">Import</string>
     <string name="room_track_search">Search</string>
@@ -778,6 +777,10 @@
     <string name="room_tv_videos_permission">Synkplay needs permission to list the videos on this device.</string>
     <string name="room_tv_videos_empty_hint">Copy a video onto this device, then open this list again.</string>
     <string name="room_tv_videos_allow">Allow access</string>
+    <string name="room_visualizer_summary">Draws the sound in place of the picture</string>
+    <string name="room_visualizer_director">Director</string>
+    <string name="room_visualizer_director_summary">Changes the pattern with the music</string>
+    <string name="room_visualizer_pattern">Pattern</string>
     <string-array name="tips">
         <item>For shared playlists to work, %1$s needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
         <item>Want to use the video player solo? Select a player, tap the %1$s logo above, then choose 'Offline Mode'.</item>

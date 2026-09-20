@@ -44,7 +44,8 @@ import app.theme.palette
 /**
  * `‹ value ›` in place, for option sets under five. Changing a choice never opens anything.
  * Role Slider with discrete steps; the current option is spoken by name. Left and right keys
- * step it; the arrows carry 48dp targets around 14dp chevrons.
+ * step it; the arrows carry 48dp targets around 14dp chevrons. [autoSize] keeps the value on
+ * one line and shrinks it to fit.
  */
 @Composable
 fun Stepper(
@@ -55,6 +56,7 @@ fun Stepper(
     enabled: Boolean = true,
     wrap: Boolean = false,
     name: String? = null,
+    autoSize: Boolean = false,
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
@@ -107,8 +109,10 @@ fun Stepper(
             style = Type.value,
             color = if (enabled) p.accent else p.disabled,
             textAlign = TextAlign.Center,
-            maxLines = 2,
+            // Auto-sized: one line that shrinks to fit, for long option names such as a drawing's.
+            maxLines = if (autoSize) 1 else 2,
             overflow = TextOverflow.Ellipsis,
+            autoSize = if (autoSize) FontSizeRange(Type.value.fontSize) else null,
             modifier = Modifier.weight(1f).padding(vertical = Space.gapTight),
         )
         StepperArrow(ChevronDirection.Right, canForward) { step(1) }

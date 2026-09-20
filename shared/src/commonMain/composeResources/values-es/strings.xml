@@ -730,6 +730,10 @@
     <string name="room_tv_videos_permission">Synkplay necesita permiso para ver los vídeos de este dispositivo.</string>
     <string name="room_tv_videos_empty_hint">Copia un vídeo en este dispositivo y vuelve a abrir esta lista.</string>
     <string name="room_tv_videos_allow">Permitir acceso</string>
+    <string name="room_visualizer_summary">Dibuja el sonido en lugar de la imagen</string>
+    <string name="room_visualizer_director">Director</string>
+    <string name="room_visualizer_director_summary">Cambia el patrón con la música</string>
+    <string name="room_visualizer_pattern">Patrón</string>
     <string-array name="tips">
         <item>Para que las listas de reproducción compartidas funcionen, %1$s necesita saber dónde se almacenan tus archivos multimedia. Añade tus carpetas de medios en 'Configuración > General > Directorios de medios para lista de reproducción compartida'.</item>
         <item>¿Quieres usar el reproductor de video solo? Selecciona un reproductor, toca el logo de %1$s arriba, luego elige 'Modo sin conexión'.</item>

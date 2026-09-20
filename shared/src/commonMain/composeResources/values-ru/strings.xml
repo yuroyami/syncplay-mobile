@@ -730,6 +730,10 @@
     <string name="room_tv_videos_permission">Synkplay нужно разрешение, чтобы показать видео на этом устройстве.</string>
     <string name="room_tv_videos_empty_hint">Скопируйте видео на это устройство, затем снова откройте этот список.</string>
     <string name="room_tv_videos_allow">Разрешить доступ</string>
+    <string name="room_visualizer_summary">Рисует звук вместо картинки</string>
+    <string name="room_visualizer_director">Режиссёр</string>
+    <string name="room_visualizer_director_summary">Меняет узор вместе с музыкой</string>
+    <string name="room_visualizer_pattern">Узор</string>
     <string-array name="tips">
         <item>Для работы общих списков воспроизведения %1$s необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
         <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип %1$s выше, затем выберите 'Автономный режим'.</item>
