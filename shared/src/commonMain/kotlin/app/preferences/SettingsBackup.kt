@@ -125,6 +125,8 @@ private fun convertTo(pref: Pref<*>, text: String): Any? {
 
     val extra = pref.config?.extraConfig
     if (converted is Int && extra is PrefExtraConfig.Slider && converted !in extra.minValue..extra.maxValue) return null
+    // A file from an earlier version can carry the old "use the theme's colour" marker for a chat colour.
+    if (converted == ChatColorCleanup.OLD_THEME_MARKER && pref.key in ChatColorCleanup.keyNames) return null
     if (converted is Float && !converted.isFinite()) return null
     if (converted is Double && !converted.isFinite()) return null
     KNOWN_CHOICES[pref.key]?.let { allowed -> if (converted !in allowed) return null }

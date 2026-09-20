@@ -30,8 +30,8 @@ import app.uicomponents.controls.Rule
 import app.uicomponents.surface
 
 /**
- * The chrome every room panel shares: a 42dp header with the title and glyph actions, a hairline,
- * and a body. No inner cards. The shape comes from the dock the panel sits in.
+ * The chrome a room panel uses: a 42dp header with the title and glyph actions, a hairline, and a
+ * body. No inner cards. The shape comes from the dock the panel sits in.
  */
 @Composable
 fun PanelFrame(
@@ -45,8 +45,7 @@ fun PanelFrame(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
-    // A tap that lands between rows stops here instead of reaching the HUD and hiding it.
-    Column(modifier.surface(Tier.Panel, shape, rim).pointerInput(Unit) { detectTapGestures { } }) {
+    PanelSurface(modifier, shape, rim) {
         Row(
             modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = if (centerTitle) Space.gapTight else Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
@@ -71,4 +70,16 @@ fun PanelFrame(
             Column(Modifier.weight(1f, fill = false), content = content)
         }
     }
+}
+
+/** The panel without the header, for a panel whose own tabs already name it. */
+@Composable
+fun PanelSurface(
+    modifier: Modifier = Modifier,
+    shape: Shape = Radius.panelShape,
+    rim: GlassEdge = GlassEdge.All,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    // A tap that lands between rows stops here instead of reaching the HUD and hiding it.
+    Column(modifier.surface(Tier.Panel, shape, rim).pointerInput(Unit) { detectTapGestures { } }, content = content)
 }

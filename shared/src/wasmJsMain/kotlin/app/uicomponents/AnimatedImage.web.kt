@@ -22,6 +22,7 @@ actual fun AnimatedImage(
     contentScale: ContentScale,
     alpha: Float,
     onLoaded: (() -> Unit)?,
+    onFailed: (() -> Unit)?,
 ) {
     if (alpha <= 0f) {
         Box(modifier)
@@ -32,6 +33,7 @@ actual fun AnimatedImage(
         contentDescription = contentDescription,
         contentScale = contentScale,
         onSuccess = { onLoaded?.invoke() },
+        onError = { onFailed?.invoke() },
         modifier = modifier.alpha(alpha),
     )
 }

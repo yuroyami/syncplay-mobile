@@ -94,16 +94,12 @@ class UserRosterGolden {
                     roster.tap("Mute")
                     assertEquals(listOf(PEER), roster.muteCalls)
                     roster.assertOneModerationStrip(muted = true)
-                    roster.tap("Report")
-                    assertEquals(listOf(PEER), roster.reportCalls)
 
                     roster.tap(FILELESS)
                     roster.assertOneModerationStrip()
                     if (compact) assertFalse(roster.labels().contains(PEER_FILE), "Opening a second person must close the first")
                     roster.tap("Mute")
                     assertEquals(listOf(PEER, FILELESS), roster.muteCalls)
-                    roster.tap("Report")
-                    assertEquals(listOf(PEER, FILELESS), roster.reportCalls)
                     roster.tap("Mark ready")
                     assertEquals(listOf(FILELESS), roster.readyCalls)
                     roster.save(if (compact) "compact-fileless-selected" else "expanded-fileless-selected")
@@ -146,8 +142,8 @@ class UserRosterGolden {
                     roster.tap(FILELESS)
                     roster.scrollToBottom()
                     roster.assertOneModerationStrip()
-                    roster.tap("Report")
-                    assertEquals(listOf(FILELESS), roster.reportCalls)
+                    roster.tap("Mark ready")
+                    assertEquals(listOf(FILELESS), roster.readyCalls)
                     roster.save("short-expanded-scrolled").assertAllTextFits()
                 }
                 Roster(width, scale, compact = true, height = height).use { roster ->
@@ -160,7 +156,6 @@ class UserRosterGolden {
 
     private class Roster(val width: Int, val scale: Float, compact: Boolean, val height: Int = if (scale == 1f) 700 else 1200) : AutoCloseable {
         val muteCalls = mutableListOf<String>()
-        val reportCalls = mutableListOf<String>()
         val readyCalls = mutableListOf<String>()
         private val muted = mutableStateSetOf<String>()
         private var compactMode by mutableStateOf(compact)
@@ -178,7 +173,6 @@ class UserRosterGolden {
                             muteCalls += username
                             if (!muted.remove(username)) muted.add(username)
                         },
-                        onReport = { reportCalls += it },
                         onSetReady = { readyCalls += it.name },
                     )
                 }
@@ -259,13 +253,12 @@ class UserRosterGolden {
         }
 
         fun assertNoModeration() {
-            assertFalse(labels().any { it == "Mute" || it == "Unmute" || it == "Report" }, "Moderation should require choosing a peer")
+            assertFalse(labels().any { it == "Mute" || it == "Unmute" }, "Moderation should require choosing a peer")
         }
 
         fun assertOneModerationStrip(muted: Boolean = false) {
-            assertEquals(1, labels().count { it == "Report" }, "Exactly one person can have actions open")
+            assertEquals(1, labels().count { it == "Mute" || it == "Unmute" }, "Exactly one person can have actions open")
             assertEquals(1, labels().count { it == if (muted) "Unmute" else "Mute" })
-            assertEquals(1, labels().count { it == "Mute" || it == "Unmute" })
         }
 
         fun save(name: String): DesignHarness.Result {

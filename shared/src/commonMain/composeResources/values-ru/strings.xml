@@ -12,6 +12,16 @@
     <string name="save">Сохранить</string>
     <string name="undefined">Не определено</string>
     <string name="reset_default">Сбросить по умолчанию</string>
+    <string name="color_hue">Оттенок</string>
+    <string name="color_saturation">Насыщенность</string>
+    <string name="color_brightness">Яркость</string>
+    <string name="color_opacity">Непрозрачность</string>
+    <string name="room_tv_videos_title">Видео на этом устройстве</string>
+    <string name="room_tv_videos_loading">Чтение видеотеки…</string>
+    <string name="room_tv_videos_empty">На этом устройстве нет видео.</string>
+    <string name="room_tv_videos_permission">Synkplay нужно разрешение, чтобы показать видео на этом устройстве.</string>
+    <string name="room_tv_videos_empty_hint">Скопируйте видео на это устройство, затем снова откройте этот список.</string>
+    <string name="room_tv_videos_allow">Разрешить доступ</string>
 
     <!-- Home Screen -->
     <string name="connect_username">Имя пользователя</string>
@@ -412,6 +422,7 @@
     <string name="room_brightness_label">Яркость</string>
     <string name="room_chapters_jump">Глава: %1$s</string>
     <string name="room_chat_copied">Скопировано</string>
+    <string name="room_chat_copy_link">Копировать ссылку</string>
     <string name="room_chat_image_from">Изображение от %1$s</string>
     <string name="room_chat_image_hidden">Изображение скрыто. Нажмите, чтобы загрузить с %1$s.</string>
     <string name="room_chat_input">Сообщение</string>
@@ -525,7 +536,6 @@
     <string name="room_track_trait_forced">Форсированные</string>
     <string name="room_tracks">Звук и субтитры</string>
     <string name="room_tracks_none">Нет дорожек</string>
-    <string name="room_tracks_title">Звук и субтитры</string>
     <string name="room_undo_seek">Отменить перемотку</string>
     <string name="room_undo_seek_always">Больше не спрашивать</string>
     <string name="room_undo_seek_cancel">Отмена</string>
@@ -543,7 +553,6 @@
     <string name="room_user_mute">Заглушить</string>
     <string name="room_user_not_ready_label">%1$s, не готов</string>
     <string name="room_user_ready_label">%1$s, готов</string>
-    <string name="room_user_report">Пожаловаться</string>
     <string name="room_user_set_not_ready">Отметить не готовым</string>
     <string name="room_user_set_ready">Отметить готовым</string>
     <string name="room_user_unmute">Снять заглушение</string>
@@ -617,7 +626,6 @@
     <string name="setting_tls_required_summary">Отказывать серверам без шифрования.</string>
     <string name="setting_tls_required_title">Требовать шифрование</string>
     <string name="setting_trusted_domains_detail">Совпадает с точным хостом, его www-вариантом, шаблонами *. и необязательным префиксом пути вроде example.com/videos. Через запятую. Пустое поле значит, что ничего присланного другими не грузится само.</string>
-    <string name="settings_color_follows_theme">Тема</string>
     <string name="settings_group_chapters">Главы</string>
     <string name="settings_group_connection">Соединение</string>
     <string name="settings_group_links">Ссылки</string>
@@ -720,16 +728,6 @@
     <string name="room_subs_all_languages">Все языки</string>
     <string name="room_subs_media_changed">Файл сменился, пока скачивались субтитры. Поищите заново.</string>
     <string name="home_engine_unavailable_flavor">В этой сборке этого движка нет. В полном APK он есть.</string>
-    <string name="color_hue">Оттенок</string>
-    <string name="color_saturation">Насыщенность</string>
-    <string name="color_brightness">Яркость</string>
-    <string name="color_opacity">Непрозрачность</string>
-    <string name="room_tv_videos_title">Видео на этом устройстве</string>
-    <string name="room_tv_videos_loading">Чтение видеотеки…</string>
-    <string name="room_tv_videos_empty">На этом устройстве нет видео.</string>
-    <string name="room_tv_videos_permission">Synkplay нужно разрешение, чтобы показать видео на этом устройстве.</string>
-    <string name="room_tv_videos_empty_hint">Скопируйте видео на это устройство, затем снова откройте этот список.</string>
-    <string name="room_tv_videos_allow">Разрешить доступ</string>
     <string name="room_visualizer_summary">Рисует звук вместо картинки</string>
     <string name="room_visualizer_director">Режиссёр</string>
     <string name="room_visualizer_director_summary">Меняет узор вместе с музыкой</string>

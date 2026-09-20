@@ -25,6 +25,7 @@ import app.protocol.wire.PlaylistChangeData
 import app.protocol.wire.PlaylistIndexData
 import app.protocol.wire.ReadyData
 import app.protocol.wire.UserSetData
+import app.room.models.isolated
 import app.utils.SyncClock
 import app.utils.loggy
 import kotlinx.atomicfu.locks.synchronized
@@ -460,9 +461,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             dispatcher.broadcastMessage(
                 message = {
                     val line = if (isReady) Localization.strings.roomReadySetBy else Localization.strings.roomNotReadySetBy
-                    line(userName, setBy)
+                    line(userName.isolated(), setBy.isolated())
                 },
-                isChat = false
+                isChat = false,
+                people = listOf(userName, setBy),
             )
         }
 

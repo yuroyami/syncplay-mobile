@@ -12,6 +12,16 @@
     <string name="save">Guardar</string>
     <string name="undefined">Indefinido</string>
     <string name="reset_default">Restablecer predeterminado</string>
+    <string name="color_hue">Tono</string>
+    <string name="color_saturation">Saturación</string>
+    <string name="color_brightness">Brillo</string>
+    <string name="color_opacity">Opacidad</string>
+    <string name="room_tv_videos_title">Vídeos en este dispositivo</string>
+    <string name="room_tv_videos_loading">Leyendo la videoteca…</string>
+    <string name="room_tv_videos_empty">No hay vídeos en este dispositivo.</string>
+    <string name="room_tv_videos_permission">Synkplay necesita permiso para ver los vídeos de este dispositivo.</string>
+    <string name="room_tv_videos_empty_hint">Copia un vídeo en este dispositivo y vuelve a abrir esta lista.</string>
+    <string name="room_tv_videos_allow">Permitir acceso</string>
 
     <!-- Home Screen -->
     <string name="connect_username">Nombre de usuario</string>
@@ -412,6 +422,7 @@
     <string name="room_brightness_label">Brillo</string>
     <string name="room_chapters_jump">Capítulo: %1$s</string>
     <string name="room_chat_copied">Copiado</string>
+    <string name="room_chat_copy_link">Copiar enlace</string>
     <string name="room_chat_image_from">Imagen enviada por %1$s</string>
     <string name="room_chat_image_hidden">Imagen oculta. Toca para cargarla desde %1$s.</string>
     <string name="room_chat_input">Mensaje</string>
@@ -525,7 +536,6 @@
     <string name="room_track_trait_forced">Forzado</string>
     <string name="room_tracks">Audio y subtítulos</string>
     <string name="room_tracks_none">Sin pistas</string>
-    <string name="room_tracks_title">Audio y subtítulos</string>
     <string name="room_undo_seek">Deshacer el salto</string>
     <string name="room_undo_seek_always">No preguntar de nuevo</string>
     <string name="room_undo_seek_cancel">Cancelar</string>
@@ -543,7 +553,6 @@
     <string name="room_user_mute">Silenciar</string>
     <string name="room_user_not_ready_label">%1$s, no listo</string>
     <string name="room_user_ready_label">%1$s, listo</string>
-    <string name="room_user_report">Denunciar</string>
     <string name="room_user_set_not_ready">Marcar como no listo</string>
     <string name="room_user_set_ready">Marcar como listo</string>
     <string name="room_user_unmute">Dejar de silenciar</string>
@@ -617,7 +626,6 @@
     <string name="setting_tls_required_summary">Rechazar servidores que no puedan cifrar.</string>
     <string name="setting_tls_required_title">Exigir cifrado</string>
     <string name="setting_trusted_domains_detail">Coincide con el host exacto, su variante www, comodines *. y un prefijo de ruta opcional como example.com/videos. Separados por comas. Si está vacío, nada de lo que envíe otro usuario se carga solo.</string>
-    <string name="settings_color_follows_theme">Tema</string>
     <string name="settings_group_chapters">Capítulos</string>
     <string name="settings_group_connection">Conexión</string>
     <string name="settings_group_links">Enlaces</string>
@@ -720,16 +728,6 @@
     <string name="room_subs_all_languages">Todos los idiomas</string>
     <string name="room_subs_media_changed">El archivo cambió mientras se descargaba el subtítulo. Busca de nuevo.</string>
     <string name="home_engine_unavailable_flavor">Esta versión no incluye ese motor. La APK completa sí.</string>
-    <string name="color_hue">Tono</string>
-    <string name="color_saturation">Saturación</string>
-    <string name="color_brightness">Brillo</string>
-    <string name="color_opacity">Opacidad</string>
-    <string name="room_tv_videos_title">Vídeos en este dispositivo</string>
-    <string name="room_tv_videos_loading">Leyendo la videoteca…</string>
-    <string name="room_tv_videos_empty">No hay vídeos en este dispositivo.</string>
-    <string name="room_tv_videos_permission">Synkplay necesita permiso para ver los vídeos de este dispositivo.</string>
-    <string name="room_tv_videos_empty_hint">Copia un vídeo en este dispositivo y vuelve a abrir esta lista.</string>
-    <string name="room_tv_videos_allow">Permitir acceso</string>
     <string name="room_visualizer_summary">Dibuja el sonido en lugar de la imagen</string>
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Cambia el patrón con la música</string>

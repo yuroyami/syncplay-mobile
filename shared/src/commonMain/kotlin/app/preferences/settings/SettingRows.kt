@@ -1,5 +1,8 @@
 package app.preferences.settings
 
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.key
+import app.uicomponents.LocalIsTelevision
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,7 +82,6 @@ import syncplaymobile.shared.generated.resources.save
 import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
-import app.uicomponents.CHAT_COLOR_FOLLOWS_THEME
 
 /** Semantic density choices a host can vary. Never font sizes. */
 @Immutable
@@ -206,24 +208,20 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
             }
 
             extra is PrefExtraConfig.ColorPick -> {
-                val stored = (value as? Int) ?: (pref.default as Int)
-                // No pick yet: the row draws the palette colour actually in use and says so,
-                // rather than showing the stored sentinel as a transparent black square.
-                val followsTheme = stored == CHAT_COLOR_FOLLOWS_THEME
-                val color = if (followsTheme) extra.themeRole(palette) else Color(stored)
+                val defaultArgb = pref.default as Int
+                val color = Color((value as? Int) ?: defaultArgb)
                 val inline = LocalInlineEditor.current
                 val onColor: (Color) -> Unit = { c -> scope.launch { pref.setAny(c.toArgb()) } }
-                val onReset: () -> Unit = { scope.launch { pref.setAny(pref.default as Int) } }
+                val onReset: () -> Unit = { scope.launch { pref.setAny(defaultArgb) } }
                 val edit: () -> Unit = {
                     if (inline != null) inline.open(title, scrollable = false) {
                         // A preference write must survive leaving the nested page or panel.
                         val editorScope = LocalGlobalViewmodel.current.viewModelScope
-                        val resetColor = if (pref.default == CHAT_COLOR_FOLLOWS_THEME) extra.themeRole(palette) else Color(pref.default as Int)
                         InlineColorPage(
                             summary, color,
                             onColor = { c -> editorScope.launch(ioDispatcher) { pref.setAny(c.toArgb()) } },
-                            onReset = { editorScope.launch(ioDispatcher) { pref.setAny(pref.default as Int) } },
-                            resetColor = resetColor,
+                            onReset = { editorScope.launch(ioDispatcher) { pref.setAny(defaultArgb) } },
+                            resetColor = Color(defaultArgb),
                         )
                     }
                     else editorOpen.value = true
@@ -232,7 +230,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     icon?.invoke()
                     RowLabel(title)
                     RowGap()
-                    RowValue(if (followsTheme) strings.settingsColorFollowsTheme else color.hex())
+                    RowValue(color.hex())
                     RowGap()
                     Swatch(color, onClick = edit, enabled = enabled)
                 }
@@ -505,6 +503,8 @@ internal fun ColorModal(
 @Composable
 private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) -> Unit) {
     var draft by remember { mutableStateOf(initial) }
+    // Bumped when the sliders move the colour, so the picker's handles follow it.
+    var generation by remember { mutableIntStateOf(0) }
     // The store write trails the picker by a beat: one write per pointer move is what stutters.
     LaunchedEffect(Unit) {
         snapshotFlow { draft }.drop(1).collectLatest { c ->
@@ -516,16 +516,23 @@ private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) ->
         Text(summary, style = Type.note, color = palette.inkDim)
         Spacer(Modifier.height(Space.gap))
     }
-    KolorPicker(
-        modifier = Modifier.fillMaxWidth().height(260.dp),
-        initialColor = initial,
-        onColorSelected = { c -> draft = c },
-    )
+    key(generation) {
+        KolorPicker(
+            modifier = Modifier.fillMaxWidth().height(260.dp),
+            initialColor = remember { draft },
+            onColorSelected = { c -> draft = c },
+        )
+    }
     Spacer(Modifier.height(Space.gap))
     Row(verticalAlignment = Alignment.CenterVertically) {
         Swatch(draft)
         RowGap()
         Text(draft.hex(), style = Type.value, color = palette.inkDim)
+    }
+    // The picker answers only a finger or a mouse; a remote chooses with these.
+    if (LocalIsTelevision.current) {
+        Spacer(Modifier.height(Space.gap))
+        ColorSliders(draft, onColor = { draft = it; generation++ })
     }
 }
 

@@ -18,6 +18,16 @@
     <string name="undefined">Undefined</string>
 
     <string name="reset_default">Reset Default</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_brightness">Brightness</string>
+    <string name="color_opacity">Opacity</string>
+    <string name="room_tv_videos_title">Videos on this device</string>
+    <string name="room_tv_videos_loading">Reading the video library…</string>
+    <string name="room_tv_videos_empty">No videos on this device.</string>
+    <string name="room_tv_videos_permission">Synkplay needs permission to list the videos on this device.</string>
+    <string name="room_tv_videos_empty_hint">Copy a video onto this device, then open this list again.</string>
+    <string name="room_tv_videos_allow">Allow access</string>
 
     <!-- Home Screen -->
     <string name="connect_username">Username</string>
@@ -83,7 +93,6 @@
     <string name="room_chat_image_hidden">Image hidden. Tap to load it from %1$s.</string>
     <string name="room_user_mute">Mute</string>
     <string name="room_user_unmute">Unmute</string>
-    <string name="room_user_report">Report</string>
     <string name="room_user_set_ready">Mark ready</string>
     <string name="room_user_set_not_ready">Mark not ready</string>
     <string name="setting_room_portrait_title">Follow device rotation</string>
@@ -144,7 +153,6 @@
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
     <string name="room_button_desc_subtitle_tracks_import_from_file">Load from file</string>
-    <string name="room_tracks_title">Audio &amp; subtitles</string>
     <string name="room_button_desc_add">Add Media</string>
     <string name="room_addmedia_online_url">URL address</string>
     <string name="room_overflow_create_managed_room">Create managed room</string>
@@ -176,6 +184,7 @@
     <string name="room_user_ready_label">%1$s, ready</string>
     <string name="room_user_not_ready_label">%1$s, not ready</string>
     <string name="room_chat_copied">Copied</string>
+    <string name="room_chat_copy_link">Copy link</string>
     <string name="room_gif_powered_by">Powered by Klipy</string>
     <string name="modal_dismiss">Close</string>
     <string name="about_privacy_button">Privacy policy</string>
@@ -719,7 +728,6 @@
     <string name="room_track_trait_forced">Forced</string>
     <string name="setting_gif_recents_title">Remember recent GIFs</string>
     <string name="setting_gif_recents_summary">One ID kept with the GIF service</string>
-    <string name="settings_color_follows_theme">Theme</string>
     <string name="server_log_joined">%1$s joined the room %2$s</string>
     <string name="server_log_disconnected">%1$s disconnected</string>
     <string name="server_log_timed_out">%1$s timed out after %2$d seconds of silence</string>
@@ -767,16 +775,6 @@
     <string name="server_notification_text_few">Running on port %1$d, %2$d people connected</string>
     <string name="server_notification_text_many">Running on port %1$d, %2$d people connected</string>
     <string name="server_notification_text_other">Running on port %1$d, %2$d people connected</string>
-    <string name="color_hue">Hue</string>
-    <string name="color_saturation">Saturation</string>
-    <string name="color_brightness">Brightness</string>
-    <string name="color_opacity">Opacity</string>
-    <string name="room_tv_videos_title">Videos on this device</string>
-    <string name="room_tv_videos_loading">Reading the video library…</string>
-    <string name="room_tv_videos_empty">No videos on this device.</string>
-    <string name="room_tv_videos_permission">Synkplay needs permission to list the videos on this device.</string>
-    <string name="room_tv_videos_empty_hint">Copy a video onto this device, then open this list again.</string>
-    <string name="room_tv_videos_allow">Allow access</string>
     <string name="room_visualizer_summary">Draws the sound in place of the picture</string>
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Changes the pattern with the music</string>

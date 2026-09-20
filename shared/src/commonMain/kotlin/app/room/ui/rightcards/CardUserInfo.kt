@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -74,7 +73,6 @@ import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelFrame
 import app.utils.FileComparison
 import app.utils.timestampFromMillis
-import io.ktor.http.encodeURLParameter
 import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
 
@@ -87,7 +85,6 @@ object CardUserInfo {
         val myFile by vm.playerManager.media.collectAsState()
         val viewKey by USER_INFO_VIEW.watchPref()
         val scope = rememberCoroutineScope()
-        val uriHandler = LocalUriHandler.current
         val me = vm.session.currentUsername
         // Only where the server says controllers may set other people's readiness.
         val canSetReady = vm.session.roomFeatures.setOthersReadiness && users.any { it.name == me && it.isController }
@@ -100,7 +97,6 @@ object CardUserInfo {
             onCompactChange = { compact -> scope.launch { USER_INFO_VIEW.set(if (compact) "compact" else "standard") } },
             mutedUsers = ui.mutedUsers,
             onToggleMute = ui::toggleMute,
-            onReport = { uriHandler.openUri(reportUserUrl(it)) },
             onSetReady = if (canSetReady) { user ->
                 vm.networkManager.sendAsync(WireMessage.readiness(!user.readiness, manuallyInitiated = true, username = user.name))
             } else null,
@@ -119,7 +115,6 @@ internal fun UserRosterPanel(
     onCompactChange: (Boolean) -> Unit,
     mutedUsers: Set<String> = emptySet(),
     onToggleMute: (String) -> Unit = {},
-    onReport: (String) -> Unit = {},
     onSetReady: ((User) -> Unit)? = null,
     shape: Shape = Radius.panelShape,
 ) {
@@ -151,7 +146,6 @@ internal fun UserRosterPanel(
                             horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
                         ) {
                             SecondaryAction(if (user.name in mutedUsers) strings.roomUserUnmute else strings.roomUserMute, { onToggleMute(user.name) })
-                            SecondaryAction(strings.roomUserReport, { onReport(user.name) })
                             if (onSetReady != null) {
                                 SecondaryAction(if (user.readiness) strings.roomUserSetNotReady else strings.roomUserSetReady, { onSetReady(user) })
                             }
@@ -189,6 +183,13 @@ private fun RosterViewSwitcher(compact: Boolean, onCompactChange: (Boolean) -> U
 @Composable
 private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compact: Boolean, expanded: Boolean, onClick: (() -> Unit)?) {
     val p = palette
+    // Kept small so a short panel shows more people: the name at the value size, the details at
+    // the group size, which is the smallest text the room uses.
+    val nameStyle = Type.label.copy(fontSize = Type.value.fontSize, lineHeight = Type.value.lineHeight)
+    val detailSize = Type.group.fontSize
+    // A file name can wrap, so its lines sit a little looser than the group role's.
+    val filenameStyle = Type.note.copy(fontSize = detailSize, lineHeight = lerp(Type.group.lineHeight, Type.note.lineHeight, 0.2f))
+    val metadataStyle = Type.value.copy(fontSize = detailSize, lineHeight = Type.group.lineHeight)
     val file = user.file
     val myDuration = myFile?.fileDuration?.takeIf { it.isFinite() && it > 0.0 }
     val peerDuration = file?.fileDuration?.takeIf { it.isFinite() && it > 0.0 }
@@ -223,7 +224,7 @@ private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compa
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         ReadinessDot(user.readiness)
                         RowGap(Space.gapTight + 2.dp)
-                        FullRosterText(user.name, modifier = Modifier.weight(1f), style = Type.label, preferredLines = 1)
+                        FullRosterText(user.name, modifier = Modifier.weight(1f), style = nameStyle, preferredLines = 1)
                         if (user.isController) {
                             RowGap(Space.gapTight)
                             Icon(Icons.Filled.Star, contentDescription = controller, tint = p.accent, modifier = Modifier.size(12.dp))
@@ -242,7 +243,7 @@ private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compa
                             Box(Modifier.weight(1f)) { identity() }
                             if (isSelf && !compact) {
                                 RowGap(Space.gap)
-                                Text(self, style = Type.value, color = p.inkDim)
+                                Text(self, style = metadataStyle, color = p.inkDim)
                             }
                             if (onClick != null && !compact) {
                                 RowGap(Space.gap)
@@ -254,9 +255,6 @@ private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compa
                 }
             }
             if (!compact || expanded) {
-                val detailSize = lerp(Type.group.fontSize, Type.note.fontSize, 0.5f)
-                val filenameStyle = Type.note.copy(fontSize = detailSize, lineHeight = lerp(Type.group.lineHeight, Type.note.lineHeight, 0.5f))
-                val metadataStyle = Type.value.copy(fontSize = detailSize, lineHeight = lerp(Type.group.lineHeight, Type.value.lineHeight, 0.5f))
                 Column(Modifier.padding(start = 15.dp), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                     FullRosterText(filename, style = filenameStyle)
                     if (file != null) {
@@ -336,9 +334,4 @@ internal fun rosterFileSize(raw: String): String {
     val tenths = (bytes / divisor * 10).roundToLong()
     val value = if (tenths % 10L == 0L) (tenths / 10).toString() else "${tenths / 10}.${tenths % 10}"
     return "$value $suffix"
-}
-
-private fun reportUserUrl(username: String): String {
-    val body = "Reporting a user in a Synkplay room.\n\nUser: $username\nWhat happened:\n"
-    return "https://github.com/yuroyami/syncplay-mobile/issues/new?title=${"[Report] user report".encodeURLParameter()}&body=${body.encodeURLParameter()}"
 }

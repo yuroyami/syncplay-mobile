@@ -18,6 +18,16 @@
     <string name="undefined">غير محدد</string>
 
     <string name="reset_default">إعادة التعيين للوضع الافتراضي</string>
+    <string name="color_hue">درجة اللون</string>
+    <string name="color_saturation">التشبع</string>
+    <string name="color_brightness">السطوع</string>
+    <string name="color_opacity">العتامة</string>
+    <string name="room_tv_videos_title">مقاطع الفيديو على هذا الجهاز</string>
+    <string name="room_tv_videos_loading">جارٍ قراءة مكتبة الفيديو…</string>
+    <string name="room_tv_videos_empty">لا توجد مقاطع فيديو على هذا الجهاز.</string>
+    <string name="room_tv_videos_permission">يحتاج Synkplay إلى إذن لعرض مقاطع الفيديو على هذا الجهاز.</string>
+    <string name="room_tv_videos_empty_hint">انسخ مقطع فيديو إلى هذا الجهاز، ثم افتح هذه القائمة مرة أخرى.</string>
+    <string name="room_tv_videos_allow">السماح بالوصول</string>
 
     <!-- Home Screen -->
     <string name="connect_username">اسم المستخدم</string>
@@ -412,6 +422,7 @@
     <string name="room_brightness_label">السطوع</string>
     <string name="room_chapters_jump">الفصل: %1$s</string>
     <string name="room_chat_copied">نُسخ</string>
+    <string name="room_chat_copy_link">نسخ الرابط</string>
     <string name="room_chat_image_from">صورة أرسلها %1$s</string>
     <string name="room_chat_image_hidden">الصورة مخفية. اضغط لتحميلها من %1$s.</string>
     <string name="room_chat_input">رسالة</string>
@@ -525,7 +536,6 @@
     <string name="room_track_trait_forced">إجباري</string>
     <string name="room_tracks">الصوت والترجمات</string>
     <string name="room_tracks_none">لا مسارات</string>
-    <string name="room_tracks_title">الصوت والترجمات</string>
     <string name="room_undo_seek">تراجع عن الانتقال</string>
     <string name="room_undo_seek_always">لا تسأل مرة أخرى</string>
     <string name="room_undo_seek_cancel">إلغاء</string>
@@ -543,7 +553,6 @@
     <string name="room_user_mute">كتم</string>
     <string name="room_user_not_ready_label">%1$s، غير جاهز</string>
     <string name="room_user_ready_label">%1$s، جاهز</string>
-    <string name="room_user_report">إبلاغ</string>
     <string name="room_user_set_not_ready">علّمه غير جاهز</string>
     <string name="room_user_set_ready">علّمه جاهزًا</string>
     <string name="room_user_unmute">إلغاء الكتم</string>
@@ -617,7 +626,6 @@
     <string name="setting_tls_required_summary">ارفض الخوادم التي لا تستطيع التشفير.</string>
     <string name="setting_tls_required_title">اشترط التشفير</string>
     <string name="setting_trusted_domains_detail">يطابق المضيف تمامًا، ونسخة www منه، وأنماط *.wildcards، وبادئة مسار اختيارية مثل example.com/videos. افصل بينها بفواصل. عند الفراغ لا يُحمَّل تلقائيًا أي شيء يدفعه مستخدم آخر.</string>
-    <string name="settings_color_follows_theme">السمة</string>
     <string name="settings_group_chapters">الفصول</string>
     <string name="settings_group_connection">الاتصال</string>
     <string name="settings_group_links">الروابط</string>
@@ -720,16 +728,6 @@
     <string name="room_subs_all_languages">كل اللغات</string>
     <string name="room_subs_media_changed">تغيّر الملف أثناء تنزيل الترجمة. ابحث من جديد.</string>
     <string name="home_engine_unavailable_flavor">هذه النسخة لا تحتوي على هذا المحرك. النسخة الكاملة تحتويه.</string>
-    <string name="color_hue">درجة اللون</string>
-    <string name="color_saturation">التشبع</string>
-    <string name="color_brightness">السطوع</string>
-    <string name="color_opacity">العتامة</string>
-    <string name="room_tv_videos_title">مقاطع الفيديو على هذا الجهاز</string>
-    <string name="room_tv_videos_loading">جارٍ قراءة مكتبة الفيديو…</string>
-    <string name="room_tv_videos_empty">لا توجد مقاطع فيديو على هذا الجهاز.</string>
-    <string name="room_tv_videos_permission">يحتاج Synkplay إلى إذن لعرض مقاطع الفيديو على هذا الجهاز.</string>
-    <string name="room_tv_videos_empty_hint">انسخ مقطع فيديو إلى هذا الجهاز، ثم افتح هذه القائمة مرة أخرى.</string>
-    <string name="room_tv_videos_allow">السماح بالوصول</string>
     <string name="room_visualizer_summary">يرسم الصوت بدل الصورة</string>
     <string name="room_visualizer_director">المخرج</string>
     <string name="room_visualizer_director_summary">يغيّر النمط مع الموسيقى</string>

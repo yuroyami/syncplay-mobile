@@ -136,7 +136,7 @@ val LocalPrefsState = staticCompositionLocalOf<State<Preferences>> {
 }
 
 /**
- * Builds the preference [DataStore] at [producePath]. No migrations.
+ * Builds the preference [DataStore] at [producePath]. One migration: [ChatColorCleanup].
  *
  * A file the parser rejects is replaced by an empty store rather than thrown from. Losing
  * settings is bad; a permanent crash on launch is worse, and it is what the alternative gave.
@@ -148,6 +148,6 @@ fun createDataStore(
         preferencesLoadFailure = failure
         emptyPreferences()
     },
-    migrations = emptyList(),
+    migrations = listOf(ChatColorCleanup),
     produceFile = { producePath().toPath() },
 )

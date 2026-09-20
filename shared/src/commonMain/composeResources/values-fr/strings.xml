@@ -18,6 +18,16 @@
     <string name="undefined">Indéfini</string>
 
     <string name="reset_default">Réinitialiser par défaut</string>
+    <string name="color_hue">Teinte</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_brightness">Luminosité</string>
+    <string name="color_opacity">Opacité</string>
+    <string name="room_tv_videos_title">Vidéos sur cet appareil</string>
+    <string name="room_tv_videos_loading">Lecture de la vidéothèque…</string>
+    <string name="room_tv_videos_empty">Aucune vidéo sur cet appareil.</string>
+    <string name="room_tv_videos_permission">Synkplay a besoin d'une autorisation pour lister les vidéos de cet appareil.</string>
+    <string name="room_tv_videos_empty_hint">Copiez une vidéo sur cet appareil, puis rouvrez cette liste.</string>
+    <string name="room_tv_videos_allow">Autoriser l’accès</string>
 
     <!-- Home Screen -->
     <string name="connect_username">Nom d'utilisateur</string>
@@ -427,6 +437,7 @@
     <string name="room_brightness_label">Luminosité</string>
     <string name="room_chapters_jump">Chapitre : %1$s</string>
     <string name="room_chat_copied">Copié</string>
+    <string name="room_chat_copy_link">Copier le lien</string>
     <string name="room_chat_image_from">Image envoyée par %1$s</string>
     <string name="room_chat_image_hidden">Image masquée. Touchez pour la charger depuis %1$s.</string>
     <string name="room_chat_input">Message</string>
@@ -540,7 +551,6 @@
     <string name="room_track_trait_forced">Forcé</string>
     <string name="room_tracks">Audio et sous-titres</string>
     <string name="room_tracks_none">Aucune piste</string>
-    <string name="room_tracks_title">Audio et sous-titres</string>
     <string name="room_undo_seek">Annuler le saut</string>
     <string name="room_undo_seek_always">Ne plus demander</string>
     <string name="room_undo_seek_cancel">Annuler</string>
@@ -558,7 +568,6 @@
     <string name="room_user_mute">Masquer</string>
     <string name="room_user_not_ready_label">%1$s, pas prêt</string>
     <string name="room_user_ready_label">%1$s, prêt</string>
-    <string name="room_user_report">Signaler</string>
     <string name="room_user_set_not_ready">Marquer comme pas prêt</string>
     <string name="room_user_set_ready">Marquer comme prêt</string>
     <string name="room_user_unmute">Ne plus masquer</string>
@@ -632,7 +641,6 @@
     <string name="setting_tls_required_summary">Refuser les serveurs incapables de chiffrer.</string>
     <string name="setting_tls_required_title">Exiger le chiffrement</string>
     <string name="setting_trusted_domains_detail">Correspond à l'hôte exact, sa variante www, les jokers *. et un préfixe de chemin facultatif comme example.com/videos. Séparés par des virgules. Vide, rien de ce qu'un autre envoie ne se charge tout seul.</string>
-    <string name="settings_color_follows_theme">Thème</string>
     <string name="settings_group_chapters">Chapitres</string>
     <string name="settings_group_connection">Connexion</string>
     <string name="settings_group_links">Liens</string>
@@ -735,16 +743,6 @@
     <string name="room_subs_all_languages">Toutes les langues</string>
     <string name="room_subs_media_changed">Le fichier a changé pendant le téléchargement du sous-titre. Relancez la recherche.</string>
     <string name="home_engine_unavailable_flavor">Cette version n'a pas ce moteur. L'APK complet l'a.</string>
-    <string name="color_hue">Teinte</string>
-    <string name="color_saturation">Saturation</string>
-    <string name="color_brightness">Luminosité</string>
-    <string name="color_opacity">Opacité</string>
-    <string name="room_tv_videos_title">Vidéos sur cet appareil</string>
-    <string name="room_tv_videos_loading">Lecture de la vidéothèque…</string>
-    <string name="room_tv_videos_empty">Aucune vidéo sur cet appareil.</string>
-    <string name="room_tv_videos_permission">Synkplay a besoin d'une autorisation pour lister les vidéos de cet appareil.</string>
-    <string name="room_tv_videos_empty_hint">Copiez une vidéo sur cet appareil, puis rouvrez cette liste.</string>
-    <string name="room_tv_videos_allow">Autoriser l’accès</string>
     <string name="room_visualizer_summary">Dessine le son à la place de l'image</string>
     <string name="room_visualizer_director">Réalisateur</string>
     <string name="room_visualizer_director_summary">Change de motif avec la musique</string>

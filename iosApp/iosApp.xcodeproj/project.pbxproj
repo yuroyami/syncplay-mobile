@@ -487,7 +487,7 @@
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Synkplay;
+				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -496,7 +496,7 @@
 				);
 				MARKETING_VERSION = 0.25.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
-				PRODUCT_NAME = Synkplay;
+				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -516,7 +516,7 @@
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Synkplay;
+				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -525,7 +525,7 @@
 				);
 				MARKETING_VERSION = 0.25.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
-				PRODUCT_NAME = Synkplay;
+				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

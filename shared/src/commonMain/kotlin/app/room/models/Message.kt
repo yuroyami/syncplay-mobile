@@ -14,6 +14,9 @@ internal const val BIDI_ISOLATE_START = "\u2068"
 /** Unicode BiDi "Pop Directional Isolate" (U+2069): closes a [BIDI_ISOLATE_START] run. */
 internal const val BIDI_ISOLATE_END = "\u2069"
 
+/** A name or a title inside a sentence, isolated so its direction cannot reorder the words around it. */
+internal fun String.isolated(): String = BIDI_ISOLATE_START + this + BIDI_ISOLATE_END
+
 /** Chat shows text the way a person would type it: no trailing spaces, no blank lines. */
 fun String.collapsedForChat(): String =
     lineSequence()
@@ -43,6 +46,12 @@ data class Message(
 
     /** Whether the message is an error, rendered in the error color (red by default). */
     var isError: Boolean = false,
+
+    /**
+     * The people an event names, each mapped to whether it is the app user. Chat draws each name
+     * in that person's name colour, and finds it by the isolates around it in [content].
+     */
+    val people: Map<String, Boolean> = emptyMap(),
 
     /** Arrival time on the wall clock, for the one-minute grouping rule. */
     val epochMs: Long = Clock.System.now().toEpochMilliseconds(),

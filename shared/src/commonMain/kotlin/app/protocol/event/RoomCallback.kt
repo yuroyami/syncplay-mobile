@@ -24,8 +24,7 @@ import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
 import app.room.OSDCategory
 import app.room.RoomViewmodel
-import app.room.models.BIDI_ISOLATE_END
-import app.room.models.BIDI_ISOLATE_START
+import app.room.models.isolated
 import app.room.toFileData
 import app.utils.loggy
 import app.utils.platformCallback
@@ -50,9 +49,6 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun String.isSelf(): Boolean = (this == session.currentUsername)
     fun String.isNotSelf(): Boolean = (this != session.currentUsername)
-
-    /** A username inside a system line keeps its own direction; chat rows already do this. */
-    private fun String.isolated(): String = BIDI_ISOLATE_START + this + BIDI_ISOLATE_END
 
     /** Triggers a platform haptic feedback event if the given preference is enabled */
     private fun hapticIf(pref: app.preferences.Pref<Boolean>) {
@@ -84,7 +80,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val osdMessage: suspend () -> String = {
             Localization.strings.roomGuyPaused(pauser.isolated(), timestampFromMillis(protocol.globalPositionMs))
         }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(pauser))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = pauser, getter = osdMessage)
     }
 
@@ -100,7 +96,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
 
         val osdMessage: suspend () -> String = { Localization.strings.roomGuyPlayed(player.isolated()) }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(player))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = player, getter = osdMessage)
     }
 
@@ -116,7 +112,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (joiner.isNotSelf()) hapticIf(HAPTIC_ON_JOINED)
         val osdMessage: suspend () -> String = { Localization.strings.roomGuyJoined(joiner.isolated()) }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(joiner))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = joiner, getter = osdMessage)
     }
 
@@ -139,7 +135,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         hapticIf(HAPTIC_ON_LEFT)
         val osdMessage: suspend () -> String = { Localization.strings.roomGuyLeft(leaver.isolated()) }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(leaver))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = leaver, getter = osdMessage)
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
@@ -173,7 +169,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val osdMessage: suspend () -> String = {
             Localization.strings.roomSeeked(seeker.isolated(), timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
         }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(seeker))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = seeker, getter = osdMessage)
 
         // Undo belongs to the person who sought, not to every receiver of the room update.
@@ -187,7 +183,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (behinder.isNotSelf()) {
             viewmodel.player.seekTo((toPosition * 1000L).toLong())
             val osdMessage: suspend () -> String = { Localization.strings.roomRewinded(behinder.isolated()) }
-            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+            dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(behinder))
             viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
         }
     }
@@ -199,7 +195,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (setBy.isNotSelf()) {
             viewmodel.player.seekTo((toPosition * 1000L).toLong())
             val osdMessage: suspend () -> String = { Localization.strings.roomFastforwarded(setBy.isolated()) }
-            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+            dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(setBy))
             viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
         }
     }
@@ -214,7 +210,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val osdMessage: suspend () -> String = {
             Localization.strings.roomIsplayingfile(person.isolated(), (file ?: "").isolated(), timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0))
         }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(person))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = person, getter = osdMessage)
 
         if (person.isNotSelf()) {
@@ -228,7 +224,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (user == "") return
         val osdMessage: suspend () -> String = { Localization.strings.roomSharedPlaylistUpdated(user.isolated()) }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(user))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
 
@@ -245,7 +241,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (user == "") return
         val osdMessage: suspend () -> String = { Localization.strings.roomSharedPlaylistChanged(user.isolated()) }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(user))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
 
@@ -427,7 +423,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                     false -> Localization.strings.roomOnControllerAuthFailed
                 })(user.isolated())
         }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = !data.success)
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = !data.success, people = listOf(user))
         if (!data.success) {
             viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
         }

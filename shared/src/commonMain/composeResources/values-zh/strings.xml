@@ -12,6 +12,16 @@
     <string name="save">保存</string>
     <string name="undefined">未定义</string>
     <string name="reset_default">重置默认</string>
+    <string name="color_hue">色相</string>
+    <string name="color_saturation">饱和度</string>
+    <string name="color_brightness">亮度</string>
+    <string name="color_opacity">不透明度</string>
+    <string name="room_tv_videos_title">此设备上的视频</string>
+    <string name="room_tv_videos_loading">正在读取视频库…</string>
+    <string name="room_tv_videos_empty">此设备上没有视频。</string>
+    <string name="room_tv_videos_permission">Synkplay 需要权限才能列出此设备上的视频。</string>
+    <string name="room_tv_videos_empty_hint">把视频复制到此设备，然后重新打开此列表。</string>
+    <string name="room_tv_videos_allow">允许访问</string>
 
     <!-- Home Screen -->
     <string name="connect_username">用户名</string>
@@ -400,6 +410,7 @@
     <string name="room_brightness_label">亮度</string>
     <string name="room_chapters_jump">章节：%1$s</string>
     <string name="room_chat_copied">已复制</string>
+    <string name="room_chat_copy_link">复制链接</string>
     <string name="room_chat_image_from">%1$s 发送的图片</string>
     <string name="room_chat_image_hidden">图片已隐藏。点按可从 %1$s 加载。</string>
     <string name="room_chat_input">消息</string>
@@ -513,7 +524,6 @@
     <string name="room_track_trait_forced">强制</string>
     <string name="room_tracks">音轨和字幕</string>
     <string name="room_tracks_none">没有可选轨道</string>
-    <string name="room_tracks_title">音轨和字幕</string>
     <string name="room_undo_seek">撤销跳转</string>
     <string name="room_undo_seek_always">不再询问</string>
     <string name="room_undo_seek_cancel">取消</string>
@@ -531,7 +541,6 @@
     <string name="room_user_mute">屏蔽</string>
     <string name="room_user_not_ready_label">%1$s，未就绪</string>
     <string name="room_user_ready_label">%1$s，已就绪</string>
-    <string name="room_user_report">举报</string>
     <string name="room_user_set_not_ready">标记为未就绪</string>
     <string name="room_user_set_ready">标记为已就绪</string>
     <string name="room_user_unmute">取消屏蔽</string>
@@ -605,7 +614,6 @@
     <string name="setting_tls_required_summary">拒绝不能加密的服务器。</string>
     <string name="setting_tls_required_title">必须加密</string>
     <string name="setting_trusted_domains_detail">匹配精确主机名、其 www 变体、*. 通配符，以及可选的路径前缀如 example.com/videos。用逗号分隔。留空时，别人推送的内容都不会自动加载。</string>
-    <string name="settings_color_follows_theme">主题</string>
     <string name="settings_group_chapters">章节</string>
     <string name="settings_group_connection">连接</string>
     <string name="settings_group_links">链接</string>
@@ -708,16 +716,6 @@
     <string name="room_subs_all_languages">所有语言</string>
     <string name="room_subs_media_changed">下载字幕时文件已更换，请重新搜索。</string>
     <string name="home_engine_unavailable_flavor">此版本不含该引擎，完整版 APK 里有。</string>
-    <string name="color_hue">色相</string>
-    <string name="color_saturation">饱和度</string>
-    <string name="color_brightness">亮度</string>
-    <string name="color_opacity">不透明度</string>
-    <string name="room_tv_videos_title">此设备上的视频</string>
-    <string name="room_tv_videos_loading">正在读取视频库…</string>
-    <string name="room_tv_videos_empty">此设备上没有视频。</string>
-    <string name="room_tv_videos_permission">Synkplay 需要权限才能列出此设备上的视频。</string>
-    <string name="room_tv_videos_empty_hint">把视频复制到此设备，然后重新打开此列表。</string>
-    <string name="room_tv_videos_allow">允许访问</string>
     <string name="room_visualizer_summary">把声音画出来，代替视频画面</string>
     <string name="room_visualizer_director">导演</string>
     <string name="room_visualizer_director_summary">随音乐切换图案</string>

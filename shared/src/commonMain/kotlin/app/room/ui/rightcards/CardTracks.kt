@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -67,7 +68,7 @@ import app.uicomponents.controls.Segmented
 import app.uicomponents.controls.Stepper
 import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
-import app.uicomponents.frames.PanelFrame
+import app.uicomponents.frames.PanelSurface
 import app.utils.ccExs
 import app.utils.ioDispatcher
 import app.utils.localizedLanguageName
@@ -115,11 +116,7 @@ object CardTracks {
                 } finally { selecting = false }
             }
         }
-        PanelFrame(
-            title = strings.roomTracksTitle, modifier = Modifier.fillMaxSize(), shape = shape,
-            scrollable = false, centerTitle = true,
-            actions = { GlyphButton(CloseGlyph, name = strings.actionClose) { ui.toggleTracks(false) } },
-        ) {
+        PanelSurface(Modifier.fillMaxSize(), shape) {
             TrackControls(
                 tracks = media?.tracks?.toList().orEmpty(),
                 supportsVideo = viewmodel.player.supportsVideoTrackSelection,
@@ -139,6 +136,7 @@ object CardTracks {
                 // The card leaves the composition with the HUD, so the tab lives in the room state.
                 initialType = ui.tracksTab.value,
                 onTypeChange = { ui.tracksTab.value = it },
+                onClose = { ui.toggleTracks(false) },
             )
         }
         SubtitleSearchModal(open = showSearch, onDismiss = { showSearch = false })
@@ -150,7 +148,7 @@ object CardTracks {
 internal fun TrackControls(
     tracks: List<Track>, supportsVideo: Boolean, supportsVisualization: Boolean,
     visualization: Boolean, onVisualization: (Boolean) -> Unit,
-    onChoose: (Track?, TrackType) -> Unit, onImport: () -> Unit, onSearch: () -> Unit,
+    onChoose: (Track?, TrackType) -> Unit, onImport: () -> Unit, onSearch: () -> Unit, onClose: () -> Unit,
     enabled: Boolean = true, initialType: TrackType = TrackType.AUDIO, visualizer: VisualizerControls? = null,
     onTypeChange: (TrackType) -> Unit = {},
 ) {
@@ -164,8 +162,12 @@ internal fun TrackControls(
         TrackType.VIDEO -> strings.roomTrackTabVideo
     } }
     Column(Modifier.fillMaxSize()) {
-        Segmented(labels, types.indexOf(selectedType), { active = types[it]; onTypeChange(active) },
-            Modifier.fillMaxWidth().padding(Space.gapTight), autoSize = true)
+        // No title row: the tabs name the panel, and the close key keeps its old place at the end.
+        Row(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
+            Segmented(labels, types.indexOf(selectedType), { active = types[it]; onTypeChange(active) },
+                Modifier.weight(1f).padding(vertical = Space.gapTight), autoSize = true)
+            GlyphButton(CloseGlyph, name = strings.actionClose, onClick = onClose)
+        }
         if (selectedType == TrackType.SUBTITLE) {
             Row(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight), horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                 SecondaryAction(strings.roomTrackImport, modifier = Modifier.weight(1f), onClick = onImport)

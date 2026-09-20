@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,12 +50,7 @@ fun Text(
     minLines: Int = 1,
     autoSize: FontSizeRange? = null,
 ) {
-    val resolved = when {
-        color.isSpecified -> color
-        style.brush != null || style.color.isSpecified -> Color.Unspecified
-        else -> palette.ink
-    }
-    val merged = style.merge(TextStyle(color = resolved, textAlign = textAlign ?: TextAlign.Unspecified))
+    val merged = appTextStyle(color, style, textAlign)
     if (autoSize == null) {
         BasicText(text = text, modifier = modifier, style = merged, overflow = overflow, softWrap = softWrap, maxLines = maxLines, minLines = minLines)
         return
@@ -87,6 +84,42 @@ fun Text(
             minLines = minLines,
         )
     }
+}
+
+/** [Text] for a sentence with styled spans, such as a name in its own colour. No auto-size. */
+@Composable
+fun Text(
+    text: AnnotatedString,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    style: TextStyle = Type.note,
+    textAlign: TextAlign? = null,
+    overflow: TextOverflow = TextOverflow.Clip,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    minLines: Int = 1,
+) {
+    BasicText(
+        text = text,
+        modifier = modifier,
+        style = appTextStyle(color, style, textAlign),
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+        minLines = minLines,
+    )
+}
+
+/** The caller's colour, else the style's colour or brush, else the palette's ink. */
+@Composable
+@ReadOnlyComposable
+private fun appTextStyle(color: Color, style: TextStyle, textAlign: TextAlign?): TextStyle {
+    val resolved = when {
+        color.isSpecified -> color
+        style.brush != null || style.color.isSpecified -> Color.Unspecified
+        else -> palette.ink
+    }
+    return style.merge(TextStyle(color = resolved, textAlign = textAlign ?: TextAlign.Unspecified))
 }
 
 /** A vector glyph tinted in one colour, the palette's ink by default. No Material. */

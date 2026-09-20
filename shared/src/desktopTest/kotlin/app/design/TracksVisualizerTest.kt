@@ -90,7 +90,7 @@ class TracksVisualizerTest {
                 TrackControls(
                     tracks = listOf(video(false)), supportsVideo = true, supportsVisualization = true,
                     visualization = true, onVisualization = {}, onChoose = { _, _ -> }, onImport = {}, onSearch = {},
-                    initialType = TrackType.VIDEO, visualizer = controls,
+                    onClose = {}, initialType = TrackType.VIDEO, visualizer = controls,
                 )
             }
         }) {

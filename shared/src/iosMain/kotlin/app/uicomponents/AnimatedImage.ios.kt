@@ -113,6 +113,7 @@ actual fun AnimatedImage(
     contentScale: ContentScale,
     alpha: Float,
     onLoaded: (() -> Unit)?,
+    onFailed: (() -> Unit)?,
 ) {
     /* Seed from the cache synchronously during composition so cache hits paint on the very
      * first frame — no flicker, no LaunchedEffect await. Cache misses fall through to the
@@ -122,6 +123,7 @@ actual fun AnimatedImage(
     LaunchedEffect(url) {
         if (nativeImage != null) return@LaunchedEffect
         nativeImage = downloadAndDecodeAnimatedImage(url)?.also { cacheImage(url, it) }
+        if (nativeImage == null) onFailed?.invoke()
     }
     LaunchedEffect(nativeImage) { if (nativeImage != null) onLoaded?.invoke() }
 

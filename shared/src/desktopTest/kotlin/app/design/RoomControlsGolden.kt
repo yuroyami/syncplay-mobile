@@ -9,7 +9,7 @@ import app.room.ui.rightcards.TrackControls
 import app.room.ui.rightcards.SeekControls
 import app.room.ui.tabs.ManagedRoomTabs
 import app.room.ui.chat.chatMediaCellSize
-import app.uicomponents.frames.PanelFrame
+import app.uicomponents.frames.PanelSurface
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,8 +39,8 @@ class RoomControlsGolden {
     @Test fun tracksFitNarrowLandscapeDocksWithLargeText() {
         for (width in listOf(240, 280, 340)) for (scale in listOf(1f, 1.3f)) for (type in TrackType.entries) {
             DesignHarness.render("tracks-${type.name.lowercase()}", width, heightDp = 300, fontScale = scale, overVideo = true) {
-                PanelFrame("Tracks", Modifier.fillMaxSize(), scrollable = false) {
-                    TrackControls(tracks, true, true, true, {}, { _, _ -> }, {}, {}, initialType = type)
+                PanelSurface(Modifier.fillMaxSize()) {
+                    TrackControls(tracks, true, true, true, {}, { _, _ -> }, {}, {}, onClose = {}, initialType = type)
                 }
             }.assertAllTextFits()
         }

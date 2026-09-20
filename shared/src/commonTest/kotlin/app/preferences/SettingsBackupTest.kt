@@ -98,6 +98,15 @@ class SettingsBackupTest {
     }
 
     @Test
+    fun an_old_theme_marker_for_a_chat_colour_is_skipped() {
+        // Earlier versions saved 0 on a chat colour reset. Written now, it would draw invisible text.
+        val raw = """{"version":1,"app":"Synkplay","values":{"pref_inroom_color_selftag":"0","pref_inroom_color_friendtag":"-1"}}"""
+        val (values, outcome) = readSettingsBackup(raw)
+        assertEquals(1, outcome.skipped)
+        assertEquals(listOf("pref_inroom_color_friendtag"), values.keys.map { it.key })
+    }
+
+    @Test
     fun engine_rows_and_nested_colours_are_exportable_but_actions_are_not() {
         val keys = exportableSettings().map { it.key }.toSet()
         assertTrue(Preferences.KITE_COMPOSE_RENDERER.key in keys, "an engine's own row is still a setting")

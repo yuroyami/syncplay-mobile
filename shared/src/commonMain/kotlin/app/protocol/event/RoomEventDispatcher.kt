@@ -249,18 +249,27 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         viewmodel.seeks.add(Pair(fromMs, toMs))
     }
 
-    fun broadcastMessage(isChat: Boolean, chatter: String = "", isError: Boolean = false, message: suspend () -> String) {
+    /** Adds a line to the room's chat. An event lists the [people] it names, so chat can colour them. */
+    fun broadcastMessage(
+        isChat: Boolean,
+        chatter: String = "",
+        isError: Boolean = false,
+        people: List<String> = emptyList(),
+        message: suspend () -> String,
+    ) {
         if (viewmodel.isSoloMode) return
 
         viewmodel.viewModelScope.launch {
             val text = message.invoke().collapsedForChat()
             // A notice that was only blank lines has nothing to show.
             if (text.isEmpty()) return@launch
+            val me = viewmodel.session.currentUsername
             val msg = Message(
                 sender = if (isChat) chatter else null,
-                isMainUser = chatter == viewmodel.session.currentUsername,
+                isMainUser = chatter == me,
                 content = text,
-                isError = isError
+                isError = isError,
+                people = people.associateWith { it == me },
             )
             // Bounded: a long session must not keep every line ever shown.
             viewmodel.session.messageSequence.update { (it + msg).takeLast(Session.MAX_MESSAGES) }

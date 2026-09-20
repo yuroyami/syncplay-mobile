@@ -18,6 +18,16 @@
     <string name="undefined">Nieokreślone</string>
 
     <string name="reset_default">Przywróć domyślne</string>
+    <string name="color_hue">Odcień</string>
+    <string name="color_saturation">Nasycenie</string>
+    <string name="color_brightness">Jasność</string>
+    <string name="color_opacity">Krycie</string>
+    <string name="room_tv_videos_title">Filmy na tym urządzeniu</string>
+    <string name="room_tv_videos_loading">Odczytywanie biblioteki wideo…</string>
+    <string name="room_tv_videos_empty">Brak filmów na tym urządzeniu.</string>
+    <string name="room_tv_videos_permission">Synkplay potrzebuje uprawnienia, aby wyświetlić filmy na tym urządzeniu.</string>
+    <string name="room_tv_videos_empty_hint">Skopiuj film na to urządzenie, a następnie otwórz tę listę ponownie.</string>
+    <string name="room_tv_videos_allow">Zezwól na dostęp</string>
 
     <!-- Home Screen -->
     <string name="connect_username">Nazwa użytkownika</string>
@@ -423,6 +433,7 @@
     <string name="room_brightness_label">Jasność</string>
     <string name="room_chapters_jump">Rozdział: %1$s</string>
     <string name="room_chat_copied">Skopiowano</string>
+    <string name="room_chat_copy_link">Kopiuj link</string>
     <string name="room_chat_image_from">Obraz od %1$s</string>
     <string name="room_chat_image_hidden">Obraz ukryty. Dotknij, aby wczytać go z %1$s.</string>
     <string name="room_chat_input">Wiadomość</string>
@@ -536,7 +547,6 @@
     <string name="room_track_trait_forced">Wymuszone</string>
     <string name="room_tracks">Dźwięk i napisy</string>
     <string name="room_tracks_none">Brak ścieżek</string>
-    <string name="room_tracks_title">Dźwięk i napisy</string>
     <string name="room_undo_seek">Cofnij przewinięcie</string>
     <string name="room_undo_seek_always">Nie pytaj ponownie</string>
     <string name="room_undo_seek_cancel">Anuluj</string>
@@ -554,7 +564,6 @@
     <string name="room_user_mute">Wycisz</string>
     <string name="room_user_not_ready_label">%1$s, niegotowy</string>
     <string name="room_user_ready_label">%1$s, gotowy</string>
-    <string name="room_user_report">Zgłoś</string>
     <string name="room_user_set_not_ready">Oznacz jako niegotowego</string>
     <string name="room_user_set_ready">Oznacz jako gotowego</string>
     <string name="room_user_unmute">Cofnij wyciszenie</string>
@@ -628,7 +637,6 @@
     <string name="setting_tls_required_summary">Odrzucaj serwery, które nie potrafią szyfrować.</string>
     <string name="setting_tls_required_title">Wymagaj szyfrowania</string>
     <string name="setting_trusted_domains_detail">Dopasowuje dokładny host, jego wariant www, symbole *. oraz opcjonalny przedrostek ścieżki, np. example.com/videos. Oddzielone przecinkami. Puste pole oznacza, że nic wysłanego przez innych nie wczyta się samo.</string>
-    <string name="settings_color_follows_theme">Motyw</string>
     <string name="settings_group_chapters">Rozdziały</string>
     <string name="settings_group_connection">Połączenie</string>
     <string name="settings_group_links">Linki</string>
@@ -731,16 +739,6 @@
     <string name="room_subs_all_languages">Wszystkie języki</string>
     <string name="room_subs_media_changed">Plik zmienił się w trakcie pobierania napisów. Poszukaj ponownie.</string>
     <string name="home_engine_unavailable_flavor">Ta wersja nie ma tego silnika. Pełny APK go ma.</string>
-    <string name="color_hue">Odcień</string>
-    <string name="color_saturation">Nasycenie</string>
-    <string name="color_brightness">Jasność</string>
-    <string name="color_opacity">Krycie</string>
-    <string name="room_tv_videos_title">Filmy na tym urządzeniu</string>
-    <string name="room_tv_videos_loading">Odczytywanie biblioteki wideo…</string>
-    <string name="room_tv_videos_empty">Brak filmów na tym urządzeniu.</string>
-    <string name="room_tv_videos_permission">Synkplay potrzebuje uprawnienia, aby wyświetlić filmy na tym urządzeniu.</string>
-    <string name="room_tv_videos_empty_hint">Skopiuj film na to urządzenie, a następnie otwórz tę listę ponownie.</string>
-    <string name="room_tv_videos_allow">Zezwól na dostęp</string>
     <string name="room_visualizer_summary">Rysuje dźwięk zamiast obrazu</string>
     <string name="room_visualizer_director">Reżyser</string>
     <string name="room_visualizer_director_summary">Zmienia wzór wraz z muzyką</string>

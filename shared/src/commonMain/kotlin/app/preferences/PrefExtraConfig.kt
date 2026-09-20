@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import app.SyncplayViewmodel
 import kotlinx.coroutines.CoroutineScope
-import androidx.compose.ui.graphics.Color
-import app.theme.Palette
 
 sealed interface PrefExtraConfig {
     data class PerformAction(
@@ -41,12 +39,8 @@ sealed interface PrefExtraConfig {
         val composable: @Composable MutableState<Boolean>.() -> Unit
     ) : PrefExtraConfig
 
-    /**
-     * A colour row. [themeRole] names the palette colour the setting falls back to while the user
-     * has picked nothing, so the row can draw the colour actually in use and say it follows the
-     * theme instead of showing a stored sentinel as transparent black.
-     */
-    data class ColorPick(val themeRole: (Palette) -> Color = { it.ink }) : PrefExtraConfig
+    /** A colour row. The stored value is the colour itself, as ARGB. */
+    data object ColorPick : PrefExtraConfig
 
     /** A page of rows behind one entry: inline in the room's settings panel, a modal elsewhere. */
     data class Nested(val content: @Composable () -> Unit) : PrefExtraConfig

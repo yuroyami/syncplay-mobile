@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.ContentScale
  *   it via the modifier chain leaves the underlying `UIView` fully opaque, producing the "ghost
  *   rectangle" / "black hole" artifact when the HUD fades out. Pass alpha as a parameter to fade
  *   the actual native view.
+ * @param onFailed Called when the download or the decode fails, so a loading placeholder can stop.
  */
 @Composable
 expect fun AnimatedImage(
@@ -21,4 +22,5 @@ expect fun AnimatedImage(
     contentScale: ContentScale = ContentScale.Fit,
     alpha: Float = 1f,
     onLoaded: (() -> Unit)? = null,
+    onFailed: (() -> Unit)? = null,
 )

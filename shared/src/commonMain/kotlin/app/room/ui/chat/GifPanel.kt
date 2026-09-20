@@ -67,12 +67,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
+import app.klipy.KlipyFavorites
 import app.klipy.KlipyMedia
 import app.klipy.KlipyMediaType
 import app.klipy.KlipyUtils
-import app.preferences.Preferences.KLIPY_FAVORITES
-import app.preferences.set
-import app.preferences.value
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Tier
@@ -93,7 +91,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.powered_by_klipy
@@ -208,7 +205,7 @@ fun GifPanel(
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     var longPressed by remember { mutableStateOf<KlipyMedia?>(null) }
-    var favoriteIds by remember { mutableStateOf(loadFavoriteIds()) }
+    var favoriteLinks by remember { mutableStateOf(KlipyFavorites.links()) }
 
     LaunchedEffect(query, selectedType, selectedSource, retry) {
         failed = false
@@ -216,7 +213,7 @@ fun GifPanel(
         if (selectedSource == GifSource.FAVORITES) {
             isLoading = true
             results.clear()
-            val favorites = loadFavorites().filter { it.type == selectedType }
+            val favorites = KlipyFavorites.load().filter { it.type == selectedType }
             results.addAll(if (query.isBlank()) favorites else favorites.filter { it.slug.contains(query, ignoreCase = true) })
             hasNextPage = false
             isLoading = false
@@ -263,8 +260,8 @@ fun GifPanel(
 
     fun send(media: KlipyMedia) {
         onGifSelected(media.fullUrl)
-        // Fire and forget; the share only feeds the recents tab.
-        scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
+        // Fire and forget; the share only feeds the recents tab. A favourite saved from chat has no slug.
+        if (media.slug.isNotBlank()) scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
     }
 
     Column(modifier.surface(Tier.Panel, Radius.panelShape)) {
@@ -309,8 +306,10 @@ fun GifPanel(
                          * Alpha is a parameter for the same interop reason and follows the HUD
                          * only: at alpha 0 Android composes no image at all, so gating it on
                          * "loaded" meant the load never started and the shimmer never left. The
-                         * shimmer sits under the image until the image reports itself loaded. */
-                        var loaded by remember(media.id) { mutableStateOf(false) }
+                         * shimmer sits over the image until the image loads or fails: on iOS the
+                         * image is a native view that clears its own area of the Compose canvas,
+                         * so a shimmer under it never shows. */
+                        var loading by remember(media.id) { mutableStateOf(true) }
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -325,15 +324,16 @@ fun GifPanel(
                                 }
                                 .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
                         ) {
-                            if (!loaded && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
                             AnimatedImage(
                                 url = media.previewUrl,
                                 contentDescription = media.title.ifBlank { null },
                                 contentScale = ContentScale.Crop,
                                 alpha = if (isHUDVisible) 1f else 0f,
-                                onLoaded = { loaded = true },
+                                onLoaded = { loading = false },
+                                onFailed = { loading = false },
                                 modifier = Modifier.matchParentSize(),
                             )
+                            if (loading && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
                         }
                     }
                     if (isLoadingMore) {
@@ -349,7 +349,7 @@ fun GifPanel(
     val target = longPressed
     Modal(open = target != null, onDismiss = { longPressed = null }, size = ModalSize.Ask, inset = false) {
         if (target != null) {
-            val isFav = target.id in favoriteIds
+            val isFav = target.fullUrl in favoriteLinks
             ListRow(onClick = { longPressed = null; send(target) }) {
                 Icon(SendGlyph, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
                 RowGap()
@@ -359,12 +359,12 @@ fun GifPanel(
                 longPressed = null
                 scope.launch {
                     if (isFav) {
-                        removeFavorite(target)
-                        if (selectedSource == GifSource.FAVORITES) results.removeAll { it.id == target.id }
+                        KlipyFavorites.remove(target.fullUrl)
+                        if (selectedSource == GifSource.FAVORITES) results.removeAll { it.fullUrl == target.fullUrl }
                     } else {
-                        addFavorite(target)
+                        KlipyFavorites.add(target)
                     }
-                    favoriteIds = loadFavoriteIds()
+                    favoriteLinks = KlipyFavorites.links()
                 }
             }) {
                 Icon(if (isFav) Icons.Filled.HeartBroken else Icons.Filled.Favorite, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
@@ -373,21 +373,4 @@ fun GifPanel(
             }
         }
     }
-}
-
-private fun loadFavorites(): List<KlipyMedia> = KLIPY_FAVORITES.value().mapNotNull { json ->
-    runCatching { Json.decodeFromString<KlipyMedia>(json) }.getOrNull()
-}
-
-private fun loadFavoriteIds(): Set<Long> = loadFavorites().map { it.id }.toHashSet()
-
-private suspend fun addFavorite(media: KlipyMedia) {
-    KLIPY_FAVORITES.set(KLIPY_FAVORITES.value() + Json.encodeToString(media))
-}
-
-private suspend fun removeFavorite(media: KlipyMedia) {
-    val updated = KLIPY_FAVORITES.value().filter { json ->
-        runCatching { Json.decodeFromString<KlipyMedia>(json).id != media.id }.getOrDefault(true)
-    }.toSet()
-    KLIPY_FAVORITES.set(updated)
 }

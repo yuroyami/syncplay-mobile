@@ -41,6 +41,7 @@ actual fun AnimatedImage(
     contentScale: ContentScale,
     alpha: Float,
     onLoaded: (() -> Unit)?,
+    onFailed: (() -> Unit)?,
 ) {
     var animation by remember(url) { mutableStateOf<DecodedAnimation?>(AnimatedImageCache.peek(url)) }
     LaunchedEffect(animation) { if (animation != null) onLoaded?.invoke() }
@@ -48,6 +49,7 @@ actual fun AnimatedImage(
     if (animation == null) {
         LaunchedEffect(url) {
             animation = AnimatedImageCache.load(url)
+            if (animation == null) onFailed?.invoke()
         }
     }
 

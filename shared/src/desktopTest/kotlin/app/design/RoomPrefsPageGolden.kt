@@ -8,6 +8,7 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -29,6 +30,7 @@ import app.theme.Space
 import app.theme.TRINITY
 import app.uicomponents.controls.BackGlyph
 import app.uicomponents.controls.GlyphButton
+import app.uicomponents.controls.hex
 import app.uicomponents.frames.PanelFrame
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -95,7 +97,7 @@ class RoomPrefsPageGolden {
                 panel.openChatColors()
                 panel.tapText(TIMESTAMP_COLOR)
                 panel.settleStorage()
-                assertEquals(pref.default, pref.value(), "Opening a picker must preserve the theme-following sentinel")
+                assertEquals(pref.default, pref.value(), "Opening a picker must not change the colour")
                 panel.tapPicker()
                 panel.awaitPreference { it != pref.default }
                 val selected = pref.value()
@@ -121,7 +123,7 @@ class RoomPrefsPageGolden {
                 assertTrue(selected != pref.default)
                 panel.save("color-picker-reset")
                 panel.tapBack()
-                panel.assertTextVisible("Theme")
+                panel.assertTextVisible(Color(pref.default).hex())
                 assertEquals(pref.default, pref.value())
             }
         } finally {

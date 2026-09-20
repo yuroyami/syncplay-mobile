@@ -15,6 +15,7 @@ actual fun AnimatedImage(
     contentScale: ContentScale,
     alpha: Float,
     onLoaded: (() -> Unit)?,
+    onFailed: (() -> Unit)?,
 ) {
     // A GIF behind a hidden HUD kept decoding every frame for a surface nobody could see. At
     // alpha 0 nothing is composed at all; the tile's own space is kept so the grid does not move.
@@ -27,6 +28,7 @@ actual fun AnimatedImage(
         contentDescription = contentDescription,
         contentScale = contentScale,
         onSuccess = { onLoaded?.invoke() },
+        onError = { onFailed?.invoke() },
         modifier = modifier.alpha(alpha),
     )
 }

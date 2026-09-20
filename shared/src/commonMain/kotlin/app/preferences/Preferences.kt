@@ -75,6 +75,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import app.theme.defaultTheme
+import app.room.models.MessagePalette
 import app.preferences.settings.SettingRow
 import app.preferences.settings.TrustedDomainsPopup
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
@@ -98,7 +99,6 @@ import kotlinx.coroutines.launch
 import app.preferences.settings.SETTINGS_GLOBAL
 import app.theme.Type
 import app.theme.palette
-import app.uicomponents.CHAT_COLOR_FOLLOWS_THEME
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.Modal
@@ -482,6 +482,9 @@ object Preferences {
     }
 
     /** ------------ Chat Colors -------------*/
+    /** Chat owns these colours. The rows below start from them and a reset returns to them. */
+    private val chatDefaults = MessagePalette()
+
     /** One entry gathering the COLOR_* prefs below as a nested page, so the room's settings
      *  panel can show them beside the chat they colour. */
     val CHAT_COLORS_ENTRY = Pref("pref_inroom_chat_colors_entry", "") {
@@ -499,41 +502,41 @@ object Preferences {
         }
     }
 
-    val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", chatDefaults.timestampColor.toArgb()) {
         title = { it.uisettingTimestampColorTitle }
         summary = { it.uisettingTimestampSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.inkFaint })
+        extraConfig = PrefExtraConfig.ColorPick
     }
-    val COLOR_SELFTAG = Pref("pref_inroom_color_selftag", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_SELFTAG = Pref("pref_inroom_color_selftag", chatDefaults.selftagColor.toArgb()) {
         title = { it.uisettingSelfColorTitle }
         summary = { it.uisettingSelfColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.accent })
+        extraConfig = PrefExtraConfig.ColorPick
     }
-    val COLOR_FRIENDTAG = Pref("pref_inroom_color_friendtag", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_FRIENDTAG = Pref("pref_inroom_color_friendtag", chatDefaults.friendtagColor.toArgb()) {
         title = { it.uisettingFriendColorTitle }
         summary = { it.uisettingFriendColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.ok })
+        extraConfig = PrefExtraConfig.ColorPick
     }
-    val COLOR_SYSTEMMSG = Pref("pref_inroom_color_systemmsg", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_SYSTEMMSG = Pref("pref_inroom_color_systemmsg", chatDefaults.systemmsgColor.toArgb()) {
         title = { it.uisettingSystemColorTitle }
         summary = { it.uisettingSystemColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.inkDim })
+        extraConfig = PrefExtraConfig.ColorPick
     }
-    val COLOR_USERMSG = Pref("pref_inroom_color_usermsg", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_USERMSG = Pref("pref_inroom_color_usermsg", chatDefaults.usermsgColor.toArgb()) {
         title = { it.uisettingHumanColorTitle }
         summary = { it.uisettingHumanColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.ink })
+        extraConfig = PrefExtraConfig.ColorPick
     }
-    val COLOR_ERRORMSG = Pref("pref_inroom_color_errormsg", CHAT_COLOR_FOLLOWS_THEME) {
+    val COLOR_ERRORMSG = Pref("pref_inroom_color_errormsg", chatDefaults.errormsgColor.toArgb()) {
         title = { it.uisettingErrorColorTitle }
         summary = { it.uisettingErrorColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick(themeRole = { it.bad })
+        extraConfig = PrefExtraConfig.ColorPick
     }
 
     /** ------------ Hosted server (persisted so a host does not retype them) ------------ */
@@ -918,7 +921,7 @@ object Preferences {
         title = { it.uisettingVideoBgColorTitle }
         summary = { it.uisettingVideoBgColorSummary }
         icon = Icons.Filled.Brush
-        extraConfig = PrefExtraConfig.ColorPick()
+        extraConfig = PrefExtraConfig.ColorPick
     }
 
     /** ------------ Advanced -------------*/
