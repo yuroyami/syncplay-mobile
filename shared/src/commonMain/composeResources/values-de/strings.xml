@@ -705,6 +705,16 @@
     <string name="room_subs_all_languages">Alle Sprachen</string>
     <string name="room_subs_media_changed">Die Datei hat sich während des Downloads geändert. Bitte neu suchen.</string>
     <string name="home_engine_unavailable_flavor">Dieser Build hat diese Engine nicht. Das volle APK hat sie.</string>
+    <string name="color_hue">Farbton</string>
+    <string name="color_saturation">Sättigung</string>
+    <string name="color_brightness">Helligkeit</string>
+    <string name="color_opacity">Deckkraft</string>
+    <string name="room_tv_videos_title">Videos auf diesem Gerät</string>
+    <string name="room_tv_videos_loading">Videobibliothek wird gelesen…</string>
+    <string name="room_tv_videos_empty">Keine Videos auf diesem Gerät.</string>
+    <string name="room_tv_videos_permission">Synkplay braucht die Berechtigung, die Videos auf diesem Gerät aufzulisten.</string>
+    <string name="room_tv_videos_empty_hint">Kopiere ein Video auf dieses Gerät und öffne diese Liste erneut.</string>
+    <string name="room_tv_videos_allow">Zugriff erlauben</string>
     <string-array name="tips">
         <item>Damit gemeinsame Playlists funktionieren, muss %1$s wissen, wo Ihre Mediendateien gespeichert sind. Fügen Sie Ihre Medienordner unter 'Einstellungen > Allgemein > Medienverzeichnisse für gemeinsame Playlist' hinzu.</item>
         <item>Möchten Sie den Video-Player solo verwenden? Wählen Sie einen Player, tippen Sie auf das %1$s-Logo oben und wählen Sie dann 'Offline-Modus'.</item>

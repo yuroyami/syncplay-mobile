@@ -707,6 +707,16 @@
     <string name="room_subs_all_languages">Все языки</string>
     <string name="room_subs_media_changed">Файл сменился, пока скачивались субтитры. Поищите заново.</string>
     <string name="home_engine_unavailable_flavor">В этой сборке этого движка нет. В полном APK он есть.</string>
+    <string name="color_hue">Оттенок</string>
+    <string name="color_saturation">Насыщенность</string>
+    <string name="color_brightness">Яркость</string>
+    <string name="color_opacity">Непрозрачность</string>
+    <string name="room_tv_videos_title">Видео на этом устройстве</string>
+    <string name="room_tv_videos_loading">Чтение видеотеки…</string>
+    <string name="room_tv_videos_empty">На этом устройстве нет видео.</string>
+    <string name="room_tv_videos_permission">Synkplay нужно разрешение, чтобы показать видео на этом устройстве.</string>
+    <string name="room_tv_videos_empty_hint">Скопируйте видео на это устройство, затем снова откройте этот список.</string>
+    <string name="room_tv_videos_allow">Разрешить доступ</string>
     <string-array name="tips">
         <item>Для работы общих списков воспроизведения %1$s необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
         <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип %1$s выше, затем выберите 'Автономный режим'.</item>

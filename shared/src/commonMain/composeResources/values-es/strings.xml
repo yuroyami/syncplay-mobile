@@ -707,6 +707,16 @@
     <string name="room_subs_all_languages">Todos los idiomas</string>
     <string name="room_subs_media_changed">El archivo cambió mientras se descargaba el subtítulo. Busca de nuevo.</string>
     <string name="home_engine_unavailable_flavor">Esta versión no incluye ese motor. La APK completa sí.</string>
+    <string name="color_hue">Tono</string>
+    <string name="color_saturation">Saturación</string>
+    <string name="color_brightness">Brillo</string>
+    <string name="color_opacity">Opacidad</string>
+    <string name="room_tv_videos_title">Vídeos en este dispositivo</string>
+    <string name="room_tv_videos_loading">Leyendo la videoteca…</string>
+    <string name="room_tv_videos_empty">No hay vídeos en este dispositivo.</string>
+    <string name="room_tv_videos_permission">Synkplay necesita permiso para ver los vídeos de este dispositivo.</string>
+    <string name="room_tv_videos_empty_hint">Copia un vídeo en este dispositivo y vuelve a abrir esta lista.</string>
+    <string name="room_tv_videos_allow">Permitir acceso</string>
     <string-array name="tips">
         <item>Para que las listas de reproducción compartidas funcionen, %1$s necesita saber dónde se almacenan tus archivos multimedia. Añade tus carpetas de medios en 'Configuración > General > Directorios de medios para lista de reproducción compartida'.</item>
         <item>¿Quieres usar el reproductor de video solo? Selecciona un reproductor, toca el logo de %1$s arriba, luego elige 'Modo sin conexión'.</item>

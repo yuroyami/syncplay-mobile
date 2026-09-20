@@ -1,5 +1,9 @@
 package app.room.ui.rightcards
 
+import app.uicomponents.LocalIsTelevision
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -116,6 +120,11 @@ object CardAddMedia {
             file ?: return@rememberFilePickerLauncher
             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
         }
+        // A television has no picker app, so there it reads its own video library instead (#163).
+        val tvPicker = rememberTvVideoPicker { file ->
+            close()
+            viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
+        }
         val playlistPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = playlistExs)) { file ->
             close()
             file ?: return@rememberFilePickerLauncher
@@ -127,7 +136,7 @@ object CardAddMedia {
         } else {
             Column {
                 RouteRow(Icons.Filled.FolderOpen, strings.roomRouteDevice, strings.roomRouteDeviceNote) {
-                    mediaPicker.launch()
+                    if (tvPicker != null) tvPicker() else mediaPicker.launch()
                 }
                 RouteRow(Icons.Filled.Link, strings.roomRouteLink, supportedSites(strings)) {
                     onLinkMode(true)
@@ -177,6 +186,17 @@ object CardAddMedia {
         val scope = rememberCoroutineScope()
         val resolverOn by MEDIA_RESOLVER_ENABLED.watchPref()
         var url by remember { mutableStateOf("") }
+        /* The form has one field and a remote came here to type in it, so it takes focus. The card
+         * swaps the routes for this form, so whatever was focused has just left the tree. */
+        val urlFocus = remember { FocusRequester() }
+        val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+        LaunchedEffect(remoteOrKeyboard) {
+            if (!remoteOrKeyboard) return@LaunchedEffect
+            repeat(8) {
+                delay(60)
+                if (runCatching { urlFocus.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            }
+        }
         var preview by remember { mutableStateOf<ResolvedMedia?>(null) }
         var resolving by remember { mutableStateOf(false) }
         var failed by remember { mutableStateOf(false) }
@@ -205,6 +225,7 @@ object CardAddMedia {
                 Field(
                     value = url,
                     onValueChange = { url = it },
+                    focusRequester = urlFocus,
                     modifier = Modifier.weight(1f),
                     placeholder = strings.roomAddmediaOnlineUrl,
                     leading = Icons.Filled.Link,

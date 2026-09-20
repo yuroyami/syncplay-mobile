@@ -755,6 +755,16 @@
     <string name="server_notification_text_few">Running on port %1$d, %2$d people connected</string>
     <string name="server_notification_text_many">Running on port %1$d, %2$d people connected</string>
     <string name="server_notification_text_other">Running on port %1$d, %2$d people connected</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_brightness">Brightness</string>
+    <string name="color_opacity">Opacity</string>
+    <string name="room_tv_videos_title">Videos on this device</string>
+    <string name="room_tv_videos_loading">Reading the video library…</string>
+    <string name="room_tv_videos_empty">No videos on this device.</string>
+    <string name="room_tv_videos_permission">Synkplay needs permission to list the videos on this device.</string>
+    <string name="room_tv_videos_empty_hint">Copy a video onto this device, then open this list again.</string>
+    <string name="room_tv_videos_allow">Allow access</string>
     <string-array name="tips">
         <item>For shared playlists to work, %1$s needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
         <item>Want to use the video player solo? Select a player, tap the %1$s logo above, then choose 'Offline Mode'.</item>

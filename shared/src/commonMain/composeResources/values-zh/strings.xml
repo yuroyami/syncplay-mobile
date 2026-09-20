@@ -695,6 +695,16 @@
     <string name="room_subs_all_languages">所有语言</string>
     <string name="room_subs_media_changed">下载字幕时文件已更换，请重新搜索。</string>
     <string name="home_engine_unavailable_flavor">此版本不含该引擎，完整版 APK 里有。</string>
+    <string name="color_hue">色相</string>
+    <string name="color_saturation">饱和度</string>
+    <string name="color_brightness">亮度</string>
+    <string name="color_opacity">不透明度</string>
+    <string name="room_tv_videos_title">此设备上的视频</string>
+    <string name="room_tv_videos_loading">正在读取视频库…</string>
+    <string name="room_tv_videos_empty">此设备上没有视频。</string>
+    <string name="room_tv_videos_permission">Synkplay 需要权限才能列出此设备上的视频。</string>
+    <string name="room_tv_videos_empty_hint">把视频复制到此设备，然后重新打开此列表。</string>
+    <string name="room_tv_videos_allow">允许访问</string>
     <string-array name="tips">
         <item>要使共享播放列表正常工作，%1$s需要知道您的媒体文件存储位置。在"设置 > 常规 > 共享播放列表的媒体目录"中添加您的媒体文件夹。</item>
         <item>想单独使用视频播放器吗？选择一个播放器，点击上方的%1$s徽标，然后选择"离线模式"。</item>

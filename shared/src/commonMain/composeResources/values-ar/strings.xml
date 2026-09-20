@@ -707,6 +707,16 @@
     <string name="room_subs_all_languages">كل اللغات</string>
     <string name="room_subs_media_changed">تغيّر الملف أثناء تنزيل الترجمة. ابحث من جديد.</string>
     <string name="home_engine_unavailable_flavor">هذه النسخة لا تحتوي على هذا المحرك. النسخة الكاملة تحتويه.</string>
+    <string name="color_hue">درجة اللون</string>
+    <string name="color_saturation">التشبع</string>
+    <string name="color_brightness">السطوع</string>
+    <string name="color_opacity">العتامة</string>
+    <string name="room_tv_videos_title">مقاطع الفيديو على هذا الجهاز</string>
+    <string name="room_tv_videos_loading">جارٍ قراءة مكتبة الفيديو…</string>
+    <string name="room_tv_videos_empty">لا توجد مقاطع فيديو على هذا الجهاز.</string>
+    <string name="room_tv_videos_permission">يحتاج Synkplay إلى إذن لعرض مقاطع الفيديو على هذا الجهاز.</string>
+    <string name="room_tv_videos_empty_hint">انسخ مقطع فيديو إلى هذا الجهاز، ثم افتح هذه القائمة مرة أخرى.</string>
+    <string name="room_tv_videos_allow">السماح بالوصول</string>
     <string-array name="tips">
         <item>لكي تعمل قوائم التشغيل المشتركة، يحتاج %1$s لمعرفة مكان تخزين ملفات الوسائط. أضف مجلدات الوسائط في 'الإعدادات > عام > مجلدات الوسائط لقائمة التشغيل المشتركة'.</item>
         <item>تريد استخدام مشغل الفيديو بمفردك؟ اختر مشغلاً، اضغط على شعار %1$s في الأعلى، ثم اختر 'الوضع غير المتصل'.</item>

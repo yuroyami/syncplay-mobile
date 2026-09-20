@@ -718,6 +718,16 @@
     <string name="room_subs_all_languages">Wszystkie języki</string>
     <string name="room_subs_media_changed">Plik zmienił się w trakcie pobierania napisów. Poszukaj ponownie.</string>
     <string name="home_engine_unavailable_flavor">Ta wersja nie ma tego silnika. Pełny APK go ma.</string>
+    <string name="color_hue">Odcień</string>
+    <string name="color_saturation">Nasycenie</string>
+    <string name="color_brightness">Jasność</string>
+    <string name="color_opacity">Krycie</string>
+    <string name="room_tv_videos_title">Filmy na tym urządzeniu</string>
+    <string name="room_tv_videos_loading">Odczytywanie biblioteki wideo…</string>
+    <string name="room_tv_videos_empty">Brak filmów na tym urządzeniu.</string>
+    <string name="room_tv_videos_permission">Synkplay potrzebuje uprawnienia, aby wyświetlić filmy na tym urządzeniu.</string>
+    <string name="room_tv_videos_empty_hint">Skopiuj film na to urządzenie, a następnie otwórz tę listę ponownie.</string>
+    <string name="room_tv_videos_allow">Zezwól na dostęp</string>
     <string-array name="tips">
         <item>Aby wspólne listy odtwarzania działały, %1$s musi wiedzieć, gdzie przechowywane są twoje pliki multimedialne. Dodaj swoje foldery z mediami w 'Ustawienia > Ogólne > Katalogi mediów dla wspólnej listy odtwarzania'.</item>
         <item>Chcesz używać odtwarzacza wideo solo? Wybierz odtwarzacz, stuknij w logo %1$s powyżej, a następnie wybierz 'Tryb offline'.</item>

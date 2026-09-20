@@ -722,6 +722,16 @@
     <string name="room_subs_all_languages">Toutes les langues</string>
     <string name="room_subs_media_changed">Le fichier a changé pendant le téléchargement du sous-titre. Relancez la recherche.</string>
     <string name="home_engine_unavailable_flavor">Cette version n'a pas ce moteur. L'APK complet l'a.</string>
+    <string name="color_hue">Teinte</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_brightness">Luminosité</string>
+    <string name="color_opacity">Opacité</string>
+    <string name="room_tv_videos_title">Vidéos sur cet appareil</string>
+    <string name="room_tv_videos_loading">Lecture de la vidéothèque…</string>
+    <string name="room_tv_videos_empty">Aucune vidéo sur cet appareil.</string>
+    <string name="room_tv_videos_permission">Synkplay a besoin d'une autorisation pour lister les vidéos de cet appareil.</string>
+    <string name="room_tv_videos_empty_hint">Copiez une vidéo sur cet appareil, puis rouvrez cette liste.</string>
+    <string name="room_tv_videos_allow">Autoriser l’accès</string>
     <string-array name="tips">
         <item>Pour que les playlists partagées fonctionnent, %1$s doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
         <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo %1$s, puis choisissez 'Mode hors ligne'.</item>
