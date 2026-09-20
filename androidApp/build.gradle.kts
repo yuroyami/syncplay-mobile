@@ -73,6 +73,11 @@ android {
             ndk { debugSymbolLevel = "FULL" }
         }
         debug {
+            // Signed with the release key when the keystore exists, so a debug build installs
+            // over a release build and keeps the app data.
+            signingConfigs.findByName("synkplay_keystore")?.let { config ->
+                signingConfig = config
+            }
         }
     }
 

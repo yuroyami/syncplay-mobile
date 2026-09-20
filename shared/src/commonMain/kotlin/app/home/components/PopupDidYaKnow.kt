@@ -37,7 +37,8 @@ object PopupDidYaKnow {
 
         val allTips = strings.tips
         LaunchedEffect(allTips) {
-            if (tips.isEmpty()) tips.addAll(allTips.map { it.replace("%1\$s", appName) }.shuffled())
+            // The string generator writes an array's %1$s as %s, so both forms are filled in.
+            if (tips.isEmpty()) tips.addAll(allTips.map { it.replace("%1\$s", appName).replace("%s", appName) }.shuffled())
         }
 
         Modal(
