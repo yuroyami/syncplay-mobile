@@ -81,6 +81,11 @@ val CheckGlyph: ImageVector by lazy {
     stroked("check") { line(4f, 10.5f, 8.5f, 15f, 16f, 6f) }
 }
 
+/** One flat hairline: neither yes nor no, it depends. */
+val DashGlyph: ImageVector by lazy {
+    stroked("dash") { line(5f, 10f, 15f, 10f) }
+}
+
 /** Three stacked lines: a list, the playlist. */
 val ListGlyph: ImageVector by lazy {
     stroked("list") { line(4f, 6f, 16f, 6f); line(4f, 10f, 16f, 10f); line(4f, 14f, 16f, 14f) }

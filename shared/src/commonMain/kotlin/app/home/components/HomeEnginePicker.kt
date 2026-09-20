@@ -1,12 +1,11 @@
 package app.home.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,14 +56,26 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainWidth
+import app.uicomponents.controls.CheckGlyph
+import app.uicomponents.controls.CloseGlyph
+import app.uicomponents.controls.DashGlyph
 import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.FontSizeRange
+import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
 import app.uicomponents.controls.Tone
 import app.uicomponents.controls.VerticalRule
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
+import app.utils.Platform
+import app.utils.platform
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -115,7 +126,7 @@ fun HomeEnginePicker(
         EngineInfoMorph(
             selectedIndex = selectedIndex.coerceAtLeast(0),
             count = engines.size,
-            info = engines.getOrNull(selectedIndex)?.let { infoOf(it, strings) },
+            story = engines.getOrNull(selectedIndex)?.let { storyOf(it, strings) },
         )
     }
 }
@@ -131,7 +142,7 @@ private val TipSize = 18.dp
  * story card on a tap; a second tap folds it back. The card follows the selection while open.
  */
 @Composable
-private fun EngineInfoMorph(selectedIndex: Int, count: Int, info: String?) {
+private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?) {
     val p = palette
     var open by remember { mutableStateOf(false) }
     val source = remember { MutableInteractionSource() }
@@ -140,31 +151,47 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, info: String?) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = Space.gapTight)) {
         val cellWidth = maxWidth / count.coerceAtLeast(1)
         val underCell = cellWidth * selectedIndex + (cellWidth - TipSize) / 2
+        val cardWidth = maxWidth
+        val density = LocalDensity.current
+        /* The card reports its own height, measured at its final width, so the height animates
+         * in lockstep with the width toward one known target. animateContentSize could not do
+         * this: it animates one size, and a width that moves every frame kept re-aiming it, so
+         * the height crawled and then finished in a second visible curve. */
+        var cardHeight by remember { mutableStateOf(0.dp) }
         val start by animateDpAsState(if (open) 0.dp else underCell, Motion.move(), label = "tipStart")
-        val width by animateDpAsState(if (open) maxWidth else TipSize, Motion.move(), label = "tipWidth")
+        val width by animateDpAsState(if (open) cardWidth else TipSize, Motion.move(), label = "tipWidth")
+        val height by animateDpAsState(if (open && cardHeight > 0.dp) cardHeight else TipSize, Motion.move(), label = "tipHeight")
         val edge by animateColorAsState(if (open) p.accent else p.rule, Motion.quick(), label = "tipEdge")
 
         Box(
             modifier = Modifier
                 .padding(start = start)
                 .width(width)
+                .height(height)
                 .clip(Radius.tightShape)
                 .border(Space.hair, edge, Radius.tightShape)
-                .clickable(interactionSource = source, indication = null, role = Role.Button, enabled = info != null) { Feedback.tick(); open = !open }
+                .clickable(interactionSource = source, indication = null, role = Role.Button, enabled = story != null) { Feedback.tick(); open = !open }
                 .hoverable(source)
                 .semantics { contentDescription = name }
                 .controlStates(source, Radius.tightShape)
                 .pointerHoverIcon(PointerIcon.Hand)
-                .pressFeedback(source)
-                .animateContentSize(Motion.move()),
+                .pressFeedback(source),
         ) {
-            if (open && info != null) {
+            if (open && story != null) {
                 AnimatedContent(
-                    targetState = info,
-                    transitionSpec = { fadeIn(Motion.quick()) togetherWith fadeOut(Motion.quick()) },
+                    targetState = story,
+                    // No size transform of its own: the box above animates the size, alone.
+                    transitionSpec = { ContentTransform(fadeIn(Motion.quick()), fadeOut(Motion.quick()), sizeTransform = null) },
                     label = "engineStory",
-                ) { story ->
-                    Text(story, style = Type.note, color = p.ink, modifier = Modifier.fillMaxWidth().padding(Space.gap))
+                ) { current ->
+                    /* Laid out at the card's final width from the first frame, whatever width the
+                     * box is animating through, so the height has one target. Measured against
+                     * the growing width, the words re-wrapped every frame: the card overshot its
+                     * final height, then shrank back. */
+                    EngineCard(
+                        current,
+                        Modifier.laidOutAt(cardWidth).onSizeChanged { cardHeight = with(density) { it.height.toDp() } },
+                    )
                 }
             } else {
                 Box(Modifier.size(TipSize), contentAlignment = Alignment.Center) {
@@ -178,14 +205,72 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, info: String?) {
 /** What a badge says, and in what tone. */
 private class EngineBadge(val label: String, val tone: Tone)
 
-/** The long story of an engine, by name, for the card. */
-private fun infoOf(engine: PlayerEngine, s: AppStrings): String? = when (engine.name.lowercase()) {
-    "exoplayer" -> s.engineInfoExoplayer
-    "mpv" -> s.engineInfoMpv
-    "kiteplayer" -> s.engineInfoKiteplayer
-    "avplayer" -> s.engineInfoAvplayer
-    "vlckit" -> s.engineInfoVlckit
-    else -> null
+/** Whether an engine can do one thing: outright, not at all, or only when the device's chip can. */
+private enum class Can { Yes, No, Device }
+
+/** The card's content: what the engine is, then one line per ability with its verdict. */
+private data class EngineStory(val description: String, val rows: List<Pair<String, Can>>)
+
+/**
+ * The facts per engine. The verdicts are what the bundled libraries can do, not what a given
+ * file needs: mpv, KitePlayer and VLCKit carry dav1d and libass, ExoPlayer and AVPlayer decode
+ * video on the device's own chips and draw ASS as plain text. Picture in picture is the one
+ * ability that depends on the platform, not the engine: KitePlayer has it on Android only.
+ */
+private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
+    fun rows(chapters: Can, styledSubs: Can, subtitleFiles: Can, mkv: Can, av1: Can, pip: Can) = listOf(
+        s.engineCanChapters to chapters,
+        s.engineCanStyledSubs to styledSubs,
+        s.engineCanSubtitleFiles to subtitleFiles,
+        s.engineCanMkv to mkv,
+        (if (av1 == Can.Device) s.engineCanAv1Device else s.engineCanAv1) to av1,
+        s.engineCanPip to pip,
+    )
+    val yes = Can.Yes
+    val no = Can.No
+    return when (engine.name.lowercase()) {
+        "exoplayer" -> EngineStory(s.engineDescExoplayer, rows(no, no, yes, yes, Can.Device, yes))
+        "mpv" -> EngineStory(s.engineDescMpv, rows(yes, yes, yes, yes, yes, yes))
+        "kiteplayer" -> EngineStory(s.engineDescKiteplayer, rows(yes, yes, yes, yes, yes, if (platform == Platform.Android) yes else no))
+        "avplayer" -> EngineStory(s.engineDescAvplayer, rows(no, no, no, no, Can.Device, yes))
+        "vlckit" -> EngineStory(s.engineDescVlckit, rows(yes, yes, yes, yes, yes, yes))
+        else -> null
+    }
+}
+
+/** The description, then the ability lines, each led by its mark: green check, red cross, or a dim dash. */
+@Composable
+private fun EngineCard(story: EngineStory, modifier: Modifier = Modifier) {
+    val p = palette
+    val s = strings
+    Column(modifier.padding(Space.gap), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
+        Text(story.description, style = Type.note, color = p.ink)
+        story.rows.forEach { (label, can) ->
+            val (glyph, tint, spoken) = when (can) {
+                Can.Yes -> Triple(CheckGlyph, p.okText, s.yes)
+                Can.No -> Triple(CloseGlyph, p.bad, s.no)
+                Can.Device -> Triple(DashGlyph, p.inkDim, s.engineCanDevice)
+            }
+            Row(
+                // One spoken line per ability, so a screen reader gets the verdict the mark shows.
+                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "$label: $spoken" },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(glyph, contentDescription = null, tint = tint, modifier = Modifier.size(Space.glyph))
+                Spacer(Modifier.width(Space.gapTight))
+                Text(label, style = Type.note, color = if (can == Can.Yes) p.ink else p.inkDim)
+            }
+        }
+    }
+}
+
+/**
+ * Measures the content at exactly [width], whatever the incoming constraints allow, and reports
+ * a width that fits them, anchored at the start. The overflow is for the caller's clip.
+ */
+private fun Modifier.laidOutAt(width: Dp): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(Constraints.fixedWidth(width.roundToPx()))
+    layout(constraints.constrainWidth(placeable.width), placeable.height) { placeable.placeRelative(0, 0) }
 }
 
 /**
