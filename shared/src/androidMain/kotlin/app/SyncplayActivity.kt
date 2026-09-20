@@ -36,11 +36,13 @@ import app.preferences.arePreferencesLoaded
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
+import android.view.WindowManager
 import app.utils.applyActivityUiProperties
 import app.utils.bindWatchdog
+import app.utils.isTelevision
 import app.utils.changeLanguage
 import app.utils.loggy
-import app.utils.maskTransientBarAnimations
+import app.utils.maskHiddenSystemBars
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -97,7 +99,13 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Tweaking window UI decor (transparent system bars, edge-to-edge) */
         applyActivityUiProperties()
-        maskTransientBarAnimations()
+        maskHiddenSystemBars()
+
+        /* A television raises its keyboard only when Center asks for it. Android would raise it by
+         * itself whenever the window regains focus on a text field, such as when a dialog closes. */
+        if (isTelevision()) {
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+        }
 
         /** Binding common logic with platform logic. Held weakly: the callback outlives this
          * Activity, which is recreated on a theme, locale or font-size change. */
@@ -452,31 +460,34 @@ class SyncplayActivity : ComponentActivity() {
                 }
             }
 
-            // D-pad: only intercept when HUD is hidden and video is loaded
+            /* D-pad: only when a video is loaded, the HUD is hidden and the screen is not
+             * locked. A locked screen answers one thing, which is the unlock key, so every key
+             * goes to the surface that shows it. */
             val hasVideo = vm.playerManager.hasVideo.value
             val hudVisible = vm.uiState.visibleHUD.value
+            val locked = vm.uiState.tabLock.value
 
-            if (hasVideo && !hudVisible) {
+            if (hasVideo && !hudVisible && !locked) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
                         vm.dispatcher.controlPlayback(
                             if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true
                         )
-                        vm.uiState.visibleHUD.value = true
+                        vm.uiState.showHud()
                         return true
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         vm.dispatcher.seekBckwd()
-                        vm.uiState.visibleHUD.value = true
+                        vm.uiState.showHud()
                         return true
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         vm.dispatcher.seekFrwrd()
-                        vm.uiState.visibleHUD.value = true
+                        vm.uiState.showHud()
                         return true
                     }
                     KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        vm.uiState.visibleHUD.value = true
+                        vm.uiState.showHud()
                         return true
                     }
                 }

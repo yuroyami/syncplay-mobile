@@ -1,5 +1,14 @@
 package app.room.ui.bottombar
 
+import kotlinx.coroutines.delay
+import app.uicomponents.LocalIsTelevision
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.foundation.focusGroup
+import app.uicomponents.controls.LocalFocusRing
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -78,7 +87,35 @@ fun RoomMediaAddButton() {
      * stays on it at full strength; the rows take dark ink, the way the key's label does. */
     // A plain standard curve: the emphasized decelerate the rest of the app uses reads as a spring on a block this size.
     val t by animateFloatAsState(if (expanded) 1f else 0f, tween(Motion.moveMs, easing = FastOutSlowInEasing), label = "addMorph")
+    /* The block is the key until it opens into the card, and both are one layout, so a remote
+     * needs the handover: into the card's first route when it opens, back to the key when it closes. */
+    val cardFocus = remember { FocusRequester() }
+    val keyFocus = remember { FocusRequester() }
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    var seenExpanded by remember { mutableStateOf(expanded) }
+    // Coming back from the link form, the routes are new again and need focus of their own.
+    LaunchedEffect(linkMode) {
+        if (!linkMode && expanded && remoteOrKeyboard) {
+            repeat(8) {
+                delay(60)
+                if (runCatching { cardFocus.requestFocus(FocusDirection.Enter) }.getOrDefault(false)) return@LaunchedEffect
+            }
+        }
+    }
+    LaunchedEffect(expanded) {
+        if (expanded != seenExpanded && remoteOrKeyboard) {
+            repeat(8) {
+                delay(60)
+                val target = if (expanded) cardFocus else keyFocus
+                val direction = if (expanded) FocusDirection.Enter else FocusDirection.Exit
+                if (runCatching { target.requestFocus(direction) }.getOrDefault(false)) return@repeat
+            }
+        }
+        seenExpanded = expanded
+    }
     val onBrand = p.onBrandBlock()
+    // A white ring on the block: its own gradient would vanish into it, and its dark ink barely shows.
+    val onBrandRing = remember(p.ink) { SolidColor(p.ink) }
     Layout(
         modifier = Modifier
             .padding(Space.gapTight)
@@ -88,8 +125,11 @@ fun RoomMediaAddButton() {
             // The key stays composed until the card is fully in, and the card until the key is.
             if (t < 1f || !expanded) {
                 Box(Modifier.layoutId("key").alpha(1f - t)) {
+                    CompositionLocalProvider(LocalFocusRing provides onBrandRing) {
                     AddVideoButton(
-                        modifier = Modifier.then(if (!hasVideo && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
+                        modifier = Modifier
+                            .focusRequester(keyFocus)
+                            .then(if (!hasVideo && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
                         expanded = !hasVideo,
                         onClick = {
                             if (hasVideo) {
@@ -100,11 +140,12 @@ fun RoomMediaAddButton() {
                             }
                         },
                     )
+                    }
                 }
             }
             if (t > 0f || expanded) {
-                Box(Modifier.layoutId("card").alpha(t).width(MorphWidth)) {
-                    CompositionLocalProvider(LocalPalette provides onBrand) {
+                Box(Modifier.layoutId("card").alpha(t).width(MorphWidth).focusRequester(cardFocus).focusGroup()) {
+                    CompositionLocalProvider(LocalPalette provides onBrand, LocalFocusRing provides onBrandRing) {
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),

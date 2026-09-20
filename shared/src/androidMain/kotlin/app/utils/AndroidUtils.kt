@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.graphics.Color
@@ -24,7 +25,9 @@ import app.preferences.createDataStore
 import io.github.vinceglb.filekit.AndroidFile
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.toAndroidUri
+import java.util.Collections
 import java.util.Locale
+import java.util.WeakHashMap
 
 /**
  * Global accessor for the application Context, initialized at app startup. Safe because the
@@ -92,6 +95,7 @@ fun SyncplayActivity.bindWatchdog() {
 @Suppress("DEPRECATION")
 fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
     runOnUiThread {
+        windowsWithHiddenBars += window
         if (!useDeprecated) {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->
                 controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -125,6 +129,8 @@ fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
 @Suppress("DEPRECATION")
 fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
     runOnUiThread {
+        // Before the show call: its animation is dispatched at once and must pass the mask.
+        windowsWithHiddenBars -= window
         if (!useDeprecated) {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->
                 controller.show(WindowInsetsCompat.Type.systemBars())
@@ -155,46 +161,40 @@ fun ComponentActivity.applyActivityUiProperties() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
 }
 
+/** The windows whose bars [hideSystemUI] has hidden. Weak keys: an activity window must not outlive its activity. */
+private val windowsWithHiddenBars: MutableSet<Window> = Collections.newSetFromMap(WeakHashMap())
+
 /**
- * Android 16 hides the fade-out of transient system bars from the app. Older builds let that
- * animation reach the insets callbacks, so anything padded on the status bar jumps down and slides
- * back up when the bars leave after a top-edge swipe. A bar animation that starts and ends hidden
- * is that fade-out, so its bar insets are zeroed here before Compose sees them. Show animations and
- * the hide on room entry start from visible bars and pass through unchanged.
+ * Reports no system bars to the view tree while [hideSystemUI] is in effect in a fullscreen window.
+ *
+ * Android tells the window about hidden bars anyway. When the notification shade opens it takes
+ * the bars over and the window is told they are visible; when it closes, the window gets them back
+ * and runs the hide animation itself. Below Android 16 the fade-out of the transient bars after a
+ * top-edge swipe arrives the same way. Everything padded on the status bar followed each of these,
+ * so the room chrome dropped and slid back up. Here the bar insets are zeroed in the plain dispatch
+ * and in every animation frame, so Compose sees no bar until [showSystemUI] asks for the bars back.
+ * Split screen and the other multi-window modes pass through: there the system keeps the bars
+ * visible and the padding has to be real.
  */
-fun ComponentActivity.maskTransientBarAnimations() {
+fun ComponentActivity.maskHiddenSystemBars() {
     if (Build.VERSION.SDK_INT < 30) return
     val decor = window.decorView
     val statusBars = WindowInsetsCompat.Type.statusBars()
     val navigationBars = WindowInsetsCompat.Type.navigationBars()
-    fun barsHidden(insets: WindowInsetsCompat) = !insets.isVisible(statusBars) && !insets.isVisible(navigationBars)
+    fun masking() = window in windowsWithHiddenBars && !isInMultiWindowMode
+    fun WindowInsetsCompat.withoutBars(): WindowInsetsCompat = WindowInsetsCompat.Builder(this)
+        .setInsets(statusBars, Insets.NONE)
+        .setInsets(navigationBars, Insets.NONE)
+        .setVisible(statusBars or navigationBars, false)
+        .build()
 
+    // The decor keeps its own handling of the insets; only what it hands down changes.
+    ViewCompat.setOnApplyWindowInsetsListener(decor) { view, insets ->
+        ViewCompat.onApplyWindowInsets(view, if (masking()) insets.withoutBars() else insets)
+    }
     ViewCompat.setWindowInsetsAnimationCallback(decor, object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
-        // Bar-only animations that began with both bars already hidden. Prepare fires before the
-        // next layout, so the root insets still hold the state from before the animation.
-        private val startedHidden = HashSet<WindowInsetsAnimationCompat>()
-
-        override fun onPrepare(animation: WindowInsetsAnimationCompat) {
-            val barsOnly = animation.typeMask and (statusBars or navigationBars).inv() == 0
-            val root = ViewCompat.getRootWindowInsets(decor) ?: return
-            if (barsOnly && barsHidden(root)) startedHidden += animation
-        }
-
-        override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
-            if (runningAnimations.none { it in startedHidden }) return insets
-            // By now the root insets hold the animation's target: bars still hidden means a fade-out.
-            val root = ViewCompat.getRootWindowInsets(decor) ?: return insets
-            if (!barsHidden(root)) return insets
-            return WindowInsetsCompat.Builder(insets)
-                .setInsets(statusBars, Insets.NONE)
-                .setInsets(navigationBars, Insets.NONE)
-                .setVisible(statusBars or navigationBars, false)
-                .build()
-        }
-
-        override fun onEnd(animation: WindowInsetsAnimationCompat) {
-            startedHidden -= animation
-        }
+        override fun onProgress(insets: WindowInsetsCompat, runningAnimations: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat =
+            if (masking()) insets.withoutBars() else insets
     })
 }
 

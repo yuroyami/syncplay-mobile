@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.focusRequester
@@ -91,7 +92,8 @@ fun RoomPlayButton(modifier: Modifier) {
                 contentDescription = name
                 if (buffering) stateDescription = bufferingLabel
             }
-            .controlStates(source, shape)
+            // The gradient ring would vanish into the gradient fill, so the ring is ink.
+            .controlStates(source, shape, focusRing = SolidColor(p.ink))
             .pressFeedback(source),
         contentAlignment = Alignment.Center,
     ) {

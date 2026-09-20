@@ -28,6 +28,7 @@ import app.theme.TRINITY
 import app.utils.platformCallback
 import java.lang.reflect.Proxy
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -71,7 +72,15 @@ class RoomStartupTest {
             viewmodel.uiState.tabCardRoomPreferences.value = settingsOpen
             runBlocking { withTimeout(2_000) { oldEngine.joinStarted.await() } }
 
-            val roomScene = ImageComposeScene(width = 800, height = 480, density = Density(1f)) {
+            /* The room's own effects (focus handover, entry focus) must run on the thread that
+             * renders this scene: a scene with no dispatcher runs them on a background one, and
+             * a focus request from there races the render in Compose's snapshot observer. */
+            val roomScene = DesignHarness.onUiThread { ImageComposeScene(
+                width = 800,
+                height = 480,
+                density = Density(1f),
+                coroutineContext = Dispatchers.Main.immediate,
+            ) {
                 DesignHarness.Frame(TRINITY, overVideo = true) {
                     if (backstack.lastOrNull() == destination) {
                         // Match Navigation3's room lifetime without starting networking or a player.
@@ -85,7 +94,7 @@ class RoomStartupTest {
                         }
                     }
                 }
-            }
+            } }
             scene = roomScene
             val surface = RoomSurface(roomScene)
             surface.advance()
@@ -95,8 +104,8 @@ class RoomStartupTest {
             // Hardware seek keys can arrive even before the on-screen transport exists.
             viewmodel.dispatcher.seek(10_000)
             viewmodel.dispatcher.seekBy(10)
-            roomScene.sendPointerEvent(PointerEventType.Press, Offset(400f, 300f))
-            roomScene.sendPointerEvent(PointerEventType.Release, Offset(400f, 300f))
+            DesignHarness.onUiThread { roomScene.sendPointerEvent(PointerEventType.Press, Offset(400f, 300f)) }
+            DesignHarness.onUiThread { roomScene.sendPointerEvent(PointerEventType.Release, Offset(400f, 300f)) }
             surface.advance()
             assertTrue(viewmodel.uiState.visibleHUD.value, "Startup must keep the exit controls visible")
 
@@ -121,7 +130,7 @@ class RoomStartupTest {
             assertFailsWith<UninitializedPropertyAccessException> { viewmodel.player }
         } finally {
             try {
-                scene?.close()
+                scene?.let { s -> DesignHarness.onUiThread { s.close() } }
             } finally {
                 try {
                     store.clear()
@@ -154,8 +163,10 @@ class RoomStartupTest {
     private class RoomSurface(private val scene: ImageComposeScene) {
         private var frame = 0L
 
+        /* One render per hop onto the interface thread: the room's effects run there too, and a
+         * single long block would hold them all until it ended. */
         fun advance() {
-            repeat(30) { scene.render(frame++ * 16_000_000L) }
+            repeat(30) { DesignHarness.onUiThread { scene.render(frame++ * 16_000_000L) } }
         }
 
         private fun nodes(node: SemanticsNode): List<SemanticsNode> = listOf(node) + node.children.flatMap(::nodes)
@@ -181,8 +192,8 @@ class RoomStartupTest {
             assertTrue(bounds.width > 0 && bounds.height > 0, "$label has no visible size")
             assertTrue(bounds.left >= 0 && bounds.top >= 0 && bounds.right <= 801 && bounds.bottom <= 481,
                 "$label is outside the room viewport: $bounds")
-            scene.sendPointerEvent(PointerEventType.Press, bounds.center)
-            scene.sendPointerEvent(PointerEventType.Release, bounds.center)
+            DesignHarness.onUiThread { scene.sendPointerEvent(PointerEventType.Press, bounds.center) }
+            DesignHarness.onUiThread { scene.sendPointerEvent(PointerEventType.Release, bounds.center) }
             advance()
         }
     }

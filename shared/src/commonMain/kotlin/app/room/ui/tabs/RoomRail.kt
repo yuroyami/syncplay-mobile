@@ -1,5 +1,6 @@
 package app.room.ui.tabs
 
+import app.room.LocalRoomRailFocus
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.expandHorizontally
@@ -29,7 +30,14 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -49,6 +57,7 @@ import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
 import app.theme.palette
+import app.uicomponents.LocalIsTelevision
 import app.uicomponents.chromeSurface
 import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.Icon
@@ -96,6 +105,33 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val unfolded = remember { MutableTransitionState(expanded) }
     unfolded.targetState = expanded
 
+    /* The More cell leaves as the actions arrive, and the actions leave when they fold again, each
+     * taking focus with them. Under a remote focus follows: onto the first action on unfold, back
+     * onto More on fold. Only on a flip, so a rail rebuilt by rotation pulls no focus. */
+    // Where a closing panel sends focus back: the cell whose panel was open, else the first.
+    val railFocus = LocalRoomRailFocus.current
+    val moreFocus = remember { FocusRequester() }
+    val firstActionFocus = remember { FocusRequester() }
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    var seenExpanded by remember { mutableStateOf(expanded) }
+    var actionsFocused by remember { mutableStateOf(false) }
+    var moreFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(expanded) {
+        if (expanded != seenExpanded && remoteOrKeyboard) {
+            val target = when {
+                expanded && moreFocused -> firstActionFocus
+                !expanded && actionsFocused -> moreFocus
+                else -> null
+            }
+            if (target != null) {
+                // A frame's grace: the cell has to exist before it can be asked.
+                delay(50)
+                target.requestFocus()
+            }
+        }
+        seenExpanded = expanded
+    }
+
     val panels = buildList {
         if (playerIsReady) {
             add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs) { ui.toggleRoomPreferences() })
@@ -130,35 +166,40 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         add(RailCell(Icons.AutoMirrored.Filled.Logout, strings.roomOverflowLeaveRoom) { ui.askLeave.value = true })
     }
     val more = RailCell(MoreGlyph, strings.roomRailMore) { ui.railActionsExpanded.value = true }
+    val activeCell = panels.indexOfFirst { it.active }.coerceAtLeast(0)
 
     if (horizontal) {
         Row(modifier.chromeSurface(Radius.panelShape), verticalAlignment = Alignment.CenterVertically) {
-            panels.forEach { RailCell(it, horizontal = true) }
+            panels.forEachIndexed { index, cell -> RailCell(cell, horizontal = true, focusRequester = railFocus.takeIf { index == activeCell }) }
             VerticalRule(Modifier.size(Space.hair, Space.row))
             AnimatedVisibility(!expanded, enter = expandHorizontally(Motion.move()), exit = shrinkHorizontally(Motion.move())) {
-                RailCell(more, horizontal = true)
+                RailCell(more, horizontal = true, focusRequester = moreFocus, onFocus = { moreFocused = it })
             }
             AnimatedVisibility(
                 visibleState = unfolded,
                 enter = expandHorizontally(Motion.move()) + fadeIn(Motion.move()),
                 exit = shrinkHorizontally(Motion.move()) + fadeOut(Motion.move()),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) { actions.forEach { RailCell(it, horizontal = true) } }
+                Row(Modifier.onFocusChanged { actionsFocused = it.hasFocus }, verticalAlignment = Alignment.CenterVertically) {
+                    actions.forEachIndexed { index, cell -> RailCell(cell, horizontal = true, focusRequester = firstActionFocus.takeIf { index == 0 }) }
+                }
             }
         }
     } else {
         Column(modifier.chromeSurface(Radius.panelShape), horizontalAlignment = Alignment.CenterHorizontally) {
-            panels.forEach { RailCell(it, horizontal = false) }
+            panels.forEachIndexed { index, cell -> RailCell(cell, horizontal = false, focusRequester = railFocus.takeIf { index == activeCell }) }
             Rule(Modifier.size(Space.row, Space.hair))
             AnimatedVisibility(!expanded, enter = expandVertically(Motion.move()), exit = shrinkVertically(Motion.move())) {
-                RailCell(more, horizontal = false)
+                RailCell(more, horizontal = false, focusRequester = moreFocus, onFocus = { moreFocused = it })
             }
             AnimatedVisibility(
                 visibleState = unfolded,
                 enter = expandVertically(Motion.move()) + fadeIn(Motion.move()),
                 exit = shrinkVertically(Motion.move()) + fadeOut(Motion.move()),
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) { actions.forEach { RailCell(it, horizontal = false) } }
+                Column(Modifier.onFocusChanged { actionsFocused = it.hasFocus }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    actions.forEachIndexed { index, cell -> RailCell(cell, horizontal = false, focusRequester = firstActionFocus.takeIf { index == 0 }) }
+                }
             }
         }
     }
@@ -169,13 +210,15 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
  * along the bottom of a row rail, or along the start edge of a column rail, facing its panel.
  */
 @Composable
-private fun RailCell(cell: RailCell, horizontal: Boolean) {
+private fun RailCell(cell: RailCell, horizontal: Boolean, focusRequester: FocusRequester? = null, onFocus: ((Boolean) -> Unit)? = null) {
     val p = palette
     val accent = p.accent
     val source = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .size(Space.row)
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+            .then(if (onFocus != null) Modifier.onFocusChanged { onFocus(it.isFocused) } else Modifier)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); cell.onClick() }
             .touchTarget()
             .hoverable(source)

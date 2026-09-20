@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
@@ -163,7 +164,12 @@ fun RoomSeekbar(modifier: Modifier) {
                 ScrubTrack(
                     value = fraction,
                     enabled = known,
-                    modifier = Modifier.onSizeChanged { trackWidthPx = it.width },
+                    /* Left and Right are the bar's own (they jump), so a remote can only leave it
+                     * up or down. Down is named here, or the keys beside the bar on the same row
+                     * are reachable from the rail alone. */
+                    modifier = Modifier
+                        .onSizeChanged { trackWidthPx = it.width }
+                        .focusProperties { down = viewmodel.uiState.controlsFocus },
                     ticks = tickFractions,
                     activeTick = if (showMarks) activeMark else -1,
                     buffered = if (known && bufferedMs > 0L) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else null,

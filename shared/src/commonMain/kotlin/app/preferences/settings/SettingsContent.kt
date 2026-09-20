@@ -1,5 +1,7 @@
 package app.preferences.settings
 
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -80,6 +82,7 @@ fun SettingsCategoryList(
     categories: List<SettingCategory>,
     modifier: Modifier = Modifier,
     selectedKey: String? = null,
+    selectedFocus: FocusRequester? = null,
     columns: Int = 1,
     onOpen: (SettingCategory) -> Unit,
 ) {
@@ -89,7 +92,9 @@ fun SettingsCategoryList(
             Row(Modifier.fillMaxWidth()) {
                 rowOf.forEach { category ->
                     ListRow(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).then(
+                            if (selectedFocus != null && category.key == selectedKey) Modifier.focusRequester(selectedFocus) else Modifier,
+                        ),
                         onClick = { onOpen(category) },
                         selected = category.key == selectedKey,
                         horizontalPadding = if (columns > 1) Space.gap else Space.gutter,

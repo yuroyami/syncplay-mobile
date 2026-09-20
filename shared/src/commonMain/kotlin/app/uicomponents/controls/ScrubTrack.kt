@@ -113,6 +113,14 @@ fun ScrubTrack(
             .hoverable(source, enabled)
             .onKeyEvent { event ->
                 if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                /* A remote and a keyboard have no long press to give, so the press key carries
+                 * what a long press does. On the seek bar that is the chapter list, which was
+                 * otherwise reachable by a finger only. */
+                val hold = onLongPress
+                if (hold != null && event.key in pressKeys) {
+                    hold()
+                    return@onKeyEvent true
+                }
                 val step = when (event.key) {
                     Key.DirectionLeft -> -keyStep
                     Key.DirectionRight -> keyStep
@@ -192,3 +200,6 @@ fun ScrubTrack(
         drawRoundRect(if (enabled) p.ink else p.disabled, Offset(headX, y + trackH / 2 - headH / 2), Size(headW, headH), r)
     }
 }
+
+/** The keys that stand for a press: a remote's centre, a keyboard's enter. */
+private val pressKeys = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)

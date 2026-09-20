@@ -1,5 +1,6 @@
 package app.preferences.settings
 
+import app.uicomponents.LocalIsTelevision
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -137,6 +138,10 @@ internal fun InlineColorPage(
                     generation++
                     onReset()
                 })
+            }
+            // The picker answers only a finger or a mouse; a remote chooses with these.
+            if (LocalIsTelevision.current) {
+                ColorSliders(edit.color, onColor = { edit = ColorEdit(it, save = true); generation++ })
             }
         }
     }

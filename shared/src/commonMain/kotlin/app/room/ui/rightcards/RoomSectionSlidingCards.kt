@@ -1,5 +1,18 @@
 package app.room.ui.rightcards
 
+import kotlinx.coroutines.delay
+import app.uicomponents.LocalIsTelevision
+import app.room.LocalRoomRailFocus
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.focusGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -44,6 +57,9 @@ private fun PanelSlot(modifier: Modifier, enter: EnterTransition, exit: ExitTran
  * and 420dp at 38 percent of the window, sliding in from the end edge. On a tall window the panel
  * is a full-width sheet rising from the bottom. The control strip sits under the panel.
  */
+/** How many times, 60ms apart, a panel tries to hand focus in or back to the rail. */
+private const val PANEL_FOCUS_TRIES = 8
+
 @Composable
 fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
@@ -66,8 +82,41 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val enter = if (tall) slideInVertically(Motion.move()) { it } else slideInHorizontally(Motion.move()) { it }
     val exit = if (tall) slideOutVertically(Motion.move()) { it } else slideOutHorizontally(Motion.move()) { it }
 
+    /* A remote opens a panel and its controls are where it wants to be, so focus follows it in,
+     * and back out to the rail when it closes. Spatial search alone skips a panel whose rows do
+     * not line up with the rail cell that opened it. */
+    val panelFocus = remember { FocusRequester() }
+    val railFocus = LocalRoomRailFocus.current
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    val openPanel = listOf(
+        stateUserInfo, statePlaylist && sharedPlaylists, statePrefs,
+        stateTracks, stateGestures, stateSeekTo, stateAddMedia,
+    ).indexOfFirst { it }
+    var seenPanel by remember { mutableStateOf(openPanel) }
+    LaunchedEffect(openPanel) {
+        if (openPanel != seenPanel && remoteOrKeyboard) {
+            /* The panel slides in and out over a few frames, and the rail rebuilds as it goes, so
+             * the target may not exist on the first ask. Try until it takes, then stop. */
+            repeat(PANEL_FOCUS_TRIES) {
+                delay(60)
+                val target = if (openPanel >= 0) panelFocus else railFocus
+                val direction = if (openPanel >= 0) FocusDirection.Enter else FocusDirection.Exit
+                if (target != null && runCatching { target.requestFocus(direction) }.getOrDefault(false)) return@repeat
+            }
+        }
+        seenPanel = openPanel
+    }
+
     Column(modifier, horizontalAlignment = Alignment.End) {
-        PanelSlot(Modifier.weight(1f).then(if (tall) Modifier.fillMaxWidth() else Modifier.width(panelWidth)), enter, exit) {
+        PanelSlot(
+            Modifier
+                .weight(1f)
+                .then(if (tall) Modifier.fillMaxWidth() else Modifier.width(panelWidth))
+                .focusRequester(panelFocus)
+                .focusGroup(),
+            enter,
+            exit,
+        ) {
             if (!viewmodel.isSoloMode) {
                 AnimatedVisibility(stateUserInfo, Modifier.fillMaxHeight(), enter, exit) { CardUserInfo.UserInfoCard(shape) }
                 AnimatedVisibility(statePlaylist && sharedPlaylists, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }

@@ -20,6 +20,9 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** The chat composer's focus target, so a key can jump to it. */
     val chatFocus = FocusRequester()
 
+    /** The control panel's own glyph, so focus can go back to it when the panel closes. */
+    val controlsFocus = FocusRequester()
+
     /** True while the track is being dragged; the HUD never hides mid-scrub. */
     val scrubbing = MutableStateFlow(false)
 

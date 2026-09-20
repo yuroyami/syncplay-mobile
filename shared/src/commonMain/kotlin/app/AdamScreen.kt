@@ -33,6 +33,7 @@ import app.room.RoomViewmodel
 import app.room.models.MessagePalette
 import androidx.compose.ui.text.font.FontFamily
 import app.theme.LocalPalette
+import app.theme.LocalSurfacePalette
 import app.theme.LocalType
 import app.theme.Palette
 import app.theme.SaveableTheme
@@ -43,8 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import app.theme.Motion
+import app.uicomponents.LocalIsTelevision
+import app.uicomponents.TvSafeArea
 import app.uicomponents.LocalWidthClass
 import app.uicomponents.currentWidthClass
+import app.utils.isTelevision
 import app.utils.reducedMotion
 import app.utils.get
 import app.preferences.Preferences.REDUCE_MOTION
@@ -125,7 +129,9 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalTheme provides currentTheme,
         LocalType provides typeRoles,
         LocalPalette provides designPalette,
+        LocalSurfacePalette provides designPalette,
         LocalWidthClass provides currentWidthClass(),
+        LocalIsTelevision provides remember { isTelevision() },
     ) {
         /* The display language, applied before anything below reads a string so the first frame
          * is already in the right one. A change moves the whole app with no restart. */
@@ -148,10 +154,19 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                 NavDisplay(
                 backStack = backstack,
                 onBack = {
-                    // In the room a back press asks first; anywhere else it pops.
+                    /* In the room, back closes whatever is open, one layer at a time, and only asks
+                     * to leave once nothing is. A remote's Back is its only way out of a panel. */
                     val room = globalviewmodel.roomWeakRef?.get()
-                    if (backstack.lastOrNull() is Screen.Room && room != null) room.uiState.askLeave.value = true
-                    else if (backstack.size > 1) backstack.removeAt(backstack.lastIndex)
+                    val ui = room?.uiState
+                    when {
+                        backstack.lastOrNull() !is Screen.Room || ui == null ->
+                            if (backstack.size > 1) backstack.removeAt(backstack.lastIndex)
+                        ui.gifPanelVisible.value -> ui.gifPanelVisible.value = false
+                        ui.anySidePanelOpen -> ui.closeSidePanels()
+                        ui.controlPanel.value -> ui.toggleControlPanel(false)
+                        ui.railActionsExpanded.value -> ui.railActionsExpanded.value = false
+                        else -> ui.askLeave.value = true
+                    }
                 },
                 transitionSpec = { pageTransition(pop = false, slidePx) },
                 popTransitionSpec = { pageTransition(pop = true, slidePx) },
@@ -168,7 +183,7 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                             factory = viewModelFactory { initializer { HomeViewmodel(backStack = globalviewmodel.backstack) } }
                         )
 
-                        HomeScreenUI(viewmodel)
+                        TvSafeArea { HomeScreenUI(viewmodel) }
                     }
 
                     entry<Screen.Room> { room ->
@@ -192,13 +207,15 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                     }
 
                     entry<Screen.ThemeCreator> { themeCreator ->
-                        ThemeCreatorScreenUI(
-                            themeToEdit = themeCreator.themeToEdit
-                        )
+                        TvSafeArea {
+                            ThemeCreatorScreenUI(
+                                themeToEdit = themeCreator.themeToEdit
+                            )
+                        }
                     }
 
                     entry<Screen.Settings> { settings ->
-                        SettingsScreenUI(settings.categoryKey)
+                        TvSafeArea { SettingsScreenUI(settings.categoryKey) }
                     }
 
                 }

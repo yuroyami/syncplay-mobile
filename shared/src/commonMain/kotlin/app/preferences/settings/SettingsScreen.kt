@@ -1,5 +1,10 @@
 package app.preferences.settings
 
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,17 +73,36 @@ fun SettingsScreenUI(categoryKey: String?) {
             scrolled = scrolled,
         ) {
             if (expanded) {
+                /* A remote crosses between the panes by row, not by pixel: Right from any category
+                 * enters the settings at their top, and Left comes back to the open category. */
+                val paneFocus = remember { FocusRequester() }
+                val categoryFocus = remember { FocusRequester() }
                 Row(Modifier.fillMaxSize()) {
-                    Column(Modifier.width(280.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                    Column(
+                        Modifier
+                            .width(280.dp)
+                            .fillMaxHeight()
+                            .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Right) paneFocus.requestFocus(FocusDirection.Down) } }
+                            .focusGroup()
+                            .verticalScroll(rememberScrollState()),
+                    ) {
                         SearchField(query) { query = it }
                         if (query.isNotBlank()) {
                             SettingsSearchResults(hits) { hit -> open = hit.category; highlight = hit.entry.pref.key; query = "" }
                         } else {
-                            SettingsCategoryList(categories, selectedKey = current?.key) { open = it; highlight = null }
+                            SettingsCategoryList(categories, selectedKey = current?.key, selectedFocus = categoryFocus) { open = it; highlight = null }
                         }
                     }
                     VerticalRule()
-                    Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(scroll)) {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .focusRequester(paneFocus)
+                            .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Left) categoryFocus.requestFocus() } }
+                            .focusGroup()
+                            .verticalScroll(scroll),
+                    ) {
                         Box(Modifier.widthIn(max = density.contentMaxWidth)) {
                             if (current != null) SettingsCategoryBody(current, highlightKey = highlight)
                         }

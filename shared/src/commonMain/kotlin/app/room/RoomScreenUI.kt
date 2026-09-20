@@ -53,6 +53,7 @@ import app.room.ui.bottombar.TopContrastUnderlay
 import app.room.ui.bottombar.RoomBottomBarSection
 import app.room.ui.chat.FadingMessageLayout
 import app.room.ui.chat.RoomChatSection
+import app.room.ui.misc.KeyboardNotchShield
 import app.room.ui.misc.RoomBackgroundArtwork
 import app.room.ui.misc.RoomGestureInterceptor
 import app.room.ui.misc.RoomTransportKeys
@@ -62,12 +63,14 @@ import app.room.ui.tabs.ManagedRoomModal
 import app.room.ui.tabs.RoomRail
 import app.room.ui.tabs.RoomUnlockableLayout
 import app.theme.LocalPalette
+import app.theme.LocalSurfacePalette
 import app.theme.Motion
 import app.theme.Space
 import app.uicomponents.GlassDemand
 import app.uicomponents.LocalGlassDemand
 import app.uicomponents.LocalGlassSuspended
 import app.uicomponents.LocalHazeState
+import app.uicomponents.LocalIsTelevision
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.glassBackdropLayer
 import app.utils.EnterRoomMode
@@ -98,6 +101,9 @@ import app.utils.timestampFromMillis
  */
 val LocalRoomInitialFocus = compositionLocalOf<FocusRequester?> { null }
 
+/** The rail cell a closing panel hands focus back to: the cell that opened it, else the first. */
+val LocalRoomRailFocus = compositionLocalOf<FocusRequester?> { null }
+
 /** The room: the video layer, then the HUD on the [RoomFrame] docks, then the notices. */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
@@ -111,6 +117,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
     val initialFocusRequester = remember { FocusRequester() }
+    val railFocusRequester = remember { FocusRequester() }
     val measuredChatMediaSize by viewmodel.uiState.chatMediaSizeDp.collectAsState()
     val window = LocalWindowInfo.current.containerSize
     val tall = window.height > window.width
@@ -133,9 +140,11 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         }),
         LocalRoomUiState provides viewmodel.uiState,
         LocalRoomInitialFocus provides initialFocusRequester,
+        LocalRoomRailFocus provides railFocusRequester,
         LocalHazeState provides roomHazeState,
         LocalGlassDemand provides roomGlassDemand,
         LocalPalette provides videoPalette,
+        LocalSurfacePalette provides videoPalette,
     ) {
         Box(Modifier.fillMaxSize()) {
             Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {
@@ -332,7 +341,9 @@ private fun RoomHud(
     val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
     val isHUDVisible by ui.visibleHUD.collectAsState()
     val focusManager = LocalFocusManager.current
-    val isKeyboardMode = LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    /* A television counts as keyboard input from the first frame. Compose only turns the input
+     * mode to keyboard once a key has arrived, and the head-up display can appear before that. */
+    val isKeyboardMode = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
 
     /* Under keyboard or D-pad input, focus lands on the primary control when the HUD shows; on
      * touch that would be jarring and could raise the soft keyboard. Focus drops on hide so the
@@ -412,6 +423,8 @@ private fun RoomHud(
     /* Above the HUD: with the HUD hidden it takes the touches that would otherwise reach the
      * still-composed controls; with it visible it attaches no pointer input at all. */
     if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+    // Above both: the notch strip beside an open keyboard, where a stray thumb closed it.
+    KeyboardNotchShield(keyboardOpen = isKeyboardOpen)
 }
 
 /**

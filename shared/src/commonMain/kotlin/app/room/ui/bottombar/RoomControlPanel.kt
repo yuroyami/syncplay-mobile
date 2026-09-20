@@ -52,6 +52,15 @@ import app.preferences.watchPref
 import app.theme.Space
 import app.uicomponents.controls.AccentAction
 import app.uicomponents.controls.Feedback
+import androidx.compose.foundation.focusGroup
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
+import app.uicomponents.LocalIsTelevision
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.frames.Modal
@@ -78,6 +87,7 @@ fun RoomControlPanelButton(modifier: Modifier) {
             name = strings.roomControlPanel,
             size = Space.glyphLarge,
             modifier = modifier,
+            focusRequester = cardController.controlsFocus,
             onClick = { cardController.toggleControlPanel() },
         )
     }
@@ -99,8 +109,26 @@ fun RoomControlPanelCard(modifier: Modifier) {
         viewmodel.dispatchOSD { Localization.strings.roomSeekUndone }
     }
 
+    /* A remote cannot find this row on its own: it sits above the seek bar, and a press of Up
+     * from there lands on the transport keys instead. So the row takes focus when it opens and
+     * hands it back to its own glyph when it closes. */
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    val open by cardController.controlPanel.collectAsState()
+    val row = remember { FocusRequester() }
+    var wasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(open, remoteOrKeyboard) {
+        if (!remoteOrKeyboard) return@LaunchedEffect
+        val target = if (open) row else if (wasOpen) cardController.controlsFocus else null
+        wasOpen = open
+        if (target == null) return@LaunchedEffect
+        repeat(8) {
+            if (runCatching { target.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            delay(50.milliseconds)
+        }
+    }
+
     Row(
-        modifier = modifier,
+        modifier = modifier.focusRequester(row).focusGroup(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {

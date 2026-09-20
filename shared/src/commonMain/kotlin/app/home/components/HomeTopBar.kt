@@ -3,6 +3,7 @@ package app.home.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -33,7 +34,10 @@ import app.LocalGlobalViewmodel
 import app.Screen
 import app.home.HomeViewmodel
 import app.i18n.strings
+import androidx.compose.ui.draw.clip
+import app.theme.Radius
 import app.theme.Space
+import app.uicomponents.controls.controlStates
 import app.theme.ThemeMenu
 import app.uicomponents.SynkplayLogo
 import app.uicomponents.SyncplayishText
@@ -57,8 +61,15 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             modifier = Modifier.fillMaxWidth().height(Space.bar).padding(start = Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // The logo is a button (it opens About, which is where solo mode lives), so a remote
+            // and a keyboard get the ring that says where focus is.
+            val logoSource = remember { MutableInteractionSource() }
             Row(
-                modifier = Modifier.clickable(interactionSource = null, indication = null, role = Role.Button) { aboutOpen.value = true },
+                modifier = Modifier
+                    .clip(Radius.controlShape)
+                    .clickable(interactionSource = logoSource, indication = null, role = Role.Button) { aboutOpen.value = true }
+                    .controlStates(logoSource, Radius.controlShape)
+                    .padding(horizontal = Space.gapTight),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SynkplayLogo(modifier = Modifier.size(40.dp))

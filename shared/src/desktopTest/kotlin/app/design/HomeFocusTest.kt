@@ -14,6 +14,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -279,11 +286,42 @@ class HomeFocusTest {
         }
     }
 
+    /**
+     * On a television a remote starts in Username and must reach every part of the form, the join
+     * key above all. Before the remote could leave a text field, the walk ended at Username.
+     */
+    @Test
+    fun aRemoteWalksTheJoinFormOnATelevision() {
+        withHome(TELEVISION, television = true) { form ->
+            // Under keyboard input the form focuses Username after a delay in real time.
+            Thread.sleep(400)
+            form.settle()
+            val walk = mutableListOf(form.focusedName())
+            repeat(4) {
+                form.remote(Key.DirectionDown)
+                walk += form.focusedName()
+            }
+            // Right as often as a person would: the server ports are a row of their own.
+            repeat(6) {
+                if (walk.last() != JOIN) {
+                    form.remote(Key.DirectionRight)
+                    walk += form.focusedName()
+                }
+            }
+            val path = walk.joinToString(" -> ")
+            assertEquals(USERNAME, walk[0], "a remote starts in Username: $path")
+            assertEquals(ROOM, walk[1], "Down leaves Username for Room name: $path")
+            assertTrue(walk.drop(2).first() !in setOf(USERNAME, ROOM), "Down leaves Room name for the server choice: $path")
+            assertTrue(JOIN in walk, "the join key is reachable: $path")
+        }
+    }
+
     private fun withHome(
         size: DpSize,
         fontScale: Float = 1f,
         config: JoinConfig = OFFICIAL,
         screen: @Composable (HomeViewmodel) -> Unit = { HomeScreenUI(it) },
+        television: Boolean = false,
         block: (HomeForm) -> Unit,
     ) {
         DesignHarness.initDatastore()
@@ -299,6 +337,7 @@ class HomeFocusTest {
             val density = Density(2f, fontScale)
             val viewmodel = HomeViewmodel(mutableStateListOf(Screen.Home))
             store.put("home-focus", viewmodel)
+            val focusManagerHolder = arrayOfNulls<FocusManager>(1)
             // The scene is as big as the biggest window a test asks for; the form lives in a
             // state-backed box inside it, so a resize never rebuilds the scene.
             val homeScene = DesignHarness.onUiThread {
@@ -308,11 +347,14 @@ class HomeFocusTest {
                     density = density,
                     coroutineContext = Dispatchers.Main.immediate,
                 ) {
-                    DesignHarness.Frame(TRINITY) {
+                    DesignHarness.Frame(TRINITY, television = television) {
                         CompositionLocalProvider(
                             LocalPlatformWindowInsets provides insets,
-                            LocalInputModeManager provides TouchInput,
+                            // A television is never in touch mode; its remote is a keyboard to Compose.
+                            LocalInputModeManager provides if (television) KeyboardInput else TouchInput,
                         ) {
+                            val focusManager = LocalFocusManager.current
+                            SideEffect { focusManagerHolder[0] = focusManager }
                             Box(Modifier.size(windowSize.value).then(WindowInsetsElement(insets))) {
                                 screen(viewmodel)
                             }
@@ -321,7 +363,7 @@ class HomeFocusTest {
                 }
             }
             scene = homeScene
-            val form = HomeForm(homeScene, windowSize, keyboardPx, density)
+            val form = HomeForm(homeScene, windowSize, keyboardPx, density) { focusManagerHolder[0] }
             form.settle()
             block(form)
         } finally {
@@ -362,6 +404,11 @@ class HomeFocusTest {
         override fun requestInputMode(inputMode: InputMode): Boolean = false
     }
 
+    private object KeyboardInput : InputModeManager {
+        override val inputMode: InputMode get() = InputMode.Keyboard
+        override fun requestInputMode(inputMode: InputMode): Boolean = false
+    }
+
     /** A window whose only inset is a soft keyboard. The harness has no insets of its own. */
     private class KeyboardInsets(heightPx: () -> Int) : PlatformWindowInsets {
         override val ime: PlatformInsets = PlatformInsets(getBottom = heightPx)
@@ -389,6 +436,7 @@ class HomeFocusTest {
         private val windowSize: MutableState<DpSize>,
         private val keyboardPx: MutableState<Int>,
         private val density: Density,
+        private val focusManager: () -> FocusManager?,
     ) {
         private var frame = 0L
 
@@ -506,6 +554,37 @@ class HomeFocusTest {
 
         fun isFocused(name: String): Boolean = editor(name).config.getOrNull(SemanticsProperties.Focused) == true
 
+        /**
+         * A remote's key: down and up, and what Android's root view does with a key nothing took,
+         * which the desktop scene lacks: an arrow moves focus that way.
+         */
+        @OptIn(InternalComposeUiApi::class)
+        fun remote(key: Key) {
+            val taken = DesignHarness.onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }
+            if (!taken) {
+                val direction = when (key) {
+                    Key.DirectionUp -> FocusDirection.Up
+                    Key.DirectionDown -> FocusDirection.Down
+                    Key.DirectionLeft -> FocusDirection.Left
+                    Key.DirectionRight -> FocusDirection.Right
+                    else -> null
+                }
+                if (direction != null) DesignHarness.onUiThread { focusManager()?.moveFocus(direction) }
+            }
+            settle(3)
+            DesignHarness.onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)) }
+            settle(5)
+        }
+
+        /** The focused control, named the way a screen reader would name it. */
+        fun focusedName(): String {
+            val node = allNodes().lastOrNull { it.config.getOrNull(SemanticsProperties.Focused) == true } ?: return "(nothing)"
+            fun SemanticsNode.label(): String? =
+                config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()
+                    ?: config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text
+            return node.label() ?: descendants(node).firstNotNullOfOrNull { it.label() } ?: "(unnamed ${node.id})"
+        }
+
         fun hasText(value: String): Boolean = textNode(value) != null
 
         /** Room name under username, with the same left edge. */
@@ -595,7 +674,10 @@ class HomeFocusTest {
         val WIDE_SHORT = DpSize(800.dp, 312.dp)
         val LARGE_TEXT_PHONE = DpSize(412.dp, 867.dp)
         val LARGE_TEXT_SHORT = DpSize(412.dp, 500.dp)
-        val SCENE = DpSize(800.dp, 900.dp)
+        val SCENE = DpSize(960.dp, 900.dp)
+
+        /** A 1080p television at its usual density. */
+        val TELEVISION = DpSize(960.dp, 540.dp)
 
         val OFFICIAL = JoinConfig(user = "yuroyami", room = "movie-night", ip = "syncplay.pl", port = 8997)
         val CUSTOM = JoinConfig(user = "yuroyami", room = "movie-night", ip = "192.168.1.20", port = 8999, pw = "secret")

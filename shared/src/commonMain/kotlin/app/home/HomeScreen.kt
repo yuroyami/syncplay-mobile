@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -123,6 +124,7 @@ import app.utils.availablePlatformPlayerEngines
 import app.utils.consumePendingShortcut
 import app.utils.ioDispatcher
 import app.utils.platform
+import app.uicomponents.LocalIsTelevision
 import app.utils.platformCallback
 import app.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
@@ -217,6 +219,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         }
     }
 
+    val television = LocalIsTelevision.current
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
     LaunchedEffect(null) {
@@ -509,7 +512,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             error = validate()
                             if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
                         },
-                        onSaveShortcut = if (platform == Platform.Desktop) null else {
+                        // A television launcher pins nothing, so the key would promise what it cannot do.
+                        onSaveShortcut = if (platform == Platform.Desktop || television) null else {
                             {
                                 error = validate()
                                 if (error == null) {
@@ -627,14 +631,23 @@ internal fun JoinRow(onJoin: () -> Unit, onSaveShortcut: (() -> Unit)?) {
 
 /**
  * The shortcut saver: a glyph key at the end of its row. The first tap unfolds it across the
- * row to say what it does; the second tap does it and folds it back.
+ * row to say what it does; the second tap does it and folds it back. Left alone for three
+ * seconds, it folds back without saving.
  */
 @Composable
 private fun ShortcutKey(onSave: () -> Unit) {
     val p = palette
     var expanded by remember { mutableStateOf(false) }
     val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
     val name = strings.connectButtonSaveshortcut
+    // A press holds the key open, so it never folds under a finger that is about to confirm.
+    LaunchedEffect(expanded, pressed) {
+        if (expanded && !pressed) {
+            delay(3000)
+            expanded = false
+        }
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val width by animateDpAsState(if (expanded) maxWidth else Space.touchMin, Motion.move(), label = "shortcutWidth")
         val textAlpha by animateFloatAsState(if (expanded) 1f else 0f, Motion.move(), label = "shortcutText")
