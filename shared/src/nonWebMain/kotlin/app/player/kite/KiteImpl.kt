@@ -1,3 +1,5 @@
+@file:OptIn(AudioVizAuthoringApi::class)
+
 package app.player.kite
 
 import androidx.annotation.UiThread
@@ -25,7 +27,6 @@ import app.player.models.TrackTrait
 import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
 import app.preferences.Preferences.AUDIO_VISUALIZATION
 import app.preferences.Preferences.KITE_AUDIO_VIZ_DIRECTOR
-import app.preferences.Preferences.KITE_AUDIO_VIZ_DRAWING
 import app.preferences.Preferences.KITE_DEBUG_STATS
 import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
 import app.preferences.Preferences.KITE_EQ_CONTRAST
@@ -47,7 +48,10 @@ import io.github.yuroyami.kiteplayer.audioviz.KiteAudioViz
 import app.player.models.VisualizerControls
 import app.player.models.shouldShowAudioVisualization
 import app.preferences.set
+import io.github.yuroyami.kiteplayer.audioviz.AudioVizAuthoringApi
 import io.github.yuroyami.kiteplayer.audioviz.AudioVizState
+import io.github.yuroyami.kiteplayer.audioviz.SongMapStore
+import io.github.yuroyami.kiteplayer.audioviz.SongScanPolicy
 import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
@@ -755,13 +759,18 @@ internal class KiteImpl(
                 }.collectAsState(initial = false)
                 // Listen before media opens so short clips retain their first audio buffers.
                 // Disabling the preference detaches the tap as well as removing the drawing.
-                val viz = rememberAudioVizState(player)
+                // The default scan policy reads plain file paths only. Nearly everything here is a
+                // URI (a picked file, a link, a YouTube stream), so the scan is opened to any
+                // source and its maps are kept in the cache directory across runs.
+                val viz = rememberAudioVizState(player, songScan = SONG_SCAN, songMapStore = songMapStore)
                 val scope = rememberCoroutineScope()
                 LaunchedEffect(viz) {
                     // Zero waits for a musical boundary however long that takes, and plenty of
                     // music offers none for minutes; the sample uses the same number.
                     viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
-                    viz.catalogue.firstOrNull { it.name == KITE_AUDIO_VIZ_DRAWING.value() }?.let { viz.drawing = it }
+                    // Every display frame on a 120 Hz phone costs battery for no visible gain.
+                    viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
+                    // The first drawing is the library's random pick; only the director switch is kept.
                     viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
                 }
                 DisposableEffect(viz) {
@@ -790,17 +799,26 @@ internal class KiteImpl(
 
         /** Longest the director holds one drawing with no boundary before the next beat changes it. */
         const val DIRECTOR_MAX_HOLD_SECONDS = 30f
+
+        /** The visualizer redraws at most this often, whatever the display's rate. */
+        const val VISUALIZER_FRAMES_PER_SECOND = 60
+
+        /** Every source the player can open may be scanned a second time for its song map. */
+        val SONG_SCAN = SongScanPolicy(localFiles = true, network = true, customReaders = true)
+
+        /** Finished song maps, kept between runs; a map is about ten kilobytes. */
+        val songMapStore: SongMapStore by lazy {
+            getCacheDirectoryPath("songmaps")?.let { SongMapStore.inDirectory(it) } ?: SongMapStore.None
+        }
     }
 }
 
-/** The tracks card's view of the visualizer: reads are snapshot state, writes also persist the pick. */
+/** The tracks card's view of the visualizer: reads are snapshot state, the director switch persists. */
 private class KiteVisualizerControls(private val viz: AudioVizState, private val scope: CoroutineScope) : VisualizerControls {
     override val drawings: List<String> = viz.catalogue.map { it.name }
     override val showing: Int get() = viz.catalogue.indexOf(viz.showing)
     override fun show(index: Int) {
-        val drawing = viz.catalogue.getOrNull(index) ?: return
-        viz.drawing = drawing
-        scope.launch { KITE_AUDIO_VIZ_DRAWING.set(drawing.name) }
+        viz.drawing = viz.catalogue.getOrNull(index) ?: return
     }
     override var directed: Boolean
         get() = viz.directed

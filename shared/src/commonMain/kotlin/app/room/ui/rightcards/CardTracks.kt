@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,9 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +45,7 @@ import app.player.models.channelBadge
 import app.player.models.codecBadge
 import app.player.models.trackLanguage
 import app.preferences.Preferences.AUDIO_VISUALIZATION
+import app.preferences.Preferences.SHOW_SETTING_DESCRIPTIONS
 import app.preferences.set
 import app.preferences.watchPref
 import app.room.ui.bottombar.SubtitleSearchModal
@@ -56,6 +59,8 @@ import app.uicomponents.controls.Icon
 import app.uicomponents.controls.ListRow
 import app.uicomponents.controls.Rocker
 import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.RowLabel
+import app.uicomponents.controls.RowValue
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Segmented
@@ -204,26 +209,38 @@ internal fun VisualizerRows(tracks: List<Track>, visualization: Boolean, onVisua
     SwitchRow(strings.uisettingKiteAudioVizTitle, strings.roomVisualizerSummary, drawing, onVisualization)
     if (drawing && visualizer != null) {
         SwitchRow(strings.roomVisualizerDirector, strings.roomVisualizerDirectorSummary, visualizer.directed) { visualizer.directed = it }
-        // The stepper under its label, not beside it: a dock is 240 to 340dp wide and the
-        // stepper keeps its minimum width, so side by side the label wrapped.
-        Column(Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight)) {
-            Text(strings.roomVisualizerPattern, style = Type.value)
-            Stepper(visualizer.drawings, visualizer.showing, visualizer::show, Modifier.fillMaxWidth(),
+        // The stepper beside its label, as a choice row in settings is drawn. The label keeps
+        // one line at its own width and the stepper takes what is left: its minimum width yields
+        // to the row, and a dock is only 240dp wide.
+        ListRow(horizontalPadding = Space.gap) {
+            Text(strings.roomVisualizerPattern, style = Type.label, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = Space.valueCol))
+            RowGap()
+            Stepper(visualizer.drawings, visualizer.showing, visualizer::show, Modifier.weight(1f),
                 wrap = true, autoSize = true, name = strings.roomVisualizerPattern)
         }
     }
 }
 
-/** A title and a note on the left, a rocker on the right. */
+/**
+ * A switch row as the settings screen draws one: the row toggles, the value reads On or Off, and
+ * the note shows under it on a long press or while Show setting descriptions is on.
+ */
 @Composable
 private fun SwitchRow(title: String, note: String, on: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = Space.gap, vertical = Space.gapTight),
-        verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = Type.value)
-            Text(note, style = Type.note, color = palette.inkDim)
-        }
-        Rocker(on, onChange, name = title)
+    val showDescriptions by SHOW_SETTING_DESCRIPTIONS.watchPref()
+    var explain by remember { mutableStateOf(false) }
+    ListRow(onClick = { onChange(!on) }, onLongClick = { explain = !explain }, horizontalPadding = Space.gap) {
+        RowLabel(title)
+        RowGap()
+        RowValue(if (on) strings.settingsValueOn else strings.settingsValueOff, accent = on, width = 36.dp)
+        RowGap()
+        // The row is the one toggleable node; a second node on the rocker read as two switches.
+        Rocker(on = on, onChange = onChange, modifier = Modifier.clearAndSetSemantics { })
+    }
+    if (showDescriptions || explain) {
+        Text(note, style = Type.note, color = palette.inkDim,
+            modifier = Modifier.fillMaxWidth().offset(y = -Space.gapTight).padding(start = Space.gap, end = Space.gap, bottom = Space.gapTight))
     }
 }
 

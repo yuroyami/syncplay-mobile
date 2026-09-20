@@ -66,6 +66,10 @@ class TracksVisualizerTest {
         val (drawing, result) = texts(listOf(video(false)), on = true, controls, "tracks-viz-drawing")
         assertTrue("Director" in drawing && "Pattern" in drawing, "director and pattern rows while drawing: $drawing")
         assertTrue(controls.drawings[2] in drawing, "the stepper names the drawing on screen: $drawing")
+        assertFalse(drawing.any { "Draws the sound" in it || "Changes the pattern" in it },
+            "a note waits for a long press, as on every settings row: $drawing")
+        val label = result.textLayouts.first { it.layoutInput.text.text == "Pattern" }
+        assertTrue(label.lineCount == 1, "the pattern label stays on one line beside its stepper")
         result.assertAllTextFits()
 
         val (off, _) = texts(listOf(video(false)), on = false, controls, "tracks-viz-off")
@@ -73,13 +77,14 @@ class TracksVisualizerTest {
     }
 
     /**
-     * A phone holds the card at about 236dp. The rows scroll with the track list, so the
-     * stepper and the tracks are a swipe away. As a fixed header they pushed both out of the card.
+     * A phone holds the card at about 236dp, and a large font makes it shorter still. The rows
+     * scroll with the track list, so the stepper and the tracks are a swipe away. As a fixed
+     * header they pushed both out of the card.
      */
     @Test
     fun aShortCardScrollsToTheStepperAndTheTracks() {
         val controls = FakeControls()
-        val heightDp = 236
+        val heightDp = 200
         DesignHarness.drive(280, heightDp = heightDp, television = false, content = {
             PanelFrame("Tracks", Modifier.fillMaxSize(), scrollable = false) {
                 TrackControls(
