@@ -32,6 +32,7 @@ import app.preferences.settings.withControl
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.uicomponents.glassEnabledNow
+import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.playableUri
 import app.utils.uri
@@ -86,9 +87,27 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     /** Collects [core]'s events and properties. Cancelled before that core closes. */
     private var coreJob: Job? = null
 
-    /** The last `time-pos` mpv reported, in ms, for when a direct read fails. */
+    /** The last `time-pos` mpv reported, in ms. */
     @Volatile
     private var mpvPos = 0L
+
+    /** The last `seekable` mpv reported. A core that has not spoken yet counts as seekable. */
+    @Volatile
+    private var mpvSeekable = true
+
+    /** The last `volume` mpv reported, as a whole percent on mpv's own 0 to [gainMax] ladder. */
+    @Volatile
+    private var mpvVolume = 100
+
+    /**
+     * Every call into the core runs here, one at a time.
+     *
+     * mpv answers a property read on its own thread, so a call made while that thread is busy
+     * (a slow decode, a stalled stream) waits for it. On the UI thread that wait is a frozen
+     * picture, and past five seconds Android kills the app for not answering a key press. One
+     * thread of our own also keeps calls in the order they were made, which the UI thread did.
+     */
+    private val coreCalls = ioDispatcher.limitedParallelism(1)
 
     private var durationWaitJob: Job? = null
 
@@ -138,31 +157,31 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         icon = Icons.Filled.SettingsInputComponent
     ) {
         +MPV_HARDWARE_ACCELERATION.withControl(PrefExtraConfig.BooleanCallback { b ->
-            withCore { it[MpvProperties.Hwdec] = if (b) HwdecMode.Auto else HwdecMode.No }
+            onCore { it[MpvProperties.Hwdec] = if (b) HwdecMode.Auto else HwdecMode.No }
         })
         +MPV_GPU_NEXT.withControl(PrefExtraConfig.BooleanCallback { b ->
             // A core without a surface must keep vo=null. The next core starts with the new choice.
-            withCore { if (it.attachedSurface != null) it[MpvProperties.Vo] = if (b) VideoOutput.GpuNext else VideoOutput.Gpu }
+            onCore { if (it.attachedSurface != null) it[MpvProperties.Vo] = if (b) VideoOutput.GpuNext else VideoOutput.Gpu }
         })
         +MPV_VIDSYNC.withControl(PrefExtraConfig.MultiChoice(
             entries = { vidsyncEntries.associateWith { it } },
             onItemChosen = { videoSync ->
                 VideoSyncMode.entries.firstOrNull { it.mpvName == videoSync }
-                    ?.let { mode -> withCore { it[MpvProperties.VideoSync] = mode } }
+                    ?.let { mode -> onCore { it[MpvProperties.VideoSync] = mode } }
             }
         ))
         +MPV_INTERPOLATION.withControl(PrefExtraConfig.BooleanCallback { b ->
-            withCore { it[MpvProperties.Interpolation] = b }
+            onCore { it[MpvProperties.Interpolation] = b }
         }).enabledWhen {
             val currentVidSyncMode = MPV_VIDSYNC.value()
             currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
         }
         +MPV_PROFILE.withControl(PrefExtraConfig.MultiChoice(
             entries = { profileEntries.associateWith { it } },
-            onItemChosen = { profile -> withCore { it.command(MpvCommands.applyProfile(profile)) } }
+            onItemChosen = { profile -> onCore { it.command(MpvCommands.applyProfile(profile)) } }
         ))
         +MPV_DEBUG_MODE.withControl(PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
-            withCore { it.command(MpvCommands.scriptBinding("stats/display-page-$itemChosen")) }
+            onCore { it.command(MpvCommands.scriptBinding("stats/display-page-$itemChosen")) }
         })
         // mpv.conf import/export, attached to the engine category so it only shows with mpv.
         +MPV_IMPORT_CONF
@@ -171,21 +190,21 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
-        return withContext(Dispatchers.Main.immediate) {
+        return withContext(coreCalls) {
             (withCore { it[MpvProperties.PlaylistCount].getOrNull() } ?: 0L) > 0L
         }
     }
 
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
-        return withContext(Dispatchers.Main.immediate) {
+        return withContext(coreCalls) {
             withCore { it[MpvProperties.Pause].getOrNull() != true } ?: false
         }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
+        withContext(coreCalls) {
             playerManager.media.value?.tracks?.clear()
 
             val tracks = withCore { it[MpvProperties.TrackList].getOrNull() } ?: return@withContext
@@ -217,7 +236,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
+        withContext(coreCalls) {
             val selection = track?.let { TrackSelection.Id(it.index) } ?: TrackSelection.No
             when (type) {
                 TrackType.SUBTITLE -> withCore { it[MpvProperties.Sid] = selection }
@@ -232,7 +251,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         if (!isInitialized) return
         mediafile.chapters.clear()
 
-        withContext(Dispatchers.Main.immediate) {
+        withContext(coreCalls) {
             val chapters = withCore { it[MpvProperties.ChapterList].getOrNull() } ?: return@withContext
             chapters.forEachIndexed { i, chapter ->
                 mediafile.chapters.add(
@@ -250,19 +269,19 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         if (!isInitialized) return
         super.jumpToChapter(chapter)
 
-        withContext(Dispatchers.Main.immediate) {
+        withContext(coreCalls) {
             withCore { it[MpvProperties.Chapter] = chapter.index.toLong() }
         }
     }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) { reapplyIndexedTrackChoices() }
+        withContext(coreCalls) { reapplyIndexedTrackChoices() }
     }
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
-        withContext(Dispatchers.Main) {
+        withContext(coreCalls) {
             // playableUri gives a file:// uri for our own downloaded subs (a bare path has no
             // scheme, so resolveUri's `when(scheme)` fell through to null) and the content:// uri
             // for picker results.
@@ -285,46 +304,43 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun pause() {
         if (!isInitialized) return
-        withCore { it[MpvProperties.Pause] = true }
+        withContext(coreCalls) { withCore { it[MpvProperties.Pause] = true } }
     }
 
     override suspend fun play() {
         if (!isInitialized) return
-        withCore { it[MpvProperties.Pause] = false }
+        withContext(coreCalls) { withCore { it[MpvProperties.Pause] = false } }
     }
 
     override suspend fun setSpeed(speed: Double) {
         if (!isInitialized) return
-        withCore { it[MpvProperties.Speed] = speed }
+        withContext(coreCalls) { withCore { it[MpvProperties.Speed] = speed } }
     }
 
-    override suspend fun isSeekable(): Boolean {
-        if (!isInitialized) return false
-        return withContext(Dispatchers.Main.immediate) {
-            // Only report non-seekable when mpv explicitly says so (e.g. live streams); default to
-            // seekable if the property isn't available yet so the position tracker keeps polling.
-            withCore { it[MpvProperties.Seekable].getOrNull() } ?: true
-        }
-    }
+    /**
+     * The observed value, not a read: the tracker asks twice a second, and mpv only says "not
+     * seekable" for a live stream, which is a fact about the file rather than the moment.
+     */
+    override suspend fun isSeekable(): Boolean = isInitialized && mpvSeekable
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
+        /* Where mpv is about to be. A paused core reports no new time-pos for a while, and until
+         * it does every reader here would answer with the position before the jump: two jumps in
+         * a row then both counted from the same place. */
+        mpvPos = toPositionMs
         // time-pos is a double, so seeks and chapter jumps keep their sub-second precision.
-        withCore { it[MpvProperties.TimePos] = toPositionMs / 1000.0 }
+        onCore { it[MpvProperties.TimePos] = toPositionMs / 1000.0 }
     }
 
-    override fun currentPositionMs(): Long {
-        if (!isInitialized) return 0L
-        // A direct read is fresher than the observed value, which stays as the fallback.
-        val precise = withCore { it[MpvProperties.TimePos].getOrNull() }
-        return if (precise != null) (precise * 1000.0).toLong() else mpvPos
-    }
+    /** mpv's own `time-pos` as it last reported it. [seekTo] samples the target, so a seek shows at once. */
+    override fun currentPositionMs(): Long = if (isInitialized) mpvPos else 0L
 
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return ""
-        return withContext(Dispatchers.Main.immediate) {
+        return withContext(coreCalls) {
             withCore { mpv ->
                 // mpv prints this option with %f, so its values compare as the strings below.
                 val currentAspect = mpv.getString("video-aspect-override")
@@ -366,7 +382,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
+        withContext(coreCalls) {
             val s: Double = when {
                 newSize == 16 -> 1.0
                 newSize > 16 -> 1.0 + (newSize - 16) * 0.05
@@ -438,6 +454,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         core?.let { old -> runCatching { old[MpvProperties.Pause] = true } }
         core = null
         mpvPos = 0L
+        mpvSeekable = true
     }
 
     /** Follows [mpv]'s events and the four properties the room shows, until [releaseCore]. */
@@ -456,6 +473,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             }
         }
         scope.follow(mpv, mpv.observe(MpvProperties.TimePos)) { if (it != null) mpvPos = (it * 1000).toLong() }
+        // Read on the UI thread, so both are followed rather than asked for: see [coreCalls].
+        scope.follow(mpv, mpv.observe(MpvProperties.Seekable)) { if (it != null) mpvSeekable = it }
+        scope.follow(mpv, mpv.observe(MpvProperties.Volume)) { if (it != null) mpvVolume = it.toInt() }
         scope.follow(mpv, mpv.observe(MpvProperties.Duration)) {
             if (it != null) playerManager.timeFullMillis.value = (it * 1000).toLong()
         }
@@ -521,21 +541,29 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         }
     }
 
+    /** Sends [block] to the core and returns at once, for a caller that cannot wait (the UI thread). */
+    private fun onCore(block: (Mpv) -> Unit) {
+        playerScopeIO.launch(coreCalls) { withCore(block) }
+    }
+
     /* mpv's own volume property is the whole ladder: 0 to 100 is its output, 100 to 200 is
      * amplification once volume-max has been raised at start. */
-    override fun getEngineVolume(): Int = currentVolume().coerceIn(0, 100)
+    override fun getEngineVolume(): Int = mpvVolume.coerceIn(0, 100)
     override fun setEngineVolume(percent: Int) {
-        withCore { it[MpvProperties.Volume] = percent.coerceIn(0, 100).toDouble() }
+        setVolume(percent.coerceIn(0, 100))
     }
 
     override val gainMax: Int = 200
-    override fun getGain(): Int = currentVolume().coerceIn(100, gainMax)
+    override fun getGain(): Int = mpvVolume.coerceIn(100, gainMax)
     override fun setGain(percent: Int) {
-        withCore { it[MpvProperties.Volume] = percent.coerceIn(100, gainMax).toDouble() }
+        setVolume(percent.coerceIn(100, gainMax))
     }
 
-    /** mpv's volume as a whole percent, 100 when there is no core. */
-    private fun currentVolume(): Int = (withCore { it[MpvProperties.Volume].getOrNull() } ?: 100.0).toInt()
+    /** The slider moves now; mpv's own value follows and comes back through the observed property. */
+    private fun setVolume(percent: Int) {
+        mpvVolume = percent
+        onCore { it[MpvProperties.Volume] = percent.toDouble() }
+    }
 
     private companion object {
         /** The video-sync modes the setting offers, in mpv's order. */
