@@ -747,8 +747,6 @@ object Preferences {
     }
     /** Whether the visualizer's director changes the drawing with the music. Set from the tracks card. */
     val KITE_AUDIO_VIZ_DIRECTOR = Pref("pref_kite_audio_viz_director", true)
-    /** The drawing the viewer last picked, by name. Empty keeps the engine's first. */
-    val KITE_AUDIO_VIZ_DRAWING = Pref("pref_kite_audio_viz_drawing", "")
     /** ------------ KitePlayer Settings -------------*/
     val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
         title = { it.uisettingKiteComposeRendererTitle }

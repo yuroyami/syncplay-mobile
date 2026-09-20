@@ -3,6 +3,7 @@ package app.room
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.ui.focus.FocusRequester
 import app.AbstractManager
+import app.player.PlayerImpl.TrackType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.concurrent.Volatile
 
@@ -41,6 +42,8 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val tabCardSharedPlaylist = MutableStateFlow(false)
     val tabCardRoomPreferences = MutableStateFlow(false)
     val tabCardTracks = MutableStateFlow(false)
+    /** The tab the tracks card shows. Kept here because the card leaves the composition with the HUD. */
+    val tracksTab = MutableStateFlow(TrackType.AUDIO)
     val tabCardGestures = MutableStateFlow(false)
     val tabCardSeekTo = MutableStateFlow(false)
     val tabCardAddMedia = MutableStateFlow(false)

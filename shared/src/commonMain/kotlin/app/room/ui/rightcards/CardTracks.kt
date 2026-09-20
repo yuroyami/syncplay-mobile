@@ -136,6 +136,9 @@ object CardTracks {
                 onChoose = ::choose,
                 onImport = { subtitlePicker.launch() },
                 onSearch = { showSearch = true },
+                // The card leaves the composition with the HUD, so the tab lives in the room state.
+                initialType = ui.tracksTab.value,
+                onTypeChange = { ui.tracksTab.value = it },
             )
         }
         SubtitleSearchModal(open = showSearch, onDismiss = { showSearch = false })
@@ -149,6 +152,7 @@ internal fun TrackControls(
     visualization: Boolean, onVisualization: (Boolean) -> Unit,
     onChoose: (Track?, TrackType) -> Unit, onImport: () -> Unit, onSearch: () -> Unit,
     enabled: Boolean = true, initialType: TrackType = TrackType.AUDIO, visualizer: VisualizerControls? = null,
+    onTypeChange: (TrackType) -> Unit = {},
 ) {
     val types = listOf(TrackType.AUDIO, TrackType.SUBTITLE) +
         if (supportsVideo || supportsVisualization) listOf(TrackType.VIDEO) else emptyList()
@@ -160,7 +164,7 @@ internal fun TrackControls(
         TrackType.VIDEO -> strings.roomTrackTabVideo
     } }
     Column(Modifier.fillMaxSize()) {
-        Segmented(labels, types.indexOf(selectedType), { active = types[it] },
+        Segmented(labels, types.indexOf(selectedType), { active = types[it]; onTypeChange(active) },
             Modifier.fillMaxWidth().padding(Space.gapTight), autoSize = true)
         if (selectedType == TrackType.SUBTITLE) {
             Row(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight), horizontalArrangement = Arrangement.spacedBy(Space.gapTight)) {
