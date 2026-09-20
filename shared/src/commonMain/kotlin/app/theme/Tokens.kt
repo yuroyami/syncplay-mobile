@@ -227,6 +227,16 @@ data class Palette(
 /** Defaults to the brand theme so previews and the render harness need no provider. */
 val LocalPalette = staticCompositionLocalOf { Palette.from(TRINITY.dynamicScheme, TRINITY) }
 
+/**
+ * The palette of the surface a screen draws on, which a dialog goes back to.
+ *
+ * [LocalPalette] is not always the screen's: a control that fills itself with the brand gradient
+ * swaps in a palette whose ink reads on that gradient. A dialog raised from inside such a control
+ * is its own surface, so it would otherwise write that control's dark ink on its own dark panel.
+ * Provided next to [LocalPalette] by the app root and by the room.
+ */
+val LocalSurfacePalette = staticCompositionLocalOf { Palette.from(TRINITY.dynamicScheme, TRINITY) }
+
 val palette: Palette @Composable @ReadOnlyComposable get() = LocalPalette.current
 
 /** Which kind of surface something is. The treatment per tier is in GlassSurface.kt. */

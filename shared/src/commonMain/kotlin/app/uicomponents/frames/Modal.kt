@@ -35,24 +35,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.theme.Motion
@@ -62,9 +71,14 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.Tier
 import app.theme.Type
+import app.theme.LocalPalette
+import app.theme.LocalSurfacePalette
+import app.uicomponents.controls.LocalFocusRing
 import app.theme.palette
 import app.uicomponents.DialogBackdropBlur
 import app.uicomponents.LocalInDialogWindow
+import app.uicomponents.LocalIsTelevision
+import app.uicomponents.isTvActivationKey
 import app.uicomponents.controls.CloseGlyph
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Rule
@@ -74,6 +88,14 @@ import app.uicomponents.surface
 
 /** The three modal sizes from DESIGN/POPUPS. On compact widths `Panel` and `Full` become sheets. */
 enum class ModalSize { Ask, Panel, Full }
+
+/**
+ * Where a modal lands its focus when a remote or a keyboard opens it. The first `Field` in the body
+ * claims [LocalModalFieldEntry]; the accent or primary action claims [LocalModalActionEntry].
+ * A destructive action never does, so a confirmation lands on its safe choice. Null outside a modal.
+ */
+internal val LocalModalFieldEntry = staticCompositionLocalOf<FocusRequester?> { null }
+internal val LocalModalActionEntry = staticCompositionLocalOf<FocusRequester?> { null }
 
 /**
  * The one modal frame. Owns the dialog window, the scrim, the entry, focus, Escape and back, and
@@ -88,6 +110,7 @@ fun Modal(
     size: ModalSize = ModalSize.Panel,
     dismissable: Boolean = true,
     inset: Boolean = true,
+    initialFocus: FocusRequester? = null,
     actions: (@Composable RowScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -101,8 +124,15 @@ fun Modal(
         ),
     ) {
         DialogBackdropBlur()
-        CompositionLocalProvider(LocalInDialogWindow provides true) {
-            ModalFrame(size, title, dismissable, onDismiss, actions, inset, body)
+        /* A dialog is its own surface, so it writes with the screen's ink rather than the ink of
+         * whatever raised it. A control that fills itself with the brand gradient swaps in a dark
+         * ink and a white focus ring for its own face; both would be unreadable here. */
+        CompositionLocalProvider(
+            LocalInDialogWindow provides true,
+            LocalPalette provides LocalSurfacePalette.current,
+            LocalFocusRing provides null,
+        ) {
+            ModalFrame(size, title, dismissable, onDismiss, actions, inset, initialFocus, body)
         }
     }
 }
@@ -116,6 +146,7 @@ internal fun ModalFrame(
     onDismiss: () -> Unit,
     actions: (@Composable RowScope.() -> Unit)?,
     inset: Boolean = true,
+    initialFocus: FocusRequester? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
@@ -129,8 +160,29 @@ internal fun ModalFrame(
     val panelMaxWidth = if (windowHeight < SHORT_WINDOW) 720.dp else 440.dp
     val visible = remember { MutableTransitionState(false) }.apply { targetState = true }
     val focusRequester = remember { FocusRequester() }
+    val fieldEntry = remember { FocusRequester() }
+    val actionEntry = remember { FocusRequester() }
     val dismissLabel = strings.modalDismiss
+    val focusManager = LocalFocusManager.current
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    var scrimFocused by remember { mutableStateOf(false) }
+    var contentFocused by remember { mutableStateOf(false) }
+    val windowFocused = LocalWindowInfo.current.isWindowFocused
+    // The scrim takes focus first: it is the node Escape and Back route through.
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+    /* Under a remote or a keyboard focus then moves into the modal, because the scrim's own click
+     * is "dismiss". It goes to the field the caller named, else the first field, else the
+     * confirming action, else the first control the focus system finds. A slow box can compose the
+     * modal before its window has focus, so this retries for a second until something holds it. */
+    LaunchedEffect(remoteOrKeyboard, windowFocused) {
+        if (!remoteOrKeyboard) return@LaunchedEffect
+        repeat(ENTRY_FOCUS_TRIES) {
+            if (contentFocused) return@LaunchedEffect
+            val landed = listOfNotNull(initialFocus, fieldEntry, actionEntry).any { runCatching { it.requestFocus() }.getOrDefault(false) }
+            if (!landed) focusManager.moveFocus(FocusDirection.Enter)
+            delay(50)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -143,11 +195,18 @@ internal fun ModalFrame(
                 else Modifier
             )
             .focusRequester(focusRequester)
+            .onFocusChanged { scrimFocused = it.isFocused }
             .focusable()
             .onPreviewKeyEvent { event ->
-                if (dismissable && event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                    onDismiss(); true
-                } else false
+                when {
+                    dismissable && event.type == KeyEventType.KeyDown && event.key == Key.Escape -> { onDismiss(); true }
+                    // Center on the scrim itself would close the modal with nothing chosen; it goes inside instead.
+                    scrimFocused && isTvActivationKey(event.key) -> {
+                        if (event.type == KeyEventType.KeyDown) focusManager.moveFocus(FocusDirection.Enter)
+                        true
+                    }
+                    else -> false
+                }
             },
         contentAlignment = if (sheet) Alignment.BottomCenter else Alignment.Center,
     ) {
@@ -168,6 +227,7 @@ internal fun ModalFrame(
                         }
                     )
                     .surface(Tier.Panel, shape)
+                    .onFocusChanged { contentFocused = it.hasFocus }
                     // Swallows the tap so it never reaches the scrim, with no semantics node of its own.
                     .pointerInput(Unit) { detectTapGestures { } },
             ) {
@@ -188,8 +248,7 @@ internal fun ModalFrame(
                         .weight(1f, fill = size == ModalSize.Full)
                         .verticalScroll(scroll)
                         .then(if (inset) Modifier.padding(horizontal = Space.gutter, vertical = Space.gap) else Modifier.padding(vertical = Space.gapTight)),
-                    content = body,
-                )
+                ) { CompositionLocalProvider(LocalModalFieldEntry provides fieldEntry) { body() } }
                 if (actions != null) {
                     Rule()
                     /* Actions wrap to a second line when they do not fit one: three keys at large
@@ -200,7 +259,7 @@ internal fun ModalFrame(
                         verticalArrangement = Arrangement.spacedBy(Space.gapTight, Alignment.CenterVertically),
                     ) {
                         // FlowRowScope is a RowScope, so the callers' action lambdas run unchanged.
-                        actions()
+                        CompositionLocalProvider(LocalModalActionEntry provides actionEntry) { actions() }
                     }
                 }
             }
@@ -218,6 +277,9 @@ private fun Modifier.widthFraction(fraction: Float, max: Dp): Modifier = layout 
     val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
     layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
 }
+
+/** How many times, 50ms apart, a modal tries to move a remote's focus inside itself. */
+private const val ENTRY_FOCUS_TRIES = 20
 
 /** Under this window height a panel modal widens, because height is what it lacks. */
 private val SHORT_WINDOW = 480.dp

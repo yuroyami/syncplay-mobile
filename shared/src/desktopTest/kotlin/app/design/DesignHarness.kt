@@ -9,6 +9,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.runtime.SideEffect
+import app.uicomponents.LocalIsTelevision
 import app.LocalGlobalViewmodel
 import app.SyncplayViewmodel
 import app.preferences.LocalPrefsState
@@ -91,7 +103,7 @@ object DesignHarness {
     }
 
     @Composable
-    fun Frame(theme: SaveableTheme, overVideo: Boolean = false, language: String = "en", content: @Composable () -> Unit) {
+    fun Frame(theme: SaveableTheme, overVideo: Boolean = false, language: String = "en", television: Boolean = false, content: @Composable () -> Unit) {
         val base = Palette.from(theme.dynamicScheme, theme)
         val pal = if (overVideo) base.overVideo() else base
         val prefs = datastoreStateFlow.collectAsState()
@@ -104,6 +116,7 @@ object DesignHarness {
             LocalAppStrings provides (appStrings[language] ?: EnAppStrings),
             // The app pins this in AdamScreen; the harness has to match or Arabic renders mirrored.
             LocalLayoutDirection provides LayoutDirection.Ltr,
+            LocalIsTelevision provides television,
         ) {
             run {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }
@@ -117,6 +130,87 @@ object DesignHarness {
         var result: kotlin.Result<T>? = null
         SwingUtilities.invokeAndWait { result = runCatching(action) }
         return result!!.getOrThrow()
+    }
+
+    /**
+     * Composes [content] in a live scene and lets [drive] press keys against it. Focus belongs to the
+     * composed tree, so what a remote can reach is checkable here without an emulator. A television
+     * runs in keyboard input mode, as a real one does; anything else runs in touch mode.
+     */
+    fun drive(
+        widthDp: Int,
+        heightDp: Int = 600,
+        television: Boolean = true,
+        content: @Composable () -> Unit,
+        drive: Driver.() -> Unit,
+    ) {
+        initDatastore()
+        val density = Density(2f, 1f)
+        val input = FixedInputMode(if (television) InputMode.Keyboard else InputMode.Touch)
+        val driver = Driver()
+        val scene = onUiThread {
+            ImageComposeScene(
+                width = (widthDp * density.density).toInt(),
+                height = (heightDp * density.density).toInt(),
+                density = density,
+                coroutineContext = Dispatchers.Main.immediate,
+            ) {
+                Frame(TRINITY, television = television) {
+                    CompositionLocalProvider(LocalInputModeManager provides input) {
+                        val focusManager = LocalFocusManager.current
+                        SideEffect { driver.focusManager = focusManager }
+                        Box(Modifier.width(widthDp.dp)) { content() }
+                    }
+                }
+            }
+        }
+        try {
+            driver.scene = scene
+            // Entrance effects and the first focus requests need frames before any key lands.
+            driver.frames(20)
+            driver.drive()
+        } finally {
+            onUiThread { scene.close() }
+        }
+    }
+
+    /** Presses keys against a live scene and gives it frames to react, the way a real remote would. */
+    class Driver {
+        internal lateinit var scene: ImageComposeScene
+        internal var focusManager: FocusManager? = null
+        private var nanos = 0L
+
+        fun frames(n: Int = 5) = repeat(n) {
+            nanos += 16_000_000L
+            onUiThread { scene.render(nanos) }
+        }
+
+        /** One press: down, a few frames, up, a few more. A focus move runs in an effect, so it needs them. */
+        @OptIn(InternalComposeUiApi::class)
+        fun press(key: Key, typed: Char? = null) {
+            val codePoint = typed?.code ?: 0
+            val taken = onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown, codePoint = codePoint)) }
+            // What Android's root view does with a key nothing took: arrows move focus, Center enters.
+            if (!taken) androidFocusDirection(key)?.let { direction -> onUiThread { focusManager?.moveFocus(direction) } }
+            frames(3)
+            onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp, codePoint = codePoint)) }
+            frames(5)
+        }
+    }
+
+    /** The mapping in Compose's Android `KeyEvent.toFocusDirection`, which the desktop scene lacks. */
+    private fun androidFocusDirection(key: Key): FocusDirection? = when (key) {
+        Key.DirectionUp -> FocusDirection.Up
+        Key.DirectionDown -> FocusDirection.Down
+        Key.DirectionLeft -> FocusDirection.Left
+        Key.DirectionRight -> FocusDirection.Right
+        Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> FocusDirection.Enter
+        Key.Back, Key.Escape -> FocusDirection.Exit
+        else -> null
+    }
+
+    private class FixedInputMode(override val inputMode: InputMode) : InputModeManager {
+        override fun requestInputMode(inputMode: InputMode): Boolean = false
     }
 
     fun render(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -64,6 +65,12 @@ fun Modifier.pressFeedback(interactionSource: InteractionSource, enabled: Boolea
 }
 
 /**
+ * The focus ring for controls on a surface painted with the brand gradient, where the usual
+ * gradient ring would vanish into its ground. Null everywhere else, which means the gradient ring.
+ */
+val LocalFocusRing = staticCompositionLocalOf<Brush?> { null }
+
+/**
  * Hover, focus and selected treatments from DESIGN/FOUNDATION, drawn behind the content.
  * Hover lifts the ground 6 percent, focus 12 percent plus the gradient border inset by 1dp,
  * selected 8 percent plus a 2dp accent edge on the start side. Nothing moves or scales.
@@ -74,6 +81,7 @@ fun Modifier.controlStates(
     shape: Shape,
     selected: Boolean = false,
     enabled: Boolean = true,
+    focusRing: Brush? = LocalFocusRing.current,
 ): Modifier {
     val hovered by interactionSource.collectIsHoveredAsState()
     val focused by interactionSource.collectIsFocusedAsState()
@@ -100,11 +108,15 @@ fun Modifier.controlStates(
             val stroke = 2.dp.toPx()
             val inner = shape.createOutline(Size(size.width - 2 * inset, size.height - 2 * inset), layoutDirection, this)
             translate(inset, inset) {
-                drawOutline(
-                    outline = inner,
-                    brush = Brush.linearGradient(brand.map { it.copy(alpha = it.alpha * focusAlpha) }),
-                    style = Stroke(stroke),
-                )
+                if (focusRing != null) {
+                    drawOutline(outline = inner, brush = focusRing, alpha = focusAlpha, style = Stroke(stroke))
+                } else {
+                    drawOutline(
+                        outline = inner,
+                        brush = Brush.linearGradient(brand.map { it.copy(alpha = it.alpha * focusAlpha) }),
+                        style = Stroke(stroke),
+                    )
+                }
             }
         }
     }

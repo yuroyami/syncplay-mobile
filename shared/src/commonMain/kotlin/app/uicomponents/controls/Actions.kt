@@ -38,10 +38,13 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+import app.uicomponents.frames.LocalModalActionEntry
 
 /** The primary action: at least 48dp, the brand field, label in the ground colour. */
 @Composable
@@ -54,14 +57,18 @@ fun PrimaryAction(
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
+    // Inside a modal this is the confirming action, where a remote lands when there is no field.
+    val entry = LocalModalActionEntry.current
     Row(
         modifier = modifier
+            .then(entry?.let { Modifier.focusRequester(it) } ?: Modifier)
             .heightIn(min = 48.dp)
             .clip(Radius.controlShape)
             .background(Brush.horizontalGradient(if (enabled) p.brandField else listOf(p.disabled, p.disabled)))
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
             .hoverable(source, enabled)
-            .controlStates(source, Radius.controlShape, enabled = enabled)
+            // The gradient ring would vanish into the gradient fill, so the ring is ink.
+            .controlStates(source, Radius.controlShape, enabled = enabled, focusRing = SolidColor(p.ink))
             .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         verticalAlignment = Alignment.CenterVertically,
@@ -83,8 +90,11 @@ fun PrimaryAction(
 fun AccentAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
     val source = remember { MutableInteractionSource() }
+    // Inside a modal this is the confirming action, where a remote lands when there is no field.
+    val entry = LocalModalActionEntry.current
     Box(
         modifier = modifier
+            .then(entry?.let { Modifier.focusRequester(it) } ?: Modifier)
             .heightIn(min = Space.row)
             .clip(Radius.controlShape)
             .background(if (enabled) p.accent else p.disabled)

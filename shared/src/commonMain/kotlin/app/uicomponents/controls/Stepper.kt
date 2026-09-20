@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -123,6 +124,8 @@ private fun StepperArrow(direction: ChevronDirection, enabled: Boolean, onClick:
         modifier = Modifier
             .width(32.dp)
             .height(Space.row)
+            // Never a focus stop: the stepper itself takes focus and steps on Left and Right.
+            .focusProperties { canFocus = false }
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = name }
             .pointerHoverIcon(PointerIcon.Hand)

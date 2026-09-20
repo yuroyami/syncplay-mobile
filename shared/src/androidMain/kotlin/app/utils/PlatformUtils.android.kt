@@ -87,11 +87,21 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
-/** Android states the mode on UiModeManager; a leanback launcher device answers television. */
-actual fun isTelevision(): Boolean = runCatching {
-    val modes = contextObtainer().getSystemService(android.app.UiModeManager::class.java)
-    modes?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
-}.getOrDefault(false)
+/**
+ * Android states the mode on UiModeManager, and some boxes carry the leanback feature without
+ * reporting the television mode, so both are asked (as pull request #159 did). Cached: the answer
+ * cannot change while the process lives, and asking is a system service call.
+ */
+private val television: Boolean by lazy {
+    runCatching {
+        val context = contextObtainer()
+        val modes = context.getSystemService(android.app.UiModeManager::class.java)
+        modes?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION ||
+            context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+    }.getOrDefault(false)
+}
+
+actual fun isTelevision(): Boolean = television
 
 /** Android answers this directly, honouring both the locale and the user's own override. */
 actual fun deviceUses24HourClock(): Boolean =

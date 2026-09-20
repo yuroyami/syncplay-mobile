@@ -1,5 +1,13 @@
 package app.uicomponents.controls
 
+import app.uicomponents.isTvActivationKey
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
@@ -84,7 +92,21 @@ fun HelpTip(text: String, modifier: Modifier = Modifier) {
                 onDismissRequest = { open = false },
                 properties = PopupProperties(focusable = true),
             ) {
-                Box(Modifier.widthIn(max = 300.dp).chromeSurface(Radius.panelShape).padding(Space.gap)) {
+                /* The card takes focus, so a remote's Center closes it the way Back does; with no
+                 * focus inside the popup, Center landed nowhere and seemed broken. */
+                val cardFocus = remember { FocusRequester() }
+                LaunchedEffect(Unit) { cardFocus.requestFocus() }
+                Box(
+                    Modifier
+                        .widthIn(max = 300.dp)
+                        .focusRequester(cardFocus)
+                        .focusable()
+                        .onKeyEvent { event ->
+                            if (event.type == KeyEventType.KeyDown && isTvActivationKey(event.key)) { open = false; true } else false
+                        }
+                        .chromeSurface(Radius.panelShape)
+                        .padding(Space.gap),
+                ) {
                     Text(text, style = Type.note, color = Color.White)
                 }
             }
