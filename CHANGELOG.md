@@ -44,6 +44,7 @@ Written for people who use the app. The full engineering history is in the commi
 - Tracks marked as accessibility captions, audio description or forced now say so in the picker.
 - When a file ends, the playlist moves on once, not once per person in the room.
 - A file that is still opening no longer drags the whole room back to the start.
+- iOS with VLC: a video from a network share reported no length at first, and the app filled the gap with a placeholder. Dragging the seek bar then sent the room to a nonsense time, and everyone landed back at the start. The bar now waits until the real length arrives.
 - If you load your file after the room has already started, you now sync to the room instead of sitting paused at the start.
 - A per-user time offset lets two different rips of the same film be watched together.
 - The three drift thresholds (rewind, slowdown, fast-forward) are now settings.
