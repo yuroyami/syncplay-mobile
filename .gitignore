@@ -66,3 +66,6 @@ desktopApp/resources/
 
 # Design notes and working documents. Local only, they are not part of the shipped app.
 /DESIGN/
+
+# Plan documents written by local tooling. They are not project documentation and docs/ is published.
+docs/superpowers/
