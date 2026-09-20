@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner with Android and macOS screenshots: watch together on phones and computers. Available on Android and iOS through Google Play and the App Store. Compatible with original official Syncplay for PC: syncplay.pl and github.com/Syncplay/syncplay.">
+  <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner: your video, everyone in sync, on a big screen and two phones. Available on Android and iOS through Google Play and the App Store. Compatible with original official Syncplay for PC: syncplay.pl and github.com/Syncplay/syncplay.">
 </p>
 
 <p align="center">
-  <b>Android · iOS · Windows · macOS · Linux</b>
+  <b>Android · iOS · Web</b>
 </p>
 
 <p align="center">
@@ -18,9 +18,9 @@
   <a href="docs/DEVELOPING.md">Build</a>
 </p>
 
-Synkplay is an independent [Syncplay](https://syncplay.pl/) client for phones and computers.
+Synkplay is an independent [Syncplay](https://syncplay.pl/) client for phones, tablets and Android TV, with a browser version on the way.
 When one person in the room pauses, plays or skips, the same thing happens for everyone else.
-It works with the official desktop client, so friends on PC can join the same room.
+It speaks the same protocol as the original Syncplay, so friends on a computer can join the same room.
 
 > [!NOTE]
 > Each person opens the same video from their own file or link. Synkplay only keeps playback in step. Nothing from your video or screen is sent to anyone.
@@ -73,7 +73,7 @@ It works with the official desktop client, so friends on PC can join the same ro
 
 Android 8.0 or newer. The IPA needs iOS 14.1 or newer. Store builds usually land a few days after the GitHub release.
 
-There is no desktop download yet. On a computer, [run Synkplay from source](docs/DEVELOPING.md#desktop), or install the [official Syncplay client](https://syncplay.pl/download/) and join the same room.
+The browser version is not ready yet. On a computer, install the [official Syncplay client](https://syncplay.pl/download/) and join the same room.
 
 <details>
 <summary><b>Which download should I choose?</b></summary>
@@ -102,6 +102,7 @@ To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no
 - Set your own time offset when your copy has a longer intro.
 - Load your own subtitle files, on players that support them.
 - Host a room on your own device with **Host mine** on Home.
+- Work the whole app with a remote on Android TV.
 
 <details>
 <summary><b>Also in there</b></summary>
@@ -124,20 +125,14 @@ To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no
   <a href="art/screenshots/android-landscape.png"><img src="art/screenshots/android-landscape.webp" width="500" alt="Android room in landscape: video, playback controls, chat and user info"></a>
 </p>
 
-<p align="center"><sub>Android home (portrait) · Android room (landscape)</sub></p>
-
-<p align="center">
-  <a href="art/screenshots/macos.png"><img src="art/screenshots/macos.webp" width="720" alt="macOS room: video, chat, playback controls and player settings"></a>
-</p>
-
-<p align="center"><sub>macOS room · Click a screenshot to open it full size.</sub></p>
+<p align="center"><sub>Android home (portrait) · Android room (landscape) · Click a screenshot to open it full size.</sub></p>
 
 ## Help
 
 <details>
 <summary><b>Can my friends use Syncplay on PC?</b></summary>
 
-Yes. They join the same server, port and room, and open the same video. Synkplay and the official desktop client mix fine in one room.
+Yes. They join the same server, port and room, and open the same video. Synkplay and the official Syncplay client mix fine in one room.
 
 </details>
 

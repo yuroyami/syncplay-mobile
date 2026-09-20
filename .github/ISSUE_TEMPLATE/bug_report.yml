@@ -21,7 +21,7 @@ body:
     id: platform
     attributes:
       label: Platform
-      options: [Android, iOS, Windows, macOS, Linux]
+      options: [Android, iOS]
     validations:
       required: true
   - type: input
