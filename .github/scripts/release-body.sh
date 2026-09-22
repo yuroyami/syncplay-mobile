@@ -106,12 +106,10 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "> This release is not on Google Play or the App Store yet. Both take a few days to review it."
   echo
 
-  echo "## Changelog"
-  echo
   if [ -n "$PREV" ]; then
-    echo "<details open><summary><b>${VERSION}</b> (everything since v${PREV})</summary>"
+    echo "<details open><summary><h2>Changelog <sub>since v${PREV}</sub></h2></summary>"
   else
-    echo "<details open><summary><b>${VERSION}</b></summary>"
+    echo "<details open><summary><h2>Changelog</h2></summary>"
   fi
   echo
   cat release-changelog.md
@@ -119,66 +117,79 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "</details>"
   echo
 
-  echo "## Dependencies"
-  echo
-  echo "<details><summary><b>The main ones</b>: toolchain, network stack, video engines. Click to unfold.</summary>"
+  echo "<details><summary><h2>Dependencies</h2></summary>"
   echo
   cat "$DEPS"
   echo
   echo "</details>"
   echo
 
-  echo "## Translations"
+  echo "## Translations &nbsp;<a href=\"${WEBLATE}\"><img src=\"https://hosted.weblate.org/widget/syncplay-mobile/svg-badge.svg\" alt=\"Translation status\" height=\"20\"></a>"
   echo
-  echo "[![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/svg-badge.svg)](${WEBLATE})"
-  echo
-  echo "Volunteers translate Synkplay on Weblate. [Add or fix a language](${WEBLATE}), no account setup beyond Weblate itself."
+  echo "Volunteers translate Synkplay on Weblate. [Add or fix a language](${WEBLATE})."
   echo
 
-  echo "## Downloads"
+  echo "<details open><summary><h2>Downloads</h2></summary>"
   echo
 
+  # One cell per build. A release that carries only one Android build gets a one column table.
   if [ -n "$FULL" ] || [ -n "$EXO" ]; then
-    echo "### Android &nbsp;<img src=\"https://img.shields.io/badge/Android-${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white\" alt=\"Android ${ANDROID_MIN} and up\" height=\"20\">"
-    echo
-  fi
+    COLS=0
+    [ -n "$FULL" ] && COLS=$((COLS + 1))
+    [ -n "$EXO" ] && COLS=$((COLS + 1))
+    echo "<table>"
+    echo "<tr><th colspan=\"${COLS}\">Android &nbsp;<img src=\"https://img.shields.io/badge/${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white&label=\" alt=\"Android ${ANDROID_MIN} and up\" height=\"20\"></th></tr>"
 
-  if [ -n "$FULL" ]; then
-    echo "**Full universal build**"
-    echo
-    download_line "$FULL"
-    echo
-    echo "- ✔️ All three engines (ExoPlayer, mpv and KitePlayer)"
-    echo "- ✔️ Works on every phone"
-    echo
-  fi
+    printf '<tr>'
+    [ -n "$FULL" ] && printf '<th>Full universal build</th>'
+    [ -n "$EXO" ] && printf '<th>Lite IzzyOnDroid build</th>'
+    printf '</tr>\n'
 
-  if [ -n "$EXO" ]; then
-    echo "**Lite IzzyOnDroid build**"
-    echo
-    download_line "$EXO"
-    echo
-    echo "- ✔️ Small, and works on every phone"
-    echo "- ❌ ExoPlayer only (mpv and KitePlayer are left out)"
+    printf '<tr>'
+    [ -n "$FULL" ] && printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
+      "$BASE" "$FULL" "$FULL" "$(size_mb "$FILES/$FULL")"
+    [ -n "$EXO" ] && printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
+      "$BASE" "$EXO" "$EXO" "$(size_mb "$FILES/$EXO")"
+    printf '</tr>\n'
+
+    printf '<tr>'
+    [ -n "$FULL" ] && printf '<td>✔️ All three engines (ExoPlayer, mpv and KitePlayer)</td>'
+    [ -n "$EXO" ] && printf '<td>❌ ExoPlayer only (mpv and KitePlayer are left out)</td>'
+    printf '</tr>\n'
+
+    printf '<tr>'
+    [ -n "$FULL" ] && printf '<td>✔️ Works on every phone</td>'
+    [ -n "$EXO" ] && printf '<td>✔️ Small, and works on every phone</td>'
+    printf '</tr>\n'
+    echo "</table>"
     echo
   fi
 
   if [ -n "$IPA" ]; then
-    echo "### iOS &nbsp;<img src=\"https://img.shields.io/badge/iOS-${IOS_MIN}%2B-000000?logo=apple&logoColor=white\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\">"
-    echo
-    download_line "$IPA"
-    echo
-    echo "To sideload, follow the [install guide](https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS). Otherwise get it from the [App Store](https://apps.apple.com/us/app/synkplay/id6760187432)."
+    echo "<table>"
+    echo "<tr><th>iOS &nbsp;<img src=\"https://img.shields.io/badge/${IOS_MIN}%2B-000000?logo=apple&logoColor=white&label=\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\"></th></tr>"
+    printf '<tr><td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td></tr>\n' \
+      "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")"
+    echo "<tr><td>To sideload, follow the <a href=\"https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS\">install guide</a>. Otherwise get it from the <a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\">App Store</a>.</td></tr>"
+    echo "</table>"
     echo
   fi
 
   if [ -n "$DMG" ] || [ -n "$MSI" ] || [ -n "$DEB" ]; then
-    echo "### Desktop"
+    echo "<table>"
+    echo "<tr><th>Desktop</th></tr>"
+    for pair in "macOS:$DMG" "Windows:$MSI" "Linux:$DEB"; do
+      label=${pair%%:*}
+      file=${pair#*:}
+      [ -n "$file" ] || continue
+      printf '<tr><td>%s: <a href="%s/%s"><b>%s</b></a> <sub>%s</sub></td></tr>\n' \
+        "$label" "$BASE" "$file" "$file" "$(size_mb "$FILES/$file")"
+    done
+    echo "</table>"
     echo
-    [ -n "$DMG" ] && { printf 'macOS: '; download_line "$DMG"; echo; }
-    [ -n "$MSI" ] && { printf 'Windows: '; download_line "$MSI"; echo; }
-    [ -n "$DEB" ] && { printf 'Linux (Debian and Ubuntu): '; download_line "$DEB"; echo; }
   fi
+
+  echo "</details>"
 } > release-body.md
 
 echo "release-body.md written: $(wc -l < release-body.md) lines, changelog since ${PREV:-the beginning}"
