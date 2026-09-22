@@ -7,50 +7,69 @@
 # Reads VERSION, GITHUB_REPOSITORY and IOS_MIN_VERSION from the environment, CHANGELOG.md and
 # the git tags from the working tree. Writes release-body.md (the GitHub release) and
 # release-notes.md (this version's changelog section alone, which the AltStore feed carries).
+# <dependencies.md> may be empty or missing; the Dependencies section is then left out.
+#
+# Optional overrides, for rebuilding the page of an older release:
+#   PREV_VERSION    previous release, when the tag before this one was never published
+#   CHANGELOG_FILE  changelog text to use instead of the CHANGELOG.md section
+#   NOTE_FILE       gray note under the header; an empty file means no note
+#   ANDROID_MIN     oldest Android version (default 8.0)
+#   FULL_ENGINES    engines in the full APK (default "ExoPlayer, mpv and KitePlayer")
+#   LITE_MISSING    engines the lite APK lacks (default "mpv or KitePlayer")
 set -euo pipefail
 
 FILES=$1
-DEPS=$2
+DEPS=${2:-}
 : "${VERSION:?VERSION is not set}" "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}"
 BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}"
 IOS_MIN=${IOS_MIN_VERSION:-15.0}
 # android.minSdk=26 in gradle.properties.
-ANDROID_MIN="8.0"
+ANDROID_MIN=${ANDROID_MIN:-8.0}
+FULL_ENGINES=${FULL_ENGINES:-ExoPlayer, mpv and KitePlayer}
+LITE_MISSING=${LITE_MISSING:-mpv or KitePlayer}
 
-# The previous release is the newest v* tag that is not this version, so a re-run of the same
-# version still measures the changelog from the release before it.
-PREV=$(git tag --list 'v*' --sort=-v:refname | grep -vx "v${VERSION}" | head -1 || true)
-PREV=${PREV#v}
-
-# This version's own section, for the AltStore feed and as a check that the section exists.
-awk -v ver="## ${VERSION}" '
-  $0 == ver { found = 1; next }
-  found && /^## / { exit }
-  found { print }
-' CHANGELOG.md > release-notes.md
-if [ ! -s release-notes.md ]; then
-  echo "::error::CHANGELOG.md has no section for ${VERSION}" >&2
-  exit 1
-fi
-
-# CHANGELOG.md is newest first, so everything above the previous release's heading is new.
-# When that heading is absent (the previous release predates the file) the whole file is.
-awk -v stop="## ${PREV}" '
-  !started && /^## / { started = 1 }
-  !started { next }
-  $0 == stop { exit }
-  { print }
-' CHANGELOG.md > release-changelog-raw.md
-
-# One version: drop its heading, since the fold's title covers it.
-# Several versions (an untagged section in between): keep every heading.
-SECTIONS=$(grep -c '^## ' release-changelog-raw.md || true)
-if [ "$SECTIONS" = "1" ]; then
-  sed -e '/^## /d' release-changelog-raw.md | sed -e 's/^### /#### /' -e '/./,$!d' > release-changelog.md
+# The previous release is the newest tag below this version. This version is added to the list,
+# because its tag does not exist yet when a new release is written.
+if [ -n "${PREV_VERSION:-}" ]; then
+  PREV=$PREV_VERSION
 else
-  sed -e 's/^### /#### /' -e 's/^## /### /' release-changelog-raw.md > release-changelog.md
+  PREV=$( { git tag --list 'v*' | sed 's/^v//'; echo "$VERSION"; } | sort -uV \
+    | awk -v v="$VERSION" '$0 == v { print prev; exit } { prev = $0 }')
 fi
-rm -f release-changelog-raw.md
+
+if [ -n "${CHANGELOG_FILE:-}" ]; then
+  cp "$CHANGELOG_FILE" release-notes.md
+  cp "$CHANGELOG_FILE" release-changelog.md
+else
+  # This version's own section, for the AltStore feed and as a check that the section exists.
+  awk -v ver="## ${VERSION}" '
+    $0 == ver { found = 1; next }
+    found && /^## / { exit }
+    found { print }
+  ' CHANGELOG.md > release-notes.md
+  if [ ! -s release-notes.md ]; then
+    echo "::error::CHANGELOG.md has no section for ${VERSION}" >&2
+    exit 1
+  fi
+
+  # From this version's heading down to the previous release's heading.
+  awk -v start="## ${VERSION}" -v stop="## ${PREV}" '
+    $0 == start { started = 1 }
+    !started { next }
+    $0 == stop { exit }
+    { print }
+  ' CHANGELOG.md > release-changelog-raw.md
+
+  # One version: drop its heading, since the fold's title covers it.
+  # Several versions (an untagged section in between): keep every heading.
+  SECTIONS=$(grep -c '^## ' release-changelog-raw.md || true)
+  if [ "$SECTIONS" = "1" ]; then
+    sed -e '/^## /d' release-changelog-raw.md | sed -e 's/^### /#### /' -e '/./,$!d' > release-changelog.md
+  else
+    sed -e 's/^### /#### /' -e 's/^## /### /' release-changelog-raw.md > release-changelog.md
+  fi
+  rm -f release-changelog-raw.md
+fi
 
 size_mb() {
   local bytes
@@ -70,6 +89,13 @@ asset() {
 }
 
 FULL=$(asset "*-full-universal.apk")
+# Older releases also ship one APK per CPU type; they get a line under the universal one.
+ABIS=""
+for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+  f=$(asset "*-full-${abi}.apk")
+  [ -n "$f" ] || continue
+  ABIS="${ABIS}${ABIS:+ · }<a href=\"${BASE}/${f}\">${abi}</a> $(size_mb "$FILES/$f")"
+done
 EXO=$(asset "*-exo-only.apk")
 IPA=$(asset "*-ios.ipa")
 DMG=$(asset "*.dmg")
@@ -95,8 +121,13 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo '</tr></table>'
   echo
   # Store review lags the GitHub release by a few days.
-  echo "> This release is not on Google Play or the App Store yet."
-  echo
+  if [ -z "${NOTE_FILE+set}" ]; then
+    echo "> This release is not on Google Play or the App Store yet."
+    echo
+  elif [ -s "$NOTE_FILE" ]; then
+    cat "$NOTE_FILE"
+    echo
+  fi
 
   if [ -n "$PREV" ]; then
     echo "<details open><summary><h2>Changelog <sub>since v${PREV}</sub></h2></summary>"
@@ -127,14 +158,16 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
     printf '<tr>'
     for f in "$FULL" "$EXO"; do
       if [ -n "$f" ]; then
-        printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
+        printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub>' \
           "$BASE" "$f" "$f" "$(size_mb "$FILES/$f")"
+        [ "$f" = "$FULL" ] && [ -n "$ABIS" ] && printf '<br><sub>One CPU only: %s</sub>' "$ABIS"
+        printf '</td>'
       else
         printf '<td align="center">Not in this release</td>'
       fi
     done
     printf '</tr>\n'
-    echo "<tr><td>✔️ All three engines (ExoPlayer, mpv and KitePlayer)</td><td>❌ ExoPlayer only, no mpv or KitePlayer</td></tr>"
+    echo "<tr><td>✔️ All three engines (${FULL_ENGINES})</td><td>❌ ExoPlayer only, no ${LITE_MISSING}</td></tr>"
     echo "</table>"
     echo
   fi
@@ -166,11 +199,13 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "</details>"
   echo
 
-  echo "<details><summary><h2>Dependencies</h2></summary>"
-  echo
-  cat "$DEPS"
-  echo
-  echo "</details>"
+  if [ -n "$DEPS" ] && [ -s "$DEPS" ]; then
+    echo "<details><summary><h2>Dependencies</h2></summary>"
+    echo
+    cat "$DEPS"
+    echo
+    echo "</details>"
+  fi
 } > release-body.md
 
 echo "release-body.md written: $(wc -l < release-body.md) lines, changelog since ${PREV:-the beginning}"
