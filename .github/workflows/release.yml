@@ -50,7 +50,12 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      # `packages` is spelled out because this pin still asks for `tools` by default, and the
+      # SDK repository stopped serving that package, so sdkmanager fails the job. The pin stays:
+      # a moving tag is what the comment at the top of this file forbids.
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
@@ -79,6 +84,8 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: platform-tools
 
       # AGP needs the NDK to strip packaged libraries and to extract native symbols; nothing
       # native is compiled. About 1GB, pinned in gradle.properties.
@@ -179,6 +186,8 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
