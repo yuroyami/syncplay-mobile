@@ -171,7 +171,7 @@ Translations are the easiest way to help. Bug reports with steps to reproduce, a
 - [Syncplay](https://syncplay.pl/) and [Et0h](https://github.com/Et0h), for the original project and their help.
 - [soredake](https://github.com/soredake), for testing.
 - [Osanosa](https://github.com/Osanosa), for contributions.
-- [mukulhase](https://github.com/mukulhase), for Android TV: the remote controls and the local video list.
+- [mukulhase](https://github.com/mukulhase), for Android TV support.
 - [mvanhorn](https://github.com/mvanhorn), for the Home keyboard fix.
 - [Zhaodaidai](https://github.com/Zhaodaidai), [DoncanC](https://github.com/DoncanC), [ivy-reps](https://github.com/ivy-reps) and everyone translating on Weblate.
 

@@ -14,7 +14,7 @@ DEPS=$2
 : "${VERSION:?VERSION is not set}" "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}"
 BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}"
 IOS_MIN=${IOS_MIN_VERSION:-15.0}
-# minSdk 26 is Android 8.0. gradle.properties carries the number, this carries the name people know.
+# android.minSdk=26 in gradle.properties.
 ANDROID_MIN="8.0"
 
 # The previous release is the newest v* tag that is not this version, so a re-run of the same
@@ -42,9 +42,8 @@ awk -v stop="## ${PREV}" '
   { print }
 ' CHANGELOG.md > release-changelog-raw.md
 
-# A release usually carries one version, and the summary line already names it, so repeating it
-# as a heading inside the fold says the same thing twice. When a release carries more than one
-# version (a section that never got its own tag), every heading stays and steps down two levels.
+# One version: drop its heading, since the fold's title covers it.
+# Several versions (an untagged section in between): keep every heading.
 SECTIONS=$(grep -c '^## ' release-changelog-raw.md || true)
 if [ "$SECTIONS" = "1" ]; then
   sed -e '/^## /d' release-changelog-raw.md | sed -e 's/^### /#### /' -e '/./,$!d' > release-changelog.md
@@ -59,8 +58,7 @@ size_mb() {
   echo "$(( (bytes + 524288) / 1048576 )) MB"
 }
 
-# The first file matching a pattern, or nothing. Matched by pattern rather than by a spelled-out
-# name, so the page follows whatever the build names its outputs.
+# The first file matching a pattern, or nothing.
 asset() {
   local f
   for f in "$FILES"/$1; do
@@ -69,12 +67,6 @@ asset() {
     return 0
   done
   return 0
-}
-
-# One download line: the file name links to the asset, the size follows it.
-download_line() {
-  local file=$1
-  printf '**[`%s`](%s/%s)** (%s)\n' "$file" "$BASE" "$file" "$(size_mb "$FILES/$file")"
 }
 
 FULL=$(asset "*-full-universal.apk")
@@ -92,7 +84,7 @@ ALTSTORE="https://celloserenity.github.io/altdirect/?url=https://raw.githubuserc
 WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
 
 {
-  # The logo sits beside the four store buttons, two per row, in one centred block.
+  # Logo on the left, store buttons in a 2x2 grid.
   echo '<table align="center"><tr>'
   echo "<td align=\"center\" rowspan=\"2\"><img src=\"${RAW}/art/synkplay_app_badge_512.png\" width=\"128\" alt=\"Synkplay\"></td>"
   echo "<td align=\"center\"><a href=\"https://play.google.com/store/apps/details?id=com.yuroyami.syncplay\"><img src=\"${RAW}/art/badges/google-play.png\" width=\"150\" alt=\"Get it on Google Play\"></a></td>"
@@ -102,8 +94,8 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "<td align=\"center\"><a href=\"${ALTSTORE}\"><img src=\"${RAW}/art/badges/AltSource_Blue.png\" width=\"150\" alt=\"Add the AltStore source\"></a></td>"
   echo '</tr></table>'
   echo
-  # True on the day a release is published. Both stores review a build before it appears.
-  echo "> This release is not on Google Play or the App Store yet. Both take a few days to review it."
+  # Store review lags the GitHub release by a few days.
+  echo "> This release is not on Google Play or the App Store yet."
   echo
 
   if [ -n "$PREV" ]; then
@@ -126,13 +118,13 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
 
   echo "## Translations &nbsp;<a href=\"${WEBLATE}\"><img src=\"https://hosted.weblate.org/widget/syncplay-mobile/svg-badge.svg\" alt=\"Translation status\" height=\"20\"></a>"
   echo
-  echo "Volunteers translate Synkplay on Weblate. [Add or fix a language](${WEBLATE})."
+  echo "Help translate Synkplay on [Weblate](${WEBLATE})."
   echo
 
   echo "<details open><summary><h2>Downloads</h2></summary>"
   echo
 
-  # One cell per build. A release that carries only one Android build gets a one column table.
+  # One column per Android build.
   if [ -n "$FULL" ] || [ -n "$EXO" ]; then
     COLS=0
     [ -n "$FULL" ] && COLS=$((COLS + 1))
@@ -154,12 +146,12 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
 
     printf '<tr>'
     [ -n "$FULL" ] && printf '<td>✔️ All three engines (ExoPlayer, mpv and KitePlayer)</td>'
-    [ -n "$EXO" ] && printf '<td>❌ ExoPlayer only (mpv and KitePlayer are left out)</td>'
+    [ -n "$EXO" ] && printf '<td>❌ ExoPlayer only, no mpv or KitePlayer</td>'
     printf '</tr>\n'
 
     printf '<tr>'
     [ -n "$FULL" ] && printf '<td>✔️ Works on every phone</td>'
-    [ -n "$EXO" ] && printf '<td>✔️ Small, and works on every phone</td>'
+    [ -n "$EXO" ] && printf '<td>✔️ Small build, works on every phone</td>'
     printf '</tr>\n'
     echo "</table>"
     echo
@@ -170,7 +162,7 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
     echo "<tr><th>iOS &nbsp;<img src=\"https://img.shields.io/badge/${IOS_MIN}%2B-000000?logo=apple&logoColor=white&label=\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\"></th></tr>"
     printf '<tr><td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td></tr>\n' \
       "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")"
-    echo "<tr><td>To sideload, follow the <a href=\"https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS\">install guide</a>. Otherwise get it from the <a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\">App Store</a>.</td></tr>"
+    echo "<tr><td>To sideload, follow the <a href=\"https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS\">install guide</a>. Otherwise, get it from the <a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\">App Store</a>.</td></tr>"
     echo "</table>"
     echo
   fi

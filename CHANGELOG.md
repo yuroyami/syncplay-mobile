@@ -4,29 +4,29 @@ Written for people who use the app. The full engineering history is in the commi
 
 ## 0.25.0
 
-- Audio files can be played, not only video. (#168, asked for by @gili-gili)
-- Audio files show a visualizer drawn by KitePlayer. It reacts to the sound, and the room's player settings turn it off.
-- The visualizer changes pattern by itself, or you pick a pattern from the row.
-- The keyboard no longer closes after the first letter on Home, so the name and room fields work again. (#167 and #170, reported by @gili-gili and @rkpsx7, fixed by @mvanhorn)
-- A remote reaches every control in the room and on Home, so the app works on Android TV. (#159, by @mukulhase)
-- On Android TV, where there is no file picker, the app lists the videos on the device. (#163, by @mukulhase)
-- Invites can be shared as an https link, which messengers make clickable. The page opens the app, or links to the stores when the app is missing.
-- The room's side panels are now one panel, with one set of controls and one way to open it.
-- You can set the chat colours, and event lines colour the names they mention.
+- Audio files can now be played. (#168, requested by @gili-gili)
+- Audio files show a visualizer. You can turn it off in the room's player settings.
+- The visualizer changes patterns on its own, or you can pick one.
+- Fixed the keyboard closing after one letter on Home. (#167, #170, reported by @gili-gili and @rkpsx7, fixed by @mvanhorn)
+- Android TV: every control now works with a remote. (#159, contributed by @mukulhase)
+- Android TV: the app lists your videos when no file picker is available. (#163, contributed by @mukulhase)
+- Invite links are now https links, clickable in any messenger. The page opens the app or links to the stores.
+- The room's side panels are merged into one.
+- You can now set chat colours, and names in event messages are coloured.
 - Long press a GIF to save it or copy its link. Long press a message to copy it.
-- Messages shown over the video fade after a few seconds, and new ones are marked.
-- The GIF and sticker controls share one row, which leaves more space for results. Sending one clears its search text from the chat input.
-- You can reorder the shared playlist by dragging a row, and the app offers your list back after a dropout.
-- Track lists say what each track is, and you can select a video track.
-- Android mpv now comes prebuilt from libmpvKt, which also fixed its video track selection.
-- iOS keeps the screen on for every room entry and when you switch players.
-- iOS VLC reads playback time from the engine, so a stalled notification no longer freezes the seek bar or rewinds the room. (#158, reported by @yvchenko)
-- Repeated fast seeks keep the newest room update, and a new file no longer inherits an unfinished seek.
-- iOS VLC completes seeks in Picture-in-Picture, and watching alone offers your saved position again.
-- Home describes each player and what it supports.
-- The app accepts only its own join links, and refuses a port outside 1 to 65535 with a message.
-- Screen readers can reach the join form.
-- You can rebuild the ExoPlayer-only APK from source and compare it with the published file, so IzzyOnDroid can verify it. (#105 and #172, raised by @IzzySoft)
+- Chat messages over the video fade out, and new ones are marked.
+- GIF and sticker controls share one row. Sending one clears the search text.
+- The shared playlist can be reordered by dragging. After a disconnect, the app offers to restore it.
+- Tracks show more detail, and video tracks can be selected.
+- mpv on Android now uses libmpvKt, which fixes video track selection.
+- iOS: the screen stays on in rooms, including after switching players.
+- iOS VLC: fixed the seek bar freezing and the room jumping backward. (#158, reported by @yvchenko)
+- Fixed rapid seeks losing the latest position, and an unfinished seek moving a new file.
+- iOS VLC: fixed seeking in Picture-in-Picture, and the resume offer when watching alone.
+- Home shows what each player supports.
+- Invalid join links and port numbers are now rejected.
+- Screen readers can now reach the join form.
+- The ExoPlayer-only APK is now reproducible, so IzzyOnDroid can verify it. (#105, #172, requested by @IzzySoft)
 
 ## 0.24.0
 

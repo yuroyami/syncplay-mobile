@@ -1,11 +1,11 @@
-Audio files can be played, not only video, and they show a visualizer drawn by KitePlayer.
+Audio files can now be played, with a visualizer.
 
-The keyboard no longer closes after the first letter on Home, so the name and room fields work again.
+Fixed the keyboard closing after one letter on Home.
 
-A remote reaches every control, so the app works on Android TV, and it lists the videos on the device.
+Android TV: every control now works with a remote, and the app lists your videos when no file picker is available.
 
-Invites can be shared as an https link.
+Invite links are now https links, clickable in any messenger.
 
-The room's side panels are now one panel. You can set the chat colours and reorder the playlist by dragging.
+The room's side panels are merged into one. You can now set chat colours and reorder the playlist by dragging.
 
-Track, seek and screen-on fixes.
+Also fixes for tracks, seeking and keeping the screen on.
