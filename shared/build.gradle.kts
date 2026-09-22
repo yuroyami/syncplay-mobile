@@ -383,9 +383,15 @@ ksp {
     arg("lyricist.xml.resourcesPath", file("src/commonMain/composeResources").absolutePath)
 }
 
-/* Every compilation reads the generated sources, so all of them wait for the generator. */
+/* The generator writes the language table in whatever order it read the resource folders, which
+ * differs per machine and reaches the compiled code. Sorting it is what lets a published APK be
+ * rebuilt and compared byte for byte. See buildSrc/LocaleOrder.kt. */
+val sortGeneratedLocales = with(LocaleOrder) { registerLocaleOrderTask() }
+
+/* Every compilation reads the generated sources, so all of them wait for the generator, and for
+ * the sort that follows it. */
 tasks.matching { it.name.startsWith("compile") || it.name.startsWith("ksp") }.configureEach {
-    if (name != "kspCommonMainKotlinMetadata") dependsOn("kspCommonMainKotlinMetadata")
+    if (name != "kspCommonMainKotlinMetadata") dependsOn(sortGeneratedLocales)
 }
 
 /* Lint's host-test model reads KSP output. Gradle 9 refuses to infer the ordering and fails the

@@ -122,7 +122,6 @@ jobs:
           keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOP
 
       # One invocation. The ABI splits that used to keep the APK and the AAB in separate
@@ -195,7 +194,6 @@ jobs:
           keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOP
 
       - name: Build APK
@@ -280,12 +278,6 @@ jobs:
           xcode-version: latest-stable
 
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
-
-      - name: Create local.properties
-        run: |
-          cat > local.properties <<EOP
-          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
-          EOP
 
       # Let KiteConfig stamp its resolved iOS version and rebuild counter before Xcode
       # reads them. The same model supplies the build number for the AltStore feed.

@@ -9,6 +9,11 @@ plugins {
 // Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
 val exoOnly = AppConfig.resolveExoOnly(providers)
 
+/* The deliberate route to a release build with no keystore (-PunsignedRelease=true), for anyone
+ * checking that a published APK was built from this source. The APK it writes says "unsigned" in
+ * its name, so it can never be mistaken for a release. README documents the command. */
+val unsignedRelease = providers.gradleProperty("unsignedRelease").orNull.toBoolean()
+
 android {
     namespace = "androidApp"
     // Pinned for reproducible builds (issue #105): AGP's default build-tools can resolve
@@ -45,8 +50,12 @@ android {
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-        signingConfigs.findByName("synkplay_keystore")?.let { config ->
-            signingConfig = config
+        // An unsigned release is unsigned even on a machine that holds the keystore, or the name
+        // would say one thing and the file would be another. Debug signs itself below.
+        if (!unsignedRelease) {
+            signingConfigs.findByName("synkplay_keystore")?.let { config ->
+                signingConfig = config
+            }
         }
     }
 
@@ -59,8 +68,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             /* An unsigned APK under a release filename is indistinguishable from a real one until
-             * a device refuses to install it. A missing keystore stops the build instead. */
-            if (signingConfigs.findByName("synkplay_keystore") == null) {
+             * a device refuses to install it. A missing keystore stops the build instead, unless
+             * the build asked for an unsigned one on purpose. */
+            if (signingConfigs.findByName("synkplay_keystore") == null && !unsignedRelease) {
                 gradle.taskGraph.whenReady {
                     val releasing = allTasks.any { it.path.contains("Release") && (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package")) }
                     check(!releasing) {
@@ -159,10 +169,13 @@ androidComponents {
                 // The exo name is spelled "syncplay" on purpose, whatever the app is called now:
                 // IzzyOnDroid's updater fetches the release asset by that name, and 0.24.0 broke
                 // it for a day by following the rename.
+                // A release that opted out of signing says so in its name, so the file cannot be
+                // mistaken for a real one. See `unsignedRelease` at the top of this file.
+                val unsigned = if (unsignedRelease && variant.buildType == "release") "-unsigned" else ""
                 val fileName = if (exoOnly) {
-                    "syncplay-$v-exo-only.apk"
+                    "syncplay-$v-exo-only$unsigned.apk"
                 } else {
-                    "${kiteConfig.appName.get().lowercase()}-$v-full-universal.apk"
+                    "${kiteConfig.appName.get().lowercase()}-$v-full-universal$unsigned.apk"
                 }
                 output.outputFileName = fileName
             }

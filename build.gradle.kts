@@ -41,6 +41,23 @@ val COVERAGE_FLOOR = 24
 val exoOnly = AppConfig.resolveExoOnly(providers)
 val localProperties = AppConfig.localProperties(rootDir)
 
+/* A release has to resolve published artifacts only, or nobody outside can rebuild it and compare
+ * the bytes. `-PuseMavenLocal` serves this project's own libraries from the builder's own machine,
+ * which is the one place an outsider cannot look, so the two cannot be combined. Debug builds are
+ * free to use it: that is what the flag is for. */
+if (providers.gradleProperty("useMavenLocal").orNull.toBoolean()) {
+    gradle.taskGraph.whenReady {
+        val releasing = allTasks.any { task ->
+            task.path.contains("Release") &&
+                (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
+        }
+        check(!releasing) {
+            "-PuseMavenLocal builds a release against libraries from this machine, and nobody else " +
+                "can reproduce it. Drop the flag for a release, or build a debug variant."
+        }
+    }
+}
+
 kiteConfig {
     appName = "Synkplay"
     appId = "com.yuroyami.syncplay"
@@ -121,7 +138,12 @@ kiteConfig {
             providers.gradleProperty("debugProtocol").map(String::toBoolean).orElse(false),
         )
         booleanField("EXOPLAYER_ONLY", exoOnly)
-        stringField("KLIPY_API_KEY", localProperties.getProperty("yuroyami.keyKlipyApi") ?: "")
+        // Public on purpose. The key ships inside every APK and travels in the URL path of
+        // every request, so it cannot be secret on a device. Committing it is what lets a
+        // third party rebuild a published APK and get the same bytes. KLIPY keys are free
+        // and unmetered, so a copied one costs nothing. No local override: one constant
+        // means every machine builds the same APK.
+        stringField("KLIPY_API_KEY", "M5BjLZtHJtX8pSM7bkwL9A1uTRIiWPceLRfb7TA7QHM9dDVmIXaQLSXk6UYgmI70")
         // A local OpenSubtitles client key can replace the legacy fallback.
         stringField(
             "OPENSUBTITLES_API_KEY",

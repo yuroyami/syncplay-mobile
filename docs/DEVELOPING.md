@@ -237,3 +237,17 @@ Local Android release signing requires `keystore/syncplaykey.jks` and `keystore.
 `keystore.keyPassword`, and `keystore.storePassword` in `local.properties`. CI signing uses
 repository secrets. A release build without the keystore fails; contributors can build debug
 variants without the maintainer's signing credentials.
+
+### Reproducing a published APK
+
+The ExoPlayer-only APK is the one built to be rebuilt from source and compared with the published
+file, which is how IzzyOnDroid verifies a release. That build needs no keystore:
+
+```sh
+./gradlew assembleExoOnlyRelease -PexoOnly=true -PunsignedRelease=true
+```
+
+`-PunsignedRelease` skips signing on purpose, and it skips it even on a machine that holds the
+keystore. The APK carries `unsigned` in its name, so the file cannot be mistaken for a release.
+Copy the signature from the published APK onto it with
+[`apksigcopier`](https://github.com/obfusk/apksigcopier), then compare the two files byte for byte.

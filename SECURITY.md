@@ -86,7 +86,9 @@ If you are contributing, these are not optional.
 - **Keep the app free of analytics, crash and advertising components.** The privacy policy asserts
   this and the store declarations depend on it.
 - **Signing secrets never enter the repository.** They load from `local.properties`, and a release
-  build without a keystore fails on purpose.
+  build without a keystore fails on purpose. One route past that exists for people verifying a
+  published APK: `-PunsignedRelease=true` builds without signing, and writes an APK whose name
+  carries `unsigned`.
 
 ## Supported versions
 

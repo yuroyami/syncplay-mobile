@@ -28,13 +28,6 @@ pluginManagement {
 dependencyResolutionManagement {
     val useMavenLocal = providers.gradleProperty("useMavenLocal").orNull.toBoolean()
     repositories {
-        // This unpublished version is installed locally; IDE sync needs it without CLI flags.
-        mavenLocal {
-            name = "localLibmpvKt"
-            content {
-                includeVersionByRegex("io\\.github\\.yuroyami", "libmpvkt.*", "0\\.2\\.0")
-            }
-        }
         if (useMavenLocal) {
             mavenLocal {
                 content { includeGroupByRegex("io\\.github\\.yuroyami(\\..*)?") }
