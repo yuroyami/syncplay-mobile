@@ -1,3 +1,9 @@
-Music gets animated visuals in KitePlayer. Audio-only media enables the visualizer automatically; turn it off in the room's player settings.
+Audio files can be picked and played, not only video. KitePlayer draws the sound while they play, and the drawing follows the song.
 
-Updated KitePlayer and mpv playback libraries.
+A remote reaches every control, so the app works on Android TV. Where there is no file picker, it lists the videos on the device.
+
+An invite link opens a web page that hands you into the room.
+
+The room's side panels are one thing now. Chat colours are yours to set, and the playlist reorders by dragging a row.
+
+Track selection, seeking and screen-on fixes.
