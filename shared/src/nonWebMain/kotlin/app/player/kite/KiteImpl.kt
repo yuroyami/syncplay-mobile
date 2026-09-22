@@ -53,6 +53,8 @@ import io.github.yuroyami.kiteplayer.audioviz.AudioVizState
 import io.github.yuroyami.kiteplayer.audioviz.SongMapStore
 import io.github.yuroyami.kiteplayer.audioviz.SongScanPolicy
 import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
+import io.github.yuroyami.kiteplayer.audioviz.viz.VizFamily
+import io.github.yuroyami.kiteplayer.audioviz.viz.Visualization
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
 import app.room.OSDCategory
@@ -770,7 +772,9 @@ internal class KiteImpl(
                     viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
                     // Every display frame on a 120 Hz phone costs battery for no visible gain.
                     viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
-                    // The first drawing is the library's random pick; only the director switch is kept.
+                    // The library opens on a random drawing from its whole catalogue, which is
+                    // wider than what this app offers, so the opening pick is made again here.
+                    viz.offeredDrawings().randomOrNull()?.let { viz.drawing = it }
                     viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
                 }
                 DisposableEffect(viz) {
@@ -813,12 +817,40 @@ internal class KiteImpl(
     }
 }
 
+/**
+ * The drawings this app offers, out of the whole catalogue KitePlayer ships.
+ *
+ * Matched by name and by family, not by class, so the library stays free to add and drop drawings:
+ * a name that leaves the catalogue leaves this row with it, and a new drawing in the Battery family
+ * joins on its own. The rest of the catalogue is not removed from the library, only from the row.
+ */
+private val OFFERED_DRAWING_NAMES = setOf(
+    "Bars", "Alchemy", "Ocean Mist", "Neon Lo-Fi", "Aurora Field", "Reactor", "Pipe", "Drift", "Smoke Rise",
+)
+
+/** Whole families this app offers, however many drawings they hold. */
+private val OFFERED_DRAWING_FAMILIES = setOf(VizFamily.Battery)
+
+/** The offered drawings, in catalogue order. */
+private fun AudioVizState.offeredDrawings(): List<Visualization> =
+    catalogue.filter { it.family in OFFERED_DRAWING_FAMILIES || it.name in OFFERED_DRAWING_NAMES }
+
 /** The tracks card's view of the visualizer: reads are snapshot state, the director switch persists. */
 private class KiteVisualizerControls(private val viz: AudioVizState, private val scope: CoroutineScope) : VisualizerControls {
-    override val drawings: List<String> = viz.catalogue.map { it.name }
-    override val showing: Int get() = viz.catalogue.indexOf(viz.showing)
+    /** Held once: the library builds its catalogue at construction and never changes it. */
+    private val offered: List<Visualization> = viz.offeredDrawings()
+
+    override val drawings: List<String> = offered.map { it.name }
+
+    /**
+     * The director draws from the library's whole catalogue, not from [offered], so while it is on
+     * the drawing on screen can be one this row does not list. The row then falls back to its first
+     * entry, because there is no index to point at.
+     */
+    override val showing: Int get() = offered.indexOf(viz.showing)
+
     override fun show(index: Int) {
-        viz.drawing = viz.catalogue.getOrNull(index) ?: return
+        viz.drawing = offered.getOrNull(index) ?: return
     }
     override var directed: Boolean
         get() = viz.directed
