@@ -71,7 +71,7 @@ It speaks the same protocol as the original Syncplay, so friends on a computer c
   </tr>
 </table>
 
-Android 8.0 or newer. The IPA needs iOS 14.1 or newer. Store builds usually land a few days after the GitHub release.
+Android 8.0 or newer. The IPA needs iOS 15.0 or newer. Store builds usually land a few days after the GitHub release.
 
 The browser version is not ready yet. On a computer, install the [official Syncplay client](https://syncplay.pl/download/) and join the same room.
 

@@ -13,7 +13,7 @@ FILES=$1
 DEPS=$2
 : "${VERSION:?VERSION is not set}" "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}"
 BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}"
-IOS_MIN=${IOS_MIN_VERSION:-14.1}
+IOS_MIN=${IOS_MIN_VERSION:-15.0}
 # minSdk 26 is Android 8.0. gradle.properties carries the number, this carries the name people know.
 ANDROID_MIN="8.0"
 
@@ -102,6 +102,9 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "<td align=\"center\"><a href=\"${ALTSTORE}\"><img src=\"${RAW}/art/badges/AltSource_Blue.png\" width=\"150\" alt=\"Add the AltStore source\"></a></td>"
   echo '</tr></table>'
   echo
+  # True on the day a release is published. Both stores review a build before it appears.
+  echo "> This release is not on Google Play or the App Store yet. Both take a few days to review it."
+  echo
 
   echo "## Changelog"
   echo
@@ -136,63 +139,41 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo
 
   if [ -n "$FULL" ] || [ -n "$EXO" ]; then
-    echo "### Android"
-    echo
-    echo "![Android ${ANDROID_MIN} and up](https://img.shields.io/badge/Android-${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white)"
+    echo "### Android &nbsp;<img src=\"https://img.shields.io/badge/Android-${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white\" alt=\"Android ${ANDROID_MIN} and up\" height=\"20\">"
     echo
   fi
 
   if [ -n "$FULL" ]; then
-    echo "#### Full build"
+    echo "**Full universal build**"
     echo
     download_line "$FULL"
     echo
-    echo "- ✔️ Three engines: mpv, ExoPlayer and KitePlayer"
-    echo "- ✔️ Broad format support, through mpv"
-    echo "- ✔️ Embedded and external subtitles, with libass styling"
-    echo "- ✔️ Chapters"
-    echo "- ✔️ Picture-in-Picture"
-    echo "- ✔️ Every CPU type in one file"
+    echo "- ✔️ All three engines (ExoPlayer, mpv and KitePlayer)"
+    echo "- ✔️ Works on every phone"
     echo
   fi
 
   if [ -n "$EXO" ]; then
-    echo "#### Lite build"
+    echo "**Lite IzzyOnDroid build**"
     echo
     download_line "$EXO"
     echo
-    echo "- ✔️ ExoPlayer, with the bundled FFmpeg audio extension"
-    echo "- ✔️ Embedded and external subtitles"
-    echo "- ✔️ Picture-in-Picture"
-    echo "- ✔️ A quarter of the size"
-    echo "- ❌ No mpv, so fewer formats play"
-    echo "- ❌ No KitePlayer"
-    echo "- ❌ No chapters"
-    echo
-    echo "This is the build IzzyOnDroid carries. It installs beside the full app as a separate app, with its own settings."
+    echo "- ✔️ Small, and works on every phone"
+    echo "- ❌ ExoPlayer only (mpv and KitePlayer are left out)"
     echo
   fi
 
   if [ -n "$IPA" ]; then
-    echo "### iOS"
-    echo
-    echo "![iOS ${IOS_MIN} and up](https://img.shields.io/badge/iOS-${IOS_MIN}%2B-000000?logo=apple&logoColor=white)"
+    echo "### iOS &nbsp;<img src=\"https://img.shields.io/badge/iOS-${IOS_MIN}%2B-000000?logo=apple&logoColor=white\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\">"
     echo
     download_line "$IPA"
     echo
-    echo "- ✔️ Three engines: VLCKit, AVPlayer and KitePlayer"
-    echo "- ✔️ Embedded and external subtitles, on VLCKit and KitePlayer"
-    echo "- ✔️ Chapters, on VLCKit and KitePlayer"
-    echo "- ✔️ Picture-in-Picture, on VLCKit and AVPlayer"
-    echo
-    echo "Add the AltStore source with the button above, or install the IPA directly. The [install guide](https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS) covers both."
+    echo "To sideload, follow the [install guide](https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS). Otherwise get it from the [App Store](https://apps.apple.com/us/app/synkplay/id6760187432)."
     echo
   fi
 
   if [ -n "$DMG" ] || [ -n "$MSI" ] || [ -n "$DEB" ]; then
     echo "### Desktop"
-    echo
-    echo "KitePlayer is the only engine on desktop. It plays through FFmpeg, with chapters and styled subtitles."
     echo
     [ -n "$DMG" ] && { printf 'macOS: '; download_line "$DMG"; echo; }
     [ -n "$MSI" ] && { printf 'Windows: '; download_line "$MSI"; echo; }

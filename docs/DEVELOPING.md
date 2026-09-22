@@ -31,7 +31,7 @@ the issue tracker.
 - Android currently uses **compile/target SDK 37**, **Build Tools 37.0.0**, **NDK 29.0.14206865**,
   and **min SDK 26 (Android 8.0)**. The authoritative pins are in
   [`gradle.properties`](../gradle.properties).
-- iOS requires macOS, Xcode and CocoaPods. The deployment target is **iOS 14.1**; arm64 device
+- iOS requires macOS, Xcode and CocoaPods. The deployment target is **iOS 15.0**; arm64 device
   and arm64 simulator targets are configured.
 
 Set `sdk.dir` in your local `local.properties`, or configure `ANDROID_HOME`, for the Android SDK.

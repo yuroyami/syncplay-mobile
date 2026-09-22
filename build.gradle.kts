@@ -251,7 +251,7 @@ tasks.register("printReleaseIdentity") {
     val iosMinimum = file("iosApp/iosApp.xcodeproj/project.pbxproj").readLines()
         .firstNotNullOfOrNull { line ->
             Regex("""IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);""").find(line)?.groupValues?.get(1)
-        } ?: "14.1"
+        } ?: "15.0"
     doLast {
         println("VERSION=$version")
         println("VERSION_CODE=$versionCode")
