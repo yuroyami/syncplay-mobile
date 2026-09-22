@@ -35,13 +35,23 @@ fi
 
 # CHANGELOG.md is newest first, so everything above the previous release's heading is new.
 # When that heading is absent (the previous release predates the file) the whole file is.
-# Headings step down two levels so they sit inside the folded changelog section.
 awk -v stop="## ${PREV}" '
   !started && /^## / { started = 1 }
   !started { next }
   $0 == stop { exit }
   { print }
-' CHANGELOG.md | sed -e 's/^### /#### /' -e 's/^## /### /' > release-changelog.md
+' CHANGELOG.md > release-changelog-raw.md
+
+# A release usually carries one version, and the summary line already names it, so repeating it
+# as a heading inside the fold says the same thing twice. When a release carries more than one
+# version (a section that never got its own tag), every heading stays and steps down two levels.
+SECTIONS=$(grep -c '^## ' release-changelog-raw.md || true)
+if [ "$SECTIONS" = "1" ]; then
+  sed -e '/^## /d' release-changelog-raw.md | sed -e 's/^### /#### /' -e '/./,$!d' > release-changelog.md
+else
+  sed -e 's/^### /#### /' -e 's/^## /### /' release-changelog-raw.md > release-changelog.md
+fi
+rm -f release-changelog-raw.md
 
 size_mb() {
   local bytes
@@ -96,9 +106,9 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "## Changelog"
   echo
   if [ -n "$PREV" ]; then
-    echo "<details open><summary><b>Everything since v${PREV}</b></summary>"
+    echo "<details open><summary><b>${VERSION}</b> (everything since v${PREV})</summary>"
   else
-    echo "<details open><summary><b>Everything in this release</b></summary>"
+    echo "<details open><summary><b>${VERSION}</b></summary>"
   fi
   echo
   cat release-changelog.md
