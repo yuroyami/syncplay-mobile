@@ -109,78 +109,68 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "</details>"
   echo
 
-  echo "<details><summary><h2>Dependencies</h2></summary>"
-  echo
-  cat "$DEPS"
-  echo
-  echo "</details>"
-  echo
-
   echo "## Translations &nbsp;<a href=\"${WEBLATE}\"><img src=\"https://hosted.weblate.org/widget/syncplay-mobile/svg-badge.svg\" alt=\"Translation status\" height=\"20\"></a>"
   echo
   echo "Help translate Synkplay on [Weblate](${WEBLATE})."
   echo
 
-  echo "<details open><summary><h2>Downloads</h2></summary>"
+  echo "<details><summary><h2>Downloads</h2></summary>"
   echo
 
-  # One column per Android build.
+  # Every table has two columns of the same fixed width, so all of them line up.
+  COL=380
+
   if [ -n "$FULL" ] || [ -n "$EXO" ]; then
-    COLS=0
-    [ -n "$FULL" ] && COLS=$((COLS + 1))
-    [ -n "$EXO" ] && COLS=$((COLS + 1))
     echo "<table>"
-    echo "<tr><th colspan=\"${COLS}\">Android &nbsp;<img src=\"https://img.shields.io/badge/${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white&label=\" alt=\"Android ${ANDROID_MIN} and up\" height=\"20\"></th></tr>"
-
+    echo "<tr><th colspan=\"2\">Android &nbsp;<img src=\"https://img.shields.io/badge/${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white&label=\" alt=\"Android ${ANDROID_MIN} and up\" height=\"20\"></th></tr>"
+    printf '<tr><th width="%s">Full universal build</th><th width="%s">Lite IzzyOnDroid build</th></tr>\n' "$COL" "$COL"
     printf '<tr>'
-    [ -n "$FULL" ] && printf '<th>Full universal build</th>'
-    [ -n "$EXO" ] && printf '<th>Lite IzzyOnDroid build</th>'
+    for f in "$FULL" "$EXO"; do
+      if [ -n "$f" ]; then
+        printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
+          "$BASE" "$f" "$f" "$(size_mb "$FILES/$f")"
+      else
+        printf '<td align="center">Not in this release</td>'
+      fi
+    done
     printf '</tr>\n'
-
-    printf '<tr>'
-    [ -n "$FULL" ] && printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
-      "$BASE" "$FULL" "$FULL" "$(size_mb "$FILES/$FULL")"
-    [ -n "$EXO" ] && printf '<td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
-      "$BASE" "$EXO" "$EXO" "$(size_mb "$FILES/$EXO")"
-    printf '</tr>\n'
-
-    printf '<tr>'
-    [ -n "$FULL" ] && printf '<td>✔️ All three engines (ExoPlayer, mpv and KitePlayer)</td>'
-    [ -n "$EXO" ] && printf '<td>❌ ExoPlayer only, no mpv or KitePlayer</td>'
-    printf '</tr>\n'
-
-    printf '<tr>'
-    [ -n "$FULL" ] && printf '<td>✔️ Works on every phone</td>'
-    [ -n "$EXO" ] && printf '<td>✔️ Small build, works on every phone</td>'
-    printf '</tr>\n'
+    echo "<tr><td>✔️ All three engines (ExoPlayer, mpv and KitePlayer)</td><td>❌ ExoPlayer only, no mpv or KitePlayer</td></tr>"
     echo "</table>"
     echo
   fi
 
   if [ -n "$IPA" ]; then
     echo "<table>"
-    echo "<tr><th>iOS &nbsp;<img src=\"https://img.shields.io/badge/${IOS_MIN}%2B-000000?logo=apple&logoColor=white&label=\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\"></th></tr>"
-    printf '<tr><td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td></tr>\n' \
-      "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")"
-    echo "<tr><td>To sideload, follow the <a href=\"https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS\">install guide</a>. Otherwise, get it from the <a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\">App Store</a>.</td></tr>"
+    echo "<tr><th colspan=\"2\">iOS &nbsp;<img src=\"https://img.shields.io/badge/${IOS_MIN}%2B-000000?logo=apple&logoColor=white&label=\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\"></th></tr>"
+    printf '<tr><td width="%s" align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
+      "$COL" "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")"
+    printf '<td width="%s">To sideload, follow the <a href="https://github.com/%s/wiki/How-to-install-the-app-on-iOS">install guide</a>. Otherwise, get it from the <a href="https://apps.apple.com/us/app/synkplay/id6760187432">App Store</a>.</td></tr>\n' \
+      "$COL" "$GITHUB_REPOSITORY"
     echo "</table>"
     echo
   fi
 
   if [ -n "$DMG" ] || [ -n "$MSI" ] || [ -n "$DEB" ]; then
     echo "<table>"
-    echo "<tr><th>Desktop</th></tr>"
+    echo "<tr><th colspan=\"2\">Desktop</th></tr>"
     for pair in "macOS:$DMG" "Windows:$MSI" "Linux:$DEB"; do
       label=${pair%%:*}
       file=${pair#*:}
       [ -n "$file" ] || continue
-      printf '<tr><td>%s: <a href="%s/%s"><b>%s</b></a> <sub>%s</sub></td></tr>\n' \
-        "$label" "$BASE" "$file" "$file" "$(size_mb "$FILES/$file")"
+      printf '<tr><td width="%s">%s</td><td width="%s" align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td></tr>\n' \
+        "$COL" "$label" "$COL" "$BASE" "$file" "$file" "$(size_mb "$FILES/$file")"
     done
     echo "</table>"
     echo
   fi
 
+  echo "</details>"
+  echo
+
+  echo "<details><summary><h2>Dependencies</h2></summary>"
+  echo
+  cat "$DEPS"
+  echo
   echo "</details>"
 } > release-body.md
 
