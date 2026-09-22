@@ -5,7 +5,7 @@ kotlin = "2.4.20"
 ksp = "2.3.11"
 agp = "9.3.2"
 kiteconfig = "2.0.1"
-compose-multiplatform = "1.12.0"
+compose-multiplatform = "1.12.1"
 kSerialization = "1.11.0"
 detekt = "1.23.8"
 kover = "0.9.9"
@@ -18,8 +18,8 @@ lyricist = "1.9.0"
 compose-multiplatform-icons = "1.7.3"
 compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
-navigation3Runtime = "1.2.0-beta01"
-navigation3Ui = "1.2.0-beta01"
+navigation3Runtime = "1.1.7"
+navigation3Ui = "1.1.2"
 compose-unstyled = "2.9.2"
 # Backdrop blur. Built against Kotlin 2.4.10 + Compose Multiplatform 1.12.0, both of which
 # this project already runs, and publishes exactly our four targets (no iosX64, which we
@@ -39,7 +39,7 @@ atomicfu = "0.33.0"
 # DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
 kotlinxBrowser = "0.5.0"
 coil = "3.6.2"
-# Skiko: Compose 1.12.0-beta02 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
+# Skiko: Compose 1.12.1 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
 # Pin to the more recent (Compose's), explicitly forced so neither side regresses
 # silently when either library is bumped. Bump this to whatever the new Compose
 # release ships when upgrading compose-multiplatform.
