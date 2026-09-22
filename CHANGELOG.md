@@ -4,29 +4,29 @@ Written for people who use the app. The full engineering history is in the commi
 
 ## 0.25.0
 
-- Audio files can be picked and played, not only video. (#168, asked for by @gili-gili)
-- Music gets a picture. KitePlayer draws the sound while an audio file plays, and the drawing follows the song. A switch in the room's player settings turns it off.
-- The drawing changes with the music on its own, or you pick one yourself from the pattern row.
+- Audio files can be played, not only video. (#168, asked for by @gili-gili)
+- Audio files show a visualizer drawn by KitePlayer. It reacts to the sound, and the room's player settings turn it off.
+- The visualizer changes pattern by itself, or you pick a pattern from the row.
 - The keyboard no longer closes after the first letter on Home, so the name and room fields work again. (#167 and #170, reported by @gili-gili and @rkpsx7, fixed by @mvanhorn)
 - A remote reaches every control in the room and on Home, so the app works on Android TV. (#159, by @mukulhase)
-- Where Android TV offers no file picker, the app lists the videos on the device instead. (#163, by @mukulhase)
-- An invite link now opens a web page that hands you into the room, so a friend without the app still lands somewhere useful.
-- The room's side panels are one thing now, with one set of controls and one place they open from.
-- Chat colours are yours to set, and an event line colours the names it mentions.
-- A long press on a GIF keeps it or copies its link, and a long press on a message copies it.
-- Messages arriving over the video fade after a moment, and new ones are marked.
-- The GIF and sticker controls share one row, so results get more space, and sending one clears its search text from the chat input.
-- The shared playlist reorders by dragging a row, and offers your list back after a dropout.
-- Every track says what it is, and a video track can be selected.
-- Android mpv comes prebuilt from libmpvKt, which also fixed its video track selection.
-- iOS holds the screen on through every room entry and through a switch between players.
-- iOS VLC reads its clock from the engine, so a stalled notification no longer freezes the seek bar or pulls the room backward. (#158, reported by @yvchenko)
-- Rapid seeks keep the newest room update, and a replacement file no longer inherits an unfinished seek gesture.
-- iOS VLC finishes its seeks in Picture-in-Picture, and watching alone offers your saved position again.
-- Home says what each player is and what it can do.
-- A join link is accepted only when it is ours, and a port outside 1 to 65535 is refused with a reason.
-- A screen reader reaches the join form.
-- The ExoPlayer-only APK can be rebuilt from source and compared with the published file, so IzzyOnDroid can verify what it ships. (#105 and #172, raised by @IzzySoft)
+- On Android TV, where there is no file picker, the app lists the videos on the device. (#163, by @mukulhase)
+- Invites can be shared as an https link, which messengers make clickable. The page opens the app, or links to the stores when the app is missing.
+- The room's side panels are now one panel, with one set of controls and one way to open it.
+- You can set the chat colours, and event lines colour the names they mention.
+- Long press a GIF to save it or copy its link. Long press a message to copy it.
+- Messages shown over the video fade after a few seconds, and new ones are marked.
+- The GIF and sticker controls share one row, which leaves more space for results. Sending one clears its search text from the chat input.
+- You can reorder the shared playlist by dragging a row, and the app offers your list back after a dropout.
+- Track lists say what each track is, and you can select a video track.
+- Android mpv now comes prebuilt from libmpvKt, which also fixed its video track selection.
+- iOS keeps the screen on for every room entry and when you switch players.
+- iOS VLC reads playback time from the engine, so a stalled notification no longer freezes the seek bar or rewinds the room. (#158, reported by @yvchenko)
+- Repeated fast seeks keep the newest room update, and a new file no longer inherits an unfinished seek.
+- iOS VLC completes seeks in Picture-in-Picture, and watching alone offers your saved position again.
+- Home describes each player and what it supports.
+- The app accepts only its own join links, and refuses a port outside 1 to 65535 with a message.
+- Screen readers can reach the join form.
+- You can rebuild the ExoPlayer-only APK from source and compare it with the published file, so IzzyOnDroid can verify it. (#105 and #172, raised by @IzzySoft)
 
 ## 0.24.0
 
