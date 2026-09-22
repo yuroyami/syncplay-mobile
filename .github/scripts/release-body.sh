@@ -117,7 +117,7 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
   echo "<details><summary><h2>Downloads</h2></summary>"
   echo
 
-  # Every table has two columns of the same fixed width, so all of them line up.
+  # Fixed column widths keep every download table the same width.
   COL=380
 
   if [ -n "$FULL" ] || [ -n "$EXO" ]; then
@@ -141,11 +141,10 @@ WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
 
   if [ -n "$IPA" ]; then
     echo "<table>"
-    echo "<tr><th colspan=\"2\">iOS &nbsp;<img src=\"https://img.shields.io/badge/${IOS_MIN}%2B-000000?logo=apple&logoColor=white&label=\" alt=\"iOS ${IOS_MIN} and up\" height=\"20\"></th></tr>"
-    printf '<tr><td width="%s" align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub></td>' \
-      "$COL" "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")"
-    printf '<td width="%s">To sideload, follow the <a href="https://github.com/%s/wiki/How-to-install-the-app-on-iOS">install guide</a>. Otherwise, get it from the <a href="https://apps.apple.com/us/app/synkplay/id6760187432">App Store</a>.</td></tr>\n' \
-      "$COL" "$GITHUB_REPOSITORY"
+    printf '<tr><th width="%s">iOS &nbsp;<img src="https://img.shields.io/badge/%s%%2B-000000?logo=apple&logoColor=white&label=" alt="iOS %s and up" height="20"></th></tr>\n' \
+      "$((COL * 2))" "$IOS_MIN" "$IOS_MIN"
+    printf '<tr><td align="center"><a href="%s/%s"><b>%s</b></a><br><sub>%s</sub><br><br>To sideload, follow the <a href="https://github.com/%s/wiki/How-to-install-the-app-on-iOS">install guide</a>. Otherwise, get it from the <a href="https://apps.apple.com/us/app/synkplay/id6760187432">App Store</a>.</td></tr>\n' \
+      "$BASE" "$IPA" "$IPA" "$(size_mb "$FILES/$IPA")" "$GITHUB_REPOSITORY"
     echo "</table>"
     echo
   fi
