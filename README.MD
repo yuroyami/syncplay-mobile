@@ -162,6 +162,7 @@ Translations are the easiest way to help. Bug reports with steps to reproduce, a
 
 **[Translate on Weblate](https://hosted.weblate.org/engage/syncplay-mobile/)** &nbsp;·&nbsp;
 **[Build & test](docs/DEVELOPING.md)** &nbsp;·&nbsp;
+**[Verify a release](docs/DEVELOPING.md#reproducing-a-published-apk)** &nbsp;·&nbsp;
 **[Support development](https://ko-fi.com/sidenaakram)**
 
 <details>

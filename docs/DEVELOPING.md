@@ -241,13 +241,20 @@ variants without the maintainer's signing credentials.
 ### Reproducing a published APK
 
 The ExoPlayer-only APK is the one built to be rebuilt from source and compared with the published
-file, which is how IzzyOnDroid verifies a release. That build needs no keystore:
+file, which is how IzzyOnDroid verifies a release. That build needs no keystore, no
+`local.properties` and no repository secret.
+
+Check out the tag of the release you are verifying. A tag is `v` and the version, so release
+0.24.0 is `v0.24.0`. Build it with **JDK 21**, the same version the Toolchain section above
+requires:
 
 ```sh
 ./gradlew assembleExoOnlyRelease -PexoOnly=true -PunsignedRelease=true
 ```
 
 `-PunsignedRelease` skips signing on purpose, and it skips it even on a machine that holds the
-keystore. The APK carries `unsigned` in its name, so the file cannot be mistaken for a release.
-Copy the signature from the published APK onto it with
-[`apksigcopier`](https://github.com/obfusk/apksigcopier), then compare the two files byte for byte.
+keystore. The APK carries `unsigned` in its name, so the file cannot be mistaken for a release. It
+is written to `androidApp/build/outputs/apk/exoOnly/release/`.
+
+Copy the signature from the published APK onto that file with
+[`apksigcopier`](https://github.com/obfusk/apksigcopier), then compare the two byte for byte.
