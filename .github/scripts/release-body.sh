@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 # Writes the GitHub release notes for one version: a header with the logo and the store
-# buttons, then three sections: a downloads table, the changelog since the previous release
-# folded under a click, and the main dependencies folded the same way.
+# buttons, then the changelog, the dependencies, the translation status and the downloads.
 #
 #   release-body.sh <dir with the release files> <dependencies.md>
 #
-# Reads VERSION and GITHUB_REPOSITORY from the environment, CHANGELOG.md and the git tags from
-# the working tree. Writes release-body.md (the GitHub release) and release-notes.md (this
-# version's changelog section alone, which the AltStore feed carries).
+# Reads VERSION, GITHUB_REPOSITORY and IOS_MIN_VERSION from the environment, CHANGELOG.md and
+# the git tags from the working tree. Writes release-body.md (the GitHub release) and
+# release-notes.md (this version's changelog section alone, which the AltStore feed carries).
 set -euo pipefail
 
 FILES=$1
 DEPS=$2
 : "${VERSION:?VERSION is not set}" "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}"
 BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}"
+IOS_MIN=${IOS_MIN_VERSION:-14.1}
+# minSdk 26 is Android 8.0. gradle.properties carries the number, this carries the name people know.
+ANDROID_MIN="8.0"
 
 # The previous release is the newest v* tag that is not this version, so a re-run of the same
 # version still measures the changelog from the release before it.
@@ -33,7 +35,7 @@ fi
 
 # CHANGELOG.md is newest first, so everything above the previous release's heading is new.
 # When that heading is absent (the previous release predates the file) the whole file is.
-# Headings step down one level so the release page keeps its own three at the top.
+# Headings step down two levels so they sit inside the folded changelog section.
 awk -v stop="## ${PREV}" '
   !started && /^## / { started = 1 }
   !started { next }
@@ -47,63 +49,63 @@ size_mb() {
   echo "$(( (bytes + 524288) / 1048576 )) MB"
 }
 
-# One table row per file matching a pattern; nothing when none does. Matched by pattern rather
-# than by a spelled-out name, so the table follows whatever the build names its outputs.
-row() {
-  local pattern=$1 platform=$2 what=$3 f file
-  for f in "$FILES"/$pattern; do
+# The first file matching a pattern, or nothing. Matched by pattern rather than by a spelled-out
+# name, so the page follows whatever the build names its outputs.
+asset() {
+  local f
+  for f in "$FILES"/$1; do
     [ -f "$f" ] || continue
-    file=$(basename "$f")
-    printf '| [`%s`](%s/%s) | %s | %s | %s |\n' "$file" "$BASE" "$file" "$platform" "$what" "$(size_mb "$f")"
+    basename "$f"
+    return 0
   done
+  return 0
 }
+
+# One download line: the file name links to the asset, the size follows it.
+download_line() {
+  local file=$1
+  printf '**[`%s`](%s/%s)** (%s)\n' "$file" "$BASE" "$file" "$(size_mb "$FILES/$file")"
+}
+
+FULL=$(asset "*-full-universal.apk")
+EXO=$(asset "*-exo-only.apk")
+IPA=$(asset "*-ios.ipa")
+DMG=$(asset "*.dmg")
+MSI=$(asset "*.msi")
+DEB=$(asset "*.deb")
 
 # Pin images to this checkout's commit. A version tag may predate new artwork on a rerun.
 # Old release pages still keep immutable image URLs if the assets later move.
 ASSET_COMMIT=$(git rev-parse --verify HEAD)
 RAW="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${ASSET_COMMIT}"
 ALTSTORE="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/refs/heads/master/altstore_yuroyami.json"
+WEBLATE="https://hosted.weblate.org/engage/syncplay-mobile/"
 
 {
-  echo '<p align="center">'
-  echo "  <img src=\"${RAW}/androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png\" width=\"96\" alt=\"Synkplay\">"
-  echo '</p>'
-  echo '<p align="center">'
-  echo "  <a href=\"https://play.google.com/store/apps/details?id=com.yuroyami.syncplay\"><img src=\"${RAW}/art/badges/google-play.png\" width=\"150\" alt=\"Get it on Google Play\"></a>"
-  echo "  &nbsp;&nbsp;"
-  echo "  <a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\"><img src=\"${RAW}/art/badges/app-store.png\" width=\"150\" alt=\"Download on the App Store\"></a>"
-  echo "  &nbsp;&nbsp;"
-  echo "  <a href=\"https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay\"><img src=\"${RAW}/art/badges/IzzyOnDroid.png\" width=\"150\" alt=\"Get it on IzzyOnDroid\"></a>"
-  echo "  &nbsp;&nbsp;"
-  echo "  <a href=\"${ALTSTORE}\"><img src=\"${RAW}/art/badges/AltSource_Blue.png\" width=\"150\" alt=\"Add the AltStore source\"></a>"
-  echo '</p>'
+  # The logo sits beside the four store buttons, two per row, in one centred block.
+  echo '<table align="center"><tr>'
+  echo "<td align=\"center\" rowspan=\"2\"><img src=\"${RAW}/art/synkplay_app_badge_512.png\" width=\"128\" alt=\"Synkplay\"></td>"
+  echo "<td align=\"center\"><a href=\"https://play.google.com/store/apps/details?id=com.yuroyami.syncplay\"><img src=\"${RAW}/art/badges/google-play.png\" width=\"150\" alt=\"Get it on Google Play\"></a></td>"
+  echo "<td align=\"center\"><a href=\"https://apps.apple.com/us/app/synkplay/id6760187432\"><img src=\"${RAW}/art/badges/app-store.png\" width=\"150\" alt=\"Download on the App Store\"></a></td>"
+  echo '</tr><tr>'
+  echo "<td align=\"center\"><a href=\"https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay\"><img src=\"${RAW}/art/badges/IzzyOnDroid.png\" width=\"150\" alt=\"Get it on IzzyOnDroid\"></a></td>"
+  echo "<td align=\"center\"><a href=\"${ALTSTORE}\"><img src=\"${RAW}/art/badges/AltSource_Blue.png\" width=\"150\" alt=\"Add the AltStore source\"></a></td>"
+  echo '</tr></table>'
   echo
-  echo "## Downloads"
-  echo
-  echo "| File | Platform | What it is | Size |"
-  echo "|---|---|---|---|"
-  row "*-full-universal.apk" "Android 8.0 and up" \
-    "The full app: ExoPlayer, mpv and KitePlayer, every CPU type in one file. Pick this one."
-  row "*-exo-only.apk" "Android 8.0 and up" \
-    "ExoPlayer only, and much smaller. This is the build IzzyOnDroid carries. It installs beside the full app as a separate app."
-  row "*-ios.ipa" "iOS 14.1 and up" \
-    "Sideload with AltStore or install it directly. The [install guide](https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS) covers both."
-  row "*.dmg" "macOS" "The desktop app."
-  row "*.msi" "Windows" "The desktop app."
-  row "*.deb" "Linux (Debian and Ubuntu)" "The desktop app."
-  echo
+
   echo "## Changelog"
   echo
   if [ -n "$PREV" ]; then
-    echo "<details><summary><b>Everything since v${PREV}</b>. Click to unfold.</summary>"
+    echo "<details open><summary><b>Everything since v${PREV}</b></summary>"
   else
-    echo "<details><summary><b>Everything in this release</b>. Click to unfold.</summary>"
+    echo "<details open><summary><b>Everything in this release</b></summary>"
   fi
   echo
   cat release-changelog.md
   echo
   echo "</details>"
   echo
+
   echo "## Dependencies"
   echo
   echo "<details><summary><b>The main ones</b>: toolchain, network stack, video engines. Click to unfold.</summary>"
@@ -111,6 +113,81 @@ ALTSTORE="https://celloserenity.github.io/altdirect/?url=https://raw.githubuserc
   cat "$DEPS"
   echo
   echo "</details>"
+  echo
+
+  echo "## Translations"
+  echo
+  echo "[![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/svg-badge.svg)](${WEBLATE})"
+  echo
+  echo "Volunteers translate Synkplay on Weblate. [Add or fix a language](${WEBLATE}), no account setup beyond Weblate itself."
+  echo
+
+  echo "## Downloads"
+  echo
+
+  if [ -n "$FULL" ] || [ -n "$EXO" ]; then
+    echo "### Android"
+    echo
+    echo "![Android ${ANDROID_MIN} and up](https://img.shields.io/badge/Android-${ANDROID_MIN}%2B-3DDC84?logo=android&logoColor=white)"
+    echo
+  fi
+
+  if [ -n "$FULL" ]; then
+    echo "#### Full build"
+    echo
+    download_line "$FULL"
+    echo
+    echo "- ✔️ Three engines: mpv, ExoPlayer and KitePlayer"
+    echo "- ✔️ Broad format support, through mpv"
+    echo "- ✔️ Embedded and external subtitles, with libass styling"
+    echo "- ✔️ Chapters"
+    echo "- ✔️ Picture-in-Picture"
+    echo "- ✔️ Every CPU type in one file"
+    echo
+  fi
+
+  if [ -n "$EXO" ]; then
+    echo "#### Lite build"
+    echo
+    download_line "$EXO"
+    echo
+    echo "- ✔️ ExoPlayer, with the bundled FFmpeg audio extension"
+    echo "- ✔️ Embedded and external subtitles"
+    echo "- ✔️ Picture-in-Picture"
+    echo "- ✔️ A quarter of the size"
+    echo "- ❌ No mpv, so fewer formats play"
+    echo "- ❌ No KitePlayer"
+    echo "- ❌ No chapters"
+    echo
+    echo "This is the build IzzyOnDroid carries. It installs beside the full app as a separate app, with its own settings."
+    echo
+  fi
+
+  if [ -n "$IPA" ]; then
+    echo "### iOS"
+    echo
+    echo "![iOS ${IOS_MIN} and up](https://img.shields.io/badge/iOS-${IOS_MIN}%2B-000000?logo=apple&logoColor=white)"
+    echo
+    download_line "$IPA"
+    echo
+    echo "- ✔️ Three engines: VLCKit, AVPlayer and KitePlayer"
+    echo "- ✔️ Embedded and external subtitles, on VLCKit and KitePlayer"
+    echo "- ✔️ Chapters, on VLCKit and KitePlayer"
+    echo "- ✔️ Picture-in-Picture, on VLCKit and AVPlayer"
+    echo
+    echo "Add the AltStore source with the button above, or install the IPA directly. The [install guide](https://github.com/${GITHUB_REPOSITORY}/wiki/How-to-install-the-app-on-iOS) covers both."
+    echo
+  fi
+
+  if [ -n "$DMG" ] || [ -n "$MSI" ] || [ -n "$DEB" ]; then
+    echo "### Desktop"
+    echo
+    echo "KitePlayer is the only engine on desktop. It plays through FFmpeg, with chapters and styled subtitles."
+    echo
+    [ -n "$DMG" ] && { printf 'macOS: '; download_line "$DMG"; echo; }
+    [ -n "$MSI" ] && { printf 'Windows: '; download_line "$MSI"; echo; }
+    [ -n "$DEB" ] && { printf 'Linux (Debian and Ubuntu): '; download_line "$DEB"; echo; }
+  fi
 } > release-body.md
 
 echo "release-body.md written: $(wc -l < release-body.md) lines, changelog since ${PREV:-the beginning}"
