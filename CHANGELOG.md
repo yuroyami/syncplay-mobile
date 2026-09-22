@@ -4,11 +4,12 @@ Written for people who use the app. The full engineering history is in the commi
 
 ## 0.25.0
 
-- Audio files can be picked and played, not only video.
+- Audio files can be picked and played, not only video. (#168)
 - Music gets a picture. KitePlayer draws the sound while an audio file plays, and the drawing follows the song. A switch in the room's player settings turns it off.
 - The drawing changes with the music on its own, or you pick one yourself from the pattern row.
-- A remote reaches every control in the room and on Home, so the app works on Android TV.
-- Where Android TV offers no file picker, the app lists the videos on the device instead.
+- The keyboard no longer closes after the first letter on Home, so the name and room fields work again. (#167, #170)
+- A remote reaches every control in the room and on Home, so the app works on Android TV. (#159)
+- Where Android TV offers no file picker, the app lists the videos on the device instead. (#163)
 - An invite link now opens a web page that hands you into the room, so a friend without the app still lands somewhere useful.
 - The room's side panels are one thing now, with one set of controls and one place they open from.
 - Chat colours are yours to set, and an event line colours the names it mentions.
@@ -19,13 +20,13 @@ Written for people who use the app. The full engineering history is in the commi
 - Every track says what it is, and a video track can be selected.
 - Android mpv comes prebuilt from libmpvKt, which also fixed its video track selection.
 - iOS holds the screen on through every room entry and through a switch between players.
-- iOS VLC reads its clock from the engine, so a stalled notification no longer freezes the seek bar or pulls the room backward.
+- iOS VLC reads its clock from the engine, so a stalled notification no longer freezes the seek bar or pulls the room backward. (#158)
 - Rapid seeks keep the newest room update, and a replacement file no longer inherits an unfinished seek gesture.
 - iOS VLC finishes its seeks in Picture-in-Picture, and watching alone offers your saved position again.
 - Home says what each player is and what it can do.
 - A join link is accepted only when it is ours, and a port outside 1 to 65535 is refused with a reason.
 - A screen reader reaches the join form.
-- The ExoPlayer-only APK can be rebuilt from source and compared with the published file, so IzzyOnDroid can verify what it ships.
+- The ExoPlayer-only APK can be rebuilt from source and compared with the published file, so IzzyOnDroid can verify what it ships. (#172)
 
 ## 0.24.0
 
