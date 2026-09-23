@@ -19,108 +19,88 @@ Written for people who use the app. The full engineering history is in the commi
 - The shared playlist can be reordered by dragging. After a disconnect, the app offers to restore it.
 - Tracks show more detail, and video tracks can be selected.
 - mpv on Android now uses libmpvKt, which fixes video track selection.
-- iOS: the screen stays on in rooms, including after switching players.
+- iOS: the screen stays on in rooms, including after switching engines.
 - iOS VLC: fixed the seek bar freezing and the room jumping backward. (#158, reported by @yvchenko)
 - Fixed rapid seeks losing the latest position, and an unfinished seek moving a new file.
 - iOS VLC: fixed seeking in Picture-in-Picture, and the resume offer when watching alone.
-- Home shows what each player supports.
+- Home shows what each engine supports.
 - Invalid join links and port numbers are now rejected.
 - Screen readers can now reach the join form.
 - The ExoPlayer-only APK is now reproducible, so IzzyOnDroid can verify it. (#105, #172, requested by @IzzySoft)
 
 ## 0.24.0
 
-### The new look
-
-- The whole app was redrawn: one set of controls, five text sizes, colours that come from the theme, and frosted panels over the video on devices that can draw them.
-- Home is a single form: your name, the server, the player, and Join. It fits a phone, a phone on its side, a tablet or a desktop window.
-- The room has a rail for its actions and a status line. The controls hide while the video plays and come back on a tap.
-- Settings have a search box, grouped rows, values in units people actually read, and colours you edit in place. Each player's settings sit inside the player category.
-- Themes preview as a miniature of the app, and the theme creator shows what a seed colour will do before you save.
-- Motion can be reduced from settings. A screen reader announces who is ready, connection changes and new messages.
-- Watching alone has its own row in About: tap the logo on Home.
-
-### Players
-
-- KitePlayer, a new engine written for this app on top of FFmpeg, is available on Android, iOS and desktop as an experimental choice. It has chapters, external and styled subtitles, pitch-preserved speed from 0.25x to 4x, and plays links over https.
-- Three engines per platform: ExoPlayer, mpv and KitePlayer on Android, and the system player, VLCKit and KitePlayer on iOS. VLC on Android and mpv on iOS are gone. VLCKit is the iOS default.
-- Volume can go past 100 on players that can boost (mpv, ExoPlayer, VLCKit). The device volume fills first, then the player's own gain takes over.
-- Double taps add up to one jump, and a long press shows where a seek will land before it commits.
-- When you watch alone, the app remembers where you left a file and offers to continue from there.
-- Seeking with KitePlayer lands on the exact frame in one step and is about twice as fast. Files with tens of thousands of subtitle lines no longer slow it down.
-- YouTube links work again with the updated extractor, and a friend's YouTube link in the shared playlist is accepted without any setup. SoundCloud, PeerTube, Bandcamp and media.ccc.de links work the same way on Android and desktop. iOS handles YouTube only.
-
-### Sync and playback
-
-- Fixed the phantom pause: a player stopping on its own no longer pauses the whole room.
-- The room shows when it is waiting for the video instead of looking frozen, and says who it is waiting for before playback starts.
-- Audio and subtitle picks survive a reload on every engine, and follow your preferred languages.
-- Tracks marked as accessibility captions, audio description or forced now say so in the picker.
-- When a file ends, the playlist moves on once, not once per person in the room.
-- A file that is still opening no longer drags the whole room back to the start.
-- iOS with VLC: a video from a network share reported no length at first, and the app filled the gap with a placeholder. Dragging the seek bar then sent the room to a nonsense time, and everyone landed back at the start. The bar now waits until the real length arrives.
-- If you load your file after the room has already started, you now sync to the room instead of sitting paused at the start.
-- A per-user time offset lets two different rips of the same film be watched together.
-- The three drift thresholds (rewind, slowdown, fast-forward) are now settings.
-- A phone coming back from the background follows the room instead of dragging it back.
-
-### Room and chat
-
-- Chat colours follow the theme, so they stay readable on a light one.
-- Chat timestamps follow your device's clock format.
-- Slash commands in the chat box: /ready, /room, /seek, /op, /users and /help.
-- Volume and brightness have their own controls, so a swipe is no longer the only way.
-- You can mute someone, and image links from other people stay hidden until you tap them.
-- The user list has a compact view and a detailed one. The detailed view shows each person's file, its length, its size and whether it matches yours.
-- A playlist change can be undone.
-- Picture in picture grows out of the video instead of popping up from nowhere.
-- The room can follow the device's rotation or stay in landscape. There is a setting for it.
-- Android: lock screen and headset controls work in the room and follow the same readiness rules as the play button.
-- On a television, the room's controls stay inside the visible area.
+- The whole app was redrawn. It now has one set of controls, five text sizes, colours from the theme, and frosted panels over the video on devices that support them.
+- KitePlayer is a new experimental engine, written for this app on top of FFmpeg. It runs on Android, iOS and desktop.
+- KitePlayer supports chapters, external and styled subtitles, https links, and speeds from 0.25x to 4x without a change in pitch.
+- KitePlayer seeks to the exact frame in one step. Files with tens of thousands of subtitle lines do not slow it down.
+- The engines are now ExoPlayer, mpv and KitePlayer on Android, and AVPlayer, VLCKit and KitePlayer on iOS. VLC on Android and mpv on iOS were removed, and VLCKit is the iOS default.
+- Fixed the phantom pause. An engine that stops on its own no longer pauses the whole room. (#148, reported by @wingoku)
+- If you load your file after the room has started, you now sync to the room. Before, you stayed paused at the start.
+- A file that is still opening no longer pulls the whole room back to the start.
+- A phone that comes back from the background now follows the room. Before, it pulled the room back.
+- iOS VLC: on a video from a network share, a seek bar drag no longer sends the room back to the start. The seek bar now waits for the real length of the video. (#158, reported by @yvchenko)
+- Before playback starts, the room shows that it is waiting for the video and who it is waiting for.
+- You can change the app's language in settings, on every platform, without a restart.
+- All seven translations are complete: Arabic, German, Spanish, French, Polish, Russian and Chinese.
+- Fixed a crash when you opened settings. A text string was defined twice, and the build now checks for duplicates. (#151, reported by @OusamaAsherM)
+- YouTube links work again. A YouTube link that a friend adds to the shared playlist also works, with no setup. (#127, requested by @girlmaya)
+- SoundCloud, PeerTube, Bandcamp and media.ccc.de links also work, on Android and desktop. iOS supports YouTube links only.
+- You can share a room as an invite link, and open an invite link to join a room.
+- Subtitle search and download work again. You can pick the subtitle language, and a failed search tells you why. (#155, reported by @SamSammy7998)
+- When you watch alone, the app remembers where you stopped in a file and offers to continue from there. (#138, requested by @ZediAlreadyTaken)
+- The volume can go above 100 on engines that support a boost (mpv, ExoPlayer and VLCKit). The device volume goes up first, then the engine boost. (#113, requested by @RaXorX)
+- The room can follow the device rotation or stay in landscape. A setting controls this. (#93, requested by @archisync)
+- You can export your settings to a file and import them back. (#112, requested by @RaXorX)
+- Encrypted connections now check the server certificate against the server name you typed.
+- You can require encryption. The app then refuses a server without encryption before it sends anything.
+- The app also runs on desktop (Windows, macOS and Linux) with KitePlayer. This release has no desktop installers yet.
+- Home is one form with your name, the server, the engine and Join. It fits a phone in both orientations, a tablet and a desktop window.
+- The room has a rail for its actions and a status line. The controls hide while the video plays, and a tap shows them again.
+- Settings have a search box and grouped rows, and show values in readable units. You edit colours in place.
+- The settings of each engine are now inside the Player category.
+- Theme previews show a small copy of the app. The theme creator shows the result of a seed colour before you save.
+- Watch alone is now in About. To open About, tap the logo on Home.
+- Double taps add up to one jump. A long press shows where a seek will land before the seek happens.
+- Audio and subtitle choices now stay after a reload on every engine, and follow your preferred languages.
+- The track picker now marks accessibility captions, audio description and forced tracks.
+- When a file ends, the playlist moves on once, not once for each person in the room.
+- A time offset for each person lets you watch two different versions of the same film together.
+- The thresholds for rewind, slowdown and fast-forward are now settings.
+- Chat colours follow the theme, so chat stays readable on a light theme.
+- Chat timestamps follow the 12-hour or 24-hour setting of your device.
+- The chat box accepts slash commands: /ready, /room, /seek, /op, /users and /help.
+- Volume and brightness have their own controls, so you do not have to swipe.
+- You can mute someone. Image links from other people stay hidden until you tap them.
+- The user list has a compact view and a detailed view. The detailed view shows each person's file, its length and size, and whether it matches yours.
+- You can undo a playlist change.
+- Android: the lock screen and headset controls now work in the room. They follow the same readiness rules as the play button.
+- You can reduce motion in settings.
+- A screen reader now announces who is ready, connection changes and new messages.
+- When the controls are hidden, new chat messages now show at the top centre, under the notices, in a readable size. Before, they were small and at the left edge.
+- Picture-in-Picture now opens with an animation from the video.
+- On a TV, the room controls stay inside the visible part of the screen.
 - The locked screen tells you how to unlock it.
 - The room shows whether your connection is encrypted.
-- Panels look right on a light theme.
-- Buffering no longer pushes the play button around. The button rounds into a circle and its colours move until the player catches up.
-- The custom skip button sits between the two jump buttons.
-- Chat that fades in while the controls are hidden now shows at the top centre, under the notices, at a readable size. It used to sit tiny at the left edge.
-- Subtitle search and download work again, you can pick the subtitle language, and a failed search says why.
-- A bug report sent from the app says which engine, which build and which device.
-
-### Connection
-
-- Encrypted connections now check the server's certificate against the name you typed.
-- You can require encryption. A server that offers none is refused before anything is sent.
-- A dropped connection reconnects with a growing wait instead of hammering the server.
-- A handshake that never finishes gives up instead of hanging.
-- Leaving the server address empty joins the official server, as it always looked like it would.
-- The network you are on can no longer push the app's own services onto plain HTTP.
-- A pasted link is checked against the site it really points to, not the text shown in front of it.
-
-### Hosting
-
-- Hosting lives on the home screen now, under the server choice, with the address first.
+- Panels now look right on light themes.
+- The play button no longer moves while the video buffers. It shows a round animation until the engine catches up.
+- The custom skip button is now between the two jump buttons.
+- A bug report sent from the app now includes the engine, the build and the device.
+- After a dropped connection, the app waits longer before each new try.
+- A connection that never finishes its setup now stops instead of hanging.
+- If you leave the server address empty, the app joins the official server.
+- The network you use can no longer switch the app's own services to plain HTTP.
+- A pasted link is checked against the site it really opens, not the text shown for it.
+- Hosting is now on Home, under the server choice, with the address first.
 - The hosting screen and its notification use the app's language.
-- A silent client is dropped after the timeout the server already advertised.
-- An operator password works only for the room it belongs to.
-- Creating a managed room now really puts the password on your clipboard, which it has claimed to do for a long time.
-
-### Language
-
-- Change the app's language from settings, on every platform, with no restart.
-- All seven translations are complete: Arabic, German, Spanish, French, Polish, Russian and Chinese.
-- Audio and subtitle language names are shown in your own language.
-- A crash when opening settings, caused by a string defined twice, is fixed. Strings are now generated at build time and checked for duplicates.
-
-### Elsewhere
-
-- Invite links: share a room with a link, and open one to join.
-- About lists what the app is built from, and can check for a newer release.
-- Settings can be exported to a file and imported back.
-- A damaged settings file no longer crashes the app at launch. It starts on defaults and tells you.
-- Service keys are never written to the log, so a log you share carries none.
+- The built-in server now drops a silent client after the timeout it advertises.
+- An operator password now works only for its own room.
+- Fixed creating a managed room not copying the password to your clipboard.
+- Audio and subtitle language names now show in your language.
+- About lists the libraries the app uses, and can check for a newer version.
+- A damaged settings file no longer crashes the app at launch. The app starts with default settings and tells you.
+- Keys for online services are never written to the log, so a log you share contains none.
 - You can tell the GIF service to forget you between sessions.
-- Reading settings at startup no longer blocks drawing, and neither does logging.
-- Android 13 and up can theme the launcher icon.
-- Android downloads are two files now: the full universal APK and the smaller exo-only one. The per-CPU files are gone. Google Play serves each phone only what it needs.
-- The app also runs on desktop (Windows, macOS, Linux) with KitePlayer. Installers are not part of this release yet.
-- mpv now comes prebuilt from libmpvKt 0.1.0 (mpv 0.41.0, FFmpeg 9.0.1). Building the app no longer compiles mpv, and a clone builds without a native toolchain. The exoOnly build still ships no native player, and a build check now proves it on the APK.
+- Reading settings and writing logs no longer delay the screen at startup.
+- Android 13 and newer can theme the launcher icon. (#143, requested by @dav23r)
+- The Android downloads are now two files: the full universal APK and the smaller ExoPlayer-only APK. The per-CPU files are gone, and Google Play gives each phone only what it needs.
