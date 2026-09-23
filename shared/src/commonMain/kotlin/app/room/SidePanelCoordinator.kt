@@ -2,7 +2,10 @@ package app.room
 
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** The add-media expansion temporarily borrows the side dock, until another control claims it. */
+/**
+ * Keeps at most one side panel open. Expanding the add-media view closes the open panel, and
+ * collapsing the view reopens that panel, unless another panel was opened in the meantime.
+ */
 internal class SidePanelCoordinator(private val panels: List<MutableStateFlow<Boolean>>) {
     val mediaExpanded = MutableStateFlow(false)
     private var suspended: MutableStateFlow<Boolean>? = null

@@ -62,9 +62,10 @@ import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.PrimaryAction
 
 /**
- * The add key in the transport. With a file playing it opens the add-media side panel. Before
- * one loads it is the room's primary control, and a tap morphs the key itself into the routes
- * card in place, growing from its own corner; the card folds back once a route has run.
+ * The add key in the bottom bar. With a file playing, it opens the add-media side panel. Before a
+ * file loads, it is the main control of the room (the group of people watching together). A tap
+ * then grows the key in place into the card of routes (the ways to add media), from the key's own
+ * corner. The card folds back once a route has run.
  */
 @Composable
 fun RoomMediaAddButton() {
@@ -76,24 +77,26 @@ fun RoomMediaAddButton() {
     var linkMode by remember { mutableStateOf(false) }
     LaunchedEffect(hasVideo) { if (hasVideo) { ui.collapseMediaAdd(); linkMode = false } }
 
-    // Before a file loads this is the room's primary control, so it claims the initial D-pad focus.
+    // Before a file loads, this is the room's main control, so it takes the initial D-pad focus.
     val initialFocus = LocalRoomInitialFocus.current
     LaunchedEffect(open) { if (!open) linkMode = false }
     val expanded = !hasVideo && open
-    /* One block that is the key and the card. A single progress value drives its width, its
-     * height and both contents' alpha from the same frame: both contents are measured up front,
-     * so the block knows its target size at once and grows out of the key's corner in one
-     * straight tween, the key's label fading as the card's rows come in. The brand gradient
-     * stays on it at full strength; the rows take dark ink, the way the key's label does. */
-    // A plain standard curve: the emphasized decelerate the rest of the app uses reads as a spring on a block this size.
+    /* One block is both the key and the card. A single progress value drives the width, the
+     * height and the alpha of both contents in the same frame. Both contents are measured up
+     * front, so the block knows its target size at once. It grows out of the key's corner in one
+     * straight tween, while the key's label fades and the card's rows come in. The brand gradient
+     * stays on the block at full strength, and the rows use dark ink, like the key's label. */
+    // A plain standard curve. The emphasized decelerate curve used elsewhere in the app looks
+    // like a spring on a block this size.
     val t by animateFloatAsState(if (expanded) 1f else 0f, tween(Motion.moveMs, easing = FastOutSlowInEasing), label = "addMorph")
-    /* The block is the key until it opens into the card, and both are one layout, so a remote
-     * needs the handover: into the card's first route when it opens, back to the key when it closes. */
+    /* The block is the key until it opens into the card, and both are one layout. So a remote
+     * needs a focus handover: into the card's first route when it opens, and back to the key when
+     * it closes. */
     val cardFocus = remember { FocusRequester() }
     val keyFocus = remember { FocusRequester() }
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     var seenExpanded by remember { mutableStateOf(expanded) }
-    // Coming back from the link form, the routes are new again and need focus of their own.
+    // After the link form closes, the routes are new again and need focus of their own.
     LaunchedEffect(linkMode) {
         if (!linkMode && expanded && remoteOrKeyboard) {
             repeat(8) {
@@ -114,7 +117,8 @@ fun RoomMediaAddButton() {
         seenExpanded = expanded
     }
     val onBrand = p.onBrandBlock()
-    // A white ring on the block: its own gradient would vanish into it, and its dark ink barely shows.
+    // A white focus ring on the block. A gradient ring would vanish into the block, and a ring in
+    // the block's dark ink would barely show.
     val onBrandRing = remember(p.ink) { SolidColor(p.ink) }
     Layout(
         modifier = Modifier
@@ -135,7 +139,7 @@ fun RoomMediaAddButton() {
                             if (hasVideo) {
                                 ui.toggleAddMedia()
                             } else {
-                                // The card needs the room's right side to itself.
+                                // The card needs the side of the room to itself.
                                 ui.expandMediaAdd()
                             }
                         },
@@ -189,9 +193,9 @@ fun RoomMediaAddButton() {
 }
 
 /**
- * The palette for what sits ON the brand block. The block is painted with the gradient, so ink
- * goes dark and an accent fill has to be dark too, or it would be the block's own colour. Labels
- * on a filled control come from [Palette.inkOn], which reads this dark accent and answers light.
+ * The palette for content on the brand block. The block is painted with the gradient, so the ink
+ * is dark, and an accent fill must be dark too, or it would match the block. Labels on a filled
+ * control come from [Palette.inkOn], which sees this dark accent and returns a light color.
  */
 internal fun Palette.onBrandBlock(): Palette = copy(
     ink = ground,
@@ -203,7 +207,7 @@ internal fun Palette.onBrandBlock(): Palette = copy(
 
 private val MorphWidth = 340.dp
 
-/** Collapsed to a glyph once a file plays; the primary action of the room before that. */
+/** An icon button once a file plays, and the main action button of the room before that. */
 @Composable
 fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
     if (!expanded) {

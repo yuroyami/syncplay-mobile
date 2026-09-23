@@ -116,7 +116,7 @@ class LocalStateIntentsTest {
         val decidedRevision = intents.revision
         var position = 10_000L
         var paused = false
-        // The inbound consumer has decided these actions; Main has not run them yet.
+        // The inbound consumer has decided these actions, but the main thread has not run them yet.
         launch {
             if (intents.isCurrent(decidedRevision)) { position = 30_000L; paused = true }
         }

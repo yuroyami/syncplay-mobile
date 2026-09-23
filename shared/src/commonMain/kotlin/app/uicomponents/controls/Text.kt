@@ -26,16 +26,18 @@ import app.theme.Type
 import app.theme.palette
 
 /**
- * The sizes a label may take when it has to fit its width: [max] down to [min], half a point at a
- * time. `Text` shrinks first and cuts only when the floor still overflows, so a caller that names
- * only a maximum gets the guarantee that the label fits unless it cannot fit at [AutoSize.floor].
+ * The sizes a label may take when it has to fit its width: from [max] down to [min], half a point
+ * at a time. [Text] shrinks the label first and cuts it only when it still overflows at [min]. So a
+ * caller that names only [max] gets a label that fits, unless it cannot fit even at
+ * [AutoSize.floor].
  */
 @Immutable
 class FontSizeRange(val max: TextUnit, val min: TextUnit = AutoSize.floor)
 
 /**
- * The app's text, on the foundation text with the app's roles: `note` unless told otherwise, the
- * palette's ink unless the style or the caller carries a colour or a brush. No Material.
+ * The app's text, built on foundation's BasicText with the app's type roles. The style is `note`
+ * unless the caller passes another, and the colour is the palette's ink unless the style or the
+ * caller gives a colour or a brush. No Material.
  */
 @Composable
 fun Text(
@@ -55,10 +57,11 @@ fun Text(
         BasicText(text = text, modifier = modifier, style = merged, overflow = overflow, softWrap = softWrap, maxLines = maxLines, minLines = minLines)
         return
     }
-    /* Foundation's auto-size never shrinks a label that an ellipsis has already cut: the cut
-     * text counts as fitting. So the search runs with a clip, and only when even the floor
-     * overflows is the label drawn again at the floor with the caller's overflow. It returns
-     * to sizing the moment the floor fits whole, so a wider window grows it back. */
+    /* Foundation's auto-size never shrinks a label that an ellipsis has already cut, because the
+     * cut text counts as fitting. So the size search runs with a clip. Only when the label
+     * overflows even at the floor is it drawn again at the floor, with the caller's overflow. It
+     * goes back to sizing as soon as the label fits whole at the floor, so a wider window grows
+     * it again. */
     var atFloor by remember { mutableStateOf(false) }
     if (!atFloor) {
         BasicText(

@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonElement
 /**
  * Per-user payload inside a `Set.user` server broadcast.
  *
- * The server emits `{"Set": {"user": {"<username>": UserSetData, ...}}}` — this models
+ * The server sends `{"Set": {"user": {"<username>": UserSetData, ...}}}`, and this class models
  * the inner per-user object.
  */
 @Serializable
@@ -19,9 +19,9 @@ data class UserSetData(
 )
 
 /**
- * Event flags inside [UserSetData]. Either [joined] or [left] is non-null (their JSON
- * value isn't meaningful — only presence is). [version] and [features] are included
- * alongside [joined] when the server reports a remote join (PC server.py:167 sends
+ * Event flags inside [UserSetData]. Either [joined] or [left] is non-null (only their
+ * presence matters, not their JSON value). [version] and [features] come with [joined] when
+ * the server reports a remote join (PC's `sendJoinMessage` in server.py sends
  * `{"joined": True, "version": ..., "features": ...}`).
  */
 @Serializable

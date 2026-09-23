@@ -6,8 +6,9 @@ import io.github.vinceglb.filekit.path
 import java.io.File
 
 /**
- * Desktop directory walk — plain filesystem recursion, no SAF and no security scopes.
- * Each discovered media file is stored as its absolute-path bytes, re-openable directly.
+ * Desktop directory walk for the shared playlist (the file list that everyone in a room follows):
+ * plain filesystem recursion, with no SAF (Android's Storage Access Framework) and no security
+ * scopes. Each media file is stored as the bytes of its absolute path, which reopen it directly.
  */
 actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
     val out = LinkedHashMap<String, ByteArray>()

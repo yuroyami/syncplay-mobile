@@ -46,9 +46,10 @@ import kotlin.math.roundToInt
 
 /**
  * The app's own slider: a 4dp track, the brand gradient as the played fill, a 3 x 16dp playhead
- * bar, optional tick marks and an optional buffered band. [value] is 0 to 1; hosts map it onto
- * whatever range they own. One engine or storage write on release is the host's job, through
- * [onValueChangeFinished]. Role Slider, with [describe] giving the spoken value.
+ * bar, optional tick marks and an optional buffered band. [value] is 0 to 1, and each host maps it
+ * onto its own range. The host writes to the engine or to storage once, on release, through
+ * [onValueChangeFinished]. Screen readers treat it as a slider, and [describe] gives the spoken
+ * value.
  */
 @Composable
 fun ScrubTrack(
@@ -98,8 +99,8 @@ fun ScrubTrack(
             .semantics {
                 stateDescription = describe(value)
                 if (name != null) contentDescription = name
-                // A disabled control says so and refuses the action. Publishing setProgress
-                // anyway let a screen reader or a remote move a track the eye can see is off.
+                // A disabled control says so and refuses the action. Publishing setProgress anyway
+                // would let a screen reader or a remote move a track that is visibly off.
                 if (!enabled) {
                     disabled()
                 } else {
@@ -113,9 +114,9 @@ fun ScrubTrack(
             .hoverable(source, enabled)
             .onKeyEvent { event ->
                 if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                /* A remote and a keyboard have no long press to give, so the press key carries
-                 * what a long press does. On the seek bar that is the chapter list, which was
-                 * otherwise reachable by a finger only. */
+                /* A remote and a keyboard have no long press, so the press key does what a long
+                 * press does. On the seek bar that opens the chapter list, which would otherwise
+                 * need a finger. */
                 val hold = onLongPress
                 if (hold != null && event.key in pressKeys) {
                     hold()
@@ -201,5 +202,5 @@ fun ScrubTrack(
     }
 }
 
-/** The keys that stand for a press: a remote's centre, a keyboard's enter. */
+/** The keys that stand for a press: a remote's Center key and a keyboard's Enter keys. */
 private val pressKeys = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)

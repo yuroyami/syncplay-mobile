@@ -6,12 +6,12 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-// Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
+// The exoOnly Gradle property (-PexoOnly=true or gradle.properties) overrides AppConfig.exoOnly.
 val exoOnly = AppConfig.resolveExoOnly(providers)
 
-/* The deliberate route to a release build with no keystore (-PunsignedRelease=true), for anyone
- * checking that a published APK was built from this source. The APK it writes says "unsigned" in
- * its name, so it can never be mistaken for a release. README documents the command. */
+/* -PunsignedRelease=true builds a release without a keystore, on purpose. It lets anyone check
+ * that a published APK was built from this source. The APK name says "unsigned", so nobody
+ * mistakes it for a signed release. docs/DEVELOPING.md documents the command. */
 val unsignedRelease = providers.gradleProperty("unsignedRelease").orNull.toBoolean()
 
 android {
@@ -20,9 +20,8 @@ android {
     // differently on a clean CI checkout.
     buildToolsVersion = providers.gradleProperty("android.buildToolsVersion").get()
 
-    // :shared holds essentially all the code, and lint stopped at this module's four files. With
-    // dependency checking on, one run covers both, which is also what makes the repo's lint.xml
-    // suppression apply to the code it was written for.
+    // :shared holds almost all the code. With checkDependencies, one lint run covers this module
+    // and :shared, so the repo's lint.xml suppression reaches the :shared code it was written for.
     lint {
         checkDependencies = true
         xmlReport = true
@@ -44,14 +43,14 @@ android {
     }
 
     defaultConfig {
-        // applicationId / versionCode / versionName / manifestPlaceholders[appName] are applied
-        // by KiteConfig in AGP finalizeDsl (AFTER this block) from the root kiteConfig { } config;
-        // the exoOnly applicationId swap lives THERE, a module-level override here cannot win.
+        // KiteConfig sets applicationId, versionCode, versionName and manifestPlaceholders[appName]
+        // from the root kiteConfig { } block. It runs in AGP finalizeDsl, after this block, so a
+        // value set here cannot win. For that reason the exoOnly applicationId swap is there too.
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-        // An unsigned release is unsigned even on a machine that holds the keystore, or the name
-        // would say one thing and the file would be another. Debug signs itself below.
+        // An unsigned release stays unsigned even on a machine that holds the keystore, so the
+        // file name always matches the file. The debug build type sets its own signing below.
         if (!unsignedRelease) {
             signingConfigs.findByName("synkplay_keystore")?.let { config ->
                 signingConfig = config
@@ -67,9 +66,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            /* An unsigned APK under a release filename is indistinguishable from a real one until
-             * a device refuses to install it. A missing keystore stops the build instead, unless
-             * the build asked for an unsigned one on purpose. */
+            /* An unsigned APK with a release file name looks like a real one until a device
+             * refuses to install it. So a missing keystore stops a release build, unless
+             * -PunsignedRelease=true asks for an unsigned one. */
             if (signingConfigs.findByName("synkplay_keystore") == null && !unsignedRelease) {
                 gradle.taskGraph.whenReady {
                     val releasing = allTasks.any { it.path.contains("Release") && (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package")) }
@@ -78,8 +77,8 @@ android {
                     }
                 }
             }
-            /* R8's mapping and the native symbol table, or a crash report from the store is a
-             * page of obfuscated frames and addresses. */
+            /* Put the full native symbol table in the bundle, next to the R8 mapping. Without
+             * both, a crash report from the store shows only obfuscated frames and addresses. */
             ndk { debugSymbolLevel = "FULL" }
         }
         debug {
@@ -93,9 +92,9 @@ android {
 
     packaging {
         jniLibs.useLegacyPackaging = true
-        // No pickFirst for libc++_shared.so any more: only the libmpvkt AAR ships one. If a
-        // second dependency ever brings its own, AGP fails the merge, and that is the moment to
-        // look at which copy is newer, not the moment to add a pickFirst.
+        // No pickFirst for libc++_shared.so: only the libmpvkt AAR ships one. If a second
+        // dependency brings its own copy, AGP fails the merge. Then check which copy is newer
+        // instead of adding a pickFirst.
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             pickFirsts += "META-INF/INDEX.LIST"
@@ -103,8 +102,9 @@ android {
             pickFirsts += "META-INF/io.netty.versions.properties"
             excludes += "META-INF/license/**"
             excludes += "META-INF/native-image/**"
-            // Dead SPI hooks from transitive deps (Rhino's JSR-223 entry, BlockHound's JVM
-            // agent hook): neither can fire on Android; dropping them quiets R8 warnings.
+            // Service loader files from transitive dependencies (Rhino's JSR-223 entry,
+            // BlockHound's JVM agent hook). Neither can run on Android, and dropping them
+            // removes R8 warnings.
             excludes += "META-INF/services/javax.script.ScriptEngineFactory"
             excludes += "META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
         }
@@ -113,25 +113,24 @@ android {
     if (exoOnly) {
         packaging {
             jniLibs {
-                // The exoOnly promise: no native player library in the APK. The libmpvkt
-                // dependency stays so the engine code compiles; its libraries are dropped here.
+                // The exoOnly APK carries no native player library. The libmpvkt dependency
+                // stays so that the engine code compiles, and this block drops its libraries.
                 // verifyExoOnlyApk (buildSrc/ExoOnlyApkGate.kt) reads the finished APK and fails
-                // the build if any of them slipped through anyway.
+                // the build if one of them is still inside.
                 for (lib in AppConfig.libmpvNativeLibs) {
                     excludes += ("**/$lib")
                 }
-                // KitePlayer's FFmpeg backend, the single largest native library here: it carries
-                // a whole statically linked FFmpeg, so leaving it in would cost this flavor more
-                // than mpv does and defeat the point of shipping no native players.
-                // KitePlayerPlatform.isAvailable detects that this payload is absent.
+                // KitePlayer's FFmpeg backend is the largest native library here, because it
+                // links all of FFmpeg statically. It costs more size than mpv, so the exoOnly
+                // APK drops it too. KitePlayerPlatform.isAvailable detects that it is missing.
                 excludes += ("**/libkitecodec_jni.so")
             }
         }
     }
-    /* No ABI splits, by decision (0.24.0): one universal APK per flavor carries every ABI. The
-     * per-ABI files saved a download but put a five-way choice on the release page, and they
-     * kept the APK and AAB builds in separate Gradle invocations (AGP issuetracker 402800800).
-     * Play still gets the AAB and serves each phone only its own libraries. */
+    /* No ABI splits: one universal APK per flavor carries every ABI. Per-ABI APKs save download
+     * size, but they put a five-way choice on the release page. They also force the APK and AAB
+     * builds into separate Gradle runs (AGP issuetracker 402800800). Play still gets the AAB and
+     * serves each phone only its own libraries. */
 
     flavorDimensions.add("flavor")
     productFlavors {
@@ -146,7 +145,7 @@ android {
         includeInBundle = false
     }
 
-    // Strip unused artifacts that the google-shortcuts library drags along.
+    // Keep Tink and Google Play services out of the app, even if a dependency pulls them in.
     configurations.all {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
         exclude(group = "com.google.android.gms")
@@ -154,23 +153,22 @@ android {
 }
 
 if (exoOnly) {
-    // The exoOnly promise, checked on the bytes of every exoOnly APK. See buildSrc/ExoOnlyApkGate.kt.
+    // Check every exoOnly APK for native player libraries. See buildSrc/ExoOnlyApkGate.kt.
     registerExoOnlyApkGate()
 }
 
 androidComponents {
-    // KiteConfig applies the major SDK; AGP needs the minor level restored afterward.
+    // KiteConfig sets the major compile SDK. AGP needs the minor level set again after that.
     finalizeDsl { it.compileSdkMinor = providers.gradleProperty("android.compileSdkMinor").get().toInt() }
     onVariants { variant ->
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val v = kiteConfig.version.get()
-                // "universal" stays in the full name: it tells a downloader every ABI is inside.
-                // The exo name is spelled "syncplay" on purpose, whatever the app is called now:
-                // IzzyOnDroid's updater fetches the release asset by that name, and 0.24.0 broke
-                // it for a day by following the rename.
-                // A release that opted out of signing says so in its name, so the file cannot be
-                // mistaken for a real one. See `unsignedRelease` at the top of this file.
+                // "universal" in the full APK name tells a downloader that every ABI is inside.
+                // The exoOnly APK name keeps "syncplay" on purpose, whatever the app name is.
+                // IzzyOnDroid's updater fetches the release asset by that name, so a rename
+                // breaks its updates.
+                // An unsigned release says so in its name. See `unsignedRelease` at the top.
                 val unsigned = if (unsignedRelease && variant.buildType == "release") "-unsigned" else ""
                 val fileName = if (exoOnly) {
                     "syncplay-$v-exo-only$unsigned.apk"

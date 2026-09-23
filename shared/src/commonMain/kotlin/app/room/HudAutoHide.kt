@@ -4,7 +4,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
-/** Every change restarts the idle window, including an interaction with unchanged playback. */
+/**
+ * The inputs of [autoHideHud]. The HUD is the set of controls drawn over the video.
+ * Every change restarts the idle timer. [activity] changes on each touch or key press, so an
+ * interaction restarts the timer even when playback stays the same.
+ */
 internal data class HudAutoHideState(
     val idleSeconds: Int,
     val hudVisible: Boolean,
@@ -18,8 +22,9 @@ internal data class HudAutoHideState(
 }
 
 /**
- * Only uninterrupted playback can hide the controls. Pausing or loading brings back controls
- * hidden by this timer; a deliberate background tap remains hidden until the user reveals it.
+ * Hides the HUD after [HudAutoHideState.idleSeconds] of uninterrupted playback. When playback
+ * pauses or buffers, controls that this timer hid come back. Controls that the user hid with a
+ * tap on the background stay hidden until the user shows them again.
  */
 internal suspend fun autoHideHud(
     states: Flow<HudAutoHideState>,

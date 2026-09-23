@@ -9,10 +9,11 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.mpv
 
 /**
- * MPV engine descriptor (Android). Backed by libmpv from libmpvKt, through [MpvImpl].
+ * The mpv engine on Android, backed by libmpv from the libmpvKt library through [MpvImpl]. An
+ * engine is one of the video players the app can drive.
  *
- * Available and the default engine only in the `full` build flavor (when EXOPLAYER_ONLY is false);
- * absent in `exoOnly` builds, which ship no native player libraries.
+ * It is available, and the default engine, only in the `full` flavor (EXOPLAYER_ONLY is false).
+ * `exoOnly` builds ship no native player libraries, so mpv is not available there.
  */
 @Suppress("KotlinConstantConditions")
 object MpvEngine: PlayerEngine {

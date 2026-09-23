@@ -23,9 +23,10 @@ import kotlinx.coroutines.withTimeout
 import app.protocol.models.ConnectionState
 
 /**
- * Cross-platform [NetworkManager] over Ktor TCP sockets. Works on every platform but does
- * NOT support TLS, so it is the fallback engine; Netty (Android) / SwiftNIO (iOS) are used
- * when encryption is required.
+ * [NetworkManager] over Ktor TCP sockets, for Android, iOS and desktop (not the browser). A
+ * network manager carries the Syncplay protocol lines between the room and the server. This one
+ * does not support TLS, so it is the fallback network engine. Netty (Android and desktop) and
+ * SwiftNIO (iOS) handle encrypted connections.
  */
 class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     override val engine = NetworkEngine.KTOR
@@ -36,41 +37,42 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     private var connection: Connection? = null
 
-    /** The reader coroutine for the current socket, so teardown can actually stop it. */
+    /** The reader coroutine for the current socket, kept so that teardown can stop it. */
     private var readerJob: Job? = null
 
     /**
-     * Guards the handover between a finished dial and a teardown that arrived while it was still
-     * dialling. Both write the same four fields from different coroutines.
+     * Guards the handover between a finished dial and a teardown that arrived during the dial.
+     * Both write the same four fields from different coroutines.
      */
     private val socketLock = SynchronizedObject()
 
     /**
      * Which dial owns the manager.
      *
-     * A counter, not a flag. With a flag, a slow dial could still claim the fields after a
-     * teardown had cleared them and a second dial had already filled them in: the second dial's
-     * socket and selector were then referenced by nothing, and its selector owns a thread.
-     * Every dial takes a number and only publishes if it is still the current one.
+     * A counter, not a flag. With a flag, a slow dial can still claim the fields after a teardown
+     * cleared them and a second dial filled them in. Nothing then references the second dial's
+     * socket and selector, and the selector owns a thread. Every dial takes a number and
+     * publishes only if it is still the current one.
      */
     private var dialSerial = 0
 
     /**
-     * Opens the TCP socket and launches a reader coroutine that feeds each inbound line to
+     * Opens the TCP socket and launches a reader coroutine that passes each inbound line to
      * [handlePacket]. A failure to open throws, and [connect] turns that into onConnectionFailed.
      */
     override suspend fun connectSocket() {
         withContext(Dispatchers.IO) {
             val serial = synchronized(socketLock) { ++dialSerial }
             val sm = SelectorManager(Dispatchers.IO)
-            /* Nothing is published until the dial returns. Assigning the selector first meant a
-             * teardown landing mid-dial closed it, and then the dial finished and overwrote the
-             * cleared fields with a socket bound to a dead selector, which nothing ever closed.
+            /* Publish nothing until the dial returns. If the selector is assigned first, a
+             * teardown during the dial closes it. The dial then finishes and fills the cleared
+             * fields with a socket bound to a dead selector, which nothing ever closes.
              *
-             * The dial is also bounded here. socketTimeout is a read/write option, not a connect
-             * deadline, so against a host that swallows the SYN this sat for the operating
-             * system's own timeout (over a minute) while the 20 s handshake deadline tore the
-             * connection state down underneath it. Netty and SwiftNIO both bound their dial. */
+             * The dial also has its own time limit here. socketTimeout is a read/write option, not
+             * a connect deadline. Against a host that drops the SYN, the dial would wait for the
+             * operating system's own timeout (over a minute), while the 20 s handshake deadline
+             * tears the connection state down under it. Netty and SwiftNIO also limit their
+             * dial. */
             val sock = try {
                 withTimeout(CONNECT_TIMEOUT_MS) {
                     aSocket(sm)
@@ -88,26 +90,26 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
             }
             val conn = sock.connection()
 
-            // The reader lives on IO, never the main dispatcher, and only reports the loss of
-            // the socket it was reading: our own teardown of a previous socket is not news. It is
-            // built lazily so it can be published under the same lock as the socket it reads.
+            // The reader runs on IO, never on the main dispatcher, and reports only the loss of the
+            // socket that it reads: closing a previous socket ourselves is expected. It starts
+            // lazily, so it can be published under the same lock as the socket it reads.
             val reader = viewmodel.viewModelScope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
                 try {
-                    // readLineStrict suspends until a full line arrives, draining the
-                    // socket at line granularity with no artificial pacing. Pacing here
-                    // (e.g. a per-line delay) lags join bursts and inflates RTT samples.
+                    // readLineStrict suspends until a full line arrives, so the socket is read
+                    // line by line with no artificial pacing. Pacing here (for example a per-line
+                    // delay) slows join bursts and inflates the RTT (round-trip time) samples.
                     // The limit matches the Netty framers: a line with no newline in 64 KiB
                     // is not the Syncplay protocol.
                     while (true) {
                         val line = conn.input.readLineStrict(limit = MAX_LINE_BYTES) ?: break
-                        // A line from a socket we have already replaced is not ours to act on.
+                        // Stop on a line from a socket that a newer connection has replaced.
                         if (socket !== sock) break
                         handlePacket(line)
                     }
                     lost(sock)
                 } catch (e: CancellationException) {
-                    // Belt and braces: the teardown that cancels this also closes the socket, but
-                    // a reader cancelled any other way would otherwise leave it open.
+                    // Close the socket here too. The teardown that cancels this reader also closes
+                    // it, but a reader cancelled in any other way would leave it open.
                     runCatching { sock.close() }
                     throw e
                 } catch (e: Exception) {
@@ -128,20 +130,24 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                 }
             }
             if (!claimed) {
-                // Superseded while we were dialling. This socket belongs to nobody.
+                // A teardown or a newer dial replaced this one during the dial, so nothing owns
+                // this socket.
                 reader.cancel()
                 runCatching { sock.close() }
                 runCatching { sm.close() }
-                // Thrown, not returned: connect() reads a normal return as a live socket and goes
-                // on to send Hello into nothing, then sits in CONNECTING until the handshake
-                // deadline. A throw is the honest answer and the fallback dial can act on it.
+                // Throw, do not return: connect() reads a normal return as a live socket, sends
+                // Hello into nothing, and waits in CONNECTING until the handshake deadline. The
+                // fallback dial can act on a throw.
                 throw SocketGoneException()
             }
             reader.start()
         }
     }
 
-    /** A socket closed under us: a failed handshake or a dropped session, depending on where we were. */
+    /**
+     * Handles a socket that closed from the other side: a failed handshake or a dropped session,
+     * depending on the connection state.
+     */
     private fun lost(sock: Socket) {
         if (socket !== sock) return
         socket = null
@@ -167,11 +173,12 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
             readerJob = null
             Triple(s, l, r)
         }
-        // Closing the socket normally ends readLineStrict, but a reader parked on a socket that
-        // never errors would otherwise outlive the connection it belongs to.
+        // Closing the socket normally ends readLineStrict, but a reader waiting on a socket that
+        // never errors would otherwise outlive its connection.
         reader?.cancel()
         runCatching { sock?.close() }
-        // The selector owns a thread; one per connection attempt used to leak for the process life.
+        // The selector owns a thread. Without this close, every connection attempt leaks one
+        // thread for the life of the process.
         runCatching { sel?.close() }
     }
 
@@ -185,11 +192,10 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     override fun supportsTLS() = false
 
     /**
-     * No-op: Ktor does not support opportunistic TLS upgrade (KTOR-6623), so encrypted
-     * connections must use the Netty or SwiftNIO engine instead.
+     * No-op: Ktor does not support an opportunistic TLS upgrade (KTOR-6623), so encrypted
+     * connections must use the Netty or SwiftNIO network engine.
      */
     override suspend fun upgradeTls() {
-        //TODO("Opportunistic TLS not yet supported by Ktor")
     }
 
     private companion object {

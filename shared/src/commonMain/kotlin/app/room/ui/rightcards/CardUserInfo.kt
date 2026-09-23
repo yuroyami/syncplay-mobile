@@ -86,13 +86,14 @@ object CardUserInfo {
         val viewKey by USER_INFO_VIEW.watchPref()
         val scope = rememberCoroutineScope()
         val me = vm.session.currentUsername
-        // Only where the server says controllers may set other people's readiness.
+        // Only when the server lets controllers set the readiness of other users, and the local
+        // user is a controller.
         val canSetReady = vm.session.roomFeatures.setOthersReadiness && users.any { it.name == me && it.isController }
         UserRosterPanel(
             users = users,
             me = me,
             myFile = myFile,
-            // Saved "files" and unknown values naturally fall back to the full-information view.
+            // A saved "files" value, or any unknown value, falls back to the standard view.
             compact = viewKey == "compact",
             onCompactChange = { compact -> scope.launch { USER_INFO_VIEW.set(if (compact) "compact" else "standard") } },
             mutedUsers = ui.mutedUsers,
@@ -105,7 +106,11 @@ object CardUserInfo {
     }
 }
 
-/** The same roster in two densities. Information and row actions have independent visibility. */
+/**
+ * The roster panel: the list of users in the room, in two densities (compact and standard). A
+ * room is the group of people watching together. The details and the row actions show
+ * independently of each other.
+ */
 @Composable
 internal fun UserRosterPanel(
     users: List<User>,
@@ -158,7 +163,7 @@ internal fun UserRosterPanel(
     }
 }
 
-/** The original small header switch: one icon, two densities, no duplicate room count. */
+/** The small view switch in the header: one icon for the two densities, and no second user count. */
 @Composable
 private fun RosterViewSwitcher(compact: Boolean, onCompactChange: (Boolean) -> Unit) {
     AnimatedContent(
@@ -183,11 +188,11 @@ private fun RosterViewSwitcher(compact: Boolean, onCompactChange: (Boolean) -> U
 @Composable
 private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compact: Boolean, expanded: Boolean, onClick: (() -> Unit)?) {
     val p = palette
-    // Kept small so a short panel shows more people: the name at the value size, the details at
-    // the group size, which is the smallest text the room uses.
+    // Small text, so a short panel shows more people. The name uses the value size, and the
+    // details use the group size, which is the smallest text in the room.
     val nameStyle = Type.label.copy(fontSize = Type.value.fontSize, lineHeight = Type.value.lineHeight)
     val detailSize = Type.group.fontSize
-    // A file name can wrap, so its lines sit a little looser than the group role's.
+    // A file name can wrap, so its line height is a little larger than that of the group style.
     val filenameStyle = Type.note.copy(fontSize = detailSize, lineHeight = lerp(Type.group.lineHeight, Type.note.lineHeight, 0.2f))
     val metadataStyle = Type.value.copy(fontSize = detailSize, lineHeight = Type.group.lineHeight)
     val file = user.file
@@ -217,7 +222,8 @@ private fun RosterUserRow(user: User, isSelf: Boolean, myFile: MediaFile?, compa
     ) {
         Column(Modifier.fillMaxWidth().padding(vertical = Space.gapTight), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                // At enlarged text, the compact row becomes two lines before either column gets squeezed.
+                // With large text, the compact row splits into two lines before either column
+                // gets too narrow.
                 val stacked = maxWidth < 260.dp * LocalDensity.current.fontScale
                 val nameWidth = maxWidth * 0.36f
                 val identity: @Composable () -> Unit = {
@@ -293,8 +299,8 @@ private fun CompactFilename(filename: String, hasFile: Boolean, modifier: Modifi
             val size = (0..2).map { lerp(style.fontSize, minSize, it / 2f) }.firstOrNull { size ->
                 measurer.measure(cleaned, style.copy(fontSize = size), softWrap = false, maxLines = 1).size.width <= width
             } ?: minSize
-            // MiddleEllipsis is not implemented consistently by the platform text engines.
-            // Measure the actual head/ellipsis/tail string so the episode suffix survives everywhere.
+            // The platforms do not all draw MiddleEllipsis the same way. Measure the real string of
+            // head, ellipsis and tail, so the episode suffix stays on every platform.
             abbreviateRosterFileName(cleaned) { candidate ->
                 measurer.measure(candidate, style.copy(fontSize = size), softWrap = false, maxLines = 1).size.width <= width
             } to size
@@ -304,7 +310,10 @@ private fun CompactFilename(filename: String, hasFile: Boolean, modifier: Modifi
     }
 }
 
-/** Shrink toward the preferred line count; longer names grow the row at the readable floor. */
+/**
+ * Shrinks the text in steps until it fits in [preferredLines] lines. A longer text stays at the
+ * smallest readable size and makes the row taller.
+ */
 @Composable
 private fun FullRosterText(filename: String, modifier: Modifier = Modifier, style: TextStyle = Type.note, preferredLines: Int = 2) {
     val measurer = rememberTextMeasurer()
@@ -321,7 +330,10 @@ private fun FullRosterText(filename: String, modifier: Modifier = Modifier, styl
     }
 }
 
-/** Unknown/withheld sizes stay unknown; byte counts get a short decimal unit. */
+/**
+ * Formats a file size for the roster. An unknown or withheld size stays unknown, and a byte count
+ * gets a short decimal unit, such as 1.5 GB.
+ */
 internal fun rosterFileSize(raw: String): String {
     val bytes = raw.toLongOrNull()?.takeIf { it > 0L } ?: return "—"
     val (divisor, suffix) = when {

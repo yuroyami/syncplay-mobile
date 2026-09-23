@@ -56,9 +56,10 @@ import syncplaymobile.shared.generated.resources.save
 import kotlin.math.roundToInt
 
 /**
- * The theme creator: controls on one side, the live miniature on the other, and the whole
- * screen re-themed on every edit through the token layer. The scheme is resolved once per
- * theme value. Saving an edit replaces the old copy in one write.
+ * The theme creator. On a wide screen, the controls sit beside a live miniature of the theme. On a
+ * narrow screen, the miniature sits above them. Every edit re-themes the whole screen through
+ * [LocalPalette], and the color scheme resolves once per theme value. Saving an edited theme
+ * replaces the old copy in one write.
  */
 @Composable
 fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
@@ -73,8 +74,8 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
     fun close() = globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
 
-    /* A save is a round trip, and the editor can be gone by the time it lands: popping whatever
-     * is last would then close whatever the user opened instead. */
+    /* A save is asynchronous, so the user can leave the editor before the save finishes. Removing
+     * the last screen at that point would close the screen that the user opened next. */
     fun closeIfStillTheEditor() {
         val stack = globalViewmodel.backstack
         if (stack.lastOrNull() is Screen.ThemeCreator) stack.removeAt(stack.lastIndex)
@@ -170,7 +171,7 @@ private fun Controls(
         }
 
         Column(Modifier.padding(Space.gutter), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
-            // Disabled while a save is in flight: two taps used to write the theme twice.
+            // Disabled while a save runs, so a second tap cannot write the theme twice.
             PrimaryAction(strings.save, onClick = { onSave(false) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
             if (editing) SecondaryAction(strings.themeSaveAsNew, onClick = { onSave(true) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
         }
@@ -178,7 +179,7 @@ private fun Controls(
     }
 }
 
-/** A colour row: the hex in the value column, the swatch after it, the shared colour modal. */
+/** A row for one theme color: the hex value, then a swatch. A tap opens the shared color modal. */
 @Composable
 private fun ColorRow(label: String, color: Color?, onColor: (Color) -> Unit, onReset: (() -> Unit)? = null) {
     val open = remember { mutableStateOf(false) }

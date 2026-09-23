@@ -7,12 +7,12 @@ import kotlin.test.Test
 
 /**
  * Live end-to-end probe of the OpenSubtitles search and download pipeline (network required).
- * Exercises the exact commonMain code path the in-app subtitle search uses, including the
- * app's only Ktorfit @Body POST: the call that silently died with "Fail to prepare request
- * body for sending / Content-Type: null" until requestDownload declared its Content-Type.
+ * It runs the exact commonMain code path of the in-app subtitle search, including the app's only
+ * Ktorfit @Body POST. That call fails silently before sending ("Fail to prepare request body for
+ * sending / Content-Type: null") unless requestDownload declares its Content-Type.
  *
- * Off unless asked for, because it needs the network and spends one unit of the key's daily
- * download quota (5/day free) per run:
+ * The test is off unless asked for, because it needs the network and spends one unit of the key's
+ * daily download quota (5 a day on the free tier) per run:
  * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest
  * [SubtitleServiceTest] checks the same requests on every run, against a local server.
  */

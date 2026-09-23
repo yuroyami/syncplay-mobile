@@ -55,10 +55,9 @@ class Pref<T>(
 /**
  * Every [Pref] ever constructed.
  *
- * Export used to walk the two settings screens, which meant a preference reachable only through
- * an engine's own category, or through a colour editor nested inside a row, was never written to
- * the file and silently did not travel. What a preference is has nothing to do with where its row
- * happens to be drawn.
+ * The settings export reads this registry, not the settings screens. Some preferences have rows
+ * only in an engine's own category, or in a colour editor nested inside a row. A walk over the
+ * screens would miss them, and they would silently stay out of the file.
  */
 object PrefRegistry {
     private val all = mutableListOf<Pref<*>>()
@@ -88,7 +87,7 @@ inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
 }
 
 
-/** One line of copy, picked out of whatever language the app is showing. */
+/** One line of text, taken from the strings of the current app language. */
 typealias Localized = (AppStrings) -> String
 
 data class SettingConfig(
@@ -115,9 +114,9 @@ inline fun <reified T> Pref<T>.prefKey(): Preferences.Key<T> {
 }
 
 /**
- * The type-erased key, for rows that hold a `Pref<*>`. Built from the default's runtime class,
- * the same rule [Pref.Render] dispatches on. A pref whose default is null has no config and is
- * never rendered, so it never reaches this.
+ * The type-erased key, for rows that hold a `Pref<*>`. It is built from the runtime class of the
+ * default, the same rule that [Pref.Render] picks the row kind by. A pref whose default is null
+ * has no config and is never rendered, so it never reaches this.
  */
 @Suppress("UNCHECKED_CAST")
 val Pref<*>.anyKey: Preferences.Key<Any>
@@ -132,7 +131,7 @@ val Pref<*>.anyKey: Preferences.Key<Any>
         else -> throw IllegalArgumentException("Unsupported pref type for $key")
     }.also { cachedKey = it }) as Preferences.Key<Any>
 
-/** Type-erased snapshot read; falls back to the default. */
+/** Type-erased snapshot read. It falls back to the default. */
 fun Pref<*>.valueAny(): Any? = datastoreStateFlow.value[anyKey] ?: default
 
 /** Type-erased reactive read from the root snapshot, like [watchPref]. */
@@ -143,21 +142,19 @@ fun Pref<*>.watchAny(): State<Any?> {
     return remember(k) { derivedStateOf { prefsState.value[k] ?: default } }
 }
 
-/** Type-erased write. The caller passes the declared type; nothing here checks it. */
+/** Type-erased write. The caller passes the declared type, and nothing here checks it. */
 suspend fun Pref<*>.setAny(value: Any) {
     datastore.edit { preferences -> preferences[anyKey] = value }
 }
 
-/**
- * Get the current value using the static default.
- */
+/** The current value, or the default when nothing is stored. */
 inline fun <reified T> Pref<T>.value(): T {
     return datastoreStateFlow.value[prefKey()] ?: default
 }
 
 /**
- * Get a reactive Flow using the static default. The flow is cached so repeated calls
- * don't rebuild the map/distinctUntilChanged chain.
+ * A flow of the value, with the default when nothing is stored. The flow is cached, so repeated
+ * calls do not rebuild the map and distinctUntilChanged chain.
  */
 inline fun <reified T> Pref<T>.flow(): Flow<T> {
     return cachedFlow ?: datastoreStateFlow
@@ -167,8 +164,8 @@ inline fun <reified T> Pref<T>.flow(): Flow<T> {
 }
 
 /**
- * Observe as Compose State. Reads from the single root-level [LocalPrefsState] snapshot
- * via [derivedStateOf], so there is no per-composable flow collection and no stale initial default.
+ * The value as Compose State. It reads the one root [LocalPrefsState] snapshot through
+ * [derivedStateOf], so no composable collects a flow of its own and no stale default shows first.
  */
 @Composable
 inline fun <reified T> Pref<T>.watchPref(): State<T> {
@@ -179,9 +176,7 @@ inline fun <reified T> Pref<T>.watchPref(): State<T> {
     }
 }
 
-/**
- * Write a new value to this preference.
- */
+/** Writes a new value to this preference. */
 suspend inline fun <reified T> Pref<T>.set(value: T) {
     datastore.edit { preferences ->
         preferences[prefKey()] = value

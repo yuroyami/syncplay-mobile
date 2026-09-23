@@ -20,29 +20,28 @@ import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
 /**
- * Bridge object that wires a [UIView] up as a VLCKit 4 video output AND a Picture-in-Picture
- * source.
+ * Makes a [UIView] both a VLCKit 4 video output and a Picture-in-Picture (PiP) source.
  *
- * VLCKit 4 introduced an opt-in PiP protocol stack: any object set as
- * `VLCMediaPlayer.drawable` that conforms to [VLCPictureInPictureDrawableProtocol] (in addition
- * to the basic [VLCDrawableProtocol]) is offered a [VLCPictureInPictureWindowControllingProtocol]
- * controller via the [pictureInPictureReady] block once the framework is ready. The same object
- * also acts as the [VLCPictureInPictureMediaControllingProtocol] delegate, providing playback
- * commands and metadata to the system's PiP overlay.
+ * VLCKit 4 has an opt-in PiP protocol set. When the object set as `VLCMediaPlayer.drawable` also
+ * conforms to [VLCPictureInPictureDrawableProtocol] (on top of the basic [VLCDrawableProtocol]),
+ * VLCKit passes it a [VLCPictureInPictureWindowControllingProtocol] controller through the
+ * [pictureInPictureReady] block once PiP is ready. The same object is also the
+ * [VLCPictureInPictureMediaControllingProtocol] delegate, which gives the system PiP overlay its
+ * playback commands and media info.
  *
- * We can't simply make a [UIView] subclass conform — `addSubview:` on UIView already exists with
- * incompatible Kotlin/Native overload semantics, so we wrap a plain UIView (`containerView`) and
- * forward into it. The VLCMediaPlayer drawable is THIS object, not the underlying view.
+ * A [UIView] subclass cannot conform directly: UIView already has `addSubview:`, and its
+ * Kotlin/Native overload does not match the protocol's. So this class wraps a plain UIView
+ * (`containerView`) and forwards to it. The VLCMediaPlayer drawable is this object, not the view.
  *
- * The Apple PiP integration invokes its synchronous media getters on Main. Commands explicitly
- * enter the player's Main scope, while mediaTime uses the adapter's native clock and seek guard.
- * It must not return VLCKit's independently cached `time` property.
+ * Apple's PiP calls the synchronous media getters on the main thread. The commands enter the
+ * player's main scope explicitly. [mediaTime] reads [VlcKitImpl]'s native clock through its seek
+ * guard, and must never return VLCKit's separately cached `time` property.
  *
- * @param containerView The UIView VLCKit will render into via [addSubview]. We forward
- *                      [VLCDrawableProtocol]'s addSubview/bounds calls to this view.
- * @param impl The [VlcKitImpl] this drawable is bound to. We hold it strongly because the
- *             drawable's lifetime is bracketed by the impl's: [VlcKitImpl.destroy] clears the
- *             player's drawable reference before we get released.
+ * @param containerView The UIView that VLCKit renders into. [addSubview] and [bounds] forward to
+ *   this view.
+ * @param impl The [VlcKitImpl] this drawable belongs to. The reference is strong because the
+ *   drawable never outlives the impl: [VlcKitImpl.destroy] clears the player's drawable reference
+ *   before this object is released.
  */
 internal class VlcDrawable(
     private val containerView: UIView,
@@ -58,7 +57,10 @@ internal class VlcDrawable(
 
     private fun isCurrentDrawable(): Boolean = !disposed && impl.vlcDrawable === this
 
-    /** Break the native PiP controller -> drawable -> controller retain cycle on Main. */
+    /**
+     * Breaks the native retain cycle (PiP controller -> drawable -> controller) on the main
+     * thread. It also cancels a pending PiP seek and stops PiP.
+     */
     fun dispose() {
         if (disposed) return
         disposed = true
@@ -80,18 +82,18 @@ internal class VlcDrawable(
     }
 
     /**
-     * The PiP window controller VLCKit hands us via [pictureInPictureReady]. Becomes non-null
-     * once the framework finishes setting up its PiP machinery (typically shortly after the
-     * first video frame is rendered). Used to start/stop PiP and to invalidate playback state
-     * so the system overlay's pause/play button stays in sync with our [VLCMediaPlayer].
+     * The PiP window controller that VLCKit passes to [pictureInPictureReady]. It becomes
+     * non-null once VLCKit has set up PiP (usually shortly after the first video frame).
+     * [VlcKitImpl] uses it to start and stop PiP, and to invalidate the playback state so the
+     * overlay's play and pause button matches the [VLCMediaPlayer].
      */
     var pipController: VLCPictureInPictureWindowControllingProtocol? = null
         private set
 
     /**
-     * Notified by VLCKit when PiP starts (`true`) or stops (`false`). Wired up to the
-     * RoomUiStateManager's `hasEnteredPipMode` flow so the room UI can hide its HUD while the
-     * floating window is up.
+     * Called when PiP starts (`true`) or stops (`false`). [VlcKitImpl] connects it to
+     * `hasEnteredPipMode` in RoomUiStateManager, so the room UI (the screen of a group of people
+     * watching together) can hide its HUD while the PiP window is up.
      */
     var onPipStateChanged: ((Boolean) -> Unit)? = null
 
@@ -99,19 +101,19 @@ internal class VlcDrawable(
     // VLCDrawable
     // ────────────────────────────────────────────────────────────────────────
 
-    // K/N's generated VLCDrawableProtocol exposes the view parameter as nullable
-    // (`UIView?`) — the override signature must match exactly. We just no-op on null,
-    // since VLCKit will never actually pass nil here in practice.
+    // Kotlin/Native's generated VLCDrawableProtocol makes the view parameter nullable
+    // (`UIView?`), and the override signature must match exactly. VLCKit never passes nil
+    // here in practice, so null is ignored.
     override fun addSubview(view: UIView?) {
         if (view == null || !isCurrentDrawable()) return
-        // A newly created native output can attach another window here. The container
-        // belongs exclusively to VLC. Drawable assignment alone does not promise a new view.
+        // A newly created native output can attach another view here. The container belongs
+        // to VLC alone, so old views go first. Setting the drawable alone does not promise a
+        // new view.
         containerView.subviews.forEach { (it as? UIView)?.removeFromSuperview() }
-        // Size the render view to fill the container, and pin it there with an
-        // autoresizing mask so subsequent rotations / layout passes keep it stretched.
-        // Without this, VLCKit's render view sometimes lands at zero-size (especially
-        // on first attach when containerView's bounds haven't fully laid out yet) and
-        // we see the container's background bleed through instead of video.
+        // Size the render view to fill the container, and pin it with an autoresizing mask
+        // so later rotations and layout passes keep it filled. Without this, VLCKit's render
+        // view can end up zero-sized (mostly on the first attach, before containerView's
+        // bounds are laid out), and the container's background shows instead of the video.
         view.setFrame(containerView.bounds)
         view.setAutoresizingMask(
             UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
@@ -143,10 +145,10 @@ internal class VlcDrawable(
     // ────────────────────────────────────────────────────────────────────────
     // VLCPictureInPictureMediaControlling
     //
-    // VLCKit invokes these from the system's PiP overlay (its play/pause/seek buttons). They go
-    // through the room dispatcher, not straight to the engine: a PiP window is still a person in
-    // a room, so a play has to pass the readiness gate and a seek has to be announced. Driving
-    // the engine directly moved this viewer alone and told nobody.
+    // VLCKit calls these from the system PiP overlay (its play, pause and seek buttons). They go
+    // through the room dispatcher, not straight to the engine. A viewer in PiP is still in the
+    // room, so a play must pass the readiness gate and a seek must be announced. Driving the
+    // engine directly would move only this viewer and tell nobody.
     // ────────────────────────────────────────────────────────────────────────
 
     override fun play() {
@@ -186,8 +188,9 @@ internal class VlcDrawable(
                     request.finish(VlcSeekCompletion.Result.UNAVAILABLE)
                     return@launch
                 }
-                // Preserve millisecond offsets and await actual local submission, not a
-                // dispatcher coroutine merely being scheduled. Native completion is separate.
+                // Keep the millisecond offset, and wait until the seek is really submitted
+                // locally, not only until a dispatcher coroutine is scheduled. Native completion
+                // is awaited separately below.
                 if (impl.viewmodel.dispatcher.seekByMillis(offset) == null) {
                     request.finish(VlcSeekCompletion.Result.UNAVAILABLE)
                     return@launch
@@ -202,9 +205,9 @@ internal class VlcDrawable(
                     },
                     targetMs = { impl.lastSeekRequestTargetMs },
                     nativePositionMs = {
-                        // An old input's coincidentally close clock is not completion of
-                        // a command still waiting for startup. Timeout only releases PiP's
-                        // callback; it does not cancel the room's deferred seek intent.
+                        // While a seek still waits for startup, the old input's clock can be
+                        // near the target by chance, and that is not completion. A timeout only
+                        // releases PiP's callback. It does not cancel the room's deferred seek.
                         if (impl.hasPendingSeek) null
                         else SyncplayVlcCurrentTimeMs(player).takeIf { it >= 0L }
                     }
@@ -214,7 +217,7 @@ internal class VlcDrawable(
             }
         }
         pendingSeekJob = job
-        // The scope can be canceled before the body starts, so its finally alone is insufficient.
+        // The scope can be cancelled before the body starts, so the finally block is not enough.
         job.invokeOnCompletion {
             dispatch_async(dispatch_get_main_queue()) {
                 request.finish(VlcSeekCompletion.Result.CANCELLED)

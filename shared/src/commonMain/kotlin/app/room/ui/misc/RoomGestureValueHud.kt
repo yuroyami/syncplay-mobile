@@ -34,30 +34,32 @@ import app.uicomponents.frames.Notice
 import app.uicomponents.frames.NoticeSeverity
 import kotlinx.coroutines.delay
 
-/** Which knob a swipe is moving. */
+/** The value that a vertical swipe changes. */
 enum class GestureValueKind { VOLUME, BRIGHTNESS }
 
-/** What the gesture readout shows: a level while swiping, or where a seek will land. */
+/** What the gesture readout shows: a level during a swipe, or where a seek will land. */
 sealed interface GestureReadout {
     /**
-     * [display] is the number shown and [fraction] fills the base bar. [gain] fills the second bar,
-     * 0 to 1 across the engine's gain range; null where the engine cannot amplify, and then there
-     * is no second bar at all.
+     * [display] is the number shown, and [fraction] fills the base bar. [gain] fills the second
+     * bar, from 0 to 1 across the gain range of the engine (one of the video players that the app
+     * can drive, such as ExoPlayer or mpv). [gain] is null when the engine cannot amplify, and
+     * then the second bar does not show.
      */
     data class Level(val kind: GestureValueKind, val display: Int, val fraction: Float, val gain: Float? = null) : GestureReadout
 
-    /** [deltaSeconds] is the accumulated double-tap chain, null for a long press preview. */
+    /** [deltaSeconds] is the total jump of a double-tap chain, or null for a long-press preview. */
     data class Seek(val deltaSeconds: Int?, val targetMs: Long, val fraction: Float?) : GestureReadout
 }
 
 /**
- * The gesture readout, in the notice channel's own shape and place: below the status line, on the
- * chrome tier. Feed it the live value and null when the gesture ends; it lingers, then fades.
+ * Shows the gesture readout as a notice (a short message over the video), at the top center under
+ * the status line. Pass the live value, and pass null when the gesture ends. The readout then
+ * stays for 700 ms and fades out.
  *
- * The two readouts above are data classes on purpose. A swipe builds a fresh one on every pointer
- * sample, and with identity equality every one of those looked like a change: this composable
- * could never skip, and the effect below was cancelled and relaunched sixty times a second for a
- * number that had not moved.
+ * The two readouts are data classes, so they compare by value. A swipe builds a new readout on
+ * every pointer sample. With identity equality, every sample would count as a change. This
+ * composable could then never skip, and the effect below would restart on every sample, even
+ * when the value did not change.
  */
 @Composable
 fun RoomGestureReadout(active: GestureReadout?, modifier: Modifier = Modifier) {
@@ -110,8 +112,8 @@ private fun ReadoutNotice(readout: GestureReadout) {
 }
 
 /**
- * The base as a 4dp ink bar; under it, only when the engine has a gain rung, a second 4dp bar in
- * the warning colour that fills as the ladder climbs past 100.
+ * Draws the base level as a 4dp bar in the ink color. When [gain] is not null, a second 4dp bar
+ * in the warning color sits under the base bar and fills as the volume goes past 100.
  */
 @Composable
 private fun LevelBars(fraction: Float, gain: Float?, modifier: Modifier = Modifier) {

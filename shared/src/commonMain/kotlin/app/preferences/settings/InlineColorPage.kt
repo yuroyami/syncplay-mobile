@@ -47,7 +47,10 @@ import kotlinx.coroutines.flow.collectLatest
 
 private data class ColorEdit(val color: Color, val save: Boolean = false)
 
-/** A height-bounded editor: reserve the footer, then fit both picker dimensions to what remains. */
+/**
+ * A colour editor for a limited height. It reserves the footer first, then fits the picker's
+ * width and height into the space that is left.
+ */
 @Composable
 internal fun InlineColorPage(
     summary: String,
@@ -69,27 +72,27 @@ internal fun InlineColorPage(
     }
     DisposableEffect(Unit) {
         onDispose {
-            // Back can arrive inside the debounce window. The host's preference writer lives
-            // beyond this page, so the last selection still reaches storage on navigation.
+            // A Back press can arrive inside the debounce window. The host's preference writer
+            // outlives this page, so the last pick still reaches storage when the user leaves.
             if (edit.save) saveColor(edit.color)
         }
     }
     BoxWithConstraints(Modifier.fillMaxSize().padding(Space.gap)) {
-        // The title already identifies the colour. Explanatory copy yields to the picker in a
-        // short room panel, instead of squeezing the controls or creating another scroll area.
+        // The title already names the colour. In a short room panel, the explanation gives way to
+        // the picker, so the controls are not squeezed and no second scroll area appears.
         val showSummary = maxHeight >= 300.dp * LocalDensity.current.fontScale
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
             if (showSummary && summary.isNotBlank()) {
                 Text(summary, style = Type.note, color = palette.inkDim)
             }
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                // KolorPicker's weights are 8 : .25 : 1 : .25 : 1. This gives its main field
-                // a square while the hue and alpha tracks remain beside it.
+                // KolorPicker's width weights are 8 : .25 : 1 : .25 : 1. This ratio makes its main
+                // field a square, with the hue and alpha tracks beside it.
                 val ratio = 10.5f / 8f
                 val height = minOf(maxHeight, maxWidth / ratio, 260.dp)
                 if (height >= 8.dp) {
-                    // The library's default 4dp track padding stops fitting in very short
-                    // panels. Scale its handles and padding with the picker as well.
+                    // The library's default 4dp track padding does not fit in very short panels.
+                    // Scale its handles and padding with the picker as well.
                     val scale = (height / 120.dp).coerceAtMost(1f)
                     val track = TrackConfig.Default.let {
                         it.copy(
@@ -110,7 +113,7 @@ internal fun InlineColorPage(
                             initialColor = start.copy(alpha = edit.color.alpha),
                             onColorSelected = { color ->
                                 // The library emits its initial colour after its first layout.
-                                // Opening/resetting must not replace "follow theme" with a pick.
+                                // Opening or resetting must not store that colour as a pick.
                                 if (color.toArgb() != edit.color.toArgb()) edit = ColorEdit(color, save = true)
                             },
                             pickerConfig = picker,
@@ -139,7 +142,7 @@ internal fun InlineColorPage(
                     onReset()
                 })
             }
-            // The picker answers only a finger or a mouse; a remote chooses with these.
+            // The picker reacts only to a finger or a mouse. A TV remote uses these sliders.
             if (LocalIsTelevision.current) {
                 ColorSliders(edit.color, onColor = { edit = ColorEdit(it, save = true); generation++ })
             }

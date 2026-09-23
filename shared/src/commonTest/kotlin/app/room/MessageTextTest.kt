@@ -4,7 +4,7 @@ import app.room.models.collapsedForChat
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** Chat text keeps its words and loses the empty lines the official server pads its notice with. */
+/** Chat text keeps its words and drops the blank lines that pad the official server's notice. */
 class MessageTextTest {
 
     @Test

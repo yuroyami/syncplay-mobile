@@ -126,14 +126,16 @@ object CardTracks {
                 onVisualization = { on ->
                     scope.launch { AUDIO_VISUALIZATION.set(on) }
                     // The visualizer draws in place of the picture, so turning it on turns the
-                    // video off. Turning it off leaves the video off: the list brings it back.
+                    // video off. Turning it off leaves the video off. A video track from the list
+                    // brings the video back.
                     if (on && media?.tracks?.any { it.type == TrackType.VIDEO && it.selected } == true) choose(null, TrackType.VIDEO)
                 },
                 enabled = !selecting,
                 onChoose = ::choose,
                 onImport = { subtitlePicker.launch() },
                 onSearch = { showSearch = true },
-                // The card leaves the composition with the HUD, so the tab lives in the room state.
+                // The panel leaves the composition when it closes, so the chosen tab lives in
+                // RoomUiStateManager.
                 initialType = ui.tracksTab.value,
                 onTypeChange = { ui.tracksTab.value = it },
                 onClose = { ui.toggleTracks(false) },
@@ -143,7 +145,11 @@ object CardTracks {
     }
 }
 
-/** One scrolling list gets the whole dock width; track types never compete for narrow columns. */
+/**
+ * The track controls: tabs for the track types, and one scrolling list that gets the whole width
+ * of the dock (the side area of the screen that holds the panels). So the track types never
+ * compete for narrow columns.
+ */
 @Composable
 internal fun TrackControls(
     tracks: List<Track>, supportsVideo: Boolean, supportsVisualization: Boolean,
@@ -162,7 +168,8 @@ internal fun TrackControls(
         TrackType.VIDEO -> strings.roomTrackTabVideo
     } }
     Column(Modifier.fillMaxSize()) {
-        // No title row: the tabs name the panel, and the close key keeps its old place at the end.
+        // No title row: the tabs name the panel, and the close key sits at the end, as in the
+        // other panels.
         Row(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
             Segmented(labels, types.indexOf(selectedType), { active = types[it]; onTypeChange(active) },
                 Modifier.weight(1f).padding(vertical = Space.gapTight), autoSize = true)
@@ -178,8 +185,8 @@ internal fun TrackControls(
         val shown = tracks.filter { it.type == selectedType }
         val listState = key(selectedType) { rememberLazyListState() }
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
-            // The rows scroll with the list: a phone's card is short, and as a fixed header they
-            // pushed the pattern stepper and the tracks out of the card.
+            // The visualizer rows scroll with the list. A panel on a phone is short, and as a fixed
+            // header, these rows would push the pattern stepper and the tracks out of the panel.
             if (selectedType == TrackType.VIDEO && supportsVisualization) item {
                 Column { VisualizerRows(tracks, visualization, onVisualization, visualizer) }
             }
@@ -205,9 +212,10 @@ internal fun TrackControls(
 }
 
 /**
- * The visualizer's rows on the video tab. The switch shows what is on screen, not the stored
- * value: with a video track selected nothing is drawn, whatever the switch says. On turns the
- * video off. The director and pattern rows appear only while something is drawn.
+ * The visualizer rows on the video tab. The switch shows what is on screen, not the stored value.
+ * While a video track is selected, the visualizer draws nothing, whatever the stored value says.
+ * Turning the switch on turns the video off. The director and pattern rows show only while the
+ * visualizer draws.
  */
 @Composable
 internal fun VisualizerRows(tracks: List<Track>, visualization: Boolean, onVisualization: (Boolean) -> Unit, visualizer: VisualizerControls?) {
@@ -215,9 +223,9 @@ internal fun VisualizerRows(tracks: List<Track>, visualization: Boolean, onVisua
     SwitchRow(strings.uisettingKiteAudioVizTitle, strings.roomVisualizerSummary, drawing, onVisualization)
     if (drawing && visualizer != null) {
         SwitchRow(strings.roomVisualizerDirector, strings.roomVisualizerDirectorSummary, visualizer.directed) { visualizer.directed = it }
-        // The stepper beside its label, as a choice row in settings is drawn. The label keeps
-        // one line at its own width and the stepper takes what is left: its minimum width yields
-        // to the row, and a dock is only 240dp wide.
+        // The stepper sits beside its label, as in a choice row of the settings screen. The label
+        // keeps one line at its own width, and the stepper takes the rest. The minimum width of
+        // the stepper gives way to the row, because the panel can be as narrow as 320dp.
         ListRow(horizontalPadding = Space.gap) {
             Text(strings.roomVisualizerPattern, style = Type.label, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = Space.valueCol))
@@ -229,8 +237,9 @@ internal fun VisualizerRows(tracks: List<Track>, visualization: Boolean, onVisua
 }
 
 /**
- * A switch row as the settings screen draws one: the row toggles, the value reads On or Off, and
- * the note shows under it on a long press or while Show setting descriptions is on.
+ * A switch row, drawn like one in the settings screen. A tap on the row toggles the switch, and
+ * the value reads On or Off. The note shows under the row after a long press, or while the "Show
+ * setting descriptions" setting is on.
  */
 @Composable
 private fun SwitchRow(title: String, note: String, on: Boolean, onChange: (Boolean) -> Unit) {
@@ -241,7 +250,8 @@ private fun SwitchRow(title: String, note: String, on: Boolean, onChange: (Boole
         RowGap()
         RowValue(if (on) strings.settingsValueOn else strings.settingsValueOff, accent = on, width = 36.dp)
         RowGap()
-        // The row is the one toggleable node; a second node on the rocker read as two switches.
+        // The row is the only toggleable node. A second node on the rocker would read as two
+        // switches.
         Rocker(on = on, onChange = onChange, modifier = Modifier.clearAndSetSemantics { })
     }
     if (showDescriptions || explain) {

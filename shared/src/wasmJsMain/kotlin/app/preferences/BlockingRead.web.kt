@@ -1,4 +1,4 @@
 package app.preferences
 
-/** Null always: blocking the browser's one thread freezes the page. The caller reads async. */
+/** Always null: blocking the browser's only thread freezes the page, so the caller reads async. */
 internal actual fun <T> readBlockingOrNull(block: suspend () -> T): T? = null

@@ -9,12 +9,12 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Tests for [RoomPasswordProvider] — the controlled-room hash chain.
+ * Tests for [RoomPasswordProvider], the hash chain behind controlled rooms. In a controlled room,
+ * only operators who know the room password can control playback.
  *
- * Wire-compatibility with the Python reference server is non-negotiable: a divergence
- * here means a controlled room created on a Python server can't be authenticated on a
- * mobile server (and vice versa). The hash-parity test pins the algorithm step by step
- * against the Python spec from `syncplay-pc-src-master/syncplay/utils.py`.
+ * The hash must match the Python reference server exactly. Otherwise a controlled room created on
+ * a Python server cannot be authenticated on the app's server, and the other way round. The parity
+ * tests pin the algorithm to `syncplay/utils.py` in the Syncplay PC source.
  */
 @OptIn(ExperimentalStdlibApi::class)
 class RoomPasswordProviderTest {
@@ -23,26 +23,18 @@ class RoomPasswordProviderTest {
     private val validPassword = "AB-123-456"
 
     // -----------------------------------------------------------
-    // Hash algorithm — step-by-step Python parity
+    // Hash algorithm: step-by-step Python parity
     // -----------------------------------------------------------
 
     /**
-     * Replicates the Python algorithm verbatim and asserts our implementation matches.
-     * From `syncplay-pc-src-master/syncplay/utils.py`:
-     *
-     *   salt = sha256(salt).hexdigest()
-     *   provisional = sha256(roomName + salt).hexdigest()
-     *   return sha1(provisional + salt + password).hexdigest()[:12].upper()
-     */
-    /**
-     * The value below was produced by the Python reference implementation, not by this code:
+     * The expected value comes from the Python reference implementation, not from this code:
      *
      *   salt   = sha256("testsalt12").hexdigest()
      *   prov   = sha256("lobby" + salt).hexdigest()
      *   sha1(prov + salt + "AB-123-456").hexdigest()[:12].upper()  ->  EB6501C30B97
      *
-     * Recomputing the chain with the same library, as the test below also does, proves the steps
-     * are wired together but cannot catch the two of them drifting from Python in the same way.
+     * The next test recomputes the chain with the same hash library. That proves the steps are
+     * wired together, but it misses a drift from Python that the code and the test share.
      */
     @Test
     fun `hash matches the value the Python server produces`() {
@@ -52,6 +44,14 @@ class RoomPasswordProviderTest {
         )
     }
 
+    /**
+     * Replicates the Python algorithm from `syncplay/utils.py` and checks that the app's
+     * implementation matches:
+     *
+     *   salt = sha256(salt).hexdigest()
+     *   provisional = sha256(roomName + salt).hexdigest()
+     *   return sha1(provisional + salt + password).hexdigest()[:12].upper()
+     */
     @Test
     fun `hash matches Python step-by-step computation`() {
         val roomName = "lobby"
@@ -94,7 +94,7 @@ class RoomPasswordProviderTest {
     }
 
     // -----------------------------------------------------------
-    // check() — round-trip with right and wrong inputs
+    // check(): round-trip with right and wrong inputs
     // -----------------------------------------------------------
 
     @Test
@@ -171,7 +171,7 @@ class RoomPasswordProviderTest {
     }
 
     // -----------------------------------------------------------
-    // generateRoomPassword() — format only (random output)
+    // generateRoomPassword(): format only (random output)
     // -----------------------------------------------------------
 
     @Test

@@ -11,8 +11,9 @@ import app.uicomponents.frames.ModalSize
 import kotlin.test.Test
 
 /**
- * About inside its modal frame, the way a phone, a phone on its side and a desktop window show
- * it. The body used to be checked only as a bare column, which is not what anyone sees.
+ * The About screen inside its modal frame, the way a phone, a phone on its side and a desktop
+ * window show it. The test renders the frame, not the bare body column, because the frame is what
+ * people see.
  */
 class AboutGolden {
 

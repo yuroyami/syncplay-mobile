@@ -1,9 +1,9 @@
 # =============================================================================
-# NewPipe Extractor — pulls in Mozilla Rhino for embedded JS (YT cipher
-# extraction). Rhino's JavaToJSONConverters references java.beans.* APIs that
-# don't exist on Android; they're only used when Rhino runs on a JVM with the
-# beans package present. Suppress the warnings — the code path is dead on
-# Android. Keep the Rhino runtime so reflection-based JS-to-Java bridging works.
+# NewPipe Extractor pulls in Mozilla Rhino to run the YouTube cipher script.
+# Rhino's JavaToJSONConverters references java.beans.* APIs, which Android does
+# not have. Rhino uses them only on a JVM that has the beans package, so the
+# warnings are suppressed. Keep the Rhino runtime, because its JS-to-Java
+# bridge uses reflection.
 # =============================================================================
 -dontwarn java.beans.**
 -dontwarn org.mozilla.javascript.**
@@ -12,7 +12,7 @@
 -keep class org.mozilla.classfile.** { *; }
 -keepclassmembers class org.mozilla.javascript.** { *; }
 
-# NewPipe Extractor itself uses jackson + reflection on its model classes.
+# NewPipe Extractor uses Jackson and reflection on its model classes.
 -keep class org.schabi.newpipe.extractor.** { *; }
 -dontwarn org.schabi.newpipe.extractor.**
 -dontwarn org.nibor.autolink.**
@@ -22,16 +22,16 @@
 -dontwarn nl.altindag.ssl.**
 
 # =============================================================================
-# Conscrypt — used as the TLS provider on Android. Native + reflective access.
+# Conscrypt is the TLS provider on Android. It uses native and reflective access.
 # =============================================================================
 -keep class org.conscrypt.** { *; }
 -keepclassmembers class org.conscrypt.** { *; }
 -dontwarn org.conscrypt.**
 
 # =============================================================================
-# Netty (full build TLS path) — large transitive surface, much of it dead code
-# on Android. The keep rule preserves the parts we actually use; the dontwarn
-# rules suppress the rest so R8 doesn't choke on JVM-only references.
+# Netty is the default network engine on Android. Much of its code is unused on
+# Android. The keep rule keeps the parts the app uses. The dontwarn rules stop
+# R8 from failing on references to JVM-only classes.
 # =============================================================================
 -keep class io.netty.** { *; }
 -keepclassmembernames class io.netty.util.internal.** { *; }
@@ -61,16 +61,15 @@
 -dontwarn org.codehaus.**
 -dontwarn org.slf4j.**
 -keep class org.apache.commons.logging.* { *; }
-# AtomicReferenceFieldUpdater is looked up reflectively by Netty's internal
-# pool — without this, R8's tree shaker removes it and Netty crashes on first
-# allocation.
+# Netty's internal pool looks up AtomicReferenceFieldUpdater by reflection.
+# Without this rule, R8 removes it and Netty crashes on its first allocation.
 -keep class java.util.concurrent.atomic.AtomicReferenceFieldUpdater { *; }
 
 # =============================================================================
-# kotlinx.serialization — the compiler plugin generates synthetic $serializer
-# classes per @Serializable type. Reflection in deserialize() looks them up by
-# name. Without these rules, R8 happily removes them and the app NPEs at the
-# first decodeFromString call.
+# kotlinx.serialization: the compiler plugin generates a $serializer class for
+# each @Serializable type, and deserialize() looks it up by name. Without these
+# rules, R8 removes those classes and the first decodeFromString call throws a
+# NullPointerException.
 # =============================================================================
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
@@ -81,9 +80,9 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# Keep generated serializers for every @Serializable class in our app — using
-# a wildcard package (app.**) is fine because the rule is name-pattern-based
-# and only fires for classes that actually have a $serializer.
+# Keep the generated serializer of every @Serializable class in the app. The
+# wildcard package (app.**) is safe: the rule matches by name, so it applies
+# only to classes that have a $serializer.
 -if @kotlinx.serialization.Serializable class app.**
 -keepclassmembers class <1> {
     static <1>$Companion Companion;
@@ -96,34 +95,34 @@
 -keep class app.**$$serializer { *; }
 
 # =============================================================================
-# Ktor / OkHttp / Coil — mostly handled by upstream consumer rules. Keep
-# warnings quiet for optional dependencies that aren't on the runtime path.
+# Ktor, OkHttp and Coil: their own consumer rules cover most cases. These lines
+# silence warnings for optional dependencies that the app never loads.
 # =============================================================================
 -dontwarn org.slf4j.impl.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 -dontwarn okhttp3.internal.platform.**
-# Coil 3 uses reflection to load image decoders by name.
+# Coil 3 loads image decoders by name, through reflection.
 -keep class coil3.** { *; }
 -dontwarn coil3.**
 
 # =============================================================================
-# DataStore / Protobuf — DataStore-Preferences uses protobuf-lite reflectively
-# for schema generation. Keep the proto-generated nested classes.
+# DataStore and Protobuf: DataStore Preferences uses protobuf-lite through
+# reflection. Keep the nested classes that protobuf generates.
 # =============================================================================
 -keep class androidx.datastore.preferences.protobuf.** { *; }
 -keep class * extends androidx.datastore.preferences.protobuf.GeneratedMessageLite { *; }
 
 # =============================================================================
-# Compose / AndroidX — Compose's IR-emitted lambdas are fine, but a few
-# reflective lookups in Navigation3 + Activity result APIs need keeping.
+# Compose and AndroidX: Compose's generated lambdas need no rules. A few
+# reflective lookups in Navigation3 and the Activity result APIs do.
 # =============================================================================
 -keep class * extends androidx.lifecycle.ViewModel { <init>(...); }
 -keep class * extends androidx.activity.ComponentActivity { <init>(...); }
 
 # =============================================================================
-# kotlin.Metadata / Companion objects — required for kotlin-reflect lookups
-# performed by serialization and a couple of our own reflective utilities.
+# kotlin.Metadata and companion objects: serialization and a few of the app's
+# own reflective helpers look them up through kotlin-reflect.
 # =============================================================================
 -keepclassmembers class **$Companion { *; }
 -keepclasseswithmembernames,includedescriptorclasses class * {

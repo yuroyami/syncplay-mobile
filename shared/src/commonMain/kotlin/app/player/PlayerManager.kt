@@ -38,11 +38,11 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val isNowPlaying = MutableStateFlow(false)
 
     /**
-     * True while the engine is filling its buffer or opening media rather than showing frames.
+     * True while the engine fills its buffer or opens media, instead of showing frames.
      *
-     * Every engine reports this in its own words (a state constant, a cache property, a status
-     * enum), so each one mirrors it here and the room shows one indicator regardless of engine.
-     * It is display only: nothing in the sync path reads it, because a stalled buffer is not a
+     * Every engine reports this in its own way (a state constant, a cache property, a status
+     * enum). Each engine copies it here, so the room shows one indicator for every engine. It is
+     * for display only: nothing in the sync path reads it, because a stalled buffer is not a
      * pause and must never be broadcast as one.
      */
     val isBuffering = MutableStateFlow(false)
@@ -57,16 +57,16 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     @Volatile
     private var timeCurrentSampledAtMs: Long = 0L
 
-    /** Records a fresh engine position. Every writer of [timeCurrentMillis] goes through here. */
+    /** Records a new engine position. Every position update goes through here. */
     fun samplePosition(positionMs: Long) {
         timeCurrentSampledAtMs = generateTimestampMillis()
         timeCurrentMillis.value = positionMs
     }
 
     /**
-     * The playhead now, from the last sample plus the time since it while the engine reports itself
-     * playing. Safe from any thread; this is what the protocol reads instead of probing the engine
-     * on the main thread. Mirrors the desktop client's `getPlayerPosition` extrapolation.
+     * The playhead now: the last sample, plus the time since that sample while the engine reports
+     * that it plays. Safe to call from any thread. The protocol reads this, so it never has to ask
+     * the engine on the main thread. It mirrors `getPlayerPosition` of the Syncplay PC client.
      */
     fun estimatedPositionMs(): Long {
         val sampled = timeCurrentMillis.value
@@ -74,7 +74,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val sampledAt = timeCurrentSampledAtMs
         if (sampledAt <= 0L) return sampled
         val age = generateTimestampMillis() - sampledAt
-        // A stale sample is not extrapolated forever: past two seconds the tracker has stopped.
+        // Do not extrapolate a stale sample forever. After two seconds, the tracker has stopped.
         return if (age in 0L..2_000L) sampled + age else sampled
     }
 
@@ -82,17 +82,17 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val timeBufferedMillis = MutableStateFlow(-1L)
 
     /**
-     * Preserved across media changes so user's preferred tracks (e.g. Japanese audio)
-     * carry over to the next playlist item without reverting to defaults.
+     * The user's track choices. They stay across media changes, so a chosen track (for example
+     * Japanese audio) carries over to the next playlist item.
      */
     var currentTrackChoices: TrackChoices = TrackChoices()
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun invalidate() {
-        // GlobalScope required — viewModelScope is already cancelled at this point.
-        // destroy() must be exception-contained: GlobalScope has no parent to swallow a
-        // failure, so an engine throwing mid-teardown would be an uncaught crash on the
-        // way OUT of a room.
+        // GlobalScope, because viewModelScope is already cancelled at this point.
+        // The destroy call must catch its own failures. GlobalScope has no parent to absorb an
+        // exception, so an engine that throws during teardown would crash the app while the
+        // user leaves the room.
         platformCallback.mediaSessionFinalize()
         val closingPlayer = if (::player.isInitialized) player else null
         if (closingPlayer != null) {
@@ -113,21 +113,20 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     companion object {
         /**
          * The teardown of the last room's engine, still running after its ViewModel is gone. The
-         * next room joins it before building its own engine: mpv's handle is process-global, so a
-         * fast leave-and-rejoin used to create the new core while the old one was still being
-         * destroyed.
+         * next room waits for it before building its own engine. mpv's handle is process-global,
+         * so a fast leave and rejoin would otherwise create the new core while the old one is
+         * still being destroyed.
          */
         @Volatile
         private var pendingDestroy: Job? = null
 
         /**
-         * Waits for the previous room's engine to finish tearing down, but not forever.
+         * Waits for the previous room's engine to finish its teardown, for at most [TEARDOWN_WAIT].
          *
-         * The next room builds its engine behind this and only then opens its connection, so a
-         * teardown that hangs used to mean a room that never connected at all, with nothing on
-         * screen to say why. mpv's handle is process-global and that is the reason to wait; a
-         * teardown still running after this has stopped being worth waiting for, and going ahead
-         * is a better failure than never joining.
+         * The next room builds its engine after this and only then opens its connection. Without
+         * the limit, a teardown that hangs would mean a room that never connects, with nothing on
+         * screen to say why. The wait exists because mpv's handle is process-global. After the
+         * limit, going ahead is a better failure than never joining.
          */
         suspend fun awaitPendingDestroy() {
             val pending = pendingDestroy ?: return
@@ -141,7 +140,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             pendingDestroy = null
         }
 
-        /** How long a new room waits for the last one's engine before going ahead without it. */
+        /** How long a new room waits for the last room's engine before it goes ahead. */
         private val TEARDOWN_WAIT = 6.seconds
     }
 }

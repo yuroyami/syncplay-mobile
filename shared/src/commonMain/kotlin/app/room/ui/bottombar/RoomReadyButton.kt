@@ -41,8 +41,9 @@ import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.touchTarget
 
 /**
- * Readiness as a 36dp cell in the transport: a 6dp square in the readiness colour and the state
- * word, hairline when not ready, green-tinted when ready. Absent in solo mode.
+ * The ready toggle, a 36dp cell in the bottom bar: a 6dp square in the readiness color and the
+ * state word. The cell has a hairline border when not ready and a green tint when ready. It is
+ * hidden in solo mode.
  */
 @Composable
 fun RoomReadyButton() {
@@ -52,7 +53,7 @@ fun RoomReadyButton() {
     var ready by remember { viewmodel.session.ready }
     val p = palette
     val source = remember { MutableInteractionSource() }
-    // One width for both words, so flipping the state never reshapes the seekbar beside it.
+    // One width for both words, so a state change never resizes the seek bar beside the cell.
     val readyLabel = strings.roomReady
     val notReadyLabel = strings.roomNotReady
     val measurer = rememberTextMeasurer()

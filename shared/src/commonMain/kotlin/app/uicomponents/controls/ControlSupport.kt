@@ -40,8 +40,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 
 /*
- * Shared behaviour for every drawn control: press feedback, the hover/focus/selected states,
- * the expanded touch target, and haptics. Defined once so no control invents its own.
+ * Shared behaviour for every drawn control: press feedback, the hover, focus and selected states,
+ * the expanded touch target, and haptics. It is defined once, so no control invents its own.
  */
 
 /** Press feedback without ripple: 70 percent opacity and a 1dp inset, drawn without re-layout. */
@@ -71,9 +71,11 @@ fun Modifier.pressFeedback(interactionSource: InteractionSource, enabled: Boolea
 val LocalFocusRing = staticCompositionLocalOf<Brush?> { null }
 
 /**
- * Hover, focus and selected treatments from DESIGN/FOUNDATION, drawn behind the content.
- * Hover lifts the ground 6 percent, focus 12 percent plus the gradient border inset by 1dp,
- * selected 8 percent plus a 2dp accent edge on the start side. Nothing moves or scales.
+ * Draws the hover, focus and selected states of a control. Hover lays a 6 percent ink wash, focus
+ * a 12 percent accent wash and a 2dp ring inset by 1dp (the brand gradient unless [focusRing]
+ * names another), and selected an 8 percent accent wash and a 2dp accent edge on the start side.
+ * The washes sit behind the content, and the ring and the edge sit over it. Nothing moves or
+ * scales.
  */
 @Composable
 fun Modifier.controlStates(
@@ -89,9 +91,9 @@ fun Modifier.controlStates(
     val focusAlpha by animateFloatAsState(if (focused && enabled) 1f else 0f, Motion.quick(), label = "focus")
     val hoverAlpha by animateFloatAsState(if (hovered && enabled) 1f else 0f, Motion.quick(), label = "hover")
     val brand = p.brandField
-    // Selection was drawn and never spoken, so a screen reader could not tell which playlist item
-    // is playing, which track is chosen or which theme is on. Every control that draws a selected
-    // state comes through here, so saying it once here covers all of them.
+    // The selected state is spoken as well as drawn, so a screen reader can tell which playlist
+    // item is playing, which track is chosen or which theme is on. Every control that draws a
+    // selected state comes through here, so this one line covers all of them.
     return semantics { this.selected = selected }.drawWithContent {
         val outline = shape.createOutline(size, layoutDirection, this)
         if (selected) drawOutline(outline, p.accent.copy(alpha = 0.08f))
@@ -125,8 +127,8 @@ fun Modifier.controlStates(
 /**
  * Expands the hit area past the visual bounds, centring the content. Never overlaps a neighbour.
  *
- * Both defaults are the platform minimum. The height used to default to a 42dp row, which is
- * below it, so every caller that took the default got a target six points short.
+ * Both defaults are the platform minimum (48dp). Do not default the height to the 42dp row
+ * height, which is below that minimum.
  */
 fun Modifier.touchTarget(minWidth: Dp = Space.touchMin, minHeight: Dp = Space.touchMin): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
@@ -138,8 +140,9 @@ fun Modifier.touchTarget(minWidth: Dp = Space.touchMin, minHeight: Dp = Space.to
 }
 
 /**
- * The control haptics vocabulary. One platform call today, so the three strengths are the same
- * pulse; the names exist so call sites say what they mean and the mapping can grow.
+ * The haptic feedback of controls, when the haptics setting is on. The platform has one call, so
+ * the three strengths give the same pulse. The names exist so call sites say what they mean and
+ * the mapping can grow.
  */
 object Feedback {
     fun tick() = pulse()
@@ -173,9 +176,10 @@ fun Modifier.shimmer(): Modifier {
 }
 
 /**
- * Where the light band's gradient starts and ends at [phase] in 0..1. The band runs diagonally,
- * so a corner sits inside it long after the band's centre has left the tile; starting and ending
- * one full diagonal reach past the edges is what keeps the wrap from phase 1 to 0 invisible.
+ * Where the light band's gradient starts and ends at [phase] (0 to 1). The band runs diagonally,
+ * so a corner stays inside the band long after the band's centre has left the tile. The sweep
+ * starts and ends one full diagonal reach past the edges, which hides the jump from phase 1 back
+ * to 0.
  */
 internal fun shimmerSweep(phase: Float, width: Float, height: Float): Pair<Offset, Offset> {
     if (width <= 0f) return Offset.Zero to Offset(0f, height)

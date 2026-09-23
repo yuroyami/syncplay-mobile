@@ -30,9 +30,10 @@ import app.theme.Type
 import app.theme.palette
 
 /**
- * The list row: full width, `row` tall at minimum, gutter padding, one announcement. Hover,
- * focus, pressed and selected are drawn by the row itself. Children are laid out by the caller;
- * [RowLabel] and [RowValue] give the channel strip its label and its aligned value column.
+ * The list row: full width, at least [Space.row] tall, with gutter padding. A screen reader
+ * announces the whole row as one item. The row draws its own hover, focus, pressed and selected
+ * states. The caller lays out the children; [RowLabel] and [RowValue] give the row its label and
+ * its aligned value column.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -75,7 +76,7 @@ fun ListRow(
     )
 }
 
-/** The name of the thing, in `label` type; wrap as far as needed to preserve its meaning. */
+/** The row's label, in `label` type. It wraps as far as needed, so no meaning is lost. */
 @Composable
 fun RowScope.RowLabel(text: String, modifier: Modifier = Modifier, color: Color = palette.ink) {
     Text(
@@ -87,9 +88,10 @@ fun RowScope.RowLabel(text: String, modifier: Modifier = Modifier, color: Color 
 }
 
 /**
- * The current value, end aligned, `value` type. With no [width] it takes what its text needs up
- * to 160dp and wraps past that, so a long choice is never cut off and whatever follows it still
- * sits at the row's edge; a fixed width pins a short column.
+ * The row's current value: end-aligned, in `value` type. With no [width], it takes the width its
+ * text needs, up to 160dp, and wraps beyond that. So a long choice is never cut off, and whatever
+ * follows it still sits at the row's edge. A fixed [width] (scaled with the text size) makes a
+ * short, aligned column.
  */
 @Composable
 fun RowScope.RowValue(text: String, modifier: Modifier = Modifier, accent: Boolean = false, width: Dp? = null) {
@@ -103,13 +105,13 @@ fun RowScope.RowValue(text: String, modifier: Modifier = Modifier, accent: Boole
     )
 }
 
-/** A short gap inside a row, on the ladder. */
+/** A short gap inside a row, from the [Space] scale. */
 @Composable
 fun RowGap(width: Dp = Space.gap) {
     Spacer(Modifier.width(width))
 }
 
-/** Group heading in the gutter: `group` type, uppercase, in the accent. */
+/** A group heading in the gutter: `group` type, upper case, in the accent colour. */
 @Composable
 fun GroupHeading(text: String, modifier: Modifier = Modifier) {
     Box(

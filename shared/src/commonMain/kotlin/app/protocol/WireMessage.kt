@@ -21,42 +21,41 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 
 /**
- * Wire messages exchanged over the Syncplay TCP protocol — one sealed hierarchy used by
- * both directions.
+ * Wire messages exchanged over the Syncplay protocol: one sealed hierarchy used by both
+ * directions.
  *
- * Five variants ([Hello], [State], [Set], [TLS], [Error]) are wire-symmetric: identical
- * JSON shape regardless of who built it. The remaining two top-level keys are split into
- * directional variants because their payload differs by direction:
+ * Five variants ([Hello], [State], [Set], [TLS], [Error]) are wire-symmetric: the JSON shape
+ * is the same whichever side built it. The other two top-level keys are split into
+ * directional variants, because their payload differs by direction:
  *
- *  - `Chat` — client sends a bare string ([ChatRequest]); server broadcasts an object
+ *  - `Chat`: the client sends a bare string ([ChatRequest]); the server broadcasts an object
  *    ([ChatBroadcast]).
- *  - `List` — client sends an empty/null body ([ListRequest]); server replies with the
- *    populated room/user map ([ListResponse]).
+ *  - `List`: the client sends an empty or null body ([ListRequest]); the server replies with
+ *    the populated room and user map ([ListResponse]).
  *
- * Decoding goes through [WireMessageDeserializer], which inspects both the top-level key
- * and the payload shape to pick the right variant — same code path on both sides.
- * Encoding is just `syncplayJson.encodeToString(message)` on a typed instance.
+ * Decoding goes through [WireMessageDeserializer], which reads both the top-level key and the
+ * payload shape to pick the right variant. Both sides use the same code path. Encoding goes
+ * through [toJson], which always uses the concrete subclass's serializer.
  *
  * [dispatch] hands the parsed message to a [WireMessageHandler]. The client's
- * [app.room.RoomServerMessageHandler] and the server's [app.server.ClientConnection] are
- * the two implementations — each overrides only the variants its side actually receives.
+ * [app.room.RoomServerMessageHandler] and the server's [app.server.ClientConnection] are the
+ * two implementations, and each overrides only the variants that its side receives.
  */
 @Serializable
 sealed interface WireMessage {
 
-    /** Visitor dispatch — invokes the matching `on…` method on [handler]. */
+    /** Visitor dispatch: calls the matching `on…` method on [handler]. */
     suspend fun dispatch(handler: WireMessageHandler)
 
     /**
      * Encodes this message to its wire JSON form.
      *
-     * Implemented per subclass on purpose: `syncplayJson.encodeToString(this)` from inside
-     * a subclass binds the reified type parameter to the concrete subclass, which uses
-     * the subclass's own serializer. Encoding via the interface type would otherwise go
-     * through Kotlinx Serialization's polymorphic serializer and inject a `"type"` class
-     * discriminator that the Syncplay protocol does not allow. Routing through this
-     * method makes the trap structurally impossible — callers can hold a `WireMessage`
-     * reference and still get the right wire format.
+     * Implemented per subclass on purpose: `syncplayJson.encodeToString(this)` inside a
+     * subclass binds the reified type parameter to the concrete subclass, so the subclass's
+     * own serializer is used. Encoding through the interface type would go through Kotlinx
+     * Serialization's polymorphic serializer and add a `"type"` class discriminator, which the
+     * Syncplay protocol does not allow. Routing through this method rules that out: callers can
+     * hold a `WireMessage` reference and still get the right wire format.
      */
     fun toJson(): String
 
@@ -91,10 +90,10 @@ sealed interface WireMessage {
     }
 
     /**
-     * Client→server `{"List": null}` request — body is meaningless, server only cares
-     * about the key. The default must be [JsonNull] (not Kotlin `null`) so the field is
-     * actually emitted under `explicitNulls = false`; otherwise the message would
-     * collapse to `{}` and the server wouldn't recognize it as a list request.
+     * Client-to-server `{"List": null}` request. The body means nothing; the server only reads
+     * the key. The default must be [JsonNull] (not Kotlin `null`), so the field is still
+     * written under `explicitNulls = false`. Otherwise the message would shrink to `{}` and the
+     * server would not recognize it as a list request.
      */
     @Serializable
     data class ListRequest(@SerialName("List") val placeholder: JsonElement = JsonNull) : WireMessage {
@@ -102,7 +101,7 @@ sealed interface WireMessage {
         override fun toJson(): String = syncplayJson.encodeToString(this)
     }
 
-    /** Server→client full room/user listing: `{"List": {"<room>": {"<user>": ListUserData}}}`. */
+    /** Server-to-client room and user listing: `{"List": {"<room>": {"<user>": ListUserData}}}`. */
     @Serializable
     data class ListResponse(
         @SerialName("List") val rooms: Map<String, Map<String, ListUserData>>
@@ -111,14 +110,14 @@ sealed interface WireMessage {
         override fun toJson(): String = syncplayJson.encodeToString(this)
     }
 
-    /** Client→server bare-string chat: `{"Chat": "msg"}`. */
+    /** Client-to-server bare-string chat: `{"Chat": "msg"}`. */
     @Serializable
     data class ChatRequest(@SerialName("Chat") val message: String) : WireMessage {
         override suspend fun dispatch(handler: WireMessageHandler) = handler.onChatRequest(this)
         override fun toJson(): String = syncplayJson.encodeToString(this)
     }
 
-    /** Server→client chat broadcast object: `{"Chat": {"username", "message"}}`. */
+    /** Server-to-client chat broadcast object: `{"Chat": {"username", "message"}}`. */
     @Serializable
     data class ChatBroadcast(@SerialName("Chat") val data: ChatData) : WireMessage {
         override suspend fun dispatch(handler: WireMessageHandler) = handler.onChatBroadcast(this)
@@ -126,8 +125,8 @@ sealed interface WireMessage {
     }
 
     /**
-     * Convenience builders for the most common shapes. Both sides use these — the
-     * direction-specific helpers are noted.
+     * Convenience builders for the most common shapes. Both sides use them; the
+     * direction-specific helpers are marked.
      */
     companion object {
         // -- Symmetric Set sub-command shortcuts --
@@ -177,18 +176,18 @@ sealed interface WireMessage {
         fun userBroadcast(map: Map<String, UserSetData>) = Set(SetData(user = map))
         fun error(message: String?) = Error(ErrorData(message = message))
 
-        // -- Client→server asymmetric --
+        // -- Client-to-server asymmetric --
         fun listRequest() = ListRequest()
         fun chatRequest(message: String) = ChatRequest(message)
 
-        /** STARTTLS request — `{"TLS": {"startTLS": "send"}}`. */
+        /** STARTTLS request: `{"TLS": {"startTLS": "send"}}`. */
         fun tlsRequest() = TLS(TLSData(startTLS = "send"))
 
-        // -- Server→client asymmetric --
+        // -- Server-to-client asymmetric --
         fun chatBroadcast(username: String, message: String) =
             ChatBroadcast(ChatData(username = username, message = message))
 
-        /** STARTTLS reply — `{"TLS": {"startTLS": "true"|"false"}}`. */
+        /** STARTTLS reply: `{"TLS": {"startTLS": "true"|"false"}}`. */
         fun tlsResponse(supported: Boolean) = TLS(TLSData(startTLS = supported.toString()))
     }
 }

@@ -10,9 +10,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 
 /**
- * A miniature of the app in a theme: the ground, a panel edge, two chat lines and a transport
- * bar with the scrub fill in the theme's gradient. Static, no glass, no state; the scheme is
- * resolved once per theme value. Draw it at 72 x 40dp in a list or at a pane's full size.
+ * A small drawing of the app in [theme]: the ground, a side panel, two chat lines and a transport
+ * bar whose fill uses the theme's gradient. It has no glass effect and no state, and it resolves
+ * the color scheme once per theme value. Draw it at 72 x 40dp in a list, or let it fill a pane.
  */
 @Composable
 fun ThemeMiniature(theme: SaveableTheme, modifier: Modifier = Modifier) {
@@ -38,7 +38,7 @@ fun ThemeMiniature(theme: SaveableTheme, modifier: Modifier = Modifier) {
         drawRoundRect(pal.accent, Offset(4 * u, 17 * u), Size(w * 0.12f, 2.5f * u), r)
         drawRoundRect(pal.ink, Offset(4 * u, 22 * u), Size(w * 0.30f, 2.5f * u), r)
 
-        // The transport: track, gradient fill, playhead, and the play key beside it.
+        // The transport bar: the play button, the track, its gradient fill and the playhead.
         val trackY = h - 8 * u
         val trackX = 12 * u
         val trackW = panelX - trackX - 4 * u

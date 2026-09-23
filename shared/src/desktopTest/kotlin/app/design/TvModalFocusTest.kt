@@ -17,8 +17,8 @@ import kotlin.test.assertTrue
 
 /**
  * A modal under a remote opens on something a person can use, never on its scrim. The scrim's own
- * click is "dismiss", so focus resting there meant Center closed every dialog before anything in it
- * could be reached (issue #146).
+ * click is "dismiss", so with focus on the scrim, Center would close every dialog before anything
+ * in it could be reached (issue #146).
  */
 class TvModalFocusTest {
 

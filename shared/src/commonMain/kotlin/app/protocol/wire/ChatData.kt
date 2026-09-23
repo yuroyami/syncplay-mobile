@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * Server-only chat payload: `{"Chat": {"username": "...", "message": "..."}}`.
- * Client-originated chat is asymmetric — a bare string — and is modelled inline on
+ * Client-originated chat has a different shape (a bare string) and is modelled inline on
  * `WireMessage.ChatRequest`.
  */
 @Serializable

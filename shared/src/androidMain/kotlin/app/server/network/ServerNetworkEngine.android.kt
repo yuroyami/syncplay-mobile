@@ -28,10 +28,10 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Android Netty-based TCP server engine.
+ * The TCP layer of the built-in server on Android, based on Netty.
  *
- * Netty's event-loop threads only deliver decoded lines — actual protocol parsing and
- * dispatch run on [scope] coroutines so the IO threads stay free.
+ * Netty's event-loop threads only deliver decoded lines. Protocol parsing and dispatch run in
+ * [scope] coroutines, so the IO threads stay free.
  */
 actual class ServerNetworkEngine actual constructor(
     private val server: SyncplayServer,
@@ -54,8 +54,8 @@ actual class ServerNetworkEngine actual constructor(
         TrafficStats.setThreadStatsTag(0xF00DFAF)
 
         bossGroup = NioEventLoopGroup(1)
-        // Two, not the default of twice the core count. This server hosts a handful of
-        // friends, and every extra loop is a thread that exists for the life of the host.
+        // Two, not the default of twice the core count. This server hosts a few friends, and
+        // every extra loop is a thread that lives as long as the server.
         workerGroup = NioEventLoopGroup(2)
 
         val bootstrap = ServerBootstrap()
@@ -63,9 +63,9 @@ actual class ServerNetworkEngine actual constructor(
             .channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_BACKLOG, ACCEPT_BACKLOG)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            /* Gives isWritable a meaning. Without a watermark a client that stops reading just
-             * accumulates: the server writes a State every second plus every broadcast, and the
-             * heap grows for as long as that client's socket stays open. */
+            /* The watermark gives isWritable a meaning. Without one, output for a client that
+             * stops reading piles up: the server writes a State every second plus every
+             * broadcast, and the heap grows for as long as that client's socket stays open. */
             .childOption(
                 ChannelOption.WRITE_BUFFER_WATER_MARK,
                 WriteBufferWaterMark(WRITE_WATERMARK_LOW, WRITE_WATERMARK_HIGH),
@@ -86,9 +86,9 @@ actual class ServerNetworkEngine actual constructor(
                                     if (ch.isWritable) {
                                         ch.writeAndFlush(line + "\r\n")
                                     } else {
-                                        /* Past the high watermark this client has a quarter of a
-                                         * megabyte of unread lines queued for it, which is about
-                                         * a thousand State messages. It is not slow, it is gone;
+                                        /* Past the high watermark, this client has a quarter of
+                                         * a megabyte of unread lines queued, about a thousand
+                                         * State messages. It is not slow, it is gone, and
                                          * writing more only costs the host memory. */
                                         loggy("Server: dropping ${ch.remoteAddress()}, outbound buffer full")
                                         ch.close()
@@ -99,9 +99,9 @@ actual class ServerNetworkEngine actual constructor(
                                 }
                             )
                             // One mailbox and one consumer per socket: lines are handled in arrival
-                            // order, and the connection is only reported lost after the last line it
-                            // sent was handled. Fanning each line onto a pool let a later line, or the
-                            // loss itself, overtake the Hello and leave a ghost watcher behind.
+                            // order, and the connection is reported lost only after its last line
+                            // is handled. With a thread pool, a later line or the loss itself could
+                            // overtake the Hello and leave a ghost watcher (a user with no socket).
                             val mailbox = Channel<String>(Channel.UNLIMITED)
                             clientChannels[ctx.channel()] = ClientMailbox(connection, mailbox)
                             scope.launch(Dispatchers.Default) {
@@ -137,7 +137,8 @@ actual class ServerNetworkEngine actual constructor(
             val future = bootstrap.bind(port).sync()
             serverChannel = future.channel()
         } catch (e: Exception) {
-            // A port in use used to leak both event-loop groups on every retry.
+            // A failed bind (such as a port in use) must shut down both event-loop groups, or
+            // every retry leaks them.
             workerGroup?.shutdownGracefully()
             bossGroup?.shutdownGracefully()
             workerGroup = null
@@ -161,9 +162,9 @@ actual class ServerNetworkEngine actual constructor(
         serverChannel = null
 
         /* No quiet period: the listening channel and every client channel are already closed
-         * above, so there is nothing left to wind down gracefully. The default two seconds kept
-         * the old event loops alive past the end of stop(), and a restart on the same port then
-         * ran a second pair of groups alongside them. */
+         * above, so nothing is left to wind down. The default two-second quiet period would keep
+         * the old event loops alive after stop() returns, and a restart on the same port would
+         * then run a second pair of groups next to them. */
         workerGroup?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         bossGroup?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         workerGroup = null
@@ -182,7 +183,7 @@ actual class ServerNetworkEngine actual constructor(
         /** Above this many unflushed bytes for one client, the client is not reading. */
         const val WRITE_WATERMARK_HIGH = 256 * 1024
 
-        /** Ceiling on how long a shut-down event loop group may take to actually stop. */
+        /** The longest time that a shut-down event loop group may take to stop. */
         const val GROUP_SHUTDOWN_TIMEOUT_SECONDS = 2L
     }
 }

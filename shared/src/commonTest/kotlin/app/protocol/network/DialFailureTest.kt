@@ -5,9 +5,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The official server's address fallback fires on exactly one kind of failure. Getting this wrong
- * is not a crash, it is a doubled wait: every unreachable-host attempt would dial a second address
- * for another full connect timeout before reporting what it already knew.
+ * The fallback to the official server's pinned address runs on one kind of failure only: a failed
+ * name lookup. A wrong match does not crash, but it doubles the wait. Every unreachable-host
+ * attempt then dials a second address for another full connect timeout, and then reports the same
+ * failure.
  */
 class DialFailureTest {
 
@@ -43,7 +44,7 @@ class DialFailureTest {
 
     @Test
     fun a_cause_cycle_does_not_hang_the_walk() {
-        // Deliberately self-referential: the depth cap is the only thing stopping this.
+        // The cause points at itself on purpose. Only the depth cap stops the walk.
         val looping = object : Exception("looping") {
             override val cause: Throwable get() = this
         }

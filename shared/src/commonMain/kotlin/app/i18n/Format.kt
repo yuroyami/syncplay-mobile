@@ -3,13 +3,14 @@ package app.i18n
 /**
  * Fills the placeholders in a generated string.
  *
- * The generator strips the `%1$` position markers from the XML, so what reaches here is a plain
- * run of `%s` and `%d` filled left to right. `%%` writes one literal percent, the Android
- * convention translators already know. Anything else, a lone `%` included, is copied as is.
+ * The Lyricist generator removes the `%1$` position markers from the XML. So only plain `%s`
+ * and `%d` placeholders arrive here, and they are filled left to right. `%%` writes one literal
+ * percent, which is the Android convention that translators know. Anything else, a lone `%`
+ * included, is copied as is.
  *
- * This lives in the generated code's own package on purpose: the generated files import nothing,
- * so they resolve `format` from here rather than from the JVM's `kotlin.text` version, which
- * would not exist on iOS at all.
+ * This function is in the package of the generated code on purpose. The generated files import
+ * nothing, so they resolve `format` from here. The `kotlin.text` version is JVM-only and does
+ * not exist on iOS.
  */
 internal fun String.format(vararg args: Any?): String {
     val out = StringBuilder(length + args.size * 8)

@@ -6,15 +6,15 @@ import kotlin.time.Instant
 /**
  * What position to put on the wire, as a function.
  *
- * This is the other half of [decideSync]: the outbound side. Both were unreachable from a test
- * because they lived on managers that need the whole room, and both are places where a wrong
- * answer poisons everyone else's playback rather than just our own.
+ * This is the other half of [decideSync]: the outbound side. Both are plain functions so that
+ * tests can reach them without a whole room, and in both a wrong answer breaks everyone else's
+ * playback, not just our own.
  *
  * The masking rule exists because a freshly loaded file reads near zero for a second or two. The
  * official server adopts its slowest watcher, so advertising that zero drags the whole room back
- * to the start of the file. While a load is settling we advertise the room's own position
- * instead, and stop the moment the engine catches up, proves it never can, or the deadline
- * passes, so a genuine standing desync stays visible.
+ * to the start of the file. While a load is settling, the report advertises the room's own
+ * position instead. It stops the moment the engine catches up, proves it never can, or the
+ * deadline passes, so a real standing desync stays visible.
  */
 
 /** Everything the outbound position depends on. */
@@ -59,14 +59,15 @@ fun extrapolatedGlobalPositionMs(inputs: PositionInputs): Double {
 fun reportablePosition(inputs: PositionInputs): PositionReport {
     val globalMs = extrapolatedGlobalPositionMs(inputs)
 
-    // No file: nothing local to report. The server pushes file-less watchers last anyway, but
-    // this keeps us from ever announcing a bare zero.
+    // No file: nothing local to report. The reference server already sorts file-less watchers
+    // last, but this keeps us from ever announcing a bare zero.
     if (!inputs.hasMedia) return PositionReport(globalMs / 1000.0, keepMasking = true)
 
     // Paused in the background: the room must not adopt a frozen watcher as its slowest.
     if (inputs.isInBackground) return PositionReport(globalMs / 1000.0, keepMasking = true)
 
-    // The seek ACK can run before Main updates the position cache. Never acknowledge the old timeline.
+    // The seek ACK can run before Main updates the position cache. Never acknowledge the old
+    // timeline.
     inputs.pendingSeekPositionMs?.let { target ->
         return PositionReport(localToRoomSeconds(target, inputs.userOffsetSeconds), keepMasking = true)
     }
@@ -80,8 +81,8 @@ fun reportablePosition(inputs: PositionInputs): PositionReport {
     val thresholdMs = SEEK_THRESHOLD_SECONDS * 1000.0
     val converged = abs(localAsRoomSeesIt * 1000.0 - globalMs) <= thresholdMs
     /* Where in our own copy the room is asking us to be. Comparing the room's position against
-     * our duration skips the offset, so an offset viewer was told to give up, or to keep trying,
-     * on the strength of a number from someone else's copy. */
+     * our duration directly would skip the offset, and an offset viewer would give up, or keep
+     * trying, based on a number from someone else's copy. */
     val localTargetMs = roomToLocalMs(globalMs, inputs.userOffsetSeconds)
     val cannotCatchUp = localTargetMs < 0.0 ||
         (inputs.durationMs > 0.0 && localTargetMs >= inputs.durationMs - thresholdMs)

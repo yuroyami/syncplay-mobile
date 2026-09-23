@@ -3,9 +3,11 @@ package app.room.ui.rightcards
 import app.utils.mediaExs
 
 /**
- * The title used by the compact roster. This changes presentation only; the actual filename
- * remains available for file comparison and the detailed row. Width-based shortening belongs
- * to the text layout, so a wider panel can show more of the title.
+ * Returns the title that the compact roster (the list of users in the room) shows for a file
+ * name. A room is the group of people watching together. The function drops a media extension
+ * and the release group tags in brackets at the start. Only the display changes: file comparison
+ * and the detailed row still use the real file name. Shortening to a width belongs to the text
+ * layout, so a wider panel can show more of the title.
  */
 internal fun compactRosterFileName(filename: String): String {
     var title = filename.trim()
@@ -17,8 +19,8 @@ internal fun compactRosterFileName(filename: String): String {
         }
     }
 
-    // Release groups may be adjacent, repeated or nested. Leave unmatched brackets and
-    // bracket-only titles intact rather than removing the only useful name we have.
+    // Release group tags can be adjacent, repeated or nested. Keep unmatched brackets, and keep a
+    // title made only of bracket tags, so the only useful name is not removed.
     while (title.startsWith('[')) {
         var depth = 0
         var closingAt = -1
@@ -41,9 +43,10 @@ internal fun compactRosterFileName(filename: String): String {
 }
 
 /**
- * Keeps the title's beginning and ending inside a measured text width. [fits] should measure
- * the complete candidate with the font used to draw it; a character limit is not a width.
- * The extra character in an odd split belongs to the ending, where episode numbers live.
+ * Shortens [title] to its beginning and its ending, joined by an ellipsis, so that it fits a
+ * measured text width. [fits] must measure the whole candidate with the font that draws it,
+ * because a character count is not a width. In an odd split, the extra character goes to the
+ * ending, where episode numbers are.
  */
 internal fun abbreviateRosterFileName(title: String, fits: (String) -> Boolean): String {
     if (fits(title)) return title
@@ -60,7 +63,7 @@ internal fun abbreviateRosterFileName(title: String, fits: (String) -> Boolean):
         boundaries += offset
     }
     val codePoints = boundaries.size - 1
-    var low = 2 // Both the title and its ending must retain at least one code point.
+    var low = 2 // The beginning and the ending each keep at least one code point.
     var high = codePoints - 1
     var result = ellipsis
     while (low <= high) {

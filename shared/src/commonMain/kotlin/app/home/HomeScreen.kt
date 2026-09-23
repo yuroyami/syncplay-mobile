@@ -135,7 +135,7 @@ import kotlin.math.roundToInt
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
-/** The official server is one host; only the port varies, so the picker offers just these. */
+/** The official server's ports. Its host never changes, so the picker offers only these. */
 val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
 private const val OFFICIAL_HOST = OFFICIAL_SERVER_NAME
@@ -144,40 +144,41 @@ private const val LOCAL_HOST = "127.0.0.1"
 /** Where the join goes: the official server, someone else's, or the one this app hosts. */
 private enum class ServerMode { Official, Custom, Host }
 
-/** One column of the form is never wider than this; two columns share twice it plus a gutter. */
+/** The widest that one column of the form gets. Two columns get twice this plus one gutter. */
 private val FORM_MAX_WIDTH = 420.dp
 
 /**
- * Two columns from here up. Each column is then at least 284dp, the narrowest width at which the
- * three-engine picker still shows every name and badge whole.
+ * The form uses two columns from this width up. Each column is then at least 284dp, the narrowest
+ * width at which the three-engine picker still shows every name and badge whole.
  */
 private val SPLIT_MIN_WIDTH = 640.dp
 
 /**
- * With less height than this (times the text scale) the form is short: the identity fields share
- * one row, and two columns spread from the top and take the compact engine picker. The height is
- * the form's own, under the top bar. A phone on its side lands here. The keyboard never does,
- * because the form measures its height without it.
+ * Below this height (times the text scale) the form is short. The identity fields can then share
+ * one row, and two columns spread from the top and use the compact engine picker. The height is
+ * the form's own, under the top bar. A phone in landscape is short. An open keyboard never makes
+ * the form short, because the form measures its height without the keyboard.
  */
 private val SHORT_HEIGHT = 400.dp
 
 /**
- * Under this height (times the text scale) one column tightens its spacing so the join key stays
- * on screen at rest. Custom and Host carry more rows, so they tighten a hundred points sooner.
+ * Below this height (times the text scale) the form tightens its spacing, so the join key stays on
+ * screen while no help or error line shows. Custom and Host show more rows, so their threshold is
+ * 100dp higher.
  */
 private val COMPACT_HEIGHT = 600.dp
 private val COMPACT_HEIGHT_WITH_SERVER_ROWS = 700.dp
 
-/** How far a gap between blocks may grow on a tall window; past it the form floats rather than stretches. */
+/** The largest gap between blocks. On a taller window, the form centres instead of stretching. */
 private val MAX_BLOCK_GAP = 72.dp
 
 /**
- * A short window pairs the identity fields in one row only when the column (times the text
- * scale) leaves each field this much: a narrow phone at big text keeps them stacked and scrolls.
+ * A short window puts the identity fields in one row only when the column is at least this wide
+ * (times the text scale). A narrow phone with large text keeps them stacked and scrolls.
  */
 private val PAIR_MIN_COLUMN = 280.dp
 
-/** The spacing set of a height tier. Everything else about the form is the same in both. */
+/** The spacing of one height tier. Everything else about the form is the same in both tiers. */
 private class FormMetrics(val compact: Boolean) {
     val blockGap: Dp get() = if (compact) Space.gap else Space.gap * 2
     val top: Dp get() = if (compact) Space.gapTight else Space.gap
@@ -185,12 +186,14 @@ private class FormMetrics(val compact: Boolean) {
 }
 
 /**
- * The join form with one left edge: label over field, help under it while focused, inline
- * errors, the server as a segmented choice, the engine picker, then the join key with the
- * shortcut saver beside it. The window decides the arrangement: one column that spreads but
- * never stretches, a centred two-column block, or two spread columns on a short wide window.
- * The four blocks are composed once and only placed differently, so no window change, the
- * keyboard included, can replace a focused field.
+ * The home screen: the form to join a room. A room is the group of people who watch together.
+ *
+ * Everything shares one left edge. Each field has its label above it, its help below it while
+ * focused, and its error inline. Then come the server choice, the engine picker (an engine is one
+ * of the video players the app can drive), and the join key with the shortcut key beside it. The
+ * window picks the arrangement: one column whose gaps grow up to a limit, a centred two-column
+ * block, or two spread columns on a short, wide window. The four blocks are composed once and
+ * only placed differently, so no window change (the keyboard included) can replace a focused field.
  */
 @Composable
 fun HomeScreenUI(viewmodel: HomeViewmodel) {
@@ -199,19 +202,21 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     val globalViewmodel = LocalGlobalViewmodel.current
     val focusManager = LocalFocusManager.current
 
-    // The store is a hot snapshot, so the saved join is read in the first composition: the
-    // fields never paint defaults and then swap values under a user who started typing.
+    // The preference store is an in-memory snapshot, so the saved join details are read in the
+    // first composition. The fields never show defaults first and then swap values while the
+    // user types.
     val savedConfig by remember { mutableStateOf(JoinConfig.savedConfigNow()) }
-    // A fresh install has no saved join: the server choice starts empty and must be made.
+    // A fresh install has no saved join details, so the server choice starts empty and the user
+    // must pick one.
     val hasSavedConfig = remember { Preferences.JOIN_CONFIG.value() != null }
 
-    // A pending shortcut joins once, on arrival, through the same caps as the form.
+    // A pending shortcut joins once, when the screen appears, with the same limits as the form.
     LaunchedEffect(Unit) {
         consumePendingShortcut()?.let { viewmodel.joinRoom(it.sanitised()) }
     }
 
-    // The settings file could not be read and the app is running on defaults. Said once, here,
-    // because otherwise the only sign is that every preference is suddenly back to new.
+    // When the settings file could not be read, the app runs on defaults. The screen says so once,
+    // because otherwise the only sign is that every preference is suddenly back to its default.
     val settingsWereReset = strings.homeSettingsWereReset
     LaunchedEffect(Unit) {
         if (preferencesLoadFailure != null) {
@@ -225,8 +230,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(ioDispatcher) {
             delay(1000)
-            // A few first launches, then the tips leave on their own; the popup's own switch
-            // silences them for good.
+            // The tips show a few times only, and never after the user has entered a room in this
+            // session. The switch in the popup turns them off for good.
             val shown = TIPS_SHOWN_COUNT.value()
             if (!globalViewmodel.hasEnteredRoomOnce && !NEVER_SHOW_TIPS.value() && shown < TIPS_MAX_SHOWINGS) {
                 TIPS_SHOWN_COUNT.set(shown + 1)
@@ -239,12 +244,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         Column(Modifier.fillMaxSize()) {
             HomeTopBar(viewmodel)
 
-            /* The bar above has already paid the status bar and the cutout's top, so the form
-             * pads only the sides and the bottom; padding the top again left a dead band under
-             * the bar on every phone. The keyboard is left out on purpose (safeDrawing would
-             * include it): the form measures the window without the keyboard, so an opening
-             * keyboard changes neither the arrangement nor the spacing. It pads the scroll
-             * container further down, and only scrolls the form. */
+            /* The top bar already pads for the status bar and the top of the cutout, so the form
+             * pads only the sides and the bottom. Padding the top again leaves an empty band
+             * under the bar. The keyboard is left out on purpose (safeDrawing would include it):
+             * the form measures the window without the keyboard, so an opening keyboard changes
+             * neither the arrangement nor the spacing. The keyboard pads the scroll container
+             * further down, and only scrolls the form. */
             val config = savedConfig
             BoxWithConstraints(
                 Modifier
@@ -271,7 +276,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 var port by remember(savedConfig) { mutableStateOf(config.port.toString()) }
                 var password by remember(savedConfig) { mutableStateOf(config.pw) }
                 var error by remember { mutableStateOf<JoinError?>(null) }
-                // The hosted port is edited in the hosting panel, so an error about it clears from there.
+                // The hosted port is edited in the hosting panel, so a port error clears when that
+                // port changes.
                 LaunchedEffect(hostPort) { if (error == JoinError.PortRange && mode == ServerMode.Host) error = null }
 
                 val usernameFocus = remember { FocusRequester() }
@@ -279,7 +285,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 val portFocus = remember { FocusRequester() }
                 val passwordFocus = remember { FocusRequester() }
 
-                // Initial focus only under keyboard input, so touch users get no keyboard on arrival.
+                // Focuses the first field only in keyboard input mode, so a touch user gets no soft
+                // keyboard when the screen opens.
                 val inputModeManager = LocalInputModeManager.current
                 LaunchedEffect(Unit) {
                     if (inputModeManager.inputMode == InputMode.Keyboard) {
@@ -288,8 +295,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
                 }
 
-                /* One validation for both paths, so the shortcut saver cannot crash on a
-                 * blank port either. */
+                /* The join key and the shortcut key share one validation, so the shortcut key
+                 * cannot crash on a blank port either. */
                 fun validate(): JoinError? = when {
                     username.isBlank() -> JoinError.Username
                     room.isBlank() -> JoinError.Room
@@ -307,12 +314,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     else -> JoinConfig(username, room, address, port.trim().toInt(), password)
                 }.sanitised()
 
-                /* The four blocks of the form. Each is one composable with one root, and
-                 * FormLayout below only decides where it goes.
+                /* The four blocks of the form. Each block is one composable with one root, and
+                 * FormLayout below only decides where each block goes.
                  *
-                 * Identity: the two fields stacked, as wide as the control rows under them; side
-                 * by side in one row when the window is short, where the clear glyphs would eat
-                 * the width the names need. */
+                 * Identity: the two fields, stacked and as wide as the rows under them. On a short
+                 * window they sit side by side in one row and hide their clear buttons, which
+                 * would take the width that the names need. */
                 val identityBlock: @Composable (paired: Boolean) -> Unit = { paired ->
                     PairOrStack(paired = paired, modifier = Modifier.fillMaxWidth()) {
                         FormField(
@@ -356,9 +363,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
                 }
 
-                /* Server: official, someone else's, or the one this app hosts. Official keeps a
-                 * non-official port from leaking through and clears the password; Custom blanks
-                 * both; Host points the join at the local server. */
+                /* Server: the official server, someone else's, or the one this app hosts. Official
+                 * replaces a non-official port with 8997 and clears the password. Custom clears
+                 * the address, the port and the password. Host points the join at the local
+                 * server. */
                 val serverBlock: @Composable () -> Unit = {
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.gapTight)) {
                         FormLabel(
@@ -393,9 +401,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             },
                             autoSize = true,
                         )
-                        /* The tab's content slides in from the side of the tab it came from
-                         * and fades, and the form's height follows it, so a switch reads as a
-                         * move rather than a swap. */
+                        /* The new content slides in from the side of the selected tab (from the
+                         * right when that tab is to the right of the old one) and fades in. The
+                         * form's height animates with it, so a switch reads as a move and not
+                         * as a swap. */
                         AnimatedContent(
                             targetState = mode,
                             transitionSpec = {
@@ -483,9 +492,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 availablePlatformPlayerEngines.firstOrNull { it.isDefault }?.let { PLAYER_ENGINE.set(it.name) }
                             }
                         }
-                        /* Two different reasons, and asking an iPhone owner about an APK was
-                         * neither of them: on Android the engine exists in the other flavour,
-                         * anywhere else it does not exist for that platform at all. */
+                        /* An engine is unavailable for one of two reasons. On Android, it ships
+                         * only in the other build flavour. On any other platform, it does not
+                         * exist for that platform at all, so the message there names no APK. */
                         val unavailable =
                             if (platform == Platform.Android) strings.homeEngineUnavailableFlavor
                             else strings.homeEngineUnavailableError
@@ -503,8 +512,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
                 }
 
-                /* Join, with the shortcut saver as its own key beside it. Desktop has no home
-                 * screen to pin to, so it gets the join key alone. */
+                /* Join, with the shortcut key beside it. Desktop has no home screen to pin a
+                 * shortcut to, so it shows the join key alone. */
                 val joinBlock: @Composable () -> Unit = {
                     val shortcutSaved = strings.homeShortcutSaved(room)
                     JoinRow(
@@ -512,7 +521,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             error = validate()
                             if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
                         },
-                        // A television launcher pins nothing, so the key would promise what it cannot do.
+                        // A TV launcher cannot pin a shortcut, so a TV shows no shortcut key.
                         onSaveShortcut = if (platform == Platform.Desktop || television) null else {
                             {
                                 error = validate()
@@ -525,11 +534,11 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     )
                 }
 
-                /* The arrangement, from the window without the keyboard. Width picks one column
-                 * or two, height picks the spacing tier and the identity row, and all of it
-                 * reaches the layouts as plain values: nothing here is an `if` around a block,
-                 * so no threshold can replace a focused field. The height thresholds grow with
-                 * the text scale, up to half again, because bigger type needs the tighter tier
+                /* The arrangement, measured from the window without the keyboard. The width picks
+                 * one column or two, and the height picks the spacing tier and the identity row.
+                 * All of it reaches the layouts as plain values, never as an `if` around a block,
+                 * so no threshold can replace a focused field. The height thresholds grow with the
+                 * text scale, up to 1.5 times, because larger text needs the tighter tier
                  * sooner. */
                 val textScale = LocalDensity.current.fontScale.coerceIn(1f, 1.5f)
                 val split = maxWidth >= SPLIT_MIN_WIDTH
@@ -538,19 +547,21 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 val pairIdentity = short && columnWidth >= PAIR_MIN_COLUMN * textScale
                 val compactBelow = if (mode == ServerMode.Custom || mode == ServerMode.Host) COMPACT_HEIGHT_WITH_SERVER_ROWS else COMPACT_HEIGHT
                 val metrics = FormMetrics(compact = viewport < compactBelow * textScale)
-                // Two columns leave the picker a column of its own, so it tightens only when short.
+                // In two columns the picker shares the right column with the join key only, so it
+                // uses the compact size only on a short window.
                 val compactPicker = if (split) short else metrics.compact
                 val arrangement = when {
                     !split -> FormArrangement.OneColumn
                     short -> FormArrangement.TwoShortColumns
                     else -> FormArrangement.TwoColumns
                 }
-                // The centred two-column block keeps an even gutter all round; the rest take the tier's.
+                // The centred two-column block keeps the same gutter on all sides. The other
+                // arrangements use the top and bottom spacing of the height tier.
                 val evenGutter = arrangement == FormArrangement.TwoColumns
                 val blockGap by animateDpAsState(metrics.blockGap, Motion.move(), label = "blockGap")
-                /* Tapping the background dismisses the keyboard. A bare tap detector, not
+                /* Tapping the background hides the keyboard. This is a plain tap detector, not
                  * `clickable`: it adds no semantics and no focus stop, so a screen reader and a
-                 * D-pad meet only the controls. The form sits inside this modifier, so clearing
+                 * D-pad reach only the controls. The form sits inside this modifier, so clearing
                  * semantics here would hide every control from a screen reader. */
                 val clearFocus = Modifier.pointerInput(focusManager) {
                     detectTapGestures { focusManager.clearFocus(force = true) }
@@ -600,9 +611,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 }
 
 /**
- * Backslashes out, trimmed, capped: the same on the form and on a shortcut. A room pasted as the
- * whole `+name:HASH:PASSWORD` string the app prints on creation is split, so it joins the managed
- * room and identifies as its operator instead of creating a room by that literal name.
+ * Cleans join details the same way for the form and for a shortcut: it removes backslashes, trims
+ * and caps the lengths. A room pasted as the whole `+name:HASH:PASSWORD` string, which the app
+ * prints when it creates a managed room, is split. The join then enters the managed room as its
+ * operator, instead of creating a room with that literal name.
  */
 private fun JoinConfig.sanitised(): JoinConfig {
     val (roomName, operator) = InviteLink.splitOperatorRoom(room)
@@ -614,8 +626,8 @@ private fun JoinConfig.sanitised(): JoinConfig {
 }
 
 /**
- * The join key, and beside it the shortcut saver when the platform has a home screen. The saver
- * unfolds over the join key to say what it does before it acts, so both share one row.
+ * The join key, with the shortcut key beside it when [onSaveShortcut] is not null. The shortcut
+ * key unfolds over the join key to explain itself before it acts, so both keys share one row.
  */
 @Composable
 internal fun JoinRow(onJoin: () -> Unit, onSaveShortcut: (() -> Unit)?) {
@@ -630,9 +642,9 @@ internal fun JoinRow(onJoin: () -> Unit, onSaveShortcut: (() -> Unit)?) {
 }
 
 /**
- * The shortcut saver: a glyph key at the end of its row. The first tap unfolds it across the
- * row to say what it does; the second tap does it and folds it back. Left alone for three
- * seconds, it folds back without saving.
+ * The shortcut key: an icon key at the end of its row. The first tap unfolds the key across the
+ * row to explain what it does. The second tap saves the shortcut and folds the key back. Left
+ * alone for three seconds, the key folds back without saving.
  */
 @Composable
 private fun ShortcutKey(onSave: () -> Unit) {
@@ -655,10 +667,10 @@ private fun ShortcutKey(onSave: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .width(width)
-                // As tall as the join key beside it, so nothing of that key shows past the fold.
+                // As tall as the join key, so the unfolded key covers the join key fully.
                 .height(Space.touchMin)
                 .clip(Radius.controlShape)
-                // Opaque, so the explanation reads over the join key it unfolds across.
+                // Opaque, so the explanation stays readable over the join key.
                 .background(p.ground)
                 .border(Space.hair, if (expanded) p.accent else p.rule, Radius.controlShape)
                 .clickable(interactionSource = source, indication = null, role = Role.Button) {
@@ -696,8 +708,9 @@ private fun ShortcutKey(onSave: () -> Unit) {
 }
 
 /**
- * Its children stacked, or side by side in equal shares when [paired]. The flag only changes how
- * the same children are measured and placed, so switching never replaces a focused field.
+ * Places its children in a stack, or side by side with equal widths when [paired]. The flag only
+ * changes how the same children are measured and placed, so a switch never replaces a focused
+ * field.
  */
 @Composable
 private fun PairOrStack(paired: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
@@ -721,7 +734,10 @@ private fun PairOrStack(paired: Boolean, modifier: Modifier = Modifier, content:
 
 /** Where [FormLayout] puts the blocks. Always a value passed down, never a branch in composition. */
 private enum class FormArrangement {
-    /** One column: the blocks spread over the height, and the room left after that centres them. */
+    /**
+     * One column. The gaps grow, up to a limit, to fill the height, and any leftover height
+     * centres the blocks.
+     */
     OneColumn,
 
     /** Two columns as one centred block, with the last block at the foot of the right column. */
@@ -732,17 +748,18 @@ private enum class FormArrangement {
 }
 
 /**
- * The blocks of the form, each direct child one block. [arrangement] only changes how the same
- * children are measured and placed, so a window that crosses a threshold keeps every one of them
- * alive, with its focus, caret and scroll position. The first [leftBlocks] make the left column.
+ * Lays out the blocks of the form. Each direct child is one block, and the first [leftBlocks] make
+ * the left column. [arrangement] only changes how the same children are measured and placed, so a
+ * window that crosses a threshold keeps every block alive, with its focus, caret and scroll
+ * position.
  *
  * A spread column gives every gap the same size, from [minGap] up to [maxGap]. In the centred
- * block the gaps stay at [minGap], and the last block (the join key) sits at the foot of the left
- * column or of the window, whichever comes first, so a left column that outgrows the window
- * never pushes it off screen.
+ * block the gaps stay at [minGap]. The last block (the join key) sits at the foot of the left
+ * column or of the window, whichever is higher, so a left column taller than the window never
+ * pushes the join key off screen.
  *
- * Content taller than the minimum height makes the form taller, and the host scrolls it. No
- * intrinsic measurement, so subcompose children are fine.
+ * Content taller than the minimum height makes the form taller, and the host scrolls it. The
+ * layout uses no intrinsic measurement, so subcompose children are fine.
  */
 @Composable
 private fun FormLayout(
@@ -760,7 +777,7 @@ private fun FormLayout(
         val twoColumns = arrangement != FormArrangement.OneColumn
         val columnGapPx = if (twoColumns) columnGap.roundToPx() else 0
         val column = if (twoColumns) ((constraints.maxWidth - columnGapPx) / 2).coerceAtLeast(0) else constraints.maxWidth
-        // Loose width: every block fills its column by itself.
+        // Loose width constraints: every block fills its column by itself.
         val placeables = measurables.map { it.measure(Constraints(maxWidth = column)) }
         val left = if (twoColumns) placeables.take(leftBlocks) else placeables
         val right = placeables.drop(left.size)
@@ -803,7 +820,7 @@ private fun FormLayout(
                 val blockHeight = maxOf(leftHeight, rightHeight)
                 val height = maxOf(constraints.minHeight, blockHeight)
                 layout(constraints.maxWidth, height) {
-                    // Half up, the way Alignment.Center rounds an odd remainder.
+                    // Rounds half up, the way Alignment.Center rounds an odd remainder.
                     val top = ((height - blockHeight) / 2f).roundToInt()
                     stack(left, 0, top, gapMin)
                     stack(right.dropLast(1), rightX, top, gapMin)
@@ -814,7 +831,7 @@ private fun FormLayout(
     }
 }
 
-/** A section label; with a [tip] it carries the help glyph, the only place the long words live. */
+/** A section label. With a [tip] it also shows a help button, the only place for the long text. */
 @Composable
 private fun FormLabel(text: String, tip: String? = null) {
     // A minimum, not a fixed height: bigger system text makes the label taller, not clipped.
@@ -828,9 +845,9 @@ private fun FormLabel(text: String, tip: String? = null) {
 }
 
 /**
- * Label over the hairline field, and one note line under it: help while the field is focused,
- * the error in `bad` when validation failed. A field at rest has nothing under it, which is
- * what keeps the form short enough for the join key to stay on screen.
+ * A label over the field, and one note line under it: the help while the field is focused, or the
+ * error (in the `bad` colour) after validation fails. A field with no focus and no error shows
+ * nothing under it, which keeps the form short enough for the join key to stay on screen.
  */
 @Composable
 private fun FormField(
@@ -870,10 +887,13 @@ private fun FormField(
     }
 }
 
-/** Cold starts that show the tips before they stop appearing by themselves. */
+/**
+ * How many times the tips popup shows before it stops by itself. Every time the home screen
+ * appears before the first room of a session counts, not only a cold start.
+ */
 private const val TIPS_MAX_SHOWINGS = 3
 
-/** Which field the join form is complaining about. The wording comes from the current language. */
+/** A validation error of the join form. [message] gives its text in the current language. */
 private enum class JoinError { Username, Room, ServerChoice, Address, Port, PortRange }
 
 private fun JoinError.message(s: AppStrings): String = when (this) {

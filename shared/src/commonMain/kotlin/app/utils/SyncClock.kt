@@ -5,15 +5,14 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
- * The one clock the sync core and the hosted server read.
+ * The one clock that the sync core and the built-in server read.
  *
- * Everything time-dependent in `app.protocol` and `app.server` goes through here instead of
- * calling [Clock.System] or [generateTimestampMillis] directly. That is what makes those parts
- * constructible in a test: a test installs a clock it controls, so "wait a second" becomes
- * "advance a second" and nothing sleeps.
+ * Time-dependent code in `app.protocol` and `app.server` reads this clock instead of
+ * [Clock.System] or [generateTimestampMillis]. So a test can install a clock that it controls:
+ * "wait a second" becomes "advance a second", and nothing sleeps.
  *
- * Production code never installs anything. UI, logging and file naming still use the wall clock
- * directly, because nothing asserts on them.
+ * Production code never installs a clock. UI, logging and file naming use the wall clock
+ * directly, because no test checks them.
  */
 object SyncClock {
 
@@ -23,28 +22,28 @@ object SyncClock {
     /** Milliseconds since the epoch. */
     fun nowMillis(): Long = source()
 
-    /** Seconds since the epoch, full precision. The protocol talks in these. */
+    /** Seconds since the epoch, full precision. The protocol uses seconds. */
     fun nowSeconds(): Double = source() / 1000.0
 
-    /** The same instant, for the code that does date arithmetic on it. */
+    /** The current instant as an [Instant], for code that does date arithmetic. */
     fun now(): Instant = Instant.fromEpochMilliseconds(source())
 
     /**
-     * Point the clock somewhere else. Tests only, and always paired with [reset] in teardown.
+     * Replaces the clock source. For tests only, and always paired with [reset] in teardown.
      */
     internal fun installForTest(clock: () -> Long) {
         source = clock
     }
 
-    /** Back to the wall clock. */
+    /** Restores the wall clock. */
     internal fun reset() {
         source = { generateTimestampMillis() }
     }
 }
 
 /**
- * A clock a test drives by hand. Starts at an arbitrary but fixed instant so failures read the
- * same on every machine.
+ * A clock that a test moves by hand. It starts at a fixed instant, so a failure reads the same on
+ * every machine.
  */
 internal class TestClock(private var millis: Long = 1_700_000_000_000L) {
     fun install() = SyncClock.installForTest { millis }

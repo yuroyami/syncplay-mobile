@@ -3,7 +3,8 @@ package app.protocol.models
 import app.utils.SyncClock
 
 /**
- * Measures network latency between client and server to keep playback in sync.
+ * Measures network latency between client and server to keep playback in sync. A port of the
+ * reference client's `PingService` (protocols.py).
  *
  * Computes RTT and one-way forward delay using an exponential moving average,
  * which smooths out temporary lag spikes. [forwardDelay] is used by the protocol
@@ -18,31 +19,31 @@ class PingService(
     private val nowSeconds: () -> Double = { SyncClock.nowSeconds() },
 ) {
     companion object {
-        /** EMA weight — higher value means slower, smoother adaptation to RTT changes. */
+        /** Moving-average weight: a higher value adapts to RTT changes more slowly and smoothly. */
         private const val PING_MOVING_AVERAGE_WEIGHT = 0.85
 
         /** Beyond this, a "round trip" is a clock step or a stale echo, not a network delay. */
         const val MAX_PLAUSIBLE_RTT_SECONDS = 10.0
     }
 
-    /** Current round-trip time in seconds. */
+    /** The latest round-trip time, in seconds (the running average after an implausible sample). */
     var rtt: Double = 0.0
 
     /**
-     * Estimated one-way delay (client → server) in seconds.
-     * Accounts for upload/download asymmetry: if the server's measured RTT is lower
-     * than ours, our upload is slower, so the extra difference is added.
+     * Estimated age of a server message when it arrives, in seconds: half the smoothed round
+     * trip, plus the amount by which our last round trip exceeds the server's measured one.
      */
     var forwardDelay: Double = 0.0
 
     private var avrRtt: Double = 0.0
 
     /**
-     * Called on each server ping response to update RTT and [forwardDelay].
+     * Updates RTT and [forwardDelay] from a server `State` that carries ping data. [timestamp]
+     * is our own send time echoed back by the server, and [senderRtt] is the server's RTT.
      *
-     * [timestamp] must arrive as full-precision seconds (Double) — rounding it to
-     * whole seconds before the subtraction destroys the only signal it carries
-     * (sub-second drift) and replaces it with up-to-±500 ms quantization noise.
+     * [timestamp] must arrive as full-precision seconds (Double). Rounding it to whole seconds
+     * before the subtraction destroys the only signal it carries (sub-second drift) and
+     * replaces it with up to ±500 ms of quantization noise.
      */
     fun receiveMessage(timestamp: Double?, senderRtt: Double) {
         // A missing timestamp arrives as null, or as 0 from a sender that coerced it: neither is a

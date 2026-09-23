@@ -8,22 +8,23 @@ import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
 
 /**
- * The Syncplay protocol over a WebSocket, because a browser tab cannot open a TCP socket.
+ * The Syncplay protocol over a WebSocket, because a browser tab cannot open a TCP socket. A
+ * network manager carries the Syncplay protocol lines between the room and the server.
  *
- * The framing is untouched: one JSON object per line, CRLF-terminated, exactly what every other
- * transport writes. Only the pipe differs. A WebSocket delivers whole messages rather than a byte
- * stream, but a peer is free to pack several lines into one message, so inbound text is split on
- * newlines and each piece handed over separately.
+ * The framing is unchanged: one JSON object per line, CRLF-terminated, exactly what every other
+ * transport writes. Only the transport differs. A WebSocket delivers whole messages, not a byte
+ * stream, but a peer may pack several lines into one message. So inbound text is split on
+ * newlines, and each piece is handled separately.
  *
- * **What this can talk to.** Nothing today. `syncplay.pl` speaks TCP and has no WebSocket
- * endpoint, so a web client reaches a Syncplay server one of two ways: a bridge that translates
- * WebSocket to TCP, or a WebSocket listener added beside the TCP one in this app's own built-in
- * server, which is the better answer because it needs no hosted infrastructure.
+ * **Servers.** The official server (`syncplay.pl`) speaks TCP only and has no WebSocket endpoint.
+ * A web client needs either a bridge that translates WebSocket to TCP, or a server with a
+ * WebSocket listener beside its TCP one. A listener in the app's own hosted server needs no extra
+ * hosting.
  *
- * **Encryption.** Not this class's to negotiate. A page served over https must use `wss`, and the
- * browser does the TLS itself before a single byte of Syncplay protocol moves; a page served over
- * plain http gets `ws`. That is why [supportsTLS] is false and [upgradeTls] does nothing: there is
- * no opportunistic upgrade to perform, the transport is already whatever the page's scheme forced.
+ * **Encryption.** This class does not negotiate it. A page served over https must use `wss`, and
+ * the browser does the TLS itself before any Syncplay protocol byte moves; a page served over
+ * plain http gets `ws`. So [supportsTLS] is false and [upgradeTls] does nothing: there is no
+ * opportunistic upgrade, because the page's scheme already decided the transport.
  */
 class WebSocketNetworkManager(viewmodel: app.room.RoomViewmodel) : NetworkManager(viewmodel) {
 
@@ -45,7 +46,7 @@ class WebSocketNetworkManager(viewmodel: app.room.RoomViewmodel) : NetworkManage
         val ws = WebSocket(url)
 
         ws.onopen = { _: Event ->
-            // Whatever the protocol layer wrote while the handshake was still in flight.
+            // Send what the protocol layer wrote while the WebSocket handshake was in progress.
             backlog.forEach { line -> runCatching { ws.send(line) } }
             backlog.clear()
             opened.complete(Unit)
@@ -73,9 +74,9 @@ class WebSocketNetworkManager(viewmodel: app.room.RoomViewmodel) : NetworkManage
     }
 
     /**
-     * A socket closed under us: a refused dial or a dropped session, depending on where we were.
-     * Branching matters, a disconnection reported for a handshake that never landed tells the
-     * room it is reconnecting to something it never reached.
+     * Handles a socket that closed from the other side: a refused dial or a dropped session,
+     * depending on the connection state. The branch matters: a disconnection reported for a
+     * handshake that never finished tells the room it is reconnecting to a server it never reached.
      */
     private fun lost(ws: WebSocket) {
         if (socket !== ws) return
@@ -89,8 +90,8 @@ class WebSocketNetworkManager(viewmodel: app.room.RoomViewmodel) : NetworkManage
     }
 
     /**
-     * False on purpose. The page's own scheme already decided this, before any Syncplay message
-     * was exchanged, so there is no in-band upgrade for the protocol to ask for.
+     * False on purpose. The page's own scheme decided this before any Syncplay message was
+     * exchanged, so there is no in-band upgrade for the protocol to ask for.
      */
     override fun supportsTLS(): Boolean = false
 
@@ -121,7 +122,7 @@ class WebSocketNetworkManager(viewmodel: app.room.RoomViewmodel) : NetworkManage
     }
 }
 
-/** A WebSocket frame is text or binary; this transport only ever sends and expects text. */
+/** A WebSocket frame is text or binary; this transport only sends and expects text. */
 private fun org.w3c.dom.MessageEvent.asDynamicText(): String? = runCatching {
     jsMessageText(this)
 }.getOrNull()?.takeIf { it.isNotEmpty() }

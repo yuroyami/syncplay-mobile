@@ -14,13 +14,12 @@ import kotlinx.serialization.json.JsonObject
  * Feature flags exchanged in `Hello.features` (both directions). The default values are
  * sensible client-side claims; the server's response overwrites them at handshake time.
  *
- * Both client and server populate a different (overlapping) subset of these fields, so
- * every property has a default — the encoder's `explicitNulls = false` keeps absent
- * fields off the wire and matches the python protocol's behaviour.
+ * Client and server each send a different, overlapping subset of these fields, so every
+ * property has a default: a field that the peer leaves out decodes to its default.
  *
- * On the wire `features` is *supposed* to be a JSON object, but it isn't always: the
- * inbound `features` fields are decoded through [LenientRoomFeaturesSerializer] because
- * some servers emit a non-object shape — see that serializer for the why.
+ * On the wire `features` is *supposed* to be a JSON object, but it is not always one. The
+ * inbound `features` fields are decoded through [LenientRoomFeaturesSerializer], which
+ * explains when a non-object shape arrives.
  */
 @Serializable
 data class RoomFeatures(
@@ -31,7 +30,7 @@ data class RoomFeatures(
     @SerialName("chat") val supportsChat: Boolean = true,
     @SerialName("sharedPlaylists") val supportsSharedPlaylists: Boolean = true,
     val featureList: Boolean = true,
-    /** Controllers may set other users' readiness (PC: client.py:746, server.py:100). */
+    /** Controllers may set other users' readiness (PC sets it in both client.py and server.py). */
     val setOthersReadiness: Boolean = true,
     val maxChatMessageLength: Int = 150,
     val maxUsernameLength: Int = 16,
@@ -42,33 +41,33 @@ data class RoomFeatures(
 /**
  * Tolerant decoder for inbound `features` values.
  *
- * The reference python server always sends an object, but it is not the only server out
- * there: minimal / older / third-party server implementations send an empty array `[]`
- * (or `null`) for a user that reported no features. The strict generated [RoomFeatures]
- * serializer rejects an array (*"Expected object, but had array"*), and one bad sub-field
- * aborts the whole `List`/`Set` decode, which would blank the user-info tab and spin the
- * reconnect loop (issue #152).
+ * The reference Python server sends an object for a real user, but its placeholder rows for
+ * empty persistent rooms carry `"features": []` (`_addDummyUserOnList` in protocols.py). Other
+ * servers can send `[]` or `null` for a user that reported no features. The strict generated
+ * [RoomFeatures] serializer rejects an array (*"Expected object, but had array"*), and one bad
+ * sub-field fails the whole `List` or `Set` line. The inbound path then skips that line, and
+ * the user list misses the update (issue #152).
  *
- * Decode: a JSON object is parsed normally; anything else (array, primitive; JSON `null`
- * is already handled by the nullable wrapper) falls back to default [RoomFeatures] — which
- * mirrors the python client's own "no features reported → computed defaults" behaviour
- * (`protocols.py`: `if not self._features: self._features = {…}`).
+ * Decode: a JSON object is parsed normally. Anything else (array, primitive; JSON `null` is
+ * already handled by the nullable wrapper) falls back to a default [RoomFeatures]. The
+ * reference server has the same rule for a client that reports no features
+ * (`SyncServerProtocol.getFeatures` in protocols.py: `if not self._features:`).
  *
- * Encode: always emits the normal object form via the generated serializer, so outbound
- * wire bytes stay identical to the python protocol.
+ * Encode: always writes the normal object form through the generated serializer, so the
+ * outbound wire bytes stay the same as the Python protocol's.
  *
- * Apply only to fields that decode untrusted inbound JSON ([app.protocol.wire.ListUserData],
- * [app.protocol.wire.SetData], [app.protocol.wire.HelloData]). The class itself stays a
- * plain `@Serializable`, so `RoomFeatures.serializer()` keeps returning the generated
- * serializer this one delegates to (no recursion).
+ * Apply it only to fields that decode untrusted inbound JSON ([app.protocol.wire.ListUserData],
+ * [app.protocol.wire.SetData], [app.protocol.wire.HelloData], [app.protocol.wire.UserEvent]).
+ * The class itself stays a plain `@Serializable`, so `RoomFeatures.serializer()` keeps
+ * returning the generated serializer that this one delegates to (no recursion).
  */
 internal object LenientRoomFeaturesSerializer : KSerializer<RoomFeatures> {
     override val descriptor: SerialDescriptor = RoomFeatures.serializer().descriptor
 
     override fun deserialize(decoder: Decoder): RoomFeatures {
         if (decoder !is JsonDecoder) {
-            // SerializationException, not require(): it is the only type the
-            // skip-a-poisoned-line catch in the inbound path covers.
+            // SerializationException, not require(): it is the one type that both inbound paths
+            // catch (the client skips the line, the server drops the peer with an error).
             throw SerializationException("LenientRoomFeaturesSerializer requires a JSON decoder")
         }
         val element = decoder.decodeJsonElement()

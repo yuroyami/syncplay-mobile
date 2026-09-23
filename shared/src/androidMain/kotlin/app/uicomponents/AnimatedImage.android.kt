@@ -17,8 +17,8 @@ actual fun AnimatedImage(
     onLoaded: (() -> Unit)?,
     onFailed: (() -> Unit)?,
 ) {
-    // A GIF behind a hidden HUD kept decoding every frame for a surface nobody could see. At
-    // alpha 0 nothing is composed at all; the tile's own space is kept so the grid does not move.
+    // At alpha 0, compose nothing, so a GIF behind a hidden HUD does not decode every frame for a
+    // surface nobody can see. The empty Box keeps the tile's space, so the grid does not move.
     if (alpha <= 0f) {
         Box(modifier)
         return

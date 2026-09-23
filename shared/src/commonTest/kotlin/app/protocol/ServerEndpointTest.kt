@@ -5,9 +5,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * The one place the dialled address and the verified certificate name are allowed to differ.
- * Getting this wrong is either a connection to nowhere or a TLS check against the wrong name,
- * and both have happened.
+ * [resolveServerEndpoint] is the one place where the dialled address and the verified certificate
+ * name may differ. A mistake there gives a connection to nowhere or a TLS check against the wrong
+ * name.
  */
 class ServerEndpointTest {
 
@@ -56,7 +56,7 @@ class ServerEndpointTest {
 
     @Test
     fun the_official_address_typed_by_hand_stays_an_address() {
-        // Typing the IP is not the same as typing the name: no certificate is issued to it.
+        // Typing the IP is not the same as typing the name: no certificate is issued to the IP.
         val e = resolveServerEndpoint(OFFICIAL_SERVER_ADDRESS)
         assertEquals(OFFICIAL_SERVER_ADDRESS, e.dialHost)
         assertEquals(OFFICIAL_SERVER_ADDRESS, e.certificateHost)

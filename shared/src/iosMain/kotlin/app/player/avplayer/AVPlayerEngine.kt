@@ -81,11 +81,12 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * AVPlayer engine - Apple's native media player (AVFoundation).
+ * The AVPlayer engine: Apple's native media player from AVFoundation. An engine is one of the
+ * video players the app can drive.
  *
- * Stable and battery-efficient with native Picture-in-Picture, but limited to Apple-supported
- * formats (mainly MP4/HLS/m3u8) and supports no external subtitles. Marked experimental and
- * not the default because of the narrow format support.
+ * AVPlayer is stable, uses little battery and has native Picture-in-Picture. It only plays
+ * formats that Apple supports (mainly MP4 and HLS/m3u8), and it cannot load external subtitles.
+ * The narrow format support is why it is not the default engine.
  */
 object AVPlayerEngine: PlayerEngine {
     override val isAvailable: Boolean = true
@@ -99,10 +100,10 @@ object AVPlayerEngine: PlayerEngine {
     class AVPlayerImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, this@AVPlayerEngine) {
         var avPlayer: AVPlayer? = null
 
-        /** The one render surface: a sublayer of the container, and the PiP controller's source. */
+        /** The only render surface: a sublayer of the container, and the PiP controller's source. */
         var avPlayerLayer: AVPlayerLayer? = null
 
-        /** The rate playback should run at; applied on play() so a paused player is never started by a speed change. */
+        /** The speed to use. [play] applies it, so a speed change never starts a paused player. */
         private var desiredRate: Float = 1f
 
         private var avContainer: UIView? = null
@@ -115,30 +116,30 @@ object AVPlayerEngine: PlayerEngine {
             get() = 250.milliseconds
 
         /**
-         * Whether [observer] is currently registered on [avPlayer]. Each `inject*Impl` creates
-         * a fresh `AVPlayer`, so the observer must be detached from the old instance and
-         * re-attached to the new one on every media switch.
+         * Whether [observer] is registered on [avPlayer]. Each `inject*Impl` creates a new
+         * `AVPlayer`, so on every media switch the observer must leave the old instance and
+         * join the new one.
          */
         private var observerAttached = false
 
         /**
-         * Starts progress tracking. The KVO `timeControlStatus` observer is not attached here:
-         * `avPlayer` is still null at this point (created lazily in [injectVideoFileImpl] /
-         * [injectVideoURLImpl]). Attachment happens in [attachTimeControlObserver] after each
-         * player instance is created.
+         * Starts progress tracking. The KVO (key-value observing) `timeControlStatus` observer is
+         * not attached here, because `avPlayer` is still null at this point. [injectVideoFileImpl]
+         * and [injectVideoURLImpl] create the player, then call [attachTimeControlObserver].
          */
         override fun initialize() {
             startTrackingProgress()
         }
 
         /**
-         * Registers [observer] on the current [avPlayer] for `timeControlStatus` KVO events,
-         * guarded against double-registration by [observerAttached].
+         * Registers [observer] on the current [avPlayer] for `timeControlStatus` KVO events.
+         * [observerAttached] prevents a double registration.
          *
-         * Essential on iPad where pause/play can come from system controls (Picture-in-Picture,
-         * Control Center, lock screen, external keyboard spacebar, AirPlay). Without it,
-         * [app.player.PlayerManager.isNowPlaying] only updates on the polling tracker tick,
-         * leaving the play button stale and delaying pause-state propagation to peers.
+         * This matters on iPad, where play and pause can come from system controls
+         * (Picture-in-Picture, Control Center, lock screen, an external keyboard's space bar,
+         * AirPlay). The progress tracker does not update [app.player.PlayerManager.isNowPlaying],
+         * so without the observer the play button shows a stale state and the other users in the
+         * room (the group of people watching together) never hear about the pause.
          */
         private fun attachTimeControlObserver() {
             if (observerAttached) return
@@ -152,9 +153,8 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         /**
-         * Removes the [AVPlayerObserver] from the current [avPlayer] if previously attached.
-         * Must be called BEFORE reassigning [avPlayer] to a new instance (otherwise the old
-         * player leaks its observer registration).
+         * Removes [observer] from the current [avPlayer] if it is attached. Call this before
+         * [avPlayer] gets a new instance, or the old player leaks its observer registration.
          */
         private fun detachTimeControlObserver() {
             if (!observerAttached) return
@@ -162,16 +162,16 @@ object AVPlayerEngine: PlayerEngine {
             observerAttached = false
         }
 
-        /** The end-of-item registration for the current item, so it can be taken back. */
+        /** The end-of-item registration for the current item, kept so it can be removed. */
         private var endOfItemObserver: Any? = null
 
         /**
          * Tells the base class when the item finishes.
          *
          * AVPlayer has no state callback that says "ended": KVO on `timeControlStatus` reports a
-         * finished item as merely paused. Without this notification `onPlaybackEnded` was never
-         * reached on this engine at all, so the shared playlist simply stopped at the end of every
-         * entry while the other engines moved the room on.
+         * finished item as just paused. Without this notification, `onPlaybackEnded` never runs
+         * on this engine. The shared playlist (the file list that everyone in a room follows)
+         * then stops at the end of every entry, while the other engines move the room on.
          */
         private fun attachEndOfItemObserver() {
             detachEndOfItemObserver()
@@ -192,9 +192,7 @@ object AVPlayerEngine: PlayerEngine {
         }
 
 
-        /**
-         * KVO Observer for AVPlayer timeControlStatus changes
-         */
+        /** KVO observer for changes to the AVPlayer `timeControlStatus`. */
         inner class AVPlayerObserver : NSObject(), NSKeyValueObservingProtocol {
 
             @OptIn(ExperimentalForeignApi::class)
@@ -206,17 +204,18 @@ object AVPlayerEngine: PlayerEngine {
             ) {
                 when (keyPath) {
                     "timeControlStatus" -> {
-                        // Only the genuine Playing state counts as playing. The third status,
-                        // WaitingToPlayAtSpecifiedRate (buffering/stalled), must not: while the
-                        // room is paused AVPlayer can briefly enter it (e.g. a programmatic rate
-                        // change), and treating that as playing would broadcast a phantom unpause.
+                        // Only the Playing status counts as playing. The third status,
+                        // WaitingToPlayAtSpecifiedRate (buffering or stalled), does not. AVPlayer
+                        // can enter it briefly while the room is paused (for example, after a
+                        // rate change in code), and counting it would send a false unpause.
                         val isPlaying = avPlayer?.timeControlStatus == AVPlayerTimeControlStatusPlaying
 
-                        // The same third status, told to the room as a waiting indicator only.
+                        // The same third status only drives the room's buffering indicator.
                         viewmodel.playerManager.isBuffering.value =
                             avPlayer?.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 
-                        // A failed player or item pauses on its own; that is local news only.
+                        // A failed player or item pauses by itself. That pause stays local and is
+                        // not sent to the room.
                         val failure = avPlayer?.error ?: avMedia?.error
                         if (!isPlaying && failure != null) {
                             viewmodel.protocol.noteExpectedPlaybackState(paused = true)
@@ -245,20 +244,20 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         override suspend fun destroy() {
-            /* Before the guard, deliberately. This observer is registered from the injection path
-             * rather than from initialize(), so an engine that never reached initialised would
-             * otherwise leave NSNotificationCenter holding the block, and through it the whole
-             * room, for the life of the process. */
+            /* Before the guard, on purpose. The injection path registers this observer, not
+             * initialize(). An engine that never became initialized would otherwise leave
+             * NSNotificationCenter holding the block, and through it the whole room, for the life
+             * of the process. */
             detachEndOfItemObserver()
             if (!isInitialized) return
             // Destroy contract shared with the Android engines: drop the guard first, then
-            // cancel the supervisor so the 250ms position tracker stops polling the
-            // about-to-be-nulled player and stops retaining the RoomViewmodel after room exit.
+            // cancel the supervisor. The 250 ms position tracker then stops polling the player
+            // that is about to be cleared, and stops holding the RoomViewmodel after room exit.
             isInitialized = false
             playerSupervisorJob.cancel()
 
-            // The old line here removed the AVPlayer as a notification observer, which it never
-            // was: the only registration this engine holds is the end-of-item one, taken back above.
+            // The AVPlayer is not a notification observer. The only NSNotificationCenter
+            // registration this engine holds is the end-of-item one, removed above.
             detachTimeControlObserver()
             avPlayer?.pause()
             avPlayerLayer?.player = null
@@ -283,8 +282,8 @@ object AVPlayerEngine: PlayerEngine {
                 modifier = modifier,
                 factory = remember {
                     factorylambda@{
-                        // The layer is the picture: added once as the container's sublayer, it is
-                        // what videoGravity resizes and what the PiP controller is built around.
+                        // Add the AVPlayerLayer once, as the container's sublayer. videoGravity
+                        // resizes this layer, and the PiP controller is built on it.
                         val container = UIView().also { it.setBackgroundColor(UIColor.blackColor) }
                         val layer = AVPlayerLayer().also { it.videoGravity = AVLayerVideoGravityResizeAspect }
                         container.layer.addSublayer(layer)
@@ -319,8 +318,9 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         /**
-         * Populates [mediafile] with audio and subtitle tracks from AVFoundation media selection
-         * groups, then auto-selects tracks whose language tag matches the audio/cc preferences.
+         * Fills [mediafile] with the video tracks of the current item and the audio and subtitle
+         * tracks of its media selection groups. Then it selects the tracks whose language matches
+         * the audio and subtitle preferences, unless the user already chose a track.
          */
         override suspend fun analyzeTracks(mediafile: MediaFile) {
             if (avPlayer == null || avMedia == null || !isInitialized) return
@@ -333,7 +333,7 @@ object AVPlayerEngine: PlayerEngine {
                     mediafile.tracks.add(AvVideoTrack(i, itemTrack.enabled))
                 }
 
-            //Groups
+            // Audio and subtitle tracks come from the media selection groups.
             val asset = avPlayer?.currentItem?.asset ?: return
             val characteristics = asset.availableMediaCharacteristicsWithMediaSelectionOptions.map { it as AVMediaCharacteristic }
             characteristics.forEach {
@@ -348,8 +348,8 @@ object AVPlayerEngine: PlayerEngine {
                                 name = option.displayName,
                                 index = i,
                                 type = if (option.mediaType == AVMediaTypeAudio) TrackType.AUDIO else TrackType.SUBTITLE,
-                                // What is playing, not what the file suggests: comparing against
-                                // the group's default meant the tick never moved off track one.
+                                // Compare with the current selection, not the group's default
+                                // option, or the check mark never moves off the first track.
                                 selected = avPlayer?.currentItem?.currentMediaSelection
                                     ?.selectedMediaOptionInMediaSelectionGroup(group) == option
                             )
@@ -362,8 +362,9 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         /**
-         * Selects an audio or subtitle track via AVFoundation's media selection API. A null
-         * [track] disables the given [type], but only if its selection group allows empty selection.
+         * Selects a video, audio or subtitle track. A video track is picked by enabling only its
+         * player item track. Audio and subtitle tracks go through AVFoundation's media selection
+         * API, where a null [track] turns the [type] off if its group allows an empty selection.
          */
         override suspend fun selectTrack(track: Track?, type: TrackType) {
             if (!isInitialized) return
@@ -410,22 +411,25 @@ object AVPlayerEngine: PlayerEngine {
             }
         }
 
-        /** Hands the remembered audio and subtitle picks back to the engine after a reload. */
+        /** Gives the remembered track choices back to the engine after a reload. */
         override suspend fun reapplyTrackChoices() {
             if (!isInitialized) return
             reapplyIndexedTrackChoices()
         }
 
-        /** AVPlayer cannot load external subtitles; the base class turns the failure into the subtitle error notice. */
+        /**
+         * AVPlayer cannot load external subtitles. The base class turns this failure into the
+         * subtitle error notice.
+         */
         override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
             throw UnsupportedOperationException("AVPlayer does not support external subtitles")
         }
 
         override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-            // Detach observer from the previous AVPlayer (if any) BEFORE replacing the
-            // reference, otherwise the old instance leaks its KVO registration.
+            // Detach the observer from the previous AVPlayer (if any) before the reference
+            // changes, or the old instance leaks its KVO registration.
             detachTimeControlObserver()
-            // Security scope is held centrally by PlayerImpl for the playback lifetime.
+            // PlayerImpl holds the file's security scope for the whole playback.
             val nsUrl = location.file.nsUrl
             val asset = AVAsset.assetWithURL(nsUrl)
             avMedia = AVPlayerItem(asset)
@@ -444,12 +448,12 @@ object AVPlayerEngine: PlayerEngine {
             attachEndOfItemObserver()
         }
 
-        /* The readiness wait in parseMedia checks isClosing on every turn, which is what wakes
-         * it: that wait can sit for ten seconds while holding the media transaction mutex, and
-         * teardown waits for the same mutex, so leaving a room during a slow load used to block
-         * the exit for all of it and leave the next room queued behind the teardown. No onClosing
-         * override is needed for that, and cancelling the supervisor here would flip the engine's
-         * scopes dead while isInitialized was still true, which is the destroy contract inverted. */
+        /* No onClosing override. The readiness wait in parseMedia checks isClosing on every turn,
+         * and that check is what ends the wait on exit. The wait can last ten seconds while it
+         * holds the media transaction mutex, and teardown waits for the same mutex. Without the
+         * check, leaving a room during a slow load blocks the exit and queues the next room behind
+         * the teardown. Cancelling the supervisor in onClosing would kill the engine's scopes while
+         * isInitialized is still true, which is the reverse of the destroy contract. */
 
         override suspend fun parseMedia(media: MediaFile) {
             hookPlayerAgain()
@@ -461,7 +465,7 @@ object AVPlayerEngine: PlayerEngine {
                 }
             }
 
-            //File is loaded, get duration and declare file
+            // The item is ready, or the wait ended. Publish the duration.
             avMedia!!.asset.duration.toMillis().let { dur ->
                 val actualDur = if (dur < 0) 0 else dur
                 playerManager.timeFullMillis.value = actualDur
@@ -478,18 +482,18 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun play() {
             if (!isInitialized) return
-            // Setting a positive rate is how AVPlayer plays, so the desired speed rides along.
+            // A positive rate is how AVPlayer plays, so this also applies the desired speed.
             avPlayer?.rate = desiredRate
         }
 
         override suspend fun setSpeed(speed: Double) {
             if (!isInitialized) return
             desiredRate = speed.toFloat()
-            // On AVPlayer a non-zero rate IS play: a speed change while paused must stay pending.
+            // A non-zero rate means playing, so while paused the new speed waits for play().
             if ((avPlayer?.rate ?: 0f) > 0f) avPlayer?.rate = desiredRate
         }
 
-        /** False for live streams (no seekable time ranges). */
+        /** False when the current item has no seekable time ranges, as with a live stream. */
         override suspend fun isSeekable(): Boolean {
             if (!isInitialized) return false
             return avPlayer?.currentItem?.seekableTimeRanges?.isNotEmpty() == true
@@ -503,7 +507,6 @@ object AVPlayerEngine: PlayerEngine {
             avPlayer?.seekToTime(CMTimeMake(toPositionMs, 1000))
         }
 
-        /** Current playback position in milliseconds. */
         @OptIn(ExperimentalForeignApi::class)
         override fun currentPositionMs(): Long {
             if (!isInitialized) return 0L
@@ -512,8 +515,8 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         /**
-         * Cycles the video gravity through Resize (stretch), ResizeAspect (letterbox), and
-         * ResizeAspectFill (crop), returning the name of the newly applied mode.
+         * Cycles the video gravity through Resize (stretch), ResizeAspect (letterbox) and
+         * ResizeAspectFill (crop). Returns the localized name of the new mode.
          */
         override suspend fun switchAspectRatio(): String {
             if (!isInitialized) return ""
@@ -534,9 +537,8 @@ object AVPlayerEngine: PlayerEngine {
             }
         }
 
-        /** Not implemented: AVPlayer has no subtitle size control. */
+        /** Not implemented for AVPlayer. */
         override suspend fun changeSubtitleSize(newSize: Int) {
-            //TODO
         }
 
         override val supportsVideoTrackSelection = true
@@ -544,13 +546,12 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
 
-        /** Converts an AVFoundation CMTime to milliseconds. */
         private fun CValue<CMTime>.toMillis(): Long {
             return CMTimeGetSeconds(this).times(1000.0).roundToLong()
         }
 
 
-        /** AVPlayer's volume is 0.0 to 1.0 and stops there: no gain rung. */
+        /** AVPlayer's volume runs from 0.0 to 1.0, so this engine has no gain above 100%. */
         override fun getEngineVolume(): Int = (avPlayer?.volume?.times(100))?.roundToInt() ?: 0
         override fun setEngineVolume(percent: Int) {
             avPlayer?.setVolume(percent.coerceIn(0, 100) / 100f)

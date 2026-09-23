@@ -9,11 +9,12 @@ import io.github.vinceglb.filekit.path
 import java.io.File
 
 /**
- * Android directory walk. Picked directories arrive as SAF tree URIs (`content://…/tree/…`),
- * enumerated via [DocumentFile]; a raw filesystem path (legacy / non-SAF) is walked with
- * [java.io.File]. Each discovered media file is stored as its content-URI / path bytes — reads
- * are authorized by the persistable permission FileKit took on the tree when the directory was
- * remembered, so we don't (and can't, for tree children) take per-file permissions here.
+ * The Android walk of a media directory. Picked directories arrive as SAF tree URIs
+ * (`content://…/tree/…`) and are walked with [DocumentFile]. A raw filesystem path (legacy, not
+ * SAF) is walked with [java.io.File]. Each media file is stored as the bytes of its content URI
+ * or path. Reads work through the persistable permission that FileKit took on the tree when the
+ * directory was remembered, so this code takes no per-file permissions (it cannot for tree
+ * children).
  */
 actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
     val out = LinkedHashMap<String, ByteArray>()

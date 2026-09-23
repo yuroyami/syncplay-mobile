@@ -7,10 +7,13 @@ import app.theme.Type
 import app.theme.palette
 import app.utils.timestampFromMillis
 
-/** `m:ss` or `h:mm:ss`; `--:--` when the time is unknown. */
+/** `mm:ss` under an hour, else `hh:mm:ss`; `--:--` when the time is unknown. */
 fun formatTimecode(ms: Long?): String = if (ms == null || ms < 0L) "--:--" else timestampFromMillis(ms)
 
-/** The one timecode: `value` type, tabular, so digits never jitter. Dimmed for a total. */
+/**
+ * The app's one timecode: `value` type with tabular digits, so the digits never jitter. [dim]
+ * dims it, for a total.
+ */
 @Composable
 fun Timecode(ms: Long?, modifier: Modifier = Modifier, dim: Boolean = false, color: Color? = null) {
     val p = palette

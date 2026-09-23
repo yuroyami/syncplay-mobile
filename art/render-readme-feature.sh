@@ -107,7 +107,7 @@ for name in desktop landscape portrait; do
   done
 done
 
-# The empty-frame preview is an output now, never the source of screen geometry.
+# The empty-frame preview is an output. It is never the source of the screen geometry.
 magick "$render_tmp/frame.png" -colorspace sRGB -strip -quality 92 \
   -define webp:method=6 "$art_dir/readme-feature-frame.webp"
 magick "$render_tmp/banner.png" -filter Lanczos -resize 1600x800 \

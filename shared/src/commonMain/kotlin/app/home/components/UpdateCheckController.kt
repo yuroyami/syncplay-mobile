@@ -6,7 +6,10 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-/** Keeps a successful answer for this Home viewmodel; only a failed request can be retried. */
+/**
+ * Runs the update check for the home view model. It keeps a successful answer, and only a failed
+ * check can run again.
+ */
 class UpdateCheckController(
     private val scope: CoroutineScope,
     private val fetchLatest: suspend () -> UpdateCheck.Result = UpdateCheck::latest,

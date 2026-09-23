@@ -6,16 +6,16 @@ import app.protocol.Session
 import kotlin.io.encoding.Base64
 
 /**
- * The room as one line someone can send.
+ * An invite link: the join details of a room as one line that someone can send.
  *
  * `synkplay://join?server=host&port=8997&room=Name&password=pw`
  *
- * The server password rides along because without it the link cannot join, and the alternative is
- * the sender dictating it anyway. The operator password never does: it grants control, not entry.
- * A username is never carried either, since each person picks their own.
+ * The link carries the server password, because the link cannot join without it and the sender
+ * would have to send it anyway. It never carries the operator password, which grants control and
+ * not entry. It never carries a username either, since each person picks their own.
  *
- * There is no scheme to interoperate with. The desktop client has no invite link, so this one is
- * ours, and both platforms register it.
+ * No other scheme exists to match: the Syncplay desktop client has no invite link. Android and iOS
+ * register the `synkplay` scheme.
  */
 object InviteLink {
 
@@ -23,14 +23,17 @@ object InviteLink {
     private const val PREFIX = "$SCHEME://join"
     const val SHARE_PAGE = "https://yuroyami.github.io/syncplay-mobile/join/"
 
-    /** HTTPS is clickable in messengers; the fragment keeps room credentials out of web requests. */
+    /**
+     * The invite link inside an HTTPS link to the share page. Messengers make HTTPS clickable, and
+     * the fragment (after `#`) keeps the room credentials out of web requests.
+     */
     fun shareUrl(config: JoinConfig): String = SHARE_PAGE + "#" + Base64.UrlSafe.encode(build(config).encodeToByteArray())
 
-    /** The official server is named, not resolved to the address the client happens to dial. */
+    /** A link names the official server by its host name, never by the address the client dials. */
     private const val OFFICIAL_IP = OFFICIAL_SERVER_ADDRESS
     private const val OFFICIAL_HOST = OFFICIAL_SERVER_NAME
 
-    /** Caps matching the join form, so a hostile link cannot hand the room a megabyte of name. */
+    /** Length limits that match the join form, so a hostile link cannot pass a huge value. */
     private const val MAX_NAME = 149
     private const val MAX_ROOM = Session.MAX_ROOM_NAME_CHARS
     private const val MAX_HOST = 255
@@ -47,8 +50,9 @@ object InviteLink {
     }
 
     /**
-     * Reads a link back, or returns null when [raw] is not one. Anything missing falls back to the
-     * defaults a fresh join would use, so a half-written link still lands somewhere sensible.
+     * Parses an invite link, or returns null when [raw] is not one. [raw] can be the `synkplay://`
+     * link or the HTTPS share link. A link without a room gives null. Any other missing field
+     * falls back to the default of a fresh join, so an incomplete link still gives usable details.
      */
     fun parse(raw: String): JoinConfig? {
         val trimmed = raw.trim()
@@ -84,8 +88,8 @@ object InviteLink {
     }
 
     /**
-     * Caps and trims a join built from outside the app (an invite link, a launcher shortcut).
-     * Returns null when there is no room to join, which is the one field with no sensible default.
+     * Trims and caps join details that come from outside the app (an invite link, a launcher
+     * shortcut). Returns null when there is no room to join, the one field with no good default.
      */
     fun sanitize(config: JoinConfig): JoinConfig? {
         val room = config.room.trim()
@@ -101,11 +105,12 @@ object InviteLink {
     }
 
     /**
-     * The string the app itself prints when a managed room is created, `+name:HASH12:PASSWORD`,
-     * split into the room and the operator password. Pasting it whole used to create a room
-     * literally called "+name:HASH12:PASSWORD".
+     * Splits the string that the app prints when it creates a managed room,
+     * `+name:HASH12:PASSWORD`, into the room and the operator password (in upper case). Without
+     * the split, pasting the whole string would create a room literally called
+     * "+name:HASH12:PASSWORD".
      *
-     * Returns the room unchanged and a blank password when there is nothing to split.
+     * Returns the trimmed room and a blank password when there is nothing to split.
      */
     fun splitOperatorRoom(room: String): Pair<String, String> {
         val trimmed = room.trim()
@@ -117,7 +122,7 @@ object InviteLink {
     /** `+base:HASH12` followed by `:XX-###-###`, the two shapes RoomPasswordProvider defines. */
     private val OPERATOR_ROOM = Regex("""^(\+.+:[A-Za-z0-9]{12}):([A-Za-z]{2}-\d{3}-\d{3})$""")
 
-    /** Percent-encoding, restricted to what a query value may hold. */
+    /** Percent-encodes [value], keeping only ASCII letters, digits and `-_.~` as they are. */
     private fun encode(value: String): String = buildString {
         for (byte in value.encodeToByteArray()) {
             val c = byte.toInt().toChar()
@@ -141,7 +146,7 @@ object InviteLink {
                         bytes.add(hex.toByte()); i += 3
                     }
                 }
-                // A query encoder may write a space as '+', so read it back as one.
+                // A query encoder may write a space as '+', so '+' decodes to a space.
                 c == '+' -> { bytes.add(' '.code.toByte()); i++ }
                 else -> {
                     for (b in c.toString().encodeToByteArray()) bytes.add(b)

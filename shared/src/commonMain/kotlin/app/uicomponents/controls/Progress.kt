@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import app.theme.palette
 
 /**
- * A 2dp bar along the top rim of its container. Determinate with [progress] in 0 to 1, or a 30
- * percent segment sweeping when null. No spinners anywhere in the app.
+ * A 2dp progress bar for the top edge of its container. With [progress] (0 to 1) it fills that
+ * share. With null, a segment 30 percent wide sweeps across. The app uses no spinners.
  */
 @Composable
 fun ProgressBar(progress: Float?, modifier: Modifier = Modifier) {

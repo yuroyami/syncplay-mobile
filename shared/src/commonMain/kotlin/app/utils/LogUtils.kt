@@ -21,7 +21,7 @@ import kotlinx.datetime.toLocalDateTime
 
 private val logLock = SynchronizedObject()
 
-/** Max number of days to keep log files before auto-cleanup. */
+/** How many days a log file stays before [cleanupOldLogs] deletes it. */
 private const val LOG_RETENTION_DAYS = 7
 
 /** The date and the timestamp of one instant, worked out together. */
@@ -30,9 +30,9 @@ private class Stamped(val date: String, val timestamp: String)
 /**
  * Formats one instant into its "yyyy-MM-dd" file name and its "yyyy-MM-dd HH:mm:ss" line prefix.
  *
- * One conversion, not two. These were separate functions and every log line called both, so each
- * line built two Instants, two LocalDateTimes and asked the platform for the system time zone
- * twice, for a date that is the first ten characters of the timestamp.
+ * Both come from one conversion. Two separate conversions would build two Instants and two
+ * LocalDateTimes per log line and read the system time zone twice, for a date that is only the
+ * first ten characters of the timestamp.
  */
 private fun stamp(millis: Long): Stamped {
     val ldt = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault())
@@ -40,14 +40,14 @@ private fun stamp(millis: Long): Stamped {
     return Stamped(date, "$date ${ldt.hour.pad()}:${ldt.minute.pad()}:${ldt.second.pad()}")
 }
 
-/** Formats epoch millis into "yyyy-MM-dd" date string for log file naming */
+/** Formats epoch milliseconds as the "yyyy-MM-dd" date that names a log file. */
 private fun formatDate(millis: Long): String = stamp(millis).date
 
 private fun Int.pad() = toString().padStart(2, '0')
 
 /**
- * What the pump accepts: a line to write, or a request to be told when everything queued
- * before it has landed on disk.
+ * An entry for the log writer ([logPump]): a line to write, or a request to be told when
+ * everything queued before it is on disk.
  */
 private sealed interface LogEntry {
     data class Line(val timestamp: String, val date: String, val text: String) : LogEntry
@@ -58,8 +58,9 @@ private val logScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 private val logQueue = Channel<LogEntry>(Channel.UNLIMITED)
 
 /**
- * One writer drains the queue on the IO dispatcher, batching whatever is already waiting into a
- * single append per file. Started on the first [loggy] call and never restarted.
+ * The one log writer. It drains the queue on the IO dispatcher and joins the lines that are
+ * already waiting into one append per file. It starts on the first use from [loggy] or
+ * [flushLogs] and never restarts.
  */
 private val logPump: Job by lazy {
     logScope.launch {
@@ -84,7 +85,7 @@ private fun writeBatch(batch: List<LogEntry>) {
                     appendToFile("$logDir/$date.log", text)
                 }
             } catch (_: Exception) {
-                // Losing a log line must never take the app with it.
+                // Losing a log line must never crash the app.
             }
         }
     }
@@ -92,10 +93,9 @@ private fun writeBatch(batch: List<LogEntry>) {
 }
 
 /**
- * Records a line. Cheap and non-blocking: the console print is immediate, the file write is
- * handed to a writer on the IO dispatcher. It used to append to a file, line by line, under a
- * lock, on whatever thread called it, which included the main thread and the serial protocol
- * consumer.
+ * Records a message. It is cheap and never blocks: the console print is immediate, and the file
+ * write goes to the log writer on the IO dispatcher. Callers include the main thread and the
+ * serial protocol consumer, so it must never write the file on the calling thread.
  */
 fun loggy(s: Any?) {
     val raw = if (s is Exception) {
@@ -105,11 +105,12 @@ fun loggy(s: Any?) {
     }
     val string = redactSecrets(raw, knownSecrets)
 
-    /* Always print to console (iOS: Xcode console, Android: logcat), including in release builds
-     * so runtime errors stay visible. The queued file write preserves logs for export from settings. */
+    /* Always print to the console (the Xcode console on iOS, logcat on Android), in release builds
+     * too, so runtime errors stay visible. The queued file write keeps the log for the export
+     * from settings. */
     Logger.e(string)
 
-    logPump // starts the writer on first use
+    logPump // starts the log writer on first use
     val stamped = stamp(generateTimestampMillis())
     for (line in string.lineSequence()) {
         logQueue.trySend(LogEntry.Line(stamped.timestamp, stamped.date, line))
@@ -129,7 +130,10 @@ suspend fun readLogsForExport(): ByteArray {
     return withContext(ioDispatcher) { logFile }
 }
 
-/** Reads and returns all log file contents as a ByteArray. Prefer [readLogsForExport]. */
+/**
+ * Every log file, concatenated, as bytes. It does not flush the queue first, so prefer
+ * [readLogsForExport].
+ */
 val logFile: ByteArray
     get() = synchronized(logLock) {
         try {
@@ -165,8 +169,10 @@ fun cleanupOldLogs() {
     } catch (_: Exception) { }
 }
 
-/** Exact epoch-day count for a "yyyy-MM-dd" string. Throws on non-date strings; callers catch
- *  and skip those files. */
+/**
+ * The epoch-day count of a "yyyy-MM-dd" string. Throws on a string that is not a date, and the
+ * caller catches that and skips the file.
+ */
 private fun String.toEpochDays(): Long {
     val parts = split("-")
     if (parts.size != 3) throw IllegalArgumentException("Not a date: $this")
@@ -188,11 +194,11 @@ fun clearLogs() {
 }
 
 /**
- * Bridges Ktor's [io.ktor.client.plugins.logging.Logger] interface into [loggy].
+ * Passes the output of Ktor's [io.ktor.client.plugins.logging.Logger] interface to [loggy].
  *
- * The Logging plugin emits multi-line transcripts (REQUEST line, headers, body,
- * RESPONSE line, more headers, body). We prefix each line with `[ktor]` so it
- * stays grep-able in the log file alongside our app logs.
+ * The Logging plugin sends multi-line messages (the request line, headers and body, then the
+ * response line, headers and body). Each message gets a `[ktor]` prefix, so a search of the log
+ * file can find it. [loggy] splits a message into lines, so only the first line has the prefix.
  */
 object KtorLoggyLogger : KtorLogger {
     override fun log(message: String) {
@@ -201,19 +207,19 @@ object KtorLoggyLogger : KtorLogger {
 }
 
 /**
- * Masks every occurrence of the given secrets.
+ * Replaces every occurrence of [secrets] in [text] with `***`.
  *
- * The log is exportable from settings, and a service key reaches it through more paths than can
- * be found one at a time: Klipy's key is part of the URL, so it is in every request line Ktor
- * prints. Masking at the one place every line passes through is the only version of this that
- * stays true as the code changes.
+ * The user can export the log from settings, and a service key reaches the log by many paths.
+ * For example, Klipy's key is part of the URL, so it is in every request line that Ktor prints.
+ * Masking at the one place that every line passes through keeps working as the code changes.
  *
- * Short values are skipped: masking a two-letter secret would eat the log.
+ * A secret shorter than [MIN_MASKABLE_SECRET] characters is skipped, because masking a very short
+ * value would destroy the log.
  */
 fun redactSecrets(text: String, secrets: List<String>): String =
     secrets.filter { it.length >= MIN_MASKABLE_SECRET }.fold(text) { acc, secret -> acc.replace(secret, "***") }
 
-/** Below this a value is too common to mask without destroying the log around it. */
+/** A secret shorter than this is too common to mask without destroying the log around it. */
 private const val MIN_MASKABLE_SECRET = 8
 
 private val knownSecrets: List<String> by lazy {

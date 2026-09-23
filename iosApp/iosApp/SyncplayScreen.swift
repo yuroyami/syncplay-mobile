@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import shared
 
-/// Fullscreen SwiftUI host for the shared Compose Syncplay UI; the app's only screen.
+/// Fullscreen SwiftUI host for the shared Compose UI. It is the app's only screen.
 struct SyncplayScreen: View {
 
     var body: some View {

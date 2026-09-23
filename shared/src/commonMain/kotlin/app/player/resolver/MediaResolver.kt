@@ -1,40 +1,43 @@
 package app.player.resolver
 
 /**
- * Resolves "page URLs" (YT, SoundCloud, PeerTube, etc.) into direct streamable URLs.
+ * Resolves page URLs (YouTube, SoundCloud, PeerTube and so on) into direct stream URLs.
  *
- * The PC desktop app gets this for free via mpv's `ytdl_hook.lua`, which shells out to a
- * locally installed `yt-dlp` binary. Mobile has no such binary on PATH, so each platform
- * provides its own pure-native extractor:
- *  - Android: NewPipe Extractor (com.github.TeamNewPipe:NewPipeExtractor) — JVM/Java, no Python.
- *  - iOS: YouTubeKit — Swift, YT only, no Python.
+ * The Syncplay PC client gets this from mpv's `ytdl_hook.lua`, which runs a locally installed
+ * `yt-dlp` binary. This app has no such binary, so each platform brings its own native extractor,
+ * with no Python:
+ *  - Android and desktop: NewPipe Extractor (com.github.TeamNewPipe:NewPipeExtractor), on the JVM.
+ *  - iOS: YouTubeKit, in Swift, for YouTube only.
  *
- * Each client resolves independently at retrieve time. The shared playlist still stores the
- * *original* page URL (e.g. `youtube.com/watch?v=…`) — direct stream URLs are typically
- * IP-pinned and time-limited, so they wouldn't be valid across clients anyway.
+ * Each client resolves the URL itself, at load time. The shared playlist keeps the original page
+ * URL (for example `youtube.com/watch?v=…`). Direct stream URLs are usually tied to one IP address
+ * and expire, so they would not work for the other clients.
  */
 interface MediaResolver {
     /**
-     * Returns a resolved direct URL for the given page URL, or null if this resolver does not
-     * handle the URL (unknown service, parse failure, network error, etc.). Callers should
-     * fall back to the original URL when null is returned.
+     * Returns the direct URL for the given page URL, or null when this resolver cannot handle the
+     * URL (unknown service, parse failure, network error and so on). On null, the caller uses the
+     * original URL.
      */
     suspend fun resolve(url: String): ResolvedMedia?
 }
 
 /**
- * The platform's native [MediaResolver]. Initialized lazily on first use.
- *  - Android and desktop: NewPipe Extractor — YT, SoundCloud, PeerTube, Bandcamp, MediaCCC.
- *  - iOS: YouTubeKit — YT only.
+ * The platform's native [MediaResolver], created on first use.
+ *  - Android and desktop: NewPipe Extractor, for YouTube, SoundCloud, PeerTube, Bandcamp and
+ *    MediaCCC.
+ *  - iOS: YouTubeKit, for YouTube only.
+ *  - Web: a resolver that resolves nothing yet.
  */
 expect val mediaResolver: MediaResolver
 
 /**
- * Output of [MediaResolver.resolve] — a direct streamable URL plus best-effort metadata.
+ * The result of [MediaResolver.resolve]: a direct stream URL, plus metadata when available.
  *
- * @property directUrl A URL the player engine can hand to its native loader (HLS, MP4, DASH, …).
- * @property title Human-readable title, used to override the auto-derived filename in the OSD.
- * @property durationSec Duration in seconds, or null if the source is a livestream/unknown.
+ * @property directUrl A URL that the engine can pass to its native loader (HLS, MP4, DASH and
+ *   so on).
+ * @property title A readable title. It replaces the file name taken from the URL.
+ * @property durationSec The duration in seconds, or null for a live stream or an unknown length.
  */
 data class ResolvedMedia(
     val directUrl: String,
@@ -43,13 +46,13 @@ data class ResolvedMedia(
 )
 
 /**
- * Quick "is this clearly a direct media file already" check. Returns true for URLs whose
- * path ends with a recognizable container extension — those go straight to the player and
- * skip the resolver. Anything else (page URLs, query-string-only URLs, unknown extensions)
- * is offered to the resolver.
+ * A quick check for a URL that is clearly a direct media file already. Returns true when the URL
+ * path ends with a known container extension. Such a URL goes straight to the player and skips
+ * the resolver. Any other URL (a page URL, a query-only URL, an unknown extension) goes to the
+ * resolver.
  *
- * Kept conservative on purpose: false positives here mean an unnecessary resolver call
- * (the resolver returns null, we use the original URL — no harm done).
+ * The check is strict on purpose. A missed direct URL only costs an unneeded resolver call: the
+ * resolver returns null, and the caller uses the original URL.
  */
 fun urlLooksLikeDirectMedia(url: String): Boolean {
     val pathPart = url.substringBefore('?').substringBefore('#').lowercase()
@@ -64,15 +67,14 @@ private val DIRECT_MEDIA_EXTENSIONS = listOf(
 )
 
 /**
- * Pulls the 11-character video ID out of any common YT URL form:
+ * Pulls the 11-character video ID out of any common YouTube URL form:
  *  - youtube.com/watch?v=ID
  *  - youtu.be/ID
- *  - youtube.com/embed/ID
- *  - youtube.com/shorts/ID
- *  - m.youtube.com / music.youtube.com (subdomains)
+ *  - youtube.com/embed/ID, /v/ID, /shorts/ID and /live/ID
+ *  - youtube-nocookie.com, and subdomains such as m.youtube.com and music.youtube.com
  *
- * Returns null if the URL is not a recognizable YT link. Used by the iOS resolver,
- * since YouTubeKit takes a raw video ID rather than a URL string.
+ * Returns null when the URL is not a recognizable YouTube link. The add-media card uses it to
+ * tell whether the resolver can handle a pasted link.
  */
 fun extractYtId(url: String): String? = YT_ID_REGEX.find(url)?.groupValues?.getOrNull(1)
 

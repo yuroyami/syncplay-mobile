@@ -21,9 +21,9 @@ data class KlipySearchWrapper(
     val hasNext: Boolean = false
 )
 
-/* Defaults on every field so the parser accepts sparse responses. Klipy's shape changes
- * subtly between endpoints (search vs trending vs recents), and the Darwin engine on iOS
- * surfaces missing fields as hard failures — defaults keep deserialization alive. */
+/* Every field has a default, so the parser accepts sparse responses. The response shape of
+ * Klipy differs a little between the search, trending and recent endpoints. A missing field
+ * without a default makes the whole parse fail. */
 @Serializable
 data class KlipyItem(
     val id: Long = 0L,

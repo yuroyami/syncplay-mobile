@@ -28,8 +28,8 @@ import SyncplayMobile.shared.KiteBuildConfig
 
 actual val platform: Platform = Platform.Desktop
 
-/* Lazily cached singleton so one OkHttp engine is shared and connection pooling works.
- * Mirrors the Android actual — OkHttp is pure JVM. */
+/* One lazy client, so every request shares one OkHttp engine and its connection pool.
+ * It mirrors the Android actual, because OkHttp is pure JVM. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(OkHttp) {
         install(HttpTimeout) {
@@ -39,8 +39,8 @@ actual val httpClient: HttpClient by lazy {
         }
         install(Logging) {
             logger = KtorLoggyLogger
-            // A whole request line carries the URL, and the Klipy key lives in the URL. Full
-            // bodies are a debugging tool, not something to ship.
+            // Release builds log only the request line and status (INFO). That line holds the URL,
+            // and the URL holds the KLIPY key. Full bodies are for debug builds only.
             level = if (KiteBuildConfig.IS_DEBUG) LogLevel.ALL else LogLevel.INFO
             sanitizeHeader { header -> header == "Api-Key" || header == HttpHeaders.Authorization }
             filter { request -> request.url.host.startsWith("api.") }
@@ -52,22 +52,20 @@ actual val httpClient: HttpClient by lazy {
 }
 
 /**
- * Desktop has ONE engine, and it is KitePlayer.
+ * Desktop has one engine (video player): KitePlayer.
  *
- * vlcj and libmpv are gone from here on the owner's instruction: the desktop build is a KitePlayer
- * build, not a shell around whatever native player happens to be installed. That also takes their
- * bundled natives out of the distribution.
+ * The desktop build is a KitePlayer build, not a shell around whatever native player is
+ * installed, so the distribution bundles no other player's native files.
  *
- * The engine renders through the Compose canvas, pinned there by KiteDesktopEngine: KitePlayer's
- * JVM native view is real since 0.0.21, but on macOS it takes every click meant for the controls
- * drawn over it.
+ * KiteDesktopEngine forces the engine onto the Compose canvas. KitePlayer's JVM native view
+ * exists, but on macOS it takes every click meant for the controls drawn over the video.
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(desktopKiteEngine)
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     return when (NETWORK_ENGINE.value()) {
         "ktor" -> KtorNetworkManager(this)
-        // Netty is the desktop default — the only engine with opportunistic TLS.
+        // Netty is the desktop default: it is the only network engine with opportunistic TLS.
         else -> NettyNetworkManager(this)
     }
 }
@@ -93,13 +91,13 @@ actual fun getFileName(uri: PlatformFile): String? =
 actual fun getFileSize(uri: PlatformFile): Long? =
     runCatching { File(uri.path).takeIf { it.isFile }?.length() }.getOrNull()
 
-/* The entry always originates from the system clipboard on desktop, so reading the global
- * clipboard is equivalent and avoids depending on Compose's JVM ClipEntry internals. */
+/* On desktop the entry always comes from the system clipboard, so reading the global clipboard
+ * gives the same text and avoids depending on Compose's JVM ClipEntry internals. */
 actual fun ClipEntry.getText(): String? = runCatching {
     Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String
 }.getOrNull()
 
-/* Desktop windows have no system-bar chrome to hide and no orientation to lock. */
+/* Desktop windows have no system bars to hide and no orientation to lock. */
 @Composable
 actual fun EnterRoomMode(portrait: Boolean) {
 }
@@ -199,9 +197,9 @@ actual fun fileExists(path: String): Boolean = try {
     false
 }
 
-/** Where an mpv config would live on this platform. Nothing reads it: the only desktop engine
- *  is KitePlayer, and the mpv rows are Android's. Kept so the expect declaration is satisfied
- *  and a path exists if a desktop mpv ever arrives. */
+/** Where an mpv config would live on desktop. Nothing reads it here: the only desktop engine is
+ *  KitePlayer, and the mpv settings rows are Android's. It exists to satisfy the expect
+ *  declaration. */
 actual fun getMpvConfFilePath(): String? = try {
     val dir = java.io.File(desktopAppDataDir, "mpv").apply { mkdirs() }
     java.io.File(dir, "mpv.conf").absolutePath
@@ -209,7 +207,7 @@ actual fun getMpvConfFilePath(): String? = try {
     null
 }
 
-/** Desktop "shortcut" = command-line join args parsed in Main.kt (--user/--room/--host/...). */
+/** The desktop "shortcut": the join request from the command line (--user, --room, --host...). */
 actual fun consumePendingShortcut(): app.home.JoinConfig? =
     pendingDesktopJoin.also { pendingDesktopJoin = null }
 

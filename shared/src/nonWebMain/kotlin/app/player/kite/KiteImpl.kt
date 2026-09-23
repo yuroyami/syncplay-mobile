@@ -98,19 +98,19 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * KitePlayer driving Syncplay, written once for both phones.
+ * The KitePlayer engine (one of the video players the app can drive), written once for Android,
+ * iOS and desktop.
  *
- * There is no androidMain/iosMain split below this line. KitePlayer's own engine is common code,
- * so the whole of Syncplay's player contract maps onto it in shared source; the only per-platform
- * piece is [KiteMediaResolver], which exists because Android hands out `content://` URIs that
- * FFmpeg cannot open and iOS hands out real paths that it can. The platform engine registry
- * injects that resolver once when it constructs [KiteEngine].
+ * This file has no per-platform split. KitePlayer's own engine is common code, so Syncplay's whole
+ * player contract maps onto it in shared source. The only per-platform piece is
+ * [KiteMediaResolver]: Android hands out `content://` URIs that FFmpeg cannot open, while iOS and
+ * desktop hand out real paths that it can. Each platform's engine list passes that resolver in
+ * when it constructs [KiteEngine].
  *
- * The suspend contract fits without a single blocking bridge. Everything Syncplay declares as
- * suspend (open, destroy, track selection) is suspend in KitePlayer too, and the two members
- * Syncplay needs synchronously, [currentPositionMs] and [seekTo], map onto KitePlayer's
- * deliberately non-suspending `position()` and `seekLater()`. No `runBlocking` appears here, and
- * none is needed.
+ * The suspend contract fits without a blocking bridge. Everything Syncplay declares as suspend
+ * (open, destroy, track selection) is suspend in KitePlayer too. The two members that Syncplay
+ * needs synchronously, [currentPositionMs] and [seekTo], map onto KitePlayer's non-suspending
+ * `position()` and `seekLater()`. No `runBlocking` is needed here.
  */
 internal class KiteImpl(
     viewmodel: RoomViewmodel,
@@ -119,15 +119,17 @@ internal class KiteImpl(
 ) : PlayerImpl(viewmodel, kiteEngine) {
 
     /**
-     * A StateFlow, not a plain field and deliberately not Compose snapshot state. Not plain
-     * because [VideoPlayer] passes it to its presentation and [initialize] assigns it from inside
-     * that composable's first pass; a plain `var` would be read once as null and never re-read,
-     * leaving video output permanently detached from a player that is otherwise running. Not
-     * `mutableStateOf` because this impl is constructed on RoomViewmodel's IO launch, and a
-     * snapshot-state object created off the main thread can be read by a composition whose
-     * snapshot predates that creation; both iOS presentations crashed on room entry with
-     * "Reading a state that was created after the snapshot was taken". A StateFlow has no
-     * snapshot identity, so the construction thread cannot matter.
+     * A StateFlow, not a plain field, and on purpose not Compose snapshot state.
+     *
+     * Not a plain field, because [VideoPlayer] passes it to its presentation and [initialize]
+     * assigns it inside that composable's first pass. A plain `var` is read once as null and never
+     * again, so video output stays detached from a player that is otherwise running.
+     *
+     * Not `mutableStateOf`, because this impl is constructed on RoomViewmodel's IO launch. A
+     * composition whose snapshot is older than a snapshot-state object created off the main
+     * thread can still read that object, and on iOS that crashes room entry with "Reading a state
+     * that was created after the snapshot was taken". A StateFlow has no snapshot identity, so
+     * the construction thread does not matter.
      */
     private val kiteFlow = MutableStateFlow<KitePlayer?>(null)
 
@@ -142,41 +144,45 @@ internal class KiteImpl(
         }
 
     /**
-     * Completed only after the active presentation has attached video output to [kite]. Incoming
-     * room media can race the first composition; suspending it here preserves the load and ensures
-     * the renderer is present before KitePlayer chooses its decoder path.
+     * Completed only after the active presentation has attached video output to [kite]. Media from
+     * the room can arrive before the first composition. Suspending the load here keeps it, and
+     * makes sure the renderer exists before KitePlayer chooses its decoder path.
      */
     private val presentedPlayer = CompletableDeferred<KitePlayer>()
 
     /**
-     * The resolution behind the media currently loaded, kept alive for exactly as long as the
-     * engine may read from it. Released when the next media replaces it or the player is torn
-     * down; on Android that release closes a file descriptor, on iOS it does nothing.
+     * The resolution behind the media currently loaded, kept alive exactly as long as the engine
+     * may read from it. It is released when the next media replaces it or the player is torn
+     * down. On Android that release closes a file descriptor; on iOS and desktop it does nothing.
      */
     private var mediaPath: KiteMediaPath? = null
 
-    /** KitePlayer publishes a duration once the container is parsed, so nothing is polled for it. */
+    /**
+     * The job that mirrors the engine's state flow (see [watchEngineState]). KitePlayer publishes
+     * a duration once the container is parsed, so nothing is polled for it.
+     */
     private var durationWatcher: Job? = null
 
-    /** Temporary diagnostic for the background-return video slowdown. Remove once root-caused. */
+    /** The engine-statistics log, active while KITE_DEBUG_STATS is on (see [watchEngineStats]). */
     private var statsWatcher: Job? = null
 
     /**
-     * KitePlayer publishes position through its own progress flow, but Syncplay's shared tracker
-     * reads [currentPositionMs] on a timer, and reading it costs one atomic load. Matching mpv's
-     * cadence keeps the room's position reports at the resolution the protocol expects.
+     * KitePlayer publishes the position through its own progress flow, but Syncplay's shared
+     * tracker reads [currentPositionMs] on a timer, and one read costs one atomic load. The same
+     * interval as mpv keeps the room's position reports at the resolution the protocol expects.
      */
     override val trackerJobInterval: Duration = 250.milliseconds
 
-    /** Chapters ride the snapshot since KitePlayer 0.0.5, so the UI may offer chapter jumps. */
     override val supportsVideoTrackSelection = true
     override val supportsAudioVisualization = true
+
+    /** KitePlayer's state snapshot carries the chapters, so the UI may offer chapter jumps. */
     override val supportsChapters: Boolean = true
 
-    /** Real since KitePlayer 0.0.5: a pitch-preserving tempo stage within 0.25x to 4x. */
+    /** A pitch-preserving tempo stage from 0.25x to 4x. */
     override val supportsSpeedAdjustment: Boolean = true
 
-    /** Android hosts PiP generically; iOS has no KitePlayer-specific PiP controller yet. */
+    /** Android hosts PiP (picture-in-picture) generically; iOS has no KitePlayer PiP controller. */
     override val supportsPictureInPicture: Boolean
         get() = KitePlayerPlatform.supportsPictureInPicture
 
@@ -186,13 +192,13 @@ internal class KiteImpl(
     @UiThread
     override fun initialize() {
         if (isInitialized) return
-        // The engine-level settings read once at creation; the runtime ones (delays, subtitle
-        // scale) are ALSO seeded here so a fresh room starts where the sliders sit.
+        // The engine-level settings are read once, at creation. The runtime ones (delays, subtitle
+        // scale) are also set here, so a new room starts where the sliders are.
         val config = PlayerConfig(
             hardwareDecode = if (KITE_HARDWARE_ACCELERATION.value()) HwdecPolicy.Auto else HwdecPolicy.Off,
             subtitles = SubtitleConfig(
                 autoSelect = KITE_SUBTITLE_AUTOSELECT.value(),
-                // The one shared subtitle-size setting, on the same 16-to-1.0 scale as changeSubtitleSize.
+                // The shared subtitle-size setting, on the 16-to-1.0 scale of changeSubtitleSize.
                 fontScale = (SUBTITLE_SIZE.value() / 16f).coerceAtLeast(0.05f),
                 delay = KITE_SUBTITLE_DELAY_MS.value().milliseconds,
             ),
@@ -213,12 +219,14 @@ internal class KiteImpl(
     }
 
     /**
-     * The engine-statistics log, now behind the KITE_DEBUG_STATS setting. One line per stats
-     * tick (KitePlayer publishes them once a second) tells which layer stalls when playback
-     * misbehaves: decodedVideoFrames stalling means the decoder, submittedFrames stalling means
-     * the schedule or the renderer refused frames, and both advancing while the screen is
-     * static means the frames are drawn by nobody (the Compose/UIKit drawing side). The
-     * background-return slowdown investigation reads exactly these lines, so enable the setting
+     * Logs engine statistics while the KITE_DEBUG_STATS setting is on. KitePlayer publishes stats
+     * once a second, and each line shows which layer stalls when playback misbehaves:
+     *  - decodedVideoFrames stops: the decoder stalls.
+     *  - submittedFrames stops: the schedule or the renderer refuses frames.
+     *  - Both advance while the screen is static: nothing draws the frames (the Compose or UIKit
+     *    drawing side).
+     *
+     * To diagnose a video slowdown after a return from the background, turn the setting on
      * before reproducing it on a device.
      */
     private fun watchEngineStats() {
@@ -237,10 +245,10 @@ internal class KiteImpl(
                         " decoded=${s.decodedVideoFrames} submitted=${s.submittedFrames}" +
                         " headless=${s.headlessFrames} droppedLate=${s.droppedFramesLate}" +
                         " repeated=${s.repeatedFrames} underruns=${s.audioUnderruns}" +
-                        // The three that say WHICH layer is short when playback crawls: a decoder
-                        // that cannot keep up shows a low fps with a full video queue, while a
-                        // reader that cannot keep up shows both queues near empty and rebuffers
-                        // climbing. Without them a crawl looks the same either way.
+                        // These three show which layer falls behind when playback is slow. A
+                        // decoder that cannot keep up shows a low fps with a full video queue. A
+                        // reader that cannot keep up shows both queues near empty and a rising
+                        // rebuffer count. Without them, both cases look the same.
                         " fps=${s.videoDecodeFps.toInt()} videoQms=${s.videoQueueDepth.inWholeMilliseconds}" +
                         " audioQms=${s.audioQueueDepth.inWholeMilliseconds} rebuffers=${s.rebuffers}" +
                         " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}",
@@ -250,19 +258,19 @@ internal class KiteImpl(
     }
 
     /**
-     * KitePlayer knows a file's real duration the moment its container is parsed and publishes it
-     * on the snapshot flow, so the room is announced from that event rather than from
-     * [parseMedia]. Declaring it here is what stops the iOS path announcing a second time with no
-     * duration attached.
+     * KitePlayer knows a file's real duration as soon as its container is parsed, and publishes it
+     * on the snapshot flow. So the file is announced to the room from that event, not from
+     * [parseMedia]. Without this flag, the iOS path announces the file a second time with no
+     * duration.
      */
     override val announcesFileLoadViaEvent: Boolean = true
 
     /**
-     * Mirrors the engine's own state onto the room: the play/pause truth every engine owes
-     * [app.player.PlayerManager.isNowPlaying], the duration the container reported, the file
-     * announcement that re-anchors sync, and the end of playback that drives shared-playlist
-     * advance. All of it comes from the snapshot flow rather than from polling, which is why
-     * [trackerJobInterval] only has to carry the position.
+     * Mirrors the engine's state onto the room: the play/pause state that every engine reports
+     * through [app.player.PlayerManager.isNowPlaying], the duration from the container, the file
+     * announcement that re-anchors sync, and the end of playback that advances the shared
+     * playlist (the file list that everyone in the room follows). All of it comes from the
+     * snapshot flow, not from polling, so [trackerJobInterval] only carries the position.
      */
     private fun watchEngineState() {
         val player = kite ?: return
@@ -273,11 +281,11 @@ internal class KiteImpl(
             var reportedError: PlaybackError? = null
             player.state.collect { snapshot ->
                 // The play button and the protocol's divergence broadcast both collect
-                // isNowPlaying, so the engine's status must be mirrored the way every other
-                // engine mirrors its events. Buffering counts as playing: the engine is trying
-                // to advance (isActive), and KitePlayer never auto-pauses on underrun, so a
-                // buffering spell must not read as a pause. Opening is media lifecycle, not a
-                // playback intent, and is left alone like VLCKit's transitional states.
+                // isNowPlaying, so mirror the engine's status as every other engine mirrors its
+                // events. Buffering counts as playing: the engine is trying to advance
+                // (isActive), and KitePlayer never pauses by itself on underrun, so buffering
+                // must not look like a pause. Opening is media lifecycle, not a playback intent,
+                // and is left alone, like VLCKit's transitional states.
                 playerManager.isBuffering.value =
                     snapshot.status == PlaybackStatus.Buffering || snapshot.status == PlaybackStatus.Opening
                 when (snapshot.status) {
@@ -286,7 +294,7 @@ internal class KiteImpl(
                     PlaybackStatus.Paused, PlaybackStatus.Ended, PlaybackStatus.Idle ->
                         playerManager.isNowPlaying.value = false
                     PlaybackStatus.Failed -> {
-                        // A failure is ours alone: told to the user, never broadcast as a pause.
+                        // A failure is local: shown to the user, never broadcast as a pause.
                         viewmodel.protocol.noteExpectedPlaybackState(paused = true)
                         playerManager.isNowPlaying.value = false
                         val error = snapshot.error
@@ -329,8 +337,9 @@ internal class KiteImpl(
     }
 
     override suspend fun destroy() {
-        // Match every other engine's destroy contract: stop all RoomViewmodel-capturing jobs
-        // before the player disappears, then finish native teardown even if the caller is cancelled.
+        // The destroy contract that every engine follows (checked by checkDestroyContract): stop
+        // every job that captures RoomViewmodel before the player goes away, then finish the
+        // native teardown even if the caller is cancelled.
         isInitialized = false
         playerSupervisorJob.cancel()
         presentedPlayer.cancel()
@@ -339,8 +348,8 @@ internal class KiteImpl(
         statsWatcher?.cancel()
         statsWatcher = null
 
-        // Cancellation above is still required when teardown races an injection waiting for the
-        // first video output; only resource teardown itself can be skipped in the empty state.
+        // The cancellation above is still needed when teardown races a load that waits for the
+        // first video output. Only the resource teardown can be skipped in the empty state.
         if (kite == null && mediaPath == null) return
 
         val player = kite
@@ -358,8 +367,8 @@ internal class KiteImpl(
     }
 
     override fun onClosing() {
-        // An early load can be suspended waiting for the first applied native surface while the
-        // base teardown is waiting for the media transaction mutex. Wake it before that wait.
+        // An early load can be suspended, waiting for the first video output, while the base
+        // teardown waits for the media transaction mutex. Wake the load before that wait.
         presentedPlayer.cancel()
         playerSupervisorJob.cancel()
     }
@@ -369,14 +378,15 @@ internal class KiteImpl(
         title = { it.uisettingCategKite },
         icon = Icons.Filled.SettingsInputComponent,
     ) {
-        // Creation-time settings: they say so in their summaries and apply at the next load.
+        // Creation-time settings: their summaries say so, and they apply at the next load.
         +KITE_HARDWARE_ACCELERATION
         +KITE_SUBTITLE_AUTOSELECT
-        // Runtime: flipping it recomposes VideoPlayer, which swaps the presentation over the
-        // running player (KitePlayerVideo path change; the engine keeps position and play state).
+        // Runtime: a change recomposes VideoPlayer, which swaps the presentation over the running
+        // player (a KitePlayerVideo path change; the engine keeps position and play state).
         +KITE_COMPOSE_RENDERER
-        // Runtime settings: the callbacks reach the live engine immediately. Subtitle size is
-        // the shared player setting; a second slider here fought it on every file load.
+        // Runtime settings: the callbacks reach the live engine at once. Subtitle size is the
+        // shared player setting (SUBTITLE_SIZE); a second slider here would fight it on every
+        // file load.
         +KITE_SUBTITLE_DELAY_MS.withControl(PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
                 kite?.setSubtitleDelay(ms.milliseconds)
             })
@@ -384,8 +394,9 @@ internal class KiteImpl(
                 kite?.setAudioDelay(ms.milliseconds)
             })
         +KITE_PRESERVE_PITCH.withControl(PrefExtraConfig.BooleanCallback { preserve ->
-                // At 1.0x the two mechanisms are the same bypass; away from it the engine rides
-                // its internal precise seek and refuses typed on an unseekable source.
+                // At 1.0x both pitch modes are the same bypass. At other speeds the engine
+                // switches through an internal precise seek, and on an unseekable source it
+                // refuses with UnsupportedOperationException.
                 try {
                     kite?.setPreservePitch(preserve)
                 } catch (refused: UnsupportedOperationException) {
@@ -416,9 +427,9 @@ internal class KiteImpl(
     }
 
     /**
-     * The four equalizer sliders speak Synkplay's own units (percent-shaped ints); the engine
-     * speaks one VideoAdjustments value. Rebuilt whole on every slider move, because the engine
-     * bakes the colour matrix once per SETTING, so partial updates would buy nothing.
+     * Builds the engine's VideoAdjustments from the four equalizer sliders, which use percent-like
+     * ints. The value is rebuilt whole on every slider move, because the engine computes the
+     * colour matrix once per setting call, so partial updates would save nothing.
      */
     private fun adjustmentsFromPrefs() = VideoAdjustments(
         brightness = (KITE_EQ_BRIGHTNESS.value() / 100f).coerceIn(-1f, 1f),
@@ -427,7 +438,7 @@ internal class KiteImpl(
         hueDegrees = KITE_EQ_HUE.value().toFloat().coerceIn(-180f, 180f),
     )
 
-    /** The slider says percent from the top of the allowed band; the engine takes a fraction. */
+    /** The slider gives a percent from the top of the allowed band; the engine takes a fraction. */
     private fun subtitlePositionFromPref(percent: Int) = (percent / 100f).coerceIn(0.1f, 1f)
 
     override suspend fun hasMedia(): Boolean =
@@ -486,7 +497,7 @@ internal class KiteImpl(
         applyPreferredLanguages(mediafile)
     }
 
-    /** KitePlayer states both flags on the track itself, so nothing is read out of the label. */
+    /** KitePlayer sets both flags on the track itself, so nothing is read from the label. */
     private fun TrackInfo.traitOrNull(): TrackTrait? = when {
         isAccessibility -> TrackTrait.ACCESSIBILITY
         isForced -> TrackTrait.FORCED
@@ -500,21 +511,22 @@ internal class KiteImpl(
             TrackType.AUDIO -> TrackKind.Audio
             TrackType.SUBTITLE -> TrackKind.Subtitle
         }
-        // The language pass in analyzeTracks skips a type with a recorded pick. Without this
-        // record it re-selected the preferred-language track right after every pick, off included.
+        // The language pass in analyzeTracks skips a type that has a recorded pick. Without this
+        // record it selects the preferred-language track again right after every pick, "off"
+        // included.
         playerManager.currentTrackChoices.remember(type, track)
-        // A null track means "none", which the engine spells as a null id. Anything that is not
-        // one of ours cannot be resolved to a stream, so it is treated the same way rather than
-        // guessed at.
+        // A null track means "none", which the engine expresses as a null id. A track that is not
+        // a KiteTrack cannot be resolved to a stream, so it is treated the same way instead of
+        // being guessed at.
         try {
             val change = kite?.selectTrack(kind, (track as? KiteTrack)?.trackId)
             loggy("KitePlayer: selectTrack($kind, ${track?.name ?: "none"}) -> $change")
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (refused: Exception) {
-            // The engine refuses typed (unseekable source, backend without a subtitle decoder,
-            // an id the media does not have). Swallowing that here is what made a refused change
-            // read as "nothing happens" (owner report 2026-08-26), so it goes to the OSD.
+            // The engine refuses with a typed exception (an unseekable source, a backend without
+            // a subtitle decoder, an id the media does not have). A silent failure reads as
+            // "nothing happens", so the error goes to the OSD (the on-screen message).
             loggy("KitePlayer: selectTrack($kind) refused: ${refused.message}")
             viewmodel.dispatchOSD { refused.message ?: "Track change refused" }
         }
@@ -536,7 +548,7 @@ internal class KiteImpl(
     }
 
     override suspend fun jumpToChapter(chapter: Chapter) {
-        // The base class broadcasts the seek to the room; the local jump is ours.
+        // The base class broadcasts the seek to the room; this override makes the local jump.
         super.jumpToChapter(chapter)
         seekTo(chapter.timeOffsetMillis)
     }
@@ -545,30 +557,29 @@ internal class KiteImpl(
      * Re-selects whatever the user last chose, after a reload replaced the track list.
      *
      * KitePlayer keeps its selection across a seek and loses it only when new media is opened, and
-     * a fresh file has no previous choice to honour, so this is a deliberate no-op rather than an
-     * unimplemented hole.
+     * a new file has no previous choice to restore. So this is a no-op on purpose, not a missing
+     * implementation.
      */
     override suspend fun reapplyTrackChoices() = Unit
 
     /**
-     * Loads a subtitle file into the running engine (KitePlayer 0.0.5): the track appears in the
-     * list, is selected immediately, and its cues run through the same timing path container
-     * subtitles use. SubRip and WebVTT, the engine's text path.
+     * Loads a subtitle file into the running engine: the track appears in the list, is selected at
+     * once, and its cues use the same timing path as container subtitles. The engine's text path
+     * reads SubRip and WebVTT.
      *
-     * The resolver gives Android's content URIs an openable path, exactly like video; the
-     * resolution is released as soon as the call returns, because the engine reads the file once
-     * at add time and never again.
+     * The resolver makes Android's content URIs openable, as for video. The resolution is released
+     * as soon as the call returns, because the engine reads the file once, when it adds the track.
      */
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         val player = kite ?: return
         val resolved = mediaResolver.resolve(uri)
             ?: error("KitePlayer cannot open the subtitle file $uri")
         try {
-            // The video path hands the engine an fd THROUGH its demuxer open options; the
-            // subtitle reader is a plain file read with no options channel, and re-opening a
-            // SAF descriptor by its /proc path is refused by the kernel (the resolver says why).
-            // So an fd-shaped resolution is copied once into the app cache and the engine reads
-            // the copy. iOS resolutions are real paths and skip this entirely.
+            // The video path passes the engine an fd through its demuxer open options. The
+            // subtitle reader is a plain file read with no options, and the kernel refuses to
+            // reopen a SAF descriptor by its /proc path (the Android resolver explains why). So an
+            // fd resolution is copied once into the app cache, and the engine reads the copy. iOS
+            // and desktop resolutions are real paths and skip this step.
             val readablePath = if (resolved.openOptions.containsKey("fd")) {
                 val dir = getCacheDirectoryPath("subtitles") ?: error("no cache directory for subtitles")
                 val name = (getFileName(uri) ?: "subtitle.$extension").substringAfterLast('/')
@@ -603,9 +614,9 @@ internal class KiteImpl(
     }
 
     /**
-     * Waits for player construction and video-output attachment instead of dropping an early
-     * load. Bounded: a renderer that never attaches must fail the load, not hold the media
-     * transaction mutex forever.
+     * Waits until the player exists and its video output is attached, instead of dropping an early
+     * load. The wait has a time limit: a renderer that never attaches must fail the load, not hold
+     * the media transaction mutex forever.
      */
     private suspend fun awaitPresentedPlayer(): KitePlayer =
         withTimeoutOrNull(RENDERER_ATTACH_TIMEOUT_MS) { presentedPlayer.await() }
@@ -613,32 +624,31 @@ internal class KiteImpl(
 
     /**
      * Opens [path] and only then releases the previous one. The order matters on Android: the old
-     * resolution may own a file descriptor the engine is still reading from while the new open
-     * probes its container, and closing it first would pull the floor out from under a running
-     * demuxer.
+     * resolution may own a file descriptor that the engine still reads while the new open probes
+     * its container. Closing it first would break a running demuxer.
      */
     private suspend fun openAndKeep(player: KitePlayer, path: KiteMediaPath) {
         val previous = mediaPath
         mediaPath = path
         loggy("KitePlayer: opening ${path.uri} options=${path.openOptions}")
         try {
-            // The stop below drops the engine to Idle, which mirrors as "not playing". That is
-            // this client's own doing, not room news: note it before the engine can report it,
-            // or every file switch broadcast a pause to the whole room. The room's real state
+            // The stop below drops the engine to Idle, which mirrors as "not playing". This client
+            // caused it, so it is not news for the room: note it before the engine can report it,
+            // or every file switch broadcasts a pause to the whole room. The room's real state
             // comes back with the first sync after the new file announces itself.
             viewmodel.protocol.noteExpectedPlaybackState(paused = true)
             withContext(Dispatchers.IO) {
-                // KitePlayer's open() is strict: legal only from Idle, Ended and Failed, and a
-                // second file loaded while the first sits Paused throws. stop() is legal from
-                // EVERY state (a no-op when there is nothing to stop), so the unconditional
-                // prefix is the correct caller-side spelling of "replace whatever is playing".
+                // KitePlayer's open() is strict: it is legal only from Idle, Ended and Failed, and
+                // a second file loaded while the first is Paused throws. stop() is legal from every
+                // state (a no-op when there is nothing to stop). So calling stop() first, always,
+                // is how the caller says "replace whatever is playing".
                 player.stop()
                 player.open(MediaItem(uri = path.uri, openOptions = path.openOptions))
             }
             loggy("KitePlayer: opened, status=${player.state.value.status} duration=${player.state.value.duration}")
         } catch (e: Exception) {
-            // PlayerImpl.inject catches this and shows the load-failure OSD; the line here is what
-            // says WHICH uri and WHY, which the OSD cannot.
+            // PlayerImpl.inject catches this and shows the load-failure OSD. This log line says
+            // which uri failed and why, which the OSD cannot.
             loggy("KitePlayer: open failed for ${path.uri}: ${e.stackTraceToString()}")
             throw e
         } finally {
@@ -655,9 +665,9 @@ internal class KiteImpl(
     }
 
     override suspend fun setSpeed(speed: Double) {
-        // Real since 0.0.5: a pitch-preserving tempo stage. The engine refuses a live change on
-        // an unseekable source (there is no epoch boundary to ride); the room's 0.95x slowdown
-        // then simply does not happen, which is the honest outcome for a live stream.
+        // A pitch-preserving tempo stage. The engine refuses a live change on an unseekable
+        // source, because there is no epoch boundary to switch at. The room's 0.95x slowdown
+        // then does not happen, which is the correct outcome for a live stream.
         try {
             kite?.setSpeed(speed.coerceIn(KitePlayer.SPEED_MIN, KitePlayer.SPEED_MAX))
         } catch (refused: UnsupportedOperationException) {
@@ -671,13 +681,12 @@ internal class KiteImpl(
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        // seekLater is KitePlayer's non-suspending seek: it hands the request to the engine's own
-        // seek machine and returns, which is exactly the contract this UiThread member needs.
-        // Precise lands on the exact frame in one step. The two-phase KeyframeThenRefine was
-        // worth having when the decode-forward took long enough to read as the player reloading;
-        // the engine's seek is now near-instant, so the keyframe and the exact frame arrived a
-        // blink apart and the picture visibly flashed twice for every seek. The position mask
-        // reports the target throughout either way. seekLater throws on a negative.
+        // seekLater is KitePlayer's non-suspending seek: it hands the request to the engine's seek
+        // machine and returns, which fits this UiThread member. Precise lands on the exact frame
+        // in one step. Do not use the two-phase KeyframeThenRefine: the engine seeks almost at
+        // once, so the keyframe and the exact frame arrive a moment apart and the picture flashes
+        // twice for every seek. With either mode, KitePlayer's position() reports the target
+        // until the seek lands. seekLater throws on a negative position.
         kite?.seekLater(toPositionMs.coerceAtLeast(0L).milliseconds, SeekMode.Precise)
     }
 
@@ -700,9 +709,9 @@ internal class KiteImpl(
     }
 
     /**
-     * The shared subtitle-size control speaks in the app's own units, 16 being its default; the
-     * engine speaks in a multiplier over the authored size. Mapping the two at 16-to-1.0 keeps
-     * the one slider meaning the same thing on every engine.
+     * The shared subtitle-size control uses the app's own units, with 16 as the default; the
+     * engine takes a multiplier over the authored size. Mapping 16 to 1.0 keeps the one slider
+     * meaning the same thing on every engine.
      */
     override suspend fun changeSubtitleSize(newSize: Int) {
         kite?.setSubtitleScale((newSize / 16f).coerceAtLeast(0.05f))
@@ -710,19 +719,20 @@ internal class KiteImpl(
 
     @Composable
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
-        // Construct from the composition that owns the output. KitePlayerVideo reports its
-        // renderer attached, so an early media injection waits for the same invariant on the
-        // native-view and the pure-Compose path alike. Flipping the pref swaps the presentation
-        // over the RUNNING player: the engine rebuilds a coupled decoder at position by itself.
+        // Construct from the composition that owns the output. KitePlayerVideo reports when its
+        // renderer is attached, so an early media load waits for the same condition on the
+        // native-view path and the pure-Compose path. A change of the setting swaps the
+        // presentation over the running player: the engine rebuilds a coupled decoder at the
+        // same position by itself.
         LaunchedEffect(Unit) {
             initialize()
         }
         val composedKite by kiteFlow.collectAsState()
         val composeRenderer by KITE_COMPOSE_RENDERER.watchPref()
-        // The native view is a surface the frosted panels cannot sample, which is why the other
-        // engines swap their view type with the same switch. Here the Compose path is the one
-        // glass can read, so glass being on decides the path and the preference decides the rest.
-        // Desktop overrides both: its native view swallows every click meant for the HUD.
+        // The frosted-glass panels cannot sample the native view, which is why the other engines
+        // swap their view type with the same switch. Here glass can read only the Compose path,
+        // so glass being on picks that path, and otherwise the preference decides. Desktop
+        // overrides both: its native view takes every click meant for the HUD.
         val path = if (kiteEngine.forcesComposeCanvas || composeRenderer || glassEnabled()) {
             KiteRenderPath.ComposeCanvas
         } else {
@@ -759,21 +769,21 @@ internal class KiteImpl(
                         )
                     }.distinctUntilChanged()
                 }.collectAsState(initial = false)
-                // Listen before media opens so short clips retain their first audio buffers.
-                // Disabling the preference detaches the tap as well as removing the drawing.
-                // The default scan policy reads plain file paths only. Nearly everything here is a
-                // URI (a picked file, a link, a YouTube stream), so the scan is opened to any
-                // source and its maps are kept in the cache directory across runs.
+                // Listen before media opens, so short clips keep their first audio buffers.
+                // Turning the preference off detaches the audio tap as well as removing the
+                // drawing. The default scan policy reads plain file paths only. Nearly everything
+                // here is a URI (a picked file, a link, a YouTube stream), so the scan is opened to
+                // any source, and its maps stay in the cache directory across runs.
                 val viz = rememberAudioVizState(player, songScan = SONG_SCAN, songMapStore = songMapStore)
                 val scope = rememberCoroutineScope()
                 LaunchedEffect(viz) {
-                    // Zero waits for a musical boundary however long that takes, and plenty of
-                    // music offers none for minutes; the sample uses the same number.
+                    // Zero waits for a musical boundary however long that takes, and a lot of
+                    // music has none for minutes. KitePlayer's sample uses the same number.
                     viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
                     // Every display frame on a 120 Hz phone costs battery for no visible gain.
                     viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
-                    // The library opens on a random drawing from its whole catalogue, which is
-                    // wider than what this app offers, so the opening pick is made again here.
+                    // The library starts on a random drawing from its whole catalogue, which is
+                    // larger than what this app offers, so the first pick is made again here.
                     viz.offeredDrawings().randomOrNull()?.let { viz.drawing = it }
                     viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
                 }
@@ -789,7 +799,10 @@ internal class KiteImpl(
         }
     }
 
-    /** KitePlayer's gain stage stops at unity: above it is refused, not clipped, so there is no gain rung. */
+    /**
+     * KitePlayer's gain stops at 1.0: a higher value is refused, not clipped. So this engine keeps
+     * the default [gainMax] and adds no gain step to the volume ladder.
+     */
     override fun getEngineVolume(): Int =
         ((kite?.state?.value?.volume ?: 1f) * 100).toInt().coerceIn(0, 100)
 
@@ -798,10 +811,10 @@ internal class KiteImpl(
     }
 
     private companion object {
-        /** How long a load waits for the renderer before failing instead of wedging the mutex. */
+        /** How long a load waits for the renderer before it fails, instead of holding the mutex. */
         const val RENDERER_ATTACH_TIMEOUT_MS = 15_000L
 
-        /** Longest the director holds one drawing with no boundary before the next beat changes it. */
+        /** Max seconds the director holds one drawing with no boundary before a beat changes it. */
         const val DIRECTOR_MAX_HOLD_SECONDS = 30f
 
         /** The visualizer redraws at most this often, whatever the display's rate. */

@@ -12,13 +12,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * A long press and drag that moves one playlist row. While the finger is down the panel reorders
- * its own copy of the rows, so the room hears a single move, when the finger lifts.
+ * The state of a long-press drag that moves one row of the shared playlist (the file list that
+ * everyone in a room follows). While the finger is down, the panel reorders its own copy of the
+ * rows. The room (the group of people watching together) then gets a single move, when the
+ * finger lifts.
  */
 @Stable
 internal class PlaylistDragState(private val list: LazyListState, private val scope: CoroutineScope) {
 
-    /** The rows as drawn during a drag, each with its index in the room's list. Null when idle. */
+    /**
+     * The rows as drawn during a drag, each with its index in the shared playlist. Null when no
+     * drag is running.
+     */
     var rows by mutableStateOf<List<Pair<Int, String>>?>(null)
         private set
 
@@ -30,12 +35,12 @@ internal class PlaylistDragState(private val list: LazyListState, private val sc
     private var travelled by mutableFloatStateOf(0f)
     private var startOffset = 0
 
-    /** How far the dragged row is drawn from its own slot, which keeps it under the finger. */
+    /** How far the dragged row is drawn from its own slot, so that it stays under the finger. */
     val draggedOffset: Float
         get() = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == draggedAt }
             ?.let { startOffset + travelled - it.offset } ?: 0f
 
-    /** Lifts the row under [at]. False when the press was not on a row. */
+    /** Lifts the row under [at]. Returns false when the press was not on a row. */
     fun start(at: Offset, entries: List<String>): Boolean {
         val hit = list.layoutInfo.visibleItemsInfo.firstOrNull { at.y.toInt() in it.offset..(it.offset + it.size) }
             ?: return false
@@ -57,14 +62,15 @@ internal class PlaylistDragState(private val list: LazyListState, private val sc
         val middle = (top + item.size / 2f).toInt()
         val target = info.visibleItemsInfo.firstOrNull { it.index != at && middle in it.offset..(it.offset + it.size) }
         if (target != null) {
-            // Swapping with the first visible row would carry the scroll position along with it.
+            // A swap with the first visible row would move the scroll position along with that
+            // row, so keep the scroll position where it is.
             if (at == list.firstVisibleItemIndex || target.index == list.firstVisibleItemIndex) {
                 list.requestScrollToItem(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset)
             }
             rows = current.toMutableList().apply { add(target.index, removeAt(at)) }
             draggedAt = target.index
         } else {
-            // Held past an edge of the panel: the list scrolls under the finger.
+            // The row is held past an edge of the panel, so the list scrolls under the finger.
             val past = when {
                 travelled > 0 -> (top + item.size - info.viewportEndOffset).coerceAtLeast(0f)
                 travelled < 0 -> (top - info.viewportStartOffset).coerceAtMost(0f)
@@ -75,8 +81,8 @@ internal class PlaylistDragState(private val list: LazyListState, private val sc
     }
 
     /**
-     * Ends the drag. Returns the move to send, as positions in the room's list, or null when the
-     * row went back to its place or the list changed under the finger.
+     * Ends the drag. Returns the move to send, as positions in the shared playlist. Returns null
+     * when the row went back to its place, or when the list changed during the drag.
      */
     fun end(entriesNow: List<String>): Pair<Int, Int>? {
         val current = rows

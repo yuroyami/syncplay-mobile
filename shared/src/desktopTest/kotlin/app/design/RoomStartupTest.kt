@@ -40,7 +40,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/** The room must remain usable while the previous engine is still releasing its native state. */
+/** The room must stay usable while the previous engine (video player) releases its native state. */
 class RoomStartupTest {
     @Test
     fun leaveWorksBeforeThePlayerExists() = checkPendingStartup(settingsOpen = false)
@@ -163,8 +163,8 @@ class RoomStartupTest {
     private class RoomSurface(private val scene: ImageComposeScene) {
         private var frame = 0L
 
-        /* One render per hop onto the interface thread: the room's effects run there too, and a
-         * single long block would hold them all until it ended. */
+        /* One render per call onto the UI thread: the room's effects run there too, and one long
+         * block would hold them all until it ended. */
         fun advance() {
             repeat(30) { DesignHarness.onUiThread { scene.render(frame++ * 16_000_000L) } }
         }

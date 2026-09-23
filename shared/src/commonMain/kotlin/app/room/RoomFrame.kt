@@ -29,18 +29,28 @@ import androidx.compose.ui.zIndex
 import app.theme.Space
 import app.uicomponents.LocalIsTelevision
 
-/** The room runs immersive, so hidden status bars report zero: the notch still needs the union. */
+/**
+ * The top insets of the room screen: the status bars and the top of the display cutout (the
+ * notch). A room is the group of people watching together. The room screen hides the system bars,
+ * so the status bars report zero. The cutout inset still keeps content clear of the notch.
+ */
 @Composable
 fun roomTopInsets(): WindowInsets =
     WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
 
 /**
- * The docks of the room, each padded for the notch and the gesture bars exactly once. The rail
- * at the top end, vertical when the window is tall enough and a row when it is not; the status
- * line on the top centre. Chat owns the start corner from the top down. Side: panels and the control
- * strip beside the rail, under it when the rail is a row, or a full-width sheet on a tall
- * window. Bottom: the transport, which pads its own gesture inset. Center: the play key. The
- * video underneath and the notices above are not this frame's business.
+ * Places the docks of the room screen (the areas that hold the controls) and pads each dock for
+ * the window insets once:
+ * - [rail]: the strip of buttons that opens the panels, at the top end. It is a column, or a row
+ *   when [railHorizontal] is true.
+ * - [status]: the status line, on the top center.
+ * - [chat]: the start side, from the top down.
+ * - [side]: the panels and the control strip, beside a column rail or under a row rail. On a
+ *   [tall] window, a full-width sheet.
+ * - [bottom]: the bottom bar, which pads its own gesture inset.
+ * - [center]: the play button and the jump keys.
+ *
+ * The video under the docks and the notices over them are not part of this frame.
  */
 @Composable
 fun RoomFrame(
@@ -54,8 +64,8 @@ fun RoomFrame(
     bottom: (@Composable BoxScope.() -> Unit)? = null,
     center: (@Composable BoxScope.() -> Unit)? = null,
 ) {
-    // A television cuts off the outer edge of the picture, and reports no insets saying so, so the
-    // room keeps its chrome inside the margin Android TV asks for (5 percent of a 960x540dp screen).
+    // A television cuts off the outer edge of the picture and reports no insets for it. The room
+    // keeps its controls inside the margin that Android TV asks for (5 percent of 960x540dp).
     val tvSafe = if (LocalIsTelevision.current) WindowInsets(left = 48.dp, top = 27.dp, right = 48.dp, bottom = 27.dp)
                  else WindowInsets(0)
     val topInsets = roomTopInsets().union(tvSafe.only(WindowInsetsSides.Top))
@@ -76,8 +86,8 @@ fun RoomFrame(
                     .onSizeChanged { railWidth = with(density) { it.width.toDp() } },
             ) { rail() }
         }
-        // The status line sits on the exact centre, under the rail row on a tall window; the
-        // chat stays narrow enough (36 percent) that the two never meet.
+        // The status line sits on the exact center, under the rail row on a tall window. On a
+        // wide window the chat takes 36 percent and the status line 26 percent, so they never meet.
         if (status != null) {
             Box(
                 Modifier.align(Alignment.TopCenter).focusGroup()

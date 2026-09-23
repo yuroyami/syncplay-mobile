@@ -20,29 +20,29 @@ import platform.UIKit.UIPasteboard
 import kotlinx.serialization.json.Json
 
 /**
- * iOS-specific implementation of platform callbacks for system-level operations.
- *
- * Handles iOS-specific features including:
+ * The iOS implementation of [PlatformCallback], for system features that shared code cannot
+ * reach on its own:
  * - Picture-in-Picture (PiP) video playback
- * - Screen brightness control
- * - Device orientation changes
- * - Home screen shortcut management
- * - System settings navigation
- *
- * This object bridges the gap between Syncplay's platform-agnostic code and iOS APIs.
+ * - Screen brightness
+ * - Home Screen Quick Actions for joining a room (a group of people watching together)
+ * - Haptic feedback
+ * - Copying and sharing text
  */
 object ApplePlatformCallback : PlatformCallback {
-    /** TODO: update PiP pause/play buttons when playback state changes. */
+    /**
+     * Nothing to do on iOS. AVKit follows AVPlayer's rate by itself, and the VLC engine refreshes
+     * its picture-in-picture play state on every state change.
+     */
     override fun onPlayback(paused: Boolean) {
     }
 
     /**
-     * Starts or stops Picture-in-Picture mode for video playback.
+     * Starts or stops Picture-in-Picture mode. Does nothing when the device does not support PiP
+     * ([AVPictureInPictureController.isPictureInPictureSupported]).
      *
-     * Dispatches to whichever engine is currently active:
-     * - **AVPlayer** uses [AVPictureInPictureController] built around [AVPlayerLayer]
-     *   (the iOS-native path, gated by [AVPictureInPictureController.isPictureInPictureSupported]).
-     * - **VLCKit** (≥ 4.0) runs PiP via its own `VLCPictureInPictureWindowControlling`
+     * The call goes to the active engine (the video player in use):
+     * - **AVPlayer** uses an [AVPictureInPictureController] built on its `AVPlayerLayer`.
+     * - **VLCKit** (4.0 and later) runs PiP through its own `VLCPictureInPictureWindowControlling`
      *   protocol (see [VlcKitImpl.enterPictureInPicture]).
      *
      * @param enable True to enter PiP mode, false to exit it.
@@ -54,9 +54,9 @@ object ApplePlatformCallback : PlatformCallback {
             is AVPlayerEngine.AVPlayerImpl -> {
                 if (enable) {
                     player.avPlayerLayer?.let { layer ->
-                        // AVPictureInPictureController must be (re)constructed against the
-                        // current AVPlayerLayer; cache it so the system can resume the
-                        // same PiP session if the user dismisses and re-enters.
+                        // The controller must be built for the current AVPlayerLayer, so
+                        // a new one is made on every enable. [pipcontroller] holds it, so
+                        // the disable branch stops the same session.
                         pipcontroller = AVPictureInPictureController(layer)
                         if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
                             pipcontroller?.startPictureInPicture()
@@ -70,19 +70,19 @@ object ApplePlatformCallback : PlatformCallback {
                 if (enable) player.enterPictureInPicture() else player.exitPictureInPicture()
             }
             else -> {
-                // Engines without PiP support reach here only if the UI gates failed.
+                // Engines without PiP support get here only if the UI failed to block the request.
             }
         }
     }
 
-    /** iOS brightness is a normalized 0.0–1.0 value. */
+    /** iOS brightness runs from 0.0 to 1.0. */
     private const val MAX_BRIGHTNESS = 1.0f
 
     override fun getMaxBrightness() = MAX_BRIGHTNESS
 
     override fun getCurrentBrightness(): Float = UIScreen.mainScreen.brightness.toFloat()
 
-    /** Coerces into the valid 0.0–1.0 brightness range before applying. */
+    /** Clamps [v] to the 0.0 to 1.0 range before applying it. */
     override fun changeCurrentBrightness(v: Float) {
         UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
     }
@@ -97,7 +97,7 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     override fun serverServiceStart(port: Int) {
-        // No foreground service on iOS — server runs only while app is in foreground
+        // iOS has no foreground service, so the server runs only while the app is in the foreground.
     }
 
     override fun serverServiceStop() {
@@ -105,8 +105,8 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     /**
-     * Adds a Home Screen Quick Action for joining a room. The [JoinConfig] rides in the
-     * shortcut's `type` string as JSON, which is what [handleShortcut] decodes.
+     * Adds a Home Screen Quick Action for joining a room. The shortcut's `type` string holds the
+     * [JoinConfig] as JSON, and [handleShortcut] decodes it.
      */
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
         val type = Json.encodeToString(joinInfo)
@@ -139,10 +139,10 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     /**
-     * iOS doesn't suffer from the Android-SAF-SMB MIME-filtering problem the equivalent
-     * Android override addresses, so this is a no-op. The regular FileKit picker is already
-     * the system picker (UIDocumentPickerViewController) on iOS. Returning null tells the
-     * caller to fall back to the normal flow.
+     * Calls [onResult] with null, the same result as a cancelled pick, so the caller keeps the
+     * normal flow. The Android version works around FileKit's extension filter, which hides
+     * files from SMB share providers. iOS has no such problem: its FileKit picker is already
+     * the system picker (UIDocumentPickerViewController).
      */
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
         onResult(null)

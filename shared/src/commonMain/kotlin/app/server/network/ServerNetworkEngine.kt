@@ -5,25 +5,23 @@ import app.server.SyncplayServer
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * Platform-agnostic TCP server engine interface.
+ * The TCP layer of the built-in server, with one implementation per platform.
  *
- * Android uses Netty's ServerBootstrap; iOS uses Ktor raw sockets.
- * Both provide the same contract: listen on a port, accept connections,
- * forward incoming JSON-per-line to [ClientConnection.handlePacket] which routes
- * via [app.server.protocol.incoming.IncomingMessageDeserializer].
+ * Android and desktop use Netty's ServerBootstrap, and iOS uses Ktor raw sockets. A browser tab
+ * cannot listen on a port, so the web version only refuses. Each real implementation listens on
+ * a port, accepts connections and passes each incoming JSON line to
+ * [ClientConnection.handlePacket], which decodes it with [app.protocol.WireMessageDeserializer].
  */
 expect class ServerNetworkEngine(
     server: SyncplayServer,
     scope: CoroutineScope
 ) {
     /**
-     * Starts listening for incoming TCP connections on the given port.
-     * Returns once the server socket is bound and accepting connections.
+     * Starts listening for incoming TCP connections on [port]. Returns once the server socket is
+     * bound and accepting connections.
      */
     suspend fun startListening(port: Int)
 
-    /**
-     * Stops the server and closes all client connections.
-     */
+    /** Stops the server and closes all client connections. */
     fun stop()
 }

@@ -68,7 +68,7 @@ class VlcSeekRequestsTest {
     fun replacement_waits_for_native_input_even_if_explicit_play_has_ended_priming() {
         val startup = VlcSeekStartup(30_000L)
         startup.begin(0L)
-        // libVLC can still say Playing while replacement has removed its old input.
+        // libVLC can still report Playing after a media replacement has removed the old input.
         assertEquals(VlcSeekReadiness.OPENING, startup.readiness(VlcSeekInputState.UNSEEKABLE, 0L, 0L, 100L))
         assertEquals(VlcSeekReadiness.OPENING, startup.readiness(VlcSeekInputState.OPENING, 0L, 0L, 200L))
         assertEquals(VlcSeekReadiness.READY, startup.readiness(VlcSeekInputState.SEEKABLE, 180_000L, 0L, 300L))

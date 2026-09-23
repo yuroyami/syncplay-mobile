@@ -1,4 +1,4 @@
-# One person, ten git identities. Without this, `git shortlog -sn` reads as a crowd.
+# One person commits under ten git identities. This file maps them to one name in `git shortlog -sn`.
 yuroyami <evongintoki@gmail.com> <akrame0@gmail.com>
 yuroyami <evongintoki@gmail.com> <evogintoki@gmail.com>
 yuroyami <evongintoki@gmail.com> <72363167+yuroyami@users.noreply.github.com>

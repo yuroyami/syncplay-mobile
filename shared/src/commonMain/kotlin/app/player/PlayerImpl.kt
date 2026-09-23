@@ -51,22 +51,22 @@ import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** Below this media length, playlist auto-advance is suppressed — mirrors PC's
- *  `PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH` (10s). Filters spurious end-of-file events from very
- *  short clips or failed loads. */
+/** At or below this media length, the playlist does not auto-advance. The value mirrors
+ *  `PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH` (10 s) of the Syncplay PC client. It filters out false
+ *  end-of-file events from very short clips or failed loads. */
 private const val PLAYLIST_ADVANCE_MIN_DURATION_MS = 10_000L
 
-/** Auto-advance only when playback is within this window of the media's end, so a premature "ended"
- *  callback (e.g. from a load error) does not skip ahead. */
+/** Auto-advance happens only within this distance of the media's end, so an early "ended"
+ *  callback (for example from a load error) does not skip ahead. */
 private const val PLAYLIST_ADVANCE_NEAR_END_MS = 5_000L
 
-/** How slowly the position tracker ticks while the engine is not playing. A stopped playhead
- *  needs a heartbeat, not a poll: it only has to notice a position the seek path somehow did not
- *  record for itself. */
+/** The position tracker's interval while the engine neither plays nor buffers. A stopped playhead
+ *  needs only a slow check, to notice a position that the seek path did not record itself. */
 private val IDLE_TRACKER_INTERVAL = 1.seconds
 
-/** The actual platform-agnostic interface for video/audio playback in Syncplay.
- * Engines: ExoPlayer/mpv/KitePlayer (Android), AVPlayer/VLCKit/KitePlayer (iOS)*/
+/** The platform-independent player that a room (the group of people watching together) drives.
+ *  Each engine has its own subclass: ExoPlayer, mpv and KitePlayer on Android; AVPlayer, VLCKit
+ *  and KitePlayer on iOS; KitePlayer on desktop; the browser's video element on the web. */
 abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine) {
 
     val playerManager: PlayerManager = viewmodel.playerManager
@@ -79,62 +79,60 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
     val playerScopeIO = CoroutineScope(ioDispatcher + playerSupervisorJob)
 
-    //TODO
     open val canChangeAspectRatio: Boolean = true
     abstract val supportsChapters: Boolean
     open val supportsPictureInPicture: Boolean = true
     open val supportsVideoTrackSelection: Boolean = false
     open val supportsAudioVisualization: Boolean = false
 
-    /** The visualizer's knobs while it is drawing, null otherwise. Only KitePlayer has any. */
+    /** The audio visualizer's controls while it draws, null otherwise. Only KitePlayer has them. */
     open val visualizer: StateFlow<VisualizerControls?> = MutableStateFlow(null)
 
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true
 
-    /** When true, the engine announces a freshly loaded file to the room itself, typically from
-     *  a player "file-loaded" event once the real duration is known, so [parseMedia] must NOT
-     *  also fire [announceFileLoaded] on iOS. Without this guard such engines announce the file
-     *  twice (once prematurely with no duration, once correctly from the event). Engines that have
-     *  no load event leave this false and rely on the [parseMedia] announce. */
+    /** True when the engine announces a new file to the room itself, usually from its own
+     *  "file loaded" event once the real duration is known. [parseMedia] then skips its iOS
+     *  [announceFileLoaded] call. Without this flag, such an engine announces the file twice:
+     *  once too early with no duration, and once from the event. An engine with no load event
+     *  leaves this false and relies on the [parseMedia] announce. */
     protected open val announcesFileLoadViaEvent: Boolean = false
 
-    /** Volatile: the destroy contract flips it on one thread while trackers and callbacks read it on others. */
+    /** Volatile: teardown sets it on one thread while trackers and callbacks read it on others. */
     @Volatile
     var isInitialized: Boolean = false
 
     /**
-     * The local file whose iOS security scope we currently hold open for playback.
+     * The local file whose iOS security scope is open for playback.
      *
-     * A file resolved from a security-scoped bookmark must have its scope *active for as long as
-     * the engine reads it* — not merely at the moment of injection. We start access when a file
-     * is injected and release the previous one on the next injection (file or URL), so at most
-     * one scope is ever held at a time. On Android the FileKit start/stop calls are no-ops.
+     * A file resolved from a security-scoped bookmark needs its scope open for as long as the
+     * engine reads the file, not only at the moment of injection. Access starts when a file is
+     * injected, and the next injection (file or URL) releases it. So at most one media file scope
+     * is open at a time. On Android and the web, the FileKit start and stop calls do nothing.
      */
     private var scopedFile: PlatformFile? = null
     private var scopedFileAccessStarted: Boolean = false
 
     /**
-     * External subtitle files whose iOS scope is held open alongside the media's.
+     * External subtitle files whose iOS scope stays open together with the media's scope.
      *
-     * A subtitle is picked separately from the video, so the media's grant says nothing about it,
-     * and engines read a subtitle lazily rather than slurping it at load time. Without this an
-     * iOS-side sideloaded subtitle resolved to a path the engine was then refused. More than one
-     * subtitle can be loaded for one video, so these are held as a set and released together with
-     * the media grant on teardown.
+     * The user picks a subtitle separately from the video, so the media's grant does not cover
+     * it. Engines also read a subtitle lazily, not at load time. Without an open scope, the engine
+     * is refused access to a subtitle that the user picked on iOS. One video can have several
+     * subtitles, so this list holds each grant once and releases them all with the media grant.
      */
     private val scopedSubtitleFiles = mutableListOf<PlatformFile>()
 
     /**
-     * A media replacement is one transaction: resolve metadata, publish it, stop/open the engine,
-     * and announce it. Serializing the whole sequence prevents two playlist events from crossing
-     * their state, native handles, or file-descriptor ownership between those stages.
+     * Makes a media replacement one transaction: resolve the metadata, publish it, open the file
+     * in the engine and announce it. Running the whole sequence under one lock keeps two playlist
+     * events from mixing their state, native handles or file descriptors between the steps.
      */
     private val mediaInjectionMutex = Mutex()
     private val closing = atomic(false)
 
     private fun beginScopedFileAccess(file: PlatformFile) {
-        // Re-loading the same file must not increment NSURL's grant count without a matching stop.
+        // Loading the same file again must not add to NSURL's grant count without a matching stop.
         if (scopedFile == file && scopedFileAccessStarted) return
 
         releaseScopedFileAccess()
@@ -145,10 +143,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     }
 
     /**
-     * Releases the local file grant retained for playback.
+     * Releases the local file grant held for playback, and the subtitle grants with it.
      *
-     * [PlayerManager] calls this after every engine teardown, including when [destroy] fails, so
-     * an iOS room cannot strand a security-scoped resource until process exit.
+     * [destroyAndReleaseMedia] calls this after every engine teardown, even when [destroy] throws,
+     * so an iOS room cannot keep a security-scoped resource open until the process exits.
      */
     private fun releaseScopedFileAccess() {
         if (scopedFileAccessStarted) {
@@ -159,7 +157,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         releaseScopedSubtitleAccess()
     }
 
-    /** Claims the grant for a picked subtitle and keeps it for as long as the engine may read it. */
+    /** Takes the grant for a picked subtitle and keeps it for as long as the engine may read it. */
     private fun beginScopedSubtitleAccess(file: PlatformFile) {
         if (scopedSubtitleFiles.any { it == file }) return
         val started = runCatching { file.startAccessingSecurityScopedResource() }.getOrDefault(false)
@@ -177,8 +175,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun destroy()
 
     /**
-     * Synchronously marks this instance closed, wakes engine-specific readiness waits, then waits
-     * for any media replacement transaction before destroying its native state and file grant.
+     * Marks this instance closed at once and wakes the engine's load waits. Then it waits for any
+     * media replacement to finish before it destroys the native state and releases the file grant.
      */
     internal suspend fun destroyAndReleaseMedia() {
         if (!closing.compareAndSet(false, true)) return
@@ -195,7 +193,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     /** Called before teardown waits on [mediaInjectionMutex], so an engine can wake load waiters. */
     protected open fun onClosing() = Unit
 
-    /** True once teardown has started. An engine waiting on a load should give up when it is. */
+    /** True once teardown has started. An engine that waits on a load should give up then. */
     protected val isClosing: Boolean get() = closing.value
 
     abstract suspend fun configurableSettings(): SettingCategory?
@@ -232,12 +230,12 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun reapplyTrackChoices()
 
     /**
-     * Applies the preferred audio and subtitle languages to a freshly read track list.
+     * Applies the preferred audio and subtitle languages to a newly read track list.
      *
-     * Only a track the user has not already chosen for this media is touched: the track panel
-     * re-reads the list right after every pick, and without that guard the preference would undo
-     * the pick the user just made. Engines whose tracks carry no language tag answer null and are
-     * left to their own native preference handling.
+     * It skips a track type that the user already chose for this media. The track panel re-reads
+     * the list after every pick, so without that check the preference would undo the user's pick.
+     * A track with no language tag never matches, so an engine without tags keeps its own native
+     * language handling.
      */
     protected suspend fun applyPreferredLanguages(mediafile: MediaFile) {
         val options = PlayerOptions.get()
@@ -281,7 +279,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             val extension = filename.substringAfterLast('.', "srt").lowercase()
 
             if (isValidSubtitleFile(extension)) {
-                // An engine refusing the file must not throw out of the room's composition.
+                // An engine that refuses the file must not throw out of the room's composition.
                 val loaded = try {
                     beginScopedSubtitleAccess(uri)
                     loadExternalSubImpl(uri, extension)
@@ -306,8 +304,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     /**
      * Loads a subtitle from a local file path (for downloaded subtitles). Returns true when the
-     * engine accepted the file; user-facing messaging is the caller's responsibility, so the
-     * subtitle-search UI can drive its progress/checkmark/error states off the result.
+     * engine accepted the file. The caller shows any message, so the subtitle search UI can set
+     * its progress, checkmark and error states from the result.
      */
     suspend fun loadSubtitleFromPath(path: String, filename: String): Boolean {
         if (!isInitialized || !hasMedia()) return false
@@ -323,22 +321,21 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         }
     }
 
-    /** The picker offers [ccExs]; an engine that cannot parse one of them reports its own error. */
+    /** The picker offers [ccExs]. An engine that cannot parse one of them reports its own error. */
     private fun isValidSubtitleFile(extension: String) = extension.lowercase() in ccExs
 
 
     abstract suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote)
     abstract suspend fun injectVideoFileImpl(location: MediaFileLocation.Local)
 
-    /** Hands a URL to the player. If the URL is a "page URL" (YT, SoundCloud, …) and the
-     *  platform resolver is enabled, the URL is first run through the resolver to extract a
-     *  direct streamable URL plus best-effort title/duration metadata. Direct media URLs
-     *  (`*.mp4`, `*.m3u8`, …) short-circuit the resolver entirely.
+    /** Hands a URL to the player. When the URL is a page URL (YouTube, SoundCloud and so on) and
+     *  the media resolver is on, the resolver first extracts a direct stream URL, plus the title
+     *  and duration when it can. A direct media URL (`*.mp4`, `*.m3u8` and so on) skips the
+     *  resolver.
      *
-     *  Resolution happens client-side at retrieve time — the shared playlist still stores the
-     *  *original* page URL, since YT stream URLs are IP-pinned and time-limited and would
-     *  not be valid across other clients in the room. Each client resolves independently from
-     *  the same input. */
+     *  Each client resolves the URL itself, at load time. The shared playlist (the file list that
+     *  everyone in the room follows) keeps the original page URL. YouTube stream URLs are tied to
+     *  one IP address and expire, so they do not work for the other clients in the room. */
     suspend fun injectVideoURL(url: String) = inject(
         source = url,
         toMedia = { input ->
@@ -350,17 +347,17 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             }
         },
     ) {
-        // Switching to a remote source: hand back any local file scope we were holding.
+        // A remote source needs no local file, so release any local file scope.
         releaseScopedFileAccess()
         injectVideoURLImpl(it.location as MediaFileLocation.Remote)
     }
 
     suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) {
         val location = it.location as MediaFileLocation.Local
-        // Hold this file's security scope (iOS) open before the engine touches it, releasing
-        // the previous file's scope. Without this, a bookmark-resolved URL is inaccessible the
-        // instant FileKit's transient scope (from reading name/size) closes, and the engine
-        // fails to open it.
+        // Open this file's security scope (iOS) before the engine touches the file, and release
+        // the previous file's scope. Without an open scope, a bookmark-resolved URL becomes
+        // inaccessible as soon as FileKit's short scope (for reading the name and size) closes,
+        // and the engine fails to open it.
         beginScopedFileAccess(location.file)
         injectVideoFileImpl(location)
     }
@@ -376,8 +373,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     Localization.strings.roomMsgResolvedUrl(resolved.title ?: resolved.directUrl)
                 }
             } else {
-                // Said out loud: the raw page URL is handed to the engine next, and its failure
-                // would otherwise be the first sign that nothing was resolved.
+                // Show a warning. The raw page URL goes to the engine next, and without the warning
+                // the engine's failure would be the first sign that nothing was resolved.
                 viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomMsgResolveFailed }
             }
             resolved
@@ -385,10 +382,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     }
 
     /**
-     * Optional settling delay (ms) applied before a load command is issued in [inject]. Defaults
-     * to 0: mobile's in-process engines are constructed synchronously in [initialize] and self-guard
-     * on `isInitialized`, so there is nothing to wait for. An engine that genuinely needs a post-init
-     * settle window may override this to a positive value.
+     * An optional delay (ms) before [inject] sends the load command. The default is 0: the
+     * in-process engines are built synchronously in [initialize] and check `isInitialized`
+     * themselves, so there is nothing to wait for. An engine that needs time to settle after
+     * [initialize] can override this with a positive value.
      */
     protected open val injectSettleDelayMs: Long = 0L
 
@@ -403,10 +400,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             withContext(Dispatchers.Main) {
                 try {
                     if (injectSettleDelayMs > 0) delay(injectSettleDelayMs)
-                    // Install the new media BEFORE the engine load command: engine load events can
-                    // fire DURING impl() (mpv's START_FILE, VLCKit's LengthChanged) and they read
-                    // viewmodel.media for the room announce. With the old install-after-impl order,
-                    // a 2nd+ injected file could get announced with the PREVIOUS file's name, size
+                    // Install the new media before the engine load command. Engine load events can
+                    // fire during impl() (mpv's START_FILE, VLCKit's LengthChanged), and they read
+                    // viewmodel.media for the room announce. If the install came after impl(), a
+                    // second or later file could be announced with the previous file's name, size
                     // and duration.
                     installMedia(media)
                     impl(media)
@@ -423,44 +420,45 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     /**
      * Installs [media] as the active file, synchronously and before the engine sees the load
-     * command. Split out of [parseMedia] so no engine callback can ever observe the previous
-     * file's state after a new injection started.
+     * command. It runs apart from [parseMedia], so that no engine callback can see the previous
+     * file's state after a new injection starts.
      */
     private fun installMedia(media: MediaFile) {
-        // Arm position masking BEFORE attaching the file. The engine sits at ~0 until the first-sync
-        // seek lands; advertising that 0 would make the server adopt us as the slowest watcher and
-        // rewind everyone (see awaitingRoomResyncDeadline). Arming first guarantees an inbound-State
-        // ACK can never observe media!=null with the mask still disarmed; while media is still null
-        // the reporter already falls back to the room position, so the ordering is safe.
+        // Turn on position masking (the client reports the room's position, not its own) before
+        // attaching the file. The engine stays near 0 until the first sync seek lands. Reporting
+        // that 0 would make the server treat this client as the slowest watcher and rewind
+        // everyone (see awaitingRoomResyncDeadline). Masking first means that the acknowledgement
+        // of an incoming State never sees media != null with the mask off. While media is null,
+        // the reporter already falls back to the room position, so this order is safe.
         if (!viewmodel.isSoloMode) viewmodel.protocol.markAwaitingRoomResync()
         playerManager.media.value = media
-        // Arm the room re-anchor for this fresh file (see [fileLoadResyncPending] /
+        // Arm the room re-anchor for this new file (see [fileLoadResyncPending] and
         // ProtocolManager.reanchorSyncOnFileLoad).
         fileLoadResyncPending = true
-        // Wipe the previous file's duration: engines (and mpv's duration-wait loop) treat a
-        // positive value as "this file's duration is known". Leaking the old value made the
-        // very first announce of a newly injected file carry stale metadata. The playhead goes
-        // too, or the previous file's position feeds the desync comparison until the first tick.
+        // Clear the previous file's duration. Engines (and mpv's duration wait loop) treat a
+        // positive value as "this file's duration is known", so a leftover value would make the
+        // first announce of the new file carry stale metadata. Reset the playhead too, or the
+        // previous file's position feeds the desync check until the first tracker tick.
         playerManager.timeFullMillis.value = 0L
         playerManager.samplePosition(0L)
         playerManager.timeBufferedMillis.value = -1L
     }
 
     /**
-     * Set by [installMedia] the instant a NEW media is installed, consumed once by
-     * [announceFileLoaded] to re-anchor room sync for that file. Armed synchronously together
-     * with `media.value`, before the engine load command even runs, so an early engine
-     * load callback (e.g. VLCKit's `mediaPlayerLengthChanged`) cannot fire
-     * [announceFileLoaded] before the flag exists. Guarantees the re-anchor happens exactly
-     * once per load even though [announceFileLoaded] itself may fire several times
-     * (HLS/DASH length refinements).
+     * True from the moment [installMedia] installs a new media until [announceFileLoaded] uses it
+     * once to re-anchor room sync (the next server State then sets this file's position and play
+     * state again). [installMedia] sets it together with `media.value`, before the engine load
+     * command runs, so an early engine load callback (for example VLCKit's
+     * `mediaPlayerLengthChanged`) cannot call [announceFileLoaded] before the flag is set. The
+     * re-anchor happens exactly once per load, even though [announceFileLoaded] can run several
+     * times (HLS and DASH streams refine the length).
      */
     private var fileLoadResyncPending = false
 
     open suspend fun parseMedia(media: MediaFile) {
-        // Media installation (mask arming, media.value, resync flag, duration wipe) already
-        // happened in [installMedia] before the engine load command; this stage only handles
-        // the user-visible OSD, the iOS no-event announce path, and subtitle sizing.
+        // [installMedia] already did the setup (mask, media.value, resync flag, duration reset)
+        // before the engine load command. This step only shows the OSD (on-screen) message, runs
+        // the iOS announce for engines without a load event, and sets the subtitle size.
         viewmodel.dispatchOSD {
             Localization.strings.roomSelectedVid("${viewmodel.media?.fileName}")
         }
@@ -483,17 +481,18 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun isSeekable(): Boolean
 
     /**
-     * Validate a user seek before announcing it to peers. Engines may normalize the target or
-     * reject an unavailable input, but must not move playback here. A deferred startup seek can
-     * still be clamped again once its native duration becomes known.
+     * Checks a user seek before it is announced to the room. An engine may adjust the target or
+     * reject it with null, but must not move playback here. A deferred startup seek can still be
+     * clamped again once the native duration is known.
      */
     @UiThread
     open suspend fun prepareSeekTarget(targetMs: Long): Long? = targetMs
 
     /**
-     * Every engine calls this first. The tracker cache takes the target at once, so the very next
-     * State ACK advertises where the engine is heading rather than a sample from before the seek,
-     * which the server would otherwise adopt as the room's slowest position.
+     * Every engine override calls this before it moves playback. The tracker cache takes the
+     * target at once, so the next State acknowledgement reports where the engine is going, not a
+     * sample from before the seek. The server would otherwise adopt that old sample as the room's
+     * slowest position.
      */
     @UiThread
     @CallSuper
@@ -515,23 +514,23 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     @Composable
     abstract fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit)
 
-    /** The engine's own output, 0 to 100. Where the platform owns the base this stays at 100. */
+    /** The engine's own output, 0 to 100. Where the platform owns the base, this stays at 100. */
     abstract fun getEngineVolume(): Int
     abstract fun setEngineVolume(percent: Int)
 
     /** The engine's gain ceiling in percent; 100 means it cannot amplify. */
     open val gainMax: Int = VolumeLadder.BASE_MAX
 
-    /** Amplification, 100 to [gainMax]. Only consulted when [gainMax] is above 100. */
+    /** Amplification, 100 to [gainMax]. Only read when [gainMax] is above 100. */
     open fun getGain(): Int = VolumeLadder.BASE_MAX
     open fun setGain(percent: Int) {}
 
-    /** The one ladder the room moves: base first, then gain where the engine has any. */
+    /** The room's volume control: the base first, then the gain where the engine has any. */
     val volume: VolumeController by lazy { VolumeController(this) }
 
     fun announceFileLoaded() {
-        // Watching alone, the only thing to do on a load is ask whether to pick up where this
-        // file was left. In a room the room's position is the right answer instead.
+        // In solo mode (watching alone), a load only offers to resume where this file was left.
+        // In a room, the room's position decides instead.
         if (viewmodel.isSoloMode) {
             viewmodel.media?.let { media ->
                 viewmodel.resume.onMediaReady(media.fileName, playerManager.timeFullMillis.value)
@@ -541,14 +540,14 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
         viewmodel.media?.let { viewmodel.networkManager.sendAsync(WireMessage.file(it.toFileData())) }
         viewmodel.networkManager.sendAsync(WireMessage.listRequest())
-        // The loader is warned about a mismatch too, not only everyone else in the room.
+        // The client that loaded the file gets the mismatch warning too, not only the others.
         viewmodel.checkFileMismatches()
 
         // Re-anchor room sync once per loaded file, now that the engine reports the file as
-        // loaded (and is therefore seekable before the next State arrives). Without this a file
-        // that finished loading AFTER the first server State never adopts the room's position/
-        // play-state. media != null is implied by reaching here after a load, but guard anyway —
-        // an engine callback could call this before media.value is set on some path.
+        // loaded (and so seekable before the next State arrives). Without this, a file that
+        // finishes loading after the first server State never adopts the room's position and
+        // play state. A load implies media != null, but check anyway: an engine callback on some
+        // path could call this before media.value is set.
         if (fileLoadResyncPending && viewmodel.media != null) {
             fileLoadResyncPending = false
             viewmodel.protocol.reanchorSyncOnFileLoad()
@@ -558,35 +557,36 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     fun onPlaybackEnded() {
         if (!isInitialized) return
 
-        // Auto-advance applies online and in solo mode alike (PC's advanceToNextPlaylistItem has no
-        // solo concept and always runs).
+        // Auto-advance works the same in a room and in solo mode (the PC client's
+        // advanceToNextPlaylistItem has no solo mode and always runs).
         val playlistSize = viewmodel.session.sharedPlaylist.size
-        // PC only advances when there is more than one item; a single item would only repeat under a
-        // looping option, which this app has none of, so a lone item just stops at its end.
+        // The PC client advances only when there is more than one item. A single item would repeat
+        // only with a loop option, which this app does not have, so a lone item stops at its end.
         if (playlistSize <= 1) return
 
         val currentIndex = viewmodel.session.spIndex.intValue
         if (currentIndex !in 0 until playlistSize) return
 
-        // Guard against spurious EOF (e.g. a load error firing "ended" near position 0): only advance
-        // when the media is long enough (PC's PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH = 10s) and we are
-        // actually near the end. Otherwise a failed load would skip straight to the next item.
+        // Guard against a false end-of-file event (for example a load error that fires "ended" near
+        // position 0). Advance only when the media is long enough (the PC client's
+        // PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH = 10 s) and playback is near the end. Otherwise a
+        // failed load would skip to the next item.
         val durationMs = playerManager.timeFullMillis.value
         val positionMs = currentPositionMs()
         if (durationMs <= PLAYLIST_ADVANCE_MIN_DURATION_MS) return
         if (durationMs - positionMs > PLAYLIST_ADVANCE_NEAR_END_MS) return
 
-        // At the last item we stop rather than wrap to 0 — there is no "loop at end of playlist"
-        // option, so looping would be wrong (PC returns here unless loopAtEndOfPlaylist is enabled).
+        // At the last item, stop and do not wrap to 0. There is no "loop at end of playlist" option,
+        // so wrapping would be wrong (the PC client returns here unless loopAtEndOfPlaylist is on).
         if (currentIndex + 1 >= playlistSize) return
 
-        // Everyone in the room hits the end of a file at nearly the same moment, so without a
-        // debounce each client sends its own advance and the room jumps several entries at once.
+        // Everyone in the room reaches the end of a file at nearly the same moment. Without a
+        // debounce, each client sends its own advance and the room skips several entries at once.
         if (viewmodel.playlistManager.justChangedIndex(PLAYLIST_ADVANCE_NEAR_END_MS)) return
 
-        // Only the client actually playing the selected entry may advance it. A client that never
-        // resolved the file, or is watching something else entirely, has no standing to move the
-        // room on (PC's _notPlayingCurrentIndex).
+        // Only a client that plays the selected entry may advance it. A client that never found
+        // the file, or that watches something else, must not move the room to the next entry
+        // (the PC client's _notPlayingCurrentIndex).
         if (!viewmodel.playlistManager.isPlayingSelectedEntry) return
 
         viewmodel.playlistManager.sendPlaylistSelection(currentIndex + 1)
@@ -597,7 +597,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     val shouldTrackTimeManually: Boolean
         get() = trackerJobInterval != 0.seconds
 
-    /** Engines with an unknown native sample can skip publishing instead of refreshing stale time. */
+    /** Publishes the engine's position and buffered position while the media is seekable. An engine
+     *  whose native position can be unknown may override this to skip the sample, so that a stale
+     *  position never gets a new timestamp. */
     protected open suspend fun updatePlaybackProgress() {
         if (isSeekable()) {
             playerManager.samplePosition(currentPositionMs())
@@ -609,16 +611,16 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         playerScopeMain.launch {
             while (isActive) {
                 updatePlaybackProgress()
-                /* The fast rate only earns its keep while something is moving. A paused engine's
-                 * position does not change, and estimatedPositionMs() returns the last sample
-                 * verbatim when isNowPlaying is false, so polling it four times a second bought
-                 * nothing and cost a main-thread engine call each time (a JNI property read on
-                 * mpv, an ObjC array bridge on AVPlayer). Seeks sample on their own path, so a
-                 * paused playhead still moves the instant someone drags it.
+                /* The fast interval is only useful while something moves. A paused engine's
+                 * position does not change, and estimatedPositionMs() returns the last sample as
+                 * is when isNowPlaying is false. A fast poll would then cost a main-thread engine
+                 * call each time for nothing (a JNI property read on mpv, an ObjC array bridge on
+                 * AVPlayer). Seeks record their own sample, so a paused playhead still moves as
+                 * soon as someone drags it.
                  *
-                 * Buffering counts as moving. Every engine reports itself not-playing while it
-                 * refills, and that is exactly when the buffered band this loop feeds is the only
-                 * thing on screen with anything to say. */
+                 * Buffering counts as moving. Every engine reports that it is not playing while it
+                 * refills, and then the buffered band that this loop updates is the only part of
+                 * the screen that changes. */
                 val active = playerManager.isNowPlaying.value || playerManager.isBuffering.value
                 delay(if (active) trackerJobInterval else IDLE_TRACKER_INTERVAL)
             }
@@ -626,7 +628,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     }
 
     fun startTrackingProgress() {
-        // Accessing playerTrackerJob here will start it if it hasn't started yet
+        // Reading the lazy playerTrackerJob starts it if it has not started yet.
         if (shouldTrackTimeManually) {
             playerTrackerJob
         }

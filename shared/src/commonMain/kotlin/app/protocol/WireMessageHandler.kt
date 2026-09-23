@@ -2,8 +2,8 @@ package app.protocol
 
 /**
  * Side-agnostic visitor target for any [WireMessage]. Both ends of the protocol implement
- * this — the client's room handler and the server's per-connection handler — and each
- * overrides only the variants that travel toward it.
+ * it (the client's room handler and the server's per-connection handler), and each overrides
+ * only the variants that travel toward it.
  *
  * Every method has a no-op default so an implementation that receives an unexpected
  * variant simply ignores it. In practice:
@@ -22,7 +22,7 @@ interface WireMessageHandler {
     suspend fun onTLS(message: WireMessage.TLS) = Unit
     suspend fun onError(message: WireMessage.Error) = Unit
 
-    /** Empty `{"List": null}` — the client is asking for a user listing. Server-side. */
+    /** Empty `{"List": null}`: the client is asking for a user listing. Server-side. */
     suspend fun onListRequest(message: WireMessage.ListRequest) = Unit
     /** Server's full user/room listing reply. Client-side. */
     suspend fun onListResponse(message: WireMessage.ListResponse) = Unit

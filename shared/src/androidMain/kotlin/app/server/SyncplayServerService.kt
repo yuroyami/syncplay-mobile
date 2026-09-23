@@ -16,16 +16,15 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Android foreground service for keeping the Syncplay server alive when the app is backgrounded.
+ * An Android foreground service that keeps the built-in Syncplay server (which lets this device
+ * host rooms) alive while the app is in the background.
  *
- * Follows the same pattern as [app.player.SyncplayMediaSessionService] but with a separate
- * notification channel. The actual server logic runs in [ServerHostSession]'s process-lifetime
- * coroutine scope; this service only provides the foreground notification that prevents
- * Android from killing the process.
+ * The server itself runs in [ServerHostSession]'s process-lifetime coroutine scope. This service
+ * only shows the foreground notification that stops Android from killing the process.
  */
 class SyncplayServerService : Service() {
 
-    /** Only for resolving the notification's own strings; cancelled with the service. */
+    /** Only for loading the notification's localized strings. Cancelled with the service. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onBind(intent: Intent?) = null
@@ -35,9 +34,9 @@ class SyncplayServerService : Service() {
         val clients = intent?.getIntExtra(EXTRA_CLIENTS, 0) ?: 0
 
         createNotificationChannel()
-        // Foreground first with a title the app already knows, then the localized line as soon as
-        // the resource loader answers: the deadline for startForeground is measured in seconds and
-        // must not wait on anything.
+        // Go foreground first, with a title the app already has, and add the localized line when
+        // the resource loader answers. The startForeground deadline is a few seconds, so it must
+        // not wait on anything.
         startForeground(NOTIFICATION_ID, buildNotification(text = null))
         scope.launch {
             val text = runCatching {
@@ -48,8 +47,8 @@ class SyncplayServerService : Service() {
                     ?.notify(NOTIFICATION_ID, buildNotification(text))
             }
         }
-        // NOT sticky: the server itself lives in ServerHostSession's in-process memory. If the
-        // process dies, a sticky restart would only resurrect a notification with no server
+        // NOT sticky: the server lives in ServerHostSession's memory in this process. If the
+        // process dies, a sticky restart would only bring back a notification with no server
         // behind it.
         return START_NOT_STICKY
     }
@@ -72,8 +71,8 @@ class SyncplayServerService : Service() {
     }
 
     /**
-     * The app's own name plus the word for what this is. Resolved through the loader like the rest
-     * of the text, with the plain app name standing in until it answers.
+     * The notification title: the app name plus the word for a server. It comes from the resource
+     * loader like the rest of the text, and the plain app name stands in until the loader answers.
      */
     private var title: String = appName
 

@@ -1,6 +1,9 @@
 package app.protocol.sync
 
-/** Local seek metadata never goes on the wire. It follows the intent that was actually sent. */
+/**
+ * A local seek's origin and target. It never goes on the wire; it follows the intent that was
+ * actually sent, so the self echo can be matched to it.
+ */
 data class LocalSeek(val fromMs: Long, val toMs: Long, val recordUndo: Boolean = true)
 
 data class LocalStateIntent(
@@ -10,9 +13,10 @@ data class LocalStateIntent(
 )
 
 /**
- * One latest unsent state, bounded even during a seek storm. The owner holds its sync lock.
- * The existing ignoringOnTheFly gate decides when [takeReady] may send; waiting never creates
- * a packet or increments a counter. A later pause/play preserves a queued explicit seek.
+ * Holds the latest unsent local state, and only the latest, so it stays bounded even during
+ * many rapid seeks. The owner holds its sync lock around every call. The `ignoringOnTheFly`
+ * gate decides when [takeReady] may send; waiting never creates a packet or increments a
+ * counter. A later pause or play keeps a queued explicit seek.
  */
 class LocalStateIntents {
     private var pending: LocalStateIntent? = null
@@ -42,9 +46,11 @@ class LocalStateIntents {
     }
 
     /**
-     * Match before sending the next intent: client counters can restart at one after an ACK.
-     * The server may age a playing seek by its forward delay, bounded by elapsed time here.
-     * A duplicate old echo must not consume the next seek's unrelated origin.
+     * Matches an inbound self-seek echo to the last sent seek, and returns that seek's origin.
+     * Call it before sending the next intent: client counters can restart at 1 after an ACK.
+     * The server may age a playing seek by its forward delay, so the echo may run ahead of the
+     * sent position by up to the elapsed time. An old duplicate echo must not consume the next
+     * seek's unrelated origin.
      */
     fun consumeSeekEcho(positionSeconds: Double, clientCounter: Int?, nowMs: Long): LocalSeek? {
         val sent = sentSeek ?: return null

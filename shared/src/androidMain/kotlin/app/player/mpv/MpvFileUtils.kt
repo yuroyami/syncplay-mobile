@@ -15,9 +15,9 @@ import java.io.OutputStream
 object MpvFileUtils {
     fun copyAssets(context: Context) {
         val assetManager = context.assets
-        // subfont.ttf is no longer here: it's a shared Compose resource installed by
-        // installMpvSubfontIfNeeded() (commonMain), the same path iOS uses. cacert.pem stays in
-        // assets because it must exist when a core starts (tls-ca-file), before playback.
+        // subfont.ttf is not copied here: installMpvSubfontIfNeeded() (commonMain) installs it
+        // from a shared Compose resource. cacert.pem stays in assets because it must exist when
+        // an mpv core starts (tls-ca-file), before playback.
         val files = arrayOf("cacert.pem")
         val configDir = context.filesDir.path
         for (filename in files) {
@@ -26,8 +26,8 @@ object MpvFileUtils {
             try {
                 ins = assetManager.open(filename, AssetManager.ACCESS_STREAMING)
                 val outFile = File("$configDir/$filename")
-                // Note that .available() officially returns an *estimated* number of bytes available
-                // this is only true for generic streams, asset streams return the full file size
+                // available() returns only an estimate for generic streams, but an asset stream
+                // returns the full file size.
                 if (outFile.length() == ins.available().toLong()) {
                     loggy("Skipping copy of asset file (exists same size): $filename")
                     continue
@@ -71,20 +71,19 @@ object MpvFileUtils {
             return null
         }
 
-        // Try real path first — if found, we close the pfd and return the path
-        val path = findRealPath(desc.fd) // use .fd (not detached) for the check
+        // Try the real path first. If there is one, close the descriptor and return the path.
+        val path = findRealPath(desc.fd) // .fd, not detached, for the check
         if (path != null) {
             Log.e("mpv", "Found real file path: $path")
-            desc.close() // safe to close, mpv will open the real path itself
+            desc.close() // Safe to close: mpv opens the real path itself.
             return path
         }
 
-        /* No real path: detach and hand the descriptor to mpv.
+        /* No real path: detach the descriptor and hand it to mpv.
          *
-         * fdclose://, not fd://. The comment here used to claim mpv takes ownership of an fd://
-         * descriptor, and it does not: stream_file.c borrows one and closes only the fdclose://
-         * form. Every SAF file opened this way leaked a descriptor, and a process has a limited
-         * number of them. */
+         * Use fdclose://, not fd://. mpv does not take ownership of an fd:// descriptor:
+         * stream_file.c borrows it and closes only the fdclose:// form. With fd://, every SAF
+         * file opened this way leaks a descriptor, and a process has a limited number of them. */
         val fd = desc.detachFd()
         return "fdclose://${fd}"
     }
@@ -94,7 +93,7 @@ object MpvFileUtils {
         try {
             val path = File("/proc/self/fd/${fd}").canonicalPath
             if (!path.startsWith("/proc") && File(path).canRead()) {
-                // Double check that we can read it
+                // Confirm access with a real read.
                 ins = FileInputStream(path)
                 ins.read()
                 return path

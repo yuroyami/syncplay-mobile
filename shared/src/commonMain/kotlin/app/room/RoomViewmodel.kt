@@ -32,92 +32,90 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Classification used by the categorized [RoomViewmodel.dispatchOSD] overload to decide whether
- * an OSD overlay should be shown, based on the user's per-category preferences. Mirrors the
- * five toggles in Syncplay PC's "Messages" settings tab. Note: the NON_OPERATOR layer is applied
- * implicitly by the dispatcher when a [SAME_ROOM] event has an `originUser` argument and the
- * room is operator-controlled — there is no NON_OPERATOR case here on purpose.
+ * The category of an OSD notice (a short message over the video). The categorized
+ * [RoomViewmodel.dispatchOSD] checks the user's preference for each category, like the five
+ * toggles in the "Messages" settings tab of Syncplay PC. There is no NON_OPERATOR case on purpose.
+ * The dispatcher applies that filter to a [SAME_ROOM] event with an `originUser` argument, in a
+ * room (the group of people watching together) that operators control.
  */
 enum class OSDCategory {
-    /** Pause/play/seek/join/leave/file-load events from a user in your current room. */
+    /** Pause, play, seek, join, leave and file-load events from a user in the current room. */
     SAME_ROOM,
-    /** Activity from a different room (peer's chat / cross-room presence). */
+    /** Activity in a different room, such as a user who joins or leaves another room. */
     OTHER_ROOM,
-    /** Local sync mechanism notices (slowing down, rewinding, fast-forwarding to catch up). */
+    /** Local sync notices (slowing down, rewinding, fast-forwarding to catch up). */
     SLOWDOWN,
-    /** Red warnings: file mismatch, alone-in-room, connection errors, etc. */
+    /** Red warnings: a file mismatch, being alone in the room, connection errors and similar. */
     WARNING
 }
 
 /**
- * ViewModel for the Syncplay room screen where synchronized playback occurs.
+ * The ViewModel of the room screen, where synchronized playback happens. A room is the group of
+ * people watching together.
  *
- * Coordinates all room-level managers including networking, media playback, protocol handling,
- * session state, and user interactions. Supports both online synchronized rooms and solo mode.
+ * It holds all room managers: networking, playback, protocol, session state and user actions.
+ * It serves both online rooms and solo mode (watching alone, with no server).
  *
- * @property joinConfig The room connection configuration, or null for solo mode
- * @property backStack The navigation stack for leaving the room
+ * @property joinConfig The room connection settings, or null for solo mode.
+ * @property backStack The navigation stack, used to leave the room.
  */
 class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /************ Managers ***************/
 
-    /** Manages and holds UI state for the room screen */
+    /** The UI state of the room screen. */
     val uiState: RoomUiStateManager by lazy { RoomUiStateManager(this) }
 
-    /** Manages media player lifecycle, controls, and state */
+    /** The player lifecycle, controls and state. */
     val playerManager: PlayerManager by lazy { PlayerManager(this) }
 
     /**
-     * Manages the network connection and communication with the Syncplay server. Built on first
-     * touch rather than inside a coroutine: as a lateinit assigned from a launch, anything that
-     * reached it first (a callback, the dispatcher, a fast leave) threw.
+     * The network connection to the Syncplay server. It is built on first use, not inside a
+     * coroutine, so a callback, the dispatcher or a fast leave can never reach it before it exists.
      */
     private val networkManagerHolder = lazy { instantiateNetworkManager() }
     val networkManager: NetworkManager by networkManagerHolder
 
-    /** Manages the Syncplay protocol and its events */
+    /** The Syncplay protocol state and its events. */
     val protocol: ProtocolManager by lazy { ProtocolManager(this) }
 
-    /** Manages callbacks from protocol events (e.g., when someone pauses) - receiving actions */
+    /** Reactions to protocol events, such as a pause by another user (the receiving side). */
     val callback: RoomCallback by lazy { RoomCallback(this) }
 
-    /** Manages actions performed by the user to send to the server - sending actions */
+    /** Actions of the local user that go to the server (the sending side). */
     val dispatcher: RoomEventDispatcher by lazy { RoomEventDispatcher(this) }
 
-    /** Implements [app.protocol.WireMessageHandler] — routes incoming wire messages. */
+    /** The [app.protocol.WireMessageHandler] that routes incoming wire messages. */
     val serverHandler: RoomServerMessageHandler by lazy { RoomServerMessageHandler(this) }
 
-    /** Manages the shared playlist and all playlist-related functionality */
+    /** The shared playlist: the file list that everyone in the room follows. */
     val playlistManager: SharedPlaylistManager by lazy { SharedPlaylistManager(this) }
 
     /** Who the room is waiting for, and the countdown once it is waiting for nobody. */
     val readiness: ReadinessManager by lazy { ReadinessManager(this) }
 
-    /** Where each file was left, and the offer to pick it up. */
+    /** Where each file was left, and the offer to continue from there. */
     val resume: ResumeManager by lazy { ResumeManager(this) }
 
-    /**
-     * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
-     * Used for tracking and potentially reverting seek operations.
-     */
+    /** The seeks so far, as (from, to) pairs in milliseconds, used to undo a seek. */
     val seeks = mutableStateListOf<Pair<Long, Long>>()
 
     init {
-        // From landing in the room to the first packet, in the log. A report of a flaky join
-        // needs to say whether the wait was the engine, the dial, or the server.
+        // The log shows how long after entering the room the engine was ready and the connection
+        // started. For a slow join, the log must show whether the wait was the engine, the dial
+        // or the server.
         val roomEnteredAt = TimeSource.Monotonic.markNow()
         viewModelScope.launch(ioDispatcher) {
             val playerInitialization = launch {
-                // The previous room's engine may still be tearing down (mpv's handle is
-                // process-global); never build the next one over it.
+                // The engine of the previous room may still be shutting down (the mpv handle is
+                // global to the process). Never build the next engine over it.
                 PlayerManager.awaitPendingDestroy()
                 val preferred = Preferences.PLAYER_ENGINE.value()
                 val engine = availablePlatformPlayerEngines
                     .firstOrNull { it.name == preferred && it.isAvailable }
                     ?: availablePlatformPlayerEngines.firstOrNull { it.isAvailable }
                 if (engine == null) {
-                    // Nothing can play here (desktop with KitePlayer unavailable, for one).
+                    // No engine can play here, for example on desktop when KitePlayer is missing.
                     loggy("No available player engine on this platform")
                     dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomNoPlayerEngine }
                     dispatcher.broadcastMessage(isChat = false, isError = true) { Localization.strings.roomNoPlayerEngine }
@@ -125,8 +123,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 }
                 if (engine.name != preferred) {
                     // A debug-only engine can disappear when a release build replaces the app.
-                    // Persist the effective fallback so the picker never displays a stale,
-                    // unselected engine name after that transition.
+                    // Save the fallback engine, so the picker never shows a stale engine name
+                    // that is not the one in use.
                     Preferences.PLAYER_ENGINE.set(engine.name)
                 }
                 playerManager.player = engine.createImpl(this@RoomViewmodel)
@@ -136,12 +134,12 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             joinConfig?.let {
                 launch {
-                    // Initial State/playlist messages can read player capabilities or load
-                    // media immediately. Publish the player before opening that inbound path.
+                    // The first State and playlist messages can read player capabilities or load
+                    // media at once, so the player must be ready before that inbound path opens.
                     playerInitialization.join()
                     if (!playerManager.isPlayerReady.value) {
-                        // No engine, so no connection is ever attempted. Say so: the room would
-                        // otherwise sit there looking disconnected with nothing explaining it.
+                        // No engine, so the room never tries to connect. Log it, or the room looks
+                        // disconnected with nothing to explain why.
                         loggy("Room: no player engine, so the room will not connect")
                         return@launch
                     }
@@ -153,12 +151,12 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     session.currentUsername = joinConfig.user
                     session.currentRoom = joinConfig.room
                     session.currentPassword = joinConfig.pw
-                    // Pasted alongside the room name; onConnected re-identifies with it, so this
-                    // also survives every later reconnect.
+                    // Pasted together with the room name. onConnected identifies with it again, so
+                    // the operator role also survives every later reconnect.
                     session.currentOperatorPassword = joinConfig.operatorPassword
 
-                    // connect() decides TLS from the settings and this transport, and refuses
-                    // outright when encryption is required and cannot be had.
+                    // connect() picks TLS from the settings and this transport. It refuses to
+                    // connect when encryption is required and not available.
                     loggy("Room: connecting ${roomEnteredAt.elapsedNow().inWholeMilliseconds}ms after entering the room")
                     networkManager.connect()
                 }
@@ -170,7 +168,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      * Exits the current room and returns to the home screen.
      */
     fun goHome() {
-        // Leaving is the last chance to write down where this file got to.
+        // Leaving is the last chance to save the position in this file.
         resume.record()
         backStack.removeAt(backStack.lastIndex)
     }
@@ -180,31 +178,29 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      */
     fun checkFileMismatches() {
         if (isSoloMode) return
-        if (!Preferences.FILE_MISMATCH_WARNING.value()) return //Return if user doesn't want warnings
+        if (!Preferences.FILE_MISMATCH_WARNING.value()) return
 
         viewModelScope.launch {
-            val localMedia = media ?: return@launch //No media is loaded
+            val localMedia = media ?: return@launch
 
             for (user in session.userList.value) {
-                if (user.name == session.currentUsername) continue //We ain't gonna compare with ourselves
-                val theirFile = user.file ?: continue //User has no file
+                if (user.name == session.currentUsername) continue
+                val theirFile = user.file ?: continue
 
-                // Map mismatch conditions to their warning messages, using the python-parity
-                // comparators (utils.py sameFilename/sameFileduration/sameFilesize):
-                // case-insensitive names, raw-vs-hashed cross-comparison for privacy-mode peers,
-                // the **Hidden filename** / size-0 sentinels matching anything, and a 2.5s
-                // duration tolerance.
+                // Map each mismatch to its warning, with the comparators of Python's utils.py
+                // (sameFilename, sameFileduration, sameFilesize): case-insensitive names, a
+                // raw-to-hashed comparison for peers in privacy mode, the **Hidden filename** and
+                // size 0 placeholders that match anything, and a 2.5 s duration tolerance.
                 val mismatches = listOf(
                     !FileComparison.sameFilename(localMedia.fileName, theirFile.fileName) to Localization.strings.roomFileMismatchWarningName,
                     !FileComparison.sameFileduration(localMedia.fileDuration ?: 0.0, theirFile.fileDuration ?: 0.0) to Localization.strings.roomFileMismatchWarningDuration,
                     !FileComparison.sameFilesize(localMedia.fileSize, theirFile.fileSize) to Localization.strings.roomFileMismatchWarningSize
                 )
 
-                // If all three mismatch, skip showing a warning
+                // No warning when all three differ.
                 val matchingMismatches = mismatches.filter { it.first }
                 if (matchingMismatches.isEmpty() || matchingMismatches.size == 3) continue
 
-                // Build warning message dynamically
                 val warning = buildString {
                     append(Localization.strings.roomFileMismatchWarningCore(user.name))
                     mismatches.filter { it.first }
@@ -218,24 +214,31 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     }
 
     /**
-     * Indicates whether the room is in solo mode (offline playback).
-     * When true, online-only components like networking and session sync are disabled.
+     * Whether the room is in solo mode (offline playback, with no server). In solo mode, the
+     * online parts such as networking and session sync are off.
      */
     val isSoloMode: Boolean
         get() = joinConfig == null
 
 
-    /** The room's transient messages: at most three on screen, a warning never dropped for info. */
+    /**
+     * The room's short-lived notices: at most three on screen, and a warning is never dropped to
+     * make room for an info notice.
+     */
     val notices = NoticeQueue()
 
     fun dispatchOSD(getter: suspend () -> String) = dispatchNotice(NoticeSeverity.Info, getter)
 
-    /** Something the person asked for failed or was refused. No notice switch hides it. */
+    /**
+     * Shows a warning: something that the user asked for failed or was refused. No setting hides
+     * it.
+     */
     fun dispatchWarning(getter: suspend () -> String) = dispatchNotice(NoticeSeverity.Warn, getter)
 
     /**
-     * The hold comes from the notice duration preference. Zero switches routine notices off, and a
-     * warning still gets the default hold: zero asks for less chatter, not for hidden problems.
+     * Posts a notice for as long as the notice duration preference says. Zero turns routine
+     * notices off. A warning still gets at least the default hold, because zero asks for less
+     * noise, not for hidden problems.
      */
     private fun dispatchNotice(severity: NoticeSeverity, getter: suspend () -> String) {
         val chosenMs = Preferences.OSD_DURATION.value() * 1000L
@@ -245,19 +248,18 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     }
 
     /**
-     * Categorized variant of [dispatchOSD] that consults the user's per-category OSD preferences
-     * before showing. If the relevant toggle is off, the OSD is silently dropped (the chat-log
-     * `broadcastMessage` should still happen separately at the call site, unaffected by this).
+     * The categorized form of [dispatchOSD]. It checks the user's OSD preference for [category]
+     * before it shows anything, and drops the OSD notice when that preference is off. The call
+     * site still sends the chat line with `broadcastMessage` on its own.
      *
-     * Mirrors Syncplay PC's gating in `client.SyncplayClient.handleOSDMessage` /
-     * `showOSDMessage` (constants `SHOW_SAME_ROOM_OSD`, `SHOW_NON_CONTROLLER_OSD`,
-     * `SHOW_DIFFERENT_ROOM_OSD`, `SHOW_SLOWDOWN_OSD`, `SHOW_OSD_WARNINGS`).
+     * Mirrors the OSD gating of Syncplay PC in client.py (the constants `SHOW_SAME_ROOM_OSD`,
+     * `SHOW_NONCONTROLLER_OSD`, `SHOW_DIFFERENT_ROOM_OSD`, `SHOW_SLOWDOWN_OSD` and
+     * `SHOW_OSD_WARNINGS`).
      *
-     * @param category which OSD class this event belongs to.
-     * @param originUser optional username of the user that triggered the event. When the
-     *                   current room is operator-controlled (`session.currentOperatorPassword
-     *                   != null`) and the originator is not in the controller list, the event
-     *                   is additionally gated by [OSDCategory.NON_OPERATOR]'s preference.
+     * @param category The OSD category of this event.
+     * @param originUser The optional name of the user who caused the event. In an
+     *                   operator-controlled room ([Session.isControlledRoom]), an event from a
+     *                   user who is not a controller also needs the `OSD_NON_OPERATOR` preference.
      */
     fun dispatchOSD(category: OSDCategory, originUser: String? = null, getter: suspend () -> String) {
         val prefs = app.preferences.Preferences
@@ -284,35 +286,32 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         dispatchNotice(severity, getter)
     }
 
-    /************ Extension Properties for Quick Access ***************/
+    /************ Shortcuts to the managers ***************/
 
-    /** Quick access to the current media player instance */
     val player: PlayerImpl
         get() = playerManager.player
 
-    /** Quick access to the current room session state */
     val session: Session
         get() = protocol.session
 
-    /** Quick access to the currently loaded media file, if any */
+    /** The loaded media file, or null. */
     var media: MediaFile?
         get() = playerManager.media.value
         set(value) {
             playerManager.media.value = value
         }
 
-    /** Quick access to whether the current media contains video */
     val hasVideo: StateFlow<Boolean>
         get() = playerManager.hasVideo
 
     /**
-     * Cleans up all managers and resources when the ViewModel is destroyed.
-     * Ensures proper shutdown of network connections, player, and other subsystems.
+     * Releases the managers and their resources when the ViewModel is destroyed: the player, the
+     * network connection, the UI state and the protocol.
      */
     override fun onCleared() {
         loggy("²²²²²²²²²²²² Clearing viewmodel")
         playerManager.invalidate()
-        // Solo mode may never have needed one; building it here only to tear it down is waste.
+        // Solo mode may never have built one. Building it here only to tear it down is waste.
         if (networkManagerHolder.isInitialized()) networkManager.invalidate()
         uiState.invalidate()
         protocol.invalidate()

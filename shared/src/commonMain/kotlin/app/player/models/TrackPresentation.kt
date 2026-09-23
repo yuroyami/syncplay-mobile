@@ -4,7 +4,10 @@ import app.preferences.mediaLanguages
 
 internal data class TrackLanguage(val code: String, val flag: String, val fallbackName: String?)
 
-/** Explicit regions win. A globe covers unspecified, multilingual and unrecognised languages. */
+/**
+ * Maps a raw language tag to a code, a flag and an English name. A region in the tag wins over
+ * the default region. A globe covers unspecified, multilingual and unrecognised languages.
+ */
 internal fun trackLanguage(raw: String?): TrackLanguage {
     val parts = raw.orEmpty().trim().replace('_', '-').split('-')
     val primary = parts.first().lowercase()
@@ -22,7 +25,10 @@ internal fun trackLanguage(raw: String?): TrackLanguage {
     return TrackLanguage(code, flag, language?.englishName)
 }
 
-/** Channel count alone cannot distinguish 5.1 from 6.0, so do not invent a speaker layout. */
+/**
+ * The channel badge, for example "5.1 ch" or "2 ch". A channel count alone cannot tell 5.1 from
+ * 6.0, so the badge uses a speaker layout only when the engine gives one.
+ */
 internal fun channelBadge(count: Int?, layout: String?): String? {
     val surround = Regex("[1-9]\\.[0-9](?:\\([^)]*\\))?").matchEntire(layout.orEmpty())
     if (surround != null) return layout!!.substringBefore('(') + " ch"

@@ -77,7 +77,10 @@ import app.uicomponents.controls.Icon
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Text
 
-/** The chat dock: the composer on top, then either the message list or the GIF drawer. */
+/**
+ * The chat dock (the area of the room screen that holds the chat): the composer (the chat input
+ * row) on top, then the message list or the GIF drawer.
+ */
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
@@ -88,8 +91,9 @@ fun RoomChatSection(modifier: Modifier) {
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
     if (isChatSupported) {
-        /* The cutout inset and side margins go on each child, not the column, so the strip beside
-         * a camera notch belongs to the row in front of it instead of the HUD dismiss underneath. */
+        /* The cutout inset and side margins go on each child, not on the column. So the strip
+         * beside a camera notch belongs to the row in front of it, not to the HUD's tap-to-hide
+         * handler underneath. */
         val cutoutInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
 
         Column(modifier = modifier) {
@@ -97,7 +101,8 @@ fun RoomChatSection(modifier: Modifier) {
                 viewmodel = viewmodel,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // Tap shield first, then the insets: a fat-finger miss around the input is a no-op.
+                    // Tap shield first, then the insets, so a missed tap around the input does
+                    // nothing.
                     .pointerInput(Unit) { detectTapGestures { } }
                     .windowInsetsPadding(cutoutInsets)
                     .padding(horizontal = 8.dp),
@@ -134,9 +139,9 @@ fun RoomChatSection(modifier: Modifier) {
 }
 
 /**
- * The composer: a GIF glyph, the hairline field, and a send glyph that turns accent once there
- * is text. The keyboard's send action keeps its switch and is suppressed while the drawer is
- * open, because the text is then a search query. A blank send changes nothing.
+ * The composer: a GIF button, the hairline text field, and a send button that turns to the accent
+ * color once there is text. The keyboard's send action follows its setting, and it is off while
+ * the GIF drawer is open, because the text is then a search query. A blank send changes nothing.
  */
 @Composable
 fun ChatComposer(
@@ -160,19 +165,19 @@ fun ChatComposer(
     val chatScope = rememberCoroutineScope()
 
     fun send() {
-        /* The cap is the server's own limit, floored at 1 so a hostile zero cannot eat every
-         * message. Nothing is stripped: the JSON layer escapes backslashes itself. */
+        /* The cap is the server's own limit, with a floor of 1, so a hostile zero cannot block
+         * every message. Nothing is stripped: the JSON layer escapes backslashes itself. */
         val maxLen = viewmodel.session.roomFeatures.maxChatMessageLength.coerceAtLeast(1)
         val text = msg.trimEnd()
         if (text.isBlank()) return
         if (text.length > maxLen) {
-            // The draft stays in the field; a silent cut lost the end of the message.
+            // The draft stays in the field, because a silent cut would lose the end of the message.
             val length = text.length
             viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomChatTooLong(length, maxLen) }
             return
         }
-        /* A slash command is carried out here and never reaches the room, so a typo is
-         * nobody else's business. Anything else is an ordinary message. */
+        /* A slash command runs here and never reaches the room, so no one else sees a typo.
+         * Anything else is an ordinary message. */
         val command = parseSlashCommand(text)
         if (command == SlashCommand.NotACommand) {
             viewmodel.dispatcher.sendMessage(text)
@@ -192,7 +197,7 @@ fun ChatComposer(
         Field(
             value = msg,
             onValueChange = { viewmodel.uiState.msg.value = it },
-            // Not the outer modifier: that would re-apply the shield and the insets to the field.
+            // Not the outer modifier: that would apply the shield and the insets to the field again.
             modifier = Modifier.weight(1f),
             placeholder = strings.roomChatInput,
             imeAction = if (keyboardSends) ImeAction.Send else ImeAction.Done,
@@ -216,7 +221,7 @@ fun ChatComposer(
     }
 }
 
-/** The message list, opening at its last line and animating only on growth. */
+/** The message list. It opens at its last line and animates only when it grows. */
 @Composable
 fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
@@ -236,8 +241,8 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     Box(modifier.background(if (hasVideo) Color(50, 50, 50, bgOpacity) else Color.Transparent, Radius.panelShape)) {
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))
         val scope = rememberCoroutineScope()
-        /* The list follows the newest line until the reader scrolls it out of view. Only a scroll the
-         * reader makes decides that: the list's own animation to a new message does not count. */
+        /* The list follows the newest line until the reader scrolls it out of view. Only a scroll
+         * by the reader decides that: the list's own animation to a new message does not count. */
         var following by remember { mutableStateOf(true) }
         var unseen by remember { mutableIntStateOf(0) }
         var ownScrolls by remember { mutableIntStateOf(0) }
@@ -276,8 +281,8 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
                     }
                 },
             ) { index, message ->
-                /* Seen only while the HUD shows: it stays composed at alpha 0 when hidden, and
-                 * marking then would defeat the fading layout. */
+                /* Marked seen only while the HUD shows. The list stays composed at alpha 0 while
+                 * hidden, and marking lines then would defeat the fading layout. */
                 if (isHUDVisible) SideEffect { message.seen = true }
                 MessageRow(
                     message = message,
@@ -301,20 +306,20 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     }
 }
 
-/** Chat text can be selected and copied on desktop; touch keeps its long press for the rows. */
+/** Chat text can be selected and copied on desktop. On touch, the long press stays with the rows. */
 @Composable
 private fun Selectable(content: @Composable () -> Unit) {
     if (platform == Platform.Desktop) SelectionContainer(content = content) else content()
 }
 
-/** The newest line is at least partly on screen, or there is nothing to show. */
+/** Whether the newest line is at least partly on screen. True when there is nothing to show. */
 private fun LazyListState.showsLastItem(): Boolean {
     val info = layoutInfo
     val last = info.visibleItemsInfo.lastOrNull() ?: return true
     return last.index >= info.totalItemsCount - 1
 }
 
-/** The way back down after reading up the list, shown only once something new arrived below. */
+/** The way back down to the newest line, shown only once something new arrived below. */
 @Composable
 internal fun NewMessagesMarker(modifier: Modifier, onClick: () -> Unit) {
     val p = palette

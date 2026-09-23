@@ -43,9 +43,9 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 
 /**
- * Seek to a position, as a side panel over the video instead of a dialog. One timecode field:
- * digits shift in from the right like a microwave clock, so 1 2 3 4 reads 00:12:34. The field
- * sits at the top of the panel, above where the keyboard lands.
+ * The seek-to panel: a side panel over the video, not a dialog, that seeks to a typed position.
+ * It has one timecode field. Typed digits shift in from the right, so 1 2 3 4 reads 00:12:34.
+ * The field sits at the top of the panel, above the keyboard.
  */
 object CardSeekTo {
 
@@ -71,7 +71,8 @@ object CardSeekTo {
             val ss = padded.substring(4, 6).toLong().coerceAtMost(59)
             val result = ss * 1000 + mm * 60_000 + hh * 3_600_000
             close()
-            // The one seek path: announce first so a rewind does not yank us back.
+            // The single seek path announces the seek before it moves the engine, so a rewind
+            // does not pull the local user back.
             viewmodel.dispatcher.seek(result)
             viewmodel.dispatchOSD { Localization.strings.roomSeekTopositionSuccess(timestampFromMillis(result)) }
         }
@@ -93,7 +94,10 @@ object CardSeekTo {
         }
     }
 
-    /** Empty stays empty (the placeholder shows); otherwise hh:mm:ss from the right-aligned digits. */
+    /**
+     * Formats the digits as hh:mm:ss, filled from the right. Empty input stays empty, so the
+     * placeholder shows.
+     */
     private fun format(digits: String): String {
         if (digits.isEmpty()) return ""
         val padded = digits.padStart(6, '0')
@@ -133,7 +137,7 @@ fun RoomViewmodel.customSkip() {
         val currentMs = player.currentPositionMs()
         val newPos = currentMs + CUSTOM_SEEK_AMOUNT.value() * 1000L
         dispatcher.seek(newPos, fromMs = currentMs)
-        // The same notice as seek-to, so it gets the same timecode shape, not a bare count.
+        // The same notice as the seek-to panel, so it shows a timecode, not a bare number.
         dispatchOSD { Localization.strings.roomSeekTopositionSuccess(timestampFromMillis(newPos)) }
     }
 }

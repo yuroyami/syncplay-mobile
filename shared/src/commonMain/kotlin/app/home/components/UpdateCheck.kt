@@ -11,17 +11,17 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * Asks GitHub what the newest release is.
+ * Asks GitHub for the newest release.
  *
- * The app is offered as a direct download as well as through stores, and a direct download has
- * nothing that tells the user a new version exists. This is that: asked for, never on its own,
- * and it reports rather than downloads anything.
+ * The app ships as a direct download as well as through stores, and a direct download has nothing
+ * else that tells the user about a new version. The check runs only when the user asks. It reports
+ * the result and never downloads anything.
  */
 object UpdateCheck {
 
     private const val LATEST = "https://api.github.com/repos/yuroyami/syncplay-mobile/releases/latest"
 
-    /** What the release page says, or null when the answer could not be read. */
+    /** The outcome of one update check. */
     sealed interface Result {
         /** Nothing newer than what is installed. */
         data object UpToDate : Result
@@ -29,7 +29,7 @@ object UpdateCheck {
         /** A newer release exists; [version] is its tag and [url] its page. */
         data class Newer(val version: String, val url: String) : Result
 
-        /** The list could not be reached, or made no sense. */
+        /** The release API could not be reached, or its answer made no sense. */
         data object Unreachable : Result
     }
 
@@ -51,8 +51,9 @@ object UpdateCheck {
     }
 
     /**
-     * Compares two dotted versions number by number, so 0.24.0 beats 0.9.9 the way it should and
-     * a string comparison would not. Anything that is not a number counts as zero.
+     * Whether [candidate] is newer than [installed]. It compares the dotted versions number by
+     * number, so 0.24.0 is newer than 0.9.9, which a string comparison gets wrong. Each part counts
+     * by its leading digits, and a part without any counts as zero.
      */
     internal fun isNewer(candidate: String, installed: String): Boolean {
         val a = candidate.split('.').map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }

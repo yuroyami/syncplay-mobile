@@ -40,8 +40,10 @@ import app.protocol.sync.AutoplayState
 private val EPISODE = Regex("(?:s|season)(\\d{1,2})(?:e|episode)(\\d{1,2})")
 
 /**
- * The status line: a 6dp connection square, the room name, the user count or the connection
- * state, and the episode tag when the file name carries one. Notices live elsewhere now.
+ * The status line of the room (the group of people watching together): a 6dp connection square,
+ * the encryption icon, the room name, and a state text. The state text is the readiness line or
+ * the user count when connected, and the connection state otherwise. A reconnect button shows
+ * while the connection is down, and an episode tag shows when the file name has one.
  */
 @Composable
 fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
@@ -53,7 +55,7 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     val autoplay by viewmodel.readiness.state.collectAsState()
     val readiness by viewmodel.readiness.summary.collectAsState()
 
-    // The server's list includes us; while joining, show one instead of a flash of zero.
+    // The user list of the server includes the local user. Before the list arrives, show 1, not 0.
     val totalUsers = when {
         userList.isNotEmpty() -> userList.size
         connectionState == ConnectionState.CONNECTED -> 1
@@ -64,8 +66,9 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         ConnectionState.CONNECTING, ConnectionState.SCHEDULING_RECONNECT -> p.accent
         ConnectionState.DISCONNECTED -> p.bad
     }
-    /* Connected and idle, the line says who the room is waiting for. That is more useful than
-     * a head count, which the roster already shows. */
+    /* When connected, the line shows the autoplay countdown or who the room is waiting for. That
+     * is more useful than a user count, which the roster (the list of users in the room) already
+     * shows. */
     val readinessLine: String? = when {
         connectionState != ConnectionState.CONNECTED -> null
         autoplay is AutoplayState.CountingDown ->
@@ -92,7 +95,7 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
 
     Row(
         modifier = modifier
-            // Connection changes are read out as they happen.
+            // A screen reader announces changes to this line, such as a lost connection.
             .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
             .chromeSurface(Radius.panelShape)
             .heightIn(min = Space.rowCompact)
@@ -100,7 +103,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(6.dp).background(square, Radius.tightShape))
-        // Whether anyone between you and the server can read the room, said plainly.
+        // The lock shows whether the connection is encrypted. That tells the user whether anyone
+        // between the user and the server can read the room.
         if (connectionState == ConnectionState.CONNECTED) {
             RowGap(Space.gapTight)
             Icon(
@@ -122,8 +126,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         )
         RowGap(Space.gapTight + 2.dp)
         Text(state, style = Type.value, color = p.inkDim, maxLines = 1)
-        // Waiting out the backoff is the common case, but a user who knows the server just came
-        // back should not have to leave the room to try again.
+        // The app retries on its own after a delay. A user who knows that the server is back can
+        // retry now, without leaving the room.
         if (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.SCHEDULING_RECONNECT) {
             RowGap(Space.gapTight)
             GlyphButton(

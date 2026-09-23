@@ -1,6 +1,10 @@
 package app.player.vlc
 
-/** The bundled C API converts milliseconds to signed microsecond ticks. */
+/**
+ * Clamps a seek target between 0 and the media length, when the length is known. The bundled C
+ * API converts milliseconds to signed microsecond ticks, so the target also stays at or below
+ * `Long.MAX_VALUE / 1000`.
+ */
 internal fun normalizeVlcSeekTarget(targetMs: Long, nativeLengthMs: Long): Long {
     val maxNativeMs = Long.MAX_VALUE / 1_000L
     val upperBound = if (nativeLengthMs > 0L) nativeLengthMs.coerceAtMost(maxNativeMs) else maxNativeMs
@@ -11,7 +15,10 @@ internal enum class VlcSeekReadiness { OPENING, READY, UNAVAILABLE }
 
 internal enum class VlcSeekInputState { INACTIVE, OPENING, SEEKABLE, UNSEEKABLE, FAILED }
 
-/** Media replacement can report the old Playing state before the new input exists. */
+/**
+ * Tracks the opening window of a new input. A media replacement can report the old Playing state
+ * before the new input exists.
+ */
 internal class VlcSeekStartup(private val timeoutMs: Long) {
     private var startedAtMs: Long? = null
 
@@ -35,7 +42,7 @@ internal class VlcSeekStartup(private val timeoutMs: Long) {
             reset()
             return VlcSeekReadiness.READY
         }
-        // Positive native length/time proves an active, genuinely unseekable input.
+        // A positive native length or time proves an active input that really cannot seek.
         // Parsed wrapper metadata cannot prove that the playback input has opened.
         if (inputState == VlcSeekInputState.FAILED ||
             (inputState == VlcSeekInputState.UNSEEKABLE && (nativeLengthMs > 0L || nativeTimeMs > 0L))
@@ -59,7 +66,7 @@ internal sealed interface VlcSeekDecision {
     data object None : VlcSeekDecision
 }
 
-/** Keeps one startup command until the native input can accept it; never retries a submitted seek. */
+/** Keeps one startup seek until the native input can accept it. It never retries a submitted seek. */
 internal class VlcSeekRequests(private val openingTimeoutMs: Long) {
     private data class Request(val targetMs: Long, val requestedAtMs: Long)
     private var pending: Request? = null

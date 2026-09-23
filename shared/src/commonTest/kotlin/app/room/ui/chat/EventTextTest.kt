@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Event lines colour the people they name, and only where a whole isolated name stands. */
+/** Event lines colour a person's name only where `isolated()` wrapped the whole name. */
 class EventTextTest {
     private val self = Color(0xFF8E5CF7)
     private val friend = Color(0xFF3DDC84)

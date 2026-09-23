@@ -91,21 +91,21 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     @Volatile
     private var mpvPos = 0L
 
-    /** The last `seekable` mpv reported. A core that has not spoken yet counts as seekable. */
+    /** The last `seekable` mpv reported. A core that has not reported yet counts as seekable. */
     @Volatile
     private var mpvSeekable = true
 
-    /** The last `volume` mpv reported, as a whole percent on mpv's own 0 to [gainMax] ladder. */
+    /** The last `volume` mpv reported, as a whole percent on mpv's own 0 to [gainMax] scale. */
     @Volatile
     private var mpvVolume = 100
 
     /**
      * Every call into the core runs here, one at a time.
      *
-     * mpv answers a property read on its own thread, so a call made while that thread is busy
-     * (a slow decode, a stalled stream) waits for it. On the UI thread that wait is a frozen
-     * picture, and past five seconds Android kills the app for not answering a key press. One
-     * thread of our own also keeps calls in the order they were made, which the UI thread did.
+     * mpv answers a property read on its own thread, so a call made while that thread is busy (a
+     * slow decode, a stalled stream) waits for it. On the UI thread, that wait freezes the picture,
+     * and after five seconds Android reports the app as not responding to a key press. Running
+     * one call at a time also keeps the calls in the order they were made.
      */
     private val coreCalls = ioDispatcher.limitedParallelism(1)
 
@@ -121,9 +121,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
-        // The guards go first: the position tracker polls every 500 ms, and a call that arrives after
-        // the core is gone must find no core. A core that closes under a call throws, and withCore
-        // absorbs that.
+        // Reset the guards first: the position tracker polls every 500 ms, and a call that arrives
+        // after the core is gone must find no core. A core that closes during a call throws, and
+        // withCore catches that.
         isInitialized = false
         playerSupervisorJob.cancel()
 
@@ -282,9 +282,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
         withContext(coreCalls) {
-            // playableUri gives a file:// uri for our own downloaded subs (a bare path has no
-            // scheme, so resolveUri's `when(scheme)` fell through to null) and the content:// uri
-            // for picker results.
+            // playableUri gives a file:// uri for the app's own downloaded subtitles and a
+            // content:// uri for picker results. A bare path has no scheme, so resolveUri would
+            // return null for it.
             ctx.resolveUri(uri.playableUri)?.let { subUri ->
                 // A file mpv refuses throws here, so the caller reports a failure, not a success.
                 withCore { it.command(MpvCommands.subAdd(subUri, SubAddMode.Cached)).getOrThrow() }
@@ -318,8 +318,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     /**
-     * The observed value, not a read: the tracker asks twice a second, and mpv only says "not
-     * seekable" for a live stream, which is a fact about the file rather than the moment.
+     * The observed value, not a property read. The tracker asks twice a second, and mpv reports
+     * "not seekable" only for a live stream, which is a fact about the file, not the moment.
      */
     override suspend fun isSeekable(): Boolean = isInitialized && mpvSeekable
 
@@ -327,15 +327,15 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        /* Where mpv is about to be. A paused core reports no new time-pos for a while, and until
-         * it does every reader here would answer with the position before the jump: two jumps in
-         * a row then both counted from the same place. */
+        /* Store the seek target now. A paused core reports no new time-pos for a while, and until
+         * it does, every reader here would get the position from before the jump. Two jumps in a
+         * row would then both start from the same place. */
         mpvPos = toPositionMs
         // time-pos is a double, so seeks and chapter jumps keep their sub-second precision.
         onCore { it[MpvProperties.TimePos] = toPositionMs / 1000.0 }
     }
 
-    /** mpv's own `time-pos` as it last reported it. [seekTo] samples the target, so a seek shows at once. */
+    /** The last `time-pos` mpv reported. [seekTo] stores its target, so a seek shows at once. */
     override fun currentPositionMs(): Long = if (isInitialized) mpvPos else 0L
 
     override suspend fun switchAspectRatio(): String {
@@ -346,7 +346,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 val currentAspect = mpv.getString("video-aspect-override")
                 val currentPanscan = mpv[MpvProperties.Panscan].getOrNull()
 
-                // mpv value to the spoken label; the last entry is pan-and-scan rather than a ratio.
+                // Each mpv value with the label the room shows. The last entry is pan-and-scan,
+                // not a ratio.
                 val aspectRatios = listOf(
                     "-1.000000" to Localization.strings.roomAspectOriginal,
                     "1.777778" to Localization.strings.roomAspectRatioLabel("16:9"),
@@ -363,7 +364,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                     enablePanscan = true
                     aspectRatios[5]
                 } else {
-                    // An unknown current value (a user config) restarts the cycle at the first ratio.
+                    // An unknown current value (from a user config) restarts the cycle at the first
+                    // entry, Original.
                     aspectRatios.getOrElse(aspectRatios.indexOfFirst { it.first == currentAspect } + 1) { aspectRatios[1] }
                 }
 
@@ -393,7 +395,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         }
     }
 
-    /** Every file starts on a fresh core, as it always has here. The view hands it the surface. */
+    /**
+     * Plays [pathOrUrl] on a new core. Every file gets its own core, and the view hands it the
+     * surface.
+     */
     @UiThread
     private fun playOnFreshCore(pathOrUrl: String) {
         startCore()
@@ -409,14 +414,14 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         releaseCore()
         mpvView.initialize(startOptions())
         val mpv = mpvView.mpv ?: return
-        // Set after the start, as they always were, so a user's mpv.conf cannot override them.
+        // Set these after the start, so a user's mpv.conf cannot override them.
         val playerOptions = PlayerOptions.get()
         mpv[MpvProperties.SavePositionOnQuit] = false
         mpv[MpvProperties.Idle] = IdleMode.Once
         mpv[MpvProperties.Alang] = languages(playerOptions.audioPreference)
         mpv[MpvProperties.Slang] = languages(playerOptions.ccPreference)
         mpv[MpvProperties.Pause] = true
-        // The gain rung: mpv clamps volume at 130 by default.
+        // Raise the volume cap for gain: mpv caps volume at 130 by default.
         mpv[MpvProperties.VolumeMax] = gainMax.toDouble()
         core = mpv
         watch(mpv)
@@ -427,7 +432,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         configDir = ctx.filesDir,
         cacheDir = ctx.cacheDir,
         // TextureView keeps the picture in the view tree, so Haze can blur it under glass.
-        // SurfaceView can use a hardware overlay (less power, no GPU copy) but no in-app effect sees it.
+        // SurfaceView can use a hardware overlay (less power, no GPU copy), but no in-app effect
+        // can see it.
         surfaceType = if (glassEnabledNow()) SurfaceType.Texture else SurfaceType.Surface,
         vo = if (MPV_GPU_NEXT.value()) VideoOutput.GpuNext else VideoOutput.Gpu,
         hwdec = if (MPV_HARDWARE_ACCELERATION.value()) HwdecMode.Auto else HwdecMode.No,
@@ -437,7 +443,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         tlsCaFile = File(ctx.filesDir, "cacert.pem"),
         demuxerMaxBytes = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64L else 32L) * 1024 * 1024,
         inputDefaultBindings = true,
-        // The room hears that a file ended through EndFile, which keep-open would hold back.
+        // The room learns that a file ended through EndFile, which keep-open would hold back.
         keepOpen = KeepOpenMode.No,
     )
 
@@ -446,7 +452,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     /**
      * Forgets the running core and stops its flows, so none of its last events reach the next core.
-     * The view closes that core on a thread of its own, so it is paused first to stay silent until then.
+     * The view closes that core on its own thread, so this pauses it first to keep it silent.
      */
     private fun releaseCore() {
         coreJob?.cancel()
@@ -457,7 +463,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mpvSeekable = true
     }
 
-    /** Follows [mpv]'s events and the four properties the room shows, until [releaseCore]. */
+    /** Follows [mpv]'s events and the properties the room uses, until [releaseCore]. */
     private fun watch(mpv: Mpv) {
         val job = SupervisorJob(playerSupervisorJob)
         coreJob = job
@@ -473,13 +479,14 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             }
         }
         scope.follow(mpv, mpv.observe(MpvProperties.TimePos)) { if (it != null) mpvPos = (it * 1000).toLong() }
-        // Read on the UI thread, so both are followed rather than asked for: see [coreCalls].
+        // Callers read the next two on the UI thread, so they are observed here instead of
+        // queried. See [coreCalls].
         scope.follow(mpv, mpv.observe(MpvProperties.Seekable)) { if (it != null) mpvSeekable = it }
         scope.follow(mpv, mpv.observe(MpvProperties.Volume)) { if (it != null) mpvVolume = it.toInt() }
         scope.follow(mpv, mpv.observe(MpvProperties.Duration)) {
             if (it != null) playerManager.timeFullMillis.value = (it * 1000).toLong()
         }
-        // Just to inform the UI.
+        // isNowPlaying drives the UI, and ProtocolManager compares it with the room's state.
         scope.follow(mpv, mpv.observe(MpvProperties.Pause)) { if (it != null) playerManager.isNowPlaying.value = !it }
         // mpv stalling on its cache, which the room shows as a waiting indicator and never treats as a pause.
         scope.follow(mpv, mpv.observe(MpvProperties.PausedForCache)) {
@@ -495,14 +502,14 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     /**
      * Announces the file once mpv knows its duration. One wait per file: the next core cancels it,
-     * so a fast second load cannot announce the new file with the old one's timing.
+     * so a fast second load cannot announce the new file with the old file's duration.
      */
     private fun announceWhenDurationKnown(scope: CoroutineScope) {
         durationWaitJob?.cancel()
         durationWaitJob = scope.launch {
-            // timeFullMillis is wiped to 0 on every inject (PlayerImpl.installMedia), so this really
-            // waits for THIS file's duration; a stale one used to announce the old name, size and
-            // duration. Bounded: a file with no duration (a live stream) still announces, with 0.
+            // PlayerImpl.installMedia resets timeFullMillis to 0 on every inject, so this waits for
+            // this file's duration. A stale value would announce the old name, size and duration.
+            // Bounded: a file with no duration (a live stream) still announces, with 0.
             var waitedMs = 0L
             while (isActive && playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
                 delay(50)
@@ -546,8 +553,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         playerScopeIO.launch(coreCalls) { withCore(block) }
     }
 
-    /* mpv's own volume property is the whole ladder: 0 to 100 is its output, 100 to 200 is
-     * amplification once volume-max has been raised at start. */
+    /* mpv's volume property covers the whole scale: 0 to 100 is normal output, and 100 to 200 is
+     * amplification, because startCore raises volume-max. */
     override fun getEngineVolume(): Int = mpvVolume.coerceIn(0, 100)
     override fun setEngineVolume(percent: Int) {
         setVolume(percent.coerceIn(0, 100))
@@ -559,7 +566,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         setVolume(percent.coerceIn(100, gainMax))
     }
 
-    /** The slider moves now; mpv's own value follows and comes back through the observed property. */
+    /** The slider moves at once. mpv's value follows and returns through the observed property. */
     private fun setVolume(percent: Int) {
         mpvVolume = percent
         onCore { it[MpvProperties.Volume] = percent.toDouble() }

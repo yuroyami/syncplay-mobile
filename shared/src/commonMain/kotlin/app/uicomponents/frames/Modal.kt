@@ -86,21 +86,25 @@ import app.uicomponents.controls.SheetHandle
 import app.uicomponents.glassScrim
 import app.uicomponents.surface
 
-/** The three modal sizes from DESIGN/POPUPS. On compact widths `Panel` and `Full` become sheets. */
+/**
+ * The three modal sizes: `Ask` (a short question), `Panel` and `Full`. On compact widths, `Panel`
+ * and `Full` become bottom sheets.
+ */
 enum class ModalSize { Ask, Panel, Full }
 
 /**
- * Where a modal lands its focus when a remote or a keyboard opens it. The first `Field` in the body
- * claims [LocalModalFieldEntry]; the accent or primary action claims [LocalModalActionEntry].
- * A destructive action never does, so a confirmation lands on its safe choice. Null outside a modal.
+ * Where a modal puts focus when a remote or a keyboard opens it. Every `Field` in the body attaches
+ * [LocalModalFieldEntry], so the first one takes focus. The accent and primary actions attach
+ * [LocalModalActionEntry]. A destructive action never does, so a confirmation lands on its safe
+ * choice. Both are null outside a modal.
  */
 internal val LocalModalFieldEntry = staticCompositionLocalOf<FocusRequester?> { null }
 internal val LocalModalActionEntry = staticCompositionLocalOf<FocusRequester?> { null }
 
 /**
- * The one modal frame. Owns the dialog window, the scrim, the entry, focus, Escape and back, and
- * dismissal; callers supply a title, a body and actions. The Android window blur is asked for from
- * inside this window, which is the only place it can be.
+ * The one modal frame. It owns the dialog window, the scrim, the enter animation, focus, Escape
+ * and Back, and dismissal. Callers supply a title, a body and actions. It requests the Android
+ * window blur from inside the dialog window, the only place where that request works.
  */
 @Composable
 fun Modal(
@@ -124,9 +128,9 @@ fun Modal(
         ),
     ) {
         DialogBackdropBlur()
-        /* A dialog is its own surface, so it writes with the screen's ink rather than the ink of
-         * whatever raised it. A control that fills itself with the brand gradient swaps in a dark
-         * ink and a white focus ring for its own face; both would be unreadable here. */
+        /* A dialog is its own surface, so it uses the screen's palette and not the palette of
+         * whatever opened it. A control filled with the brand gradient provides a dark ink and a
+         * white focus ring for its own face, and both would be unreadable here. */
         CompositionLocalProvider(
             LocalInDialogWindow provides true,
             LocalPalette provides LocalSurfacePalette.current,
@@ -137,7 +141,7 @@ fun Modal(
     }
 }
 
-/** The frame without its dialog window, so the render harness can draw it. */
+/** The frame without its dialog window, so the desktop screenshot tests can draw it. */
 @Composable
 internal fun ModalFrame(
     size: ModalSize,
@@ -154,9 +158,9 @@ internal fun ModalFrame(
     val window = LocalWindowInfo.current.containerSize
     val windowHeight = with(density) { window.height.toDp() }
     val sheet = size != ModalSize.Ask && LocalWidthClass.current == WidthClass.Compact
-    /* A panel is 440dp wide so its rows stay readable on a desktop, where height is plentiful.
-     * A phone on its side has 330dp of height for the whole panel, so there the width is the
-     * room a body gets: 720dp, and the body lays itself out beside itself. */
+    /* A panel is 440dp wide, so its rows stay readable on a desktop, where height is plentiful.
+     * A phone in landscape has 330dp of height for the whole panel, so there the panel takes its
+     * room from the width instead: 720dp, and the body lays its parts out side by side. */
     val panelMaxWidth = if (windowHeight < SHORT_WINDOW) 720.dp else 440.dp
     val visible = remember { MutableTransitionState(false) }.apply { targetState = true }
     val focusRequester = remember { FocusRequester() }
@@ -170,10 +174,11 @@ internal fun ModalFrame(
     val windowFocused = LocalWindowInfo.current.isWindowFocused
     // The scrim takes focus first: it is the node Escape and Back route through.
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
-    /* Under a remote or a keyboard focus then moves into the modal, because the scrim's own click
-     * is "dismiss". It goes to the field the caller named, else the first field, else the
-     * confirming action, else the first control the focus system finds. A slow box can compose the
-     * modal before its window has focus, so this retries for a second until something holds it. */
+    /* Under a remote or a keyboard, focus then moves into the modal, because a click on the scrim
+     * means "dismiss". Focus goes to the field the caller named, else the first field, else the
+     * confirming action, else the first control the focus system finds. A slow TV box can compose
+     * the modal before its window has focus, so this retries for one second until something
+     * holds focus. */
     LaunchedEffect(remoteOrKeyboard, windowFocused) {
         if (!remoteOrKeyboard) return@LaunchedEffect
         repeat(ENTRY_FOCUS_TRIES) {
@@ -200,7 +205,8 @@ internal fun ModalFrame(
             .onPreviewKeyEvent { event ->
                 when {
                     dismissable && event.type == KeyEventType.KeyDown && event.key == Key.Escape -> { onDismiss(); true }
-                    // Center on the scrim itself would close the modal with nothing chosen; it goes inside instead.
+                    // Center on the scrim would close the modal with nothing chosen, so it moves
+                    // focus inside instead.
                     scrimFocused && isTvActivationKey(event.key) -> {
                         if (event.type == KeyEventType.KeyDown) focusManager.moveFocus(FocusDirection.Enter)
                         true
@@ -251,8 +257,9 @@ internal fun ModalFrame(
                 ) { CompositionLocalProvider(LocalModalFieldEntry provides fieldEntry) { body() } }
                 if (actions != null) {
                     Rule()
-                    /* Actions wrap to a second line when they do not fit one: three keys at large
-                     * text in a 320dp Ask used to squeeze the last one down to a letter per line. */
+                    /* Actions wrap to a second line when they do not fit on one. Without the wrap,
+                     * three keys at large text in a 320dp Ask squeeze the last key down to one
+                     * letter per line. */
                     FlowRow(
                         modifier = Modifier.fillMaxWidth().heightIn(min = Space.rowTall).padding(horizontal = Space.gap, vertical = Space.gapTight),
                         horizontalArrangement = Arrangement.spacedBy(Space.gapTight, Alignment.End),
@@ -268,9 +275,9 @@ internal fun ModalFrame(
 }
 
 /**
- * [fraction] of the available width, but never more than [max]. Written as one layout step on
- * purpose: `fillMaxWidth(f).widthIn(max)` cannot cap anything, because the fill has already fixed
- * the width by the time the cap measures, which is how every panel came to span a desktop window.
+ * [fraction] of the available width, but never more than [max]. It is one layout step on purpose:
+ * `fillMaxWidth(f).widthIn(max)` caps nothing, because the fill fixes the width before the cap
+ * measures, and every panel would then span a desktop window.
  */
 private fun Modifier.widthFraction(fraction: Float, max: Dp): Modifier = layout { measurable, constraints ->
     val width = minOf((constraints.maxWidth * fraction).roundToInt(), max.roundToPx()).coerceIn(constraints.minWidth, constraints.maxWidth)
@@ -284,7 +291,7 @@ private const val ENTRY_FOCUS_TRIES = 20
 /** Under this window height a panel modal widens, because height is what it lacks. */
 private val SHORT_WINDOW = 480.dp
 
-/** A hairline that appears under a scrolled header; kept here so every frame draws it the same. */
+/** A thin line under a header once the content scrolls, drawn the same way in every frame. */
 @Composable
 internal fun ScrolledRule(scrolled: Boolean) {
     Rule(Modifier.alpha(if (scrolled) 1f else 0f))

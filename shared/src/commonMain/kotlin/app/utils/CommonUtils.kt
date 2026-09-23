@@ -8,18 +8,18 @@ import org.kotlincrypto.hash.md.MD5
 import org.kotlincrypto.hash.sha2.SHA256
 import kotlin.time.Clock
 
-/** Platform-agnostic utility functions (no expect/actual). */
+/** Utility functions that are the same on every platform (no expect/actual). */
 
-/** App name sourced from BuildConfig (defined in AppConfig.kt in buildSrc). */
+/** The app name, from the generated KiteBuildConfig (set in the root build.gradle.kts). */
 val appName: String = KiteBuildConfig.APP_NAME
 
 /** Marker annotation for protocol-related builders and scopes. */
 annotation class ProtocolApi
 
 /**
- * Current local time for a chat line, in the device's own clock format: "14:23" where the device
- * is on a 24-hour clock, "2:23 PM" where it is not. Seconds are left out: a chat line is stamped
- * to the minute everywhere else people read chat.
+ * The current local time for a chat line, in the device's own clock format: "14:23" on a 24-hour
+ * clock, "2:23 PM" otherwise. Seconds are left out, because other chat apps also stamp a line to
+ * the minute.
  */
 fun generateClockstamp(): String {
     val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
@@ -37,11 +37,11 @@ fun generateClockstamp(): String {
 private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
 /**
- * Shared-playlist size limits, from the reference python server's `constants.py`
- * (`PLAYLIST_MAX_ITEMS` / `PLAYLIST_MAX_CHARACTERS`, enforced via `playlistIsValid`).
- * The official server silently refuses any `playlistChange` exceeding these and sends
- * the old playlist back — so the client must not let the user build one, and our own
- * built-in server must enforce the same rule on inbound changes.
+ * Size limits of the shared playlist (the file list that everyone in a room follows), from the
+ * reference Python server's `constants.py` (`PLAYLIST_MAX_ITEMS` and `PLAYLIST_MAX_CHARACTERS`,
+ * enforced by `playlistIsValid`). The official server silently refuses a `playlistChange` over
+ * these limits and sends the old playlist back. So the client must not let the user build such a
+ * playlist, and the built-in server must enforce the same rule on incoming changes.
  */
 const val PLAYLIST_MAX_ITEMS = 250
 const val PLAYLIST_MAX_CHARACTERS = 10000
@@ -66,28 +66,26 @@ val audioExs = listOf("mp3", "m4a", "aac", "flac", "alac", "aiff", "aif", "opus"
 val mediaExs = vidExs + audioExs
 
 /**
- * Returns a [FileKitType.File] configured for picking media files.
+ * The FileKit file type for picking media files.
  *
- * On Android, the full [mediaExs] list is used as a MIME-extension filter so only matching files
- * appear selectable in the SAF picker.
+ * On every platform except iOS, the full [mediaExs] list filters the picker, so only matching
+ * files can be picked.
  *
- * On iOS, the extensions filter is OMITTED. Reason: FileKit maps each extension to a UTType via
+ * On iOS the extension filter is left out. FileKit maps each extension to a UTType with
  * `UTType.typeWithFilenameExtension(ext)`. Uncommon video extensions (divx, xvid, rm, rmvb, amv,
- * mtv, mod, tod, dat, vob, f4v, mxf, asf, swf, h264, h265 …) have no registered public UTType,
- * so the API returns a *dynamic* UTType of the form `dyn.abc123…`. On iOS 26, passing dynamic
- * UTTypes to `UIDocumentPickerViewController(forOpeningContentTypes:)` causes the picker to
- * render every file as dimmed/unselectable. Falling back to [FileKitType.File] with `null`
- * extensions makes FileKit use `UTTypeItem` (all files pickable), and the player layer
- * (AVPlayer / VLCKit / mpv) naturally rejects unsupported formats downstream.
+ * mtv, mod, tod, dat, vob, f4v, mxf, asf, swf, h264, h265 and more) have no registered public
+ * UTType, so the call returns a dynamic UTType of the form `dyn.abc123...`. On iOS 26, passing
+ * dynamic UTTypes to `UIDocumentPickerViewController(forOpeningContentTypes:)` shows every file
+ * dimmed and unselectable. With no extensions, FileKit uses `UTTypeItem` (every file can be
+ * picked), and the engine (AVPlayer, VLCKit or KitePlayer) rejects an unsupported format later.
  */
 val mediaFileKitType: FileKitType
     get() = if (platform == Platform.IOS) FileKitType.File() else FileKitType.File(extensions = mediaExs)
 
 /**
- * Whether a filename (with extension) names a media file we are willing to put into / resolve
- * from the shared playlist. Matches every [mediaExs] extension, case-insensitively. Files
- * without a recognized extension are ignored so directory indexing doesn't pull in `.nfo`,
- * `.jpg`, `.txt`, etc.
+ * Whether [filename] names a media file that the shared playlist may hold or resolve. It matches
+ * every [mediaExs] extension, ignoring case. A file without a known extension does not match, so
+ * folder indexing skips `.nfo`, `.jpg`, `.txt` and similar files.
  */
 fun isPlayableMediaFilename(filename: String): Boolean {
     val ext = filename.substringAfterLast('.', "").lowercase()
@@ -95,7 +93,7 @@ fun isPlayableMediaFilename(filename: String): Boolean {
     return ext in mediaExs
 }
 
-/** Supported subtitle/closed-caption file extensions, used as the FileKit picker filter. */
+/** Supported subtitle and closed-caption file extensions, used as the FileKit picker filter. */
 val ccExs = listOf("srt", "sub", "sbv", "ass", "ssa", "usf", "idx", "vtt", "smi", "rt", "txt")
 
 /** Supported playlist file extensions, used as the FileKit picker filter. */
@@ -107,7 +105,11 @@ fun md5(str: String) = MD5().digest(str.encodeToByteArray())
 /** SHA-256 digest of [str] as raw bytes. */
 fun sha256(str: String) = SHA256().digest(str.encodeToByteArray())
 
-/** True if this character falls in a common emoji code-point range or is a surrogate. */
+/**
+ * True if this character is in the 0x2600 to 0x27BF symbol range or is a surrogate. A `Char` is
+ * one UTF-16 unit (at most 0xFFFF), so the ranges above 0xFFFF never match. An emoji above 0xFFFF
+ * matches only through the surrogate check.
+ */
 fun Char.isEmoji(): Boolean {
     val codePoint = this.code
     return when {
@@ -126,10 +128,13 @@ fun Char.isEmoji(): Boolean {
     }
 }
 
-/** substring() with [start]/[end] coerced into bounds, so it never throws. */
+/**
+ * `substring` with [start] raised to 0 and [end] capped at the length. It still throws when
+ * [start] ends up past [end].
+ */
 fun String.substringSafely(start: Int, end: Int) = substring(start.coerceAtLeast(0), end.coerceAtMost(length))
 
-/** @return random password in "XX-###-###" format (e.g. "AB-123-456") */
+/** @return A random managed-room password in the "XX-###-###" format, for example "AB-123-456" */
 fun generateRoomPassword(): String {
     fun letters(n: Int) = (1..n).map { ('A'..'Z').random() }.joinToString("")
     fun digits(n: Int) = (1..n).map { ('0'..'9').random() }.joinToString("")

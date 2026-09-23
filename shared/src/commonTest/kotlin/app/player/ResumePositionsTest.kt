@@ -7,8 +7,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Where a file was left. The policy matters more than the storage: offering to resume something
- * the viewer barely started, or already finished, is worse than not offering at all.
+ * A resume point remembers where the viewer left a file. The policy matters more than the storage:
+ * an offer to resume a file that the viewer barely started, or already finished, is worse than none.
  */
 class ResumePositionsTest {
 

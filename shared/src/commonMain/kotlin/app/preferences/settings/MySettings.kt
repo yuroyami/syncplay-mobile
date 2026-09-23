@@ -193,8 +193,8 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
 }
 
 /**
- * What the room is allowed to draw over the video, and for how long. Chat is a log you read;
- * these are interruptions, so they get their own category instead of a group under chat.
+ * What the room may draw over the video, and for how long. Chat is a log that the user reads, but
+ * these notices interrupt, so they get their own category instead of a group under chat.
  */
 val INROOM_NOTICES = SettingCategory(
     key = "room-notices",
@@ -224,8 +224,8 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
         +CUSTOM_SEEK_AMOUNT
     }
     group({ it.settingsGroupSubtitles }) {
-        /* Preferred track languages, mirrored from the global Language category so they are
-         * reachable mid-session too. */
+        /* The preferred track languages, repeated from the global Language category, so that
+         * they can also be changed inside a room. */
         +CC_LANG
         +AUDIO_LANG
     }
@@ -266,11 +266,11 @@ val INROOM_ADVANCED = SettingCategory(
 val SETTINGS_GLOBAL: List<SettingCategory> = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
 
 /**
- * Engine-agnostic in-room settings.
+ * The in-room settings that apply to every engine.
  *
- * Engine-specific rows are absent here: each [app.player.PlayerImpl] returns its own category
- * via [app.player.PlayerImpl.configurableSettings], and [roomSettings] folds the active engine's
- * rows into the player category as its last group.
+ * Engine-specific rows are not here. Each [app.player.PlayerImpl] returns its own category from
+ * [app.player.PlayerImpl.configurableSettings], and [roomSettings] folds the active engine's rows
+ * into the player category as its last group.
  */
 val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_SYNC,
@@ -281,7 +281,10 @@ val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_ADVANCED,
 )
 
-/** The room's categories, with the active engine's rows folded into the player category. */
+/**
+ * The room's categories. The player category also gets the audio visualizer row when the engine
+ * supports it, and the active engine's rows as its last group.
+ */
 fun roomSettings(engine: SettingCategory?, supportsAudioVisualization: Boolean = false): List<SettingCategory> {
     if (engine == null && !supportsAudioVisualization) return SETTINGS_ROOM
     val player = SettingCategory(INROOM_PLAYER_SETTINGS.key, INROOM_PLAYER_SETTINGS.title, INROOM_PLAYER_SETTINGS.icon) {

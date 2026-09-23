@@ -14,20 +14,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** Global viewmodel handle, mirroring the Android Activity and the desktop window. */
+/** The app viewmodel, held here as the Android Activity and the desktop window hold theirs. */
 var globalViewmodel: SyncplayViewmodel? = null
 
 /**
  * The browser entry point.
  *
- * The order matters and differs from every other platform in one way: nothing composes until the
- * stored preferences have been read. Android holds its splash and desktop blocks the calling
- * thread, but a page can do neither, so it waits properly instead. The wait is a localStorage
- * read, so it is over before the browser has finished painting anything.
+ * The call order matters: nothing composes until the stored preferences have been read. Android
+ * holds its splash screen and desktop blocks the calling thread, but a page can do neither, so it
+ * suspends in awaitPreferences instead. The wait is one localStorage read, so it ends before the
+ * browser paints anything.
  *
- * `ComposeViewport` rather than the older canvas entry point on purpose: it is the one that
- * supports putting real HTML elements inside the Compose layout, which is how the video engine
- * will eventually get its `<video>`.
+ * This uses `ComposeViewport`, not the older canvas entry point, because only `ComposeViewport`
+ * can put real HTML elements inside the Compose layout. The web video engine needs that for its
+ * `<video>` element.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {

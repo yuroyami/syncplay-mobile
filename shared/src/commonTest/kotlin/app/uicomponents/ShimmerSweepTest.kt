@@ -6,10 +6,9 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * The shimmer loops by restarting its phase. The loop is only invisible if, at both ends, no
- * pixel of the tile sits inside the light band; the corners are the extreme points, so they are
- * what is checked. The old sweep lit the top-left corner at phase 0 and the bottom-right at
- * phase 1, which showed as a snap on every wrap.
+ * The shimmer loops by restarting its phase. The restart is invisible only if no pixel of the tile
+ * sits inside the light band at either end of the loop. The corners are the extreme points, so the
+ * test checks them. A corner lit at phase 0 or phase 1 shows as a jump on every restart.
  */
 class ShimmerSweepTest {
 

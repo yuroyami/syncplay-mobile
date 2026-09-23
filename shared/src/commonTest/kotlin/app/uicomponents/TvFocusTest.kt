@@ -8,7 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** The decisions behind a remote working a text field, from pull request #159. */
+/** The decisions behind TV remote navigation in a text field (pull request #159). */
 class TvFocusTest {
 
     @Test

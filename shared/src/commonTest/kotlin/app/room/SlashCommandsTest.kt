@@ -3,7 +3,7 @@ package app.room
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** The chat box parser. It never throws, because what it reads is a text field. */
+/** Tests for the chat box's slash-command parser. It never throws, because it reads a text field. */
 class SlashCommandsTest {
 
     @Test

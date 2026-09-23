@@ -27,9 +27,9 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [ServerRoom.getPosition] adopts the slowest watcher and rewrites the room's own state, which
- * is faithful to Python's `Room.getPosition()`. These tests pin the two ways that bites: two
- * reads in a row disagree, and the second read inherits a `setBy` the first one chose.
+ * [ServerRoom.getPosition] adopts the slowest watcher and rewrites the room's own state, as the
+ * Python server's `Room.getPosition()` does. These tests pin the two side effects: two reads in a
+ * row disagree, and the second read inherits a `setBy` that the first read chose.
  */
 class ServerRoomPositionTest {
 
@@ -50,8 +50,8 @@ class ServerRoomPositionTest {
     }
 
     /**
-     * Joins the room first, then sets the position. Order matters: [ServerRoom.addWatcher]
-     * hands a joiner the room's own position, so a position set before joining is thrown away.
+     * Joins the room first, then sets the position. Order matters: [ServerRoom.addWatcher] gives
+     * every joiner after the first the room's own position, so a position set earlier is lost.
      */
     private fun ServerRoom.joinAt(name: String, position: Double): ServerWatcher =
         ServerWatcher(server, name).also { addWatcher(it); it.setPosition(position) }

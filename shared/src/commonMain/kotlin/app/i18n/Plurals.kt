@@ -1,17 +1,18 @@
 package app.i18n
 
 /**
- * Which form a language uses for a number. The names are the CLDR ones, which is what the
- * `_zero` / `_one` / `_two` / `_few` / `_many` / `_other` string keys are named after.
+ * The plural form that a language uses for a number. The names come from CLDR (the Unicode
+ * locale data), and the `_zero` / `_one` / `_two` / `_few` / `_many` / `_other` string keys
+ * use the same names.
  */
 enum class PluralForm { Zero, One, Two, Few, Many, Other }
 
 /**
- * The form [count] takes in [language]. Only the eight languages the app ships are handled;
- * anything else is treated like English.
+ * The plural form that [count] takes in [language]. The rules cover the eight languages that
+ * the app ships and a few more. Any other language uses the English rule.
  *
- * These are the integer rules from CLDR. They are short because the app only ever counts
- * whole things: people in a room, clients on a server.
+ * These are the integer rules from CLDR. They are short because the app only counts whole
+ * things: people in a room, clients on a server.
  */
 fun pluralForm(language: String, count: Int): PluralForm {
     val n = if (count < 0) -count else count
@@ -19,7 +20,7 @@ fun pluralForm(language: String, count: Int): PluralForm {
         // One form for every number.
         "zh", "ja", "ko", "vi", "th", "id", "ms" -> PluralForm.Other
 
-        // Zero and one share a form; everything else is plural.
+        // Zero and one share a form. Every other number is plural.
         "fr" -> if (n <= 1) PluralForm.One else PluralForm.Other
 
         "ru", "uk" -> when {
@@ -48,7 +49,7 @@ fun pluralForm(language: String, count: Int): PluralForm {
     }
 }
 
-/** Picks one of the six forms for [count], in whatever language the app is showing. */
+/** Picks one of the six forms for [count], by the rule for the current Lyricist language tag. */
 internal fun <T> plural(
     count: Int,
     zero: T, one: T, two: T, few: T, many: T, other: T,

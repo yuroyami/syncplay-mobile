@@ -10,14 +10,15 @@ import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.ktor.client.HttpClient
 
-/** expect declarations actualized per platform (Android, iOS, desktop). */
+/** Declarations that each platform implements (Android, iOS, desktop, web), plus a few helpers. */
 
 /** Current system time as Unix epoch milliseconds (UTC). */
 expect fun generateTimestampMillis(): Long
 
 /**
- * Whether the app is running on a television. TVs cut off the outer edge of the picture
- * (overscan), so the room keeps its chrome inside a safe margin there.
+ * Whether the app runs on a television. A TV cuts off the outer edge of the picture (overscan),
+ * so the room (the screen where a group watches together) keeps its controls inside a safe
+ * margin there.
  */
 expect fun isTelevision(): Boolean
 
@@ -27,15 +28,17 @@ expect fun isTelevision(): Boolean
  */
 expect fun deviceUses24HourClock(): Boolean
 
-/** Global platform-specific callback handler for system-level operations.
- * Must be initialized before use. */
+/**
+ * The platform's [PlatformCallback], for system-level operations. Each platform sets it at
+ * startup, before any code reads it.
+ */
 lateinit var platformCallback: PlatformCallback
 
 
 expect class WeakRef<T: Any>
 expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
 
-/** Platforms Syncplay runs on, each with a display label and brand color. */
+/** The platforms that the app runs on, each with a display label and brand color. */
 enum class Platform(val label: String, val color: Color) {
     Android(label = "Android", color = Color(0xFF32DE84)),
     IOS(label = "iOS", color = Color(0xFFA2AAAD)),
@@ -48,13 +51,16 @@ expect val platform: Platform
 
 expect val httpClient: HttpClient
 
-/** Media player engines available on the current platform. */
+/**
+ * The player engines available on this platform. An engine is one media player backend, such as
+ * ExoPlayer or mpv.
+ */
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
 /** Builds the platform-specific [NetworkManager] for this room. */
 expect fun RoomViewmodel.instantiateNetworkManager(): NetworkManager
 
-/** Formats a duration as "mm:ss" (under 1h) or "hh:mm:ss", zero-padded. */
+/** Formats a duration as "mm:ss" (under an hour) or "hh:mm:ss", zero-padded. */
 fun timestampFromMillis(milliseconds: Number): String {
     val secs = (milliseconds.toLong() / 1000L)
     return if (secs < 3600) {
@@ -64,25 +70,25 @@ fun timestampFromMillis(milliseconds: Number): String {
     }
 }
 
-/** Filename of [uri] (content:// on Android, file:// on iOS), or null if undeterminable. */
+/** Filename of [uri] (content:// on Android, file:// on iOS), or null when it is unknown. */
 expect fun getFileName(uri: PlatformFile): String?
 
-/** Parent folder name of a file URI, or null if undeterminable. */
+/** Parent folder name of a file URI, or null when it is unknown. */
 expect fun getFolderName(uri: String): String?
 
-/** Size in bytes of [uri], or null if undeterminable. */
+/** Size in bytes of [uri], or null when it is unknown. */
 expect fun getFileSize(uri: PlatformFile): Long?
 
 /** Text content of a clipboard entry, or null if it holds no text. */
 expect fun ClipEntry.getText(): String?
 
 /**
- * Applies the windowing policy for the room screen: hides system UI chrome (Android) and
- * locks the interface orientation to the requested mode.
+ * Applies the window policy of the room screen: it hides the system bars (Android) and locks
+ * the orientation. Desktop and the web do nothing here.
  *
- * Acts as the single source of truth for orientation changes inside the room — re-fires
- * whenever [portrait] changes so that toggling between landscape and portrait is a single
- * geometry update, not a race between two effects.
+ * It is the only place that changes the orientation inside the room. It runs again whenever
+ * [portrait] changes, so a switch between landscape and portrait is one geometry update, not a
+ * race between two effects.
  *
  * @param portrait true to lock to portrait, false to lock to landscape
  */
@@ -90,8 +96,8 @@ expect fun ClipEntry.getText(): String?
 expect fun EnterRoomMode(portrait: Boolean)
 
 /**
- * Restores the default windowing policy for screens outside the room (home, server host,
- * theme creator): system UI chrome visible (Android) and all orientations unlocked.
+ * Restores the default window policy for the screens outside the room (home, server host, theme
+ * creator): the system bars show (Android) and every orientation is allowed.
  */
 @Composable
 expect fun ExitRoomMode()
@@ -99,69 +105,80 @@ expect fun ExitRoomMode()
 
 expect fun <T : Any> WeakRef<T>?.get(): T?
 
-/** Device local (WiFi/LAN) IP, or null if unavailable. Used by server hosting to show a join IP. */
+/**
+ * The device's local (Wi-Fi or LAN) IP address, or null when unavailable. Server hosting shows
+ * it as the address that others join.
+ */
 expect fun getDeviceIpAddress(): String?
 
-/** Log directory path (Android: filesDir/logs, iOS: NSDocumentDirectory/logs). */
+/**
+ * The log folder, or null when the platform has none (the web). Android uses `filesDir/logs`,
+ * iOS uses `Library/Logs/Synkplay`, and desktop uses `logs` in the app data folder.
+ */
 expect fun getLogDirectoryPath(): String?
 
-/** An app-private cache folder named [subdir], created if missing; null when the platform has none. */
+/** An app-private cache folder named [subdir], created if missing. Null when there is none. */
 expect fun getCacheDirectoryPath(subdir: String): String?
 
 /** Appends [content] to [path], creating the file if missing. */
 expect fun appendToFile(path: String, content: String)
 
 /**
- * Writes [content] to [path], REPLACING any existing file. Use this for downloaded
- * artifacts (e.g. subtitles) where appending to a previous copy would corrupt the file.
+ * Writes [content] to [path] and replaces any existing file. Use it for a downloaded file, such
+ * as a subtitle, where an append to an older copy would corrupt the file.
  */
 expect fun writeTextFile(path: String, content: String)
 
 /** Names of files in [directoryPath]. */
 expect fun listFiles(directoryPath: String): List<String>
 
-/** Full text of the file at [path], or "" if missing/unreadable. */
+/** Full text of the file at [path], or "" when the file is missing or unreadable. */
 expect fun readFile(path: String): String
 
 /** Deletes the file at [path]. */
 expect fun deleteFile(path: String)
 
 /**
- * Overwrites the file at [path] with [bytes]. Creates the file (and parents on Android) if
- * missing. No-op on failure. Used for mpv.conf import on Android.
+ * Overwrites the file at [path] with [bytes], and creates the file if it is missing. Android and
+ * desktop also create missing parent folders. Does nothing on failure. Used for the mpv.conf
+ * import, the mpv libass fallback font and the KitePlayer copy of a subtitle.
  */
 expect fun writeFileBytes(path: String, bytes: ByteArray)
 
 /**
- * Reads all bytes from the file at [path], or null if it does not exist / cannot be read.
- * Used for mpv.conf export on Android.
+ * All bytes of the file at [path], or null when the file is missing or cannot be read. Used for
+ * the mpv.conf export on Android.
  */
 expect fun readFileBytes(path: String): ByteArray?
 
 /**
- * Returns true if a file exists at [path]. Used to make one-time installs (e.g. the mpv libass
- * fallback font) idempotent without reading the whole file.
+ * Whether a file exists at [path]. A one-time install (for example the mpv libass fallback font)
+ * uses it to skip work that is already done, without reading the file.
  */
 expect fun fileExists(path: String): Boolean
 
 /**
- * Returns the absolute path where mpv looks for its user configuration file, or null on
- * platforms with no mpv engine. On Android this resolves to `{filesDir}/mpv.conf`, the
- * `config-dir` every mpv core starts with (see `MpvImpl`).
+ * The absolute path of mpv's user configuration file. On Android it is `mpv.conf` in `filesDir`,
+ * the `config-dir` that every mpv core starts with (see `MpvImpl`). iOS and the web have no mpv
+ * engine and return null. Desktop returns a path that nothing reads.
  */
 expect fun getMpvConfFilePath(): String?
 
 /**
- * Returns and clears a pending shortcut JoinConfig, if any.
- * On iOS, this reads from the pending shortcut flow set by the AppDelegate.
- * On Android, this always returns null (shortcuts are handled via Intents).
+ * Returns and clears a pending join from outside the app, if any. iOS reads the join that the
+ * app delegate stored from a Quick Action or an invite link. Desktop reads the join from the
+ * command line, and the web reads it from the address bar. Android always returns null, because
+ * it handles shortcuts through intents.
  */
 expect fun consumePendingShortcut(): app.home.JoinConfig?
 
-/** True when the system asks for less motion: iOS Reduce Motion, Android's animator scale at zero, never on desktop. */
+/**
+ * True when the system asks for less motion: iOS Reduce Motion, Android's animator scale at zero,
+ * or the web's `prefers-reduced-motion` query. Always false on desktop.
+ */
 expect fun reducedMotion(): Boolean
 
-/** The OS and the hardware, one line, for a bug report: "Android 15 (Pixel 7)". */
+/** The OS and the hardware, one line, for a bug report: "Android 15 (API 35, Google Pixel 7)". */
 expect fun platformDescription(): String
 /**
  * The name of a language written in [inLanguage], from a two-letter ISO 639-1 code. The app picks

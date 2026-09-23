@@ -4,8 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The decision that used to be made after the server answered, by which time the Hello carrying
- * the password hash had already gone out in plain text.
+ * [decideTls] runs before the socket opens. A decision after the server answers is too late,
+ * because the Hello with the password hash has already gone out in plain text.
  */
 class TlsPolicyTest {
 

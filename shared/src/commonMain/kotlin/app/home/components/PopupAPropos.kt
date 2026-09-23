@@ -48,7 +48,7 @@ import app.uicomponents.controls.ListRow
 
 object PopupAPropos {
 
-    /** About: the mark, the wordmark, what the app is, the facts, and the links. */
+    /** The About popup: the logo, the wordmark, what the app is, a few facts, and the links. */
     @Composable
     fun AProposPopup(visibilityState: MutableState<Boolean>, homeViewmodel: HomeViewmodel) {
         val globalViewmodel = LocalGlobalViewmodel.current
@@ -78,10 +78,10 @@ object PopupAPropos {
     }
 
     /**
-     * The body of About, without its dialog so the render harness can draw it. Two arrangements:
-     * the story over the links, or, in a window too short for that stack (a phone on its side,
-     * where the panel is 330dp tall), the story beside the links, so Watch alone and the update
-     * check are on screen without a scroll.
+     * The body of the About popup, without its dialog, so the desktop screenshot tests can draw
+     * it. Normally the story sits above the links. In a window too short for that (a phone in
+     * landscape, where the panel is 330dp tall), the story sits beside the links, so Watch alone
+     * and the update check show without scrolling.
      */
     @Composable
     internal fun AboutBody(
@@ -108,7 +108,7 @@ object PopupAPropos {
         }
     }
 
-    /** The mark, the wordmark, what the app is, and the three facts; [compact] halves the mark. */
+    /** The logo, the wordmark, what the app is, and three facts. [compact] draws a smaller logo. */
     @Composable
     private fun ColumnScope.Story(compact: Boolean) {
         val p = palette
@@ -139,7 +139,7 @@ object PopupAPropos {
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(Space.gap))
-        // Three facts that wrap to a second line rather than run into each other when the type grows.
+        // When the text grows, the three facts wrap to a second line instead of running together.
         FlowRow(
             modifier = Modifier.fillMaxWidth().padding(bottom = Space.gapTight),
             horizontalArrangement = Arrangement.spacedBy(Space.gutter, Alignment.CenterHorizontally),
@@ -150,7 +150,10 @@ object PopupAPropos {
         }
     }
 
-    /** The links, the update check and the one way to watch alone. */
+    /**
+     * The links, the update check, and Watch alone, which is the only way into solo mode
+     * (offline playback).
+     */
     @Composable
     private fun Links(
         updateResult: UpdateCheck.Result?,
@@ -173,8 +176,8 @@ object PopupAPropos {
                 secondText = strings.aboutLicencesButton,
                 onSecondClick = onLicences,
             )
-            // Asked for, never automatic: a direct download has nothing else that would say a
-            // newer version exists.
+            // The user starts the update check; it never runs by itself. A direct download has no
+            // other way to learn that a newer version exists.
             UpdateCheckAction(
                 result = updateResult,
                 isChecking = updateChecking,
@@ -189,7 +192,7 @@ object PopupAPropos {
     /** Under this window height the story sits beside the links instead of above them. */
     private val SHORT_WINDOW = 480.dp
 
-    /** Every third-party piece inside the app, with its licence and a link to it. */
+    /** The licences popup: every third-party piece inside the app, with its licence and a link. */
     @Composable
     private fun LicencesModal(open: MutableState<Boolean>) {
         val p = palette
@@ -217,8 +220,8 @@ object PopupAPropos {
 
     /** A new-issue link with the environment already in the body. */
     private fun bugReportUrl(): String {
-        // Everything a triage needs, filled in already: without the engine and the build, most
-        // reports cost a round trip before anyone can even reproduce them.
+        // The body already holds what triage needs. Without the engine and the build, most
+        // reports need a second message before anyone can reproduce them.
         val body = """
             |**What happened?**
             |

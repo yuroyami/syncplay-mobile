@@ -29,10 +29,8 @@ import kotlinx.coroutines.withContext
 import kotlin.uuid.Uuid
 
 /**
- * Application-level ViewModel for managing global Syncplay state.
- *
- * Maintains app-wide settings, theme configuration, and tracks high-level
- * user interaction state that persists across screen navigation.
+ * The app-wide view model. It owns the navigation back stack and the themes, and it lives across
+ * all screens.
  */
 class SyncplayViewmodel : ViewModel() {
 
@@ -40,34 +38,31 @@ class SyncplayViewmodel : ViewModel() {
         app.utils.cleanupOldLogs()
     }
 
-    /** The navigation backstack */
     val backstack = mutableStateListOf<Screen>(Screen.Home)
 
     /**
-     * Whether the shared playlist feature is enabled.
-     *
-     * When disabled, all shared playlist functionality should be hidden/disabled
-     * throughout the UI, and this state should be communicated to the server.
+     * Whether the shared playlist is on. The shared playlist is the file list that everyone in a
+     * room follows. Nothing reads this flag yet.
      *
      * TODO: Advertise this to server, disable shared-playlist-related functionality everywhere when this is off
      */
     val isSharedPlaylistEnabled = mutableStateOf(true)
 
     /**
-     * Tracks whether the user has entered a room at least once during this app session.
-     *
-     * Used for UI/UX decisions like adjusting first-time behavior.
+     * Whether the user has entered a room at least once during this app session. The home screen
+     * shows its tips only before that, and the first room opens the user list once.
      */
     var hasEnteredRoomOnce = false
 
-    /** Weak References for our child viewmodels so we can access them from SyncplayActivity
-     * but also not prevent them from getting garbage-collected when they're finalized (invalidated and cleared)
+    /** Weak references to the child view models. The platform hosts (SyncplayActivity, the iOS and
+     * desktop apps) reach them through these, and a cleared view model can still be collected.
+     * AdamScreen sets [roomWeakRef]. Nothing sets [homeWeakRef], so it is always null.
      */
     var homeWeakRef: WeakRef<HomeViewmodel>? = null
     var roomWeakRef: WeakRef<RoomViewmodel>? = null
 
     /**
-     * The currently active theme.
+     * The active theme.
      */
     val currentTheme: StateFlow<SaveableTheme> = CURRENT_THEME.flow()
         .flowOn(ioDispatcher)
@@ -89,7 +84,9 @@ class SyncplayViewmodel : ViewModel() {
     }
 
     /**
-     * @return true if theme is saved, false if it already exists
+     * Saves [theme] as a custom theme and makes it the active theme.
+     *
+     * @return true if the theme is saved, false if it already exists
      */
     suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
         return withContext(ioDispatcher) {
@@ -122,7 +119,8 @@ class SyncplayViewmodel : ViewModel() {
 
     /**
      * Replaces [old] with [new] in one datastore write, so a fast save cannot lose the theme
-     * between a delete and an add. Refused when [new] already exists as another theme.
+     * between a delete and an add, and makes [new] the active theme. Returns false and changes
+     * nothing when [new] already exists as another theme.
      */
     suspend fun replaceTheme(old: SaveableTheme, new: SaveableTheme): Boolean = withContext(ioDispatcher) {
         val oldJson = old.asString()
@@ -137,7 +135,7 @@ class SyncplayViewmodel : ViewModel() {
     }
 
     init {
-        //Generate a unique ID for the user and persist, to use it for Klipy API only.
+        // Creates and saves a unique user ID once. Only the Klipy API (GIF search) uses it.
         viewModelScope.launch(ioDispatcher) {
             val userId = USER_ID.value()
             if (userId == null) USER_ID.set(Uuid.generateV7().toHexString())

@@ -14,10 +14,11 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
 /**
- * The preference store lives in Application Support, which the Files app never shows and iCloud
- * does not sync by document. It used to sit in Documents, which this app exposes to the Files app
- * on purpose for media, so the saved room password was one tap away; an existing store is moved
- * across once.
+ * Creates the preference store in Application Support, which the Files app never shows and iCloud
+ * does not sync as a document. Do not use Documents: this app shares Documents with the Files app
+ * on purpose, for media, so a store there puts the saved password of a room (a group of people
+ * watching together) one tap away. A store that an older version left in Documents is moved here
+ * once.
  */
 @OptIn(ExperimentalForeignApi::class)
 fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
@@ -49,8 +50,8 @@ fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
 fun initializeDS() {
     runCatching {
         datastore = dataStore(SYNKPLAY_PREFS)
-        // The first read comes off disk; doing it here, on a background thread, keeps it off the
-        // one that draws the first frame.
+        // The first read comes from disk. Starting it here, on a background thread, keeps it off
+        // the thread that draws the first frame.
         warmPreferences()
     }
 }

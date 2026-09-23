@@ -7,8 +7,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /**
- * Every trust decision in the app starts by asking which host a URL names, and the string was
- * written by whoever is in the room with you. These are the shapes that used to answer wrongly.
+ * Every trust decision in the app starts with the host that a URL names, and the URL comes from
+ * whoever is in the room. These are the URL shapes that a naive parser reads wrongly.
  */
 class UrlHostTest {
 

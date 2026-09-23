@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The app plays media URLs and joins servers the user types, so arbitrary hosts (LAN IPs, plain
-  HTTP streams) must stay reachable. What must never downgrade is the app's own backends: those
-  carry the OpenSubtitles key, the Klipy key and the update check.
+  The app plays media links and joins servers that the user types, so any host must stay
+  reachable, including LAN addresses and plain HTTP streams. The app's own services must never
+  fall back to plain HTTP, because their requests carry the OpenSubtitles key, the KLIPY key and
+  the update check.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">

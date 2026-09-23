@@ -1,21 +1,20 @@
 package app.room
 
 /**
- * Slash commands in the chat box.
+ * A command typed in the chat box, such as `/ready` or `/seek 1:30`. The desktop Syncplay client
+ * accepts similar commands. They reach actions that otherwise need the right panel: readiness,
+ * changing room, identifying as an operator, seeking to a time. A room is the group of people
+ * watching together.
  *
- * The desktop client has had these since forever and mobile has not, which means several things
- * the app can already do are reachable only by finding the right panel: setting readiness,
- * changing room, identifying as an operator, jumping to a timecode.
- *
- * The parser is deliberately dumb and total: anything it does not recognise is [Unknown], and
- * anything that does not start with a slash is [NotACommand] and gets sent as chat. It never
- * throws, because the caller is a text field.
+ * The parser is simple and total. Input that it does not recognize is [Unknown], and input that
+ * does not start with a slash is [NotACommand] and goes out as chat. The parser never throws,
+ * because its caller is a text field.
  */
 sealed interface SlashCommand {
     /** Ordinary text. Send it. */
     data object NotACommand : SlashCommand
 
-    /** A slash followed by something we do not know. */
+    /** A slash followed by a command word that the parser does not know. */
     data class Unknown(val name: String) : SlashCommand
 
     /** `/ready` and `/notready`. */
@@ -33,25 +32,28 @@ sealed interface SlashCommand {
     /** `/op <XX-000-000>`: identify as an operator in the current room. */
     data class Identify(val password: String) : SlashCommand
 
-    /** `/users`: print the roster into chat, for a room whose panel is closed. */
+    /**
+     * `/users`: print the roster (the list of users in the room) into chat, when its panel is
+     * closed.
+     */
     data object ListUsers : SlashCommand
 
-    /** `/help`: the list of these. */
+    /** `/help`: print the list of commands. */
     data object Help : SlashCommand
 
     /** The command word was right but what followed it was not. */
     data class BadArgument(val name: String, val expected: String) : SlashCommand
 }
 
-/** Every command word, for the help text and for anyone adding one. */
+/** Every command word, for the help text. A new command must be listed here too. */
 val SLASH_COMMANDS: List<String> =
     listOf("ready", "notready", "room", "seek", "pause", "play", "op", "users", "help")
 
 /**
- * Reads a chat draft.
+ * Parses a chat draft into a [SlashCommand].
  *
- * A leading `//` escapes: `//so` is the text `/so`, so a message that genuinely starts with a
- * slash is still sendable.
+ * A draft that starts with `//` is [SlashCommand.NotACommand], so it goes out as chat. The chat
+ * box sends it as typed, with both slashes.
  */
 fun parseSlashCommand(input: String): SlashCommand {
     val text = input.trim()
@@ -82,8 +84,8 @@ fun parseSlashCommand(input: String): SlashCommand {
 private val OPERATOR_PASSWORD = Regex("""[A-Z]{2}-\d{3}-\d{3}""")
 
 /**
- * `mm:ss`, `hh:mm:ss` or plain seconds, optionally prefixed with `+` or `-` to move by that
- * much instead of jumping to it.
+ * Parses a seek argument: `mm:ss`, `hh:mm:ss` or plain seconds. A leading `+` or `-` moves by
+ * that amount instead of jumping to it.
  */
 private fun parseSeek(argument: String): SlashCommand {
     if (argument.isEmpty()) return SlashCommand.BadArgument("seek", "a time like 1:23:45, or +30")

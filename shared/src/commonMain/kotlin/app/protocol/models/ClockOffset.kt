@@ -4,19 +4,20 @@ package app.protocol.models
  * How far our clock sits from the server's, estimated from the timestamps already on the wire.
  *
  * Every `State` carries the server's send time and echoes back the time we sent ours. With the
- * moment we received it, that is three of Cristian's four points, and the fourth (when the
- * server received ours) is not on the wire. Assuming the two directions are equally slow:
+ * moment we received it, that gives three of the four timestamps that NTP uses; the fourth
+ * (when the server received ours) is not on the wire. Assuming both directions are equally
+ * slow, Cristian's algorithm gives:
  *
  *     offset = serverSendTime + roundTrip / 2 - ourReceiveTime
  *
  * The assumption is wrong on any asymmetric link, and the error is bounded by half the
  * asymmetry. What makes the estimate usable anyway is the filter: the sample with the smallest
  * round trip in the window is the one that spent the least time queued, so it carries the least
- * of that error. This is the standard NTP trick and it is why a clock filter beats an average.
+ * of that error. NTP's clock filter works the same way, and picking the least-delayed sample is
+ * why a clock filter beats an average.
  *
- * **Nothing corrects playback from this yet.** It is measured and logged so a real two-device
- * session can show whether the numbers are sane before the sync decision is moved onto them.
- * Replacing the threshold ladder is the step after that, and it needs hardware.
+ * **Nothing corrects playback from this yet.** It is only measured and logged, so a real
+ * two-device session can show whether the numbers are sane.
  */
 class ClockOffsetEstimator(
     /** How many samples the filter keeps. NTP uses eight for the same reason. */
@@ -40,7 +41,7 @@ class ClockOffsetEstimator(
     var dispersionSeconds: Double = 0.0
         private set
 
-    /** Enough samples, and they agree closely enough to be worth acting on. */
+    /** Enough samples, and they agree closely enough to be trusted. */
     val settled: Boolean
         get() = window.size >= windowSize && dispersionSeconds <= MAX_SETTLED_DISPERSION_SECONDS
 

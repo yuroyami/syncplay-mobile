@@ -4,9 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The hosted-server log keeps its last 500 lines, so past 500 the list stops growing. A reader
- * that remembered how many lines it had seen then saw the same number forever and showed nothing
- * new for the rest of the session.
+ * The log of the server that the app hosts keeps its last 500 lines, so past 500 the list stops
+ * growing. A reader that counts the lines it has seen would see the same count forever and show
+ * nothing new, so [ServerLogCursor] keeps its place by sequence number.
  */
 class ServerLogCursorTest {
 

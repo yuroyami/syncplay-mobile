@@ -14,8 +14,9 @@ import androidx.compose.ui.unit.dp
 import app.room.roomTopInsets
 
 /**
- * Shading under the transport so white glyphs survive bright video: black rising to 70 percent
- * over the bottom 96dp. A gradient reads as shading; a flat block read as a letterbox bar.
+ * A dark gradient under the bottom bar, so white icons stay readable over bright video: black
+ * rising to 70 percent over the bottom 96dp. A gradient looks like shading, while a flat block
+ * looks like a letterbox bar.
  */
 @Composable
 fun BlackContrastUnderlay(modifier: Modifier = Modifier) {
@@ -39,8 +40,9 @@ fun BlackContrastUnderlay(modifier: Modifier = Modifier) {
 }
 
 /**
- * The same shading for the top row: black at 60 percent under the notch and the status line,
- * gone 96dp below them, so the room name and the rail survive a white frame.
+ * The same shading for the top row: black at 60 percent at the top edge, fading out 96dp below the
+ * notch inset. The room name and the rail (the strip of buttons that opens the panels) stay
+ * readable over a white frame. A room is the group of people watching together.
  */
 @Composable
 fun TopContrastUnderlay(modifier: Modifier = Modifier) {

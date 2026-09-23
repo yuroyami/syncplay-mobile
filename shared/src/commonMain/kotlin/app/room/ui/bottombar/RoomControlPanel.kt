@@ -70,11 +70,11 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 
 /*
- * The control panel: a row of glyph buttons. The audio and subtitle panel lives in the side dock
- * (CardTracks); the subtitle search and the chapter list live in their own files.
+ * The control panel: a row of icon buttons. The audio and subtitle panel is in the side dock
+ * (CardTracks). The subtitle search and the chapter list have their own files.
  */
 
-/** The entry glyph in the transport bar. */
+/** The button in the bottom bar that opens the control panel. */
 @Composable
 fun RoomControlPanelButton(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
@@ -109,9 +109,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
         viewmodel.dispatchOSD { Localization.strings.roomSeekUndone }
     }
 
-    /* A remote cannot find this row on its own: it sits above the seek bar, and a press of Up
-     * from there lands on the transport keys instead. So the row takes focus when it opens and
-     * hands it back to its own glyph when it closes. */
+    /* A remote cannot find this row on its own. The row sits above the seek bar, and Up from there
+     * lands on the transport keys instead. So the row takes focus when it opens, and gives focus
+     * back to its own button when it closes. */
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     val open by cardController.controlPanel.collectAsState()
     val row = remember { FocusRequester() }
@@ -145,8 +145,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
             cardController.toggleSeekTo()
         }
 
-        /* Only the local user's seeks are undoable (see RoomCallback.onSomeoneSeeked). The key
-         * carries the position an undo would return to, so there is no guessing before the tap. */
+        /* Only the local user's seeks can be undone (see RoomCallback.onSomeoneSeeked). The key
+         * shows the position that an undo returns to, so the user sees the target before the tap. */
         val last = viewmodel.seeks.lastOrNull()
         UndoSeekKey(target = last?.first) {
             when {
@@ -156,7 +156,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        /* Gesture switches live here, not in settings, so they can be flipped mid-playback. */
+        /* The gesture switches are here, not in settings, so they can change during playback. */
         GlyphButton(Icons.Filled.TouchApp, name = strings.roomGesturesPanelTitle, size = Space.glyphLarge) {
             cardController.toggleGestures()
         }
@@ -167,7 +167,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 return@GlyphButton
             }
             viewmodel.viewModelScope.launch {
-                // The panel never opens without media; the engine needs one to list tracks.
+                // The panel never opens without media. The engine needs media to list tracks.
                 viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                 cardController.toggleTracks(true)
             }
@@ -186,7 +186,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
     )
 }
 
-/** The undo glyph in a normal 48dp key, with the return timecode as a small badge under it. */
+/** The undo icon in a normal 48dp key, with the return time as a small badge under it. */
 @Composable
 private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
     val p = palette
@@ -238,7 +238,7 @@ private fun UndoSeekModal(seek: Pair<Long, Long>?, onDismiss: () -> Unit, onUndo
     ) {
         if (seek != null) {
             Text(
-                // second is where we are now, first is where the seek started.
+                // second is the current position, and first is where the seek started.
                 text = strings.roomUndoSeekMessage(timestampFromMillis(seek.second), timestampFromMillis(seek.first)),
                 style = Type.note,
                 color = palette.inkDim,

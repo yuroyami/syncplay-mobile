@@ -27,7 +27,7 @@ import syncplaymobile.shared.generated.resources.okay
 
 object PopupDidYaKnow {
 
-    /** First-launch tips, one at a time, with a Next that advances instead of showing one forever. */
+    /** The tips popup of the first launches. It shows one tip at a time, and Next moves on. */
     @Composable
     fun DidYaKnowPopup(state: MutableState<Boolean>) {
         val viewmodel = LocalGlobalViewmodel.current

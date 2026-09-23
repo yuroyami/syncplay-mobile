@@ -8,14 +8,17 @@ import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
 import kotlinx.serialization.json.JsonPrimitive
 
-/** Manages room lifecycle, watcher movement between rooms, and broadcasting. */
+/**
+ * Manages the rooms of the built-in server: their lifecycle, watcher moves between rooms, and
+ * broadcasts. A room is the group of people watching together, and a watcher is one user in it.
+ */
 open class ServerRoomManager {
 
     protected val _rooms = mutableMapOf<String, ServerRoom>()
 
     /**
-     * Runs [action] against every watcher in every room.
-     * Overridden in [PublicServerRoomManager] to confine the reach to the sender's room.
+     * Runs [action] against every watcher in every room. [PublicServerRoomManager] overrides it
+     * to reach only the sender's room.
      */
     open fun broadcast(sender: ServerWatcher, action: (ServerWatcher) -> Unit) {
         for (room in _rooms.values) {
@@ -34,13 +37,13 @@ open class ServerRoomManager {
         }
     }
 
-    /** Moves a watcher to a new room, removing it from the old one and creating the target if needed. */
+    /** Moves a watcher out of its old room and into [roomName], which is created when needed. */
     open fun moveWatcher(watcher: ServerWatcher, roomName: String) {
         val truncated = roomName.take(MAX_ROOM_NAME_LENGTH)
-        /* Moving to the room you are already in is not a move. Done literally, the last watcher
-         * in a room left it, the room was deleted for being empty, and a fresh one took its
-         * place: the playlist, the selected index, the position and every registered controller
-         * gone, on a client re-sending the room it is already in. */
+        /* A move to the watcher's current room is not a move. Done literally, the last watcher
+         * in a room would leave it, the empty room would be deleted, and a fresh one would take
+         * its place. The playlist, the selected index, the position and every registered
+         * controller would be lost, only because a client sent its current room again. */
         if (watcher.room?.name == truncated) return
         removeWatcher(watcher)
         val room = getOrCreateRoom(truncated)
@@ -54,7 +57,7 @@ open class ServerRoomManager {
         deleteRoomIfEmpty(oldRoom)
     }
 
-    /** Returns the existing room or creates one; controlled room names yield a [ControlledServerRoom]. */
+    /** Returns the room or creates it. A controlled room name gets a [ControlledServerRoom]. */
     private fun getOrCreateRoom(roomName: String): ServerRoom {
         _rooms[roomName]?.let { return it }
 
@@ -76,8 +79,8 @@ open class ServerRoomManager {
     /** Returns a unique username, appending underscores when the requested name is already taken. */
     fun findFreeUsername(username: String, maxLength: Int): String {
         var name = username.take(maxLength)
-        // A set, and each name lowercased once. The membership test below runs in a loop, so as a
-        // list it was a linear scan per underscore, and the lowercasing was redone every time.
+        // A set, with each name lowercased once. The membership test below runs in a loop, and a
+        // list would cost a linear scan and a new lowercasing for every underscore.
         val allNames = _rooms.values
             .flatMapTo(mutableSetOf()) { room -> room.getWatchers().map { it.name.lowercase() } }
 
@@ -93,7 +96,7 @@ open class ServerRoomManager {
         return name
     }
 
-    /** Returns all watchers visible to [forUser] (every room here, sender's room only when isolated). */
+    /** Returns the watchers that [forUser] can see. Here that is every watcher in every room. */
     open fun getAllWatchersForUser(forUser: ServerWatcher): List<ServerWatcher> {
         return _rooms.values.flatMap { it.getWatchers() }
     }
@@ -118,9 +121,9 @@ class PublicServerRoomManager : ServerRoomManager() {
     }
 
     override fun moveWatcher(watcher: ServerWatcher, roomName: String) {
-        // Same guard as the base, and it has to be here too: the "left" broadcast below happens
-        // before super runs, so without it a self-move told the room the watcher had gone and
-        // then never announced them back.
+        // Same guard as the base, and it must be here too: the "left" broadcast below happens
+        // before super runs. Without it, a self-move would tell the room that the watcher left,
+        // and never announce them back.
         if (watcher.room?.name == roomName.take(MAX_ROOM_NAME_LENGTH)) return
         val oldRoom = watcher.room
         if (oldRoom != null) {
@@ -132,7 +135,8 @@ class PublicServerRoomManager : ServerRoomManager() {
             }
         }
         super.moveWatcher(watcher, roomName)
-        // The new room never saw this watcher's file; PC re-sends it on every isolated switch.
+        // The new room has not seen this watcher's file. The PC server sends it again on every
+        // switch between isolated rooms.
         watcher.setFile(watcher.file)
     }
 }

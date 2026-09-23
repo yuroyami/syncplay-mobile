@@ -14,37 +14,35 @@ plugins {
     alias(libs.plugins.android.kmp.library).apply(false)
 
     alias(libs.plugins.kSerialization).apply(false)
-    // Ktorfit generates its API implementations through KSP; without this there is no createKlipyAPI.
+    // Ktorfit generates its API implementations with KSP. Without KSP, there is no createKlipyAPI.
     alias(libs.plugins.ksp).apply(false)
 
     alias(libs.plugins.ktorfit).apply(false)
 
-    // Static analysis and coverage. Both are configured for this repo, not generically:
+    // Static analysis (detekt) and coverage (kover), both set up for this repo:
     // see config/detekt/detekt.yml and the kover block below.
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
 }
 
-// KiteConfig applies app identity in AGP finalizeDsl (AFTER module DSL blocks), so the
-// exoOnly applicationId swap must happen here, not inside androidApp's defaultConfig.
 /**
  * The coverage floor for app.protocol and app.server, set just under what a clean full run
- * measures (24.9 percent on 2026-09-04). It is a ratchet: raise it when a pass adds tests, never
- * lower it to make a build pass.
+ * measures (24.9 percent). Raise it when new tests add coverage. Never lower it to make a build
+ * pass.
  *
- * The number moves both ways for an honest reason. Extracting the sync decision and the position
- * report out of the managers put a hundred previously unreachable lines inside the measured
- * packages, most of which are now covered, but the managers around them still are not.
+ * The measured value can fall as well as rise, for example when untested code moves into these
+ * packages. The sync decision and the position report are mostly covered by tests; the managers
+ * around them are not.
  */
 val COVERAGE_FLOOR = 24
 
 val exoOnly = AppConfig.resolveExoOnly(providers)
 val localProperties = AppConfig.localProperties(rootDir)
 
-/* A release has to resolve published artifacts only, or nobody outside can rebuild it and compare
- * the bytes. `-PuseMavenLocal` serves this project's own libraries from the builder's own machine,
- * which is the one place an outsider cannot look, so the two cannot be combined. Debug builds are
- * free to use it: that is what the flag is for. */
+/* A release must resolve only published artifacts, so that anyone can rebuild it and compare the
+ * bytes. `-PuseMavenLocal` serves this project's own libraries from the local machine, which an
+ * outsider cannot see, so a release build with that flag fails here. Debug builds may use the
+ * flag. */
 if (providers.gradleProperty("useMavenLocal").orNull.toBoolean()) {
     gradle.taskGraph.whenReady {
         val releasing = allTasks.any { task ->
@@ -62,10 +60,12 @@ kiteConfig {
     appName = "Synkplay"
     appId = "com.yuroyami.syncplay"
     version = "0.25.0"
-    // Sync updates Xcode before it opens; builds apply only their platform's changes.
+    // A Gradle sync updates the Xcode project before Xcode opens it. A build applies only the
+    // changes for its own platform.
     autoApply = true
 
-    // Both shared and webApp use KMP; generated app configuration belongs in shared.
+    // Both shared and webApp use Kotlin Multiplatform. The generated app configuration goes
+    // into shared.
     modules { shared = ":shared" }
 
     jvm {
@@ -74,6 +74,9 @@ kiteConfig {
     }
 
     android {
+        // KiteConfig applies the app identity in AGP finalizeDsl, after the module DSL blocks.
+        // So the applicationId swap for the exoOnly flavor (ExoPlayer only, no native player
+        // library) happens here, not in androidApp's defaultConfig.
         if (exoOnly) appId = "com.reddnek.syncplay"
         version { rebuild = 1 }
         sdk(
@@ -109,19 +112,20 @@ kiteConfig {
 
     buildConfig {
         includeIdentity = false
-        // KiteBuildConfig avoids AGP's generated BuildConfig name.
+        // The generated object is KiteBuildConfig, so it does not clash with AGP's BuildConfig.
         packageName = "SyncplayMobile.shared"
         stringField("APP_NAME", kiteConfig.appName)
         stringField("APP_VERSION", kiteConfig.version)
-        // NOT "DEBUG": KiteConfig generates a PUBLIC object, so every field becomes a property on the
-        // exported ObjC header, and Xcode defines DEBUG=1 in Debug configs, so "BOOL DEBUG"
-        // preprocesses to "BOOL 1" and every iOS Debug build fails to precompile the module.
+        // The name is IS_DEBUG, not DEBUG. KiteConfig generates a public object, so every field
+        // appears in the exported Objective-C header. Xcode defines DEBUG=1 in Debug
+        // configurations, so "BOOL DEBUG" becomes "BOOL 1" and every iOS Debug build fails to
+        // precompile the module.
         //
-        // The value is detected per invocation, never hardcoded (2026-08-26: a hardcoded `true`
-        // shipped debug-only engine entries in Release binaries). iOS: the pod script phase passes
-        // -Pkotlin.native.cocoapods.configuration=Debug|Release, the authoritative signal there.
-        // Android/desktop: the requested task names carry the variant. Anything ambiguous (mixed
-        // variants, sync, no variant in the name) is conservatively NOT debug.
+        // Detect the value on each invocation and never hardcode it: a hardcoded `true` ships
+        // debug-only engine entries in Release binaries. On iOS, the pod script phase passes
+        // -Pkotlin.native.cocoapods.configuration=Debug|Release, which is the reliable signal.
+        // On Android and desktop, the requested task names carry the variant. Anything unclear
+        // (mixed variants, a sync, no variant in the name) counts as not debug.
         val requestedTasks = gradle.startParameter.taskNames.map { it.lowercase() }
         val podConfiguration =
             providers.gradleProperty("kotlin.native.cocoapods.configuration").orNull?.lowercase()
@@ -132,19 +136,20 @@ kiteConfig {
             else -> false
         }
         booleanField("IS_DEBUG", isDebugInvocation)
-        // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
+        // Logs every raw protocol line when set: ./gradlew ... -PdebugProtocol=true
         booleanField(
             "DEBUG_SYNCPLAY_PROTOCOL",
             providers.gradleProperty("debugProtocol").map(String::toBoolean).orElse(false),
         )
         booleanField("EXOPLAYER_ONLY", exoOnly)
         // Public on purpose. The key ships inside every APK and travels in the URL path of
-        // every request, so it cannot be secret on a device. Committing it is what lets a
-        // third party rebuild a published APK and get the same bytes. KLIPY keys are free
-        // and unmetered, so a copied one costs nothing. No local override: one constant
-        // means every machine builds the same APK.
+        // every request, so a device cannot keep it secret. The committed key lets a third
+        // party rebuild a published APK and get the same bytes. KLIPY keys are free and
+        // unmetered, so a copied key costs nothing. There is no local override, so every
+        // machine builds the same APK.
         stringField("KLIPY_API_KEY", "M5BjLZtHJtX8pSM7bkwL9A1uTRIiWPceLRfb7TA7QHM9dDVmIXaQLSXk6UYgmI70")
-        // A local OpenSubtitles client key can replace the legacy fallback.
+        // A local OpenSubtitles client key (yuroyami.keyOpenSubsApi in local.properties)
+        // replaces the committed fallback key.
         stringField(
             "OPENSUBTITLES_API_KEY",
             localProperties.getProperty("yuroyami.keyOpenSubsApi")
@@ -160,12 +165,12 @@ registerAndroidReleaseAllTask(kiteConfig.version.get())
 registerDependencyTableTask()
 
 /**
- * Static analysis, aimed at this codebase. The rule set in `config/detekt/detekt.yml` is almost
- * entirely off; what is on maps to defects this repo actually had.
+ * Static analysis for this codebase. Most rules in `config/detekt/detekt.yml` are off; the rules
+ * that are on match defects that this repo has had.
  *
- * The inbound-throws rule lives in [checkProtocolThrows] rather than here, because detekt's
- * ForbiddenMethodCall needs type resolution that the plain detekt task does not have, so it
- * would have passed silently forever.
+ * The rule against throws in inbound protocol code lives in [checkProtocolThrows], not here.
+ * Detekt's ForbiddenMethodCall needs type resolution, which the plain detekt task does not have,
+ * so that rule would always pass silently.
  */
 detekt {
     buildUponDefaultConfig = true
@@ -176,7 +181,7 @@ detekt {
             "shared/src/commonMain/kotlin",
             "shared/src/androidMain/kotlin",
             "shared/src/desktopMain/kotlin",
-            // Android and desktop share these files, so nothing else was reading them.
+            // Android and desktop share these files; without this line detekt does not scan them.
             "shared/src/jvmShared/kotlin",
             "shared/src/iosMain/kotlin",
             "shared/src/commonTest/kotlin",
@@ -198,9 +203,9 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 }
 
 /**
- * Coverage, scoped to the two packages where a gap is a real risk: the protocol and the hosted
- * server. Everything else (UI, platform actuals, build glue) is excluded, because measuring it
- * would only produce a number nobody can act on.
+ * Coverage, limited to the two packages where a gap is a real risk: the protocol and the hosted
+ * server. Everything else (UI, platform actuals, build code) is left out, because a number for it
+ * would not lead to any action.
  */
 dependencies {
     // The code being measured lives in :shared; the root project only aggregates.
@@ -214,7 +219,7 @@ kover {
                 classes("app.protocol.*", "app.server.*")
             }
             excludes {
-                // Generated, or a platform actual that cannot run on the JVM.
+                // Generated classes: serializers, Compose singletons and factories.
                 classes("*\$\$serializer", "*ComposableSingletons*", "*_Factory*")
             }
         }
@@ -233,11 +238,10 @@ kover {
 registerQualityGates(kiteConfig.versionCode.get().toString())
 
 /**
- * Release identity, printed once, for anything outside Gradle that needs it.
+ * Prints the release identity for tools outside Gradle, such as the release workflow.
  *
- * The release workflow used to grep the version out of this file with sed and recompute the
- * version code in an inline Python one-liner, which meant KiteConfig's scheme was written down
- * twice and the second copy could drift without anyone noticing. It asks for these now.
+ * Read the version and the version code from this task instead of parsing this file or
+ * recomputing them. Then KiteConfig's version scheme exists in one place only.
  */
 tasks.register("printReleaseIdentity") {
     group = "help"
@@ -247,7 +251,8 @@ tasks.register("printReleaseIdentity") {
     val iosVersion = kiteConfig.iosMarketingVersion.get()
     val iosBuildNumber = kiteConfig.iosBuildNumber.get()
     val appId = kiteConfig.androidApplicationId.get()
-    // Xcode owns the deployment target; KiteConfig reads it instead of duplicating it.
+    // The Xcode project owns the deployment target, so read it from project.pbxproj instead of
+    // repeating it here.
     val iosMinimum = file("iosApp/iosApp.xcodeproj/project.pbxproj").readLines()
         .firstNotNullOfOrNull { line ->
             Regex("""IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);""").find(line)?.groupValues?.get(1)

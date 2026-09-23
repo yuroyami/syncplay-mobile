@@ -6,28 +6,31 @@ import androidx.compose.ui.text.intl.Locale
 import cafe.adriel.lyricist.Lyricist
 
 /**
- * The app's display language, held in one place.
+ * Holds the app's display language in one place.
  *
- * Screens read [strings]; anything outside a composable reads [Localization.strings]. Both come
- * from the same [Lyricist], so changing the language moves the whole app at once with no restart.
+ * Composables read [strings]. Code outside a composable reads [Localization.strings]. Both come
+ * from the same [Lyricist], so a language change updates the whole app at once, with no restart.
  *
- * The layout stays left to right in every language, Arabic included: only the words change.
- * That is a deliberate choice, not an oversight.
+ * The layout stays left to right in every language, Arabic included. Only the words change.
+ * This is a deliberate choice.
  */
 object Localization {
 
-    /** The one instance. Composables get it through [ProvideAppStrings] in the root. */
+    /** The only instance. Composables get it through [ProvideAppStrings] at the root. */
     val lyricist: Lyricist<AppStrings> = Lyricist(Locales.En, appStrings)
 
     /** Strings for code that is not a composable: the protocol, the engines, notifications. */
     val strings: AppStrings get() = lyricist.strings
 
-    /** The language the device is set to, or English when it is one we do not ship. */
+    /**
+     * The language tag of the device. [Lyricist] shows English when the app does not ship that
+     * language.
+     */
     fun deviceLanguage(): String = Locale.current.toLanguageTag()
 
     /**
-     * Applies a saved preference. A blank value means "follow the device", which is what the
-     * language setting stores when nothing is chosen.
+     * Applies a saved language preference. A blank value means "follow the device". The language
+     * setting stores a blank value when nothing is chosen.
      */
     fun apply(saved: String) {
         lyricist.languageTag = saved.ifBlank { deviceLanguage() }

@@ -31,7 +31,8 @@ import kotlin.math.abs
 
 /**
  * Handles user-initiated actions and outbound protocol messages for playback control,
- * seeking, and chat. Counterpart to [RoomCallback]. All send operations are no-ops in solo mode.
+ * seeking, and chat. Counterpart to [RoomCallback]. All send operations do nothing in solo mode
+ * (watching alone, with no server).
  */
 class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val network = viewmodel.networkManager
@@ -46,8 +47,8 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                     username = session.currentUsername,
                     password = passwordHash,
                     room = Room(session.currentRoom),
-                    // PC wire shape: `version` carries the 1.2.X compatibility constant,
-                    // `realversion` the actual protocol version (protocols.py:165-166).
+                    // PC wire shape: `version` carries the 1.2.X compatibility constant, and
+                    // `realversion` the actual protocol version (`sendHello` in protocols.py).
                     version = SYNCPLAY_LEGACY_VERSION,
                     realversion = SYNCPLAY_PROTOCOL_VERSION,
                     features = clientFeatures
@@ -56,7 +57,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         )
     }
 
-    /** Announce this exact gesture; queued seeks retain their own origin for the self echo. */
+    /** Announces this exact seek gesture. A queued seek keeps its own origin for the self echo. */
     fun sendSeek(newPosMs: Long, fromMs: Long, recordUndo: Boolean = true) {
         if (viewmodel.isSoloMode) return
         // Capture and enqueue before moving the engine. Independent IO launches could reorder
@@ -75,9 +76,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
         // In the background the player is paused on purpose and stays that way: nothing here
-        // reaches the engine, and nothing is told to the room (a backgrounded client used to
-        // broadcast its pause and drag everyone down with it). Inbound pause/play is skipped
-        // too; the return to the foreground re-anchors to the room's real state in one step.
+        // reaches the engine, and nothing is told to the room (broadcasting a background pause
+        // would pause everyone). Inbound pause and play are skipped too; the return to the
+        // foreground re-anchors to the room's real state in one step.
         if (viewmodel.uiState.isInBackground) return
 
         /* If this is a user-initiated play request, check readiness gating */
@@ -85,7 +86,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             && viewmodel.session.roomFeatures.supportsReadiness
         ) {
             if (!instaplayConditionsMet()) {
-                /* Block the unpause — set as ready instead, and say so where the user is looking. */
+                /* Block the unpause. Set as ready instead, and say so where the user is looking. */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
                 viewmodel.session.ready.value = true
                 viewmodel.readiness.evaluate()
@@ -96,18 +97,17 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             }
         }
 
-        // Set the expectation BEFORE we touch the player. The engine's isNowPlaying
-        // callback fires synchronously inside player.pause()/play() on some engines
-        // (notably ExoPlayer), and the protocol's flow collector reads this expectation
-        // to decide whether to re-broadcast the change. If we set it AFTER, there's a
-        // race where the collector sees the engine update against the stale expectation
-        // and broadcasts a redundant State packet.
+        // Set the expectation BEFORE touching the player. On some engines (notably
+        // ExoPlayer) the isNowPlaying callback fires synchronously inside pause() or play(),
+        // and the protocol's flow collector reads this expectation to decide whether to
+        // broadcast the change. Set AFTER, the collector can see the engine update against
+        // the stale expectation and broadcast a redundant State packet.
         viewmodel.protocol.noteExpectedPlaybackState(paused = !playback.play)
 
-        /* Skip native playback without media. The bundled VLCKit cookie-jar patch
-         * dereferences the media descriptor inside native play before validating it;
-         * the player handle itself need not be null. VLCKit's queued play makes that
-         * boundary asynchronous. The user's room intent is still announced below. */
+        /* Skip native playback without media. The cookie-jar patch in the bundled VLCKit
+         * dereferences the media descriptor inside native play before checking it; the
+         * player handle itself need not be null. VLCKit's queued play makes that boundary
+         * asynchronous. The user's room intent is still announced below. */
         if (viewmodel.media != null) {
             // A pause is the natural place to write down where we are.
             if (playback == Playback.PAUSE) viewmodel.resume.record()
@@ -123,9 +123,10 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
         if (viewmodel.isSoloMode || !tellServer) return
 
-        /* Readiness follows a deliberate pause: walking away used to leave the room a watcher who
-         * showed as ready forever, so PC's changeReadyState(!paused) is mirrored here. A follower
-         * in a controlled room cannot control playback, so its readiness is left alone. */
+        /* Readiness follows a deliberate pause or play, like PC's
+         * `changeReadyState(not self.getPlayerPaused(), ...)`. Otherwise a watcher who pauses
+         * and walks away shows as ready forever. A follower in a controlled room cannot control
+         * playback, so its readiness is left alone. */
         if (session.roomFeatures.supportsReadiness && !session.isInControlledRoomWithoutController()) {
             if (session.ready.value != playback.play) {
                 session.ready.value = playback.play
@@ -145,10 +146,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
      * Mirrors the PC client's `instaplayConditionsMet()`.
      */
     private fun instaplayConditionsMet(): Boolean {
-        // python's first gate: if we can't control a controlled room, we can never unpause
-        // it ourselves — no point pretending we can. Without this, mobile lets the user
-        // try, then the server's forcePositionUpdate echoes their state back as paused,
-        // creating a brief unpause-then-repause flicker on the local player.
+        // Python's canControl gate: a follower in a controlled room can never unpause it. Without
+        // this check the user could try, and the server's forcePositionUpdate would echo the
+        // state back as paused: a brief unpause-then-repause flicker on the local player.
         if (session.isInControlledRoomWithoutController()) return false
 
         val unpauseAction = UNPAUSE_ACTION.value()
@@ -158,11 +158,11 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             "IfAlreadyReady" -> session.ready.value
             "IfOthersReady" -> session.ready.value || session.areAllOtherUsersReady()
             "IfMinUsersReady" -> {
-                // PC's instaplayConditionsMet gates ALL modes behind "if you're ready you
-                // can always unpause" (client.py:1023, the leading `if isReady() or ...`).
-                // Without this short-circuit, a user who is already ready but alone — or
-                // whose peers aren't all ready — gets silently blocked and re-marked ready,
-                // whereas PC would just play. Mirror the other modes here.
+                // PC's instaplayConditionsMet puts ALL modes behind "if you are ready, you can
+                // always unpause" (the leading `if self.userlist.currentUser.isReady() or ...`
+                // in client.py). Without this short-circuit, a user who is already ready but
+                // alone, or whose peers are not all ready, is silently blocked and marked ready
+                // again, where PC would just play. The other modes have the same short-circuit.
                 session.ready.value ||
                     (session.areAllOtherUsersReady() && session.usersInRoomCount() >= 2)
             }
@@ -172,11 +172,13 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     }
 
     /**
-     * The one seek path. Every user seek goes through here, in this order and nowhere else:
-     * record the origin, announce it (a no-op in solo mode), move the engine, and in solo mode
-     * record the pair for undo (online, the inbound echo records it). [fromMs] is the position
-     * before the user's gesture; the seekbar captures it on the first drag event, because by
-     * the time the finger lifts the preview has moved even though the engine has not.
+     * Seeks to [targetMs] for the user. Every user seek, from here or from [seekBy], runs the
+     * same steps in [seekNow], in this order: record the origin, announce it (a no-op in solo
+     * mode), move the engine, and in solo mode record the pair for undo (online, the inbound
+     * echo records it). A chapter jump, which the engine makes on its own, uses [announceSeek]
+     * instead. [fromMs] is the position before the user's gesture. The seekbar captures it on
+     * the first drag event, because by the time the finger lifts, the preview has moved even
+     * though the engine has not.
      */
     fun seek(targetMs: Long, fromMs: Long? = null, recordUndo: Boolean = true) {
         // Chat commands and hardware media keys remain reachable during room startup.

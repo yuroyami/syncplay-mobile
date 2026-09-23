@@ -8,15 +8,16 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.vlc
 
 /**
- * VLC (VLCKit) - VLC's iOS framework with extensive codec support.
+ * The VLCKit engine: VLC's iOS framework, with wide codec support. An engine is one of the video
+ * players the app can drive. This is the default iOS engine.
  *
  * **Characteristics:**
- * - Widest format support (MKV, AVI, FLV, and many others)
- * - Supports most subtitle formats (SRT, SSA, ASS, etc.)
- * - More battery consumption than AVPlayer
- * - Larger app size due to bundled codecs
+ * - Widest format support (MKV, AVI, FLV and many others)
+ * - Most subtitle formats (SRT, SSA, ASS and others)
+ * - Uses more battery than AVPlayer
+ * - Makes the app larger, because it bundles its codecs
  *
- * **Best for:** Users who need to play various file formats and subtitle types.
+ * **Best for:** users who need to play many file formats and subtitle types.
  */
 object VlcKitEngine : PlayerEngine {
     override val isAvailable: Boolean = true

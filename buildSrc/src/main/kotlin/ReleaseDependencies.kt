@@ -4,10 +4,10 @@ import org.gradle.kotlin.dsl.register
 import java.io.File
 
 /**
- * Every version number the build pins, read once from where each one actually lives: the
- * version catalog, gradle.properties, the Gradle wrapper, the Swift package lock and the
- * CocoaPods lock. The documentation version tables and the release page's
- * dependency table both come from here, so the two cannot disagree.
+ * Every version number the build pins, read from the file that owns it: the version catalog,
+ * gradle.properties, the Gradle wrapper, the Swift package lock and the CocoaPods lock. The
+ * version table in the docs and the release page's dependency table both come from here, so
+ * the two cannot disagree.
  */
 internal class ToolVersions(root: File) {
     val catalog: Map<String, String> = Regex("""^([A-Za-z0-9_-]+)\s*=\s*"([^"]+)"""", RegexOption.MULTILINE)
@@ -41,9 +41,9 @@ internal class ToolVersions(root: File) {
 private class Row(val component: String, val where: String, val version: String?)
 
 /**
- * The dependency table the release notes carry, as Markdown. Only the main ones: the toolchain,
- * the network stack and the video engines. Someone deciding whether to trust or debug the app
- * wants those; nobody reads forty rows of AndroidX artifacts on a release page.
+ * The dependency table for the release notes, as Markdown. It lists only the main dependencies:
+ * the toolchain, the network stack and the video engines. A reader who wants to trust or debug
+ * the app needs those, not forty rows of AndroidX artifacts.
  */
 internal fun releaseDependencyTable(v: ToolVersions): String {
     fun c(key: String) = v.catalog[key]
@@ -67,7 +67,7 @@ internal fun releaseDependencyTable(v: ToolVersions): String {
     }.trim()
 }
 
-/** `printDependencyTable`: the release workflow captures this into the GitHub release notes. */
+/** `printDependencyTable`: the release workflow copies its output into the GitHub release notes. */
 fun Project.registerDependencyTableTask(): TaskProvider<*> = tasks.register("printDependencyTable") {
     group = "syncplay"
     description = "Prints the dependency table for the GitHub release notes as Markdown."

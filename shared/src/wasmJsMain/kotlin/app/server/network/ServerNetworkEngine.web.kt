@@ -5,13 +5,13 @@ import app.utils.loggy
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * Hosting is not something a page can do.
+ * A page cannot host a Syncplay server.
  *
- * A browser tab cannot listen on a port, so the built-in server has no web implementation and is
- * not offered in the UI there. The class exists because the shared server code names the type.
+ * A browser tab cannot listen on a port, so the hosted server has no web implementation. The
+ * class exists because the shared server code names the type, and [startListening] throws.
  *
- * If a web client should ever be reachable, the answer is the other way round: the Android or
- * desktop host grows a WebSocket listener beside its TCP one, and browsers connect to that.
+ * To reach a web client, an Android or desktop host needs a WebSocket listener beside its TCP
+ * one; browsers then connect to that listener.
  */
 actual class ServerNetworkEngine actual constructor(
     @Suppress("UNUSED_PARAMETER") server: SyncplayServer,

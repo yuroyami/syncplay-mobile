@@ -6,9 +6,9 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * A favourite saved from a chat link must land in the right tab of the GIF panel, and its id must
- * never collide with a real Klipy id or with another saved link, because the panel's grid keys
- * its tiles by id and a duplicate key crashes the grid.
+ * A favourite saved from a chat link must land in the right tab of the GIF panel (Klipy is the GIF
+ * service). Its id must never match a real Klipy id or the id of another saved link. The panel's
+ * grid keys its tiles by id, and a duplicate key crashes the grid.
  */
 class KlipyFavoritesTest {
 

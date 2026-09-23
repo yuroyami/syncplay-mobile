@@ -10,7 +10,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** A chat colour saved as the old "use the theme's colour" marker falls back to chat's own default. */
+/** A chat colour stored as 0 (the old "use the theme's colour" marker) gets the chat default. */
 class ChatColorCleanupTest {
     private val selfTag = intPreferencesKey(Preferences.COLOR_SELFTAG.key)
     private val friendTag = intPreferencesKey(Preferences.COLOR_FRIENDTAG.key)

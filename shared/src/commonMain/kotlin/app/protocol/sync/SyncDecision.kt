@@ -7,20 +7,17 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /**
- * The sync decision, as a function.
+ * The sync decision, as a pure function that tests can call.
  *
- * `onState` used to read a dozen fields, mutate eight of them and fire six kinds of side effect
- * in one 150-line method, which is why the sync algorithm had no tests: there was nothing to
- * call. [decideSync] takes what the server said plus a snapshot of where we are, and answers
- * with the next snapshot and a list of things to do. It touches nothing: no player, no network,
- * no preferences, no clock.
+ * [decideSync] takes what the server said plus a snapshot of where we are, and answers with the
+ * next snapshot and a list of things to do. It touches nothing: no player, no network, no
+ * preferences, no clock.
  *
- * The handler stays in charge of doing them, in order. Behaviour is meant to be identical to
- * what the method did, line for line; the thresholds and their reasons are unchanged and still
- * match the reference client's `constants.py`.
+ * The message handler (`onState`) stays in charge of doing those things, in order. The
+ * thresholds match the reference client's `constants.py`.
  */
 
-/** The sync anchor: everything `onState` carried between messages. */
+/** The sync anchor: everything `onState` carries from one message to the next. */
 data class SyncState(
     val serverIgnFly: Int = 0,
     val clientIgnFly: Int = 0,
@@ -49,7 +46,7 @@ data class SyncContext(
     val isInBackground: Boolean,
     val supportsSpeedAdjustment: Boolean,
     val selfName: String,
-    /** True for a follower in a controlled room, which is the only case PC force-fastforwards. */
+    /** True for a follower in a controlled room, the only case where PC forces a fast-forward. */
     val followerInControlledRoom: Boolean,
     val prefs: SyncPrefs,
     /** Seconds the inbound position is already stale, from the ping service. */
@@ -67,7 +64,7 @@ data class SyncContext(
     val rewindThreshold: Double = REWIND_THRESHOLD,
     val slowdownThreshold: Double = SLOWDOWN_THRESHOLD,
     val fastForwardThreshold: Double = FASTFORWARD_THRESHOLD,
-    /** The position cache still belongs to a seek that Main has not applied. */
+    /** True while the position cache still belongs to a seek that Main has not applied. */
     val seekPending: Boolean = false,
 )
 
@@ -98,15 +95,16 @@ const val SLOWDOWN_THRESHOLD = 1.5
 const val SLOWDOWN_RESET_THRESHOLD = 0.1
 
 /**
- * The ingress ceiling on a name, shared with the message handler. Cutting at the protocol's 16
- * broke the server's own duplicate-name convention, where "alice" is followed by "alice_".
+ * The inbound length limit on a name, shared with the message handler. Cutting at the
+ * protocol's 16 would break the server's own duplicate-name convention, where "alice" is
+ * followed by "alice_".
  */
 private const val MAX_USERNAME_CHARS = Session.MAX_USERNAME_CHARS
 
 /**
- * Applies a server `ignoringOnTheFly` block. A server counter adopts it and clears ours; a
- * client counter matching ours clears ours. Separate from [decideSync] because it runs even for
- * a State that carries no playstate.
+ * Applies a server `ignoringOnTheFly` block. A server counter is adopted and clears ours; a
+ * client counter that matches ours clears ours. Separate from [decideSync] because it runs even
+ * for a State that carries no playstate.
  */
 fun SyncState.withIgnoringOnTheFly(ignoring: IgnoringOnTheFlyData?): SyncState {
     if (ignoring == null) return this
@@ -163,7 +161,7 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
     }
 
     /* Desync correction only makes sense with media loaded. With none, the engine reads 0 and
-     * diff looks like multi-second lag, which used to fire a phantom catch-up notice. A
+     * diff looks like multi-second lag, which would fire a phantom catch-up notice. A
      * backgrounded client is paused on purpose and catches up when it returns. */
     if (ctx.hasMedia && !ctx.isInBackground && !ctx.seekPending) {
         if (diff > ctx.rewindThreshold && doSeek != true && ctx.prefs.rewind) {
@@ -171,12 +169,12 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
             actions += SyncAction.SomeoneBehind(setBy ?: "", agedPosition)
         }
 
-        /* PC gates the forced catch-up on not being able to control the room: only a follower
-         * in a controlled room force-fastforwards. In a normal room everyone can control, so
-         * the room follows its slowest member instead. dontSlowWithMe opts in regardless. */
+        /* PC forces the catch-up only on a client that cannot control the room: only a follower
+         * in a controlled room is forced to fast-forward. In a normal room everyone can control,
+         * so the room follows its slowest member instead. dontSlowWithMe opts in regardless. */
         val canFastForward = ctx.prefs.fastForward && (ctx.followerInControlledRoom || ctx.prefs.dontSlowWithMe)
         /* The "behind" clock starts well before the trigger, so a user who moves the trigger
-         * keeps the same head start the reference client gives. */
+         * keeps the same lead time that the reference client gives. */
         val behindThreshold = ctx.fastForwardThreshold - (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
         if (diff < -behindThreshold && doSeek != true && canFastForward) {
             val since = next.behindFirstDetected

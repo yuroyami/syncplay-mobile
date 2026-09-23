@@ -3,18 +3,17 @@ package app.room.sharedplaylist
 import io.github.vinceglb.filekit.PlatformFile
 
 /**
- * Recursively walks the media directory rooted at this [PlatformFile] and returns a map of
- * `filename → durable bookmark bytes` for every playable media file found
+ * Walks the media directory at this [PlatformFile], with all its subdirectories, and returns a
+ * map from file name to lasting bookmark bytes for every playable media file
  * (see [app.utils.isPlayableMediaFilename]).
  *
- * The returned bytes are whatever [app.utils.platformFileFromBookmark] can later resolve on
- * the same platform:
+ * [app.utils.platformFileFromBookmark] can later resolve the returned bytes on the same platform:
  *  - **iOS**: a security-scoped bookmark for each file, created while the directory's scope is
- *    held (so descendants are reachable). Resolvable independently afterwards.
- *  - **Android**: the child document URI bytes; reads are authorized by the persistable
- *    permission already taken on the parent tree when the directory was remembered.
+ *    held (so the files inside are reachable). Each bookmark resolves on its own afterwards.
+ *  - **Android**: the child document URI bytes. The persistable permission on the parent tree,
+ *    taken when the directory was remembered, allows the reads.
  *
- * Implementations own all security-scope / permission bracketing internally and must not leave
- * any scope open on return. Returns an empty map if the directory can't be accessed.
+ * Implementations open and close every security scope and permission themselves, and must not
+ * leave a scope open on return. Returns an empty map when the directory cannot be accessed.
  */
 expect suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>

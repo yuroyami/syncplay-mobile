@@ -91,8 +91,8 @@ class FramesGolden {
     }
 
     /**
-     * Three actions in a 320dp Ask at large text: the row wraps, it does not squeeze the last key
-     * down to one letter per line, which is what the tips popup did on a phone at 1.3x.
+     * Three actions in a 320dp Ask modal at large text, as in the tips popup: the row wraps. It
+     * must not squeeze the last key down to one letter per line.
      */
     @Test
     fun askActionsWrapInsteadOfSqueezing() {

@@ -7,15 +7,15 @@ import app.utils.loggy
 import kotlinx.browser.window
 
 /**
- * What the page can and cannot do on the app's behalf.
+ * The web implementation of [PlatformCallback]: what the page can and cannot do for the app.
  *
  * Most of this interface describes an operating system, and a tab does not have one. Brightness
- * belongs to the device, a launcher shortcut belongs to a launcher, a foreground service belongs
- * to Android. Those answer honestly rather than pretending: [supportsBrightness] is false, so the
- * room hides the brightness swipe instead of offering a control that does nothing.
+ * belongs to the device, a launcher shortcut to a launcher, a foreground service to Android.
+ * Those calls do nothing, and say so: [supportsBrightness] is false, so the room hides the
+ * brightness swipe instead of offering a control that does nothing.
  *
- * The three that do have a browser equivalent are clipboard, sharing and the invite link, and all
- * three are permission-gated and asynchronous, so they are best-effort.
+ * The calls with a browser equivalent are the clipboard, sharing and vibration. The browser may
+ * refuse them or run them asynchronously, so they are best-effort.
  */
 object WebPlatformCallback : PlatformCallback {
 
@@ -32,10 +32,10 @@ object WebPlatformCallback : PlatformCallback {
     override fun getMaxBrightness(): Float = 1f
     override fun changeCurrentBrightness(v: Float) = Unit
 
-    /** Volume is the element's own; there is no device stream to move. */
+    /** The volume belongs to the video element; there is no device stream to change. */
     override fun deviceVolumeSteps(): Int = 0
 
-    /** The Media Session API can put this on the OS media keys; not wired yet. */
+    /** Not implemented. The Media Session API is the browser's way to reach the OS media keys. */
     override fun mediaSessionInitialize(viewmodel: RoomViewmodel) = Unit
     override fun mediaSessionFinalize() = Unit
 
@@ -49,11 +49,11 @@ object WebPlatformCallback : PlatformCallback {
     override fun onPictureInPicture(enable: Boolean) = Unit
 
     override fun performHapticFeedback() {
-        // navigator.vibrate is Android Chrome only and silently absent elsewhere.
+        // navigator.vibrate exists only in Chrome on Android; elsewhere it is silently missing.
         runCatching { jsVibrate(20) }
     }
 
-    /** The unfiltered picker is an Android workaround for SMB providers; nothing to do here. */
+    /** The unfiltered picker is an Android workaround for SMB providers; the web needs none. */
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) = onResult(null)
 
     override fun copyText(text: String) {
@@ -61,7 +61,7 @@ object WebPlatformCallback : PlatformCallback {
             .onFailure { loggy("Clipboard write was refused by the browser: $it") }
     }
 
-    /** Web Share where the browser has it, clipboard where it does not. */
+    /** Web Share where the browser has it, the clipboard where it does not. */
     override fun shareText(text: String) {
         val shared = runCatching { jsShareText(text) }.getOrDefault(false)
         if (!shared) copyText(text)
@@ -77,5 +77,5 @@ private fun jsCopyText(text: String): Boolean =
 private fun jsShareText(text: String): Boolean =
     js("(navigator.share ? (navigator.share({text: text}), true) : false)")
 
-/** Kept so the import above is used even while the rest of this file is browser-API free. */
+/** Nothing calls this. It keeps the kotlinx.browser.window import in use. */
 internal fun pageOrigin(): String = runCatching { window.location.origin }.getOrDefault("")

@@ -17,9 +17,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * The requests the app really sends to OpenSubtitles, answered by a local server instead of the
- * live one. The API redirects a query string that is not in sorted order, and a downloaded file's
- * name comes from the server, so both are pinned here. The replies follow the documented shapes.
+ * The requests that the app sends to OpenSubtitles, answered by a local server instead of the live
+ * one. The API redirects a query string that is not in sorted order, and a downloaded file's name
+ * comes from the server, so both are pinned here. The replies follow the documented shapes.
  */
 class SubtitleServiceTest {
 
@@ -107,7 +107,7 @@ class SubtitleServiceTest {
     fun `every request carries the key and one exact user agent`(): Unit = runBlocking {
         service().search("x")
         val headers = seen.single().headers
-        // The shared client has its own agent, and a stacked one is refused by the API.
+        // The shared client has its own agent, and the API refuses a stacked one.
         val agent = headers["user-agent"].orEmpty()
         assertEquals(1, agent.size, "one User-Agent header, not ${agent.size}")
         assertTrue(Regex("""Synkplay v[^\s;,]+""").matches(agent.single()), "the agent must be exactly 'Synkplay vX.Y.Z', got '${agent.single()}'")
@@ -159,7 +159,10 @@ class SubtitleServiceTest {
     }
 }
 
-/** A search reply in the documented shape: one usable row, one with no file, and keys the app does not model. */
+/**
+ * A search reply in the documented shape: one usable row, one row with no file, and keys that the
+ * app does not model.
+ */
 private val SEARCH_RESPONSE = """
 {
   "total_pages": 1, "total_count": 2, "per_page": 60, "page": 1,

@@ -1,8 +1,8 @@
 package app.server.model
 
 /**
- * A password-protected room where only authenticated controllers can change playback state.
- * Port of Python's ControlledRoom class (syncplay-pc-src-master/syncplay/server.py).
+ * A password-protected room where only authenticated controllers can change the playback state.
+ * A port of the ControlledRoom class in the Syncplay PC server (syncplay/server.py).
  *
  * Room name format: `+roomBaseName:HASH12CHARS`
  */
@@ -46,10 +46,10 @@ class ControlledServerRoom(name: String) : ServerRoom(name) {
     }
 
     /**
-     * Disclosure path: deliberately returns an EMPTY list so newly joining watchers are
-     * NOT told who the existing controllers are. Mirrors PC's
-     * `ControlledRoom.getControllers()` (server.py), which returns `{}`.
-     * Permission checks must use [canControl] / [getControllerWatchersInternal], never this.
+     * Returns an EMPTY list on purpose, so watchers who join are NOT told who the controllers
+     * are. This matches the PC server's `ControlledRoom.getControllers()` (server.py), which
+     * returns `{}`. Permission checks must use [canControl] or [getControllerWatchersInternal],
+     * never this.
      */
     override fun getControllers(): List<ServerWatcher> = emptyList()
 

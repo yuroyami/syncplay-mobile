@@ -45,7 +45,10 @@ import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SettingsGlyph
 import app.utils.appName
 
-/** Logo and wordmark on the left, theme and settings glyphs on the right, one hairline under. */
+/**
+ * The home screen's top bar: the logo and wordmark on the left, the theme and settings buttons on
+ * the right, and a thin line under it.
+ */
 @Composable
 fun HomeTopBar(viewmodel: HomeViewmodel) {
     val aboutOpen = remember { mutableStateOf(false) }
@@ -60,8 +63,8 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             modifier = Modifier.fillMaxWidth().height(Space.bar).padding(start = Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The logo is a button (it opens About, which is where solo mode lives), so a remote
-            // and a keyboard get the ring that says where focus is.
+            // The logo is a button: it opens About, which holds the way into solo mode. So a
+            // remote or a keyboard shows the focus ring on it.
             val logoSource = remember { MutableInteractionSource() }
             Row(
                 modifier = Modifier

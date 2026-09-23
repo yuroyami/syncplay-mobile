@@ -27,13 +27,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The room takes a tap anywhere as "outside the keyboard" and closes it. The keyboard stops short
- * of a camera notch, so a thumb that lands on that strip while typing closed the keyboard. With the
- * keyboard open, the shield must swallow a tap on the notch columns and nothing else; with it
- * closed, the strip must be live again.
+ * The room takes a tap anywhere as "outside the keyboard" and closes the keyboard. The keyboard
+ * stops short of a camera notch, so a thumb that lands on that strip while typing would close it.
+ * With the keyboard open, the shield must consume a tap on the notch columns and nothing else.
+ * With the keyboard closed, the strip must take taps again.
  *
- * The window is 800 by 600 pixels. Insets reach Compose on two roads, a composition local and a
- * layout node, and both are fed here, as in [HomeFocusTest].
+ * The window is 800 by 600 pixels. Insets reach Compose in two ways, a composition local and a
+ * layout node, and the test feeds both, as in [HomeFocusTest].
  */
 @OptIn(InternalComposeUiApi::class)
 class KeyboardNotchShieldTest {

@@ -10,14 +10,14 @@ sealed interface PrefExtraConfig {
         val onClick: () -> Unit
     ) : PrefExtraConfig
 
-    /** Boolean pref that also fires a side-effect callback on toggle, once, after the write. */
+    /** A Boolean pref that also runs a callback when toggled, once, after the write. */
     data class BooleanCallback(
         val onBooleanChanged: (b: Boolean) -> Unit
     ) : PrefExtraConfig
 
     /**
      * A numeric range. [unit] is shown after the value ("10 s"). [onValueChanged] reaches a live
-     * subsystem: it fires on release and at most a few times a second while dragging.
+     * subsystem: it fires on release, and at most once every 60 ms while dragging.
      */
     data class Slider(
         val maxValue: Int = 100,
@@ -25,7 +25,7 @@ sealed interface PrefExtraConfig {
         val unit: String = "",
         /** Shows "Off" instead of "0", for sliders where zero switches the feature off. */
         val zeroMeansOff: Boolean = false,
-        /** Converts the stored integer to the number users see and hear; [unit] is appended. */
+        /** Converts the stored integer to the number that users see and hear. [unit] is appended. */
         val formatValue: (Int) -> String = { it.toString() },
         val onValueChanged: (suspend SyncplayViewmodel.(newValue: Int) -> Unit)? = null,
     ) : PrefExtraConfig
@@ -45,7 +45,10 @@ sealed interface PrefExtraConfig {
     /** A page of rows behind one entry: inline in the room's settings panel, a modal elsewhere. */
     data class Nested(val content: @Composable () -> Unit) : PrefExtraConfig
 
-    /** [destructive] draws the row and the confirming action in the destructive treatment. */
+    /**
+     * A row that asks yes or no. [destructive] draws the row and the yes action in the
+     * destructive style.
+     */
     data class YesNoDialog(
         val rationale: Localized,
         val onYes: suspend CoroutineScope.() -> Unit,

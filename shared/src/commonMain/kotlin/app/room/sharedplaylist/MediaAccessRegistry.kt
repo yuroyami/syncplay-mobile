@@ -22,34 +22,34 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
- * Persistent, cross-platform access registry for local media used by the shared playlist.
+ * A lasting, cross-platform registry of access to the local media of the shared playlist (the
+ * file list that everyone in a room follows). A room is the group of people watching together.
  *
  * ## Why this exists
- * The shared-playlist protocol only ever transmits **filenames** — never paths or URLs (except
- * for remote `http(s)`/`ftp` URLs, which are stored verbatim). Each client is responsible for
- * locating a file *of that name* in its own storage and loading it. That mapping
- * (`filename` → an actually-openable file handle) is exactly what platform sandboxing makes
- * hard, and what this registry solves once for both platforms:
+ * The shared playlist protocol sends only **file names**, never paths. The exception is a remote
+ * `http(s)` or `ftp` URL, which is stored as it is. Each client must find a file *of that name* in
+ * its own storage and load it. Platform sandboxing makes that mapping (from a file name to a file
+ * handle that opens) hard, and this registry solves it once for both platforms:
  *
- *  - **iOS**: a file/folder picked by the user is a *security-scoped* `NSURL`. The grant
- *    evaporates the moment the picker's scope is released — a bare path string is useless
- *    afterwards. The only way to regain access later (or after a process restart) is a
- *    **security-scoped bookmark**.
- *  - **Android**: SAF `content://` URIs from `ACTION_OPEN_DOCUMENT(_TREE)` are revocable and do
- *    not survive a process restart unless the app calls `takePersistableUriPermission`.
+ *  - **iOS**: a file or folder that the user picks is a *security-scoped* `NSURL`. The grant ends
+ *    as soon as the picker's scope is released, and a bare path string is useless after that. A
+ *    **security-scoped bookmark** is the only way to get access back later, also after a process
+ *    restart.
+ *  - **Android**: SAF `content://` URIs from `ACTION_OPEN_DOCUMENT(_TREE)` can be revoked, and
+ *    they do not survive a process restart unless the app calls `takePersistableUriPermission`.
  *
- * [durableBookmark]/[platformFileFromBookmark] abstract both: on iOS they create/resolve a
- * security-scoped bookmark; on Android `bookmarkData` takes the persistable permission and
- * returns the URI bytes. We persist those opaque bytes (Base64) in DataStore and resolve them
- * back to a ready-to-open [PlatformFile] at playback time. This is why a path string captured
- * at pick time must NEVER be the thing we persist — only the bookmark is durable.
+ * [durableBookmark] and [platformFileFromBookmark] cover both. On iOS they create and resolve a
+ * security-scoped bookmark. On Android, `bookmarkData` takes the persistable permission and
+ * returns the URI bytes. The registry saves those opaque bytes (Base64) in DataStore and resolves
+ * them back to a [PlatformFile] that is ready to open at playback time. Never save a path string
+ * captured at pick time instead: only the bookmark lasts.
  *
  * ## Two namespaces
- *  - **Directories** (`dirId` → bookmark): every media directory the user added. Keyed by the
- *    directory's [PlatformFile.path] so it lines up with [Preferences.MEDIA_DIRECTORIES].
- *  - **Files** (`filename` → bookmark): every individual media file we have a durable handle
- *    for — either because the user picked it directly, or because we discovered it while
- *    indexing a remembered directory. This is the fast path for [resolvePlayableFile].
+ *  - **Directories** (`dirId` to bookmark): every media directory that the user added. The key is
+ *    the directory's [PlatformFile.path], so it lines up with [Preferences.MEDIA_DIRECTORIES].
+ *  - **Files** (`filename` to bookmark): every media file with a lasting handle, either picked by
+ *    the user or found while indexing a remembered directory. This is the fast path for
+ *    [resolvePlayableFile].
  */
 object MediaAccessRegistry {
 
@@ -62,10 +62,9 @@ object MediaAccessRegistry {
     /* ----------------------------- Remembering ----------------------------- */
 
     /**
-     * Persists durable access to [dir] and registers it under [Preferences.MEDIA_DIRECTORIES].
-     * Safe to call repeatedly with the same directory (idempotent). Failures are swallowed and
-     * logged — a directory we couldn't bookmark simply won't be resolvable later, which the
-     * resolver degrades on gracefully.
+     * Saves lasting access to [dir] and adds it to [Preferences.MEDIA_DIRECTORIES]. Safe to call
+     * again with the same directory. A failure is logged, not thrown. A directory without a
+     * bookmark cannot be resolved from a bookmark later, so the resolver falls back to its path.
      */
     suspend fun rememberDirectory(dir: PlatformFile) {
         val id = dir.path
@@ -78,9 +77,9 @@ object MediaAccessRegistry {
     }
 
     /**
-     * Persists durable access to picked [files], each keyed by its filename so the playlist
-     * (which stores only names) can resolve it later. All bookmarks are written in a single
-     * store update.
+     * Saves lasting access to the picked [files], each under its file name, so the playlist
+     * (which stores only names) can resolve it later. All bookmarks go into the store in one
+     * update.
      */
     suspend fun rememberFiles(files: List<PlatformFile>) {
         val bookmarks = LinkedHashMap<String, ByteArray>()
@@ -94,7 +93,10 @@ object MediaAccessRegistry {
         rememberFileBookmarks(bookmarks)
     }
 
-    /** Bulk-persists `filename → bookmark-bytes` discovered by [indexMediaTree]. */
+    /**
+     * Saves many file bookmarks (file name to bookmark bytes) in one update, such as the result
+     * of [indexMediaTree].
+     */
     suspend fun rememberFileBookmarks(bookmarks: Map<String, ByteArray>) {
         if (bookmarks.isEmpty()) return
         mergeBookmarks(FILE_BOOKMARKS, bookmarks)
@@ -103,17 +105,16 @@ object MediaAccessRegistry {
     /* ------------------------------ Resolving ------------------------------ */
 
     /**
-     * Resolves [filename] to a [PlatformFile] that is ready to be opened by the player
-     * (security scope re-established on iOS, persisted permission on Android), or null if it
-     * cannot be found in any remembered location.
+     * Resolves [filename] to a [PlatformFile] that the player can open (security scope restored
+     * on iOS, saved permission on Android). Returns null when no remembered location has it.
      *
      * Resolution order:
-     *  1. **Direct file bookmark** — instant; covers files the user picked or any file already
-     *     discovered by a previous index of a media directory.
-     *  2. **Self-healing directory re-index** — if the name isn't known yet (e.g. a peer added a
-     *     file that lives in one of our media directories but landed there after we last
-     *     indexed), we re-walk each remembered directory, persist everything we find, and retry
-     *     the direct lookup. Stops as soon as the file turns up.
+     *  1. **Direct file bookmark**: instant. It covers files that the user picked and files that
+     *     an earlier index of a media directory found.
+     *  2. **Directory re-index**: when the name is not known yet, walk each remembered directory
+     *     again, save everything found and retry the direct lookup. This finds a file that a peer
+     *     added and that arrived in a media directory after the last index. The walk stops as
+     *     soon as the file turns up.
      */
     suspend fun resolvePlayableFile(filename: String): PlatformFile? {
         directFile(filename)?.let { return it }
@@ -133,8 +134,8 @@ object MediaAccessRegistry {
     private suspend fun directFile(filename: String): PlatformFile? {
         val bytes = readBookmark(FILE_BOOKMARKS, filename) ?: return null
         val file = runCatching { platformFileFromBookmark(bytes) }.getOrNull() ?: return null
-        // exists() can throw on a stale/revoked handle; treat that as "still try it" only when
-        // the check itself failed to run, but treat a definitive `false` as not-found.
+        // stillExists() can throw on a stale or revoked handle. When the check itself fails,
+        // still try the file. A definite `false` means not found.
         val present = runCatching { file.stillExists() }.getOrElse { true }
         return if (present) file else null
     }
@@ -144,8 +145,9 @@ object MediaAccessRegistry {
         readBookmark(DIR_BOOKMARKS, dirId)?.let { bytes ->
             runCatching { platformFileFromBookmark(bytes) }.getOrNull()?.let { return it }
         }
-        // Legacy entries (added before bookmarking existed) or same-session Android URIs: best
-        // effort. On iOS this won't be accessible, and indexMediaTree will simply yield nothing.
+        // Best effort for an entry without a bookmark (saved by an older version, or a failed
+        // bookmark) and for an Android URI from this session. On iOS such a path is not
+        // accessible, and indexMediaTree returns nothing.
         return runCatching { platformFileAt(dirId) }.getOrNull()
     }
 
@@ -154,7 +156,7 @@ object MediaAccessRegistry {
     /** Drops a directory's bookmark (called when the user removes it from media directories). */
     suspend fun forgetDirectory(dirId: String) = removeBookmark(DIR_BOOKMARKS, dirId)
 
-    /** Clears every persisted handle. Mirrors "clear all media directories". */
+    /** Clears every saved handle, for the "clear all media directories" action. */
     suspend fun clear() {
         datastore.edit { prefs ->
             prefs.remove(DIR_BOOKMARKS)
@@ -166,8 +168,9 @@ object MediaAccessRegistry {
 
     @OptIn(ExperimentalEncodingApi::class)
     private suspend fun readBookmark(key: androidx.datastore.preferences.core.Preferences.Key<String>, id: String): ByteArray? {
-        // The hot snapshot lags its own writes by a collection, so a file remembered a moment ago
-        // read back as missing. Read the store itself; a bookmark lookup is not a hot path.
+        // The hot snapshot lags behind its own writes by one collection, so a file remembered a
+        // moment ago would read back as missing. Read the store itself: a bookmark lookup is not
+        // a hot path.
         val raw = datastore.data.first()[key] ?: return null
         val map = decode(raw)
         val b64 = map[id] ?: return null

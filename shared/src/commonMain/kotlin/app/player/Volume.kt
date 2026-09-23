@@ -6,15 +6,16 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 /**
- * One volume ladder with two rungs.
+ * The volume scale of one engine, from 0 to [max], in two ranges.
  *
- * 0 to 100 is the base: the device's own music volume where the platform lets the app set it
- * (Android), else the engine's own output (iOS, desktop; iOS has no public API for the system
- * volume). Above 100 is the engine's gain, where the engine can amplify: VLCKit and mpv go to
- * 200 natively, ExoPlayer to 200 through a loudness effect, KitePlayer and AVPlayer stop at 100.
+ * 0 to 100 is the base. The base is the device's music volume where the platform lets the app
+ * set it (Android). Elsewhere, the base is the engine's own output (iOS has no public API for
+ * the system volume). Above 100 is the engine's gain, where the engine can amplify: VLCKit and
+ * mpv go to 200 natively, ExoPlayer goes to 200 through a loudness effect, and KitePlayer and
+ * AVPlayer stop at 100.
  */
 class VolumeLadder(val deviceSteps: Int, val gainMax: Int) {
-    /** True where the platform lets the app move the device's own music stream. */
+    /** True where the platform lets the app set the device's music volume. */
     val deviceOwnsBase: Boolean get() = deviceSteps > 0
     val max: Int get() = gainMax.coerceAtLeast(BASE_MAX)
     val hasGain: Boolean get() = gainMax > BASE_MAX
@@ -24,10 +25,13 @@ class VolumeLadder(val deviceSteps: Int, val gainMax: Int) {
     }
 }
 
-/** Reads and writes the ladder for one engine, routing the base and the gain to where they live. */
+/**
+ * Reads and writes the [VolumeLadder] position of one engine. The base goes to the device volume
+ * or the engine output, and the gain goes to the engine.
+ */
 class VolumeController(private val player: PlayerImpl) {
 
-    /* Volatile: read from the pointer handler during a swipe and from composition. */
+    /* Volatile: the pointer handler reads it during a swipe, and composition reads it too. */
     @Volatile
     private var cachedLadder: VolumeLadder? = null
 
@@ -35,20 +39,20 @@ class VolumeController(private val player: PlayerImpl) {
     private var cachedAt: TimeSource.Monotonic.ValueTimeMark? = null
 
     /**
-     * The ladder, rebuilt at most every [LADDER_TTL_MS].
+     * The ladder, rebuilt at most once per [LADDER_TTL].
      *
-     * It was a plain getter, and reading it asks the platform how many steps the device's volume
-     * has, which on Android is a binder call to the audio service. A volume swipe reads this on
-     * every pointer sample and then writes through [set], which used to ask again on the way
-     * down, so one finger movement crossed the process boundary three or four times. Nothing it
-     * describes changes faster than a headset being plugged in.
+     * Building it asks the platform how many steps the device volume has. On Android, that is a
+     * binder call (a call into another process) to the audio service. A volume swipe reads the
+     * ladder on every pointer sample and then writes through [set]. Without the cache, one finger
+     * movement would cross the process boundary three or four times. None of these values change
+     * faster than a headset gets plugged in.
      */
     val ladder: VolumeLadder
         get() {
             val cached = cachedLadder
             val at = cachedAt
-            // Monotonic, not the wall clock: a clock that steps backwards makes an elapsed time
-            // negative, which reads as "still fresh" and freezes the ladder until it catches up.
+            // Monotonic time, not the wall clock. A wall clock that steps backwards gives a negative
+            // elapsed time, which reads as "still fresh" and freezes the ladder until it catches up.
             if (cached != null && at != null && at.elapsedNow() < LADDER_TTL) return cached
             return VolumeLadder(
                 deviceSteps = platformCallback.deviceVolumeSteps(),
@@ -67,7 +71,7 @@ class VolumeController(private val player: PlayerImpl) {
         return base(ladder).coerceIn(0, VolumeLadder.BASE_MAX)
     }
 
-    /** Sets the ladder position; the base fills before any gain is applied, and gain drops first. */
+    /** Sets the ladder position. The base fills before any gain applies, and the gain drops first. */
     fun set(percent: Int) {
         val ladder = ladder
         val target = percent.coerceIn(0, ladder.max)
@@ -91,14 +95,14 @@ class VolumeController(private val player: PlayerImpl) {
             player.setEngineVolume(percent)
             return
         }
-        // The engine's own output stays at full so the device's stream is the only thing heard moving.
+        // The engine's own output stays at full, so only the device volume changes what is heard.
         player.setEngineVolume(VolumeLadder.BASE_MAX)
         val steps = ladder.deviceSteps.coerceAtLeast(1)
         platformCallback.setDeviceVolume((percent * steps + VolumeLadder.BASE_MAX / 2) / VolumeLadder.BASE_MAX)
     }
 
     private companion object {
-        /** Long enough to cover a whole swipe, short enough that plugging in a headset lands. */
+        /** Long enough to cover a whole swipe, short enough that a headset plug-in shows up soon. */
         val LADDER_TTL = 500.milliseconds
     }
 }

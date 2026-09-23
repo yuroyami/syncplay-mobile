@@ -27,12 +27,13 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 
 /**
- * Netty-based [NetworkManager] for the JVM platforms: async TCP socket with TLS support. The
- * default network engine on both Android and desktop.
+ * Netty-based [NetworkManager] for the JVM platforms: an async TCP socket with TLS support. A
+ * network manager carries the Syncplay protocol lines between the room and the server. Netty is
+ * the default network engine on Android and desktop.
  *
- * This used to be two byte-identical files, which meant every Netty fix in the ledger had to land
- * twice. The only real differences were socket tagging and waiting for Conscrypt, and both are
- * behind [tagSocketThread] and [awaitTlsProviderReady] now.
+ * Android and desktop share this one file, so a Netty fix lands once. Their two differences,
+ * socket tagging and the wait for Conscrypt, sit behind [tagSocketThread] and
+ * [awaitTlsProviderReady].
  */
 class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
@@ -42,28 +43,28 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     private var channel: Channel? = null
 
     /**
-     * Event loop group backing [channel]. Must be shut down together with the channel:
-     * each group owns native NIO threads, so a group released later than its channel leaks
-     * those threads for the process lifetime.
+     * The event loop group behind [channel]. Shut it down together with the channel: each group
+     * owns its NIO threads, so a group released later than its channel leaks those threads for
+     * the life of the process.
      *
-     * Volatile for the same reason [channel] is: it is written on the connect coroutine and read
-     * by [terminateExistingConnection], which the channel watchdog and the handshake deadline
-     * both call from coroutines of their own.
+     * Volatile for the same reason as [channel]: the connect coroutine writes it, and
+     * [terminateExistingConnection] reads it. The channel watchdog and the handshake deadline
+     * both call that function from their own coroutines.
      */
     @Volatile
     private var group: EventLoopGroup? = null
 
     /**
-     * Opens a TCP connection to the Syncplay server. Bootstraps a NIO client with string
-     * codecs, a CRLF line-frame decoder, and an inbound handler that forwards each line to
-     * [handlePacket]. Waits up to 10 s; a refused, unreachable or timed-out connect throws,
-     * which [connect] turns into onConnectionFailed.
+     * Opens a TCP connection to the Syncplay server. Bootstraps a NIO client with string codecs,
+     * a line-frame decoder, and an inbound handler that passes each line to [handlePacket]. Waits
+     * up to 10 s. A refused, unreachable or timed-out connect throws, and [connect] turns that
+     * into onConnectionFailed.
      */
     override suspend fun connectSocket() {
         loggy("Handshake: entering the transport after ${sinceHandshakeStart()}")
         // One thread, explicitly. The no-argument constructor sizes the group at twice the core
-        // count, which on a phone spins up sixteen NIO threads to service the one socket this
-        // client ever opens, and does it again on every reconnect attempt.
+        // count, which on a phone starts sixteen NIO threads for the one socket that this client
+        // opens, and does it again on every reconnect attempt.
         val group: EventLoopGroup = NioEventLoopGroup(1)
         this.group = group
         val b = Bootstrap()
@@ -72,9 +73,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     val pipeline = ch.pipeline()
-                    // 64 KiB line cap, matching the built-in server's framer. Must stay large
-                    // enough for a fat List response (big room plus a playlist near the protocol's
-                    // 10000-char limit); a smaller cap overflows the decoder and loops reconnects.
+                    // 64 KiB line cap, the same as the hosted server's framer. It must stay large
+                    // enough for a large List response (a big room plus a playlist near the
+                    // protocol's 10000-char limit). A smaller cap overflows the decoder and causes
+                    // a reconnect loop.
                     pipeline.addLast("framer", DelimiterBasedFrameDecoder(65536, *Delimiters.lineDelimiter()))
                     pipeline.addLast(StringDecoder())
                     pipeline.addLast(StringEncoder())
@@ -85,7 +87,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                         }
 
                         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
-                            // A line from a socket we have already replaced is not ours to act on.
+                            // Ignore a line from a socket that a newer connection has replaced.
                             if (msg != null && ctx?.channel() === channel) handlePacket(msg)
                         }
 
@@ -110,10 +112,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             dial(b).also { loggy("Handshake: dial returned after ${sinceHandshakeStart()}") }
         } catch (e: Throwable) {
             loggy("Handshake: dial failed after ${sinceHandshakeStart()} (${e::class.simpleName}: ${e.message})")
-            /* A dial that fails leaves this group with nothing to serve. It used to sit there
-             * holding its NIO thread until the next connect attempt tore it down on the way in.
-             * Shut down unconditionally: if a newer attempt has already claimed the field, this
-             * group is doubly orphaned and would otherwise never be released at all. */
+            /* A failed dial leaves this group with nothing to serve, so shut it down now instead
+             * of letting it hold its NIO thread until the next connect attempt. Shut it down even
+             * when a newer attempt has already taken the field: then nothing else owns this group,
+             * and it would never be released. */
             if (this.group === group) this.group = null
             runCatching { group.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
             throw e
@@ -127,24 +129,25 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             suspendCancellableCoroutine<Channel> { cont ->
                 val f = b.connect(viewmodel.session.serverHost, viewmodel.session.serverPort)
                 f.addListener { future ->
-                    // The future completing is not the same as it succeeding: a refused or
-                    // unreachable host completes it with a cause.
+                    // A completed future is not always a success: a refused or unreachable host
+                    // completes it with a cause.
                     if (future.isSuccess) cont.resume(f.channel())
                     else cont.resumeWithException(future.cause() ?: IOException("Connect failed"))
                 }
                 cont.invokeOnCancellation {
-                    // Losing the race means the connect already succeeded, so cancelling the
-                    // future does nothing and the socket would be left open with nothing holding
-                    // it: `channel` is only assigned after this block returns.
+                    // If the cancel loses the race, the connect already succeeded. Cancelling the
+                    // future then does nothing, and the socket stays open with nothing holding it
+                    // (`channel` is assigned only after this block returns). So close it here.
                     if (!f.cancel(true)) f.channel()?.close()
                 }
             }
         }
 
     /**
-     * The socket went away under us. Only the current channel counts: our own teardown of a
-     * previous socket is not news. In CONNECTING that is a server closing mid-handshake (a
-     * wrong password, for one), which used to leave the room dead-ended with no callback.
+     * Handles a socket that closed from the other side. Only the current channel counts: closing
+     * a previous socket ourselves is expected. In CONNECTING, the close means the server ended
+     * the handshake (for example on a wrong password), so the room gets onConnectionFailed
+     * instead of waiting with no callback.
      */
     private fun lost(ch: Channel) {
         if (ch !== channel) return
@@ -166,10 +169,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         } catch (e: Exception) {
             loggy("Channel close failed: ${e.message}")
         } finally {
-            /* Release the NIO threads with the channel — see [group]. No quiet period: the
-             * channel is closed on the line above, so there is nothing to wind down, and the
-             * default two seconds is longer than the shortest reconnect interval, which left
-             * every retry running its group alongside the one before it. */
+            /* Release the NIO threads with the channel (see [group]). No quiet period: the
+             * channel is already closed above, so there is nothing to wind down. The default
+             * two-second quiet period is longer than the shortest reconnect interval, so each
+             * retry would run its group beside the one before it. */
             group?.shutdownGracefully(0L, GROUP_SHUTDOWN_TIMEOUT_MS, TimeUnit.MILLISECONDS)
             group = null
         }
@@ -184,9 +187,9 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                 if (future.isSuccess) cont.resume(Unit)
                 else cont.resumeWithException(future.cause() ?: IOException("Write failed"))
             }
-            // The caller writes under a timeout. Without this the timeout only abandoned the
-            // wait: the write stayed queued and still went out, so the caller's retry put the
-            // same line on the wire a second time.
+            // The caller writes under a timeout. Without this cancel, the timeout only abandons
+            // the wait: the write stays queued and still goes out, and the caller's retry sends
+            // the same line a second time.
             cont.invokeOnCancellation { f.cancel(false) }
         }
     }
@@ -195,24 +198,24 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     /**
      * Inserts an SSL handler at the front of the pipeline and suspends until the TLS handshake
-     * completes (or fails). Awaiting the handshake guarantees a subsequent `Hello` write goes out
-     * as ciphertext rather than relying on the SSL handler's buffering as a timing detail.
+     * completes or fails. Waiting for the handshake makes sure that the next `Hello` write goes
+     * out encrypted, instead of relying on the SSL handler's buffering as a timing detail.
      *
-     * The certificate is checked against the host name the user typed (SNI carries it too), not
-     * the IP the socket dialled: without that check any certificate from anyone on the path
-     * passed, and encryption bought nothing.
+     * The certificate is checked against the host name that the user typed (SNI carries it too),
+     * not the IP that the socket dialled. Without that check, any certificate from anyone on the
+     * network path passes, and the encryption protects nothing.
      */
     override suspend fun upgradeTls() {
-        /* Bounded, the way the SwiftNIO side already bounds its own handshake. This runs on the
-         * serial inbound consumer, so a handshake that never settles stops every packet behind
-         * it; the channel close from the handshake deadline does eventually fail the promise, but
-         * waiting for the provider happens before any handler is in the pipeline, where closing
-         * the channel cannot reach it. Measured against the official server the whole upgrade is
-         * about a second.
+        /* The upgrade has a time limit, like the handshake on the SwiftNIO (iOS) side. This runs
+         * on the serial inbound consumer, so a handshake that never finishes stops every packet
+         * behind it. The channel close from the handshake deadline does fail the promise in the
+         * end, but the wait for the TLS provider happens before any handler is in the pipeline,
+         * where a channel close cannot reach it. Against the official server, the whole upgrade
+         * takes about a second.
          *
-         * The timeout is turned into an ordinary exception on the way out. TimeoutCancellationException
-         * is a CancellationException, and the caller rethrows those by contract, which would take
-         * the inbound consumer down with it and leave the connection unable to read anything again. */
+         * The timeout leaves as an ordinary IOException. TimeoutCancellationException is a
+         * CancellationException, and the caller rethrows those by contract. That would stop the
+         * inbound consumer and leave the connection unable to read anything again. */
         try {
             withTimeout(TLS_UPGRADE_TIMEOUT_MS) {
                 // Android has to wait for Conscrypt; desktop's JDK provider is always there.
@@ -226,9 +229,9 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     private suspend fun upgradeTlsNow() = suspendCancellableCoroutine<Unit> { cont ->
         try {
-            // Off the current channel, not off a field the ChannelInitializer wrote: that field
-            // tracked whichever channel was initialised last, so after a torn-down connect the
-            // SSL handler went into a dead pipeline.
+            // Take the pipeline from the current channel, not from a field that the
+            // ChannelInitializer writes. Such a field tracks whichever channel was initialised
+            // last, so after a torn-down connect the SSL handler goes into a dead pipeline.
             val pipeline = channel?.pipeline() ?: throw SocketGoneException()
             val sslContext = sharedClientSslContext()
 
@@ -255,10 +258,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         /**
          * One client TLS context for the whole process, built on first use.
          *
-         * It was rebuilt for every upgrade, and a fresh context carries a fresh session cache, so
-         * every reconnect paid for a full handshake. Reusing it lets the JDK resume the session
-         * it already has for this host, which is the difference between two round trips and one.
-         * The context is immutable and safe to share; only the per-channel handler is new.
+         * A fresh context has a fresh session cache, so a context built per upgrade makes every
+         * reconnect pay for a full handshake. Reuse lets the JDK resume the session that it
+         * already has for this host: one round trip instead of two. The context is immutable and
+         * safe to share; only the per-channel handler is new.
          */
         @Volatile
         private var clientSslContext: SslContext? = null
@@ -273,10 +276,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
         const val CONNECT_TIMEOUT_MS = 10_000L
 
-        /** Ceiling on waiting for the TLS provider and the handshake together. */
+        /** The time limit for the TLS provider wait and the handshake together. */
         const val TLS_UPGRADE_TIMEOUT_MS = 15_000L
 
-        /** Ceiling on how long a shut-down event loop group may take to actually stop. */
+        /** The longest time that a shut-down event loop group may take to stop. */
         const val GROUP_SHUTDOWN_TIMEOUT_MS = 2_000L
     }
 }

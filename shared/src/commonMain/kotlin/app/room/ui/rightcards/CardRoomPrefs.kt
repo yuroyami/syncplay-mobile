@@ -32,13 +32,16 @@ import app.uicomponents.frames.PanelFrame
 
 object CardRoomPrefs {
 
-    /** In-room settings: the same console list as the global screen, inside the panel frame. */
+    /**
+     * The settings panel of the room (the group of people watching together). It shows the room
+     * settings in the same category list as the global settings screen, inside a panel frame.
+     */
     @Composable
     fun InRoomSettingsCard(shape: Shape = Radius.panelShape) {
         val viewmodel = LocalRoomViewmodel.current
         var categories: List<SettingCategory>? by remember { mutableStateOf(null) }
         var open by remember { mutableStateOf<SettingCategory?>(null) }
-        // Nested pages (chat colours, one colour) stack here, inline, so the chat stays in view.
+        // Nested pages (chat colors, then one color) stack inline here, so the chat stays in view.
         val pages = remember { mutableStateListOf<InlineEditorPage>() }
         val host = remember { InlineEditorHost { page -> pages.add(page) } }
 
@@ -82,8 +85,9 @@ object CardRoomPrefs {
 }
 
 /**
- * One nested page in the panel's body slot. Lists use the panel's scroll; fitted editors switch
- * that scroll off so their child receives the actual available height. Pages never nest scrolls.
+ * Shows one nested page in the body slot of the panel. A list page uses the scroll of the panel.
+ * A fitted editor turns that scroll off, so its child gets the real available height. Pages never
+ * nest scrolls.
  */
 @Composable
 internal fun InRoomNestedPage(content: @Composable () -> Unit) {

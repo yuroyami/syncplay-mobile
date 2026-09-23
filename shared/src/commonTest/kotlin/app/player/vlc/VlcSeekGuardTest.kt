@@ -59,8 +59,8 @@ class VlcSeekGuardTest {
     fun a_paused_seek_does_not_need_an_intermediate_sample_to_defer_its_deadline() {
         val guard = VlcSeekGuard()
         guard.seek(20_000L, 0L, playing = false)
-        // The tracker may be asleep/backgrounded for the whole pause. Its first sample
-        // after resume must start the playing deadline instead of expiring immediately.
+        // The position tracker can sleep in the background for the whole pause. Its first sample
+        // after the resume must start the playing deadline, not release the target at once.
         assertEquals(20_000L, guard.sample(5_000L, 10_000L, playing = true))
         assertEquals(20_000L, guard.sample(5_000L, 11_000L, playing = true))
         assertEquals(5_000L, guard.sample(5_000L, 11_001L, playing = true))

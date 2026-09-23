@@ -8,9 +8,10 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer
 
 /**
- * ExoPlayer (Media3) engine. Stable and battery-efficient but with narrower codec/format
- * support than mpv, and weak softsub handling. Default engine on the `exoOnly` flavor
- * (`KiteBuildConfig.EXOPLAYER_ONLY`), which ships no native player libs.
+ * The ExoPlayer (Media3) engine. An engine is one of the video players the app can drive.
+ * ExoPlayer is stable and battery-efficient, but it supports fewer codecs and formats than mpv
+ * and handles soft subtitles poorly. It is the default engine in the `exoOnly` flavor
+ * (`KiteBuildConfig.EXOPLAYER_ONLY`), which ships no native player libraries.
  */
 object ExoEngine : PlayerEngine {
     override val name = "ExoPlayer"

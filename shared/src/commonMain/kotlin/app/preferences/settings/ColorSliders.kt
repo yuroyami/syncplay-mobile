@@ -19,9 +19,10 @@ import app.uicomponents.controls.Text
 import kotlin.math.roundToInt
 
 /**
- * Hue, saturation, brightness and opacity as sliders a remote can move with Left and Right. The
- * picker above them only answers a finger or a mouse, so on a television these are how a colour
- * is chosen. The hue is kept apart from [color], because a grey has none to read back.
+ * Hue, saturation, brightness and opacity as sliders that a TV remote can move with Left and
+ * Right. The picker above them reacts only to a finger or a mouse, so on a television the user
+ * picks a colour with these sliders. The hue is kept apart from [color], because a grey has no
+ * hue to read back.
  */
 @Composable
 internal fun ColorSliders(color: Color, onColor: (Color) -> Unit, modifier: Modifier = Modifier) {
@@ -51,7 +52,7 @@ private fun Slider(label: String, value: Float, spoken: String, step: Float = 0.
 
 private fun percent(value: Float) = "${(value * 100).roundToInt()}%"
 
-/** Hue in degrees, then saturation and value from 0 to 1. */
+/** Converts the colour to HSV: the hue in degrees, then the saturation and the value from 0 to 1. */
 internal fun Color.toHsv(): FloatArray {
     val max = maxOf(red, green, blue)
     val min = minOf(red, green, blue)

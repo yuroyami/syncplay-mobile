@@ -4,8 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The log is exportable from settings, so anything in it is something the user can hand to a
- * stranger. A service key reaches it through more paths than can be found one at a time.
+ * The user can export the log from settings and hand it to a stranger. A service key reaches the
+ * log through too many paths to find one at a time, so [redactSecrets] masks the known secrets.
  */
 class LogRedactionTest {
 

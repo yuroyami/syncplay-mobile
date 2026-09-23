@@ -28,10 +28,11 @@ import org.jetbrains.skia.Data
 import org.jetbrains.skia.Image as SkiaImage
 
 /**
- * Desktop animated image: Coil has no JVM GIF decoder (coil-gif is Android-only), so GIFs are
- * decoded with Skia's Codec directly — every frame pre-rendered sequentially (delta frames
- * accumulate onto the previous one via priorFrame) and cycled with each frame's own duration.
- * Mirrors the iOS actual, including its 64-entry LRU so Klipy panel scrolling stays smooth.
+ * Desktop animated image. Coil has no JVM GIF decoder (coil-gif is Android-only), so Skia's Codec
+ * decodes GIFs directly. Every frame is rendered ahead, in order: a delta frame draws on top of
+ * the previous frame through priorFrame. Playback then cycles the frames, each for its own
+ * duration. This mirrors the iOS actual, including the 64-entry LRU cache that keeps scrolling in
+ * the KLIPY GIF panel smooth.
  */
 @Composable
 actual fun AnimatedImage(
@@ -59,8 +60,8 @@ actual fun AnimatedImage(
     var frameIndex by remember(anim) { mutableIntStateOf(0) }
 
     if (anim.frames.size > 1) {
-        // Keyed on visibility too. A GIF at alpha 0 is a GIF nobody is looking at, and the room
-        // keeps its panels composed while the HUD is hidden, so every one of them kept decoding.
+        // Keyed on visibility too. Nobody sees a GIF at alpha 0, and the room keeps its panels
+        // composed while the HUD is hidden, so without this key every GIF keeps animating.
         val visible = alpha > 0f
         LaunchedEffect(anim, visible) {
             if (!visible) return@LaunchedEffect
@@ -100,7 +101,7 @@ private object AnimatedImageCache {
     suspend fun load(url: String): DecodedAnimation? = withContext(Dispatchers.IO) {
         synchronized(cache) { cache[url] }?.let { return@withContext it }
 
-        // In-flight dedup is intentionally skipped: the Klipy grid loads distinct URLs.
+        // No de-duplication of loads in progress, on purpose: the KLIPY grid loads distinct URLs.
         runCatching {
             val bytes: ByteArray = httpClient.get(url).body()
             val decoded = decode(bytes)
@@ -122,8 +123,8 @@ private object AnimatedImageCache {
             } else {
                 val frameInfos = c.framesInfo
                 for (i in 0 until c.frameCount) {
-                    // priorFrame = the frame currently held in `work`, letting Skia compose
-                    // delta-encoded GIF frames on top of the accumulated previous frame.
+                    // priorFrame is the frame currently held in `work`, so Skia draws a
+                    // delta-encoded GIF frame on top of the frames before it.
                     if (i == 0) c.readPixels(work, 0) else c.readPixels(work, i, i - 1)
                     val duration = frameInfos.getOrNull(i)?.duration?.takeIf { it > 0 } ?: 100
                     frames.add(

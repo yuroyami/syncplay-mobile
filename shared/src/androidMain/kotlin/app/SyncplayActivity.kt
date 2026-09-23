@@ -58,9 +58,7 @@ import androidx.core.content.ContextCompat
 import app.room.VideoBounds
 
 /**
- * Main Activity for the Syncplay Android application.
- *
- * This is a single-activity app - all navigation is handled within Compose.
+ * The only Activity of the Android app. All navigation happens inside Compose.
  */
 class SyncplayActivity : ComponentActivity() {
 
@@ -74,44 +72,39 @@ class SyncplayActivity : ComponentActivity() {
 
 
     /**
-     * Called when the activity is first created.
-     *
-     * Performs initialization including:
-     * - Installing splash screen
-     * - Configuring transparent system bars and edge-to-edge layout
-     * - Setting up platform callback implementation
-     * - Launching Compose UI
-     * - Processing shortcut intents
+     * Sets up the splash screen, the system bars, [platformCallback] and the Compose UI. Then it
+     * handles a launcher shortcut or an invite link and asks for the notification permission.
      */
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Cold starts only. It holds while preferences are still being read, so no screen is
-        // ever drawn against defaults that are about to change.
+        // The splash screen shows on cold starts only. It stays while the preferences load, so
+        // no screen is drawn with defaults that are about to change.
         installSplashScreen().setKeepOnScreenCondition { !arePreferencesLoaded }
 
-        /** Communicates the lifecycle with our common code */
+        /** Forwards the Activity lifecycle to the room's UI state. */
         bindWatchdog()
 
         super.onCreate(savedInstanceState)
 
-        /** Install crash handler early so it catches everything after this point */
+        /** Install the crash handler early, so it catches everything after this point. */
         CrashHandler.install()
 
-        /** Tweaking window UI decor (transparent system bars, edge-to-edge) */
+        /** Transparent system bars and an edge-to-edge layout. */
         applyActivityUiProperties()
         maskHiddenSystemBars()
 
-        /* A television raises its keyboard only when Center asks for it. Android would raise it by
-         * itself whenever the window regains focus on a text field, such as when a dialog closes. */
+        /* On a TV, the keyboard opens only when the D-pad center key asks for it. Otherwise
+         * Android opens it whenever the window regains focus on a text field, such as when a
+         * dialog closes. */
         if (isTelevision()) {
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         }
 
-        /** Binding common logic with platform logic. Held weakly: the callback outlives this
-         * Activity, which is recreated on a theme, locale or font-size change. */
+        /** Connects the shared code to this platform. The callback holds this Activity weakly:
+         * the callback outlives the Activity, which is recreated on a theme, locale or font-size
+         * change. */
         platformCallback = AndroidPlatformCallback(WeakReference(this))
 
-        /****** Composing UI using Jetpack Compose *******/
         setContent {
             coil3.compose.setSingletonImageLoaderFactory { context ->
                 coil3.ImageLoader.Builder(context)
@@ -125,8 +118,9 @@ class SyncplayActivity : ComponentActivity() {
                     .build()
             }
 
-            /* Status bar icon color follows the theme: a light theme gets dark icons and the
-             * reverse. The old hardcoded `false` left white-on-white icons on Daylight. */
+            /* The status bar icon color follows the theme: a light theme gets dark icons, and a
+             * dark theme gets light icons. A fixed value gives white-on-white icons on a light
+             * theme such as Daylight. */
             var composedViewmodel by remember { mutableStateOf<SyncplayViewmodel?>(null) }
             val activeTheme = composedViewmodel?.currentTheme?.collectAsState()?.value
             LaunchedEffect(activeTheme?.isDark) {
@@ -134,7 +128,6 @@ class SyncplayActivity : ComponentActivity() {
                     activeTheme?.isDark == false
             }
 
-            //MainUI
             Box {
                 AdamScreen(
                     onGlobalViewmodel = {
@@ -147,7 +140,7 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        // The room's own words for the two picture-in-picture actions, resolved once.
+        // Load the localized labels for the two picture-in-picture actions once.
         lifecycleScope.launch {
             runCatching {
                 pipPauseLabel = Localization.strings.roomPause
@@ -155,7 +148,7 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        /** A shortcut, or an invite link someone tapped */
+        /** A launcher shortcut, or an invite link that someone tapped. */
         handleLaunchIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -165,12 +158,7 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Applies the saved language before the base context is attached.
-     *
-     * This ensures the correct locale is used when inflating resources.
-     */
-    /** A link that arrives while the app is already running reaches the same handler. */
+    /** A shortcut or link that arrives while the app is running goes to the same handler. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -178,8 +166,8 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     /**
-     * Joins from a launcher shortcut or an invite link. Both are outside input: the room name and
-     * the addresses go through the same caps and trimming the join form applies.
+     * Joins from a launcher shortcut or an invite link. Both are outside input, so the room name
+     * and the addresses get the same caps and trimming as the join form.
      */
     private fun handleLaunchIntent(intent: Intent?) {
         intent ?: return
@@ -194,12 +182,12 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     /**
-     * The join behind a launcher shortcut.
+     * Returns the join behind a launcher shortcut, or null when no saved shortcut matches.
      *
-     * This activity is exported, so any installed app can send these extras and ask us to join a
-     * server of its choosing. They are only honoured when a shortcut we ourselves saved carries
-     * exactly that configuration: shortcut ids are per-package, so nobody else can plant one. The
-     * fields then go through the same caps as an invite link.
+     * This activity is exported, so any installed app can send these extras and ask the app to
+     * join a server of its choosing. The extras count only when a shortcut that this app saved
+     * has exactly that configuration. Shortcut ids are per package, so no other app can plant
+     * one. The fields then get the same caps as an invite link.
      */
     private fun quickLaunchConfig(intent: Intent): JoinConfig? {
         val name = intent.getStringExtra("name") ?: ""
@@ -207,11 +195,11 @@ class SyncplayActivity : ComponentActivity() {
         val ip = intent.getStringExtra("serverip") ?: ""
         val port = intent.getIntExtra("serverport", JoinConfig().port)
 
-        /* The saved shortcut is the authority, not the intent. It has to still exist and still
-         * be enabled, and what we join with comes out of it: the caller supplied the id we look
-         * up, so letting the caller also supply the fields would make the check decorative.
-         * Erasing shortcuts leaves the pinned ones on the launcher, greyed out; tapping one
-         * used to join anyway. */
+        /* Trust the saved shortcut, not the intent. The shortcut must still exist and be
+         * enabled, and the join fields come from the shortcut. The caller supplied the id for
+         * the lookup, so fields from the caller would make the check useless. Erasing shortcuts
+         * leaves the pinned ones on the launcher, greyed out, and the isEnabled check stops a
+         * tap on one of them from joining. */
         val saved = runCatching {
             ShortcutManagerCompat.getShortcuts(
                 this,
@@ -236,7 +224,8 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context?) {
-        /** Applying the saved language; blank means the device's own, so nothing is forced. */
+        /** Apply the saved language before the base context attaches, so resources load in that
+         * locale. A blank choice means the device's own language, so nothing is forced. */
         val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)
         super.attachBaseContext(if (lang.isBlank()) newBase else newBase!!.changeLanguage(lang))
     }
@@ -256,22 +245,17 @@ class SyncplayActivity : ComponentActivity() {
         resources.updateConfiguration(config, resources.displayMetrics)
     }
 
-    /**
-     * Called when the activity is becoming visible to the user.
-     *
-     * Loads subtitle appearance settings for the player.
-     * Follows onCreate() and precedes activity results and onResume().
-     */
+    /** Registers the picture-in-picture receiver and reapplies the subtitle size to ExoPlayer. */
     override fun onStart() {
         super.onStart()
 
-        /* Registered here and not in onResume: entering picture-in-picture pauses the activity
-         * while leaving it started, so an onResume/onPause pairing tore the receiver down at the
-         * exact moment the PiP window's own play and pause buttons started firing at it.
+        /* Register here, not in onResume. Entering picture-in-picture pauses the activity but
+         * keeps it started, so an onResume/onPause pair would remove the receiver just when the
+         * PiP window's own play and pause buttons start sending to it.
          *
-         * Not exported on every API level, not only on 13 and up: below Tiramisu the
+         * Not exported on every API level, not only on 13 and up. Below Tiramisu, the
          * two-argument call registers an exported receiver, so any app on the device could
-         * broadcast the action and pause the room. ContextCompat carries the flag back. */
+         * broadcast the action and pause the room. ContextCompat applies the flag there too. */
         ContextCompat.registerReceiver(
             this,
             pipBroadcastReceiver,
@@ -279,7 +263,7 @@ class SyncplayActivity : ComponentActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
 
-        /* Loading subtitle appearance */
+        /* Reapply the saved subtitle size. */
         lifecycleScope.launch(Dispatchers.Main) {
             val room = roomViewmodel ?: return@launch
             if (!room.playerManager.isPlayerReady.value) return@launch
@@ -288,23 +272,15 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Handles Picture-in-Picture mode state changes.
-     *
-     * Updates UI state when entering/exiting PiP mode.
-     *
-     * @param isInPictureInPictureMode Whether PiP mode is active
-     * @param newConfig The new configuration after the PiP change
-     */
+    /** Copies the picture-in-picture state into the room's UI state. */
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = isInPictureInPictureMode
     }
 
     /**
-     * Enters Picture-in-Picture mode if supported (Android 8.0+).
-     *
-     * Updates PiP parameters and enters PiP, hiding the HUD controls.
+     * Enters picture-in-picture (PiP) with the current play or pause action, and hides the HUD
+     * (the on-screen controls).
      */
     internal fun initiatePIPmode() {
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = true
@@ -316,30 +292,28 @@ class SyncplayActivity : ComponentActivity() {
         roomViewmodel?.uiState?.visibleHUD?.value = false
     }
 
-    /**
-     * Builds PiP parameters with play/pause remote action.
-     *
-     * Creates a PendingIntent that carries the intended action (0=pause, 1=play)
-     * so the broadcast receiver knows what to do.
-     */
-    /** Resolved once the loader answers; the English words stand in only until then. */
+    /** Localized labels for the PiP actions, set in onCreate. English stands in until then. */
     private var pipPauseLabel: String = "Pause"
     private var pipPlayLabel: String = "Play"
 
+    /**
+     * Builds the PiP parameters with one play or pause action. Its PendingIntent carries the
+     * action (0 = pause, 1 = play), so [pipBroadcastReceiver] knows what to do.
+     */
     private fun buildPiPParams(isPlaying: Boolean = false): PictureInPictureParams {
 
-        // When playing → show pause button (action=0 means pause)
-        // When paused  → show play button  (action=1 means play)
+        // While playing, show a pause button (action 0). While paused, show play (action 1).
         val actionValue = if (isPlaying) 0 else 1
-        // Explicit and package-bound: the receiver is not exported, so no other app can press it.
+        // An explicit intent bound to this package. The receiver is not exported, so no other
+        // app can trigger it.
         val intent = Intent(PIP_ACTION).setPackage(packageName).putExtra("pause_zero_play_one", actionValue)
         val pendingIntent = PendingIntent.getBroadcast(
             this, 6969 + actionValue, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
         )
 
-        // The labels are the room's own words for the same two actions, so the window does not
-        // switch to English the moment it shrinks.
+        // The labels are the room's localized words for the same two actions, so the window does
+        // not switch to English when it shrinks.
         val label = if (isPlaying) pipPauseLabel else pipPlayLabel
         val action = RemoteAction(
             Icon.createWithResource(
@@ -355,15 +329,15 @@ class SyncplayActivity : ComponentActivity() {
         val builder = PictureInPictureParams.Builder()
             .setActions(if (hasVideo) listOf(action) else listOf())
         if (hasVideo) {
-            // A video-shaped window instead of the system's square default.
+            // A fixed 16:9 window, so the shape does not depend on the system default.
             builder.setAspectRatio(android.util.Rational(16, 9))
-            // The picture's own rectangle, so entering and leaving morphs out of the video rather
-            // than appearing from nowhere. The room reports it as it lays the video layer out.
+            // The video's own rectangle, so the PiP window grows out of the video when it enters
+            // and leaves. The room updates VideoBounds when it lays out the video layer.
             if (VideoBounds.known) {
                 builder.setSourceRectHint(Rect(VideoBounds.left, VideoBounds.top, VideoBounds.right, VideoBounds.bottom))
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Home while playing keeps the picture on screen, the way video apps do.
+                // Pressing Home while playing enters PiP, like other video apps.
                 builder.setAutoEnterEnabled(isPlaying)
             }
         }
@@ -371,8 +345,8 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     /**
-     * Updates the PiP parameters on the activity to reflect current playback state. Reads the
-     * engine's reported state, never a live probe (rule 5 of the ledger).
+     * Updates the PiP parameters to match the current playback state. It reads the engine's
+     * reported state, never a live probe.
      */
     internal fun updatePiPParams() {
         val playing = roomViewmodel?.playerManager?.isNowPlaying?.value == true
@@ -381,11 +355,7 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Broadcast receiver for handling Picture-in-Picture control actions.
-     *
-     * Listens for "pip" action broadcasts and controls playback accordingly.
-     */
+    /** Receives the PiP window's play and pause buttons ([PIP_ACTION]) and controls playback. */
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let { intnt ->
@@ -398,21 +368,16 @@ class SyncplayActivity : ComponentActivity() {
                         roomViewmodel?.dispatcher?.controlPlayback(Playback.PAUSE, true)
                     }
 
-                    // Refresh the PiP action button to reflect new state
+                    // Swap the PiP button between play and pause.
                     updatePiPParams()
                 }
             }
         }
     }
 
-    /**
-     * Called when the activity comes to the foreground.
-     *
-     * Registers the PiP broadcast receiver and reapplies player track choices.
-     */
+    /** Reapplies the track choices in the foreground, so the player does not forget them. */
     override fun onResume() {
         super.onResume()
-        /** Applying track choices again so the player doesn't forget about track choices **/
         lifecycleScope.launch {
             val room = roomViewmodel ?: return@launch
             if (room.playerManager.isPlayerReady.value) room.player.reapplyTrackChoices()
@@ -420,22 +385,22 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     /**
-     * Handles D-pad and media button key events for Android TV / Google TV.
+     * Handles D-pad and media keys for Android TV and Google TV.
      *
-     * Media buttons always control playback. When a video is loaded and the HUD is hidden,
-     * D-pad keys control playback (left/right = seek, center = play/pause) and reveal the HUD.
-     * When the HUD is visible, D-pad events pass through to Compose for focus navigation.
+     * In a room, media keys always control playback. When a video is loaded, the HUD is hidden
+     * and the screen is not locked, the D-pad controls playback (left and right seek, center
+     * plays or pauses) and shows the HUD. Other key events go to Compose for focus navigation.
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val vm = roomViewmodel
 
-        // Media buttons: always handle when in room
+        // Media keys: always handled in a room.
         if (vm != null) {
             when (keyCode) {
                 KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                     if (vm.playerManager.hasVideo.value) {
-                        // The app's own intent, not a live engine probe: mid-buffer a probe says
-                        // "not playing" and the key would unpause a room that just paused.
+                        // The app's own intent, not a live engine probe. While buffering, a probe
+                        // says "not playing", so the key would send play instead of pause.
                         vm.dispatcher.controlPlayback(
                             if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true
                         )
@@ -461,8 +426,8 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             /* D-pad: only when a video is loaded, the HUD is hidden and the screen is not
-             * locked. A locked screen answers one thing, which is the unlock key, so every key
-             * goes to the surface that shows it. */
+             * locked. A locked screen answers only its unlock key, so every key goes to the
+             * view that shows that key. */
             val hasVideo = vm.playerManager.hasVideo.value
             val hudVisible = vm.uiState.visibleHUD.value
             val locked = vm.uiState.tabLock.value
@@ -506,40 +471,37 @@ class SyncplayActivity : ComponentActivity() {
         const val PIP_ACTION = "app.syncplay.PIP_PLAYBACK"
     }
 
-    /* A refusal is respected quietly: the old toast fired on every cold start, in English, and
-     * promised playback controls the notification does not carry. */
+    /* A refusal is accepted quietly. A toast here would show on every cold start, because the
+     * request runs again at each start while the permission is missing. */
     private var notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { _ -> }
 
     /**
-     * Callback indirection for the "custom picker" (chooser-of-file-managers) flow. The
-     * PlatformCallback override stores the caller's `onResult` here, then launches
-     * [systemFilePickerLauncher]. When the picker returns, the result handler invokes and
-     * clears this callback.
+     * The caller's result callback for the system file picker. launchSystemFilePicker stores
+     * `onResult` here, then launches [systemFilePickerLauncher]. When the picker returns, the
+     * result handler clears this callback and calls it.
      */
     internal var pendingSystemFilePickerCallback: ((String?) -> Unit)? = null
 
     /**
-     * "Custom picker" launcher — fires `ACTION_GET_CONTENT` wrapped in [Intent.createChooser] so
-     * the user is presented with a selector of every installed file manager / explorer / cloud
-     * app that registered as a content source (FX, MiXplorer, Solid Explorer, Drive, Dropbox,
-     * LocalSend, etc.), in addition to the system Documents UI.
+     * The system file picker: `ACTION_GET_CONTENT` inside [Intent.createChooser]. The chooser
+     * lists every installed app that registered as a content source (file managers and cloud
+     * apps such as FX, MiXplorer, Solid Explorer, Drive, Dropbox or LocalSend), next to the
+     * system Documents UI.
      *
-     * This complements FileKit's default launcher (which goes straight to the SAF Documents UI
-     * via `ACTION_OPEN_DOCUMENT` with an extension-derived MIME filter). Two reasons to offer it:
+     * FileKit's default picker opens the Documents UI directly (`ACTION_OPEN_DOCUMENT`), with a
+     * MIME filter built from file extensions. This picker adds two things:
      *
-     *  1. **SMB / cloud DocumentsProviders**: some providers report files with opaque MIME types
-     *     (`application/octet-stream`) that FileKit's extension filter hides; routing through a
-     *     third-party file manager bypasses that filter.
-     *  2. **User preference**: some users keep their media indexed in a specific file manager
-     *     and want to browse there directly.
+     *  1. **SMB and cloud providers**: some report files as `application/octet-stream`, which
+     *     FileKit's extension filter hides. A third-party file manager does not apply that filter.
+     *  2. **User preference**: some users keep their media indexed in one file manager and want
+     *     to browse there.
      *
-     * Note: an `ACTION_GET_CONTENT` grant is usually not persistable, unlike an
-     * `ACTION_OPEN_DOCUMENT` one, so the result handler asks for a lasting grant and carries on
-     * when the provider refuses. The URI is readable for this session either way, which is all
-     * immediate playback needs; the FileKit path remains the one to use for playlist entries that
-     * have to survive a restart.
+     * An `ACTION_GET_CONTENT` grant is usually not persistable, unlike an `ACTION_OPEN_DOCUMENT`
+     * one. The result handler asks for a lasting grant anyway and continues when the provider
+     * refuses. The URI stays readable for this session, which is enough for immediate playback.
+     * Use the FileKit picker for playlist entries that must survive a restart.
      */
     internal val systemFilePickerLauncher = registerForActivityResult(
         object : ActivityResultContract<String, Uri?>() {
@@ -548,7 +510,7 @@ class SyncplayActivity : ComponentActivity() {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = input
                 }
-                // Passing null title lets the system pick a sensible default ("Open with …").
+                // A null title lets the system use its default title.
                 return Intent.createChooser(pick, null)
             }
 
@@ -560,9 +522,9 @@ class SyncplayActivity : ComponentActivity() {
     ) { uri ->
         val callback = pendingSystemFilePickerCallback
         pendingSystemFilePickerCallback = null
-        // A GET_CONTENT grant usually cannot be kept, but some providers do allow it, and the ones
-        // that do give a playlist entry that still opens after a restart. Asking costs nothing:
-        // a provider that refuses throws, and the grant stays good for this session either way.
+        // A GET_CONTENT grant usually cannot be kept, but some providers allow it. With those, a
+        // playlist entry still opens after a restart. A provider that refuses throws, and the
+        // grant still works for this session.
         if (uri != null) {
             runCatching {
                 contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)

@@ -14,28 +14,32 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Remembering where a file was left, and offering it back.
+ * Saves where the user left each file, and offers to continue from that position.
  *
- * Only ever offered when watching alone. In a room the room's position is the right answer, and
- * a prompt that fights the first sync would be worse than nothing. Positions are still recorded
- * in a room, so opening the same file alone later picks up where the room got to.
+ * The offer appears only in solo mode (watching alone). In a room (the group of people watching
+ * together), the position of the room wins, and a resume prompt would fight the first sync.
+ * Positions are still saved in a room, so the same file opened alone later continues from where
+ * the room stopped.
  *
- * The store and the policy are in [app.player.ResumePoint] and are tested there.
+ * The store and the offer rules live next to [app.player.ResumePoint] and are tested there.
  */
 class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
-    /** A file the viewer has seen before, waiting on continue or start over. */
+    /**
+     * The saved position on offer, or null. The user answers with [continueFromOffer] or
+     * [startOver].
+     */
     val offer: StateFlow<ResumePoint?>
         field = MutableStateFlow(null)
 
-    /** Called when a file finishes loading. Raises the question, or does not. */
+    /** Called when a file finishes loading. Sets [offer] when a saved position is worth offering. */
     fun onMediaReady(fileName: String, durationMs: Long) {
         if (!viewmodel.isSoloMode) return
         if (!Preferences.RESUME_PLAYBACK.value()) return
         onIOThread {
             val point = resumePointFor(decodeResumePoints(Preferences.RESUME_POSITIONS.value()), fileName)
-            // A file whose length we now know to be shorter than the remembered position is a
-            // different file with the same name. Do not offer to seek past its end.
+            // A file that is shorter than the saved position is a different file with the same
+            // name. Do not offer to seek past its end.
             if (point != null && (durationMs <= 0L || point.positionMs < durationMs)) {
                 offer.value = point
             }
@@ -52,7 +56,7 @@ class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(view
         offer.value = null
     }
 
-    /** Writes down where we are. Called on pause and on the way out of the room. */
+    /** Saves the position in the current file. Called on pause and when the user leaves the room. */
     fun record() {
         if (!Preferences.RESUME_PLAYBACK.value()) return
         val media = viewmodel.media ?: return

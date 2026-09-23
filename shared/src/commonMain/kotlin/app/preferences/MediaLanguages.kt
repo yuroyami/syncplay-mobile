@@ -7,9 +7,9 @@ import app.i18n.Localization
 import app.utils.localizedLanguageName
 
 /**
- * One offered media language. [iso6392] is what the track preferences store and what the player
- * engines match on; [iso6391] is the code the platform knows how to name; [englishName] is the
- * fallback for a platform that has no name for it.
+ * One media language that the settings offer. The track preferences store [iso6392], and the
+ * engines match on it. [iso6391] is the code that the platform can name. [englishName] is the
+ * fallback for a platform that has no name for the language.
  */
 internal data class MediaLanguage(val iso6392: String, val iso6391: String, val englishName: String)
 
@@ -63,9 +63,9 @@ internal val mediaLanguages = listOf(
 )
 
 /**
- * Language names in the reader's own language. A French user picks "Espagnol", not "Spanish".
- * The stored value is still the ISO 639-2 code, so switching the app's language does not
- * invalidate anyone's saved preference.
+ * The offered languages, named in the app's display language and mapped to their stored codes.
+ * A French user picks "Espagnol", not "Spanish". The stored value is still the ISO 639-2 code,
+ * so a change of the app's language keeps every saved preference valid.
  */
 @Composable
 internal fun mediaLanguageEntries(): Map<String, String> = buildMap {

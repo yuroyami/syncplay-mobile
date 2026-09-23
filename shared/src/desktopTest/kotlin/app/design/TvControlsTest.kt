@@ -24,8 +24,8 @@ import kotlin.test.assertTrue
 class TvControlsTest {
 
     /**
-     * The stepper steps on Left and Right. Its two arrows are tap targets, not focus stops: a
-     * remote landing on an arrow saw no focus ring and pressed a direction that did two things.
+     * The stepper steps on Left and Right. Its two arrows are tap targets, not focus stops. A
+     * remote that lands on an arrow shows no focus ring, and a direction there would do two things.
      */
     @Test
     fun aStepperTakesFocusItselfAndStepsOnLeftAndRight() {
@@ -56,7 +56,7 @@ class TvControlsTest {
 
     /**
      * A track that carries a long press (the seek bar's chapter list) gives it to the press key
-     * too. A remote has no long press, so without this the chapters were reachable by finger only.
+     * too. A remote has no long press, so without it the chapters are reachable by finger only.
      */
     @Test
     fun theTrackGivesItsLongPressToThePressKey() {

@@ -30,8 +30,8 @@ import app.uicomponents.controls.Rule
 import app.uicomponents.surface
 
 /**
- * The chrome a room panel uses: a 42dp header with the title and glyph actions, a hairline, and a
- * body. No inner cards. The shape comes from the dock the panel sits in.
+ * The frame of a room panel: a 42dp header with the title and icon actions, a thin line, and a
+ * body. No inner cards. The caller passes the shape, which depends on where the panel is docked.
  */
 @Composable
 fun PanelFrame(
@@ -50,7 +50,7 @@ fun PanelFrame(
             modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = if (centerTitle) Space.gapTight else Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // A centred title gets a lead-in the width of one glyph key, balancing the close key.
+            // A centred title gets a spacer one icon button wide, to balance the close button.
             if (centerTitle) Spacer(Modifier.width(Space.touchMin))
             Text(
                 text = title,

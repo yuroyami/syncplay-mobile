@@ -16,16 +16,16 @@ class ExoTrack(
     override val selected: Boolean
 ): Track() {
 
-    /**
-     * Media3 carries the purpose in the format's role and selection flags, so nothing has to be
-     * guessed from the track name.
-     */
     override val language: String? get() = format.language
     override val channelCount: Int? get() = format.channelCount.takeIf { it > 0 }
     override val codec: String? get() = format.sampleMimeType?.substringAfter('/')
     override val videoDescription: String? get() =
         if (format.width > 0 && format.height > 0) "${format.width} × ${format.height}" else null
 
+    /**
+     * Media3 carries the track's purpose in the format's role and selection flags, so nothing has
+     * to be guessed from the track name.
+     */
     override val trait: TrackTrait?
         get() = when {
             format.roleFlags and ACCESSIBILITY_ROLES != 0 -> TrackTrait.ACCESSIBILITY

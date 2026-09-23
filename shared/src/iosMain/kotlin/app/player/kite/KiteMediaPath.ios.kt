@@ -6,13 +6,14 @@ import io.github.vinceglb.filekit.startAccessingSecurityScopedResource
 import io.github.vinceglb.filekit.stopAccessingSecurityScopedResource
 
 /**
- * iOS resolves to the real filesystem path, and claims the file's grant for as long as the
- * resolution is held.
+ * Resolves a file to its real filesystem path for KitePlayer (one of the app's video players,
+ * built on FFmpeg). It also claims the file's security-scoped grant and holds it until the path
+ * is released.
  *
- * The video's own grant is held around the whole playback by [app.player.PlayerImpl], but a file
- * that arrives here without going through that path (a subtitle picked on its own) has no grant of
- * its own, and FFmpeg is then refused when it opens the path. Claiming here is cheap: NSURL counts
- * grants, so a second claim on a file already held is balanced by the release below.
+ * FFmpeg is refused when it opens a path that nobody holds a grant for. [app.player.PlayerImpl]
+ * holds the grants for the video and for a picked subtitle, and this claim covers any file that
+ * reaches the resolver without one. A second claim is cheap: NSURL counts grants, so the release
+ * below balances it.
  */
 internal object IosKiteMediaResolver : KiteMediaResolver {
     override fun resolve(file: PlatformFile): KiteMediaPath? {

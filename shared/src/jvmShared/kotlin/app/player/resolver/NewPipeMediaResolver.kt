@@ -18,12 +18,14 @@ import okhttp3.Request as OkRequest
 import org.schabi.newpipe.extractor.downloader.Request as NpRequest
 import org.schabi.newpipe.extractor.downloader.Response as NpResponse
 
-/** The NewPipe resolver, shared by Android and desktop — pure JVM, no Python, no native binaries.
+/** The NewPipe media resolver that Android and desktop share. A media resolver turns a page URL
+ *  (such as a YouTube link) into a direct stream URL. This one is pure JVM, with no Python and no
+ *  native binaries.
  *
- *  Supports YT, SoundCloud, PeerTube, Bandcamp and MediaCCC out of the box. NewPipe's
- *  `StreamInfo.getInfo(url)` auto-detects the service from the URL; if no service handles it
- *  (e.g. a Twitch URL), it throws and we return null so callers can fall back to the original
- *  URL unchanged. */
+ *  It supports YouTube, SoundCloud, PeerTube, Bandcamp and MediaCCC. NewPipe's
+ *  `StreamInfo.getInfo(url)` detects the service from the URL. If no service handles the URL (for
+ *  example a Twitch URL), it throws and [resolve] returns null, so the caller can fall back to
+ *  the original URL. */
 internal object NewPipeMediaResolver : MediaResolver {
 
     @Volatile private var initialized = false
@@ -58,16 +60,16 @@ internal object NewPipeMediaResolver : MediaResolver {
     }
 
     private fun pickDirectUrl(info: StreamInfo): String? {
-        // Livestreams: HLS manifest. Every engine on both platforms parses HLS natively.
+        // Live streams use the HLS manifest. Every engine on Android and desktop plays HLS.
         if (info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM) {
             info.hlsUrl?.takeIf { it.isNotBlank() }?.let { return it }
         }
-        // Combined audio+video streams — non-DASH-aware players (ExoPlayer w/o DASH module on
-        // some flavors) need a single muxed source. videoOnlyStreams + audio are
-        // intentionally skipped to avoid having to mux.
+        // Combined audio and video streams, so the engine gets one muxed source. Video-only
+        // streams plus a separate audio stream are skipped on purpose, because they need muxing.
         info.videoStreams.orEmpty().bestPick()?.content?.let { return it }
-        // SoundCloud and Bandcamp are advertised as supported and have no video at all, so their
-        // links resolved to nothing and the raw page URL went to the player instead.
+        // SoundCloud and Bandcamp have no video streams, so fall back to the best audio stream.
+        // Without this fallback their links resolve to nothing, and the raw page URL goes to the
+        // player.
         return info.audioStreams.orEmpty().maxByOrNull { it.averageBitrate }?.content
     }
 
@@ -79,14 +81,14 @@ internal object NewPipeMediaResolver : MediaResolver {
             ?: maxByOrNull { it.heightPx() }
     }
 
-    @Suppress("DEPRECATION") // VideoStream.resolution field is deprecated in favor of getResolution(),
-    // but Kotlin's property syntax binds to the field. Suppress to keep call site readable.
+    @Suppress("DEPRECATION") // The VideoStream.resolution field is deprecated for getResolution(),
+    // but Kotlin's property syntax binds to the field. The suppression keeps the call readable.
     private fun VideoStream.heightPx(): Int =
         resolution?.substringBefore('p')?.toIntOrNull() ?: 0
 }
 
-/** Bridges NewPipe's [Downloader] to OkHttp. OkHttp is already on the Android classpath via
- *  ktor-client-okhttp, so no extra dependency is needed. */
+/** Bridges NewPipe's [Downloader] to OkHttp. OkHttp is already on the Android and desktop
+ *  classpath through ktor-client-okhttp, so no extra dependency is needed. */
 private object NewPipeOkHttpDownloader : Downloader() {
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)

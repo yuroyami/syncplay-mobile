@@ -23,12 +23,12 @@ import SyncplayMobile.shared.KiteBuildConfig
 actual val platform: Platform = Platform.Web
 
 /**
- * The browser's own fetch(), behind the Ktor client the rest of the app already talks to.
+ * The browser's own fetch(), behind the Ktor client that the rest of the app already uses.
  *
- * Two things differ from every other platform and neither is fixable here. Connect and socket
- * timeouts are the browser's to decide, so only the request timeout is set. And the User-Agent
- * header is forbidden to scripts, so requests carry the browser's own; anything that wants to
- * know it is Synkplay calling has to be told some other way.
+ * Two things differ from every other platform, and this code cannot change either one. The
+ * browser decides the connect and socket timeouts, so only the request timeout is set. Scripts
+ * may not set the User-Agent header, so requests carry the browser's own; a server that needs to
+ * know that Synkplay is calling must learn it some other way.
  */
 actual val httpClient: HttpClient by lazy {
     HttpClient(Js) {
@@ -45,10 +45,10 @@ actual val httpClient: HttpClient by lazy {
 }
 
 /**
- * One engine, the browser's own `<video>`.
+ * One engine (video player): the browser's own `<video>`.
  *
- * The other four are native: ExoPlayer and mpv are Android, VLCKit is iOS, and KitePlayer decodes
- * through FFmpeg over JNI and cinterop. None of them has anything to compile to here.
+ * The other engines are native: ExoPlayer and mpv on Android, AVPlayer and VLCKit on iOS, and
+ * KitePlayer through FFmpeg over JNI and cinterop. None of them compiles for the browser.
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(webVideoEngine)
 
@@ -60,22 +60,21 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager = WebSocket
 
 actual fun generateTimestampMillis(): Long = Clock.System.now().toEpochMilliseconds()
 
-/** No browser reports a TV, and a TV browser is a desktop browser as far as the page can tell. */
+/** No browser reports a TV. To the page, a TV browser looks like a desktop browser. */
 actual fun isTelevision(): Boolean = false
 
-/** What the page's own locale formats an hour as. */
+/** Follows the hour format of the page's own locale. */
 actual fun deviceUses24HourClock(): Boolean = runCatching { !jsPrefersTwelveHourClock() }.getOrDefault(true)
 
 private fun jsPrefersTwelveHourClock(): Boolean =
     js("(new Intl.DateTimeFormat().resolvedOptions().hour12 === true)")
 
 /**
- * A strong reference wearing a weak reference's name.
+ * A strong reference behind the weak-reference API.
  *
- * JavaScript does have a real `WeakRef`, but it is not surfaced to Kotlin/Wasm, and the two
- * holders of one here (the room from the app viewmodel, the viewmodel from the platform) are
- * both cleared explicitly on teardown, so nothing leaks for the life of a tab. Worth revisiting
- * if a third holder appears.
+ * JavaScript has a real `WeakRef`, but Kotlin/Wasm does not expose it. So on the web, the app
+ * viewmodel's roomWeakRef keeps the last RoomViewmodel reachable after its room closes, until
+ * the next room replaces it.
  */
 actual class WeakRef<T : Any>(internal val target: T)
 
@@ -113,24 +112,23 @@ actual fun readFileBytes(path: String): ByteArray? = null
 
 actual fun fileExists(path: String): Boolean = false
 
-/** mpv is Android's engine alone. */
+/** Always null: only Android has the mpv engine. */
 actual fun getMpvConfFilePath(): String? = null
 
 /* ---- the page as an environment ----------------------------------------------------------- */
 
 /**
- * Clipboard reads are asynchronous and permission-gated in a browser, and this contract is
- * neither, so paste-from-clipboard is unavailable rather than wrong.
+ * In a browser, clipboard reads are asynchronous and need permission, and this contract is
+ * neither. So paste from the clipboard is unavailable instead of wrong.
  */
 actual fun ClipEntry.getText(): String? = null
 
 /**
- * Nothing yet.
+ * Does nothing.
  *
- * Both halves of the room's window policy are gated on a user gesture here: fullscreen must be
- * requested from a click, and the orientation lock only applies once fullscreen is held. That
- * makes this a job for the room's own fullscreen control rather than an effect that fires on
- * entry, which is why this is empty instead of trying and failing.
+ * In a browser, both parts of the room's window policy need a user gesture: fullscreen must be
+ * requested from a click, and the orientation lock applies only in fullscreen. So this belongs on
+ * the room's own fullscreen control, not in an effect that runs on entry and fails.
  */
 @Composable
 actual fun EnterRoomMode(portrait: Boolean) = Unit
@@ -138,7 +136,7 @@ actual fun EnterRoomMode(portrait: Boolean) = Unit
 @Composable
 actual fun ExitRoomMode() = Unit
 
-/** A page never learns the machine's LAN address, and would have no use for it: it cannot host. */
+/** A page never learns the machine's LAN address, and needs none: it cannot host a server. */
 actual fun getDeviceIpAddress(): String? = null
 
 actual fun platformDescription(): String = runCatching { window.navigator.userAgent }.getOrDefault("Web")
@@ -148,12 +146,12 @@ actual fun reducedMotion(): Boolean =
     runCatching { window.matchMedia("(prefers-reduced-motion: reduce)").matches }.getOrDefault(false)
 
 /**
- * A join handed over in the address bar, which is this platform's answer to a launcher shortcut
- * and to the `synkplay://` invite link:
+ * A join request passed in the address bar. It is the web version of a launcher shortcut and of
+ * the `synkplay://` invite link:
  *
  *     https://…/?user=Alice&room=movienight&server=syncplay.pl&port=8997&pw=secret
  *
- * Read once and cleared, same as every other platform's shortcut.
+ * It is read once and then cleared, like every other platform's shortcut.
  */
 actual fun consumePendingShortcut(): JoinConfig? {
     val query = runCatching { window.location.search }.getOrNull() ?: return null
@@ -173,7 +171,7 @@ actual fun consumePendingShortcut(): JoinConfig? {
     params["port"]?.toIntOrNull()?.let { config = config.copy(port = it) }
     params["pw"]?.let { config = config.copy(pw = it) }
 
-    // Cleared so a reload is a plain visit, and so the credentials stop sitting in the address bar.
+    // Clear it, so a reload is a plain visit and the credentials leave the address bar.
     runCatching { window.history.replaceState(null, "", window.location.pathname) }
     return config
 }
@@ -184,10 +182,10 @@ private fun decodeUriComponent(value: String): String =
 private fun jsDecodeUriComponent(value: String): String = js("decodeURIComponent(value)")
 
 /**
- * What the browser calls a language, in the language the app is displaying.
+ * The browser's name for a language, in the language that the app displays.
  *
  * `Intl.DisplayNames` is the browser's own name table, so this needs no bundled data. An empty
- * answer becomes null and the caller falls back to English.
+ * answer, or one that only repeats the code, becomes null, and the caller falls back to English.
  */
 actual fun localizedLanguageName(iso6391: String, inLanguage: String): String? =
     runCatching { jsLanguageName(iso6391, inLanguage).takeIf { it.isNotBlank() && !it.equals(iso6391, true) } }

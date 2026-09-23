@@ -9,19 +9,21 @@ import kotlinx.coroutines.withContext
 import syncplaymobile.shared.generated.resources.Res
 
 /**
- * Installs the bundled libass fallback font into mpv's config dir, once. Used by the Android mpv
- * engine ([MpvImpl]); platforms with no mpv return null from [getMpvConfFilePath] and skip it.
+ * Installs the bundled libass fallback font into mpv's config directory, once. The Android mpv
+ * engine ([MpvImpl]) uses it. Platforms without mpv return null from [getMpvConfFilePath] and
+ * skip it.
  *
- * This mpv build has no system libass font provider, so libass renders nothing — for embedded ASS
- * and sideloaded SRT alike — unless mpv finds a fallback font at `<config-dir>/subfont.ttf` (see
- * mpv's `mp_ass_configure_fonts`). The font ships as a shared Compose resource
- * (`commonMain/composeResources/files/subfont.ttf`) and is copied into the mpv config dir, the
- * parent of the path returned by [getMpvConfFilePath].
+ * This mpv build has no system font provider for libass. So libass renders no subtitles at all
+ * (embedded ASS and sideloaded SRT alike) unless mpv finds a fallback font at
+ * `<config-dir>/subfont.ttf` (see mpv's `mp_ass_configure_fonts`). The font ships as a shared
+ * Compose resource (`commonMain/composeResources/files/subfont.ttf`). This function copies it
+ * into the mpv config directory, the parent of the path that [getMpvConfFilePath] returns.
  *
- * Idempotent: a single [fileExists] check after the first install. Must run before `loadfile`,
- * because mpv configures libass fonts at playback start. mpv must also be told `config=yes`
- * (Android `MpvImpl` does it by giving `MpvOptions` a config dir) or libmpv's builtin profile
- * leaves config loading off and mpv never scans its config dir for this file.
+ * After the first install, a call costs one [fileExists] check. The call must run before
+ * `loadfile`, because mpv configures libass fonts when playback starts. mpv must also get
+ * `config=yes` (the Android `MpvImpl` does this by giving `MpvOptions` a config directory).
+ * Otherwise the builtin libmpv profile leaves config loading off, and mpv never looks for this
+ * file.
  */
 suspend fun installMpvSubfontIfNeeded() {
     val configDir = getMpvConfFilePath()?.substringBeforeLast('/') ?: return

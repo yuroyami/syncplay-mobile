@@ -25,23 +25,23 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.add
 
-/** Where the whole preference store lives in the browser, as one key. */
+/** The one localStorage key that holds the whole preference store. */
 private const val STORAGE_KEY = "synkplay.preferences"
 
 /**
  * The preference store, kept in the browser's localStorage.
  *
- * DataStore's own factory wants a file path, and a page has no filesystem, so this implements the
- * two-method `DataStore` contract directly instead. localStorage rather than sessionStorage on
- * purpose: settings should survive closing the tab, which is the whole point of settings.
+ * DataStore's own factory needs a file path, and a page has no filesystem, so this class
+ * implements the two-method `DataStore` contract directly. It uses localStorage, not
+ * sessionStorage, on purpose: settings must survive closing the tab.
  *
- * Everything is held in memory and the whole store is rewritten on each change. The store is a
- * hundred small values read constantly and written rarely, so that costs nothing and removes any
- * question of partial writes.
+ * The store stays in memory, and each change rewrites the whole store. It holds about a hundred
+ * small values that are read often and written rarely, so the full rewrite costs nothing and
+ * rules out partial writes.
  *
- * Two limits worth knowing. localStorage is per-origin and around 5 MB, which this will never
- * approach, and it is unavailable in a page with cookies blocked or in some private windows; that
- * case degrades to memory-only, so settings work for the session and do not survive it.
+ * Two limits: localStorage is per-origin and about 5 MB, far more than this store needs. It is
+ * unavailable when cookies are blocked and in some private windows. Then the store works in
+ * memory only: settings work for the session but do not survive it.
  */
 class LocalStorageDataStore : DataStore<Preferences> {
 
@@ -62,7 +62,8 @@ class LocalStorageDataStore : DataStore<Preferences> {
         val raw = runCatching { localStorage.getItem(STORAGE_KEY) }.getOrNull()
         if (raw.isNullOrBlank()) return mutablePreferencesOf()
         return runCatching { decode(raw) }.getOrElse { failure ->
-            // Same policy as the file store's corruption handler: defaults beat a broken launch.
+            // Same policy as the file store's corruption handler: start with defaults rather than
+            // fail the launch.
             preferencesLoadFailure = failure
             loggy("Stored preferences could not be read and were replaced with defaults: $failure")
             mutablePreferencesOf()
@@ -76,11 +77,11 @@ class LocalStorageDataStore : DataStore<Preferences> {
 }
 
 /**
- * One JSON object, each entry tagged with its type.
+ * Encodes the store as one JSON object, with each entry tagged with its type.
  *
- * The type has to be recorded because DataStore keys carry it and there is no way to recover it
- * from a bare JSON value: 1 could be an Int, a Long, a Float or a Double, and reading it back as
- * the wrong one throws on the first access.
+ * The type must be recorded, because DataStore keys carry it and a bare JSON value cannot give it
+ * back: 1 could be an Int, a Long, a Float or a Double, and reading it back as the wrong one
+ * throws on the first access.
  */
 private fun encode(preferences: Preferences): String {
     val obj = buildJsonObject {

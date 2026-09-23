@@ -12,13 +12,13 @@ import androidx.compose.ui.graphics.Color
 import app.theme.Space
 import app.theme.palette
 
-/** A 1dp full bleed rule. The only separator in the app. */
+/** A 1dp line across the full width. It is the only separator in the app. */
 @Composable
 fun Rule(modifier: Modifier = Modifier, color: Color = palette.rule) {
     Box(modifier.fillMaxWidth().height(Space.hair).background(color))
 }
 
-/** The vertical twin, for cells in a row. */
+/** The vertical [Rule], for cells in a row. */
 @Composable
 fun VerticalRule(modifier: Modifier = Modifier, color: Color = palette.rule) {
     Box(modifier.fillMaxHeight().width(Space.hair).background(color))

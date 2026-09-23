@@ -45,15 +45,14 @@ import app.uicomponents.controls.UnlockGlyph
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * IDE previews for the drawn control set, so a control can be looked at while it is edited.
+ * IDE previews of the drawn controls, so a control can be checked while it is edited.
  *
- * What actually guards these is the golden harness in desktopTest, which renders the same
- * controls headlessly and writes PNGs a change can be compared against. Previews rot in silence;
- * a golden does not.
+ * The golden tests in desktopTest are what actually guard these controls: they render the same
+ * controls headlessly and write PNG files that a change can be compared against. A broken preview
+ * fails silently, and a golden test does not.
  *
- * The room's own composables have no previews and cannot have any until the RoomViewmodel graph
- * is constructible outside the app. That is the same wall the sync tests hit before the decision
- * became a function.
+ * The room's own composables have no previews, because a RoomViewmodel and the objects it needs
+ * cannot be built outside the app.
  */
 
 @Composable

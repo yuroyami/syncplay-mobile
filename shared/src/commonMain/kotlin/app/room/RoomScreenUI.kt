@@ -96,20 +96,26 @@ import app.uicomponents.frames.Modal
 import app.utils.timestampFromMillis
 
 /**
- * Primary focus target for D-pad and TV use: the play key, or the add button before a file
- * loads. Focus lands on it whenever the HUD shows under keyboard input.
+ * The main focus target for D-pad and TV input: the play button, or the add button before a file
+ * loads. Focus moves to it each time the HUD (the controls over the video) shows under keyboard
+ * input.
  */
 val LocalRoomInitialFocus = compositionLocalOf<FocusRequester?> { null }
 
-/** The rail cell a closing panel hands focus back to: the cell that opened it, else the first. */
+/**
+ * The rail cell that gets focus back when a panel closes: the cell that opened the panel, or else
+ * the first cell. The rail is the strip of buttons that opens the panels.
+ */
 val LocalRoomRailFocus = compositionLocalOf<FocusRequester?> { null }
 
-/** The room: the video layer, then the HUD on the [RoomFrame] docks, then the notices. */
+/**
+ * The room screen. A room is the group of people watching together. The screen has three layers:
+ * the video, the HUD on the [RoomFrame] docks (the areas that hold the controls), and the notices.
+ */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    // Phones stay landscape in the room; the tall arrangement is for windows taller than wide.
-    // The room is held in landscape unless the user asked otherwise; the arrangement already
-    // follows the window, so portrait lays out on its own once rotation is allowed.
+    // The room stays in landscape unless the user allows portrait. The layout follows the window
+    // shape, so a portrait window gets the tall layout with no extra code.
     EnterRoomMode(portrait = ROOM_ALLOW_PORTRAIT.watchPref().value)
 
     val soloMode = remember { viewmodel.isSoloMode }
@@ -121,18 +127,21 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val measuredChatMediaSize by viewmodel.uiState.chatMediaSizeDp.collectAsState()
     val window = LocalWindowInfo.current.containerSize
     val tall = window.height > window.width
-    // A window under 480dp tall cannot hold the rail as a column beside the transport.
+    // A window under 480dp tall cannot fit the rail as a column together with the bottom bar.
     val railHorizontal = tall || with(LocalDensity.current) { window.height.toDp() } < 480.dp
 
-    /* The room's own glass backdrop: only the video layer and the artwork. Glass in the same
-     * window cannot sample the backdrop it lives inside, so in-room chrome blurs this capture. */
+    /* The backdrop for the room's glass (the frosted blur behind panels): only the video layer and
+     * the artwork. A glass surface cannot blur a backdrop that contains the surface itself, so
+     * the room's controls blur this capture. */
     val roomHazeState = rememberHazeState()
 
-    // Over video the palette is pinned dark; the theme supplies only accent, gradient and status.
+    // Over video the palette is always dark. The theme supplies only the accent, gradient and
+    // status colors.
     val videoPalette = LocalPalette.current.overVideo()
 
-    // The room's panels sample the room's own capture, so they arm the room's own demand: on
-    // the app-wide one they kept the whole-screen backdrop capturing for nothing.
+    // The room's panels blur the room's own capture, so they register demand on the room's own
+    // GlassDemand. Demand on the app-wide one would keep the whole-screen capture running for
+    // nothing.
     val roomGlassDemand = remember { GlassDemand() }
     CompositionLocalProvider(
         LocalChatMediaSize provides if (measuredChatMediaSize > 0f) measuredChatMediaSize.dp else chatMediaCellSize(with(LocalDensity.current) {
@@ -152,15 +161,15 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
                 val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
                 if (playerIsReady) {
-                    /* The letterbox behind the picture, black by default. Alpha keeps the surface
-                     * composed while no video shows, and the colour sits after it in the chain so
-                     * the no-video state stays invisible. */
+                    /* The letterbox color behind the picture, black by default. The alpha keeps the
+                     * surface composed while no video shows. The background comes after the alpha
+                     * in the chain, so the background is invisible too while there is no video. */
                     val videoBackground by remember { VIDEO_BACKGROUND_COLOR.flow() }.collectAsState(initial = 0xFF000000.toInt())
                     viewmodel.player.VideoPlayer(
                         modifier = Modifier
                             .fillMaxSize()
-                            // Reported so picture-in-picture can morph out of the picture itself
-                            // instead of appearing from nowhere.
+                            // Reported so that the picture-in-picture animation starts from the
+                            // video's own rectangle.
                             .onGloballyPositioned { layout ->
                                 val origin = layout.positionInWindow()
                                 VideoBounds.report(
@@ -184,11 +193,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             }
 
             if (!isInPipMode) {
-                // Notices and unseen chat share one column on the centre line, under the status
-                // line (and under the rail row on a tall window): the room's own notices first,
-                // people's lines under them. Both sit above the HUD and outside its alpha, so they
-                // show while it is hidden. Chat used to fade in at the left edge, which is the one
-                // place nobody watching the picture is looking.
+                // Notices and unseen chat lines share one column on the center line, under the
+                // status line (and under the rail row on a tall window). The room's notices come
+                // first and chat lines follow. Both sit above the HUD and outside its alpha, so
+                // they show while the HUD is hidden. The center is where a viewer is looking.
                 Column(
                     modifier = Modifier.align(Alignment.TopCenter)
                         .fillMaxWidth()
@@ -211,10 +219,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         PlaylistRestoreAsk(viewmodel)
 
         val globalViewmodel = LocalGlobalViewmodel.current
-        // The roster opens once, on the first room of the session, so a newcomer sees who is here.
-        // It waited on a magic delay and then opened on every room, including the second one in a
-        // row. It now waits for the thing it was really waiting for, which is the roster having
-        // someone in it, and only opens if this session has not seen a room yet.
+        // The user list opens once, in the first room since the app started, so a newcomer sees
+        // who is here. It waits for the roster to have someone in it, not for a fixed delay.
         val firstRoom = remember { !globalViewmodel.hasEnteredRoomOnce }
         val roster by viewmodel.session.userList.collectAsState()
         LaunchedEffect(firstRoom, soloMode, roster.isNotEmpty()) {
@@ -226,9 +232,9 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 }
 
 /**
- * The question a peer-pushed link from an unknown host raises. Refusing outright was a dead end:
- * the file never played and the only way forward was a settings field the user had to guess the
- * syntax of.
+ * Asks whether to play a link from a host that is not trusted, when another user added the link.
+ * Without this question, the file would never play, and the only way forward would be a settings
+ * field with a syntax to guess.
  */
 @Composable
 private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
@@ -258,7 +264,7 @@ private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
     }
 }
 
-/** The room came back from a dropped connection without its playlist. It asks once. */
+/** Offers to restore the playlist when the room comes back from a dropped connection without it. */
 @Composable
 private fun PlaylistRestoreAsk(viewmodel: RoomViewmodel) {
     val offer by viewmodel.playlistManager.restoreOffer.collectAsState()
@@ -278,7 +284,7 @@ private fun PlaylistRestoreAsk(viewmodel: RoomViewmodel) {
     }
 }
 
-/** Watching alone, a file that was left part-way asks whether to pick it up. */
+/** In solo mode, asks whether to continue a file from where the user left it. */
 @Composable
 private fun ResumeAsk(viewmodel: RoomViewmodel) {
     val point by viewmodel.resume.offer.collectAsState()
@@ -307,7 +313,10 @@ private fun ResumeAsk(viewmodel: RoomViewmodel) {
     }
 }
 
-/** The leave question, raised by the rail, system back or desktop Escape. */
+/**
+ * Asks whether to leave the room. The rail, the system back action and Escape on desktop raise
+ * the question.
+ */
 @Composable
 private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
     val ui = viewmodel.uiState
@@ -327,7 +336,7 @@ private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
     )
 }
 
-/** The HUD: everything that fades, on the frame's docks, with the gesture layer above it. */
+/** The HUD: every control that fades, on the [RoomFrame] docks, with the gesture layer above. */
 @Composable
 private fun RoomHud(
     viewmodel: RoomViewmodel,
@@ -341,13 +350,13 @@ private fun RoomHud(
     val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
     val isHUDVisible by ui.visibleHUD.collectAsState()
     val focusManager = LocalFocusManager.current
-    /* A television counts as keyboard input from the first frame. Compose only turns the input
-     * mode to keyboard once a key has arrived, and the head-up display can appear before that. */
+    /* A television counts as keyboard input from the first frame. Compose only switches the input
+     * mode to keyboard after the first key press, and the HUD can appear before that. */
     val isKeyboardMode = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
 
-    /* Under keyboard or D-pad input, focus lands on the primary control when the HUD shows; on
-     * touch that would be jarring and could raise the soft keyboard. Focus drops on hide so the
-     * composed-but-invisible controls keep no off-screen focus stop. */
+    /* Under keyboard or D-pad input, focus moves to the main control when the HUD shows. On touch
+     * that would be jarring and could raise the soft keyboard. Focus is cleared on hide, so the
+     * hidden controls (still composed) keep no focus. */
     LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode, playerIsReady) {
         if (isHUDVisible) {
             if (isKeyboardMode && playerIsReady) {
@@ -359,39 +368,41 @@ private fun RoomHud(
         }
     }
 
-    // The HUD stays composed and fades: chat state survives a hide.
+    // The HUD stays composed and only fades, so the chat state survives a hide.
     val hudAlpha = animateFloatAsState(if (isHUDVisible) 1f else 0f, Motion.quick())
     val density = LocalDensity.current
-    /* hudHidden goes through derivedStateOf so the glass suspension only wakes this scope when
-     * the answer flips, rather than on every frame of the fade. The keyboard flag deliberately
-     * does not: WindowInsets.ime is snapshot-backed on Android, and a derived read that turned
-     * out not to be on another platform would freeze this at its first value, which auto-hides
-     * the HUD over an open keyboard. Not worth the frames. */
+    /* hudHidden uses derivedStateOf, so the glass suspension wakes this scope only when the value
+     * flips, not on every frame of the fade. The keyboard flag must not use derivedStateOf.
+     * WindowInsets.ime is snapshot state on Android, but maybe not on other platforms. There, a
+     * derived read would freeze at its first value, and the HUD would auto-hide over an open
+     * keyboard. */
     val hudHidden by remember { derivedStateOf { hudAlpha.value == 0f } }
     val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
     HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo)
 
-    // While the HUD is faded out its glass releases the capture; it re-arms as the fade begins.
+    // While the HUD is fully faded out, its glass releases the capture. The capture starts again
+    // as soon as the fade-in begins.
     CompositionLocalProvider(LocalGlassSuspended provides hudHidden) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            /* Modifier.alpha, not a graphicsLayer block. It looks like the same thing with the
-             * read deferred, but alpha() clips to the layer and skips the layer entirely at 1f,
-             * which is the steady state; a raw graphicsLayer would keep a full-screen offscreen
-             * layer under the whole HUD, glass surfaces and all, for the life of the room. */
+            /* Modifier.alpha, not a graphicsLayer block. A graphicsLayer block would defer the
+             * state read, but it keeps a full-screen offscreen layer under the whole HUD (glass
+             * surfaces included) for the life of the room. alpha() clips to the layer and skips
+             * the layer at 1f, which is the usual state. */
             .alpha(hudAlpha.value)
             .then(
                 if (isHUDVisible) Modifier.pointerInput(playerIsReady) {
                     detectTapGestures(onTap = {
-                        // Typing: a stray tap only closes the keyboard. Otherwise it hides the HUD.
+                        // While typing, a stray tap only closes the keyboard. Otherwise the tap
+                        // hides the HUD.
                         if (isKeyboardOpen) focusManager.clearFocus(force = true)
                         else if (playerIsReady) ui.visibleHUD.value = false
                     })
                 } else Modifier
             )
             .pointerInput(Unit) {
-                // Presses only: moves would restart the idle timer at pointer rate for nothing.
+                // Presses only. Counting moves would restart the idle timer on every pointer event.
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
@@ -411,8 +422,9 @@ private fun RoomHud(
             status = if (soloMode || !playerIsReady) null else ({ RoomStatusInfoSection() }),
             rail = { RoomRail(horizontal = railHorizontal) },
             chat = if (soloMode) null else ({ RoomChatSection(modifier = Modifier.fillMaxSize()) }),
-            // Room creation waits for the previous engine's teardown. Until it publishes
-            // the new player, keep chat/navigation usable but do not compose player tools.
+            // Room creation waits until the previous player engine has shut down. Until the new
+            // player is ready, chat and navigation stay usable, but the player tools are not
+            // composed.
             side = if (playerIsReady) ({ RoomSidePanels(Modifier.fillMaxSize(), tall = tall) }) else null,
             bottom = if (playerIsReady) ({ RoomBottomBarSection(modifier = Modifier.fillMaxWidth()) }) else null,
             center = { if (playerIsReady) RoomTransportKeys() else ProgressBar(progress = null) },
@@ -420,16 +432,18 @@ private fun RoomHud(
     }
     }
 
-    /* Above the HUD: with the HUD hidden it takes the touches that would otherwise reach the
-     * still-composed controls; with it visible it attaches no pointer input at all. */
+    /* The gesture layer sits above the HUD. While the HUD is hidden, the gesture layer takes the
+     * touches that would otherwise reach the hidden controls. While the HUD is visible, the
+     * gesture layer attaches no pointer input. */
     if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
-    // Above both: the notch strip beside an open keyboard, where a stray thumb closed it.
+    // Above both: the notch strip beside an open keyboard. A stray thumb there closes the keyboard.
     KeyboardNotchShield(keyboardOpen = isKeyboardOpen)
 }
 
 /**
- * The idle window runs only while video is playing. Panels, the keyboard, scrubbing and an
- * unfinished message hold it open; each release or playback restart gets the full window.
+ * Runs [autoHideHud] for the room. The idle timer runs only while video plays. Open panels, the
+ * keyboard, scrubbing and an unsent message hold the HUD open. After each release or playback
+ * restart, the timer starts again from the full delay.
  */
 @Composable
 private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardOpen: Boolean, hasVideo: Boolean) {

@@ -1,6 +1,9 @@
 package app.protocol.sync
 
-/** Owns the advertised target until the queued player command has run or been discarded. */
+/**
+ * A seek target accepted from the room. The outbound position report advertises it until the
+ * queued player command has run or been discarded.
+ */
 class PendingSeekPosition(val targetMs: Long)
 
 /** The protocol holds its sync lock around every access. Completion belongs to one command. */

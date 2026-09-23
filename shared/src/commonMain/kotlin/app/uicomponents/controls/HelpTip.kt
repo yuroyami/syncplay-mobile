@@ -47,10 +47,10 @@ import app.utils.platform
 import kotlinx.coroutines.delay
 
 /**
- * A question mark in an 18dp hairline square, sitting inline after a label. A tap opens a card on
- * the chrome tier under it with the explanation; a tap anywhere else closes it. On desktop a
- * hover opens it after a moment. The card is the only place the long words live, so the form
- * stays quiet.
+ * A help button: a question mark in an 18dp square with a thin border, inline after a label. A
+ * tap opens a card on the chrome tier under it with the explanation, and a tap anywhere else
+ * closes it. On desktop, a 400 ms hover also opens it. The card is the only place for the long
+ * explanation, so the form stays short.
  */
 @Composable
 fun HelpTip(text: String, modifier: Modifier = Modifier) {
@@ -70,7 +70,7 @@ fun HelpTip(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(Space.glyph)
-            // The drawn square stays 18dp; the touch target is the platform minimum.
+            // The drawn square stays 18dp, and the touch target is the platform minimum.
             .touchTarget(minWidth = Space.touchMin, minHeight = Space.touchMin)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { open = !open }
             .hoverable(source)
@@ -92,8 +92,8 @@ fun HelpTip(text: String, modifier: Modifier = Modifier) {
                 onDismissRequest = { open = false },
                 properties = PopupProperties(focusable = true),
             ) {
-                /* The card takes focus, so a remote's Center closes it the way Back does; with no
-                 * focus inside the popup, Center landed nowhere and seemed broken. */
+                /* The card takes focus, so a remote's Center closes it the way Back does. With no
+                 * focus inside the popup, Center would land nowhere and seem broken. */
                 val cardFocus = remember { FocusRequester() }
                 LaunchedEffect(Unit) { cardFocus.requestFocus() }
                 Box(

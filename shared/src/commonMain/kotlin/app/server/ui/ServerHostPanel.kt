@@ -67,10 +67,11 @@ import app.server.ServerLogEvent
 private const val LOG_LINES_SHOWN = 60
 
 /**
- * Hosting, inline under the home form's third server tab: the joinable address with copy and
- * share, the status with its evidence, the start or stop action, the configuration rows and the
- * tail of the log as a severity list. Bound straight to [ServerHostSession], which outlives
- * every screen. One hairline region holds all of it; its rows carry their own gutters.
+ * The hosting panel, shown inline under the Host tab (the third server tab) of the home form. It
+ * holds the address to join (with copy and share), the status (with the reason for an error),
+ * the start or stop action, the configuration rows and the end of the log, marked by severity.
+ * It reads [ServerHostSession] directly, and that session outlives every screen. One thin border
+ * holds it all, and the rows carry their own side padding.
  */
 @Composable
 fun ServerHostPanel(modifier: Modifier = Modifier) {

@@ -30,8 +30,10 @@ import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.okay
 
 /**
- * Managed rooms in one modal: a segmented choice between creating a room and identifying as
- * its operator, then the one field that choice needs. No chooser in front of it.
+ * The managed room modal. A room is the group of people watching together, and in a managed room
+ * only the operators can control playback. The modal has a segmented choice between creating a
+ * managed room and identifying as its operator, then the one field that the choice needs. No
+ * other chooser opens before the modal.
  */
 @Composable
 fun ManagedRoomModal() {
@@ -49,18 +51,18 @@ fun ManagedRoomModal() {
     fun send() {
         close()
         val auth = if (create) {
-            // Creating moves us to the minted room; the transition mutes its own events, and
-            // gives up on its own if the answer never comes.
+            // Creating moves the local user to the new managed room. The room change mutes its own
+            // events, and gives up by itself if no answer comes.
             viewmodel.protocol.beginRoomChange()
-            // The base name, so managing a room that is already managed does not mint a name
-            // from a name.
+            // The base name, so managing a room that is already managed does not build a managed
+            // name from a managed name.
             WireMessage.controllerAuth(
                 room = RoomPasswordProvider.baseName(roomName),
                 password = generateRoomPassword(),
             )
         } else {
-            // Identifying stays in this room. The attempt is kept so a success can store it for
-            // the re-identification every reconnect performs.
+            // Identifying stays in this room. The attempt is kept, so that a success can store the
+            // password. Each reconnect then identifies again with it.
             val attempt = password.trim().uppercase()
             viewmodel.session.lastControlPasswordAttempt = attempt
             WireMessage.controllerAuth(room = viewmodel.session.currentRoom, password = attempt)

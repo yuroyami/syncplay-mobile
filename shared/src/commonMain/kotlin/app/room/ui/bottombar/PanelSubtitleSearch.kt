@@ -62,9 +62,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * The OpenSubtitles search: a hairline field, a language row, the progress bar on the rim while
- * searching, and results as rows. Failures render inside the modal, because a notice would sit
- * behind it, and the modal stays open so another result can be tried.
+ * The OpenSubtitles search: a hairline text field, a language row, a progress bar at the top edge
+ * while searching, and the results as rows. Errors show inside the modal, because a notice would
+ * sit behind it. The modal stays open, so the user can try another result.
  */
 @Composable
 fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
@@ -83,7 +83,7 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var showLanguages by remember { mutableStateOf(false) }
 
-    /* The language filter persists (default English); "all" drops the filter entirely. */
+    /* The language filter is saved (English by default). "all" removes the filter. */
     val languageCode by SUBTITLE_SEARCH_LANG.watchPref()
     val appLanguage = Localization.lyricist.state.collectAsState().value.languageTag
     val allLanguages = strings.roomSubsAllLanguages
@@ -99,8 +99,8 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
         languages.firstOrNull { it.first == languageCode }?.second ?: languageCode.uppercase()
     }
 
-    /* One search in flight: a language change or a retyped query cancels the previous one, so
-     * an older, slower reply can never overwrite a newer result list. */
+    /* One search at a time. A language change or a new query cancels the previous search, so an
+     * older, slower reply can never overwrite a newer result list. */
     var searchJob by remember { mutableStateOf<Job?>(null) }
     fun runSearch() {
         searchJob?.cancel()
@@ -172,8 +172,8 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
                 onClick = {
                     error = null
                     downloading = result.fileId
-                    // What this subtitle was searched for. A download takes seconds, and the room
-                    // can move to the next file inside them.
+                    // The media that this subtitle was searched for. A download takes seconds, and
+                    // the room can move to the next file during that time.
                     val forMedia = viewmodel.media?.location?.commonUri
                     scope.launch(ioDispatcher) {
                         when (val outcome = SubtitleSearch.download(result.fileId)) {
@@ -186,12 +186,14 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
                                 val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
                                 downloading = null
                                 if (injected) {
-                                    // The tracks panel stays open behind this, so its list must follow.
+                                    // The tracks panel stays open behind this modal, so its
+                                    // list must update.
                                     viewmodel.media?.let { viewmodel.player.analyzeTracks(it) }
-                                    // Free plan keys allow a handful of downloads a day; searches are unlimited.
+                                    // Free plan keys allow a few downloads a day. Searches are
+                                    // unlimited.
                                     viewmodel.dispatchOSD { Localization.strings.roomSubsDownloadedRemaining(outcome.remaining) }
                                     downloadedOk = result.fileId
-                                    delay(1000) // let the check land before the modal leaves
+                                    delay(1000) // let the check mark show before the modal closes
                                     onDismiss()
                                 } else {
                                     error = Localization.strings.roomSelectedSubError

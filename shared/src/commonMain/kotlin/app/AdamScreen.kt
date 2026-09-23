@@ -68,32 +68,29 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.scene.Scene
 import app.uicomponents.lexendFont
 
-/** Provides access to the global [SyncplayViewmodel] instance shared across the app. */
+/** The app-wide [SyncplayViewmodel]. */
 val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
 
-/** Provides access to the current [RoomViewmodel] within the room screen scope. */
+/** The [RoomViewmodel] of the open room. Only the room screen provides it. */
 val LocalRoomViewmodel = compositionLocalOf<RoomViewmodel> { error("No Viewmodel provided yet") }
 
-/** Provides access to the current [SaveableTheme] across the app composable scope. */
+/** The current [SaveableTheme]. */
 val LocalTheme = compositionLocalOf<SaveableTheme> { error("No theme provided yet") }
 
-/** Provides access to the currently active [Screen] in the navigation back stack. */
+/** The current [Screen]: the last entry of the navigation back stack. */
 val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
 
-/** Provides access to the current [MessagePalette] for chat message color theming. */
+/** The [MessagePalette]: the colours of chat messages. */
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
 
 val LocalRoomUiState = compositionLocalOf<RoomUiStateManager> { error("No RoomUiState provided yet") }
 
 /**
- * The root composable for the app.
+ * The root composable of the app.
  *
- * This composable initializes the global [SyncplayViewmodel], sets up the main
- * navigation back stack, and provides key CompositionLocals such as theme,
- * view models, and chat palette.
- *
- * It acts as the parent container for all screens and handles navigation
- * between them, using [NavDisplay] for composable screen transitions.
+ * It creates the global [SyncplayViewmodel] and passes it once to [onGlobalViewmodel], so the
+ * platform host can keep it. It provides the app-wide composition locals (theme, palette, type
+ * roles, chat palette, view models) and shows the last screen of the back stack with [NavDisplay].
  *
  * @see HomeScreenUI
  * @see RoomScreenUI
@@ -116,7 +113,7 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
     val currentTheme by globalviewmodel.currentTheme.collectAsState()
     val prefsState = datastoreStateFlow.collectAsState()
 
-    // The design tokens: one type binding per family, one palette per theme.
+    // The design tokens: the type roles come from the one font family, the palette from the theme.
     val lexend = FontFamily(lexendFont)
     val typeRoles = remember(lexend) { TypeRoles.from(lexend) }
     val designPalette = remember(currentTheme) { Palette.from(currentTheme.dynamicScheme, currentTheme) }
@@ -133,19 +130,20 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalWidthClass provides currentWidthClass(),
         LocalIsTelevision provides remember { isTelevision() },
     ) {
-        /* The display language, applied before anything below reads a string so the first frame
-         * is already in the right one. A change moves the whole app with no restart. */
+        /* Applies the display language before anything below reads a string, so the first frame
+         * already uses it. A language change updates the whole app without a restart. */
         val savedLanguage by DISPLAY_LANG.watchPref()
         remember(savedLanguage) { Localization.apply(savedLanguage) }
 
-        /* The layout stays left to right in every language, Arabic included: only the words
-         * change. Pinned here so an Arabic device does not mirror the app either. */
+        /* The layout stays left to right in every language, Arabic included. Only the words
+         * change. The direction is pinned here so that an Arabic device does not mirror the app. */
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         ProvideAppStrings(Localization.lyricist) {
-        // The ground is the theme's: every page sits on it, so no window colour shows through.
+        // Every page sits on the theme's ground colour, so the window colour never shows through.
         Box(Modifier.fillMaxSize().background(designPalette.ground)) {
             GlassBackdrop {
-                // Reduced motion: the platform setting or the switch, read once per change.
+                // Reduced motion is on when the app's switch or the platform setting is on. The
+                // platform setting is read again only when the switch changes.
                 LaunchedEffect(Unit) {
                     REDUCE_MOTION.flow().collect { Motion.reduced = it || reducedMotion() }
                 }
@@ -154,8 +152,8 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                 NavDisplay(
                 backStack = backstack,
                 onBack = {
-                    /* In the room, back closes whatever is open, one layer at a time, and only asks
-                     * to leave once nothing is. A remote's Back is its only way out of a panel. */
+                    /* In the room, Back closes one open layer at a time, and asks to leave only
+                     * when nothing is open. On a TV remote, Back is the only way out of a panel. */
                     val room = globalviewmodel.roomWeakRef?.get()
                     val ui = room?.uiState
                     when {
@@ -228,8 +226,9 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
 }
 
 /**
- * A push slides 24dp in from the trailing edge and fades; a pop is the reverse. Entering or
- * leaving the room is a mode change, so it crossfades. Reduced motion collapses all of it.
+ * The page transition. A push slides the new page 24dp in from the right and fades it in, and a
+ * pop does the reverse. Entering or leaving the room is a mode change, so it only crossfades.
+ * With reduced motion, every transition is instant.
  */
 private fun AnimatedContentTransitionScope<Scene<Screen>>.pageTransition(pop: Boolean, slidePx: Int): ContentTransform {
     val toRoom = targetState.entries.lastOrNull()?.contentKey is Screen.Room

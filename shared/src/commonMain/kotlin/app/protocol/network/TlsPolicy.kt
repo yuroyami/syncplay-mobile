@@ -19,8 +19,9 @@ enum class TlsDecision {
  * the enable switch happens to say, and a transport with no TLS at all cannot satisfy it: the Ktor
  * engine has no opportunistic upgrade, so requiring encryption on it means not connecting.
  *
- * This is decided before the socket opens. Reading the requirement only after a server answers
- * `TLS: false` is too late, because the Hello carrying the password hash has already gone out.
+ * This is decided before the socket opens. If the requirement were read only when a TLS answer
+ * arrives, a connection that never asks (TLS disabled, or a transport without TLS) would already
+ * have sent the Hello carrying the password hash in plain text.
  */
 fun decideTls(enabled: Boolean, required: Boolean, transportSupportsTls: Boolean): TlsDecision = when {
     required && !transportSupportsTls -> TlsDecision.REFUSE

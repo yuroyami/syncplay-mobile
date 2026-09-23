@@ -10,15 +10,15 @@ class PlayerOptions private constructor() {
     var minBuffer = 15000
         private set
 
-    /** Buffer in ms to fill after seeking before resuming playback. */
+    /** The buffer (ms) to fill after a seek before playback resumes. */
     var playbackBuffer = 2000
         private set
 
-    /** ISO 639 language code. "und" = no preference. */
+    /** The preferred audio language as an ISO 639 code. "und" means no preference. */
     var audioPreference = "und"
         private set
 
-    /** ISO 639 language code. */
+    /** The preferred subtitle language as an ISO 639 code. */
     var ccPreference = "eng"
         private set
 

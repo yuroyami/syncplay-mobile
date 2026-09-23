@@ -3,22 +3,23 @@ package app.server.model
 import app.utils.md5
 
 /**
- * Configuration for a Syncplay server instance.
- *
- * Mirrors the arguments accepted by the original Syncplay server
- * (syncplay-pc-src-master/syncplay/server.py SyncFactory.__init__).
+ * The settings of one built-in server instance. They mirror the arguments of the Syncplay PC
+ * server (SyncFactory.__init__ in syncplay/server.py).
  */
 data class ServerConfig(
     /** TCP port to listen on. */
     val port: Int = DEFAULT_PORT,
 
-    /** Server password (raw, will be MD5-hashed for comparison). Empty = no password. */
+    /** The server password in plain text. It is MD5-hashed for comparison. Empty means none. */
     val password: String = "",
 
-    /** When true, rooms are isolated — users only see their own room. */
+    /** When true, rooms are isolated: users only see their own room. */
     val isolateRooms: Boolean = true,
 
-    /** Disable the readiness feature (all users always considered ready). */
+    /**
+     * Turns off the readiness feature. The server advertises it as off and reports every user's
+     * readiness as unknown (null).
+     */
     val disableReady: Boolean = false,
 
     /** Disable chat messages. */
@@ -39,7 +40,7 @@ data class ServerConfig(
     /** Seconds without a State from a client before it is dropped as dead. */
     val protocolTimeoutSeconds: Double = PROTOCOL_TIMEOUT_SECONDS
 ) {
-    /** Returns the MD5-hashed password, or empty string if no password set. */
+    /** The MD5-hashed password in hex, or an empty string when no password is set. */
     val hashedPassword: String
         get() = if (password.isNotEmpty()) {
             md5(password).toHexString(HexFormat.Default)

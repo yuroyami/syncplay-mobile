@@ -11,7 +11,7 @@ import java.io.File
  *  - macOS:   ~/Library/Application Support/Synkplay
  *  - Linux:   $XDG_DATA_HOME/synkplay (or ~/.local/share/synkplay)
  *
- * Holds the DataStore preferences file and the log directory.
+ * Holds the DataStore preferences file, the log directory and the cache directory.
  */
 val desktopAppDataDir: File by lazy {
     val os = System.getProperty("os.name").lowercase()
@@ -24,7 +24,7 @@ val desktopAppDataDir: File by lazy {
     dir.apply { mkdirs() }
 }
 
-/** One-time process init for the global DataStore. Call from main() before any UI. */
+/** Creates the global DataStore once per process. Call it from main() before any UI. */
 fun initializeDatastore() {
     runCatching {
         datastore = createDataStore(
@@ -34,7 +34,7 @@ fun initializeDatastore() {
 }
 
 /**
- * A join request parsed from the command line (see Main.kt), consumed once by the home
- * screen through [consumePendingShortcut] — the desktop analog of iOS Quick Actions.
+ * A join request parsed from the command line (see Main.kt). The home screen reads it once
+ * through [consumePendingShortcut]. It is the desktop version of the iOS Quick Actions.
  */
 var pendingDesktopJoin: app.home.JoinConfig? = null

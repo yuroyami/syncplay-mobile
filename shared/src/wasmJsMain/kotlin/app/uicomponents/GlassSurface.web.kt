@@ -7,10 +7,10 @@ import androidx.compose.runtime.Composable
 actual fun DialogBackdropBlur() = Unit
 
 /**
- * False, and it will stay false.
+ * Always false.
  *
- * Video on the web is an HTML element the browser composites itself, outside the canvas Compose
- * draws into. There are no pixels for the blur to sample, exactly as with a SurfaceView on
- * Android, so panels over video fall back to a plain tint.
+ * Video on the web is an HTML element that the browser composites itself, outside the canvas that
+ * Compose draws into. The blur has no pixels to sample, as with a SurfaceView on Android, so
+ * panels over video use a plain tint.
  */
 actual fun videoSurfaceSupportsGlass(): Boolean = false

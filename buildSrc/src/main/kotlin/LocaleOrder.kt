@@ -5,12 +5,13 @@ import java.io.File
 /**
  * Puts the generated language table in the same order on every machine.
  *
- * The Lyricist symbol processor writes the `Locales` object and the `appStrings` map in the order
- * it walked the `values-*` resource folders. That order is the filesystem's, so two machines
- * generate two different files. The constants then land in a different order in the DEX, R8 gives
- * the locale classes different short names, and a published APK cannot be rebuilt and compared
- * byte for byte. Sorting both blocks by property name before anything compiles them removes the
- * difference. Which order it is does not matter, only that every machine picks the same one.
+ * The Lyricist symbol processor (the KSP step that generates the string classes) writes the
+ * `Locales` object and the `appStrings` map in the order that it walked the `values-*` resource
+ * folders. That order comes from the filesystem, so two machines generate two different files.
+ * The constants then land in a different order in the DEX, R8 gives the locale classes different
+ * short names, and nobody can rebuild a published APK and compare it byte for byte. Sorting both
+ * blocks by property name before any compilation removes the difference. The order itself does
+ * not matter, only that every machine uses the same one.
  */
 object LocaleOrder {
 
@@ -18,11 +19,12 @@ object LocaleOrder {
     private val ENTRY = Regex("""^(\s*)Locales\.([A-Za-z0-9_]+) to ([A-Za-z0-9_]+),?\s*$""")
 
     /**
-     * Registers `sortGeneratedLocales` and makes every compilation wait for it.
+     * Registers `sortGeneratedLocales`. The caller makes every compilation depend on it (see
+     * shared/build.gradle.kts).
      *
      * The task always runs. It reads one small file and rewrites it only when the order is wrong,
-     * which keeps it correct even if a build cache ever hands back generated output that another
-     * machine produced.
+     * so the result stays correct even if a build cache returns generated output from another
+     * machine.
      */
     fun Project.registerLocaleOrderTask(): TaskProvider<*> {
         val generatedDir = layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin/app/i18n")
@@ -42,7 +44,7 @@ object LocaleOrder {
         }
     }
 
-    /** Sorts both blocks. Fails loudly when the generated shape is not the one this reads. */
+    /** Sorts both blocks. Fails when the generated file does not have the expected shape. */
     internal fun sort(text: String, name: String): String {
         val lines = text.split("\n").toMutableList()
         sortBlock(lines, name, "public object Locales {", "}", FIELD) { it.groupValues[2] }
@@ -53,7 +55,8 @@ object LocaleOrder {
     /**
      * Sorts the lines between the line that starts with [open] and the next line that is exactly
      * [close]. Every line between the two must match [pattern], and [key] reads the name to sort
-     * on. A trailing comma belongs to every entry but the last, so it is rewritten either way.
+     * on. When the entries use trailing commas, every entry except the last gets one after the
+     * sort.
      */
     private fun sortBlock(
         lines: MutableList<String>,

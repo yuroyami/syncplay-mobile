@@ -3,10 +3,8 @@ package app.server.model
 import app.utils.SyncClock
 
 /**
- * Represents a room on the server.
- * Port of Python's Room class (syncplay-pc-src-master/syncplay/server.py).
- *
- * Tracks playback state (position, paused), playlist, and connected watchers.
+ * A room on the built-in server: its playback state (position, paused), its playlist and its
+ * watchers. A port of the Room class in the Syncplay PC server (syncplay/server.py).
  */
 open class ServerRoom(val name: String) {
 
@@ -24,19 +22,19 @@ open class ServerRoom(val name: String) {
     protected var _position: Double = 0.0
 
     /**
-     * Whose position the room adopts when its own reading goes stale. Base rooms follow the
-     * slowest watcher; a controlled room follows the slowest controller.
+     * Whose position the room adopts when its own reading goes stale. A plain room follows the
+     * slowest watcher, and a controlled room follows the slowest controller.
      */
     protected open fun positionCandidates(): Collection<ServerWatcher> = _watchers.values
 
     /**
-     * Current playback position, advanced by wall-clock while playing.
+     * The current playback position, advanced by the wall clock while playing.
      *
-     * **This call mutates the room.** When the reading is more than a second stale it adopts
-     * the slowest candidate's position and rewrites `_position`, `_setBy` and `_lastUpdate`.
-     * That is faithful to Python's `Room.getPosition()`, and it means two calls in a row do
-     * not return the same thing and the second one sees a `setBy` the first one chose. Read it
-     * once and reuse the value; use [peekPosition] when you only want to look.
+     * **This call changes the room.** When the reading is more than a second old, it adopts the
+     * slowest candidate's position and rewrites `_position`, `_setBy` and `_lastUpdate`. This
+     * matches Python's `Room.getPosition()`. So two calls in a row can return different values,
+     * and the second call sees a `setBy` that the first one chose. Read it once and reuse the
+     * value. Use [peekPosition] when you only want to look.
      */
     fun getPosition(): Double {
         val age = currentTimeSeconds() - _lastUpdate

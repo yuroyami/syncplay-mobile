@@ -4,5 +4,5 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
-/** Every platform with real threads: the pool coroutines already provides. */
+/** Android, iOS and desktop have real threads, so this is the coroutines library's IO pool. */
 actual val ioDispatcher: CoroutineDispatcher = Dispatchers.IO

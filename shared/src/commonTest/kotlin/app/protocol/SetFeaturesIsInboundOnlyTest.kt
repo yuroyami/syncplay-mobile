@@ -9,14 +9,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * `Set{"features": ...}` is a remote crash, not a feature.
+ * An outbound `Set{"features": ...}` makes the reference Syncplay server drop the sender.
  *
- * The reference server's `handleSet` sends the `features` command to
- * `Watcher.setFeatures`, which `server.py` never defines. Any client that sends one
- * takes down its own connection with an AttributeError inside the server's reactor.
+ * The reference server's `handleSet` passes the `features` command to
+ * `Watcher.setFeatures`, which `server.py` never defines. A client that sends one
+ * drops its own connection with an AttributeError inside the server's reactor.
  *
- * We decode it (our own server accepts one) but must never produce one. This test
- * fails the build if a builder starts emitting the key.
+ * The app decodes the key (the app's own server accepts one) but must never send it. This
+ * test fails the build if a message builder starts to emit the key.
  */
 class SetFeaturesIsInboundOnlyTest {
 

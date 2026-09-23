@@ -24,10 +24,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Server-side integration tests: drive [SyncplayServer] / [ClientConnection] with raw JSON lines
- * and assert on what they emit, simulating real clients over a fake socket. Each test wires a
- * fresh [TestClient] into a shared [SyncplayServer] instance so multiple clients can join the
- * same room and observe each other's broadcasts.
+ * Integration tests for the app's own Syncplay server. They drive [SyncplayServer] and
+ * [ClientConnection] with raw JSON lines and assert on what they emit, as real clients would see
+ * it over a fake socket. Within a test, several [TestClient]s share one [SyncplayServer], so they
+ * can join the same room and see each other's broadcasts.
  */
 @OptIn(ExperimentalStdlibApi::class)
 class ServerProtocolFlowTest {
@@ -46,7 +46,7 @@ class ServerProtocolFlowTest {
      */
     class TestClient(server: SyncplayServer) {
         /* Guarded: the server's per-watcher state timer writes here from its own thread while the
-         * test reads, so a plain list could tear or drop an entry and turn a real failure green. */
+         * test reads, so a plain list could tear or lose an entry and hide a real failure. */
         private val lock = SynchronizedObject()
         private val captured = mutableListOf<WireMessage>()
 
@@ -119,7 +119,7 @@ class ServerProtocolFlowTest {
     @Test
     fun `server drops a client supplying a wrong password`(): Unit = runBlocking {
         val client = TestClient(server(ServerConfig(password = "secret")))
-        // MD5("wrong") doesn't match MD5("secret").
+        // "wronghash" is not the MD5 hex of "secret".
         client.receive(helloFor("alice", "lobby", password = "wronghash"))
         assertEquals(true, client.dropped)
     }
@@ -172,12 +172,12 @@ class ServerProtocolFlowTest {
     fun `ListRequest before Hello is rejected`(): Unit = runBlocking {
         val client = TestClient(server())
         client.receive(WireMessage.listRequest())
-        // The gate itself, not just its side effect: an unauthenticated request is answered with
-        // an error and the socket goes. Asserting only "no list came back" passed even with the
-        // whole requireLogged() check deleted, because sendList returns early with no watcher.
+        // Test the gate itself, not only its side effect: an unauthenticated request gets an error
+        // and the socket closes. A check of "no list came back" alone would pass even without
+        // requireLogged(), because sendList returns early when there is no watcher.
         assertEquals(true, client.dropped, "an unauthenticated request must drop the connection")
         assertNotNull(client.lastOf<WireMessage.Error>(), "and say why")
-        // Either dropped or no list response — but definitely no list reply since not logged in.
+        // And no list reply, because the client is not logged in.
         assertEquals(0, client.allOf<WireMessage.ListResponse>().size)
     }
 
@@ -424,7 +424,7 @@ class ServerProtocolFlowTest {
     // Controlled rooms
     // -----------------------------------------------------------
 
-    /** Creates a controlled room the way a client does: ask in a plain room, then join the minted name. */
+    /** Creates a controlled room as a client does: ask in a plain room, then join the new room. */
     private suspend fun TestClient.createControlledRoom(baseRoom: String, password: String): String {
         receive(WireMessage.controllerAuth(room = baseRoom, password = password))
         val minted = lastOf<WireMessage.Set>()!!.data.newControlledRoom!!

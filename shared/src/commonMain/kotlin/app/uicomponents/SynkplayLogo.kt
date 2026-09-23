@@ -14,10 +14,11 @@ import androidx.compose.ui.graphics.vector.PathParser
 import app.theme.Theming
 
 /**
- * The app mark, drawn live so the active theme's trinity flows through it. The static drawable
- * could only ever show the colors it was exported with; this draws the same silhouette and
- * highlight, with the sail gradient built from [Theming.flexibleGradient] at composition time.
- * Theme changes recolor the logo, the wordmark and every accent in the same frame.
+ * The app logo, drawn in code so that it takes the colours of the active theme. A static drawable
+ * shows only the colours it was exported with. This draws the same shape and highlight, and builds
+ * the sail gradient from the theme's three seed colours ([Theming.flexibleGradient]) at
+ * composition time. A theme change recolours the logo, the wordmark and every accent in the same
+ * frame.
  */
 @Composable
 fun SynkplayLogo(modifier: Modifier) {
@@ -29,10 +30,11 @@ fun SynkplayLogo(modifier: Modifier) {
     Canvas(modifier) {
         val s = size.minDimension / VIEWPORT
         scale(scaleX = s, scaleY = s, pivot = Offset.Zero) {
-            // Same geometry as the shipped art: a dark lead-in, then the trinity, with the last
-            // color held to the tip. The lead-in mixes the first two seeds and darkens them; both
-            // constants are tuned (in Oklab, which is what Compose's lerp uses) so the brand
-            // trinity reproduces the artwork's #793695 anchor. Custom themes get the same recipe.
+            // The same geometry as the original artwork: a dark lead-in, then the three seed
+            // colours, with the last colour held to the tip. The lead-in mixes the first two seeds
+            // and darkens the mix. Both constants are tuned in Oklab (the space Compose's lerp
+            // uses), so the brand seeds reproduce the artwork's #793695 anchor. Custom themes use
+            // the same recipe.
             drawPath(
                 path = path,
                 brush = Brush.linearGradient(
@@ -45,7 +47,7 @@ fun SynkplayLogo(modifier: Modifier) {
                     end = Offset(1160f, 100f),
                 )
             )
-            // Fixed near-white sheen over the wing shoulder, theme-independent.
+            // A fixed near-white sheen over the wing shoulder, the same for every theme.
             drawPath(
                 path = path,
                 brush = Brush.radialGradient(

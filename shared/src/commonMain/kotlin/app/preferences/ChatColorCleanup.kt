@@ -5,12 +5,13 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.Preferences as StoredPreferences
 
 /**
- * Earlier versions saved 0 when someone reset a chat colour, and 0 meant "use the theme's colour".
- * Chat colours no longer come from the theme, so a saved 0 would now draw invisible text. This
- * removes it before the first read of the store, and the chat default applies again.
+ * A store migration that removes a saved chat colour of 0. Older app versions saved 0 when the
+ * user reset a chat colour, and 0 meant "use the theme's colour". Chat colours do not come from
+ * the theme, so a saved 0 would draw invisible text. The migration runs before the first read of
+ * the store, and the chat default applies again.
  */
 internal object ChatColorCleanup : DataMigration<StoredPreferences> {
-    /** The old marker. It is fully transparent black, and nobody picks invisible chat text. */
+    /** The old marker. As a colour it is fully transparent black, which nobody picks for chat text. */
     const val OLD_THEME_MARKER = 0
 
     /** The keys of the six chat colour settings. */

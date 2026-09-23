@@ -24,7 +24,7 @@ import app.theme.Radius
 import app.theme.Space
 import app.theme.palette
 
-/** A 22 x 16dp rectangle with a hairline. A rectangle, because a circle is chip language. */
+/** A colour swatch: a 22 x 16dp rectangle with a thin border, because a circle reads as a chip. */
 @Composable
 fun Swatch(
     color: Color,

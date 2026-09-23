@@ -9,7 +9,7 @@ actual fun tagSocketThread() {
 }
 
 /**
- * Conscrypt gives us TLS 1.3 and is installed off the main thread at startup. The handshake is
- * always far enough after startup to simply wait here.
+ * Waits for the Conscrypt install, which adds TLS 1.3 and runs off the main thread at startup.
+ * A TLS handshake always comes long enough after startup to wait here.
  */
 actual suspend fun awaitTlsProviderReady() = SecurityProvider.awaitInstalled()

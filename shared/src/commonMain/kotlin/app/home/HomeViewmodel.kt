@@ -12,12 +12,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The home screen's viewmodel: joining, and the notices the screen shows at its bottom edge. */
+/** The home screen's view model: joining, and the notices the screen shows at its bottom edge. */
 class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     val updateCheck = UpdateCheckController(viewModelScope)
 
-    /** Saves the configuration when remembering is on, then opens the room; null joins alone. */
+    /**
+     * Saves [joinConfig] when the remember setting is on, then opens the room. A null [joinConfig]
+     * opens solo mode (offline playback).
+     */
     suspend fun joinRoom(joinConfig: JoinConfig?) {
         withContext(ioDispatcher) { joinConfig?.save() }
         withContext(Dispatchers.Main) { backStack.add(Screen.Room(joinConfig)) }

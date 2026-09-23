@@ -7,8 +7,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The invite link is the one thing a stranger pastes into this app, so it is parsed defensively
- * and round-trips exactly.
+ * An invite link carries a room name, a server address and a password. The link comes from another
+ * person, so the parser refuses anything unexpected, and a valid link round-trips exactly.
  */
 class InviteLinkTest {
     @Test fun httpsSharingRoundTripsWithoutExposingAnEmbeddedWebsite() {

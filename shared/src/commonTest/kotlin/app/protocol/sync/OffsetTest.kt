@@ -4,14 +4,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Two conversions, one sign convention. Getting the sign wrong in one direction only shows up on
- * a viewer who set an offset, which is why it went unnoticed on every path that had it backwards.
+ * The offset is how far a viewer's copy of a file runs ahead of the room. The two conversions share
+ * one sign convention. A sign error shows up only for a viewer who set an offset, so it is easy to
+ * miss.
  */
 class OffsetTest {
 
     @Test
     fun `a local seek is announced in room time`() {
-        // Our copy runs 10 s ahead, so our 40 s is the room's 30 s.
+        // The local copy runs 10 s ahead, so the local 40 s is the room's 30 s.
         assertEquals(30.0, localToRoomSeconds(localMs = 40_000L, offsetSeconds = 10.0))
         assertEquals(50.0, localToRoomSeconds(localMs = 40_000L, offsetSeconds = -10.0))
     }

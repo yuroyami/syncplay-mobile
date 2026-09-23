@@ -59,7 +59,6 @@ import app.uicomponents.glassEnabledNow
 
 class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
-    /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null
     private lateinit var exoView: PlayerView
 
@@ -78,9 +77,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
 
         val options = PlayerOptions.get()
-        /* Clamp the buffer values so DefaultLoadControl's invariants always hold even with an
-         * invalid saved pref combo: it requires minBuffer <= maxBuffer and
-         * bufferForPlayback(AfterRebuffer) <= minBuffer. (min/max are ms; seek is already ms.) */
+        /* Clamp the buffer values so DefaultLoadControl's rules hold even with an invalid saved
+         * combination: minBuffer <= maxBuffer, and both playback buffers <= minBuffer. All four
+         * values are in milliseconds. */
         val minBufferMs = options.minBuffer
         val maxBufferMs = maxOf(options.maxBuffer, minBufferMs)
         val bufferForPlaybackMs = minOf(options.playbackBuffer, minBufferMs)
@@ -123,12 +122,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build(),
-                /* MUST stay false. When true, ExoPlayer silently pause()s on transient/permanent
-                 * audio-focus loss (notifications, system sounds, OS doze, Bluetooth glitches),
-                 * firing onIsPlayingChanged(false). The isNowPlaying divergence collector in
+                /* handleAudioFocus MUST stay false. When true, ExoPlayer pauses by itself on any
+                 * audio focus loss (notifications, system sounds, doze, Bluetooth glitches) and
+                 * fires onIsPlayingChanged(false). The isNowPlaying divergence collector in
                  * ProtocolManager.startChannelHealthMonitoring() then broadcasts `play=false` to
-                 * the room, producing a spurious "User X paused" minutes into a session. Any
-                 * polite focus handling must pause LOCALLY only and never mutate
+                 * the room, which shows a false "User X paused" minutes into a session. Any
+                 * audio focus handling must pause locally only and never change
                  * viewmodel.playerManager.isNowPlaying. */
                 false
             )
@@ -142,7 +141,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         exoplayer?.addListener(object : Player.Listener {
 
-            /* On load completion, announce the file's duration to the server. */
+            /* When loading stops, store the duration, and announce the file to the server when
+             * its duration changed. */
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
 
@@ -178,8 +178,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 when (player.playbackState) {
                     Player.STATE_BUFFERING -> return
                     Player.STATE_IDLE -> {
-                        // The engine gave up (a stream error, a stop); the room did not. Note
-                        // the pause as expected so the collector treats it as local news only.
+                        // The engine gave up (a stream error, a stop), but the room did not. Mark
+                        // the pause as expected, so the collector does not broadcast it.
                         viewmodel.protocol.noteExpectedPlaybackState(paused = true)
                         viewmodel.playerManager.isNowPlaying.value = false
                         return
@@ -192,7 +192,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 }
             }
 
-            /* Fires on any track change (e.g. loading a custom sub); re-analyze tracks. */
+            /* Fires on any track change, such as a new external subtitle. List the tracks again. */
             override fun onTracksChanged(tracks: Tracks) {
                 super.onTracksChanged(tracks)
 
@@ -218,9 +218,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Reset the guard and cancel the 500ms position-tracker job before releasing the player.
-        // Exo polls a nullable instance (no hard crash like mpv's global handle), but leaving the
-        // job alive keeps it polling a torn-down player and retains the captured RoomViewmodel graph.
+        // Reset the guard and cancel the 500 ms position tracker before releasing the player.
+        // Exo polls a nullable instance, so it does not crash like mpv's global handle. But a live
+        // tracker keeps polling a released player and keeps the captured RoomViewmodel in memory.
         isInitialized = false
         playerSupervisorJob.cancel()
 
@@ -239,9 +239,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                // TextureView so Haze can capture the frames (glass over video); SurfaceView when
-                // glass is off, which can take the hardware overlay plane instead. Surface type is
-                // fixed at inflation, so this is read once here rather than observed.
+                // A TextureView when glass is on, so Haze (the blur library) can capture the
+                // frames. A SurfaceView when glass is off, because it can use the hardware overlay
+                // plane. The surface type is fixed at inflation, so read the setting once here.
                 val layout = if (glassEnabledNow()) R.layout.exoview else R.layout.exoview_surface
                 exoView = LayoutInflater.from(context).inflate(layout, null) as PlayerView
                 initialize()
@@ -264,9 +264,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         exoplayer?.volume = percent.coerceIn(0, 100) / 100f
     }
 
-    /* Amplification rides a LoudnessEnhancer on the player's audio session: 200 percent is +6 dB,
-     * the point where a doubled amplitude starts to clip on most material. The effect is built on
-     * first use and torn down with the player. */
+    /* Amplification uses a LoudnessEnhancer on the player's audio session. 200 percent is +6 dB
+     * (double the amplitude), where most material starts to clip. The effect is built on first
+     * use and released with the player. */
     override val gainMax: Int = 200
     private var loudness: LoudnessEnhancer? = null
     private var gainPercent: Int = 100
@@ -339,8 +339,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         val cleared = builder.clearOverridesOfType(exoType)
 
         if (exoTrack == null) {
-            /* Off means off. Removing the override alone leaves the selector free to pick a
-             * track by preferred language, which it does, so "no subtitles" showed subtitles. */
+            /* Off means off. Removing the override alone lets the selector pick a track by
+             * preferred language, so "no subtitles" would still show subtitles. */
             exoplayer?.trackSelector?.parameters = cleared.setTrackTypeDisabled(exoType, true).build()
             when (type) {
                 TrackType.SUBTITLE -> playerManager.currentTrackChoices.subtitle = TrackChoice.Off
@@ -356,7 +356,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             TrackType.AUDIO -> playerManager.currentTrackChoices.audio = TrackChoice.ByOverride(override)
             TrackType.VIDEO -> playerManager.currentTrackChoices.video = TrackChoice.ByOverride(override)
         }
-        // And undo the disable, or picking a track after switching off would show nothing.
+        // Also undo the disable, or picking a track after Off would show nothing.
         exoplayer?.trackSelector?.parameters =
             cleared.setTrackTypeDisabled(exoType, false).addOverride(override).build()
     }
@@ -367,9 +367,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         if (!isInitialized) return
 
         withContext(Dispatchers.Main.immediate) {
-            // No analyzeTracks() here (this runs on every onResume): re-adding the stored overrides
-            // is all that's needed to restore the selection, since no engine is released across
-            // pause/resume. The media.tracks UI list rebuilds on-demand when the track sheet opens.
+            // No analyzeTracks() here, because this runs on every onResume. Adding the stored
+            // overrides again restores the selection, since no engine is released across a pause
+            // and resume. The media.tracks list is rebuilt when the tracks panel opens.
             if (viewmodel.media == null) return@withContext
 
             exoplayer?.apply {
@@ -386,7 +386,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                             .setTrackTypeDisabled(exoType, false)
                             .addOverride(override)
                             .build()
-                        // Restore the disable too, or Off stopped holding across a resume.
+                        // Restore the disable too, or Off would not hold across a resume.
                         stored == TrackChoice.Off -> newParams.buildUpon()
                             .clearOverridesOfType(exoType)
                             .setTrackTypeDisabled(exoType, true)
@@ -405,11 +405,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     private var externalSubMediaId: String? = null
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
-        // Was FileProvider with authority "${packageName}.fileprovider": that authority doesn't
-        // exist (the manifest declares "${applicationId}.provider"), AND filesDir/logs (where
-        // downloaded subs land) isn't in provider_paths.xml, so getUriForFile threw and the sub
-        // silently never attached. playableUri yields the content:// uri for picker results and a
-        // file:// uri for our own downloaded files, neither of which needs FileProvider.
+        // playableUri gives a content:// uri for picker results and a file:// uri for the app's
+        // own downloaded files. Neither needs FileProvider. If FileProvider is ever used here,
+        // its authority is "${applicationId}.provider", not "${packageName}.fileprovider".
         val subUri = uri.playableUri
 
         externalSub = MediaItem.SubtitleConfiguration.Builder(subUri)

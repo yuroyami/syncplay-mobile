@@ -23,20 +23,20 @@ import kotlinx.atomicfu.locks.synchronized
 import okio.Path.Companion.toPath
 
 /**
- * Global DataStore instance for application preferences. Must be assigned via [createDataStore]
- * before any preference access; reading it earlier throws [UninitializedPropertyAccessException].
+ * The app's preference DataStore. Assign it with [createDataStore] before any preference access.
+ * An earlier read throws [UninitializedPropertyAccessException].
  */
 lateinit var datastore: DataStore<Preferences>
 
 
 /**
- * Process-lifetime coroutine scope for DataStore. Never cancelled. Uses [SupervisorJob] so one
- * failed child doesn't tear down the others.
+ * The DataStore's coroutine scope. It lives as long as the process and is never cancelled.
+ * [SupervisorJob] keeps one failed child from cancelling the others.
  */
 val datastoreScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
 
-/** True once the first read off disk has landed, so nothing has to block waiting for it. */
+/** Completes once the first read off disk has finished. */
 private val preferencesLoaded = CompletableDeferred<Unit>()
 
 @Volatile
@@ -46,30 +46,30 @@ private var cachedStateFlow: StateFlow<Preferences>? = null
 private val stateFlowLock = SynchronizedObject()
 
 /**
- * Non-null when the settings on disk could not be used and the app is running on defaults.
+ * Non-null when the settings on disk could not be used and the app runs on defaults.
  *
- * Set from two places: the corruption handler, which is the usual one, and the first read, for a
- * failure the handler does not cover. The store is read once, blocking, behind the splash, so
- * before this existed an unreadable file threw there on every launch, with nothing on screen to
- * say why and no way out but reinstalling.
+ * Two places set it: the corruption handler (the usual case), and the first read, for a failure
+ * that the handler does not cover. The first read blocks at startup. Without this fallback, an
+ * unreadable file would throw there on every launch, with nothing on screen to say why and no
+ * way out but a reinstall.
  */
 var preferencesLoadFailure: Throwable? = null
     internal set
 
 /**
- * Hot [StateFlow] of all preferences, collected once and shared for the whole process.
+ * A hot [StateFlow] of all preferences, collected once and shared for the whole process.
  *
- * The first read comes off disk, and the first caller pays for it. That caller used to be the
- * main thread during startup, which is why [warmPreferences] exists: it does the same read on a
- * background thread before the first frame, so by the time anything on the main thread asks, the
- * answer is already here.
+ * The first read comes off disk, and the first caller waits for it. Without a warm-up, that
+ * caller is the main thread during startup. So [warmPreferences] does the same read on a
+ * background thread before the first frame, and the answer is usually ready when the main thread
+ * asks.
  */
 val datastoreStateFlow: StateFlow<Preferences>
     get() = cachedStateFlow ?: synchronized(stateFlowLock) {
-        // Double-checked under the lock: the warm-up thread and the first main-thread reader
-        // arrive together on iOS and desktop, which have no splash to hold them apart. Without
-        // this both built their own eagerly-collected flow, so the store was read off disk twice
-        // and one of the two collectors leaked for the life of the process.
+        // Double-checked under the lock. On iOS and desktop, no splash screen holds the warm-up
+        // thread and the first main-thread reader apart, so they can arrive together. Without the
+        // lock, both would build their own eagerly collected flow: the store would be read off
+        // disk twice, and one of the two collectors would leak for the life of the process.
         cachedStateFlow ?: run {
             // Null only in a browser, where blocking the one thread would freeze the page.
             val upfront = readBlockingOrNull {
@@ -87,8 +87,8 @@ val datastoreStateFlow: StateFlow<Preferences>
                 if (upfront != null) {
                     preferencesLoaded.complete(Unit)
                 } else {
-                    // The gate opens when the first real value lands instead. awaitPreferences()
-                    // is still what holds the first frame, so nothing draws against defaults.
+                    // Here preferencesLoaded completes when the first real value arrives. The web
+                    // holds its first frame in awaitPreferences(), so nothing draws with defaults.
                     datastoreScope.launch {
                         runCatching { datastore.data.first() }
                             .onFailure { failure -> preferencesLoadFailure = failure }
@@ -100,23 +100,25 @@ val datastoreStateFlow: StateFlow<Preferences>
     }
 
 /**
- * Reads the store on a background thread. Called once at startup, before anything composes.
- * The platform holds its splash until [awaitPreferences] returns, so no screen is ever drawn
- * against default values that are about to change.
+ * Reads the store on a background thread. Each platform calls this once at startup, before
+ * anything composes. No screen draws with default values that are about to change: Android holds
+ * its splash screen until [arePreferencesLoaded], the web waits in [awaitPreferences], and iOS
+ * and desktop block on the first read.
  */
 fun warmPreferences() {
     datastoreScope.launch { datastoreStateFlow }
 }
 
-/** True once [warmPreferences] has finished; the Android splash holds on this. */
+/** True once the store has been read once. The Android splash screen stays until then. */
 val arePreferencesLoaded: Boolean get() = preferencesLoaded.isCompleted
 
 /** Suspends until the store has been read at least once. */
 suspend fun awaitPreferences() = preferencesLoaded.await()
 
 /**
- * Drops the memoized flow so the next read builds against whatever [datastore] now points at.
- * Only tests install a second store in one process; without this the first one won a whole JVM.
+ * Drops the cached flow, so that the next read uses whatever [datastore] now points at. Only
+ * tests install a second store in one process. Without this reset, the first store would stay
+ * for the whole JVM run.
  */
 fun resetPreferencesForTesting() {
     synchronized(stateFlowLock) {
@@ -126,20 +128,20 @@ fun resetPreferencesForTesting() {
 }
 
 /**
- * Composition-level preferences snapshot, provided once at the root composable ([app.AdamScreen])
- * and read by [app.preferences.watchPref] via [derivedStateOf], avoiding per-composable flow
- * collection. [staticCompositionLocalOf] is correct because the [State] reference never changes;
- * reads of [State.value] still recompose via the snapshot system.
+ * The preferences snapshot for composition. The root composable ([app.AdamScreen]) provides it
+ * once, and [app.preferences.watchPref] reads it through [derivedStateOf], so no composable has to
+ * collect a flow of its own. [staticCompositionLocalOf] is correct because the [State] reference
+ * never changes. Reads of [State.value] still recompose through the snapshot system.
  */
 val LocalPrefsState = staticCompositionLocalOf<State<Preferences>> {
     mutableStateOf(datastoreStateFlow.value)
 }
 
 /**
- * Builds the preference [DataStore] at [producePath]. One migration: [ChatColorCleanup].
+ * Builds the preference [DataStore] at [producePath], with one migration: [ChatColorCleanup].
  *
- * A file the parser rejects is replaced by an empty store rather than thrown from. Losing
- * settings is bad; a permanent crash on launch is worse, and it is what the alternative gave.
+ * A file that the parser rejects is replaced by an empty store, not thrown. Losing settings is
+ * bad, but a crash on every launch is worse.
  */
 fun createDataStore(
     producePath: () -> String,

@@ -8,8 +8,9 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 /*
- * The drawn glyph set: 20dp box, 1.5dp stroke, square terminals. This file holds the first wave;
- * every glyph is a stroked path on a 20 x 20 viewport so it sits with the hairlines.
+ * The drawn glyph set: a 20dp box, a 1.5dp stroke and flat line ends. Every glyph is a path on a
+ * 20 x 20 viewport, so it matches the thin lines of the controls. Most glyphs are stroked; Play,
+ * Pause and More are filled.
  */
 
 private fun stroked(name: String, builder: androidx.compose.ui.graphics.vector.ImageVector.Builder.() -> Unit): ImageVector =
@@ -34,17 +35,17 @@ private fun ImageVector.Builder.closedFill(vararg points: Float) {
     }
 }
 
-/** Two crossing hairlines. */
+/** Two crossing lines. */
 val CloseGlyph: ImageVector by lazy {
     stroked("close") { line(5f, 5f, 15f, 15f); line(15f, 5f, 5f, 15f) }
 }
 
-/** A left pointing chevron for back. */
+/** A left-pointing chevron for back. */
 val BackGlyph: ImageVector by lazy {
     stroked("back") { line(12f, 4f, 6f, 10f, 12f, 16f) }
 }
 
-/** Play: a solid triangle, the one filled glyph. */
+/** Play: a solid triangle. */
 val PlayGlyph: ImageVector by lazy {
     stroked("play") { closedFill(6f, 4f, 16f, 10f, 6f, 16f) }
 }
@@ -66,7 +67,7 @@ val SearchGlyph: ImageVector by lazy {
     }
 }
 
-/** Send: a right pointing arrow. */
+/** Send: a right-pointing arrow. */
 val SendGlyph: ImageVector by lazy {
     stroked("send") { line(3f, 10f, 16f, 10f); line(11f, 5f, 16f, 10f, 11f, 15f) }
 }
@@ -81,7 +82,7 @@ val CheckGlyph: ImageVector by lazy {
     stroked("check") { line(4f, 10.5f, 8.5f, 15f, 16f, 6f) }
 }
 
-/** One flat hairline: neither yes nor no, it depends. */
+/** One flat line, for an answer that is neither yes nor no. */
 val DashGlyph: ImageVector by lazy {
     stroked("dash") { line(5f, 10f, 15f, 10f) }
 }

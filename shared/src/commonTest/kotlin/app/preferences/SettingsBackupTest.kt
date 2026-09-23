@@ -7,8 +7,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Settings in and out of a file. A settings file is a text file people mail to each other, so
- * two things matter: nothing private travels, and a hand-edited file cannot break the app.
+ * Export and import of settings through a file. People send settings files to each other as text,
+ * so two things matter: nothing private travels, and a hand-edited file cannot break the app.
  */
 class SettingsBackupTest {
 
@@ -99,7 +99,8 @@ class SettingsBackupTest {
 
     @Test
     fun an_old_theme_marker_for_a_chat_colour_is_skipped() {
-        // Earlier versions saved 0 on a chat colour reset. Written now, it would draw invisible text.
+        // A file from an older version can hold 0 for a reset chat colour.
+        // If applied, a 0 draws invisible text.
         val raw = """{"version":1,"app":"Synkplay","values":{"pref_inroom_color_selftag":"0","pref_inroom_color_friendtag":"-1"}}"""
         val (values, outcome) = readSettingsBackup(raw)
         assertEquals(1, outcome.skipped)

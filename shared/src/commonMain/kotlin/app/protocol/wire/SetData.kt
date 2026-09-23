@@ -5,23 +5,23 @@ import app.protocol.models.RoomFeatures
 import kotlinx.serialization.Serializable
 
 /**
- * Inner payload of a `Set` message — multi-purpose envelope. Each direction populates a
+ * Inner payload of a `Set` message: a multi-purpose envelope. Each direction fills a
  * different subset of these fields:
  *
- * - Server→client: [user] broadcasts of joins/leaves/file changes,
- *   [playlistChange]/[playlistIndex], [newControlledRoom], [controllerAuth] response,
+ * - Server to client: [user] broadcasts of joins, leaves and file changes,
+ *   [playlistChange]/[playlistIndex], [newControlledRoom], the [controllerAuth] response,
  *   [ready] state, [features].
- * - Client→server: [room] for room change, [file] for setting own file,
- *   [controllerAuth] auth attempt, [ready] for own readiness,
+ * - Client to server: [room] for a room change, [file] for our own file,
+ *   [controllerAuth] for an auth attempt, [ready] for our own readiness,
  *   [playlistChange]/[playlistIndex], [features].
  */
 @Serializable
 data class SetData(
-    /** Server→client user broadcast: `{username -> UserSetData}`. */
+    /** Server-to-client user broadcast: `{username -> UserSetData}`. */
     val user: Map<String, UserSetData>? = null,
-    /** Client→server room change request. */
+    /** Client-to-server room change request. */
     val room: Room? = null,
-    /** Client→server: own file metadata. */
+    /** Client to server: our own file metadata. */
     val file: FileData? = null,
     val controllerAuth: ControllerAuthData? = null,
     val newControlledRoom: NewControlledRoom? = null,
@@ -29,7 +29,7 @@ data class SetData(
     val playlistIndex: PlaylistIndexData? = null,
     val playlistChange: PlaylistChangeData? = null,
     /**
-     * Inbound only. Our own server reads this; nothing may ever *send* it.
+     * Inbound only. The app's own server reads this; nothing in this app may ever *send* it.
      *
      * The reference server's `handleSet` routes the `features` command to
      * `Watcher.setFeatures`, a method `server.py` does not define, so a

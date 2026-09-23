@@ -17,19 +17,32 @@ import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
 
-/** App delegate singleton, registered with UIApplication on init. */
+/**
+ * The app delegate. Kotlin/Native creates it on first use, which comes after launch, and it then
+ * replaces UIApplication's delegate.
+ */
 val delegato = AppleDelegate().also {
     UIApplication.sharedApplication.delegate = it
 }
 
-/** Global AVPictureInPictureController, set when entering a room with video. */
+/**
+ * The PiP controller of the AVPlayer engine (the video player built on Apple's AVFoundation).
+ * [ApplePlatformCallback.onPictureInPicture] sets it.
+ */
 var pipcontroller: AVPictureInPictureController? = null
 
-/** UIApplicationDelegate handling iOS behaviors the Compose layer cannot: orientation mask and Quick Action shortcuts. */
+/**
+ * UIApplicationDelegate for what the Compose layer cannot handle: the orientation mask, Quick
+ * Action shortcuts and invite links.
+ */
 @Suppress("CONFLICTING_OVERLOADS")
 class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
-    /** Allowed orientations: portrait outside rooms, landscape inside rooms. iOS reads this via [application]. */
+    /**
+     * The allowed orientations, which iOS reads through [application]. Starts as portrait.
+     * `EnterRoomMode` sets portrait or landscape in a room (a group of people watching together),
+     * and `ExitRoomMode` allows all.
+     */
     var myOrientationMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
 
     init {
@@ -43,7 +56,10 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         return myOrientationMask
     }
 
-    /** Cold-launch entry point: routes a launching Quick Action shortcut to [handleShortcut]. */
+    /**
+     * Routes a launching Quick Action to [handleShortcut]. UIKit calls this only on the delegate
+     * that exists at launch. [delegato] is created later, so UIKit never calls it here.
+     */
     override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
         (didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
             ?.let { handleShortcut(it) }
@@ -57,7 +73,7 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
     }
 
-    /** An invite link, parked for the home screen exactly like a Quick Action. */
+    /** Handles an invite link the same way as a Quick Action. */
     override fun application(app: UIApplication, openURL: NSURL, options: Map<Any?, *>): Boolean {
         val parsed = openURL.absoluteString?.let { InviteLink.parse(it) } ?: return false
         pendingShortcutJoinConfig.value = parsed
@@ -67,15 +83,16 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 }
 
 /**
- * Pending shortcut [JoinConfig] consumed by the HomeScreen once ready. On cold start the
- * delegate may receive the shortcut before the Compose UI and HomeViewmodel exist, so it is
- * parked here for HomeScreen to observe and join instead of polling for the viewmodel.
+ * A [JoinConfig] from a Quick Action or an invite link, waiting for the home screen to join it.
+ * The home screen may not exist when the config arrives (for example while the user is in a
+ * room), so the config waits here. HomeScreen takes it through `consumePendingShortcut()` once,
+ * when the screen appears.
  */
 val pendingShortcutJoinConfig = MutableStateFlow<JoinConfig?>(null)
 
 /** Parses a Quick Action shortcut's room config and posts it to [pendingShortcutJoinConfig]. */
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
-    // Only the arrival: the type string is the whole join config, both passwords included.
+    // Log only the arrival: the type string is the whole join config, both passwords included.
     loggy("Quick Action shortcut received")
     runCatching {
         val joinConfig = Json.decodeFromString<JoinConfig>(shortcut.type)

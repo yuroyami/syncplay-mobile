@@ -54,15 +54,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Renders real composables headlessly and writes PNGs, the way every DESIGN measurement is
- * made. Provides the locals a surface needs outside AdamScreen. Resource fonts do not resolve
- * here, so goldens judge layout and spacing, not letterforms.
+ * Renders real composables headlessly and writes PNGs, so the design tests can measure them. It
+ * provides the composition locals that a surface needs outside `AdamScreen`, the app's root
+ * screen. Resource fonts do not resolve here, so the golden images judge layout and spacing, not
+ * letterforms.
  */
 object DesignHarness {
 
     val outDir: File = File(System.getenv("DESIGN_GOLDEN_OUT") ?: "build/design-goldens").also { it.mkdirs() }
 
-    /** The measured height of the last render, in dp. */
+    /** The output of one render: the PNG file, the content height in dp, and the text layouts. */
     data class Result(val file: File, val contentHeightDp: Int, val textLayouts: List<TextLayoutResult>) {
         fun assertAllTextFits() {
             assertTrue(textLayouts.isNotEmpty(), "No text layouts in ${file.name}")
@@ -91,7 +92,10 @@ object DesignHarness {
 
     private var datastoreReady = false
 
-    /** Surfaces read preferences (the glass switch, the settings rows), so the harness owns a throwaway datastore. */
+    /**
+     * Surfaces read preferences (the glass switch, the settings rows), so the harness owns a
+     * throwaway datastore.
+     */
     @Synchronized
     fun initDatastore() {
         if (datastoreReady) return
@@ -124,7 +128,7 @@ object DesignHarness {
         }
     }
 
-    /** Scene creation, measurement and disposal share the same thread as Compose's callbacks. */
+    /** Runs [action] on the Swing event thread, the thread of Compose's callbacks. */
     internal fun <T> onUiThread(action: () -> T): T {
         if (SwingUtilities.isEventDispatchThread()) return action()
         var result: kotlin.Result<T>? = null
@@ -134,8 +138,8 @@ object DesignHarness {
 
     /**
      * Composes [content] in a live scene and lets [drive] press keys against it. Focus belongs to the
-     * composed tree, so what a remote can reach is checkable here without an emulator. A television
-     * runs in keyboard input mode, as a real one does; anything else runs in touch mode.
+     * composed tree, so a test can check what a remote can reach without an emulator. A television
+     * runs in keyboard input mode, as a real one does. Anything else runs in touch mode.
      */
     fun drive(
         widthDp: Int,
@@ -185,7 +189,10 @@ object DesignHarness {
             onUiThread { scene.render(nanos) }
         }
 
-        /** One press: down, a few frames, up, a few more. A focus move runs in an effect, so it needs them. */
+        /**
+         * One press: key down, a few frames, key up, a few more frames. A focus move runs in an
+         * effect, so it needs those frames.
+         */
         @OptIn(InternalComposeUiApi::class)
         fun press(key: Key, typed: Char? = null) {
             val codePoint = typed?.code ?: 0
@@ -220,7 +227,7 @@ object DesignHarness {
         fontScale: Float = 1f,
         theme: SaveableTheme = TRINITY,
         overVideo: Boolean = false,
-        /** Renders the screen in one of the shipped languages. English unless a test says otherwise. */
+        /** The shipped language to render the screen in. The default is English. */
         language: String = "en",
         content: @Composable () -> Unit,
     ): Result {

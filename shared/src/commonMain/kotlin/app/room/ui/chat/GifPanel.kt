@@ -96,12 +96,15 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.powered_by_klipy
 import app.uicomponents.controls.touchTarget
 
-/** Source shown while the composer is empty; typed text becomes a search over the chosen type. */
+/**
+ * The source shown while the composer (the chat input row) is empty. Typed text becomes a search
+ * of the chosen type.
+ */
 internal enum class GifSource { TRENDING, RECENTS, FAVORITES }
 
 /**
- * The type switch: a 14 x 30dp track with a knob that sits up for GIFs and down for stickers,
- * the two words beside it. One tap flips it, so it needs no more width than the words.
+ * The type switch: a 14 x 30dp track with a knob that sits up for GIFs and down for stickers, and
+ * the two words beside it. One tap switches it, so it needs no more width than the words.
  */
 @Composable
 private fun TypeSwitch(gifs: Boolean, modifier: Modifier = Modifier, onChange: (gifs: Boolean) -> Unit) {
@@ -140,8 +143,9 @@ private fun TypeSwitch(gifs: Boolean, modifier: Modifier = Modifier, onChange: (
 }
 
 /**
- * Keep all selectors in one row so narrow chat drawers leave more height for the results.
- * The switch takes at most 30 percent of the width; all labels shrink when space is tight.
+ * The header of the GIF drawer, with all selectors in one row, so a narrow chat drawer leaves
+ * more height for the results. The switch takes at most 30 percent of the width, and all labels
+ * shrink when space is tight.
  */
 @Composable
 internal fun GifDrawerHeader(
@@ -178,9 +182,10 @@ internal fun GifDrawerHeader(
 }
 
 /**
- * The GIF drawer: the type switch and the source row, a square tile grid with 4dp gaps, and a
- * failure state that is not an empty one. The composer text is the query, debounced 400 ms on
- * typing only. Selecting sends at once and closes; a long press offers send or favourite.
+ * The GIF drawer: the type switch and the source row, a grid of square tiles with 4dp gaps, and a
+ * failure state that differs from the empty state. The composer text is the query, with a 400 ms
+ * debounce on typing only. A tap sends the GIF at once and closes the drawer. A long press offers
+ * send or favorite.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -209,7 +214,7 @@ fun GifPanel(
 
     LaunchedEffect(query, selectedType, selectedSource, retry) {
         failed = false
-        // Favourites never touch the network: the composer text filters them by slug.
+        // Favorites never use the network: the composer text filters them by slug.
         if (selectedSource == GifSource.FAVORITES) {
             isLoading = true
             results.clear()
@@ -260,7 +265,7 @@ fun GifPanel(
 
     fun send(media: KlipyMedia) {
         onGifSelected(media.fullUrl)
-        // Fire and forget; the share only feeds the recents tab. A favourite saved from chat has no slug.
+        // Not awaited: the share only feeds the recents tab. A favorite saved from chat has no slug.
         if (media.slug.isNotBlank()) scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
     }
 
@@ -302,22 +307,23 @@ fun GifPanel(
                 ) {
                     items(results, key = { it.id }) { media ->
                         /* Fixed width and height on the tile: an empty UIImageView reports zero
-                         * size and Compose never re-measures UIKit interop after the image loads.
-                         * Alpha is a parameter for the same interop reason and follows the HUD
-                         * only: at alpha 0 Android composes no image at all, so gating it on
-                         * "loaded" meant the load never started and the shimmer never left. The
-                         * shimmer sits over the image until the image loads or fails: on iOS the
-                         * image is a native view that clears its own area of the Compose canvas,
-                         * so a shimmer under it never shows. */
+                         * size, and Compose never measures UIKit interop again after the image
+                         * loads. Alpha is a parameter for the same interop reason, and it follows
+                         * the HUD only. At alpha 0 Android composes no image at all, so an alpha
+                         * gated on "loaded" would never start the load, and the shimmer would
+                         * stay. The shimmer sits over the image until the image loads or fails:
+                         * on iOS the image is a native view that clears its own area of the
+                         * Compose canvas, so a shimmer under it would never show. */
                         var loading by remember(media.id) { mutableStateOf(true) }
                         Box(
                             Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
                                 .clip(Radius.tightShape)
-                                /* The name goes on the tile, not on the image inside it: on iOS
-                                 * the image is a native view the Compose accessibility bridge
-                                 * cannot reach, so the whole grid read as unlabelled buttons. */
+                                /* The name goes on the tile, not on the image inside it. On iOS
+                                 * the image is a native view that the Compose accessibility
+                                 * bridge cannot reach, so the grid would read as unlabeled
+                                 * buttons. */
                                 .semantics(mergeDescendants = true) {
                                     contentDescription = media.title.ifBlank { untitledGif }
                                     role = Role.Button

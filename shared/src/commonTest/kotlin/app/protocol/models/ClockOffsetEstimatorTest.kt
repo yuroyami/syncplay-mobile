@@ -7,8 +7,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The clock offset, from the timestamps already on the wire. Nothing corrects playback from it
- * yet; these tests are what will make moving the sync decision onto it a small step.
+ * Tests for [ClockOffsetEstimator], which estimates how far the server clock is from the local
+ * clock, from the timestamps already on the wire. The app measures the offset, but nothing
+ * corrects playback from it.
  */
 class ClockOffsetEstimatorTest {
 
@@ -16,8 +17,8 @@ class ClockOffsetEstimatorTest {
      * One exchange over a link with a known offset and delay.
      *
      * @param offset how far ahead the server's clock is
-     * @param up how long our message took to arrive
-     * @param down how long the reply took to reach us
+     * @param up how long the client's message took to reach the server
+     * @param down how long the reply took to reach the client
      */
     private fun ClockOffsetEstimator.exchange(offset: Double, up: Double, down: Double, at: Double = 1000.0) {
         observe(
@@ -46,7 +47,7 @@ class ClockOffsetEstimatorTest {
     @Test
     fun the_least_delayed_sample_wins_which_is_the_whole_point() {
         val e = ClockOffsetEstimator()
-        // Three congested exchanges, then one clean one. The clean one should decide.
+        // Two congested exchanges, then one clean one. The clean one decides.
         e.exchange(offset = 5.0, up = 0.9, down = 0.1, at = 1000.0)
         e.exchange(offset = 5.0, up = 0.8, down = 0.1, at = 1010.0)
         e.exchange(offset = 5.0, up = 0.02, down = 0.02, at = 1020.0)

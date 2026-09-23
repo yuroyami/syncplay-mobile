@@ -5,7 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** The seam itself: installing a clock must actually redirect every reading, and reset must undo it. */
+/** Installing a test clock must redirect every [SyncClock] reading, and a reset must undo it. */
 class SyncClockTest {
 
     @AfterTest

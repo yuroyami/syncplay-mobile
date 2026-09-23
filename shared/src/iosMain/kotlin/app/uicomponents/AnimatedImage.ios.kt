@@ -54,26 +54,24 @@ import platform.UIKit.UIImageView
 import platform.UIKit.UIViewContentMode
 
 /**
- * Process-wide LRU cache of decoded [UIImage]s keyed by URL. Survives Compose recomposition,
- * panel teardown, and even leaving the room — so reopening the GIF panel or toggling the HUD
- * doesn't have to redownload-and-redecode 24 GIFs every time. NSURLCache (configured in
- * PlatformUtils.ios.kt) handles the byte-level cache; this layer skips the CGImageSource
- * frame-extraction step too, which is the dominant cost for animated GIFs (≈100-300 ms per
- * GIF on a multi-frame source).
+ * A process-wide LRU cache of decoded [UIImage]s, keyed by URL. It survives recomposition,
+ * panel teardown and even leaving the room (the group of people watching together). So reopening
+ * the GIF panel or toggling the HUD does not download and decode 24 GIFs again. NSURLCache (set
+ * up in PlatformUtils.ios.kt) caches the bytes. This cache also skips the CGImageSource frame
+ * extraction, which is the main cost of an animated GIF (about 100 to 300 ms for a multi-frame
+ * source).
  *
- * Capped at 64 entries: a panel page is 24 tiles plus the loaded second/third pages, so 64
- * comfortably covers two pages worth and still bounds memory at ≤ ~30 MB worst case.
- * Eviction is plain LRU via [LinkedHashMap]'s access-order behavior — touching an entry on
- * read moves it to the end, oldest-untouched gets evicted on overflow. Synchronized lock
- * because the cache is read on the Compose Main dispatcher and written from
- * [downloadAndDecodeAnimatedImage] which finishes on Dispatchers.Default.
+ * Two bounds apply: 64 entries (a panel page is 24 tiles, so this holds more than two pages) and
+ * [IMAGE_CACHE_MAX_BYTES] of decoded frames. The oldest untouched entry goes first. A lock guards
+ * the cache: reads run during composition, and writes run after [downloadAndDecodeAnimatedImage]
+ * returns (its decode step runs on Dispatchers.Default).
  */
 private const val IMAGE_CACHE_MAX_ENTRIES = 64
 private const val IMAGE_CACHE_MAX_BYTES = 48L * 1024 * 1024
 private val imageCacheLock = SynchronizedObject()
-/* LinkedHashMap on Kotlin/Native preserves insertion order only — no access-order
- * constructor like the JVM offers. Implement LRU by removing + re-inserting on read,
- * which moves the entry to the tail; eviction then picks the head (oldest-untouched). */
+/* Kotlin/Native's LinkedHashMap keeps insertion order only; it has no access-order constructor
+ * like the JVM one. So a read removes and re-inserts the entry, which moves it to the tail, and
+ * eviction takes the head (the oldest untouched entry). */
 private val imageCache = LinkedHashMap<String, UIImage>()
 
 private fun cachedImage(url: String): UIImage? = synchronized(imageCacheLock) {
@@ -82,7 +80,7 @@ private fun cachedImage(url: String): UIImage? = synchronized(imageCacheLock) {
     hit
 }
 
-/** Decoded frames, four bytes a pixel: the cost a cached image actually has in memory. */
+/** Estimates the memory of a cached image: its decoded frames, at four bytes per pixel. */
 @OptIn(ExperimentalForeignApi::class)
 private fun UIImage.approximateBytes(): Long {
     val (w, h) = size.useContents { width to height }
@@ -95,7 +93,7 @@ private fun cacheImage(url: String, image: UIImage) {
     synchronized(imageCacheLock) {
         imageCache.remove(url)
         imageCache[url] = image
-        // Two bounds: a count for the panel's grid, and bytes so a few long GIFs cannot own the heap.
+        // Two bounds: a count for the panel's grid, and bytes so a few long GIFs cannot fill memory.
         var bytes = imageCache.values.sumOf { it.approximateBytes() }
         while (imageCache.size > IMAGE_CACHE_MAX_ENTRIES || (bytes > IMAGE_CACHE_MAX_BYTES && imageCache.size > 1)) {
             val oldest = imageCache.keys.iterator().next()
@@ -115,9 +113,9 @@ actual fun AnimatedImage(
     onLoaded: (() -> Unit)?,
     onFailed: (() -> Unit)?,
 ) {
-    /* Seed from the cache synchronously during composition so cache hits paint on the very
-     * first frame — no flicker, no LaunchedEffect await. Cache misses fall through to the
-     * effect below which downloads + decodes + populates the cache. */
+    /* Read the cache synchronously during composition, so a cache hit draws on the first frame,
+     * with no flicker and no wait for LaunchedEffect. A miss goes to the effect below, which
+     * downloads, decodes and fills the cache. */
     var nativeImage by remember(url) { mutableStateOf<UIImage?>(cachedImage(url)) }
 
     LaunchedEffect(url) {
@@ -146,9 +144,9 @@ actual fun AnimatedImage(
             // An invisible tile drops its image, so UIKit stops animating it; the decoded frames
             // stay in the cache, so showing it again is instant.
             imageView.image = if (alpha > 0f) nativeImage else null
-            /* Native alpha — Compose's `Modifier.alpha` does not propagate into UIKit interop
-             * layers. The underlying UIImageView keeps drawing at full opacity unless we set
-             * its alpha here, which is what fades the actual pixels along with the parent HUD. */
+            /* Set the native alpha. Compose's `Modifier.alpha` does not reach UIKit interop layers,
+             * so the UIImageView draws at full opacity unless its alpha is set here. This is what
+             * fades the pixels with the parent HUD. */
             imageView.alpha = alpha.toDouble()
         },
         properties = UIKitInteropProperties(
@@ -160,25 +158,23 @@ actual fun AnimatedImage(
 }
 
 /**
- * Downloads image data using the shared Ktor client and decodes it as animated GIF/WebP.
- * Decoding runs on `Dispatchers.Default` because [decodeAnimatedImage] does CGImageSource
- * frame-by-frame extraction synchronously — running it on the LaunchedEffect's default
- * (Compose Main) dispatcher means a 24-tile grid stalls the UI thread for hundreds of ms
- * per tile. Cancellation is rethrown so a closed/recomposed panel can correctly cancel
- * the in-flight download instead of being silently swallowed by `catch (_: Exception)`
- * (which catches `CancellationException` too).
+ * Downloads image bytes with the shared Ktor client and decodes them as an animated image. The
+ * decode runs on `Dispatchers.Default`, because [decodeAnimatedImage] extracts the CGImageSource
+ * frames one by one, synchronously. On the LaunchedEffect's own dispatcher (the Compose main
+ * thread), a 24-tile grid would block the UI thread for hundreds of ms per tile.
+ * CancellationException is rethrown, so a closed or recomposed panel can cancel the running
+ * download. A plain `catch (e: Exception)` would swallow the cancellation too.
  */
 private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
     return try {
         val bytes: ByteArray = httpClient.get(url).body()
         val image = withContext(Dispatchers.Default) { decodeAnimatedImage(bytes) }
         if (image == null) {
-            /* Decode failure with non-empty bytes usually means the body was truncated
-             * upstream. Most common cause on Darwin: the Ktor Logging plugin tees the
-             * response channel, and on Kotlin/Native the consumer side receives partial
-             * bytes for binary bodies. The PlatformUtils.ios.kt config filters API hosts
-             * only to avoid this — if you ever see this log line for a static.klipy.com
-             * URL, the filter has been broken or removed. */
+            /* A decode failure with non-empty bytes usually means a truncated body. The most
+             * common cause on Darwin: the Ktor Logging plugin copies the response channel, and on
+             * Kotlin/Native the reading side then gets partial bytes for binary bodies. The
+             * PlatformUtils.ios.kt config logs API hosts only, to avoid this. If this line shows
+             * up for a static.klipy.com URL, that filter is broken or gone. */
             val firstFour = bytes.take(4).joinToString(" ") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
             loggy("AnimatedImage: decode FAILED url=$url bytes=${bytes.size} firstFour=[$firstFour]")
         }
@@ -192,12 +188,12 @@ private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
 }
 
 /**
- * Decodes raw image bytes into a [UIImage]. For multi-frame GIF/WebP/APNG images,
- * all frames are extracted via ImageIO's CGImageSource and combined into a
- * natively-animated UIImage via [UIImage.animatedImageWithImages]. Per-frame delay
- * is read from the source properties so the resulting animation runs at the correct
- * speed; UIImage distributes the total duration evenly across frames, which is a
- * close-enough approximation for content with mostly uniform timing.
+ * Decodes raw image bytes into a [UIImage]. For a multi-frame GIF, WebP or APNG image, ImageIO's
+ * CGImageSource extracts all frames, and [UIImage.animatedImageWithImages] combines them into a
+ * natively animated UIImage. The frame delays come from the source properties (GIF and APNG;
+ * other formats use the 100 ms default), so the animation runs at about the right speed. UIImage
+ * spreads the total duration evenly across the frames, which is close enough for content with
+ * mostly even timing.
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
@@ -214,15 +210,15 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
         val frameCount = CGImageSourceGetCount(source).toInt()
 
         if (frameCount <= 1) {
-            /* Static image — single frame */
+            /* Static image: a single frame */
             val cgImage = CGImageSourceCreateImageAtIndex(source, 0u, null)
             CFRelease(source)
-            // A Create call hands over a reference. UIImage retains its own, so ours has to go
-            // back or every image decoded leaks one CGImage for the life of the process.
+            // A Create call returns an owned reference. UIImage keeps its own, so release this
+            // one, or every decoded image leaks one CGImage for the life of the process.
             return@usePinned cgImage?.let { UIImage.imageWithCGImage(it).also { _ -> CGImageRelease(it) } }
         }
 
-        /* Animated image — extract every frame and sum per-frame delays for total duration. */
+        /* Animated image: extract every frame, and add up the frame delays for the duration. */
         val frames = mutableListOf<UIImage>()
         var totalDuration = 0.0
 
@@ -236,9 +232,9 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
 
         if (frames.isEmpty()) return@usePinned null
 
-        /* Sub-20ms delays in GIF metadata are routinely treated as 100ms by browsers
-         * and most image viewers because old encoders abused tiny delays. Match that
-         * behavior so animations don't appear to run at warp speed. */
+        /* Browsers and most image viewers treat GIF delays under 20 ms as 100 ms, because old
+         * encoders abused tiny delays. Do the same, based on the average delay, so animations
+         * do not run far too fast. */
         if (totalDuration < frames.size * MIN_FRAME_DELAY_SECONDS) {
             totalDuration = frames.size * DEFAULT_FRAME_DELAY_SECONDS
         }
@@ -247,14 +243,14 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
     }
 }
 
-/* GIF/APNG/WebP convention: delays under ~20ms are interpreted as 100ms. */
+/* The GIF, APNG and WebP convention: a delay under about 20 ms counts as 100 ms. */
 private const val MIN_FRAME_DELAY_SECONDS = 0.02
 private const val DEFAULT_FRAME_DELAY_SECONDS = 0.1
 
 /**
- * Reads the per-frame delay (seconds) from the image source's frame properties.
- * Tries unclamped values first (true encoded delay) and falls back to clamped
- * values, then to the default if neither is present.
+ * Reads one frame's delay (in seconds) from the image source's GIF or APNG frame properties.
+ * Tries the unclamped value first (the real encoded delay), then the clamped value, then the
+ * default.
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun readFrameDelaySeconds(source: CGImageSourceRef, index: ULong): Double {
@@ -281,8 +277,8 @@ private fun readFrameDelaySeconds(source: CGImageSourceRef, index: ULong): Doubl
     }
 }
 
-/** Look up a nested CFDictionary by key. Returns null when the key is missing or the K/N
- *  binding doesn't expose it on this platform. */
+/** Looks up a nested CFDictionary by key. Returns null when the key is missing, or when the
+ *  Kotlin/Native binding does not expose the key on this platform. */
 @OptIn(ExperimentalForeignApi::class)
 private fun CFDictionaryRef.nestedDict(key: kotlinx.cinterop.CPointer<*>?): CFDictionaryRef? {
     if (key == null) return null
@@ -290,7 +286,7 @@ private fun CFDictionaryRef.nestedDict(key: kotlinx.cinterop.CPointer<*>?): CFDi
     return ptr.reinterpret()
 }
 
-/** Look up a Double-valued CFNumber by key. */
+/** Looks up a CFNumber by key as a Double. Returns null when it is missing or not positive. */
 @OptIn(ExperimentalForeignApi::class)
 private fun CFDictionaryRef.doubleValue(key: kotlinx.cinterop.CPointer<*>?): Double? {
     if (key == null) return null

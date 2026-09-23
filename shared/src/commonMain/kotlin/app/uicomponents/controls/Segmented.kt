@@ -34,8 +34,9 @@ import app.theme.Type
 import app.theme.palette
 
 /**
- * Two to four hairline cells in one frame. The active cell fills with the accent at 16 percent
- * and carries a 2dp accent bottom edge. A selectable group for screen readers.
+ * A segmented control: a few option cells in one thin frame. The active cell fills with the
+ * accent at 16 percent and has a 2dp accent line at its bottom edge. Screen readers see a
+ * selectable group.
  */
 @Composable
 fun Segmented(
@@ -100,9 +101,10 @@ private fun SegmentedCell(label: String, active: Boolean, enabled: Boolean, auto
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            // Between the group and value sizes when a label has to fit; cut only past the floor.
+            // Shrinks from the value size, down to the auto-size floor, when a label has to fit.
+            // The label is cut only when it overflows even at the floor.
             autoSize = if (autoSize) FontSizeRange(Type.value.fontSize) else null,
-            // A label never touches the cell's hairlines, whatever size it settles at.
+            // The label never touches the cell's borders, whatever size it ends at.
             modifier = Modifier.padding(horizontal = Space.gapTight),
         )
     }

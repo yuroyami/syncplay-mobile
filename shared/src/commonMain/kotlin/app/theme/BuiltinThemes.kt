@@ -8,7 +8,7 @@ import com.materialkolor.PaletteStyle
 val defaultTheme: SaveableTheme
     get() = TRINITY
 
-/** The flagship theme: the Trinity brand colors (ultraviolet/orchid/coral) seeded into a dark scheme. */
+/** The default theme: the Trinity brand colors (ultraviolet, orchid, coral) seed a dark scheme. */
 val TRINITY = SaveableTheme(
     name = "Violet",
     primaryColor = Theming.NeoSP1.toArgb(),
@@ -21,7 +21,7 @@ val TRINITY = SaveableTheme(
     syncplayGradients = true
 )
 
-/** Light counterpart of Trinity: same brand seeds on a light scheme. */
+/** The light version of [TRINITY]: the same brand seeds on a light scheme. */
 val DAYLIGHT = SaveableTheme(
     name = "Daylight",
     primaryColor = Theming.NeoSP1.toArgb(),
@@ -34,7 +34,7 @@ val DAYLIGHT = SaveableTheme(
     syncplayGradients = true
 )
 
-/** Signature pink AMOLED theme with the Rainbow palette style. */
+/** An AMOLED theme: an orange-red primary, pink neutral tones and the Rainbow palette style. */
 val PYNCSLAY = SaveableTheme(
     name = "Neon",
     primaryColor = -44800,
@@ -48,7 +48,7 @@ val PYNCSLAY = SaveableTheme(
     syncplayGradients = false
 )
 
-/** Pure AMOLED theme: true-black backgrounds with a silver accent so controls stay visible. */
+/** An AMOLED theme: pure black backgrounds with a silver accent, so controls stay visible. */
 val GrayOLED = SaveableTheme(
     name = "GrayOLED",
     primaryColor = Color(0xFFCFCFCF).toArgb(),
@@ -63,7 +63,7 @@ val GrayOLED = SaveableTheme(
     syncplayGradients = false
 )
 
-/** Warm amber primary over dark-gray backgrounds, Neutral palette style. */
+/** A dark theme: a warm amber primary over dark gray backgrounds, in the Neutral palette style. */
 val ALLEY_LAMP = SaveableTheme(
     name = "Alley Lamp",
     primaryColor = Color(255, 214, 111).toArgb(),
@@ -87,7 +87,7 @@ val SILVER_LAKE = SaveableTheme(
     syncplayGradients = true
 )
 
-/** Builtin themes stored under their old names come back as the current objects. */
+/** Maps a built-in theme that was saved under its old name to the current theme object. */
 fun SaveableTheme.migrated(): SaveableTheme = when (name) {
     "Trinity" -> TRINITY
     "PyncSlay" -> PYNCSLAY

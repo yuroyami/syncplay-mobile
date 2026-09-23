@@ -5,10 +5,10 @@ import kotlin.concurrent.Volatile
 /**
  * Where the video is drawn inside the window, in pixels.
  *
- * Android's picture-in-picture animation morphs out of a rectangle the app names, and without one
- * the window appears out of nowhere and lands back over the whole screen. The room's video layer
- * reports its own position here as it is laid out, and the Android side reads it when it builds
- * the picture-in-picture parameters. Null until the video layer has been measured once.
+ * Android's picture-in-picture animation starts from a rectangle that the app names. Without one,
+ * the small window appears with no transition, and on return it covers the whole screen. The
+ * video layer reports its position here on each layout, and the Android side reads it to build
+ * the picture-in-picture parameters. [known] is false until the first measure.
  */
 object VideoBounds {
 
@@ -38,6 +38,9 @@ object VideoBounds {
         this.bottom = bottom
     }
 
-    /** Forgotten when the room closes, so a later picture-in-picture never uses a stale rectangle. */
+    /**
+     * Clears the rectangle when the room closes, so a later picture-in-picture never uses it. A
+     * room is the group of people watching together.
+     */
     fun forget() = report(0, 0, 0, 0)
 }

@@ -7,5 +7,8 @@ import androidx.compose.runtime.Composable
 @Composable
 actual fun DialogBackdropBlur() = Unit
 
-/** iOS draws video through a UIKit interop view that Compose cannot capture either way, so this is moot here. */
+/**
+ * Always true. iOS draws video in a UIKit interop view that Compose cannot capture in any case,
+ * so the answer changes nothing here.
+ */
 actual fun videoSurfaceSupportsGlass(): Boolean = true

@@ -22,25 +22,25 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Wire-format tests for the unified [WireMessage] hierarchy.
+ * Wire-format tests for the [WireMessage] hierarchy, which models every Syncplay protocol message.
  *
- * Two classes of invariant:
+ * Two kinds of invariant:
  *
- *  1. **Encoding shape** — the Syncplay JSON config (`explicitNulls = false`) drops null
+ *  1. **Encoding shape**: the Syncplay JSON config (`explicitNulls = false`) drops null
  *     fields, which can collapse [WireMessage.ListRequest] to `{}` and break the user
  *     list end-to-end. Every variant gets a "the top-level key is present" assertion.
  *
- *  2. **Deserializer routing** — [WireMessageDeserializer] disambiguates the two
- *     direction-asymmetric keys (`Chat`, `List`) by payload shape. Tests cover all four
- *     branches plus the symmetric variants.
+ *  2. **Deserializer routing**: [WireMessageDeserializer] tells apart the two keys that
+ *     mean different things in each direction (`Chat`, `List`) by payload shape. Tests
+ *     cover all four branches plus the symmetric variants.
  *
- * Round-trip tests (encode → decode → assert equality of the typed object) guard against
- * the two sides drifting apart.
+ * Round-trip tests (encode, decode, then compare the typed object) guard against the two
+ * sides drifting apart.
  */
 class WireMessageTest {
 
     // ============================================================
-    // Encoding — every top-level variant must emit its envelope key
+    // Encoding: every top-level variant must emit its envelope key
     // ============================================================
 
     @Test
@@ -95,8 +95,8 @@ class WireMessageTest {
 
     @Test
     fun `FileData size encodes digits as a JSON number and a hash as a string`() {
-        // Python wire shape: raw byte counts (and the hidden-size sentinel 0) are numbers,
-        // only the 12-char privacy hash is a string.
+        // Python wire shape: raw byte counts (and the hidden-size sentinel 0) are numbers.
+        // Only the 12-character privacy hash is a string.
         val numeric = syncplayJson.encodeToString(
             WireMessage.file(FileData(name = "movie.mkv", duration = 7200.0, size = "1024"))
         )
@@ -193,9 +193,9 @@ class WireMessageTest {
     }
 
     /**
-     * With `explicitNulls = false`, a nullable-with-default field collapses out of the
-     * JSON. ListRequest's `placeholder` defaults to [JsonNull] (not Kotlin `null`) so the
-     * envelope key is preserved. Catches any switch back to `JsonElement?`.
+     * With `explicitNulls = false`, a nullable field with a default drops out of the JSON.
+     * ListRequest's `placeholder` defaults to [JsonNull] (not Kotlin `null`), so the
+     * envelope key stays. This test fails if `placeholder` becomes a `JsonElement?`.
      */
     @Test
     fun `ListRequest preserves the List key with null payload`() {
@@ -226,7 +226,7 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Deserializer — routing for all variants and asymmetric keys
+    // Deserializer: routing for all variants and asymmetric keys
     // ============================================================
 
     @Test fun `decodes Hello`()  = decodesAs<WireMessage.Hello>("""{"Hello":{"username":"x","room":{"name":"r"},"version":"1.7.3","realversion":"1.7.3"}}""")
@@ -256,7 +256,7 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Round-trip — encode then decode and assert equality on key fields
+    // Round-trip: encode, decode, and assert equality on key fields
     // ============================================================
 
     @Test
@@ -326,7 +326,7 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Dispatch — visitor pattern hits the right handler method
+    // Dispatch: the visitor pattern reaches the right handler method
     // ============================================================
 
     @Test
@@ -373,15 +373,15 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Polymorphic discriminator trap — toJson must avoid it
+    // Polymorphic discriminator trap: toJson must avoid it
     // ============================================================
 
     /**
-     * Kotlinx Serialization injects a `"type"` class discriminator when you encode a
-     * sealed `@Serializable` interface via the interface type itself — that extra field
-     * is not legal Syncplay wire format. Encoding via the interface must go through
-     * `toJson()` (overridden per subclass) and emit the same clean shape as encoding via
-     * the concrete subclass.
+     * Kotlinx Serialization adds a `"type"` class discriminator when it encodes a sealed
+     * `@Serializable` interface through the interface type itself. That extra field is not
+     * legal Syncplay wire format. Encoding through the interface must use `toJson()`
+     * (overridden per subclass) and emit the same clean shape as encoding through the
+     * concrete subclass.
      */
     @Test
     fun `toJson produces clean wire format even when message is held by interface type`() {
@@ -407,30 +407,30 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Wire-format compatibility — exact JSON matches Python protocol
+    // Wire-format compatibility: exact JSON matches the Python protocol
     // ============================================================
 
     @Test
     fun `tlsRequest matches Python wire format`() {
-        // syncplay/protocols.py — sendTLS sends {"TLS": {"startTLS": "send"}}
+        // syncplay/protocols.py: sendTLS sends {"TLS": {"startTLS": "send"}}
         assertEquals("""{"TLS":{"startTLS":"send"}}""", syncplayJson.encodeToString(WireMessage.tlsRequest()))
     }
 
     @Test
     fun `listRequest matches Python wire format`() {
-        // syncplay/protocols.py — sendList sends {"List": None}
+        // syncplay/protocols.py: sendList sends {"List": None}
         assertEquals("""{"List":null}""", syncplayJson.encodeToString(WireMessage.listRequest()))
     }
 
     @Test
     fun `chatRequest matches Python wire format`() {
-        // syncplay/protocols.py — sendChatMessage sends {"Chat": "<message>"}
+        // syncplay/protocols.py: sendChatMessage sends {"Chat": "<message>"}
         assertEquals("""{"Chat":"hello"}""", syncplayJson.encodeToString(WireMessage.chatRequest("hello")))
     }
 
     @Test
     fun `chatBroadcast matches Python server wire format`() {
-        // syncplay/server.py — sendChat sends {"Chat": {"username": ..., "message": ...}}
+        // syncplay/server.py: sendChat sends {"Chat": {"username": ..., "message": ...}}
         assertEquals(
             """{"Chat":{"username":"alice","message":"hi"}}""",
             syncplayJson.encodeToString(WireMessage.chatBroadcast("alice", "hi"))
@@ -438,18 +438,18 @@ class WireMessageTest {
     }
 
     // ============================================================
-    // Lenient inbound shapes — loosely-typed python protocol drift
+    // Lenient inbound shapes: loosely typed values from the Python side
     // ============================================================
     //
-    // The wire protocol is duck-typed on the python side and can hand us a value in a
-    // shape our strict @Serializable models don't expect. A single bad sub-field must not
-    // abort the WHOLE message decode (that would blank the entire user list and spin the
-    // reconnect loop, issue #152). These assert the decode survives such shapes.
+    // The Python side of the protocol is loosely typed, so it can send a value in a shape
+    // that the strict @Serializable models do not expect. A single bad sub-field must not
+    // abort the whole message decode: that would blank the entire user list and spin the
+    // reconnect loop (issue #152). These tests assert that the decode survives such shapes.
 
     /**
      * Some servers send a user's `features` as an empty array `[]` instead of an object
-     * (issue #152). The line — including a bare-number `size` — must still decode, with
-     * `features` falling back to defaults rather than aborting the whole List decode.
+     * (issue #152). The line, including a bare-number `size`, must still decode, and
+     * `features` falls back to defaults instead of aborting the whole List decode.
      */
     @Test
     fun `List user with features as empty array decodes to defaults`() {
@@ -460,7 +460,7 @@ class WireMessageTest {
         assertNotNull(user, "alice should be present despite features:[]")
         assertNotNull(user.features, "features:[] should fall back to defaults, not null")
         assertEquals(true, user.features.supportsChat)
-        // bare-number `size` normalizes to its string form (FileSizeSerializer)
+        // A bare-number `size` becomes its string form (FileSizeSerializer).
         assertEquals("401358678", user.file?.size)
     }
 
@@ -477,8 +477,8 @@ class WireMessageTest {
 
     @Test
     fun `joined event carries version and features like PC`() {
-        // PC server.py:167 sends {"joined": True, "version": ..., "features": {...}};
-        // features must also survive the [] shape from minimal servers.
+        // Syncplay's server.py:167 sends {"joined": True, "version": ..., "features": {...}}.
+        // The features must also survive the [] shape from minimal servers.
         val json = """{"Set":{"user":{"erin":{"room":{"name":"r"},"event":{"joined":true,"version":"1.7.0","features":{"chat":false}}}}}}"""
         val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.Set
         val event = decoded.data.user?.get("erin")?.event
@@ -493,7 +493,7 @@ class WireMessageTest {
 
     @Test
     fun `List user with unknown future feature keys is tolerated`() {
-        // PC clients send uiMode / setOthersReadiness that our model doesn't declare.
+        // PC clients send uiMode and setOthersReadiness, which the model does not declare.
         val json = """{"List":{"r":{"carol":{"position":0,"features":{"chat":true,"uiMode":"GUI","setOthersReadiness":true}}}}}"""
         val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.ListResponse
         assertNotNull(decoded.rooms["r"]?.get("carol")?.features)
@@ -526,11 +526,11 @@ class WireMessageTest {
     }
 
     /**
-     * The python server relays a roommate's file dict verbatim, so the `size` value's JSON
-     * type is fully attacker/bug-controlled. A non-primitive size must surface as
-     * [SerializationException] — the only type [app.protocol.network.NetworkManager]'s
-     * skip-a-poisoned-line catch covers. FileSizeSerializer must not throw
-     * IllegalStateException (e.g. via `error()`), which would escape that catch.
+     * The Python server relays a roommate's file dict unchanged, so a peer (or a bug) controls
+     * the JSON type of `size`. A non-primitive size must surface as [SerializationException]:
+     * the skip-a-bad-line catch in [app.protocol.network.NetworkManager] handles that type, and
+     * the server's `ClientConnection.handlePacket` catches no other. FileSizeSerializer must not
+     * throw IllegalStateException (for example through `error()`).
      */
     @Test
     fun `FileData size as object or array fails as SerializationException`() {
@@ -565,8 +565,9 @@ class WireMessageTest {
 
     @Test
     fun `a digit-only hash with a leading zero stays a string, a byte count stays a number`() {
-        // A privacy hash is twelve digits and about one in 2500 begins with a zero. As a number
-        // it loses that zero and two people with the same file are told they differ.
+        // A privacy hash is twelve hex characters, and about one in 2800 is all digits with a
+        // leading zero. As a number it loses that zero, and two people with the same file are
+        // told they differ.
         val hashed = syncplayJson.encodeToString(FileData(name = "a", duration = 1.0, size = "045784691835"))
         assertTrue("\"045784691835\"" in hashed, hashed)
 

@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/** The cap that keeps one client from drowning a room. */
+/** The rate cap that stops one client from flooding a room with messages. */
 class RateLimiterTest {
 
     @Test

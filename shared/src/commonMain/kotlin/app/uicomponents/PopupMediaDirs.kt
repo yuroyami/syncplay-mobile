@@ -42,9 +42,11 @@ import kotlinx.coroutines.launch
 object PopupMediaDirs {
 
     /**
-     * The media folders editor, reached from settings and from the playlist panel: one row per
-     * remembered folder with its name and path, an empty state, add and clear. Removing a folder
-     * updates the preference and the registry together.
+     * The editor of the media folders, where the app looks for the files of the shared playlist
+     * (the file list that everyone in a room follows). Settings and the shared playlist panel open
+     * it. It shows one row per remembered folder with its name and path, an empty state, and the
+     * add and clear actions. Removing a folder updates the preference and [MediaAccessRegistry]
+     * together.
      */
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
@@ -84,7 +86,8 @@ object PopupMediaDirs {
                 )
             }
             dirs.forEach { item ->
-                // Android document ids carry a storage prefix before the path; the folder name is what matters.
+                // Android document ids carry a storage prefix before the path; only the folder
+                // name matters here.
                 val name = (Uri.parseOrNull(item)?.pathSegments?.lastOrNull() ?: item)
                     .substringAfter("primary:").substringAfter("secondary:").substringAfterLast("/")
                 ListRow(minHeight = Space.rowTall) {

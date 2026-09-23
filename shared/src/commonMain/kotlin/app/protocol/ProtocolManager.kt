@@ -46,21 +46,26 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     var globalPositionMs: Double = 0.0
 
     /**
-     * The wall-clock time at which [globalPositionMs] was last set from a server `State`.
-     * Used to extrapolate the room's *current* expected position via [extrapolatedGlobalPositionMs].
+     * When [globalPositionMs] was last set from a server `State`, the message that carries the
+     * room's position and pause state. A room is the group of people watching together. Used to
+     * extrapolate the room's *current* expected position via [extrapolatedGlobalPositionMs].
      */
     var lastGlobalPositionSetAt: Instant? = null
 
-    /** Tracks conflicting state updates during rapid changes. Updated atomically. */
+    /**
+     * The server's `ignoringOnTheFly` counter, adopted from an inbound `State` and echoed back
+     * once in the next outbound one. Updated atomically.
+     */
     private val _serverIgnFly = atomic(0)
     var serverIgnFly: Int
         get() = _serverIgnFly.value
         set(value) { _serverIgnFly.value = value }
 
     /**
-     * Prevents responding to our own state changes until the server acknowledges them.
-     * Packet construction and enqueue now share [syncLock] with inbound counter updates;
-     * atomic access also supports readers outside that transaction.
+     * Our own `ignoringOnTheFly` counter. It counts local state changes until the server
+     * acknowledges the latest one, and while it is non-zero, inbound playstates are ignored.
+     * Packet construction and enqueue share [syncLock] with inbound counter updates; the atomic
+     * also serves readers outside that lock.
      */
     private val _clientIgnFly = atomic(0)
     var clientIgnFly: Int
@@ -68,51 +73,50 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         set(value) { _clientIgnFly.value = value }
 
     /**
-     * Position drift threshold (seconds) at which the client triggers a corrective rewind
-     * to catch up with the room. Matches PC's `DEFAULT_REWIND_THRESHOLD = 4`
-     * ([syncplay-pc-src-master/syncplay/constants.py:63](../../../../../../syncplay-pc-src-master/syncplay/constants.py#L63)).
-     * PC's `MINIMUM_REWIND_THRESHOLD = 3`, so values below 3 wouldn't be valid if this
-     * ever becomes user-configurable.
+     * PC's `DEFAULT_REWIND_THRESHOLD` (constants.py): how many seconds ahead of the room a client
+     * may drift before it is rewound. The live threshold comes from the SYNC_REWIND_THRESHOLD
+     * preference, which keeps PC's `MINIMUM_REWIND_THRESHOLD` of 3 seconds.
      */
     val rewindThreshold = 4L
 
     /**
-     * Timestamp of the last received global state update, used for sync timing. A `null` value
-     * arms the one-shot "first sync" in [app.room.RoomServerMessageHandler.onState] (force-seek
-     * to the room position + apply pause/play on the next inbound `State`).
+     * When a server `State` playstate was last applied. `null` arms the one-shot first sync: the
+     * next inbound `State` seeks to the room position and applies the room's pause state (decided
+     * in [app.protocol.sync.decideSync], applied by [app.room.RoomServerMessageHandler.onState]).
      *
-     * `@Volatile` because it is read on the inbound-State consumer thread (Dispatchers.Default in
-     * NetworkManager) but written from other threads too: [resetSyncAnchorForReconnect] from the
-     * reconnect loop and [reanchorSyncOnFileLoad] from a player-engine load callback (Main / mpv
-     * IO / VLCKit delegate). Without the volatile, the consumer thread could keep observing a
-     * stale non-null value on ARM and silently skip the re-anchor. Mirrors [lastStateReceivedAt].
+     * `@Volatile` because the inbound `State` consumer (Dispatchers.Default in NetworkManager)
+     * reads it, while other threads write it: [resetSyncAnchorForReconnect] from the reconnect
+     * loop, and [reanchorSyncOnFileLoad] from a player engine's load callback (Main, mpv IO or a
+     * VLCKit delegate). Without it, the consumer can keep seeing a stale non-null value on ARM and
+     * silently skip the re-anchor. [lastStateReceivedAt] is volatile for the same reason.
      */
     @Volatile
     var lastGlobalUpdate: Instant? = null
 
     /**
-     * Position-masking window for a freshly-loaded file: non-null (a future instant) means we are
-     * still catching up and every outbound `State` must advertise the room's extrapolated position
-     * instead of the engine's own (which sits at ~0 for the first second or so after a load, before
-     * the first-sync seek lands and the engine converges). `null` means "report the true local
-     * position" (not loading, or already caught up).
+     * Position masking for a freshly loaded file. Non-null (a future instant) means the file is
+     * still catching up, and every outbound `State` advertises the room's extrapolated position
+     * instead of the engine's own. The engine sits at about 0 for the first second or so after a
+     * load, until the first-sync seek lands and the engine converges. `null` means report the
+     * true local position (not loading, or already caught up).
      *
-     * This is the embedded-player equivalent of the desktop client's `getCalculatedPosition`
-     * (players/mpv.py), which returns `getGlobalPosition()` whenever `fileLoaded == False`. Without
-     * it a late loader reports position ~0 the instant it attaches a file, the official server adopts
-     * it as the slowest watcher and broadcasts ~0, every other client rewinds back to 0, and the
-     * loader's own rewind logic then yanks it to 0 too — so the [reanchorSyncOnFileLoad] first-sync
-     * seeks to a position the loader itself just corrupted. [reportableStatePositionSec] clears it
-     * (back to null) the moment the engine converges, the file proves too short to ever reach the
-     * room position, or this deadline passes — after which the true local position is reported again
-     * so a genuine standing desync (buffering) stays visible to the room.
+     * This is the embedded-player version of the desktop client's `getCalculatedPosition`
+     * (players/mpv.py), which returns `getGlobalPosition()` while `fileLoaded == False`. Without
+     * it, a late loader reports about 0 as soon as it attaches a file. The official server adopts
+     * it as the slowest watcher and broadcasts about 0, every other client rewinds to 0, and the
+     * loader's own rewind logic pulls it to 0 too. The first sync from [reanchorSyncOnFileLoad]
+     * then seeks to a position that the loader itself just corrupted.
      *
-     * A SINGLE field — not a `(Boolean armed, Instant deadline)` pair — on purpose: a reader on the
-     * inbound-State thread must never observe a half-written "armed but no deadline" state and
-     * mistake it for timed-out, which would unmask and advertise the engine's ~0 (the exact poison
-     * this prevents). `@Volatile` for the same cross-thread reason as [lastGlobalUpdate]: written
-     * from the player load thread ([markAwaitingRoomResync] in parseMedia), read on the
-     * inbound-State consumer thread.
+     * [reportableStatePositionSec] clears it (back to null) once the engine converges, once the
+     * file proves unable to ever reach the room position, or once this deadline passes. From then
+     * on the true local position is reported again, so a real standing desync (buffering) stays
+     * visible to the room.
+     *
+     * One field on purpose, not an (armed, deadline) pair: a reader on the inbound `State` thread
+     * must never see a half-written "armed but no deadline" state and take it for a timeout. That
+     * would unmask and advertise the engine's 0, the exact value this masking exists to hide.
+     * `@Volatile` for the same cross-thread reason as [lastGlobalUpdate]: [markAwaitingRoomResync]
+     * writes it on the main thread, and the inbound `State` consumer reads it.
      */
     @Volatile
     var awaitingRoomResyncDeadline: Instant? = null
@@ -122,21 +126,24 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     /**
      * How far our clock sits from the server's, from the timestamps already on the wire.
      *
-     * Measured and reported, not yet acted on: replacing the threshold ladder with a rate
-     * controller driven by this is the step after a real two-device session, and the point of
-     * measuring first is that the session can say whether the numbers are sane.
+     * Nothing acts on it yet. It is only measured and logged, so a real two-device session can
+     * check whether the numbers are sane.
      */
     val clockOffset = ClockOffsetEstimator()
 
     /** Tracks whether playback speed has been adjusted for desync correction. */
     var speedChanged = false
 
-    /** Timestamp when we first detected the client is behind. Null if not behind. */
+    /**
+     * When this client first fell behind the room. Null when it is not behind. After a
+     * fast-forward it is set in the future, as a cooldown.
+     */
     var behindFirstDetected: Instant? = null
 
     /**
-     * The whole sync anchor as one value, which is what [app.protocol.sync.decideSync] reads and
-     * returns. The individual fields stay because the rest of the room reads them by name.
+     * The whole sync anchor (the room state carried from one `State` to the next) as one value,
+     * which is what [app.protocol.sync.decideSync] reads and returns. The individual fields stay
+     * because the rest of the room reads them by name.
      */
     var syncState: SyncState
         get() = SyncState(
@@ -182,7 +189,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         localStateIntents.isCurrent(revision)
     }
 
-    /** A queued local seek belongs to this media and room, never to a replacement. */
+    /**
+     * Drops queued local state after a media or room change. A queued local seek belongs to the
+     * media and room it was made for, never to a replacement.
+     */
     private fun refreshLocalIntentContext() {
         if (intentMedia !== viewmodel.media || intentRoom != session.currentRoom) {
             localStateIntents.clear()
@@ -199,7 +209,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         intentRoom = session.currentRoom
     }
 
-    /** Capture intent and enqueue in one transaction; the network writer already owns IO. */
+    /**
+     * Records a local state change and enqueues its `State` in one step under [syncLock]. The
+     * network writer does the IO, so nothing here needs its own IO coroutine.
+     */
     fun sendLocalState(position: Double, play: Boolean, seek: LocalSeek? = null) = synchronized(syncLock) {
         if (viewmodel.isSoloMode) return@synchronized
         refreshLocalIntentContext()
@@ -209,7 +222,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         Unit
     }
 
-    /** Called after adopting inbound ignore counters, before deciding obsolete corrections. */
+    /**
+     * Sends the queued local state if the `ignoringOnTheFly` gate allows it, and says whether it
+     * did. onState calls it after adopting the inbound counters, before deciding corrections.
+     */
     fun flushPendingLocalState(serverTime: Double?): Boolean = synchronized(syncLock) {
         refreshLocalIntentContext()
         val intent = localStateIntents.takeReady(clientIgnFly == 0 || serverIgnFly != 0)
@@ -220,7 +236,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         true
     }
 
-    /** Capture origin before a newly flushed seek can replace its in-flight metadata. */
+    /**
+     * Matches an inbound self-seek echo to the seek we sent, and returns that seek's origin. Runs
+     * before a newly flushed seek can replace the in-flight seek's metadata.
+     */
     fun consumeLocalSeekEcho(state: StateData): LocalSeek? = synchronized(syncLock) {
         refreshLocalIntentContext()
         val playstate = state.playstate
@@ -229,15 +248,18 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 playstate.position ?: 0.0, state.ignoringOnTheFly?.client, SyncClock.nowMillis(),
             )
         } else null
-        // An unrelated old self-seek echo can reuse counter one after a later send. Leave that
-        // later origin intact when the echoed target does not match it.
+        // An old, unrelated self-seek echo can reuse counter 1 after a later send. When the
+        // echoed target does not match, keep the later seek's origin.
         if (clientIgnFly == 0 && !(playstate?.doSeek == true && playstate.setBy == session.currentUsername)) {
             localStateIntents.forgetAcknowledgedSeek()
         }
         seek
     }
 
-    /** The gate, counter snapshot and queue insertion share the same lock as inbound State. */
+    /**
+     * Sends an acknowledgement `State`. The gate, the counter snapshot and the enqueue run under
+     * the same lock as inbound `State` handling.
+     */
     fun sendStateAcknowledgement(serverTime: Double?, position: Double?, play: Boolean?) = synchronized(syncLock) {
         viewmodel.networkManager.sendAsync(buildStatePacket(serverTime, null, position, false, play))
     }
@@ -255,11 +277,12 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Set during a room transition so the events it causes are not broadcast as divergence.
+     * Set during a room transition, so the events it causes are not broadcast as divergence.
      *
-     * Owned rather than a bare flag: a creation the server refuses, or one whose answer never
-     * arrives, used to leave this true for the rest of the session, and every playback notice
-     * stayed muted afterwards with nothing on screen to explain it.
+     * Owned by [beginRoomChange] and [endRoomChange], with a timeout, rather than a bare flag. A
+     * room creation that the server refuses, or whose answer never arrives, must not leave it
+     * true for the rest of the session and mute every divergence broadcast with nothing on
+     * screen to explain it.
      */
     var isRoomChanging = false
         private set
@@ -289,9 +312,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     val isManagedRoom = MutableStateFlow(false)
 
     /**
-     * Timestamp of the last `State` message received from the server. The watchdog uses this to
-     * detect silent disconnects — i.e. the TCP socket looks healthy on our end but the
-     * server stopped sending State packets (common on flaky networks, especially iOS).
+     * When the last `State` arrived from the server. The watchdog uses it to detect a silent
+     * disconnect: the socket looks healthy here, but the server has stopped sending `State`
+     * packets (common on flaky networks, especially on iOS).
      */
     @Volatile
     var lastStateReceivedAt: Instant? = null
@@ -302,51 +325,53 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     /**
      * Our current belief about the player's pause state. The flow collector started by
-     * [startChannelHealthMonitoring] watches [PlayerManager.isNowPlaying] (which every
-     * engine updates from its own native callback — ExoPlayer's `Player.Listener`,
-     * MPV's property observer, VLC's delegate, AVPlayer's KVO) and broadcasts a State
-     * packet only when the engine-reported playing state DIVERGES from this expectation.
+     * [startChannelHealthMonitoring] watches [PlayerManager.isNowPlaying], which every engine
+     * updates from its own native callback (for example ExoPlayer's `Player.Listener`, mpv's
+     * property observer, VLCKit's delegate and AVPlayer's KVO). It broadcasts a `State` only when
+     * the engine-reported playing state DIVERGES from this expectation. The watchdog tick runs
+     * the same check.
      *
      * That way, user-initiated pauses (which already broadcast via
      * [RoomEventDispatcher.controlPlayback]) and server-driven pauses (applied by
-     * [RoomServerMessageHandler]) don't get re-broadcast — the path that updates the
-     * player also calls [noteExpectedPlaybackState] so the engine callback's resulting
-     * flow emission matches our expectation. Only engine-driven auto-pauses/resumes
-     * (buffer underrun, audio focus loss, EOF, etc.) trigger an actual broadcast.
+     * [RoomServerMessageHandler]) are not broadcast again. The path that updates the player also
+     * calls [noteExpectedPlaybackState], so the engine's resulting flow emission matches the
+     * expectation. Only engine-driven pauses and resumes (buffer underrun, audio focus loss,
+     * EOF) cause an actual broadcast.
      *
-     * Callback-driven rather than polled: mobile player engines expose event APIs for
-     * everything, so reacting to the flow avoids the phantom seeks a poll produces when
-     * it samples a player still mid-converging on a seek target.
+     * Driven by the flow rather than by polling: the engines expose event APIs for everything,
+     * and a poll that samples a player still converging on a seek target produces phantom seeks.
      */
     @Volatile
     private var expectedPaused: Boolean = true
 
     /**
-     * The room's *intended* play state as the app authoritatively knows it, with no engine
-     * probe. Set synchronously by [noteExpectedPlaybackState] before the player is touched and
-     * by the divergence collector. Outbound paths must read this instead of `player.isPlaying()`,
-     * which on VLCKit 4 returns a stale pre-transition value in the async window right after a
-     * pause/play toggle — broadcasting that stale value makes the server think the watcher
-     * unpaused the room.
+     * The room's *intended* play state as the app knows it, with no engine probe. Set
+     * synchronously by [noteExpectedPlaybackState] before the player is touched, and by the
+     * divergence check. Outbound paths must read this instead of `player.isPlaying()`. On
+     * VLCKit 4 that call returns a stale pre-transition value in the async window right after a
+     * pause or play, and broadcasting it makes the server think the watcher unpaused the room.
      */
     val expectedPlaying: Boolean get() = !expectedPaused
 
     /**
      * Starts the channel-health coroutines for the current room session.
      *
-     * Two jobs run while CONNECTED:
-     *  - **List-probe ping** — sends an empty `List` request every [LIST_PROBE_INTERVAL_SECONDS]
-     *    so the server is forced to respond. Keeps the channel warm and surfaces a broken
-     *    socket early: if the send fails, NetworkManager's retry/onError path queues the
-     *    packet and flips state to DISCONNECTED.
-     *  - **State watchdog** — runs every [WATCHDOG_INTERVAL_SECONDS]. If no State message
-     *    has arrived for [STATE_TIMEOUT_SECONDS] seconds while we still believe ourselves
-     *    connected, fires `onDisconnected()` which kicks off a reconnect. Detects silent
-     *    disconnects where the socket looks healthy locally but the server stopped sending
-     *    State. The Syncplay server gives up after ~10–15 unanswered State broadcasts,
-     *    matching this 15s threshold.
+     * Three jobs run while connected:
+     *  - **List probe**: sends an empty `List` request every [LIST_PROBE_INTERVAL_SECONDS], so
+     *    the server has to answer. This keeps the connection active and finds a broken socket
+     *    early: a write that keeps failing makes NetworkManager report the lost socket, which
+     *    starts a reconnect.
+     *  - **State watchdog**: runs every [WATCHDOG_INTERVAL_SECONDS]. If no `State` has arrived
+     *    for [STATE_TIMEOUT_SECONDS] seconds while we still count as connected, it calls
+     *    `onDisconnected()`, which starts a reconnect. This detects a silent disconnect, where
+     *    the socket looks healthy here but the server has stopped sending `State`. The
+     *    reference client gives up on a silent server after 12.5 seconds (`PROTOCOL_TIMEOUT`),
+     *    and the reference server drops a silent watcher after the same time.
+     *  - **Playback divergence**: collects [PlayerManager.isNowPlaying] and broadcasts
+     *    engine-driven pause changes (see [expectedPaused]).
      *
-     * No-op in solo mode — called from onConnected(), so the guard is defense-in-depth.
+     * Does nothing in solo mode (watching alone, with no server). Only onConnected() calls it,
+     * so that check is a backup.
      */
     fun startChannelHealthMonitoring() {
         if (viewmodel.isSoloMode) return
@@ -361,9 +386,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             while (isActive) {
                 delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
                 if (network.state.value == ConnectionState.CONNECTED) {
-                    // Fire-and-forget: awaiting the write measured the next interval from when
-                    // the previous one landed, so a slow socket stretched a 15 s keepalive well
-                    // past the server's own tolerance and the probe stopped keeping anything warm.
+                    // Fire-and-forget. Awaiting the write would start the next interval only when
+                    // the previous write landed, so a slow socket would stretch the 15 s probe
+                    // interval well past the server's own tolerance.
                     network.sendAsync(WireMessage.listRequest())
                 }
             }
@@ -379,9 +404,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 // silently, so the same comparison runs on this tick too.
                 broadcastPlaybackDivergence(viewmodel.playerManager.isNowPlaying.value)
 
-                /* The clock estimate, written down every tick. Nothing acts on it; it is here so
-                 * a real two-device session can read the log and say whether it is sane before
-                 * the sync decision is moved onto it. */
+                /* Logs the clock estimate on every tick once it has settled. Nothing acts on it;
+                 * the log lets a real two-device session check whether it is sane. */
                 if (clockOffset.settled) {
                     loggy(
                         "Clock offset: ${(clockOffset.offsetSeconds * 1000).toInt()}ms " +
@@ -416,8 +440,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 if (network.state.value != ConnectionState.CONNECTED) return@collect
                 if (lastGlobalUpdate == null) return@collect
                 if (isRoomChanging) return@collect
-                // A backgrounded client is paused locally and catches up on return; nothing the
-                // engine does back there is room news.
+                // A backgrounded client is paused locally and catches up on return. Nothing the
+                // engine does in the background is news for the room.
                 if (viewmodel.uiState.isInBackground) return@collect
 
                 val expectedPlaying = !expectedPaused
@@ -427,9 +451,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Engine-driven pause/resume (buffer underrun, audio focus loss, EOF): tell the room and
-     * update the expectation, so neither the collector nor the watchdog says it twice. Anything
-     * the app does deliberately notes its expectation first and never reaches here.
+     * Engine-driven pause or resume (buffer underrun, audio focus loss, EOF): tells the room and
+     * updates the expectation, so neither the collector nor the watchdog says it twice. Anything
+     * the app does on purpose notes its expectation first, so it matches here and sends nothing.
      */
     private fun broadcastPlaybackDivergence(isPlaying: Boolean) {
         if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return
@@ -452,17 +476,15 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Records what we expect the player's pause state to be after a deliberate change —
-     * a user action via [RoomEventDispatcher.controlPlayback] or a server-driven state
-     * applied by [RoomServerMessageHandler]. The flow collector in
-     * [startChannelHealthMonitoring] uses this to suppress its own re-broadcast: when
-     * the engine's resulting `isNowPlaying` callback fires, it matches expectation and
-     * is treated as the natural follow-on of the action that just happened.
+     * Records the pause state the player should reach after a deliberate change: a user action
+     * via [RoomEventDispatcher.controlPlayback], or a server-driven state applied by
+     * [RoomServerMessageHandler]. The flow collector in [startChannelHealthMonitoring] uses it to
+     * skip its own broadcast: the engine's resulting `isNowPlaying` update matches the
+     * expectation and counts as the result of the action that just happened.
      *
-     * Must be called BEFORE invoking the player's pause/play (or before the engine has
-     * a chance to fire its callback for a server-driven change), otherwise there's a
-     * brief window where the flow collector sees the engine update against a stale
-     * expectation and broadcasts a redundant State packet.
+     * Call it BEFORE the player's pause or play (or before the engine can fire its callback for
+     * a server-driven change). Otherwise the collector briefly sees the engine update against a
+     * stale expectation and broadcasts a redundant `State`.
      */
     fun noteExpectedPlaybackState(paused: Boolean) {
         expectedPaused = paused
@@ -489,8 +511,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     /**
      * Called when the app returns to the foreground after a background pause. The room moved on
-     * without us, so the next `State` must hard-seek and re-apply pause/play exactly like a fresh
-     * file load, and until we converge the ACK advertises the room position instead of ours.
+     * meanwhile, so the next `State` must seek and re-apply pause or play exactly like a fresh
+     * file load. Until the player converges, the ACK advertises the room position, not ours.
      */
     fun resumeFromBackground() {
         if (viewmodel.isSoloMode || viewmodel.media == null) return
@@ -499,17 +521,19 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Lightweight per-connection reset for a TRANSIENT reconnect (NOT a room change or teardown,
-     * which use [invalidate]). Clears only the sync anchor and the ignoringOnTheFly counters so
-     * the first server `State` on the new socket re-triggers the first-sync re-anchor in
-     * RoomServerMessageHandler (force-seek to the authoritative room position + re-apply
-     * pause/play). Without this, [lastGlobalUpdate] stays non-null across the reconnect, the
-     * re-anchor is skipped, and sub-rewind-threshold (<4s) drift can persist when the server's
-     * rejoin `State` is self/null-attributed. Mirrors PC's `_performRetryStateReset`.
+     * Light per-connection reset for a TRANSIENT reconnect. A room change or a teardown uses
+     * [invalidate] instead. Clears the queued local state, any room change in progress, the
+     * clock offset estimate, [lastGlobalUpdate], [lastGlobalPositionSetAt] and both
+     * `ignoringOnTheFly` counters. The first server `State` on the new socket then runs the
+     * first-sync re-anchor again (seek to the room position and re-apply its pause state).
+     * Without this, [lastGlobalUpdate] stays non-null across the reconnect, the re-anchor is
+     * skipped, and drift under the rewind threshold (4 s by default) can persist when the
+     * server's rejoin `State` is attributed to us or to nobody. Mirrors PC's
+     * `_performRetryStateReset`.
      *
-     * Deliberately leaves [session] (userlist/playlist must survive), the player, [speedChanged]
-     * / [behindFirstDetected] (the slowdown/fastforward state self-heals via the normal sync
-     * algorithm once States resume), and [pingService] intact.
+     * Deliberately keeps [session] (the user list and playlist must survive), the player,
+     * [speedChanged] and [behindFirstDetected] (the normal sync algorithm corrects the slowdown
+     * and fast-forward state once `State` packets resume), and [pingService].
      */
     fun resetSyncAnchorForReconnect() = synchronized(syncLock) {
         clearLocalStateIntents()
@@ -522,37 +546,31 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Re-arms the one-shot first-sync so the NEXT inbound server `State` hard-seeks the
-     * freshly-loaded file to the room's authoritative position and applies its pause/play state
-     * (the `lastGlobalUpdate == null` branch in [app.room.RoomServerMessageHandler.onState]).
+     * Re-arms the one-shot first sync, so the NEXT inbound server `State` seeks the newly loaded
+     * file to the room's position and applies the room's pause state (the
+     * `lastGlobalUpdate == null` branch of [app.protocol.sync.decideSync]).
      *
-     * Called exactly once per newly-loaded file, from [app.player.PlayerImpl.announceFileLoaded]
-     * (the engine's confirmed file-loaded / duration-known callback, so the engine is seekable by
-     * the time the next `State` arrives). Without it, a client that receives even ONE `State`
-     * while its media is still loading latches [lastGlobalUpdate] non-null — it is stamped on
-     * every processed `State`, with or without media — so by the time the file is ready the
-     * first-sync is permanently skipped: the new file sits at position 0, paused, and in a normal
-     * room nothing pulls it forward (rewind only fires when AHEAD, fastforward is off in normal
-     * rooms). The server then adopts this watcher as the slowest member and rewinds everyone else
-     * back to it. On the desktop client the external player layer hides this by reporting
-     * `getGlobalPosition()` while no file is loaded and force-seeking on file open; the embedded
-     * player has no such layer, so this re-anchor restores the same intent.
+     * Called once per newly loaded file, from [app.player.PlayerImpl.announceFileLoaded]: the
+     * engine has confirmed the load or knows the duration, so it can seek by the time the next
+     * `State` arrives. Without this call, one `State` that arrives while the media is still
+     * loading sets [lastGlobalUpdate] (every applied `State` sets it, with or without media). The
+     * first sync is then skipped for good: the new file sits paused at position 0, and in a
+     * normal room nothing pulls it forward (rewind only fires when AHEAD, and fast-forward is off
+     * in a normal room unless dontSlowWithMe is set). The server then adopts this watcher as the
+     * slowest member and rewinds everyone else back to it. The desktop client avoids this in its
+     * external player layer, which reports `getGlobalPosition()` while no file is loaded and
+     * seeks on file open. The embedded player has no such layer, so this re-anchor does the same
+     * job.
      *
-     * Clears ONLY [lastGlobalUpdate]. Deliberately NOT the `ignoringOnTheFly` counters (a
-     * mid-session load must keep tracking in-flight local state changes) nor [lastGlobalPositionSetAt]
-     * (harmless to keep; only feeds position extrapolation). That narrower scope is what separates
-     * this from [resetSyncAnchorForReconnect], which resets more because the socket itself changed.
+     * Clears ONLY [lastGlobalUpdate]. It keeps the `ignoringOnTheFly` counters (a mid-session load
+     * must keep tracking in-flight local state changes) and [lastGlobalPositionSetAt] (it only
+     * feeds position extrapolation). [resetSyncAnchorForReconnect] resets more, because there the
+     * socket itself changed.
      */
     fun reanchorSyncOnFileLoad() = synchronized(syncLock) {
         lastGlobalUpdate = null
     }
 
-    /**
-     * The room's *current* expected position in ms, extrapolated from the last server
-     * `State`. While the room is playing, advances by wall-clock time elapsed since
-     * [lastGlobalPositionSetAt]. Mirrors python's `getGlobalPosition()` — without the
-     * extrapolation, a SYNC_ON_PAUSE seek lands on a stale frame from the last 1 Hz tick.
-     */
     /** Everything [reportablePosition] needs, gathered from the room. */
     private fun positionInputs() = PositionInputs(
         now = SyncClock.now(),
@@ -577,6 +595,12 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      */
     fun userTimeOffsetSeconds(): Double = (Preferences.USER_TIME_OFFSET.value() - 600) / 10.0
 
+    /**
+     * The room's *current* expected position in ms, extrapolated from the last server `State`.
+     * While the room plays, it advances by the wall-clock time since [lastGlobalPositionSetAt].
+     * Mirrors Python's `getGlobalPosition()`. Without the extrapolation, a SYNC_ON_PAUSE seek
+     * lands on a stale frame from the last 1 Hz tick.
+     */
     fun extrapolatedGlobalPositionMs(): Double = synchronized(syncLock) {
         extrapolatedGlobalPositionMs(positionInputs())
     }
@@ -596,13 +620,12 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Builds an outbound `State` packet, applying the same `ignoringOnTheFly` bookkeeping
-     * (mutating [serverIgnFly] / [clientIgnFly] as side effects) as the python reference
-     * client.
+     * Builds an outbound `State` packet, with the same `ignoringOnTheFly` bookkeeping as the
+     * Python reference client (it changes [serverIgnFly] and [clientIgnFly] as side effects).
      *
-     * [position] is full-precision seconds (Double) on the wire — never round to whole
-     * seconds: the protocol depends on sub-second precision for both the desync-detection
-     * algorithm on the server and for `min(watchers)` not picking us as the slowest.
+     * [position] goes on the wire as full-precision seconds (Double). Never round it to whole
+     * seconds: the server's desync detection needs sub-second precision, and so does
+     * `min(watchers)`, which must not pick us as the slowest.
      */
     private fun buildStatePacket(
         serverTime: Double?,
@@ -649,65 +672,72 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     companion object {
         /**
-         * The Syncplay protocol version we advertise in `Hello.realversion`.
+         * The Syncplay protocol version advertised in `Hello.realversion`.
          *
-         * 1.7.5 is the current `RECENT_CLIENT_THRESHOLD` in PC's constants.py — sending
-         * anything below it triggers a "your client is old, please upgrade" MOTD warning.
-         * We implement every protocol feature up through 1.7.5 (managedRooms, readiness,
-         * setOthersReadiness, sharedPlaylists, chat) so the claim is accurate.
+         * 1.7.5 is `RECENT_CLIENT_THRESHOLD` in PC's constants.py. For any lower version, the
+         * reference server adds a "new version available" warning to its message of the day.
+         * The client implements every protocol feature up to 1.7.5 (managedRooms, readiness,
+         * setOthersReadiness, sharedPlaylists, chat), so the claim is accurate.
          */
         const val SYNCPLAY_PROTOCOL_VERSION = "1.7.5"
 
         /**
-         * The compatibility shim PC clients put in `Hello.version` (protocols.py:165:
+         * The compatibility value PC clients put in `Hello.version` (`sendHello` in protocols.py:
          * `hello["version"] = "1.2.255"  # Used so newer clients work on 1.2.X server`).
-         * Legacy 1.2.X servers only read `version`; modern servers prefer `realversion`.
+         * Old 1.2.X servers only read `version`; newer servers prefer `realversion`.
          */
         const val SYNCPLAY_LEGACY_VERSION = "1.2.255"
 
-        /** Playback drift threshold in seconds before a corrective seek is triggered. */
+        /** PC's `SEEK_THRESHOLD`, in seconds: a smaller player jump does not count as a seek. */
         const val SEEK_THRESHOLD = 1L
 
-        /** Playback speed used to gradually catch up when ahead of others. */
+        /** Playback speed while this client is ahead, so the rest of the room can catch up. */
         const val SLOWDOWN_RATE = app.protocol.sync.SLOWDOWN_RATE
 
-        /** Time difference (seconds) at which slowdown kicks in. */
+        /** Default time difference, in seconds, at which slowdown starts. */
         const val SLOWDOWN_THRESHOLD = app.protocol.sync.SLOWDOWN_THRESHOLD
 
-        /** Time difference (seconds) at which speed reverts to normal. */
+        /** Time difference, in seconds, at which the speed returns to normal. */
         const val SLOWDOWN_RESET_THRESHOLD = app.protocol.sync.SLOWDOWN_RESET_THRESHOLD
 
-        /** Time difference (seconds, negative/behind) at which fastforward detection starts. */
+        /** Default time behind the room, in seconds, at which the fast-forward timer starts. */
         const val FASTFORWARD_BEHIND_THRESHOLD = app.protocol.sync.FASTFORWARD_BEHIND_THRESHOLD
 
-        /** Time difference (seconds, behind) at which fastforward triggers after waiting. */
+        /** Default time behind the room, in seconds, at which fast-forward fires after the wait. */
         const val FASTFORWARD_THRESHOLD = app.protocol.sync.FASTFORWARD_THRESHOLD
 
-        /** Extra time (seconds) added when fastforwarding to overshoot slightly. */
+        /** Extra seconds added to a fast-forward target, to overshoot slightly. */
         const val FASTFORWARD_EXTRA_TIME = app.protocol.sync.FASTFORWARD_EXTRA_TIME
 
-        /** Cooldown (seconds) after a fastforward before it can trigger again. */
+        /** Cooldown in seconds after a fast-forward, before it can fire again. */
         const val FASTFORWARD_RESET_THRESHOLD = app.protocol.sync.FASTFORWARD_RESET_THRESHOLD
 
-        /** How often the list-probe coroutine fires an empty List to keep the channel warm. */
+        /** How often the list probe sends an empty `List`, to keep the connection active. */
         const val LIST_PROBE_INTERVAL_SECONDS = 15L
 
         /** How often the State watchdog checks whether the server has gone silent. */
         const val WATCHDOG_INTERVAL_SECONDS = 5L
 
-        /** If no State message has arrived in this many seconds, we assume the channel is
-         * broken and trigger a reconnect. Chosen to match the Syncplay server's own
-         * ~10–15s threshold for dropping unresponsive clients. */
+        /**
+         * If no `State` has arrived for this many seconds, the channel counts as broken and a
+         * reconnect starts. Set just above the reference `PROTOCOL_TIMEOUT` of 12.5 seconds,
+         * after which the reference client gives up on a silent server and the reference server
+         * drops a silent watcher.
+         */
         const val STATE_TIMEOUT_SECONDS = 15L
 
-        /** How long a room transition may mute divergence broadcasts before it gives up on
-         * ever being told the outcome. Comfortably longer than a round trip, short enough that
-         * a lost answer is not felt. */
+        /**
+         * How long a room transition may mute divergence broadcasts before it stops waiting for
+         * the outcome. Well above a round trip, and short enough that a lost answer goes
+         * unnoticed.
+         */
         val ROOM_CHANGE_TIMEOUT = 5.seconds
 
-        /** Max seconds a freshly-loaded file may advertise the room position instead of its own
-         * while catching up, before [reportableStatePositionSec] reverts to the true local
-         * position even if it never converged (mismatched/short file, slow device). */
+        /**
+         * Maximum seconds a freshly loaded file may advertise the room position instead of its
+         * own while catching up. After that, [reportableStatePositionSec] reports the true local
+         * position even if the engine never converged (a mismatched or short file, a slow device).
+         */
         const val AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS = 30L
     }
 }

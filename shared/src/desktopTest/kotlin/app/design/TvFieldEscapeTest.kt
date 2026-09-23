@@ -14,9 +14,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * On a television the D-pad must leave a text field. Before this, Down stayed in the first field of
- * the join form for ever and everything below it was out of reach, the "invisible wall" of issue
- * #146. Off a television the arrows stay the caret's, as a keyboard expects.
+ * On a television, the D-pad must leave a text field. Otherwise Down stays in the first field of
+ * the join form and everything below it is out of reach (the "invisible wall" of issue #146). Off
+ * a television, the arrows move the caret, as a keyboard user expects.
  */
 class TvFieldEscapeTest {
 

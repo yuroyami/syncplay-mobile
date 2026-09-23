@@ -9,13 +9,11 @@ import app.utils.loggy
 /**
  * Puts the room on the lock screen and answers the headset button.
  *
- * This used to be a bare foreground notification: it kept the process alive, showed a line of
- * text, and offered no controls at all, which is most of what issue 125 is about. It is a real
- * MediaSessionService now, so the system draws the transport, media buttons work, and Android
- * knows something is playing.
+ * As a MediaSessionService, it lets the system draw the playback controls, makes media buttons
+ * work and tells Android that something is playing (issue #125).
  *
- * The session is created by the room and handed here, because the player behind it is whichever
- * engine the room built. [RoomMediaSessionHolder] is the handover.
+ * The room creates the session and hands it over through [RoomMediaSessionHolder], because the
+ * player behind the session is whichever engine the room built.
  */
 @UnstableApi
 class SyncplayMediaSessionService : MediaSessionService() {
@@ -39,7 +37,8 @@ class SyncplayMediaSessionService : MediaSessionService() {
         RoomMediaSessionHolder.session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        // Swiping the app away should end playback, not leave a notification behind with no room.
+        // After a swipe from recents, stop when there is no room or nothing plays, so no
+        // notification stays behind without a room.
         val session = RoomMediaSessionHolder.session
         if (session == null || !session.player.playWhenReady) {
             stopSelf()
@@ -58,9 +57,9 @@ class SyncplayMediaSessionService : MediaSessionService() {
 /**
  * Where the room leaves its session for the service to pick up.
  *
- * A process-wide holder rather than a binder because the service and the room live in the same
- * process and the alternative is a lot of ceremony for one reference. Cleared on teardown, so a
- * dead room can never be driven from a stale notification.
+ * A process-wide holder, not a binder: the service and the room live in the same process, and a
+ * binder is a lot of extra code for one reference. The room clears it on teardown, so a stale
+ * notification can never drive a dead room.
  */
 @UnstableApi
 object RoomMediaSessionHolder {

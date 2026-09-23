@@ -26,9 +26,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The engine card under the picker. Opening it is one motion: the picker grows to the card's
- * final height and stops there. It used to measure the words against the width it was
- * animating through, so a short card overshot its height and shrank back.
+ * The engine card under the engine picker. An engine is one of the video players that the app can
+ * drive. Opening the card is one motion: the picker grows to the card's final height and stops
+ * there. A card that measures its words against the width it animates through overshoots its
+ * height and shrinks back.
  */
 class EngineCardTest {
     @Test

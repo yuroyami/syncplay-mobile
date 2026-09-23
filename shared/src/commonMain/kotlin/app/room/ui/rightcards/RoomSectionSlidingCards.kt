@@ -46,20 +46,28 @@ import app.theme.Radius
 import app.theme.Space
 import app.uicomponents.chromeSurface
 
-/** A plain box, so the panels' AnimatedVisibility resolves outside the dock's column scope. */
+/**
+ * A plain box, so the AnimatedVisibility calls of the panels resolve to the top-level function,
+ * not to the ColumnScope version inside the column of [RoomSidePanels].
+ */
 @Composable
 private fun PanelSlot(modifier: Modifier, enter: EnterTransition, exit: ExitTransition, content: @Composable () -> Unit) {
     Box(modifier) { content() }
 }
 
 /**
- * The side dock's contents: one panel at a time at a real reading width, clamped between 320dp
- * and 420dp at 38 percent of the window, sliding in from the end edge. On a tall window the panel
- * is a full-width sheet rising from the bottom. The control strip sits under the panel.
+ * How many times, 60 ms apart, focus tries to move into a panel, or back to the rail (the strip
+ * of buttons that opens the panels).
  */
-/** How many times, 60ms apart, a panel tries to hand focus in or back to the rail. */
 private const val PANEL_FOCUS_TRIES = 8
 
+/**
+ * The contents of the side dock (the side area of the screen that holds the panels). The dock
+ * shows one panel at a time, at a real reading width: 38 percent of the window, kept between
+ * 320dp and 420dp. The panel slides in from the right. Compose does not mirror this slide for
+ * right-to-left layouts, where the dock is on the left. On a tall window, the panel is a
+ * full-width sheet that rises from the bottom. The control strip sits under the panel.
+ */
 @Composable
 fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
@@ -82,9 +90,9 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val enter = if (tall) slideInVertically(Motion.move()) { it } else slideInHorizontally(Motion.move()) { it }
     val exit = if (tall) slideOutVertically(Motion.move()) { it } else slideOutHorizontally(Motion.move()) { it }
 
-    /* A remote opens a panel and its controls are where it wants to be, so focus follows it in,
-     * and back out to the rail when it closes. Spatial search alone skips a panel whose rows do
-     * not line up with the rail cell that opened it. */
+    /* A remote user who opens a panel wants its controls, so focus moves into the panel, and back
+     * to the rail when the panel closes. The spatial focus search alone skips a panel whose rows
+     * do not line up with the rail button that opened it. */
     val panelFocus = remember { FocusRequester() }
     val railFocus = LocalRoomRailFocus.current
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
@@ -95,8 +103,9 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     var seenPanel by remember { mutableStateOf(openPanel) }
     LaunchedEffect(openPanel) {
         if (openPanel != seenPanel && remoteOrKeyboard) {
-            /* The panel slides in and out over a few frames, and the rail rebuilds as it goes, so
-             * the target may not exist on the first ask. Try until it takes, then stop. */
+            /* The panel slides in and out over a few frames, and the rail rebuilds during the
+             * slide, so the target may not exist at the first request. So ask again, 60 ms apart,
+             * PANEL_FOCUS_TRIES times. */
             repeat(PANEL_FOCUS_TRIES) {
                 delay(60)
                 val target = if (openPanel >= 0) panelFocus else railFocus
@@ -122,7 +131,8 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
                 AnimatedVisibility(statePlaylist && sharedPlaylists, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
             }
             AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
-            // The tool panels below wrap their content instead of filling the dock.
+            // Of the tool panels below, only the tracks panel fills the dock. The others wrap their
+            // content.
             AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { CardTracks.TracksPanel(shape) }
             AnimatedVisibility(stateGestures, enter = enter, exit = exit) { CardGestures.GesturesPanel(shape) }
             AnimatedVisibility(stateSeekTo, enter = enter, exit = exit) { CardSeekTo.SeekToPanel(shape) }

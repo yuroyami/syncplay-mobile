@@ -8,11 +8,11 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 
 /**
- * Coil, same as Android, and static for now.
+ * Coil, as on Android, but the image stays static.
  *
- * Coil decodes the first frame of a GIF on this target and stops there. Animating it properly
- * means an `<img>` element placed over the canvas through Compose's HTML interop, which is the
- * same mechanism the video engine needs, so both are worth doing at once rather than twice.
+ * On this target Coil decodes only the first frame of a GIF. A real animation needs an `<img>`
+ * element over the canvas through Compose's HTML interop, the same mechanism that the web video
+ * engine needs. At alpha 0 nothing loads.
  */
 @Composable
 actual fun AnimatedImage(

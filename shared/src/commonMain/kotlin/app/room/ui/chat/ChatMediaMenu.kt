@@ -38,8 +38,8 @@ import app.utils.platformCallback
 import kotlinx.coroutines.launch
 
 /**
- * The long-press menu of a GIF or sticker in chat: favourite it for the GIF panel, or copy its
- * link. It opens against the image it belongs to, so place it inside the image's box.
+ * The long-press menu of a GIF or sticker in chat: add it to the GIF panel's favorites, or copy
+ * its link. The menu opens next to the image it belongs to, so place it inside the image's box.
  */
 @Composable
 internal fun ChatMediaMenu(link: String, onDismiss: () -> Unit) {
@@ -63,7 +63,8 @@ internal fun ChatMediaMenu(link: String, onDismiss: () -> Unit) {
         ) {
             ListRow(onClick = {
                 onDismiss()
-                // The room's scope, not this popup's: the popup leaves as the write starts.
+                // The room's scope, not the popup's: the popup leaves the composition as the
+                // write starts.
                 viewmodel.viewModelScope.launch {
                     if (isFavorite) KlipyFavorites.remove(link) else KlipyFavorites.add(KlipyFavorites.fromChatLink(link))
                 }
@@ -86,9 +87,9 @@ internal fun ChatMediaMenu(link: String, onDismiss: () -> Unit) {
 }
 
 /**
- * Under the anchor when the menu fits there, over it when it does not, and moved inside the window
- * sideways. Each bound is floored at zero, so a window smaller than the menu cannot make
- * `coerceIn` throw.
+ * Places the menu under the anchor when it fits there, and over the anchor when it does not.
+ * Sideways, it keeps the menu inside the window. Each bound has a floor of zero, so a window
+ * smaller than the menu cannot make `coerceIn` throw.
  */
 internal class BelowOrAbove(private val gapPx: Int) : PopupPositionProvider {
     override fun calculatePosition(

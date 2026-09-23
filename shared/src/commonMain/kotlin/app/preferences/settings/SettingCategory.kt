@@ -24,11 +24,11 @@ fun Pref<*>.withControl(control: PrefExtraConfig): SettingEntry = SettingEntry(t
 fun Pref<*>.enabledWhen(rule: () -> Boolean): SettingEntry = SettingEntry(this, null, rule)
 fun SettingEntry.enabledWhen(rule: () -> Boolean): SettingEntry = SettingEntry(pref, control, rule)
 
-/** A run of entries under one heading. A null title is the implicit first group. */
+/** A run of entries under one heading. A null title marks an untitled group of loose entries. */
 class SettingGroup(val title: Localized?, val entries: List<SettingEntry>)
 
 class SettingCategory(
-    /** Stable name for a deep link. Never shown, so it does not move with the copy. */
+    /** A stable name for a deep link. It is never shown, so it does not change with the UI text. */
     val key: String,
     val title: Localized,
     val icon: ImageVector,
@@ -49,7 +49,7 @@ class SettingCategory(
         operator fun Pref<*>.unaryPlus() { loose.add(SettingEntry(this)) }
         operator fun SettingEntry.unaryPlus() { loose.add(this) }
 
-        /** Starts a titled group. Entries added before the first group land in an implicit one. */
+        /** Starts a titled group. Loose entries added before it land in an untitled group. */
         fun group(title: Localized, body: SettingListBuilder.() -> Unit) {
             flushLoose()
             val inner = SettingListBuilder().apply(body).build()

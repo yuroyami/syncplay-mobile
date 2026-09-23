@@ -23,16 +23,16 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Process-lifetime owner of the hosted Syncplay server. The server deliberately does not live in
- * the screen's viewmodel, which is cleared on leaving the screen; everything here survives until
- * the process dies, and the Android foreground service keeps the process alive. Configuration
- * comes from the six server preferences, read once at start.
- */
 enum class ServerStatus {
     Stopped, Starting, Running, Error
 }
 
+/**
+ * The process-lifetime owner of the hosted Syncplay server. The server does not live in the
+ * screen's viewmodel on purpose, because that viewmodel is cleared when the user leaves the
+ * screen. Everything here lives until the process dies, and the Android foreground service keeps
+ * the process alive. The configuration comes from the server preferences, read once at start.
+ */
 object ServerHostSession {
 
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
@@ -40,7 +40,7 @@ object ServerHostSession {
 
     val serverStatus = MutableStateFlow(ServerStatus.Stopped)
 
-    /** One line of evidence for an error state, such as the port being taken. */
+    /** The event that explains an error state, such as a port that is already taken. */
     val statusDetail = MutableStateFlow<ServerLogEvent?>(null)
     val connectedClients = MutableStateFlow(0)
     val deviceIpAddress = mutableStateOf<String?>(null)
@@ -67,15 +67,16 @@ object ServerHostSession {
     /**
      * Which start attempt is the current one.
      *
-     * Start and stop are both coroutines, so a stop can land in the middle of a start. Without
-     * this the stop tore the half-built server down and set Stopped, and then the start coroutine
-     * carried on and announced Running over it, leaving the panel claiming a server that had
-     * already been shut down. Every stop retires the number the running start is holding.
+     * Start and stop are both coroutines, so a stop can arrive in the middle of a start. Without
+     * this counter, the stop would tear down the half-built server and set Stopped, and then the
+     * start coroutine would continue and announce Running. The panel would then show a server
+     * that is already shut down. Every stop retires the number that the running start holds.
      */
     private val startGeneration = atomic(0)
 
     fun startServer() {
-        // Starting counts too: a second tap mid-start used to build a second server and orphan the first.
+        // Starting counts too: a second tap during a start would build a second server and
+        // orphan the first.
         if (serverStatus.value == ServerStatus.Running || serverStatus.value == ServerStatus.Starting) return
 
         val portInt = Preferences.SERVER_PORT.value().trim().toIntOrNull()
@@ -83,7 +84,7 @@ object ServerHostSession {
             fail(ServerLogEvent.InvalidPort(Preferences.SERVER_PORT.value().trim()))
             return
         }
-        // The salt is minted once and kept: a fresh one per start would silently invalidate every
+        // The salt is created once and kept: a new one per start would silently invalidate every
         // controlled-room password handed out by the previous run.
         val salt = Preferences.SERVER_SALT.value().ifEmpty {
             ServerConfig.generateSalt().also { minted -> scope.launch { Preferences.SERVER_SALT.set(minted) } }
@@ -128,7 +129,7 @@ object ServerHostSession {
                 engine = newEngine
                 newEngine.startListening(portInt)
                 if (startGeneration.value != generation) {
-                    // Stopped while we were binding. Undo this start rather than announcing it.
+                    // A stop arrived during the bind. Undo this start instead of announcing it.
                     collectorsJob?.cancel()
                     collectorsJob = null
                     runCatching { newEngine.stop() }
@@ -143,7 +144,8 @@ object ServerHostSession {
 
                 launch {
                     publicIpLoading.value = true
-                    // The shared client has timeouts; a bare one hung forever offline and leaked on failure.
+                    // The shared client has timeouts. A bare client would hang forever offline and
+                    // leak on failure.
                     publicIpAddress.value = try {
                         httpClient.get("https://api.ipify.org").bodyAsText().trim().takeIf { it.isNotEmpty() }
                     } catch (_: Exception) {
@@ -206,8 +208,8 @@ object ServerHostSession {
         while (serverLogs.size > LOG_CAP) serverLogs.removeAt(0)
     }
 
-    /* The session's own lines are added straight to the screen list and never pass through a
-     * cursor, but every entry carries a sequence number, so they count too. */
+    /* The session's own lines go straight to the screen list and never pass through a cursor.
+     * [ServerLogEntry] still needs a sequence number, so this counter numbers them. */
     private var ownLogSeq = 0L
 
     private fun addLog(event: ServerLogEvent) {
@@ -218,9 +220,9 @@ object ServerHostSession {
 /**
  * A reader's place in a log that rotates.
  *
- * The server keeps the last 500 lines, so past 500 the list stops growing and a reader counting
- * how many it had already seen sees the same number forever and shows nothing new. The sequence
- * number does not rotate, so it is what the place is kept in.
+ * The server keeps the last 500 lines. Past 500, the list stops growing, so a reader that counts
+ * the lines it has seen gets the same number forever and shows nothing new. The sequence number
+ * does not rotate, so the cursor keeps its place by that number.
  */
 class ServerLogCursor {
     private var lastSeq = 0L

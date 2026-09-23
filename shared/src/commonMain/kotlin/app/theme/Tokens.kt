@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 
 /*
- * The design tokens every surface reads. Values and reasons live in DESIGN/FOUNDATION; this file
- * only states them. Nothing in app code chooses a size, a radius, a duration or a colour outside
- * of these objects, and the lint test in desktopTest enforces that for text sizes.
+ * The design tokens: the sizes, radii, durations, text styles and colors that surfaces read. App
+ * code should take these values from here. A lint test in desktopTest (DesignLint) enforces this
+ * for text sizes only.
  */
 
-/** The 6dp ladder. A row is 42dp on purpose: density is the whole point. */
+/** Spacing and sizes, mostly in steps of 6dp. A row is 42dp on purpose, so lists stay dense. */
 object Space {
     val u = 6.dp
     val rowCompact = 36.dp
@@ -46,11 +46,11 @@ object Space {
     val glyphLarge = 24.dp
     val hair = 1.dp
     val touchMin = 48.dp
-    /** The widest a line meant to be read at a glance gets: a notice, or chat over the video. */
+    /** The maximum width of a notice and of the chat over the video, so lines stay short. */
     val noticeWidth = 420.dp
 }
 
-/** Near square. Nothing is a capsule. */
+/** Corner radii. They are small, so shapes stay nearly square and are never pill-shaped. */
 object Radius {
     val none = 0.dp
     val tight = 2.dp
@@ -62,14 +62,17 @@ object Radius {
     val panelShape = RoundedCornerShape(panel)
 }
 
-/** Two durations, one easing, one spring. Holds are named once, here. */
+/** Animation timing: two durations, one easing curve and one spring. */
 object Motion {
     const val quickMs = 120
     const val moveMs = 220
 
     val easing: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-    /** Set at the root from the platform setting or the Reduce motion switch; tweens collapse to instant. */
+    /**
+     * True when the platform setting or the Reduce motion switch is on. AdamScreen, the app root,
+     * sets it. [quick] and [move] then take 0 ms.
+     */
     @kotlin.concurrent.Volatile
     var reduced: Boolean = false
 
@@ -78,7 +81,7 @@ object Motion {
     fun <T> drag(): SpringSpec<T> = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
 }
 
-/** The five roles, bound to one family. Built once per family and provided through [LocalType]. */
+/** The five text roles for one font family, built once per family and provided by [LocalType]. */
 @Immutable
 class TypeRoles(
     val display: TextStyle,
@@ -110,23 +113,24 @@ class TypeRoles(
 }
 
 /**
- * What auto-sizing is allowed to do to a label that will not fit its width.
+ * The limits for auto-sizing a label that does not fit its width.
  *
- * A control rarely owns its width: an engine badge gets a third of the picker, a segment gets its
- * share of the row. English writes short words there and other languages do not, so the range has
- * to be wide enough to actually rescue one. [floor] is the guarantee: nothing is ever cut above
- * it, and nothing is ever drawn below it.
+ * A control rarely chooses its own width. For example, an engine badge (an engine is one of the
+ * video players that the app can drive) gets a third of the engine picker, and a segment gets its
+ * share of the row. English words are short there, but other languages need more room, so the
+ * size range must be wide. A label shrinks down to [floor] before it is cut off, and it never
+ * gets smaller than [floor].
  */
 object AutoSize {
     val floor = 5.sp
-    /** Half a point at a time, so the fitted size never looks chosen by luck. */
+    /** Auto-sizing moves in 0.5sp steps, so fitted sizes stay on a regular scale. */
     val step = 0.5.sp
 }
 
-/** Defaults to the system family so a composable rendered outside AdamScreen still lays out. */
+/** Defaults to the system font family, so a composable drawn outside AdamScreen still lays out. */
 val LocalType = staticCompositionLocalOf { TypeRoles.from(FontFamily.Default) }
 
-/** Read a role: `Type.label`. Group headings are drawn uppercase by their composable, not here. */
+/** Reads a text role: `Type.label`. GroupHeading uppercases its text, not the [group] style. */
 object Type {
     val display: TextStyle @Composable @ReadOnlyComposable get() = LocalType.current.display
     val label: TextStyle @Composable @ReadOnlyComposable get() = LocalType.current.label
@@ -136,9 +140,10 @@ object Type {
 }
 
 /**
- * The semantic palette. Surfaces read this, never Material role names. Over video the room
- * re-provides [overVideo], which pins the grounds and inks dark and keeps only the theme's
- * accent, gradient and status colours.
+ * The semantic palette: the colors that surfaces read, never the Material scheme roles. Over the
+ * video, the room screen (where the group watches together) provides [overVideo] instead. That
+ * palette fixes the grounds dark and the inks white, and keeps only the theme's accent, gradient
+ * and status colors.
  */
 @Immutable
 data class Palette(
@@ -153,11 +158,11 @@ data class Palette(
     val brandField: List<Color>,
     val ok: Color,
     /**
-     * The same idea as [ok], but for words rather than a filled shape.
+     * The readiness green for text. [ok] is the same green for a filled shape.
      *
-     * [ok] is a readiness square on its own ground and is fixed on purpose. Text has to sit on
-     * the theme's own surface, and on the light theme that surface is pale enough that the
-     * bright green reads at roughly 1:1 against it. This is the readable one.
+     * [ok] is fixed on purpose and fills a readiness square on its own ground. Text sits on the
+     * theme's own surface. On the light theme, that surface is so pale that the bright [ok] green
+     * has a contrast of roughly 1:1 against it. This color stays readable there.
      */
     val okText: Color,
     val warn: Color,
@@ -166,12 +171,12 @@ data class Palette(
     val isDark: Boolean,
 ) {
     /**
-     * What to write on a filled control, worked out from the fill itself rather than stored.
+     * The ink color for text on a filled control, computed from [fill] instead of stored.
      *
-     * A stored colour goes stale the moment a palette repurposes [accent], which is exactly what
-     * the add-media block does: it paints itself with the brand gradient and turns [accent] into
-     * the dark ink that reads on it. A label that trusted a token then matched its own button.
-     * The cut is where white and near-black give the same contrast against the fill.
+     * A stored color goes stale when a palette repurposes [accent]. The add-media button does
+     * that: it paints itself with the brand gradient and turns [accent] into the dark ink that
+     * reads on the gradient. A label that used a stored token would then match its own button.
+     * The 0.19 cut is where white and near-black give the same contrast against the fill.
      */
     fun inkOn(fill: Color): Color = if (fill.luminance() > 0.19f) VideoGround else Color.White
 
@@ -188,7 +193,7 @@ data class Palette(
     )
 
     companion object {
-        /** Readiness green and error red are fixed so no theme can make "not ready" look ready. */
+        /** The readiness green, fixed like [Bad] so no theme can make "not ready" look ready. */
         val Ok = Color(0xFF6ECB5A)
 
         /** A dark green for text on a light ground: about 4.6:1 against the Daylight surface. */
@@ -224,16 +229,16 @@ data class Palette(
     }
 }
 
-/** Defaults to the brand theme so previews and the render harness need no provider. */
+/** Defaults to the brand theme ([TRINITY]), so previews need no provider. */
 val LocalPalette = staticCompositionLocalOf { Palette.from(TRINITY.dynamicScheme, TRINITY) }
 
 /**
- * The palette of the surface a screen draws on, which a dialog goes back to.
+ * The palette of the surface that a screen draws on. A dialog switches back to this palette.
  *
- * [LocalPalette] is not always the screen's: a control that fills itself with the brand gradient
- * swaps in a palette whose ink reads on that gradient. A dialog raised from inside such a control
- * is its own surface, so it would otherwise write that control's dark ink on its own dark panel.
- * Provided next to [LocalPalette] by the app root and by the room.
+ * [LocalPalette] is not always the screen's palette: a control that fills itself with the brand
+ * gradient provides a palette whose ink reads on that gradient. A dialog opened from inside such a
+ * control is its own surface. Without this palette, the dialog would draw that control's dark ink
+ * on its own dark panel. AdamScreen and the room screen provide it next to [LocalPalette].
  */
 val LocalSurfacePalette = staticCompositionLocalOf { Palette.from(TRINITY.dynamicScheme, TRINITY) }
 

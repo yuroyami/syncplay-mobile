@@ -55,9 +55,9 @@ fun SettingsScreenUI(categoryKey: String?) {
     val index = settingsIndex(categories)
     val hits = remember(query, index) { index.search(query) }
     val scroll = rememberScrollState()
-    /* Through derivedStateOf, so this scope wakes when the answer flips rather than on every
-     * pixel of scroll. Reading scroll.value straight into a parameter recomposed the whole
-     * settings screen for the length of a fling. */
+    /* Read through derivedStateOf, so this scope recomposes only when the answer changes, not on
+     * every pixel of scroll. Reading scroll.value straight into a parameter would recompose the
+     * whole settings screen for the length of a fling. */
     val scrolled by remember { derivedStateOf { scroll.value > 0 } }
 
     val current = open ?: if (expanded) categories.first() else null
@@ -73,7 +73,7 @@ fun SettingsScreenUI(categoryKey: String?) {
             scrolled = scrolled,
         ) {
             if (expanded) {
-                /* A remote crosses between the panes by row, not by pixel: Right from any category
+                /* A TV remote moves between the panes by row, not by pixel. Right from any category
                  * enters the settings at their top, and Left comes back to the open category. */
                 val paneFocus = remember { FocusRequester() }
                 val categoryFocus = remember { FocusRequester() }

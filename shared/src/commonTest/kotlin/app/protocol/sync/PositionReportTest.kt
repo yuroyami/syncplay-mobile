@@ -8,9 +8,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /**
- * What we tell the room our position is. Getting this wrong does not desync us, it desyncs
- * everyone: the official server adopts its slowest watcher, so one honest-but-wrong zero from a
- * file that is still opening drags the whole room back to the start.
+ * The position that the client reports to the room (the group of people watching together). A
+ * wrong report desyncs everyone, not only this client: the official server adopts its slowest
+ * watcher, so one wrong zero from a file that is still opening drags the whole room to the start.
  */
 class PositionReportTest {
 
@@ -58,7 +58,7 @@ class PositionReportTest {
         assertEquals(100_000.0, at)
     }
 
-    // ---- what we advertise ----
+    // ---- the reported position ----
 
     @Test
     fun with_no_file_we_advertise_the_room_and_never_a_bare_zero() {
@@ -125,9 +125,9 @@ class PositionReportTest {
 }
 
 /**
- * A per-user offset for two rips of the same film that differ by an intro or a logo card. It
- * must shift what we do locally and nothing the room sees, or one person's offset would drag
- * everybody.
+ * A per-user offset lines up two copies of the same film that differ by an intro or a logo card.
+ * The offset must shift only the local playback and nothing that the room sees. Otherwise one
+ * person's offset would drag everybody.
  */
 class UserOffsetTest {
 
@@ -155,7 +155,7 @@ class UserOffsetTest {
 
     @Test
     fun what_we_advertise_is_our_position_less_our_own_offset() {
-        // Our copy runs 12s ahead, so at 112s we are showing the room's 100s.
+        // The local copy runs 12 s ahead, so the local 112 s shows the room's 100 s.
         val r = reportablePosition(inputs(localMs = 112_000.0, offset = 12.0))
         assertEquals(100.0, r.positionSeconds, 1e-9)
     }
@@ -174,8 +174,8 @@ class UserOffsetTest {
 
     @Test
     fun convergence_is_judged_in_the_rooms_frame_not_ours() {
-        // Our copy runs 12s ahead. At 112s we are exactly on the room's 100s, so a load that
-        // has caught up must stop masking even though the raw numbers differ by twelve seconds.
+        // The local copy runs 12 s ahead, so the local 112 s is exactly the room's 100 s. A load
+        // that has caught up must stop masking, even though the raw numbers differ by 12 s.
         val r = reportablePosition(inputs(localMs = 112_000.0, offset = 12.0, deadline = t0 + 20.seconds))
         assertFalse(r.keepMasking, "an offset must not look like a permanent desync")
         assertEquals(100.0, r.positionSeconds, 1e-9)
@@ -189,8 +189,8 @@ class UserOffsetTest {
 
     @Test
     fun an_impossible_local_target_is_impossible_in_local_time() {
-        // Our copy is 100 s long and runs 10 s ahead. The room is at 95 s, which is 105 s in our
-        // copy: past the end. Comparing 95 against 100 said "keep trying" forever.
+        // The local copy is 100 s long and runs 10 s ahead. The room is at 95 s, which is 105 s in
+        // the local copy: past the end. A check of 95 against 100 would keep masking forever.
         val far = t0 + 20.seconds
         val r = reportablePosition(
             inputs(localMs = 0.0, offset = 10.0, deadline = far, globalMs = 95_000.0, durationMs = 100_000.0)
@@ -200,8 +200,8 @@ class UserOffsetTest {
 
     @Test
     fun a_negative_offset_can_make_the_same_target_reachable() {
-        // Same room position, but our copy runs 10 s behind: the room's 95 s is our 85 s, which
-        // is inside a 100 s file, so masking stays on until we get there.
+        // Same room position, but the local copy runs 10 s behind: the room's 95 s is the local
+        // 85 s. That is inside a 100 s file, so masking stays on until playback gets there.
         val far = t0 + 20.seconds
         val r = reportablePosition(
             inputs(localMs = 0.0, offset = -10.0, deadline = far, globalMs = 95_000.0, durationMs = 100_000.0)
@@ -211,7 +211,7 @@ class UserOffsetTest {
 
     @Test
     fun a_target_before_the_start_of_our_copy_is_impossible() {
-        // The room is at 5 s and our copy runs 10 s behind, so it wants us at minus 5 s.
+        // The room is at 5 s and the local copy runs 10 s behind, so the local target is minus 5 s.
         val far = t0 + 20.seconds
         val r = reportablePosition(
             inputs(localMs = 50_000.0, offset = -10.0, deadline = far, globalMs = 5_000.0, durationMs = 100_000.0)

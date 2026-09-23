@@ -27,9 +27,10 @@ import app.theme.palette
 enum class Tone { Neutral, Accent, Ok, Warn, Bad }
 
 /**
- * A hairline rectangle carrying a state word or a badge, 22dp tall, `value` type. Filled when
- * the state is on (ready, connected). With [onToggle] it becomes a toggle with a 48dp target.
- * [autoSize] lets a word in a narrow cell step down to the group size before it is cut.
+ * A tag: a rectangle with a thin border that holds a state word or a badge, at least 22dp tall,
+ * in `value` type. It is [filled] when the state is on (ready, connected). With [onToggle] it
+ * becomes a toggle with a 48dp target. [autoSize] lets a word in a narrow cell shrink, down to the
+ * auto-size floor, before it is cut.
  */
 @Composable
 fun Tag(

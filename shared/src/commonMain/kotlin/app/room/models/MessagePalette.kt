@@ -3,8 +3,8 @@ package app.room.models
 import androidx.compose.ui.graphics.Color
 
 /**
- * The colours chat draws with, one per chat colour setting. The defaults below belong to chat:
- * no theme reads or changes them, and only the chat colour settings override them.
+ * The colors that chat draws with, one per chat color setting. The defaults below belong to chat.
+ * No theme reads or changes them, and only the chat color settings override them.
  */
 data class MessagePalette(
     val timestampColor: Color = Color(0xFF737373),

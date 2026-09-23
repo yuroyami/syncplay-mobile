@@ -19,7 +19,7 @@ internal fun UpdateCheckAction(
     when (result) {
         UpdateCheck.Result.UpToDate -> ActionStatus(
             text = strings.aboutUpdateCurrent,
-            // Text on the theme's own surface, so the readable green, not the badge one.
+            // Text on the theme's surface, so it uses the readable green, not the badge green.
             color = palette.okText,
             modifier = Modifier.fillMaxWidth(),
         )

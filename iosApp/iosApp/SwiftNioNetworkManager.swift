@@ -9,9 +9,10 @@ import Pods_iosApp
 import shared
 
 /**
- iOS networking implementation backed by SwiftNIO. Subclasses the shared `NetworkManager`
- abstract class and implements `ChannelInboundHandler` to receive server data. Used as the
- default iOS client because it (unlike Ktor) supports the opportunistic TLS upgrade.
+ The iOS network client, built on SwiftNIO. It subclasses the shared `NetworkManager` and
+ implements `ChannelInboundHandler` to receive server data. It is the default iOS client because,
+ unlike Ktor, it supports the TLS upgrade: a Syncplay connection starts in plain text and then
+ switches the same socket to TLS.
  */
 @preconcurrency
 class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked Sendable {
@@ -25,10 +26,10 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     }
 
     /**
-     Opens a TCP connection to the Syncplay server with a 10-second connect timeout. On success
-     the `channel` is retained; on failure the error is thrown, and the shared `connect()` turns
-     it into `onConnectionFailed()`. Inbound bytes are line-framed before reaching this handler,
-     with a 64 KiB cap so a peer that never sends a newline cannot grow the buffer forever.
+     Opens a TCP connection to the Syncplay server, with a 10-second connect timeout. On success
+     it keeps the `channel`. On failure it throws, and the shared `connect()` turns the error into
+     `onConnectionFailed()`. Inbound bytes are split into lines before they reach this handler,
+     with a 64 KiB limit, so a peer that never sends a newline cannot grow the buffer forever.
      */
     override func connectSocket() async throws {
         let group = NIOTSEventLoopGroup()
@@ -64,8 +65,8 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         eventLoopGroup = nil
     }
 
-    /// Writes a UTF-8 string and waits for the transport to accept it; a failed write throws so
-    /// the shared retry and queue logic sees the real outcome.
+    /// Writes a UTF-8 string and waits until the transport accepts it. A failed write throws, so
+    /// the shared retry and queue logic sees the real result.
     override func writeActualString(s: String) async throws {
         guard let channel = channel else {
             // asError() keeps the Kotlin type, so the shared retry logic can tell "no socket" apart.
@@ -78,18 +79,17 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     }
 
     /**
-     Upgrades the connection to TLS and awaits the handshake before returning. Inserts a
-     `NIOSSLClientHandler` at the head of the pipeline plus a one-shot tracking handler that
-     resolves once `TLSUserEvent.handshakeCompleted` fires. The caller
-     (`RoomCallback.onReceivedTLS`) sends `Hello` immediately after this returns, so the channel
-     must be fully ciphered by then. The certificate is checked against the host name the user
-     typed (`session.tlsPeerHost`), which is also sent as SNI, not against the official server's
-     name or the IP the socket dialled. A failure throws; the caller reports it.
+     Upgrades the connection to TLS and waits for the handshake before it returns. It inserts a
+     `NIOSSLClientHandler` at the head of the pipeline, plus a one-shot tracking handler that
+     settles when the handshake ends. The caller (`RoomCallback.onReceivedTLS`) sends `Hello`
+     right after this returns, so the channel must be fully encrypted by then. The certificate is
+     checked against the host name the user typed (`session.tlsPeerHost`), which is also sent as
+     SNI. It is not checked against the official server's name or the IP that the socket dialled.
+     A failure throws, and the caller reports it.
      */
     override func upgradeTls() async throws {
-        // Returning here used to report a completed handshake, so the caller set `encrypted` and
-        // showed the room's lock over a socket that had no TLS on it at all. There is nothing to
-        // upgrade without a channel: say so.
+        // Without a channel there is nothing to upgrade, so throw. A plain return reads as a
+        // finished handshake: the caller then sets `encrypted` and shows the lock on a plain socket.
         guard let channel = channel else {
             throw NetworkManager.SocketGoneException().asError()
         }
@@ -101,12 +101,12 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         let handshakePromise = channel.eventLoop.makePromise(of: Void.self)
         let trackingHandler = TLSHandshakeTrackingHandler(promise: handshakePromise)
 
-        // The observer first: added after the TLS handler, it can miss a handshake that has
-        // already finished or already failed, and then nothing ever settles the promise.
+        // Add the tracking handler before the TLS handler. Added after it, the tracker can miss a
+        // handshake that already finished or failed, and the promise then only ends at the timeout.
         try await channel.pipeline.addHandler(trackingHandler).get()
         try await channel.pipeline.addHandler(tlsHandler, position: .first).get()
 
-        // A server that accepts the socket and then says nothing must not hold this forever.
+        // A server that accepts the socket and then sends nothing must not block this call forever.
         let deadline = channel.eventLoop.scheduleTask(in: .seconds(15)) { trackingHandler.timedOut() }
         defer { deadline.cancel() }
         try await handshakePromise.futureResult.get()
@@ -116,13 +116,13 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     // MARK: - Channel Handler Methods
 
     /// Decodes the inbound `ByteBuffer` as UTF-8 and forwards it to `handlePacket(jsonString:)`.
-    /// Only the current channel counts: a line from a socket we have already replaced would be
-    /// answered against a room we are no longer in.
+    /// Only the current channel counts. A line from a socket that was already replaced belongs to
+    /// a room this client has left, so it must not be answered.
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         guard context.channel === channel else { return }
         var buffer = self.unwrapInboundIn(data)
-        // readString decodes straight out of the buffer. Going through Data first copied every
-        // inbound line twice before anything looked at it.
+        // readString decodes straight from the buffer. A detour through Data would copy every
+        // inbound line twice before anything reads it.
         if let received = buffer.readString(length: buffer.readableBytes) {
             self.handlePacket(jsonString: received)
         }
@@ -133,9 +133,10 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         context.flush()
     }
 
-    /// The socket went away under us. Only the current channel counts: our own teardown of a
-    /// previous socket is not news. During the handshake that is a server closing on us (a wrong
-    /// password, for one), which used to leave the room stuck with no callback at all.
+    /// Called when the socket closes. Only the current channel counts, because the teardown of an
+    /// old socket is expected. A close during the handshake means the server closed the connection
+    /// (after a wrong password, for example). That case must report `onConnectionFailed()`, or the
+    /// room stays stuck with no callback at all.
     func channelInactive(context: ChannelHandlerContext) {
         guard context.channel === channel else {
             context.fireChannelInactive()
@@ -153,17 +154,17 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("Reader exception: \(error)")
-        // The handshake tracker sits behind this handler and has to hear the failure before
-        // the close, or a failed handshake leaves its promise unresolved forever.
+        // The TLS handshake tracker sits after this handler. Pass the error on before the close,
+        // so the tracker fails the handshake with the real error and not with a plain end-of-file.
         context.fireErrorCaught(error)
         context.close(promise: nil)
     }
 }
 
 /**
- A line framer with a ceiling. `LineBasedFrameDecoder` buffers until it sees a newline, so a
- server that never sends one grows memory without bound; past `maxLength` bytes with no newline
- the connection is closed instead.
+ Splits inbound bytes into lines, with a size limit. NIO's `LineBasedFrameDecoder` buffers until
+ it sees a newline, so a server that never sends one grows memory without limit. This decoder
+ throws when a line passes `maxLength` bytes, and the error closes the connection.
  */
 private final class BoundedLineFrameDecoder: ByteToMessageDecoder {
     typealias InboundOut = ByteBuffer
@@ -174,7 +175,7 @@ private final class BoundedLineFrameDecoder: ByteToMessageDecoder {
      How many bytes past the reader index have already been searched. `decode` is called again on
      every socket read with everything buffered so far, so without this a message that arrives in
      forty segments is scanned from the top forty times. NIO's own `LineBasedFrameDecoder` keeps
-     the same bookmark for the same reason.
+     the same offset for the same reason.
      */
     private var scannedBytes: Int = 0
 
@@ -194,10 +195,11 @@ private final class BoundedLineFrameDecoder: ByteToMessageDecoder {
             return .needMoreData
         }
         scannedBytes = 0
-        // The view's indices are the buffer's own, so the line runs from the reader index to the newline.
+        // The view's indices are the buffer's own, so the line runs from the reader index to
+        // the newline.
         let lineLength = newlineIndex - buffer.readerIndex
-        // A line that arrives complete is still a line: the ceiling is about what one message
-        // may be, not about whether the sender remembered a newline.
+        // A complete line can also be too long: the limit is on the size of one message,
+        // whether or not its newline has arrived.
         if lineLength > maxLength {
             throw LineTooLongError(bytes: lineLength)
         }
@@ -222,9 +224,10 @@ private final class BoundedLineFrameDecoder: ByteToMessageDecoder {
 }
 
 /**
- One-shot handler that resolves `promise` once the TLS handshake fires
- `TLSUserEvent.handshakeCompleted`, then removes itself from the pipeline. Lets
- `SwiftNioNetworkManager.upgradeTls` await the handshake instead of firing and forgetting.
+ One-shot handler that settles `promise` when the TLS handshake ends, so
+ `SwiftNioNetworkManager.upgradeTls` can wait for it. `TLSUserEvent.handshakeCompleted` succeeds
+ the promise and removes this handler from the pipeline. An error, a channel close, the handler's
+ removal or the timeout fails it.
  */
 private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, RemovableChannelHandler {
     typealias InboundIn = NIOAny
@@ -237,7 +240,7 @@ private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, Removabl
         self.promise = promise
     }
 
-    /// Every exit goes through here, and only the first one counts.
+    /// Settles the promise. Every exit path calls this, and only the first call counts.
     private func settle(_ result: Result<Void, Error>) {
         guard !settled else { return }
         settled = true
@@ -249,9 +252,8 @@ private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, Removabl
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
-        // SwiftNIO ≥ 2.55 changed `.handshakeCompleted` from a plain enum case to one
-        // with an associated `negotiatedProtocol: String?` payload, so we pattern-match
-        // instead of using `==`.
+        // `.handshakeCompleted` carries a `negotiatedProtocol: String?` payload, so match the
+        // case with a pattern instead of `==`.
         if let tlsEvent = event as? TLSUserEvent, case .handshakeCompleted = tlsEvent {
             settle(.success(()))
             context.pipeline.removeHandler(self, promise: nil)
@@ -270,7 +272,7 @@ private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, Removabl
         context.fireChannelInactive()
     }
 
-    /// Removed from the pipeline before the handshake landed: nothing else will report it.
+    /// The handler left the pipeline before the handshake ended. Nothing else reports that case.
     func handlerRemoved(context: ChannelHandlerContext) {
         settle(.failure(ChannelError.ioOnClosedChannel))
     }

@@ -8,22 +8,23 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Picks the [WireMessage] subtype to decode by inspecting the top-level JSON key — and,
- * for the two direction-asymmetric keys, the payload shape underneath:
+ * Picks the [WireMessage] subtype to decode from the top-level JSON key and, for the two
+ * direction-asymmetric keys, from the payload shape under it:
  *
- *  - `Chat` payload is a string → [WireMessage.ChatRequest] (client→server).
- *  - `Chat` payload is anything else (object) → [WireMessage.ChatBroadcast] (server→client).
- *  - `List` payload is a JSON object (even empty) → [WireMessage.ListResponse] (server→client).
+ *  - `Chat` payload is a string → [WireMessage.ChatRequest] (client to server).
+ *  - `Chat` payload is anything else (object) → [WireMessage.ChatBroadcast] (server to client).
+ *  - `List` payload is a JSON object (even empty) → [WireMessage.ListResponse] (server to
+ *    client).
  *  - `List` payload is anything else (`null`, array, primitive) →
- *    [WireMessage.ListRequest] (client→server).
+ *    [WireMessage.ListRequest] (client to server).
  *
- * The same deserializer works on both sides — the wire shapes don't collide.
+ * The same deserializer works on both sides, because the wire shapes do not collide.
  */
 object WireMessageDeserializer : JsonContentPolymorphicSerializer<WireMessage>(WireMessage::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<WireMessage> {
         // `element.jsonObject` would throw IllegalArgumentException for non-object inputs
-        // (literals, arrays, garbage). Translate into a SerializationException so callers
-        // (NetworkManager.handlePacket / ClientConnection.handlePacket) catch and recover.
+        // (literals, arrays, garbage). A SerializationException instead is what both inbound
+        // paths (NetworkManager.processPacket, ClientConnection.handlePacket) catch.
         if (element !is JsonObject) {
             throw SerializationException("Wire message must be a JSON object, got ${element::class.simpleName}")
         }

@@ -93,12 +93,13 @@ data class SettingsDensity(
 
 val LocalSettingsDensity = staticCompositionLocalOf { SettingsDensity() }
 
-/** Which rows show their explanation, keyed by preference; the list reads it to draw the rules. */
+/** Which rows show their explanation, keyed by preference. The list reads it to draw the rules. */
 val LocalExpandedSettings = staticCompositionLocalOf { mutableStateMapOf<String, Boolean>() }
 
 /**
- * A host that shows a nested page (a colour editor, the chat colours list) inline, in place of
- * the rows, so what the page changes stays visible beside it. Without a host, rows open modals.
+ * A nested page (a colour editor, the chat colours list) that an [InlineEditorHost] shows inline,
+ * in place of the rows, so that what the page changes stays visible beside it. Without a host,
+ * rows open modals.
  */
 class InlineEditorPage(val title: String, val scrollable: Boolean = true, val content: @Composable () -> Unit)
 
@@ -110,18 +111,18 @@ class InlineEditorHost(private val onOpen: (InlineEditorPage) -> Unit) {
 val LocalInlineEditor = staticCompositionLocalOf<InlineEditorHost?> { null }
 
 /**
- * The console row for one entry: label left, value in the fixed column, control after it. The
- * row kind follows the value type and the control, exactly as DESIGN/PREF_SYSTEM lists them.
+ * The settings row for one entry: the label on the left, the value in the fixed column, and the
+ * control after it. The row kind follows the value type and the control.
  */
 /* One `when` over nine row kinds, all sharing the same dozen locals. Splitting each branch into
- * its own composable would mean threading eight parameters into each of nine functions, which
+ * its own composable would mean passing eight parameters into each of nine functions, which
  * reads worse than the table does. */
 @Suppress("LongMethod")
 @Composable
 fun SettingEntry.Render(highlighted: Boolean = false) {
     val cfg = pref.config ?: return
     val extra = extra
-    // Reading the snapshot here is what makes a dependency flip recompose the dependent row.
+    // Reading the snapshot here makes a change in a dependency recompose the dependent row.
     LocalPrefsState.current.value
     val enabled = isEnabled()
     val value by pref.watchAny()
@@ -155,7 +156,8 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     RowGap()
                     RowValue(if (on) strings.settingsValueOn else strings.settingsValueOff, accent = on, width = 36.dp)
                     RowGap()
-                    // The row is the one toggleable node; a second node on the rocker read as two switches.
+                    // The row is the only toggleable node. A second node on the rocker would read
+                    // as two switches.
                     Rocker(on = on, onChange = flip, enabled = enabled, modifier = Modifier.clearAndSetSemantics { })
                 }
             }
@@ -293,8 +295,9 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
 }
 
 /**
- * The explanation under a row, aligned with the row's label and pulled up under it, shown on a
- * long press or when Show setting descriptions is on. The list around it draws the rules.
+ * The explanation under a row, aligned with the row's label and pulled up under it. It shows on a
+ * long press, when "Show setting descriptions" is on, or when the host asks for inline
+ * explanations. The list around it draws the rules.
  */
 @Composable
 private fun Explanation(text: String, indent: Dp) {
@@ -348,7 +351,7 @@ private fun ActionRow(
     }
 }
 
-/** Label and value on one line, the track full width beneath. The value sits with its control. */
+/** A slider row: the label and the value on one line, and the full-width track beneath. */
 @Composable
 private fun ScrubRow(
     title: String,
@@ -369,8 +372,8 @@ private fun ScrubRow(
     val span = (max - min).coerceAtLeast(1)
     var dragging by remember { mutableStateOf(false) }
     var preview by remember { mutableFloatStateOf(0f) }
-    /* The store writes on another thread: the row keeps showing what was just committed until
-     * the stored value catches up, so the thumb never snaps back for a frame on release. */
+    /* The store writes on another thread. The row keeps showing the committed value until the
+     * stored value catches up, so the thumb never jumps back for a frame on release. */
     var committed by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(value) { if (committed == value) committed = null }
     val settled = committed ?: value
@@ -503,9 +506,9 @@ internal fun ColorModal(
 @Composable
 private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) -> Unit) {
     var draft by remember { mutableStateOf(initial) }
-    // Bumped when the sliders move the colour, so the picker's handles follow it.
+    // Goes up when the sliders move the colour, so that the picker's handles follow it.
     var generation by remember { mutableIntStateOf(0) }
-    // The store write trails the picker by a beat: one write per pointer move is what stutters.
+    // The store write trails the picker by 50 ms. One write per pointer move makes it stutter.
     LaunchedEffect(Unit) {
         snapshotFlow { draft }.drop(1).collectLatest { c ->
             delay(50)
@@ -529,7 +532,7 @@ private fun ColorEditorBody(summary: String, initial: Color, onColor: (Color) ->
         RowGap()
         Text(draft.hex(), style = Type.value, color = palette.inkDim)
     }
-    // The picker answers only a finger or a mouse; a remote chooses with these.
+    // The picker reacts only to a finger or a mouse. A TV remote uses these sliders.
     if (LocalIsTelevision.current) {
         Spacer(Modifier.height(Space.gap))
         ColorSliders(draft, onColor = { draft = it; generation++ })

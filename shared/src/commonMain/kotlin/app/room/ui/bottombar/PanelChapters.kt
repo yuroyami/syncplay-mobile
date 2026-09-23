@@ -25,9 +25,9 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 
 /**
- * The chapter list, opened by a long press on the track. It reads the chapters the seekbar
- * already analysed and never re-analyses: every engine clears the list first, which would blank
- * the marks.
+ * The chapter list, opened by a long press on the seek bar. It reads the chapters that the seek
+ * bar already analyzed, and never analyzes them again. Every engine (one of the video players that
+ * the app can drive, such as ExoPlayer or mpv) clears the list first, which would blank the marks.
  */
 @Composable
 fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {

@@ -10,8 +10,8 @@ import platform.AVFoundation.AVMediaSelectionOption
 import platform.AVFoundation.hasMediaCharacteristic
 
 /**
- * [Track] carrying the AVFoundation media selection option and its group, both required to
- * switch tracks via the media selection API.
+ * A [Track] that carries its AVFoundation media selection option and group. The media selection
+ * API needs both to switch tracks.
  */
 class AvTrack(
     val sOption: AVMediaSelectionOption,
@@ -24,7 +24,7 @@ class AvTrack(
 
     override val language: String? get() = sOption.extendedLanguageTag
 
-    /** AVFoundation states the purpose as a media characteristic on the option itself. */
+    /** The track's purpose, read from the option's own AVFoundation media characteristics. */
     override val trait: TrackTrait?
         get() = when {
             sOption.hasMediaCharacteristic(AVMediaCharacteristicTranscribesSpokenDialogForAccessibility) -> TrackTrait.ACCESSIBILITY

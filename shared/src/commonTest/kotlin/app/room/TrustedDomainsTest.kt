@@ -6,10 +6,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Pins the trusted-domain entry matcher against PC's `_isURITrustableAndTrusted` rules
- * (client.py:565-602): exact host, `www.` variant, one-label `*` wildcards, and optional
- * path-prefix constraints. Notably, arbitrary subdomains are NOT trusted without an
- * explicit wildcard — the old `endsWith` matcher trusted every subdomain.
+ * Pins the trusted-domain matcher to the rules of `_isURITrustableAndTrusted` in the Syncplay PC
+ * client (client.py:565-602): exact host, `www.` variant, one-label `*` wildcards, and optional
+ * path-prefix constraints. A subdomain is not trusted without an explicit wildcard, so a plain
+ * `endsWith` check is wrong.
  */
 class TrustedDomainsTest {
 

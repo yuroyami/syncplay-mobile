@@ -18,8 +18,8 @@ struct iOSApp: App {
             return SwiftNioNetworkManager(viewmodel: roomViewmodel) as NetworkManager
         }
 
-        // Without this registration, MediaResolver on iOS no-ops and page URLs pass through to
-        // the player unresolved (fine for direct media files).
+        // Without this registration, the iOS MediaResolver does nothing, and page URLs reach the
+        // player unresolved (fine for direct media files).
         YouTubeKitBridgeKt.instantiateYouTubeKitBridge = {
             return YouTubeKitBridgeImpl()
         }
@@ -38,9 +38,9 @@ struct iOSApp: App {
         }
     }
 
-    /// Apply after a scene exists and reapply on every activation, rather than only in init.
-    /// This app-wide policy also covers KitePlayer's custom renderer. Reading scenePhase at
-    /// App scope keeps the display awake while any scene is active and releases it otherwise.
+    /// Keeps the display awake while any scene is active, and releases it otherwise (reading
+    /// `scenePhase` at App scope gives that). It runs after a scene exists and again on every
+    /// activation, not only in `init`. This app-wide policy also covers KitePlayer's renderer.
     private func updateIdleTimer(for phase: ScenePhase) {
         UIApplication.shared.isIdleTimerDisabled = phase == .active
     }

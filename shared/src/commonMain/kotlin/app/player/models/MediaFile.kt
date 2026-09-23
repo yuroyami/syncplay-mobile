@@ -12,24 +12,21 @@ import io.github.vinceglb.filekit.name
 import kotlinx.coroutines.withContext
 import syncplaymobile.shared.generated.resources.undefined
 
-/**************************************************************************************
- * File wrapper class. It encapsulates all information and data we need about a file  *
- **************************************************************************************/
-
+/** A media file that the player can load, with what the app knows about it. */
 data class MediaFile(
-    /** The file  **/
+    /** Where the file is: a local file or a remote URL. */
     var location: MediaFileLocation? = null,
 
-    /** The name of the file with its extension **/
+    /** The file name with its extension. For a resolved URL, this is the title from the resolver. */
     var fileName: String = "",
 
-    /** The size of the file in bytes **/
+    /** The file size in bytes, as text. It is "0" for a URL. */
     var fileSize: String = "",
 
-    /** The duration of the file (seconds) **/
+    /** The duration in seconds, or null while it is unknown. */
     var fileDuration: Double? = null,
 
-    /** the subtitle tracks, audio tracks and chapters for this file **/
+    /** The audio, subtitle and video tracks of this file. */
     var tracks: SnapshotStateList<Track> = mutableStateListOf(),
     val chapters: SnapshotStateList<Chapter> = mutableStateListOf(),
 ) {

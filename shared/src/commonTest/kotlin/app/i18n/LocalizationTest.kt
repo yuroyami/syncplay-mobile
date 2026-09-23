@@ -7,8 +7,8 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * The language is state, not a restart. These pin the parts of that which are not visual:
- * switching, falling back, and picking the right plural form.
+ * The app language is runtime state, so a switch needs no restart. These tests cover the parts that
+ * are not visual: the switch, the fallback, and the choice of plural form.
  */
 class LocalizationTest {
 

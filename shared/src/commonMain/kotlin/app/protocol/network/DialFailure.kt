@@ -3,11 +3,11 @@ package app.protocol.network
 /**
  * Whether a failed dial was the resolver's fault rather than the host's.
  *
- * This is the one question the official server's address fallback turns on. The fallback exists
- * for a broken or blocked resolver and nothing else: a host that resolves fine and then refuses
- * or ignores the connection behaves the same on its other address, so dialling that address only
- * spends a second connect timeout before reporting the failure the caller already had. That
- * doubled the time to the retry that usually works.
+ * The official server's address fallback depends on this one question. The fallback exists for
+ * a broken or blocked resolver and nothing else: a host that resolves fine and then refuses or
+ * ignores the connection behaves the same on its other address. Dialling that address only
+ * spends a second connect timeout before reporting the failure the caller already had, which
+ * doubles the time to the retry that usually works.
  *
  * The exception type differs by platform and by transport, so this reads class names and messages
  * along the cause chain rather than catching one class. A false negative only means the fallback

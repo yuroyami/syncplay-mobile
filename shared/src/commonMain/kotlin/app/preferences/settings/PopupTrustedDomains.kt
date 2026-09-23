@@ -39,8 +39,9 @@ import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.save
 
 /**
- * The trusted domains as a list: an inline add row, one hairline row per domain with remove.
- * Reads split on newline and comma, saves joined by newline, as the matcher expects.
+ * The trusted domains (the hosts whose shared playlist links load on their own) as a list: an add
+ * row, then one row per domain with a remove button. It splits the stored value on newlines and
+ * commas, and saves it joined by newlines, as the matcher expects.
  */
 @Composable
 fun TrustedDomainsPopup(visibilityState: MutableState<Boolean>) {

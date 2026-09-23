@@ -6,11 +6,11 @@ import app.protocol.WireMessage
 import app.utils.loggy
 
 /**
- * Carries out a [SlashCommand]. Everything here already existed somewhere in the app; the
- * commands are a second way in for people who are already typing.
+ * Runs a [SlashCommand]. Returns false when the input is ordinary chat text. Each command is a
+ * shortcut to something that the app can already do from a panel.
  *
- * Every reply goes into chat as a local line, never onto the wire, so a mistyped command is
- * invisible to the room.
+ * Every reply goes into chat as a local line and never to the server, so the room (the group of
+ * people watching together) never sees a mistyped command.
  */
 suspend fun RoomViewmodel.runSlashCommand(command: SlashCommand): Boolean {
     fun reply(isError: Boolean = false, text: suspend () -> String) =
@@ -58,7 +58,7 @@ suspend fun RoomViewmodel.runSlashCommand(command: SlashCommand): Boolean {
         }
 
         is SlashCommand.Identify -> {
-            // Kept so a success can store it for the re-identification every reconnect performs.
+            // Kept so that a success can save the password for the re-identification on reconnect.
             session.lastControlPasswordAttempt = command.password
             networkManager.sendAsync(
                 WireMessage.controllerAuth(room = session.currentRoom, password = command.password)

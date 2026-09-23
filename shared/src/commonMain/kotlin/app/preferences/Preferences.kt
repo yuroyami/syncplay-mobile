@@ -105,16 +105,17 @@ import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 
 /**
- * Centralized preference definitions with type safety
+ * Every preference of the app: its stored key, its typed default and, when it has one, its
+ * settings row.
  */
 object Preferences {
 
     /**
-     * Touch this to be sure every preference exists.
+     * Call this to make sure that every preference exists.
      *
-     * A Kotlin object initialises on first access, and every [Pref] registers itself as it is
-     * constructed. Anything that reads [PrefRegistry] before this object has been touched sees
-     * an empty registry, which is how export first came back with nothing at all.
+     * A Kotlin object initialises on first access, and every [Pref] registers itself when it is
+     * constructed. Code that reads [PrefRegistry] before anything touched this object sees an
+     * empty registry, and the settings export would then write nothing.
      */
     fun ensureAllRegistered() = Unit
 
@@ -123,10 +124,13 @@ object Preferences {
     /** ------------ Miscellaneous -------------*/
     val USER_ID = Pref<String?>("misc_user_id", null)
 
-    /** The hosted server's controlled-room salt, minted once so operator passwords survive a restart. */
+    /**
+     * The salt for the controlled rooms of the hosted server. It is created once, so operator
+     * passwords stay valid after a restart.
+     */
     val SERVER_SALT = Pref("misc_server_salt", "")
 
-    /** How many cold starts have shown the tips; they stop on their own after a few. */
+    /** How many cold starts have shown the tips. The tips stop on their own after a few. */
     val TIPS_SHOWN_COUNT = Pref("misc_tips_shown_count", 0)
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
@@ -145,7 +149,7 @@ object Preferences {
     /** Where each recently watched file was left, as JSON. See [app.player.ResumePoint]. */
     val RESUME_POSITIONS = Pref("misc_resume_positions", "")
 
-    /** Offer to pick a file up where it was left. Only ever offered when watching alone. */
+    /** Whether to offer to resume a file where it was left. The offer appears only in solo mode. */
     val RESUME_PLAYBACK = Pref("pref_resume_playback", true) {
         title = { it.settingResumeTitle }
         summary = { it.settingResumeSummary }
@@ -153,17 +157,17 @@ object Preferences {
     }
 
     /**
-     * Whether the GIF panel may keep the same id with the GIF service from one launch to the next.
-     * On, the service can hand your own picks back under Recents. Off, a fresh id every launch, so
-     * nothing links two sessions, and Recents comes back empty.
+     * Whether the GIF panel keeps the same id with the GIF service from one launch to the next.
+     * When on, the service can show the user's own picks under Recents. When off, each launch
+     * gets a new id, so nothing links two launches, and Recents comes back empty.
      */
     val GIF_REMEMBER_RECENTS = Pref("pref_inroom_gif_remember_recents", true) {
         title = { it.settingGifRecentsTitle }
         summary = { it.settingGifRecentsSummary }
         icon = Icons.Filled.Gif
     }
-    /** When true, the "Undo Seek" action skips its confirmation dialog. Set by the dialog's
-     * "Always do" button. No SettingConfig, so it never appears in the settings UI. */
+    /** When true, the "Undo seek" action skips its confirmation dialog. The dialog's "Don't ask
+     * again" button sets it. It has no SettingConfig, so it never appears in the settings UI. */
     val UNDO_SEEK_NO_CONFIRM = Pref("misc_undo_seek_no_confirm", false)
 
     /** ------------ General -------------*/
@@ -177,23 +181,29 @@ object Preferences {
         summary = { it.settingNeverShowTipsSummary }
         icon = Icons.Filled.Lightbulb
     }
-    /** Prints every row's explanation under it, for people who liked the old manuals. */
+    /** Shows the explanation under every settings row, not only after a long press. */
     val SHOW_SETTING_DESCRIPTIONS = Pref("pref_show_setting_descriptions", false) {
         title = { it.settingsShowDescriptionsTitle }
         summary = { it.settingsShowDescriptionsSummary }
         icon = Icons.Filled.Lightbulb
     }
-    /** The control haptics (a rocker flip, a seek landing), separate from the room event pulses. */
-    /** Forces every transition to a crossfade; the platform setting does the same on its own. */
-    /** The desktop window's last size, position and placement, as "x,y,w,h,placement". Never shown as a row. */
+    /**
+     * The desktop window's last size, position and placement, as "x,y,w,h,placement". It never
+     * shows as a row.
+     */
     val DESKTOP_WINDOW = Pref("pref_desktop_window", "")
 
+    /**
+     * Makes transitions and animations instant. The platform's reduced-motion setting has the
+     * same effect on its own.
+     */
     val REDUCE_MOTION = Pref("pref_reduce_motion", false) {
         title = { it.settingReduceMotionTitle }
         summary = { it.settingReduceMotionSummary }
         icon = Icons.Filled.Timer
     }
 
+    /** The control haptics (a rocker flip, a seek landing), separate from the room event pulses. */
     val HAPTICS_ON_CONTROLS = Pref("pref_haptics_on_controls", true) {
         title = { it.settingsHapticsControlsTitle }
         summary = { it.settingsHapticsControlsSummary }
@@ -223,14 +233,14 @@ object Preferences {
     }
 
     /** ------------ Language -------------*/
-    /** Blank means the device's language; a code forces that language on Android. */
+    /** Blank means the device's language. A language code sets the app to that language. */
     val DISPLAY_LANG = Pref("pref_lang", "") {
         title = { it.settingDisplayLanguageTitle }
         summary = { it.settingDisplayLanguageSummry(appName) }
         icon = Icons.Filled.Translate
 
-        /* The same picker everywhere. The app holds its own strings now, so a choice takes
-         * effect where it is made instead of through a restart or the system settings. */
+        /* The same picker on every platform. The app holds its own strings, so a choice takes
+         * effect at once, with no restart and no trip to the system settings. */
         extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 linkedMapOf(strings.settingDisplayLanguageSystem to "") +
@@ -258,10 +268,10 @@ object Preferences {
     }
 
     /**
-     * Language used for the OpenSubtitles "download from web" search. Holds an ISO 639-1 (2-letter)
-     * code — NOT the 3-letter [mediaLanguages] codes the player track prefs use — because the
-     * OpenSubtitles API speaks 2-letter codes. The sentinel "all" means "don't filter by language".
-     * Picked inline in the subtitle-search sheet, so this has no settings-UI entry of its own.
+     * The language of the OpenSubtitles "download from web" search. It holds an ISO 639-1
+     * (2-letter) code, not the 3-letter [mediaLanguages] codes of the track preferences, because
+     * the OpenSubtitles API uses 2-letter codes. The value "all" means "do not filter by language".
+     * The subtitle search sheet picks it inline, so it has no settings row of its own.
      */
     val SUBTITLE_SEARCH_LANG = Pref("pref_subtitle_search_lang", "en")
 
@@ -271,7 +281,7 @@ object Preferences {
         summary = { it.settingReadyFirsthandSummary }
         icon = Icons.Filled.TaskAlt
     }
-    /** Start the room on its own once everyone with a file says they are ready. */
+    /** Whether the room starts on its own once everyone with a file says that they are ready. */
     val AUTOPLAY = Pref("pref_inroom_autoplay", false) {
         title = { it.settingAutoplayTitle }
         summary = { it.settingAutoplaySummary }
@@ -346,7 +356,7 @@ object Preferences {
                     if (platform == Platform.IOS) {
                         put(strings.settingNetworkEngineSwiftNio, "swiftnio")
                     } else {
-                        // Android and Desktop both run the Netty engine.
+                        // Android and desktop run the Netty engine.
                         put(strings.settingNetworkEngineNetty, "netty")
                     }
 
@@ -368,9 +378,9 @@ object Preferences {
         detail = { it.settingTlsRequiredDetail }
         icon = Icons.Filled.Lock
     }
-    /** When true, page URLs (YT, SoundCloud, …) entered as media are run through the
-     *  platform's native extractor before reaching the player. A heuristic short-circuits when
-     *  the URL is already direct media, so there's no cost in the common case. */
+    /** When true, a page URL (YouTube, SoundCloud and so on) entered as media goes through the
+     *  platform's native extractor before it reaches the player. A quick check skips the
+     *  extractor when the URL is already direct media, so the common case costs nothing. */
     val MEDIA_RESOLVER_ENABLED = Pref("pref_media_resolver_enabled", true) {
         title = { it.settingMediaResolverTitle }
         summary = { it.settingMediaResolverSummary }
@@ -378,15 +388,16 @@ object Preferences {
         icon = Icons.Filled.Language
     }
 
-    /** Master off-switch for the frosted glass system, end to end.
+    /** One switch that turns the frosted glass effect off everywhere.
      *
-     *  When true: no Haze capture or blur anywhere, panels fall back to a solid tonal surface,
-     *  no platform window blur, and the Android players go back to SurfaceView, which can use a
-     *  hardware overlay plane (lower power, HDR passthrough) but cannot be captured for blur.
-     *  Glass and the overlay fast path are mutually exclusive, so this is one switch, not two.
+     *  When true: no Haze (the blur library) capture or blur anywhere, panels use a solid tonal
+     *  surface, no platform window blur, and the Android players go back to SurfaceView. A
+     *  SurfaceView can use a hardware overlay plane (lower power, HDR passthrough) but cannot be
+     *  captured for blur. Glass and the overlay path exclude each other, so this is one switch,
+     *  not two.
      *
-     *  Surface type is fixed when the player view is inflated, so a change lands on the next
-     *  room entry, matching how the other engine options behave. */
+     *  The surface type is fixed when the player view is inflated, so a change takes effect on the
+     *  next room entry, like the other engine options. */
     val DISABLE_FROSTED_GLASS = Pref("pref_disable_frosted_glass", false) {
         title = { it.settingDisableGlassTitle }
         summary = { it.settingDisableGlassSummary }
@@ -423,9 +434,9 @@ object Preferences {
         icon = Icons.Filled.FastRewind
     }
     /**
-     * How far ahead of the room you may drift before it asks everyone to come back, in tenths of
-     * a second. The reference client's default is 4 seconds, and it refuses anything under 3
-     * because below that ordinary jitter would trigger it constantly.
+     * How far this client may run ahead of the room before it rewinds to the room's position, in
+     * tenths of a second. The Syncplay PC client's default is 4 seconds, and it refuses anything
+     * under 3, because below that ordinary jitter would trigger it all the time.
      */
     val SYNC_REWIND_THRESHOLD = Pref("pref_inroom_sync_rewind_threshold", 40) {
         title = { it.uisettingSyncRewindThresholdTitle }
@@ -436,7 +447,7 @@ object Preferences {
         extraConfig = PrefExtraConfig.Slider(minValue = 30, maxValue = 150, unit = "s", formatValue = { formatTenths(it) })
     }
 
-    /** How far ahead you may drift before playback slows to let the room catch up, in tenths. */
+    /** How far this client may run ahead before playback slows for the room to catch up, in tenths. */
     val SYNC_SLOWDOWN_THRESHOLD = Pref("pref_inroom_sync_slowdown_threshold", 15) {
         title = { it.uisettingSyncSlowdownThresholdTitle }
         summary = { it.uisettingSyncSlowdownThresholdSummary }
@@ -446,7 +457,7 @@ object Preferences {
         extraConfig = PrefExtraConfig.Slider(minValue = 5, maxValue = 60, unit = "s", formatValue = { formatTenths(it) })
     }
 
-    /** How far behind you may fall before the room pulls you forward, in tenths. */
+    /** How far this client may fall behind before it jumps forward to the room, in tenths. */
     val SYNC_FASTFORWARD_THRESHOLD = Pref("pref_inroom_sync_fastforward_threshold", 50) {
         title = { it.uisettingSyncFastforwardThresholdTitle }
         summary = { it.uisettingSyncFastforwardThresholdSummary }
@@ -457,12 +468,11 @@ object Preferences {
     }
 
     /**
-     * How far our copy of the file runs ahead of the room's, in tenths of a second, offset by
-     * 600 so the slider can cover minus sixty to plus sixty seconds.
+     * How far this client's copy of the file runs ahead of the room's, in tenths of a second. The
+     * stored value is offset by 600, so the slider covers minus sixty to plus sixty seconds.
      *
-     * Two rips of the same film differ by an intro, a logo card, a few frames of black. The
-     * desktop client has had a per-user offset forever; this is the same idea, and it shifts
-     * only what we do locally.
+     * Two rips of the same film can differ by an intro, a logo card or a few frames of black. The
+     * Syncplay PC client has the same per-user offset. It shifts only local playback.
      */
     val USER_TIME_OFFSET = Pref("pref_inroom_user_time_offset", 600) {
         title = { it.uisettingUserOffsetTitle }
@@ -482,11 +492,11 @@ object Preferences {
     }
 
     /** ------------ Chat Colors -------------*/
-    /** Chat owns these colours. The rows below start from them and a reset returns to them. */
+    /** The chat's own default colours. The rows below start from them, and a reset returns to them. */
     private val chatDefaults = MessagePalette()
 
-    /** One entry gathering the COLOR_* prefs below as a nested page, so the room's settings
-     *  panel can show them beside the chat they colour. */
+    /** One entry that gathers the COLOR_* prefs below as a nested page, so that the room's
+     *  settings panel can show them beside the chat that they colour. */
     val CHAT_COLORS_ENTRY = Pref("pref_inroom_chat_colors_entry", "") {
         title = { it.uisettingCategChatColors }
         summary = { it.uisettingChatColorsEntrySummary }
@@ -570,7 +580,7 @@ object Preferences {
     }
 
     /** ------------ Chat Properties -------------*/
-    /** Zero switches the outline off; there is no separate switch. */
+    /** Zero switches the outline off. There is no separate switch. */
     val MSG_OUTLINE_THICKNESS = Pref("pref_inroom_msg_outline_thickness", 2) {
         title = { it.uisettingMsgoutlineTitle }
         summary = { it.uisettingMsgoutlineSummary }
@@ -590,7 +600,7 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 255, minValue = 0)
     }
-    /** 5 to 24, default 10; existing choices are preserved. MessageStyle uses the same floor. */
+    /** 5 to 24, default 10. Saved values stay as they are. MessageStyle uses the same floor of 5. */
     val MSG_FONTSIZE = Pref("pref_inroom_msg_fontsize", 10) {
         title = { it.uisettingMsgsizeTitle }
         summary = { it.uisettingMsgsizeSummary }
@@ -628,10 +638,11 @@ object Preferences {
     }
 
     /** ------------ OSD Notification Filters -------------
-     *  Mirrors Syncplay PC's "Messages" tab toggles (showSameRoomOSD / showNonControllerOSD /
-     *  showDifferentRoomOSD / showSlowdownOSD / showOSDWarnings). These gate which event-driven
-     *  OSD overlays bubble up via [RoomViewmodel.dispatchOSD]. They do NOT affect the chat log. */
-    /** Routine room events stay in chat by default instead of crowding the video with notices. */
+     *  These mirror the "Messages" tab toggles of the Syncplay PC client (showSameRoomOSD,
+     *  showNonControllerOSD, showDifferentRoomOSD, showSlowdownOSD, showOSDWarnings). They decide
+     *  which room events show as an OSD (on-screen) message through [RoomViewmodel.dispatchOSD].
+     *  They do not affect the chat log. */
+    /** Routine room events stay in chat by default, so that notices do not crowd the video. */
     val OSD_SAME_ROOM = Pref("pref_inroom_osd_same_room", false) {
         title = { it.uisettingOsdSameroomTitle }
         summary = { it.uisettingOsdSameroomSummary }
@@ -643,7 +654,7 @@ object Preferences {
         icon = Icons.Filled.Face
         dependencyEnable = { OSD_SAME_ROOM.value() }
     }
-    /** Default false to match Syncplay PC's SHOW_DIFFERENT_ROOM_OSD = False default. */
+    /** Off by default, like SHOW_DIFFERENT_ROOM_OSD = False in the Syncplay PC client. */
     val OSD_OTHER_ROOM = Pref("pref_inroom_osd_other_room", false) {
         title = { it.uisettingOsdOtherroomTitle }
         summary = { it.uisettingOsdOtherroomSummary }
@@ -716,7 +727,7 @@ object Preferences {
         dependencyEnable = { SHOW_CHAPTER_DOTS.value() }
     }
 
-    /** Off by default: double-tap-to-seek fights with tap-to-reveal-HUD for most users. */
+    /** Off by default, because a double tap to seek conflicts with a tap to show the HUD. */
     val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", false) {
         title = { it.uisettingDoubletapSeekTitle }
         summary = { it.uisettingDoubletapSeekSummary }
@@ -730,7 +741,7 @@ object Preferences {
         icon = Icons.Filled.Swipe
     }
 
-    /** Idle seconds during playback before the HUD hides; zero keeps it up until tapped away. */
+    /** Idle seconds during playback before the HUD hides. Zero keeps it up until a tap hides it. */
     val HUD_AUTO_HIDE_SECONDS = Pref("pref_inroom_hud_auto_hide_seconds", 15) {
         title = { it.roomHudAutoHideTitle }
         summary = { it.roomHudAutoHideSummary }
@@ -739,16 +750,25 @@ object Preferences {
         extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0, unit = "s", zeroMeansOff = true)
     }
 
-    /** Compact or expanded roster (stored as "standard"); legacy "files" falls back to expanded. */
+    /**
+     * The roster view: "compact", or "standard" for the expanded view. Any other saved value,
+     * such as the old "files", shows the expanded view.
+     */
     val USER_INFO_VIEW = Pref("pref_inroom_user_info_view", "standard")
 
-    /** Kept under the old key so existing visualizer choices survive the capability migration. */
+    /**
+     * Whether to show the audio visualizer. The key keeps its old KitePlayer name, so that saved
+     * choices stay valid.
+     */
     val AUDIO_VISUALIZATION = Pref("pref_kite_audio_viz", false) {
         title = { it.uisettingKiteAudioVizTitle }
         summary = { it.uisettingKiteAudioVizSummary }
         icon = Icons.Filled.MusicNote
     }
-    /** Whether the visualizer's director changes the drawing with the music. Set from the tracks card. */
+    /**
+     * Whether the visualizer's director (its automatic drawing picker) changes the drawing with
+     * the music. The tracks card sets it.
+     */
     val KITE_AUDIO_VIZ_DIRECTOR = Pref("pref_kite_audio_viz_director", true)
     /** ------------ KitePlayer Settings -------------*/
     val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
@@ -913,9 +933,9 @@ object Preferences {
     }
 
     /**
-     * The colour behind the video picture (the letterbox area). Black by default, because a
-     * letterbox that is anything else reads as a rendering bug; picker for whoever disagrees.
-     * Opaque ARGB, same storage convention as the chat colour prefs.
+     * The colour behind the video picture (the letterbox area). It is black by default, because a
+     * letterbox in any other colour looks like a rendering bug. The picker is there for users who
+     * want another colour. Opaque ARGB, stored like the chat colour prefs.
      */
     val VIDEO_BACKGROUND_COLOR = Pref("pref_video_background_color", androidx.compose.ui.graphics.Color.Black.toArgb()) {
         title = { it.uisettingVideoBgColorTitle }
@@ -960,7 +980,7 @@ object Preferences {
             rationale = { it.settingResetdefaultDialog },
             destructive = true,
             onYes = {
-                // Every in-room and engine key, by prefix; nothing else.
+                // Every in-room and engine key, by prefix or in IN_ROOM_EXTRA_KEYS. Nothing else.
                 datastore.edit { preferences ->
                     preferences.asMap().keys
                         .filter { key -> IN_ROOM_KEY_PREFIXES.any { key.name.startsWith(it) } || key.name in IN_ROOM_EXTRA_KEYS }
@@ -977,8 +997,9 @@ object Preferences {
     )
 
     /**
-     * Every setting the app shows, into a file. What stays behind is anything private: the
-     * install id, the saved join config, the server salt, the server password, watch positions.
+     * Writes every setting that the app shows into a file. Anything private stays behind: the
+     * install id, the saved join config, the server salt, the server password and the watch
+     * positions.
      */
     val EXPORT_SETTINGS = Pref<String>("settings_export", "") {
         title = { it.settingExportSettingsTitle }
@@ -994,7 +1015,7 @@ object Preferences {
                 val saver = rememberFileSaver { file ->
                     if (file == null) return@rememberFileSaver
                     scope.launch {
-                        // Writing a file can fail for a dozen reasons, and silence looks
+                        // Writing a file can fail for many reasons, and silence looks
                         // exactly like success.
                         result = runCatching { file.writeBytesCompat(buildSettingsBackup().encodeToByteArray()) }
                             .fold(onSuccess = { done }, onFailure = { failed })
@@ -1009,8 +1030,8 @@ object Preferences {
     }
 
     /**
-     * A settings file back in. A value that does not fit its setting is skipped rather than
-     * guessed at, because a settings file is a text file and someone will hand-edit one.
+     * Reads a settings file back in. A value that does not fit its setting is skipped, not
+     * guessed, because someone will edit a settings file by hand.
      */
     val IMPORT_SETTINGS = Pref<String>("settings_import", "") {
         title = { it.settingImportSettingsTitle }
@@ -1090,10 +1111,10 @@ object Preferences {
     }
 
     /**
-     * Extra command-line flags forwarded verbatim to LibVLC on iOS (`VLCLibrary(args)`).
-     * Tokenized by [tokenizeVlcFlags], which splits on whitespace but honours `"`/`'` quoted runs
-     * so values with spaces work (e.g. `--sub-text-scale="1.5"`). Takes effect on the next VLCKit
-     * (re)initialization.
+     * Extra command-line flags passed as they are to LibVLC on iOS (`VLCLibrary(args)`).
+     * [tokenizeVlcFlags] splits them on whitespace but keeps `"` and `'` quoted runs together,
+     * so a value can contain spaces (for example `--sub-text-scale="1.5"`). A change takes effect
+     * the next time VLCKit initializes.
      */
     val VLC_CUSTOM_FLAGS = Pref("pref_vlc_custom_flags", "") {
         title = { it.uisettingVlcCustomFlagsTitle }
@@ -1104,12 +1125,13 @@ object Preferences {
     }
 
     /**
-     * Import an mpv.conf from the user's storage, overwriting the one mpv reads from at
-     * `{filesDir}/mpv.conf`. Only shown by the mpv engine's own settings category, so platforms
-     * without mpv never see it; there [getMpvConfFilePath] returns null and this is a no-op.
+     * Imports an mpv.conf from the user's storage. It overwrites the file that mpv reads at
+     * `{filesDir}/mpv.conf`. Only the mpv engine's own settings category shows this row, so
+     * platforms without mpv never see it. On those platforms, [getMpvConfFilePath] returns null
+     * and the import does nothing.
      *
-     * The new config takes effect the next time mpv is initialized (e.g. after loading a video
-     * fresh) because mpv reads its config dir only when a core starts.
+     * The new config takes effect the next time mpv starts (for example when a video loads
+     * again), because mpv reads its config directory only when a core starts.
      */
     val MPV_IMPORT_CONF = Pref<String>("mpv_import_conf", "") {
         title = { it.uisettingMpvImportConfTitle }
@@ -1142,9 +1164,9 @@ object Preferences {
     }
 
     /**
-     * Export the currently active mpv.conf (if any) to a user-chosen location. On Android this
-     * reads from `{filesDir}/mpv.conf`; if the file does not exist yet the pref is effectively a
-     * no-op (user is informed via logs).
+     * Exports the active mpv.conf, if there is one, to a place that the user picks. On Android it
+     * reads `{filesDir}/mpv.conf`. When that file does not exist yet, nothing is written, and only
+     * the log says so.
      */
     val MPV_EXPORT_CONF = Pref<String>("mpv_export_conf", "") {
         title = { it.uisettingMpvExportConfTitle }
@@ -1180,11 +1202,10 @@ object Preferences {
 }
 
 /**
- * A one-line answer to "did that work?".
+ * A one-line answer to "did that work?" after a settings import or export.
  *
- * Import and export used to write their outcome to the log and nothing else, so a refused file
- * and a successful one looked identical: the sheet closed and the settings were whatever they
- * were.
+ * With only a log line, a refused file and a successful one would look the same to the user:
+ * the sheet closes, and the settings are whatever they are.
  */
 @Composable
 private fun OutcomeModal(text: String?, onDismiss: () -> Unit) {

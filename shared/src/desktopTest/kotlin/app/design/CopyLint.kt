@@ -4,7 +4,11 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-/** Copy hygiene. Layout is checked by rendering; arbitrary length caps must not obscure a setting's meaning. */
+/**
+ * Lints the English strings: no Android-style escapes, and no marketing words in setting text.
+ * The lint sets no length cap: the render tests check that text fits, and a cap could hide what a
+ * setting means.
+ */
 class CopyLint {
 
     private val banned = listOf("seamless", "robust", "powerful", "leverage", "empower", "enhance", "optimize", "elevate", "streamline", "intuitive", "effortless", "delve")

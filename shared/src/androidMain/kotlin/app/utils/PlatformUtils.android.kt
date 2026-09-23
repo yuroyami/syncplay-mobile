@@ -44,8 +44,8 @@ import SyncplayMobile.shared.KiteBuildConfig
 
 actual val platform: Platform = Platform.Android
 
-/* Lazily cached singleton so one OkHttp engine is shared and connection pooling works.
- * HttpTimeout fails fast on flaky CDNs; User-Agent is set for CDNs that filter on it. */
+/* A lazy singleton, so one OkHttp engine is shared and connection pooling works. HttpTimeout
+ * fails fast on flaky CDNs, and the User-Agent header is set for CDNs that filter on it. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(OkHttp) {
         install(HttpTimeout) {
@@ -53,12 +53,12 @@ actual val httpClient: HttpClient by lazy {
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
         }
-        /* Full HTTP transcript piped into loggy(). The host filter restricts logging to
-         * JSON API hosts so that 100KB+ image-tile bodies don't drown the log. */
+        /* HTTP logging goes to loggy(). The host filter limits it to JSON API hosts (api.*), so
+         * image bodies of 100 KB or more do not flood the log. */
         install(Logging) {
             logger = app.utils.KtorLoggyLogger
-            // A whole request line carries the URL, and the Klipy key lives in the URL. Full
-            // bodies are a debugging tool, not something to ship.
+            // Every request line carries the URL, which holds the Klipy key (loggy masks it).
+            // Full bodies are for debugging only, so release builds log at INFO.
             level = if (KiteBuildConfig.IS_DEBUG) LogLevel.ALL else LogLevel.INFO
             sanitizeHeader { header -> header == "Api-Key" || header == HttpHeaders.Authorization }
             filter { request -> request.url.host.startsWith("api.") }
@@ -73,7 +73,7 @@ actual val httpClient: HttpClient by lazy {
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(ExoEngine)
     add(MpvEngine)
-    // One KitePlayer entry: the renderer (native view or pure Compose) is an in-room toggle now.
+    // One KitePlayer entry: the renderer (native view or pure Compose) is a toggle in the room.
     add(KiteEngine(AndroidKiteMediaResolver))
 }
 
@@ -88,9 +88,10 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
 /**
- * Android states the mode on UiModeManager, and some boxes carry the leanback feature without
- * reporting the television mode, so both are asked (as pull request #159 did). Cached: the answer
- * cannot change while the process lives, and asking is a system service call.
+ * Whether this device is a TV. Android reports the mode through UiModeManager, but some TV boxes
+ * have the leanback feature without reporting TV mode, so this checks both (as pull request #159
+ * did). The answer is cached: it cannot change while the process lives, and each check is a
+ * system service call.
  */
 private val television: Boolean by lazy {
     runCatching {
@@ -133,15 +134,7 @@ actual fun getFileSize(uri: PlatformFile): Long? {
     return df.length()
 }
 
-/**
- * Queries the display name of a content:// URI from the ContentResolver.
- *
- * Helper function for [getFileName] that handles content URIs specifically.
- *
- * @receiver Context for accessing ContentResolver
- * @param uri The content URI to query
- * @return The display name from the content provider, or null if query fails
- */
+/** The display name of a content:// URI from the ContentResolver, or null when the query fails. */
 private fun Context.getContentFileName(uri: Uri): String? = runCatching {
     contentResolver.query(uri, null, null, null, null)?.use { cursor ->
         cursor.moveToFirst()
@@ -158,7 +151,8 @@ actual fun ClipEntry.getText(): String? {
 actual fun EnterRoomMode(portrait: Boolean) {
     val view = LocalView.current
 
-    // SideEffect runs after every composition — re-hides bars after popups/menus dismiss.
+    // SideEffect runs after every composition, so it hides the bars again after a popup or menu
+    // closes.
     SideEffect {
         if (Build.VERSION.SDK_INT >= 30) {
             view.windowInsetsController?.hide(

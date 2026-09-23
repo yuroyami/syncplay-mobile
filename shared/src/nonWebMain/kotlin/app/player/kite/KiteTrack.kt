@@ -6,12 +6,12 @@ import app.player.models.TrackTrait
 import io.github.yuroyami.kiteplayer.TrackId
 
 /**
- * A KitePlayer track, carrying the engine's own [TrackId] rather than a bare position.
+ * A KitePlayer track, carrying the engine's own [TrackId] instead of a bare position.
  *
  * KitePlayer identifies a track by its container stream index (or a negative value for an
- * externally added one), and [Track.index] is an Int the shared UI uses for display and ordering
- * only. Keeping the real id beside it means selection never has to guess which list position maps
- * to which stream.
+ * externally added one). [Track.index] is an Int that the shared UI uses only for display and
+ * ordering. With the real id beside it, selection never has to guess which list position maps to
+ * which stream.
  */
 class KiteTrack(
     override val name: String,

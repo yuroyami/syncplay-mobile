@@ -79,11 +79,14 @@ import app.utils.platform
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Every engine at once: one hairline frame, one cell per engine with its mark, name and badge,
- * the active cell filled with the accent and carrying the bottom edge. Under the frame a "?"
- * square sits below the selected cell; a tap morphs it into a full-width card with the
- * engine's story, so there is never a doubt which engine the words are about. [compact] is the
- * short-window size: smaller marks and tighter padding, twenty points less per cell.
+ * The engine picker. An engine is one of the video players the app can drive (ExoPlayer, mpv,
+ * VLCKit, AVPlayer, KitePlayer).
+ *
+ * All engines show at once in one thin frame, one cell per engine with its logo, name and badge.
+ * The selected cell has an accent fill and an accent line at its bottom edge. Under the frame, a
+ * "?" square sits below the selected cell. A tap turns the square into a full-width card that
+ * describes the engine, so it is always clear which engine the card is about. [compact] is the
+ * size for a short window: smaller logos, tighter padding, and cells 20dp shorter.
  */
 @Composable
 fun HomeEnginePicker(
@@ -138,8 +141,9 @@ private val CompactMarkSize = 32.dp
 private val TipSize = 18.dp
 
 /**
- * The "?" square under the selected cell, which glides to the start edge and widens into the
- * story card on a tap; a second tap folds it back. The card follows the selection while open.
+ * The "?" square under the selected cell. A tap moves the square to the start edge and widens it
+ * into the engine card, and a second tap folds it back. While open, the card shows the selected
+ * engine.
  */
 @Composable
 private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?) {
@@ -153,10 +157,10 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?)
         val underCell = cellWidth * selectedIndex + (cellWidth - TipSize) / 2
         val cardWidth = maxWidth
         val density = LocalDensity.current
-        /* The card reports its own height, measured at its final width, so the height animates
-         * in lockstep with the width toward one known target. animateContentSize could not do
-         * this: it animates one size, and a width that moves every frame kept re-aiming it, so
-         * the height crawled and then finished in a second visible curve. */
+        /* The card reports its own height, measured at its final width, so the height and the
+         * width animate together toward one known target. Do not use animateContentSize here: it
+         * animates one size, and a width that changes every frame keeps re-aiming it, so the
+         * height lags and then ends in a second visible curve. */
         var cardHeight by remember { mutableStateOf(0.dp) }
         val start by animateDpAsState(if (open) 0.dp else underCell, Motion.move(), label = "tipStart")
         val width by animateDpAsState(if (open) cardWidth else TipSize, Motion.move(), label = "tipWidth")
@@ -180,14 +184,14 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?)
             if (open && story != null) {
                 AnimatedContent(
                     targetState = story,
-                    // No size transform of its own: the box above animates the size, alone.
+                    // No size transform here: only the box above animates the size.
                     transitionSpec = { ContentTransform(fadeIn(Motion.quick()), fadeOut(Motion.quick()), sizeTransform = null) },
                     label = "engineStory",
                 ) { current ->
                     /* Laid out at the card's final width from the first frame, whatever width the
                      * box is animating through, so the height has one target. Measured against
-                     * the growing width, the words re-wrapped every frame: the card overshot its
-                     * final height, then shrank back. */
+                     * the growing width, the words would wrap again on every frame, and the card
+                     * would overshoot its final height and then shrink back. */
                     EngineCard(
                         current,
                         Modifier.laidOutAt(cardWidth).onSizeChanged { cardHeight = with(density) { it.height.toDp() } },
@@ -205,18 +209,18 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?)
 /** What a badge says, and in what tone. */
 private class EngineBadge(val label: String, val tone: Tone)
 
-/** Whether an engine can do one thing: outright, not at all, or only when the device's chip can. */
+/** Whether an engine can do one thing: yes, no, or only when the device's hardware can. */
 private enum class Can { Yes, No, Device }
 
 /** The card's content: what the engine is, then one line per ability with its verdict. */
 private data class EngineStory(val description: String, val rows: List<Pair<String, Can>>)
 
 /**
- * The facts per engine. The verdicts are what the bundled libraries can do, not what a given
- * file needs: mpv, KitePlayer and VLCKit carry the full FFmpeg with dav1d and libass, so they
- * share one list of formats. ExoPlayer and AVPlayer decode video on the device's own chips and
- * draw ASS as plain text. Picture in picture is the one ability that depends on the platform,
- * not the engine: KitePlayer has it on Android only.
+ * The facts for each engine. A verdict says what the bundled libraries can do, not what a given
+ * file needs. mpv, KitePlayer and VLCKit carry the full FFmpeg with dav1d and libass, so they
+ * share one list of abilities. ExoPlayer and AVPlayer decode video on the device's own hardware
+ * and draw ASS subtitles as plain text. Picture-in-picture is the one ability that depends on the
+ * platform and not the engine: KitePlayer has it on Android only.
  */
 private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
     val yes = Can.Yes
@@ -262,7 +266,10 @@ private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
     }
 }
 
-/** The description, then the ability lines, each led by its mark: green check, red cross, or a dim dash. */
+/**
+ * The engine card: the description, then one line per ability, led by a green check, a red cross
+ * or a dim dash.
+ */
 @Composable
 private fun EngineCard(story: EngineStory, modifier: Modifier = Modifier) {
     val p = palette
@@ -289,8 +296,9 @@ private fun EngineCard(story: EngineStory, modifier: Modifier = Modifier) {
 }
 
 /**
- * Measures the content at exactly [width], whatever the incoming constraints allow, and reports
- * a width that fits them, anchored at the start. The overflow is for the caller's clip.
+ * Measures the content at exactly [width], whatever the incoming constraints allow, and reports a
+ * width that fits those constraints. The content is anchored at the start, and the caller's clip
+ * cuts the overflow.
  */
 private fun Modifier.laidOutAt(width: Dp): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(Constraints.fixedWidth(width.roundToPx()))
@@ -298,8 +306,8 @@ private fun Modifier.laidOutAt(width: Dp): Modifier = layout { measurable, const
 }
 
 /**
- * One badge per engine, the most important thing to know first: missing beats experimental
- * beats default beats the platform's own player.
+ * One badge per engine, for the most important fact: unavailable first, then experimental, then
+ * default, then the platform's own player.
  */
 private fun badgeOf(engine: PlayerEngine, s: AppStrings): EngineBadge? = when {
     !engine.isAvailable -> EngineBadge(s.connectEngineBadgeUnavailable, Tone.Bad)
@@ -321,7 +329,7 @@ private fun EngineCell(engine: PlayerEngine, active: Boolean, compact: Boolean, 
 
     Column(
         modifier = modifier
-            // Always selectable: tapping an engine this build lacks lets the caller say so.
+            // Always selectable, so a tap on an engine this build lacks lets the caller say why.
             .selectable(selected = active, role = Role.RadioButton, interactionSource = source, indication = null, onClick = onClick)
             .hoverable(source)
             .semantics { contentDescription = spoken }
@@ -341,7 +349,7 @@ private fun EngineCell(engine: PlayerEngine, active: Boolean, compact: Boolean, 
             painter = painterResource(engine.img),
             contentDescription = null,
             modifier = Modifier.size(if (compact) CompactMarkSize else MarkSize),
-            // An engine that cannot be picked loses its colour, not only its word.
+            // An unavailable engine shows in grey, not only with its badge.
             colorFilter = if (available) null else ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
             alpha = if (available) 1f else 0.5f,
         )
@@ -357,7 +365,7 @@ private fun EngineCell(engine: PlayerEngine, active: Boolean, compact: Boolean, 
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            // A name wider than its cell steps down toward the group size before it is cut.
+            // A name wider than its cell shrinks, down to the auto-size floor, before it is cut.
             autoSize = FontSizeRange(Type.label.fontSize),
         )
         if (badge != null) {

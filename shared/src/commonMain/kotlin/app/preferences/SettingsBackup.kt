@@ -4,15 +4,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * Settings in and out of a file.
+ * Moves settings into and out of a file, so that a user can set up a new phone or keep two
+ * devices in step without setting every preference by hand.
  *
- * Half of this existed: mpv's own config could be imported and exported and nothing else could.
- * Moving to a new phone, or keeping two devices in step, meant setting a hundred preferences by
- * hand.
- *
- * What travels is exactly what the settings screens show. Identity, saved themes, the join
- * config and anything holding a password stay behind, because a settings file is something
- * people mail to each other.
+ * The file holds every preference that has a settings row. Identity, saved themes, the join
+ * config and anything that holds a password stay behind, because people send settings files to
+ * each other.
  */
 
 /** The file's shape. Versioned so a later format can still read this one. */
@@ -41,8 +38,8 @@ private val backupJson = Json { prettyPrint = true; ignoreUnknownKeys = true; en
 /**
  * Every setting with a row, minus actions and the ones that stay behind.
  *
- * Read from the registry, not from the two settings screens: an engine's own rows and the
- * colours behind a nested editor are real preferences that were quietly not travelling.
+ * It reads the registry, not the settings screens, because an engine's own rows and the colours
+ * behind a nested editor are real preferences too.
  */
 fun exportableSettings(): List<Pref<*>> {
     // Before the snapshot, not after: the registry fills as the preferences are constructed.
@@ -61,7 +58,7 @@ fun exportableSettings(): List<Pref<*>> {
         .distinctBy { it.key }
 }
 
-/** Reads the live values into a file. */
+/** Builds the text of a backup file from the live values. */
 fun buildSettingsBackup(): String {
     val values = exportableSettings().mapNotNull { pref ->
         val value = pref.valueAny() ?: return@mapNotNull null
@@ -74,11 +71,11 @@ fun buildSettingsBackup(): String {
 data class RestoreOutcome(val applied: Int, val skipped: Int, val error: String? = null)
 
 /**
- * Reads a backup and hands back the values to write, already matched to real preferences and
- * converted to the type each one stores.
+ * Reads a backup and returns the values to write, already matched to real preferences and
+ * converted to the type that each one stores.
  *
- * A value that does not fit its preference is skipped, not guessed at: a settings file is a
- * text file, and someone will edit one by hand.
+ * A value that does not fit its preference is skipped, not guessed: a settings file is a text
+ * file, and someone will edit one by hand.
  */
 fun readSettingsBackup(raw: String): Pair<Map<Pref<*>, Any>, RestoreOutcome> {
     val parsed = runCatching { backupJson.decodeFromString<SettingsBackup>(raw) }.getOrNull()
@@ -103,12 +100,12 @@ fun readSettingsBackup(raw: String): Pair<Map<Pref<*>, Any>, RestoreOutcome> {
 }
 
 /**
- * Reads [text] as whatever type [pref] stores, and refuses a value the row itself would not
- * offer. Null means it did not fit.
+ * Reads [text] as the type that [pref] stores, and refuses a value that the row itself would not
+ * offer. Null means that the value did not fit.
  *
- * Type alone is not enough. A settings file is a text file and somebody will edit one by hand, so
- * a number outside its slider or a choice that names nothing has to be skipped rather than
- * written: the second one leaves a code path selecting neither branch.
+ * The type alone is not enough, because someone will edit a settings file by hand. A number
+ * outside its slider, or a choice that names nothing, is skipped and not written. An unknown
+ * choice would make the code that reads it select no branch at all.
  */
 private fun convertTo(pref: Pref<*>, text: String): Any? {
     val converted = when (pref.default) {
@@ -135,11 +132,11 @@ private fun convertTo(pref: Pref<*>, text: String): Any? {
 }
 
 /**
- * Choice preferences that steer code paths, and the values their rows offer.
+ * Choice preferences that steer code paths, with the values that their rows offer.
  *
- * Only the ones where an unknown value selects nothing at all. The mpv lists are copied here
- * because they live in Android source that common code cannot see; they change about once a
- * decade, and a value missing from this list is skipped rather than mis-applied.
+ * The list holds only the ones where an unknown value selects nothing at all. The mpv lists are
+ * copies, because they live in Android source that common code cannot see. They rarely change,
+ * and a value missing from a list is skipped, not applied wrongly.
  */
 private val KNOWN_CHOICES: Map<String, Set<String>> = mapOf(
     "pref_unpause_action" to setOf("IfAlreadyReady", "IfOthersReady", "IfMinUsersReady", "Always"),

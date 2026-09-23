@@ -46,7 +46,7 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.frames.LocalModalActionEntry
 
-/** The primary action: at least 48dp, the brand field, label in the ground colour. */
+/** The primary action: at least 48dp tall, the brand gradient fill, label in the ground colour. */
 @Composable
 fun PrimaryAction(
     text: String,
@@ -67,14 +67,14 @@ fun PrimaryAction(
             .background(Brush.horizontalGradient(if (enabled) p.brandField else listOf(p.disabled, p.disabled)))
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
             .hoverable(source, enabled)
-            // The gradient ring would vanish into the gradient fill, so the ring is ink.
+            // A gradient focus ring would vanish into the gradient fill, so this ring is ink.
             .controlStates(source, Radius.controlShape, enabled = enabled, focusRing = SolidColor(p.ink))
             .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            // The label is centred on the whole bar; the trailing glyph sits over its end.
+            // The label is centred on the whole bar, and the trailing glyph sits over its end.
             ActionLabel(
                 text,
                 color = p.ground,
@@ -85,7 +85,10 @@ fun PrimaryAction(
     }
 }
 
-/** The confirming action of a panel or full modal: at least 42dp, accent fill, label read off that fill. */
+/**
+ * The confirming action of a panel or a full modal: at least 42dp tall, filled with the accent,
+ * with a label colour that reads on that fill.
+ */
 @Composable
 fun AccentAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
@@ -110,7 +113,7 @@ fun AccentAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
     }
 }
 
-/** At least 42dp, a hairline border, label in ink. */
+/** A secondary action: at least 42dp tall, a thin border, label in ink. */
 @Composable
 fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
@@ -132,7 +135,7 @@ fun SecondaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modi
     }
 }
 
-/** Related links stay beside each other only while each has a readable width. */
+/** Two related secondary actions, side by side while each has a readable width, else stacked. */
 @Composable
 fun SecondaryActionPair(
     firstText: String,
@@ -157,7 +160,10 @@ fun SecondaryActionPair(
     }
 }
 
-/** A 2dp stripe in `bad` on the start edge and the label in `bad`. Never a red filled button. */
+/**
+ * A destructive action: a 2dp stripe in `bad` on the start edge and the label in `bad`. Never a
+ * red filled button.
+ */
 @Composable
 fun DestructiveAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
@@ -199,7 +205,10 @@ fun ActionStatus(text: String, color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Labels can wrap and shrink in narrow buttons; larger system text can also grow the button. */
+/**
+ * The label of an action. It can wrap and shrink in a narrow button, and larger system text
+ * makes the button taller.
+ */
 @Composable
 private fun ActionLabel(text: String, color: Color, modifier: Modifier = Modifier) {
     val style = Type.label.copy(lineHeight = 1.25.em, textAlign = TextAlign.Center)
@@ -209,17 +218,18 @@ private fun ActionLabel(text: String, color: Color, modifier: Modifier = Modifie
         // Measure before choosing the label's height. Foundation autosize in a wrapping button
         // can otherwise size its parent using a different font from the one it finally draws.
         val labelConstraints = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
-        /* Remembered on everything the answer depends on. Every action in the app runs this, and
-         * unremembered it laid the label out up to nine times per composition, each with its own
-         * style copy and annotated string, for a result that only moves when the text or the box
-         * does. Nine candidates also overflow the measurer's own cache, so nothing there caught it. */
+        /* Remembered on everything the answer depends on. Every action in the app runs this.
+         * Without remember, it would lay the label out up to nine times per composition, each time
+         * with a new style copy and annotated string, for a result that changes only with the text
+         * or the box. Nine candidates also overflow the measurer's own cache, so that cache does
+         * not help. */
         val fontSize = remember(text, labelConstraints, style, minFontSize, measurer) {
             (0..8).map { lerp(style.fontSize, minFontSize, it / 8f) }.firstOrNull { candidate ->
                 val layout = measurer.measure(AnnotatedString(text), style.copy(fontSize = candidate), constraints = labelConstraints)
                 layout.lineCount <= 2 && !layout.hasVisualOverflow
             } ?: minFontSize
         }
-        // At the readable floor, wrapping further is preferable to truncating the action.
+        // At the smallest readable size, the label wraps to more lines instead of being cut.
         Text(text, color = color, style = style.copy(fontSize = fontSize))
     }
 }

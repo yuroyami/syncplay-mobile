@@ -15,7 +15,10 @@ import app.LocalRoomViewmodel
 import app.theme.palette
 import app.uicomponents.SynkplayLogo
 
-/** The room ground before a file loads: the mark at 35 percent, nothing else. */
+/**
+ * The background of the room screen while no video is loaded: the Synkplay logo at 35 percent
+ * opacity. A room is the group of people watching together.
+ */
 @Composable
 fun RoomBackgroundArtwork() {
     val viewmodel = LocalRoomViewmodel.current

@@ -8,10 +8,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * Base class for all "manager" components. Provides coroutine dispatch helpers tied to the
- * parent ViewModel's scope.
+ * The base class for the managers: helper classes that each own one part of a view model's work.
+ * It gives them coroutine helpers that run in the view model's scope.
  *
- * @property vm The parent ViewModel whose scope is used for coroutine execution.
+ * @property vm The view model whose scope runs the coroutines.
  */
 abstract class AbstractManager(val vm: ViewModel) {
 
@@ -21,7 +21,7 @@ abstract class AbstractManager(val vm: ViewModel) {
         vm.viewModelScope.launch(Dispatchers.Main.immediate) { block() }
     }
 
-    /** Returns the job so a caller that has to stop its own work later can hold it. */
+    /** Runs [block] on the IO dispatcher and returns the job, so a caller can cancel it later. */
     inline fun onIOThread(crossinline block: suspend () -> Unit): Job =
         vm.viewModelScope.launch(ioDispatcher) { block() }
 }

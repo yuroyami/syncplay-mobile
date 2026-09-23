@@ -29,13 +29,14 @@ import app.utils.loggy
 import java.lang.ref.WeakReference
 
 /**
- * The Android side of [PlatformCallback], holding the Activity weakly.
+ * The Android side of [PlatformCallback], which is how shared code asks the platform for things
+ * such as brightness, volume and shortcuts. It holds the Activity weakly.
  *
  * `platformCallback` is a process-wide reference, and the Activity is recreated on a theme,
- * locale or font-size change (those are not in its configChanges list). A strong reference kept
- * the dead Activity alive for the life of the process and, worse, kept sending it work: a
- * brightness change or a file picker would target a window that is gone. Every call resolves the
- * live Activity or quietly does nothing.
+ * locale or font-size change (those are not in its configChanges list). A strong reference would
+ * keep the dead Activity alive for the life of the process and keep sending it work, such as a
+ * brightness change or a file picker for a window that is gone. Each call that needs the
+ * Activity reads the live one and returns early when there is none.
  */
 internal class AndroidPlatformCallback(
     private val ref: WeakReference<SyncplayActivity>,
@@ -51,12 +52,13 @@ internal class AndroidPlatformCallback(
     @OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
         val a = activity ?: return
-        // The session is built here and left where the service will find it, because the player
-        // behind it is whichever engine the room built.
+        // Build the session here and leave it in RoomMediaSessionHolder for the service, because
+        // the player behind it is whichever engine the room built.
         val player = RoomMediaSessionPlayer(viewmodel, android.os.Looper.getMainLooper())
         RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).build())
-        // The room starts with an idle player. Media3 promotes the service when playback starts;
-        // startForegroundService here would arm Android's deadline before there is anything to play.
+        // The room starts with an idle player, and Media3 makes the service a foreground service
+        // when playback starts. startForegroundService here would start Android's startForeground
+        // deadline before there is anything to play.
         a.startService(Intent(a, SyncplayMediaSessionService::class.java))
     }
 
@@ -91,8 +93,8 @@ internal class AndroidPlatformCallback(
     }
 
     /**
-     * Creates a pinned home screen shortcut and dynamic shortcut for quick room access, with the
-     * room configuration in the intent extras.
+     * Adds a dynamic shortcut for this join configuration, and asks the launcher to pin it when
+     * the launcher supports that. The intent extras carry the join details.
      */
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
         val a = activity ?: return
@@ -110,13 +112,13 @@ internal class AndroidPlatformCallback(
             putExtra("serverpw", joinInfo.pw)
         }
 
-        // Built from exactly what the extras carry: the launch path recomputes this id from the
-        // incoming extras and refuses anything that matches no shortcut of ours.
+        // Built from exactly what the extras carry. The launch path builds this id again from the
+        // incoming extras and refuses any intent that matches no shortcut this app saved.
         val shortcutId = "$name$room$ip${joinInfo.port}"
         val shortcutInfo = ShortcutInfoCompat.Builder(a, shortcutId)
             .setShortLabel(joinInfo.room)
-            // The app module owns the launcher icon, so it is taken from the manifest rather than
-            // from this module's own resources, which held a shadowed second copy.
+            // The app module owns the launcher icon, so read it from the manifest, not from this
+            // module's resources.
             .setIcon(IconCompat.createWithResource(a, a.applicationInfo.icon))
             .setIntent(shortcutIntent)
             .build()
@@ -128,12 +130,12 @@ internal class AndroidPlatformCallback(
         }
     }
 
-    /** Removes all dynamic shortcuts created for room configurations. */
+    /** Removes all dynamic room shortcuts and disables the pinned ones. */
     override fun onEraseConfigShortcuts() {
         val a = activity ?: return
         ShortcutManagerCompat.removeAllDynamicShortcuts(a)
-        // Pinned copies live on the launcher and keep the room password; they can only
-        // be disabled, which is what stops them from ever joining again.
+        // Pinned shortcuts live on the launcher and keep the room password. The app can only
+        // disable them, and a disabled shortcut can no longer join.
         val pinned = ShortcutManagerCompat.getShortcuts(a, ShortcutManagerCompat.FLAG_MATCH_PINNED)
         if (pinned.isNotEmpty()) {
             ShortcutManagerCompat.disableShortcuts(a, pinned.map { it.id }, null)
@@ -152,8 +154,8 @@ internal class AndroidPlatformCallback(
     override fun getMaxBrightness() = 1f
 
     /**
-     * The current screen brightness, from this window's override when it has one and from system
-     * settings otherwise. Automatic mode reports an unreliable raw value, so it answers the middle.
+     * The screen brightness from 0 to 1: this window's override when it has one, and the system
+     * setting otherwise. Automatic mode reports an unreliable raw value, so it returns 0.5.
      */
     override fun getCurrentBrightness(): Float {
         val a = activity ?: return 0.5f
@@ -170,7 +172,7 @@ internal class AndroidPlatformCallback(
         else Settings.System.getInt(a.contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128).toFloat() / 255
     }
 
-    /** @param v Brightness value between 0.0 (darkest) and 1.0 (brightest). */
+    /** Sets this window's brightness, from 0.0 (darkest) to 1.0 (brightest). */
     override fun changeCurrentBrightness(v: Float) {
         val a = activity ?: return
         loggy("Brightness: $v")
@@ -224,8 +226,8 @@ internal class AndroidPlatformCallback(
     }
 
     /**
-     * Opens the system chooser, which lets the user browse with any installed file manager. This
-     * is what reaches files FileKit's extension filter hides, such as SMB-backed media for mpv.
+     * Opens the system file picker, where the user can browse with any installed file manager.
+     * It reaches files that FileKit's extension filter hides, such as SMB-backed media for mpv.
      */
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
         val a = activity ?: return onResult(null)

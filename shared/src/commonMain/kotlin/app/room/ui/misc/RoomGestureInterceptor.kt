@@ -70,14 +70,17 @@ private const val CHAIN_WINDOW_MS = 900L
 private const val LONG_PRESS_MS = 600L
 private const val LONG_PRESS_STEP_MS = 200L
 
-/** The mark drawn at a double tap: where, which way, and an id so each tap restarts the fade. */
+/** The mark at a double tap: the tap point, the seek direction, and an id that restarts the fade. */
 private class SeekMark(val at: Offset, val forward: Boolean, val id: Int)
 
 /**
- * Double tap to seek, long press to seek continuously, swipe left for brightness and right for
- * volume. Always composed; its pointer handlers attach only while the HUD is hidden, so with the
- * HUD up every touch reaches the chrome. Double taps inside 900 ms accumulate into one seek and
- * one announcement; a long press previews its landing point and commits once on release.
+ * The touch layer over the video. A double tap seeks, a long press seeks in steps, and a vertical
+ * swipe changes brightness on the left half and volume on the right half.
+ *
+ * The layer is always composed, but its pointer handlers attach only while the HUD (the controls
+ * over the video) is hidden. While the HUD shows, every touch reaches the controls.
+ * Double taps less than 900 ms apart add up to one seek and one announcement. A long press moves
+ * a preview of the landing point and seeks once, on release.
  */
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
@@ -96,9 +99,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val latestForwardJump by rememberUpdatedState(forwardJump)
     val latestBackwardJump by rememberUpdatedState(backwardJump)
 
-    /* The system edge guards, read through rememberUpdatedState: the handlers below are long
-     * lived and would keep composition-time values across a rotation, which restarts nothing
-     * because the activity handles configChanges itself. */
+    /* The system edge guards are read through rememberUpdatedState. The pointer handlers below
+     * live long and would otherwise keep the values from an old composition. A rotation does not
+     * restart the handlers, because the activity handles configChanges itself. */
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val topGestureGuardPx by rememberUpdatedState(maxOf(WindowInsets.systemGestures.getTop(density), WindowInsets.displayCutout.getTop(density)))
@@ -109,18 +112,19 @@ fun RoomGestureInterceptor(modifier: Modifier) {
 
     var readout by remember(media?.location) { mutableStateOf<GestureReadout?>(null) }
 
-    // The double-tap chain: origin captured on the first tap, committed once after the window.
+    // The double-tap chain: the first tap saves the origin, and the chain seeks once when it ends.
     var chainSteps by remember(media?.location) { mutableIntStateOf(0) }
     var chainOriginMs by remember(media?.location) { mutableLongStateOf(0L) }
     var chainVersion by remember(media?.location) { mutableIntStateOf(0) }
     var seekMark by remember(media?.location) { mutableStateOf<SeekMark?>(null) }
     var markId by remember { mutableIntStateOf(0) }
 
-    // The long press preview: the landing point moves while the finger stays down.
+    // The long-press preview: the landing point moves while the finger stays down.
     var previewMs by remember(media?.location) { mutableStateOf<Long?>(null) }
     var pressOriginMs by remember(media?.location) { mutableLongStateOf(0L) }
 
-    // The zone wash shows on the first drag, and again after a gesture preference changes.
+    // The wash is a tint with an icon over the half of the screen that a swipe changes. It shows
+    // on the first drag, and again after a gesture preference changes.
     var washSeen by remember(gesturesEnabled, swipeEnabled) { mutableStateOf(false) }
     var wash by remember { mutableStateOf<GestureValueKind?>(null) }
     var washKind by remember { mutableStateOf(GestureValueKind.VOLUME) }
@@ -135,8 +139,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     fun fractionOf(ms: Long): Float? = if (latestDurationMs > 0L) (ms.toFloat() / latestDurationMs).coerceIn(0f, 1f) else null
     fun clampToMedia(ms: Long): Long = if (latestDurationMs > 0L) ms.coerceIn(0L, latestDurationMs) else ms.coerceAtLeast(0L)
 
-    /* One engine seek and one announcement per chain, through the dispatcher's seek path, so the
-     * pending origin stays single use and the room never hears four seeks for four taps. */
+    /* A chain makes one seek and one announcement, through the seek path of the dispatcher. The
+     * saved origin is then used only once, and the room never gets four seeks for four taps. */
     LaunchedEffect(media?.location, chainVersion) {
         if (chainSteps == 0) return@LaunchedEffect
         delay(CHAIN_WINDOW_MS)
@@ -171,8 +175,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         ?: return@detectTapGestures
                                     coroutineScope {
                                         val forward = offset.x > size.width * 0.5f
-                                        // A preview belongs to this press. Pointer cancellation or
-                                        // media replacement must cancel its repeating child too.
+                                        // The preview belongs to this press. If the pointer is
+                                        // cancelled or the media changes, the preview job stops too.
                                         val job = launch {
                                             delay(LONG_PRESS_MS)
                                             Feedback.light()
@@ -217,7 +221,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     }
                                 } else null,
                                 onTap = {
-                                    // The HUD is hidden: a single tap brings it back and drops the keyboard.
+                                    // The HUD is hidden. A tap shows it and hides the keyboard.
                                     viewmodel.uiState.showHud()
                                     Feedback.tick()
                                     softwareKB?.hide()
@@ -228,8 +232,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             if (!(gesturesEnabled && swipeEnabled && hasVideo)) return@pointerInput
                             detectVerticalDragGestures(
                                 onDragStart = { startOffset ->
-                                    /* Drags from the system gesture zones and the waterfall edges are
-                                     * ignored for their whole life; size.* stays right after rotation. */
+                                    /* A drag that starts in a system gesture zone or on a waterfall
+                                     * edge (a curved screen side) is ignored until it ends. The size
+                                     * values come from the pointer scope, so they stay correct
+                                     * after a rotation. */
                                     val guardTop = maxOf(size.height * edgeGuardFraction, topGestureGuardPx.toFloat())
                                     val guardBottom = maxOf(size.height * edgeGuardFraction, bottomGestureGuardPx.toFloat())
                                     if (startOffset.y < guardTop || startOffset.y > size.height - guardBottom ||
@@ -238,8 +244,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         initialBrightness = -1f
                                         return@detectVerticalDragGestures
                                     }
-                                    // Where the platform cannot set brightness the left half does nothing,
-                                    // rather than showing a readout of a change that never happens.
+                                    // Where the platform cannot set brightness, the left half
+                                    // does nothing. It shows no readout for a change that
+                                    // cannot happen.
                                     val brightnessSide = startOffset.x < size.width * 0.5f
                                     if (brightnessSide && !platformCallback.supportsBrightness) {
                                         initialBrightness = -1f
@@ -266,8 +273,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     dragDistance += delta
                                     val height = size.height / 2f
                                     if (pointer.position.x >= size.width * 0.5f) {
-                                        /* Half the screen height is the base hundred; a swipe that keeps going
-                                         * climbs into the gain rung at the same rate, where the engine has one. */
+                                        /* A swipe over half the screen height moves the volume by
+                                         * 100. When the engine has a gain range, a longer swipe
+                                         * goes on into the gain range at the same rate. */
                                         val ladder = viewmodel.player.volume.ladder
                                         val newVolume = (initialVolume + (-dragDistance * VolumeLadder.BASE_MAX / height)).roundToInt().coerceIn(0, ladder.max)
                                         val gainSpan = (ladder.gainMax - VolumeLadder.BASE_MAX).coerceAtLeast(1)
@@ -294,7 +302,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                             lastAppliedBrightness = newBright
                                         }
                                     }
-                                    // The wash has done its teaching once the value readout is up.
+                                    // The wash is only a hint, so it hides when the readout shows.
                                     wash = null
                                 },
                             )
@@ -303,8 +311,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             ),
         )
 
-        /* The zone wash carries its own HUD gate: the interceptor is composed at all times, so a
-         * wash without it would draw under the visible chrome. */
+        /* The wash checks the HUD itself. This interceptor is always composed, so without the
+         * check, a wash could draw under the visible HUD. */
         val washAlpha by animateFloatAsState(if (wash != null && !isHUDVisible) 1f else 0f, Motion.quick(), label = "wash")
         if (washAlpha > 0f) {
             val onRight = washKind == GestureValueKind.VOLUME
@@ -331,7 +339,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             }
         }
 
-        // Two accent chevrons at the tap point, pointing the way the seek goes, fading over quick.
+        // Two accent chevrons at the tap point show the seek direction, and fade out over 400 ms.
         seekMark?.let { mark ->
             key(mark.id) {
                 val fade = remember { Animatable(1f) }

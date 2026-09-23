@@ -16,18 +16,16 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
 /**
- * The room, as something Android's media stack understands.
+ * The room as a Media3 player, so that Android's media stack can show and control it. A room is
+ * the group of people watching together.
  *
- * The service used to be a bare foreground notification: it kept the process alive and showed a
- * line of text, and that was all. No lock-screen controls, no headset button, nothing on the
- * notification but a title. That is what issue 125 is really about.
+ * This player gives the lock screen, the headset button and the media notification real
+ * controls (issue #125). [SimpleBasePlayer] is a Player that the platform can talk to, backed by
+ * any playback code. Every Android engine (ExoPlayer, mpv, KitePlayer) goes through it: mpv and
+ * KitePlayer are not Media3 players, and ExoPlayer's controls must reach the room too.
  *
- * [SimpleBasePlayer] exists for exactly this: it is a Player the platform can talk to, backed by
- * whatever actually plays. All five engines go through it, because none of them are Media3
- * players and one of them is VLCKit.
- *
- * Every control routes through the room's dispatcher rather than the engine, so a pause from the
- * lock screen is a pause the whole room hears, and one blocked by readiness is blocked here too.
+ * Every control goes through the room's dispatcher, not the engine. So a pause from the lock
+ * screen reaches the whole room, and a play that the readiness rules block is blocked here too.
  */
 @UnstableApi
 class RoomMediaSessionPlayer(
@@ -36,8 +34,8 @@ class RoomMediaSessionPlayer(
 ) : SimpleBasePlayer(looper) {
 
     /**
-     * SimpleBasePlayer only re-reads [getState] when it is told to, so the room's own flows have
-     * to poke it. Without this the lock screen shows whatever was true when the session was
+     * SimpleBasePlayer reads [getState] again only when told to, so the room's flows call
+     * invalidateState. Without this, the lock screen shows the state from when the session was
      * built and never changes.
      */
     private val watcher = viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
@@ -90,8 +88,8 @@ class RoomMediaSessionPlayer(
     }
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
-        // Through the dispatcher, not the engine: the room has to hear it, and readiness has to
-        // be able to refuse it.
+        // Through the dispatcher, not the engine: the room must hear the change, and the
+        // readiness rules must be able to refuse it.
         viewmodel.dispatcher.controlPlayback(
             if (playWhenReady) Playback.PLAY else Playback.PAUSE,
             tellServer = true,
@@ -110,12 +108,12 @@ class RoomMediaSessionPlayer(
             Player.COMMAND_SEEK_FORWARD -> from + forwardJumpMs()
             else -> positionMs
         }
-        // The one seek path, so the room is told and the jump can be undone.
+        // The single seek path, so the room hears the seek and the jump can be undone.
         viewmodel.dispatcher.seek(target.coerceAtLeast(0L), fromMs = from)
         return Futures.immediateVoidFuture()
     }
 
-    /** The app's own jump keys, so a lock-screen skip matches an in-room one. */
+    /** The app's own jump lengths, so a lock-screen skip matches an in-room one. */
     private fun backJumpMs(): Long = Preferences.SEEK_BACKWARD_JUMP.value().toLong() * 1000
 
     private fun forwardJumpMs(): Long = Preferences.SEEK_FORWARD_JUMP.value().toLong() * 1000

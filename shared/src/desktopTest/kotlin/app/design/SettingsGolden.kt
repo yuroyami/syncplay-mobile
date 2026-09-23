@@ -17,8 +17,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * The settings console on the real categories, with the height budgets from
- * DESIGN/PREF_SYSTEM. A change that reintroduces a seven line row fails here.
+ * The settings screens on the real categories, with a height budget for each category. A change
+ * that brings back a seven-line row fails here.
  */
 class SettingsGolden {
 
@@ -50,18 +50,18 @@ class SettingsGolden {
         DesignHarness.render("settings-player", 360, fontScale = 1.3f) { SettingsCategoryBody(INROOM_PLAYER_SETTINGS) }
         DesignHarness.render("settings-categories", 360) { SettingsCategoryList(SETTINGS_GLOBAL) {} }
 
-        // The room shows its categories two per row inside the side panel. Notices made that six,
-        // so the grid fills evenly; the names still have to survive the half-width cell.
+        // The room shows its six categories two per row inside the side panel, so the grid fills
+        // evenly. The names still have to fit the half-width cell.
         for (w in listOf(320, 440)) {
             DesignHarness.render("settings-room-categories", w) {
                 SettingsCategoryList(SETTINGS_ROOM, columns = 2) {}
             }.assertAllTextFits()
         }
 
-        // 260dp until the encryption-required row joined the category; still one screen, no scroll.
-        // 289dp: the rows grew when every control target went to the platform minimum of 48dp.
+        // The network category must fit one screen with no scroll, with every control target at
+        // the 48dp platform minimum.
         assertTrue(network.contentHeightDp <= 295, "network category ${network.contentHeightDp}dp exceeds its 295dp budget")
-        // 690dp until the room gained a rotation switch; still one screen on a phone in landscape.
+        // The player category must fit one screen on a phone in landscape.
         assertTrue(player.contentHeightDp <= 750, "player category ${player.contentHeightDp}dp exceeds its 750dp budget")
         assertTrue(chat.contentHeightDp <= 900, "chat category ${chat.contentHeightDp}dp exceeds its 900dp budget")
         assertTrue(notices.contentHeightDp <= 400, "notices category ${notices.contentHeightDp}dp exceeds its 400dp budget")

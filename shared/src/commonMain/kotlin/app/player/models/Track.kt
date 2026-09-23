@@ -2,33 +2,30 @@ package app.player.models
 
 import app.player.PlayerImpl
 
-/*****************************************************************************************
- * Track wrapper class. It encapsulates all info we need about a track in a track group  *
- *****************************************************************************************/
+/** One audio, subtitle or video track of a media file, as an engine reports it. */
 abstract class Track {
-    /** Name of the track */
     abstract val name: String
 
-    /** Corresponds to either subtitle track or audio track type **/
+    /** The track type (audio, subtitle or video), or null when it is unknown. */
     abstract val type: PlayerImpl.TrackType?
 
-    /** The index of the format (track) **/
+    /** The number that the engine uses to select this track. */
     abstract val index: Int
 
-    /** The current status of the track **/
+    /** True while this track is selected. */
     abstract val selected: Boolean
 
     /**
-     * What the platform says this track is for, when it says anything at all. A viewer who needs
+     * What the platform says this track is for, or null when it says nothing. A viewer who needs
      * captions for the deaf and hard of hearing, or an audio description, cannot tell those apart
      * from an ordinary track by name alone: many files label both "English".
      */
     open val trait: TrackTrait? get() = null
 
     /**
-     * The language tag the file states for this track, when the engine exposes one on its own.
-     * Engines that only put the language inside the display name answer null and rely on their
-     * own native preference handling instead.
+     * The language tag that the file states for this track, when the engine exposes one on its
+     * own. An engine that puts the language only inside the display name returns null and keeps
+     * its own native language handling.
      */
     open val language: String? get() = null
     open val channelCount: Int? get() = null

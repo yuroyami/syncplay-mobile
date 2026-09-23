@@ -8,13 +8,15 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
 /**
- * Desktop implementation of the platform callback surface. Most operations are inherently
- * mobile (PiP, haptics, foreground services, screen brightness) and are safe no-ops here:
- *  - Brightness: desktop OSes give apps no screen-brightness control; the in-room brightness
- *    gesture is mobile-only anyway (it only attaches to touch swipes).
- *  - Media session / server foreground services: a desktop process just keeps running; the
- *    built-in server lives in the ServerViewmodel scope and needs no service to survive.
- *  - Shortcuts: no launcher-shortcut concept; rooms are joined from the home screen.
+ * Desktop implementation of [PlatformCallback], the calls that the shared code makes into the
+ * platform. Most of them are mobile features (PiP, haptics, foreground services, screen
+ * brightness) and are safe no-ops here:
+ *  - Brightness: a desktop OS gives apps no screen-brightness control, so [supportsBrightness]
+ *    is false and the room screen ignores the brightness swipe.
+ *  - Media session and server foreground services: a desktop process simply keeps running. The
+ *    hosted server lives in ServerHostSession for the life of the process and needs no service.
+ *  - Shortcuts: there are no launcher shortcuts. A room (the group of people watching together)
+ *    is joined from the home screen or from the command line (see Main.kt).
  */
 object DesktopPlatformCallback : PlatformCallback {
 
@@ -28,7 +30,7 @@ object DesktopPlatformCallback : PlatformCallback {
 
     override fun changeCurrentBrightness(v: Float) {}
 
-    /** No desktop OS lets an app set screen brightness; the room hides the swipe rather than fake a readout. */
+    /** No desktop OS lets an app set screen brightness, so the room shows no fake readout. */
     override val supportsBrightness: Boolean get() = false
 
     override fun mediaSessionInitialize(viewmodel: RoomViewmodel) {}
@@ -46,7 +48,7 @@ object DesktopPlatformCallback : PlatformCallback {
     override fun performHapticFeedback() {}
 
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
-        // FileKit's own picker is the desktop path; the no-filter fallback is Android-only.
+        // Desktop uses FileKit's own picker; the unfiltered fallback picker is Android-only.
         onResult(null)
     }
 

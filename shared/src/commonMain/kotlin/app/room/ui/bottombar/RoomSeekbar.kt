@@ -54,17 +54,18 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /**
- * The transport track: elapsed timecode, the drawn scrub track with its buffered band and
- * chapter marks, and the total. Preview while dragging, one seek on release through the
- * dispatcher's single seek path, with the origin captured on the first drag event.
+ * The seek bar of the room (the group of people watching together): the elapsed time, the scrub
+ * track with its buffered band and chapter marks, and the total time. Dragging shows a preview.
+ * The release sends one seek through the dispatcher's single seek path, from the position
+ * captured on the first drag event.
  */
 @Composable
 fun RoomSeekbar(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val density = LocalDensity.current
     val scope = rememberCoroutineScope { Dispatchers.Main }
-    /* Collected only while the HUD shows. The bar stays composed at alpha 0 when hidden, so a
-     * plain collect recomposed it four times a second behind an invisible layer, forever. */
+    /* Collected only while the HUD shows. The bar stays composed at alpha 0 while hidden, so a
+     * plain collect would recompose it four times a second behind an invisible layer. */
     val hudVisible by LocalRoomUiState.current.visibleHUD.collectAsState()
     val positionState = remember { mutableLongStateOf(viewmodel.playerManager.timeCurrentMillis.value) }
     LaunchedEffect(hudVisible) {
@@ -72,23 +73,23 @@ fun RoomSeekbar(modifier: Modifier) {
     }
     val positionMs = positionState.longValue
     val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
-    /* Collected, not read off the viewmodel's plain getter: that getter is a StateFlow value read,
-     * which Compose does not observe, so a new file left the chapter marks on the previous one. */
+    /* Collected, not read from the viewmodel's plain getter. That getter reads a StateFlow value,
+     * which Compose does not observe, so a new file would keep the chapter marks of the old one. */
     val media by viewmodel.playerManager.media.collectAsState()
 
-    /* The one caller of analyzeChapters: engines clear the list first, so a second caller
-     * would blank the marks mid-frame. It runs again once the duration lands, because most
-     * engines know the chapters only after the container is parsed, and the snapshot below
-     * is taken after each run rather than once per file name. */
+    /* The only caller of analyzeChapters. Engines clear the list first, so a second caller would
+     * blank the marks mid-frame. It runs again once the duration is known, because most engines
+     * know the chapters only after they parse the container. The snapshot below is taken after
+     * each run, not once per file name. */
     var chapterListVersion by remember { mutableIntStateOf(0) }
     LaunchedEffect(media?.location, durationMs > 0L) {
         viewmodel.player.analyzeChapters(media ?: return@LaunchedEffect)
         chapterListVersion++
     }
     val chapters = remember(media?.location, chapterListVersion) { media?.chapters?.toList() ?: emptyList() }
-    /* Gated the same way the position is, and for the same reason. ExoPlayer is the only engine
-     * that reports a buffered position, and it reports it from the same loop, so a plain collect
-     * put the whole bar back on the recomposition list twice a second behind a hidden HUD. */
+    /* Gated like the position, for the same reason. ExoPlayer is the only engine that reports a
+     * buffered position, and it reports it from the same loop. A plain collect would recompose the
+     * whole bar twice a second behind a hidden HUD. */
     val bufferedState = remember { mutableLongStateOf(viewmodel.playerManager.timeBufferedMillis.value) }
     LaunchedEffect(hudVisible) {
         if (hudVisible) viewmodel.playerManager.timeBufferedMillis.collect { bufferedState.longValue = it }
@@ -116,25 +117,25 @@ fun RoomSeekbar(modifier: Modifier) {
     }
     val shownMs = if (dragging) (preview * durationMs).roundToLong() else positionMs
 
-    /* Marks skip anything in the first second, as the dots did: the chapter-0-at-zero marker
-     * carries no information. */
+    /* Marks skip anything in the first second, because a chapter mark at zero carries no
+     * information. */
     val marks: List<Pair<Chapter, Float>> = remember(chapters, durationMs) {
         if (!known) emptyList()
         else chapters.filter { it.timeOffsetMillis / 1000 != 0L }
             .map { it to (it.timeOffsetMillis.toFloat() / durationMs).coerceIn(0f, 1f) }
     }
-    /* The tick positions, hoisted out of the per-tick body. ScrubTrack takes a plain List, so a
-     * fresh one built here every time the playhead moved forced the whole track (semantics,
-     * gesture and key modifiers included) to rebuild two to four times a second. */
+    /* The tick positions, remembered outside the per-tick body. ScrubTrack takes a plain List,
+     * and a new list on every playhead move would force the whole track (semantics, gesture and
+     * key modifiers included) to rebuild two to four times a second. */
     val tickFractions: List<Float> = remember(marks, showMarks) {
         if (showMarks) marks.map { it.second } else emptyList()
     }
     val activeMark = marks.indexOfLast { it.second <= fraction }
     val chapterUnderPlayhead = marks.getOrNull(activeMark)?.first
 
-    /* D-pad LEFT/RIGHT perform the configured jump and announce it; the track's own key step
-     * defers to this. UP/DOWN fall through to focus traversal, and key up is ignored or the
-     * seek fires twice. */
+    /* D-pad Left and Right do the configured jump and announce it, and the track's own key step
+     * (keyStep = 0f) leaves those keys to this handler. Up and Down fall through to focus
+     * traversal. Key up is ignored, or the seek would fire twice. */
     val keys = Modifier.onPreviewKeyEvent { event ->
         if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
         when (event.key) {
@@ -144,13 +145,13 @@ fun RoomSeekbar(modifier: Modifier) {
         }
     }
 
-    /* Both timecodes get the width of the widest string their format can take, so the track
-     * does not shrink (and the thumb jump) when the elapsed time crosses an hour. */
+    /* Both timecodes get the width of the widest string that their format can take. So the track
+     * does not shrink, and the thumb does not jump, when the elapsed time passes an hour. */
     val measurer = rememberTextMeasurer()
     // timestampFromMillis pads to mm:ss under an hour and to hh:mm:ss from there.
     val widest = if (!known || durationMs >= 3_600_000L) "00:00:00" else "00:00"
-    // Remembered on what it actually depends on: the string, the type role and the density. It is
-    // one of two constant strings, so measuring it again on every position tick bought nothing.
+    // Remembered on its real inputs: the string, the type role and the density. The string is one
+    // of two constants, so measuring it again on every position tick would gain nothing.
     val timeStyle = Type.value
     val timeWidth = remember(widest, density, measurer, timeStyle) {
         with(density) { measurer.measure(widest, timeStyle).size.width.toDp() }
@@ -164,9 +165,9 @@ fun RoomSeekbar(modifier: Modifier) {
                 ScrubTrack(
                     value = fraction,
                     enabled = known,
-                    /* Left and Right are the bar's own (they jump), so a remote can only leave it
-                     * up or down. Down is named here, or the keys beside the bar on the same row
-                     * are reachable from the rail alone. */
+                    /* The bar owns Left and Right (they jump), so a remote can leave it only up or
+                     * down. Down is set here. Without it, the keys beside the bar on the same row
+                     * could be reached only from the rail. */
                     modifier = Modifier
                         .onSizeChanged { trackWidthPx = it.width }
                         .focusProperties { down = viewmodel.uiState.controlsFocus },
@@ -224,7 +225,7 @@ fun RoomSeekbar(modifier: Modifier) {
     ChaptersModal(open = showChapters, onDismiss = { showChapters = false })
 }
 
-/** The target timecode above the finger, on the chrome tier, clamped inside the track. */
+/** The target time above the finger, on a chromeSurface panel, kept inside the track. */
 @Composable
 private fun ScrubBubble(text: String, fraction: Float, trackWidthPx: Int, modifier: Modifier = Modifier) {
     var bubbleWidthPx by remember { mutableIntStateOf(0) }

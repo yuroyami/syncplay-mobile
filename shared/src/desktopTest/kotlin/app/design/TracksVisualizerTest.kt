@@ -23,7 +23,7 @@ import kotlin.test.assertTrue
 
 /**
  * The visualizer rows of the tracks card. The switch reads what is on screen, so a selected
- * video track shows it off whatever the stored value, and the director and pattern rows
+ * video track makes the switch read Off whatever the stored value. The director and pattern rows
  * appear only while something is drawn.
  */
 class TracksVisualizerTest {
@@ -78,8 +78,8 @@ class TracksVisualizerTest {
 
     /**
      * A phone holds the card at about 236dp, and a large font makes it shorter still. The rows
-     * scroll with the track list, so the stepper and the tracks are a swipe away. As a fixed
-     * header they pushed both out of the card.
+     * scroll with the track list, so the stepper and the tracks are a swipe away. A fixed header
+     * would push both out of the card.
      */
     @Test
     fun aShortCardScrollsToTheStepperAndTheTracks() {

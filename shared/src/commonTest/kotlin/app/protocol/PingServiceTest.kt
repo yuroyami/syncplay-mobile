@@ -7,23 +7,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Tests for [PingService] — RTT smoothing (EMA) and asymmetry-aware `forwardDelay`.
- * These guard the latency-compensation math the `State` handler uses to bias the global
- * position by message age.
+ * Tests for [PingService]: the smoothing of the RTT (round-trip time) and the asymmetry-aware
+ * `forwardDelay`. The `State` handler uses `forwardDelay` as the age of a message when it
+ * computes the room position.
  *
- * The clock is injected, so every expectation below is exact. These tests used to build their
- * timestamps from the same wall clock they were asserting against, which forced loose ranges: a
- * loaded machine turned them red on its own, and the smoothing weight could be set to anything
- * without a single failure.
+ * The clock is injected, so every expectation below is exact. Do not build the timestamps from the
+ * wall clock: that forces loose ranges, which fail on a loaded machine and let the smoothing
+ * weight change without a failure.
  */
 class PingServiceTest {
 
-    /** A clock the test moves by hand. Starts at a round number so the arithmetic below is readable. */
+    /** A clock that the test moves by hand. It starts at a round number for readable math. */
     private class FakeClock(var seconds: Double = 1_000_000.0)
 
     private fun serviceWithClock(clock: FakeClock) = PingService(nowSeconds = { clock.seconds })
 
-    /** The timestamp a server would have echoed [rtt] seconds ago on [clock]. */
+    /** The timestamp that a server echoes back for a ping sent [rtt] seconds ago on this clock. */
     private fun FakeClock.echoOf(rtt: Double) = seconds - rtt
 
     private fun assertClose(expected: Double, actual: Double, label: String, tolerance: Double = 1e-9) {
@@ -69,7 +68,7 @@ class PingServiceTest {
         ps.receiveMessage(timestamp = clock.echoOf(1.0), senderRtt = 100.0)
         val settled = ps.forwardDelay
 
-        // A stepped clock or a stale echo: minutes, not a network delay.
+        // A stepped clock or a stale echo gives minutes, which is not a network delay.
         ps.receiveMessage(timestamp = clock.echoOf(600.0), senderRtt = 100.0)
         assertClose(settled, ps.forwardDelay, "forwardDelay after an implausible sample")
     }
@@ -78,7 +77,7 @@ class PingServiceTest {
     fun `first message seeds forwardDelay to half the observed RTT in the symmetric path`() {
         val clock = FakeClock()
         val ps = serviceWithClock(clock)
-        // senderRtt high enough to keep us in the symmetric branch (forwardDelay = avrRtt / 2).
+        // A high senderRtt keeps the service in the symmetric branch (forwardDelay = avrRtt / 2).
         ps.receiveMessage(timestamp = clock.echoOf(2.0), senderRtt = 100.0)
         assertClose(2.0, ps.rtt, "rtt")
         assertClose(1.0, ps.forwardDelay, "forwardDelay (= rtt / 2)")
@@ -94,8 +93,8 @@ class PingServiceTest {
     }
 
     /**
-     * The smoothing constant itself. With the weight at 0 this lands on 2.5, with it at 1 on 0.5;
-     * only 0.85 gives 0.8, so the number in the source cannot be changed unnoticed.
+     * Pins the smoothing weight. A weight of 0 gives 2.5 and a weight of 1 gives 0.5. Only 0.85
+     * gives 0.8, so a change to the weight in the source fails this test.
      */
     @Test
     fun `the moving average weight is 0_85`() {
@@ -132,7 +131,7 @@ class PingServiceTest {
             it.receiveMessage(timestamp = clock.echoOf(3.0), senderRtt = 1.0)
         }
 
-        // Both share the same avrRtt; the asymmetric one adds (rtt - senderRtt) = 2.
+        // Both services have the same avrRtt. The asymmetric one adds (rtt - senderRtt) = 2.
         assertClose(2.0, asymmetric.forwardDelay - symmetric.forwardDelay, "the asymmetry term")
     }
 

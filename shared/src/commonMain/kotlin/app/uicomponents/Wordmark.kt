@@ -14,8 +14,9 @@ import androidx.compose.ui.unit.dp
 import app.theme.Theming
 
 /**
- * The wordmark: the brand face in the theme's three seeds. Identity only, never body text, so
- * [size] is in dp: the system text scale is for reading, and a logo is not read.
+ * The wordmark: the brand name in the brand font, coloured with the theme's three seed colours
+ * unless [colorStops] names others. It is for identity only, never body text, so [size] is in dp:
+ * the system text scale is for reading, and a logo is not read.
  */
 @Composable
 fun SyncplayishText(

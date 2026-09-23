@@ -5,19 +5,19 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * The source checks from DESIGN/FOUNDATION, as a ratchet: each count may only go down. Lower the
- * baseline in the same commit that removes the usages.
+ * Source checks for the design rules. Each rule has a baseline count that may only go down. Lower
+ * the baseline in the same commit that removes the usages.
  *
- * The last rule is about reachability rather than looks. A `.clickable {}` with no role and no
+ * The last rule is about reachability, not looks. A `.clickable {}` with no role and no
  * description is invisible to a screen reader and unreachable by a remote: it is a tap target
- * that announces nothing. The drawn control set carries its own semantics, so anything that
- * calls clickable directly has to say what it is.
+ * that announces nothing. The shared controls carry their own semantics, so any direct call to
+ * clickable must say what it is.
  */
 class DesignLint {
 
     private val root = File("src/commonMain/kotlin/app")
 
-    /** MaterialKolor hands the app its scheme as this Material class; it is a value holder, nothing more. */
+    /** MaterialKolor returns the colour scheme as this Material class, which only holds values. */
     private val allowedMaterialImports = setOf("ColorScheme")
 
     /** The two files that read that scheme to build the palette. */
@@ -58,13 +58,13 @@ class DesignLint {
                     if (file.name !in bridgeFiles) hit("MaterialTheme or ripple", file, n, line)
                 }
                 if (clickableRe.containsMatchIn(line)) {
-                    /* A role names the thing for assistive tech and is what selectable and
-                     * toggleable take directly; a nearby semantics block or contentDescription
-                     * does the same job for a hand-rolled clickable. clearAndSetSemantics is the
-                     * deliberate opposite: this surface is not a control at all.
+                    /* A role names the control for assistive technology, and selectable and
+                     * toggleable take one directly. A nearby semantics block or contentDescription
+                     * does the same job for a custom clickable. clearAndSetSemantics is the
+                     * deliberate opposite: it marks a surface that is not a control at all.
                      *
-                     * The window is generous because these modifier chains run long, and the
-                     * semantics that answer for a clickable often sit well below it. */
+                     * The window is wide because these modifier chains run long, and the
+                     * semantics for a clickable often sit well below it. */
                     val window = allLines
                         .subList(maxOf(0, i - 8), minOf(allLines.size, i + 20))
                         .joinToString("\n")

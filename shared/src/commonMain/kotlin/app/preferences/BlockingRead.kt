@@ -3,9 +3,9 @@ package app.preferences
 /**
  * Runs [block] to completion on the calling thread, or returns null where the platform forbids it.
  *
- * Only the preference store's very first read uses this. Android, iOS and desktop all hold a
- * splash while that read happens, so blocking there is both allowed and the simplest correct
- * thing. A browser has one thread and blocking it freezes the page, so the web returns null and
- * the caller reads the store asynchronously instead.
+ * Only the first read of the preference store uses this. On Android, iOS and desktop, that read
+ * happens before the first frame (Android also holds its splash screen), so blocking there is
+ * allowed and is the simplest correct choice. A browser has one thread, and blocking it freezes
+ * the page. So the web returns null, and the caller reads the store asynchronously.
  */
 internal expect fun <T> readBlockingOrNull(block: suspend () -> T): T?

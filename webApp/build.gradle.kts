@@ -5,12 +5,12 @@ plugins {
 }
 
 kotlin {
-    /* The browser shell. One target, one binary: everything else is in :shared. */
+    /* The browser app shell: one target and one binary. Everything else is in :shared. */
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
         browser {
             commonWebpackConfig {
-                // What index.html loads. Pinned so the page and the bundle cannot drift apart.
+                // index.html loads this file. The fixed name makes sure the page finds the bundle.
                 outputFileName = "synkplay.js"
             }
         }
@@ -21,8 +21,8 @@ kotlin {
         getByName("wasmJsMain").dependencies {
             implementation(project(":shared"))
 
-            /* :shared declares its deps with `implementation`, so types leaking through its
-             * public API have to be named again here. Same reason as :desktopApp. */
+            /* :shared declares its dependencies with `implementation`, so the types that its
+             * public API exposes must be declared again here, as in :desktopApp. */
             implementation(compose.runtime)
             implementation(compose.ui)
             implementation(libs.compose.viewmodel)

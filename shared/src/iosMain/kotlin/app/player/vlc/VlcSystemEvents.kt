@@ -23,26 +23,26 @@ import platform.Foundation.NSOrderedSame
 import platform.UIKit.UIApplicationDidBecomeActiveNotification
 
 /**
- * Keeping iOS audio and the render surface alive across system events: interruptions (Siri, a
- * call, an alarm), route changes (headphones in and out) and coming back to the foreground.
+ * Keeps iOS audio and the VLC render surface working across system events: interruptions (Siri,
+ * a call, an alarm), route changes (headphones in and out) and the return to the foreground.
  *
- * These app-level recovery requests share a cancellable job so delayed native commands
- * cannot overwrite a later playback command or act on replacement media.
+ * These recovery requests share one cancellable job (`recoveryJob`), so a delayed native command
+ * cannot override a later playback command or act on replaced media.
  */
 
 /**
- * Preconfigures the shared AVAudioSession before VLC's audio output exists.
+ * Sets up the shared AVAudioSession before VLC's audio output exists.
  *
- * VLC's Apple audio outputs also configure `.playback` with `.moviePlayback`, activate
- * the session, and handle interruption/route notifications. This early app setup uses
- * the same category and mode for video playback and PiP.
+ * VLC's Apple audio outputs also set `.playback` with `.moviePlayback`, activate the session,
+ * and handle interruption and route notifications. This early setup uses the same category and
+ * mode, for video playback and PiP.
  */
 internal fun VlcKitImpl.configureAudioSession() {
     try {
         val session = AVAudioSession.sharedInstance()
-        // Positional args: K/N's Obj-C interop exposes overloaded `setCategory:*:` /
-        // `setActive:*:` variants that share a base name, so named-parameter resolution
-        // can fail — positional keeps us on the shortest matching overload.
+        // Positional arguments on purpose. Kotlin/Native's Objective-C interop exposes several
+        // `setCategory:*:` and `setActive:*:` overloads with the same base name, so named
+        // arguments can fail to resolve. Positional ones pick the shortest matching overload.
         session.setCategory(AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, 0uL, null)
         session.setActive(true, null)
     } catch (e: Exception) {
@@ -51,18 +51,21 @@ internal fun VlcKitImpl.configureAudioSession() {
 }
 
 /**
- * Registers NSNotificationCenter observers to recover audio after system interruptions
- * (Siri, incoming FaceTime, alarm, any other AVAudioSession grab) and route changes
- * (headphones plugged/unplugged, AirPods reconnect). On interruption-end we re-activate
- * the session and nudge VLC back into sync with a pause/play cycle; on route change we
- * only re-activate the session. The pause/play cycle is an empirical workaround for
- * silent playback after an interruption, not an API requirement for every audio route.
+ * Registers NSNotificationCenter observers that recover audio after system interruptions (Siri,
+ * a FaceTime call, an alarm, any other app that takes the AVAudioSession) and route changes
+ * (headphones in or out, AirPods reconnecting). It also registers the foreground observer that
+ * repaints the video.
+ *
+ * When an interruption ends, the session is activated again. If the system allows a resume and
+ * no newer command arrived, a player that still reports playing gets a short pause and play.
+ * A route change only activates the session again. The pause and play is a workaround, found by
+ * testing, for silent playback after an interruption. No API asks for it.
  */
 internal fun VlcKitImpl.registerAudioSessionObservers() {
     val center = NSNotificationCenter.defaultCenter
     val queue = NSOperationQueue.mainQueue
-    // Only an artificial pause started by our audio recovery can create this intent.
-    // Keep it local to these observers so it expires with this player's registration.
+    // Only the temporary pause of the audio recovery below creates this intent. It lives
+    // inside these observers, so it ends with this player's registration.
     var audioPauseIntent: AudioRecoveryPauseIntent? = null
     var interruptionRevision: Long? = null
 
@@ -78,16 +81,16 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
 
         when (type) {
             AVAudioSessionInterruptionTypeBegan -> {
-                // A new interruption supersedes any pending repaint or audio recovery.
+                // A new interruption cancels any pending repaint or audio recovery.
                 val player = vlcPlayer
                 val media = player?.media
                 val wasPriming = recoveryJob?.isActive == true && primingFirstFrame
                 val interruptedAudioPause = audioPauseIntent?.takeIf { it.matches(this) }
                 supersedeRecovery()
                 interruptionRevision = commandRevision
-                // The canceled 50 ms job must not leave formerly playing media paused.
-                // Bind its intent to this interruption's revision; later user commands
-                // still invalidate it, and the old job cannot clear this copied token.
+                // The cancelled 50 ms job must not leave media paused that was playing before.
+                // Bind its intent to this interruption's revision. A later user command still
+                // invalidates the intent, and the old job cannot clear this copy.
                 audioPauseIntent = interruptedAudioPause?.copy(
                     revision = commandRevision,
                     interrupted = true
@@ -95,16 +98,16 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
                 if (wasPriming && isInitialized && player != null && media != null &&
                     vlcPlayer === player && player.media?.compare(media) == NSOrderedSame
                 ) {
-                    // The canceled repaint was temporarily playing an intentionally
-                    // paused room. Restore that pause and hide any queued Playing event
-                    // until Paused arrives; interruption recovery must not resume it.
+                    // The cancelled repaint was briefly playing a room that is paused on
+                    // purpose. Restore the pause, and hide any queued Playing event until
+                    // Paused arrives. Interruption recovery must not resume this media.
                     primingFirstFrame = true
                     player.pause()
                 }
             }
             AVAudioSessionInterruptionTypeEnded -> {
-                // Native pause/play commands are queued: isPlaying alone can still show
-                // the old state after an explicit command during the interruption.
+                // Native pause and play commands are queued, so isPlaying can still show the
+                // old state after a command sent during the interruption. Compare revisions.
                 val canRecoverInterruption = interruptionRevision == commandRevision
                 interruptionRevision = null
                 val options = (info[AVAudioSessionInterruptionOptionKey] as? NSNumber)
@@ -121,13 +124,15 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
                 if (interruptedAudioPause != null) audioPauseIntent = null
                 if (shouldResume && canRecoverInterruption) {
                     if (interruptedAudioPause?.matches(this) == true) {
-                        // Settle only our canceled temporary pause. This is not permission
-                        // to resume arbitrary paused media after a system interruption.
+                        // Undo only the recovery's own temporary pause, whose job the
+                        // interruption cancelled. This does not allow resuming other paused
+                        // media after an interruption.
                         supersedeRecovery()
                         primingFirstFrame = false
                         interruptedAudioPause.player.play()
                     } else {
-                        // Otherwise only nudge a player that still reports playing.
+                        // Otherwise run the pause and play recovery, which only acts on a
+                        // player that still reports playing.
                         requestAudioRecovery(
                             onTemporaryPause = { audioPauseIntent = it },
                             onFinished = {
@@ -151,9 +156,9 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
         } catch (_: Exception) { }
     }
 
-    // Blank frames have been observed after foregrounding. Reassert the drawable and
-    // briefly prime a paused player as an empirical recovery; assigning drawable alone
-    // changes native output configuration and does not guarantee a new render view.
+    // The video can show blank frames after the app returns to the foreground. The workaround,
+    // found by testing: set the drawable again and briefly play a paused player. Setting the
+    // drawable alone changes the native output setup, but does not promise a new render view.
     didBecomeActiveObserver = center.addObserverForName(
         name = UIApplicationDidBecomeActiveNotification,
         `object` = null,
@@ -165,9 +170,10 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
 }
 
 /**
- * Requests the existing foreground/PiP repaint workaround on the main thread. A paused
- * player briefly plays to produce frames, then returns to pause if the media and playback
- * command are still current. Duplicate recovery requests share the in-flight job.
+ * Runs the repaint workaround for the foreground and PiP on the main thread. It sets the drawable
+ * again. A paused player then plays briefly to produce frames, and pauses again if the media and
+ * the playback command are still current. A request while a recovery job runs is dropped, because
+ * the running job covers it.
  */
 internal fun VlcKitImpl.requestDrawableRecovery() {
     if (!isInitialized || recoveryJob?.isActive == true) return
@@ -185,8 +191,8 @@ internal fun VlcKitImpl.requestDrawableRecovery() {
             player.drawable = null
             player.drawable = drawable
             if (!wasPlaying) {
-                // Hide this temporary Playing state from room synchronization. Keep the
-                // flag until the Paused event arrives: VLCKit's pause() queues native work.
+                // Hide this temporary Playing state from room sync. Keep the flag until the
+                // Paused event arrives, because VLCKit's pause() queues native work.
                 primingFirstFrame = true
                 player.play()
                 delay(400)

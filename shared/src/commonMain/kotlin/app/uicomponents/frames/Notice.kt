@@ -47,9 +47,10 @@ enum class NoticeSeverity { Info, Quiet, Sync, Warn }
 class NoticeItem(val id: Long, val text: String, val severity: NoticeSeverity, val holdMs: Long)
 
 /**
- * The transient message queue: at most [max] notices, the oldest leaves first, and a warning is
- * never dropped to make room for an info. A zero or negative hold posts nothing, which is how
- * the notice duration preference switches notices off.
+ * The queue of notices (short-lived messages). It holds at most [max] notices. When it is full, a
+ * new warning pushes out the oldest notice, and any other new notice pushes out the oldest
+ * non-warning, or is dropped when only warnings are left. Blank text or a zero or negative hold
+ * posts nothing, which is how the notice duration setting turns notices off.
  */
 @Stable
 class NoticeQueue(private val max: Int = 3) {
@@ -74,8 +75,9 @@ class NoticeQueue(private val max: Int = 3) {
 }
 
 /**
- * One notice: a 2dp stub coloured by severity and a `note` line. On the `chrome` tier over video,
- * or on the panel colours as a toast on a flat screen. A live region, assertive for warnings.
+ * One notice: a 2dp stripe coloured by severity, and a line of `note` text. Over video it uses the
+ * chrome tier; on a flat screen it is a toast in the panel colours. Screen readers announce it as
+ * a live region, assertive for warnings.
  */
 @Composable
 fun Notice(

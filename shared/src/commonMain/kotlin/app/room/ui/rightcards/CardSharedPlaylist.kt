@@ -93,17 +93,21 @@ import syncplaymobile.shared.generated.resources.play
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.runtime.collectAsState
 
-/** Which header key is unfolded, if any. */
+/** The header key whose strip is open. */
 private enum class PlaylistGroup { Add, Shuffle, More }
 
 object CardSharedPlaylist {
 
     /**
-     * The shared playlist panel: rows with a play mark on the current entry, and three glyphs in
-     * the header (add, shuffle, more). A tap on one unfolds its options in a strip under the
-     * header as rows, part of the chrome, and a second tap or a choice folds it back. Pickers launch
-     * straight from the strip: the panel stays composed, so their results always land. A long
-     * press lifts a row to move it, and the room hears one move when it lands.
+     * The shared playlist panel. The shared playlist is the file list that everyone in a room
+     * follows, and a room is the group of people watching together. Each row is one entry, and a
+     * play mark shows on the current entry. The header has three keys with a strip each (add,
+     * shuffle, more), and an undo key when there is something to undo.
+     *
+     * A tap on a strip key opens its options as rows in a strip under the header. A second tap or
+     * a choice closes the strip. The pickers start straight from the strip. The panel stays
+     * composed, so their results always arrive. A long press lifts a row to move it, and the room
+     * gets one move when the row is dropped.
      */
     @Composable
     fun SharedPlaylistCard(shape: Shape = Radius.panelShape) {
@@ -133,7 +137,7 @@ object CardSharedPlaylist {
         val mediaDirsOpen = remember { mutableStateOf(false) }
         var urlsOpen by remember { mutableStateOf(false) }
         var group by remember { mutableStateOf<PlaylistGroup?>(null) }
-        // Clearing empties the list for the whole room, so it asks first.
+        // Clearing empties the list for the whole room, so the panel asks first.
         val askClear = remember { mutableStateOf(false) }
         var itemActions by remember { mutableStateOf<Int?>(null) }
 
@@ -150,8 +154,8 @@ object CardSharedPlaylist {
             actions = {
                 HeaderKey(AddGlyph, strings.roomSharedPlaylistAdd, group == PlaylistGroup.Add) { toggle(PlaylistGroup.Add) }
                 HeaderKey(Icons.Filled.Shuffle, strings.roomSharedPlaylistButtonShuffle, group == PlaylistGroup.Shuffle) { toggle(PlaylistGroup.Shuffle) }
-                // Only there when there is something to take back: a shuffle, a clear or a
-                // wrong delete is one tap and reaches everyone.
+                // The undo key shows only when there is something to undo. A shuffle, a clear or
+                // a wrong delete takes one tap and reaches everyone.
                 val canUndo by playlist.canUndo.collectAsState()
                 if (canUndo) {
                     HeaderKey(
@@ -163,7 +167,7 @@ object CardSharedPlaylist {
                 HeaderKey(MoreGlyph, strings.roomSharedPlaylistMore, group == PlaylistGroup.More) { toggle(PlaylistGroup.More) }
             },
         ) {
-            // The strip: the header grown by one row, on the accent's faint ground.
+            // The strip extends the header with option rows, on a faint tint of the accent color.
             AnimatedVisibility(group != null, enter = expandVertically(Motion.move()) + fadeIn(Motion.quick()), exit = shrinkVertically(Motion.move()) + fadeOut(Motion.quick())) {
                 Column(Modifier.fillMaxWidth().background(p.accent.copy(alpha = 0.06f))) {
                     Column(Modifier.fillMaxWidth().padding(vertical = Space.gapTight)) {
@@ -180,7 +184,7 @@ object CardSharedPlaylist {
                             PlaylistGroup.More -> {
                                 Chip(Icons.Filled.Download, strings.roomSharedPlaylistButtonPlaylistImport) { group = null; playlistLoadPicker.launch() }
                                 Chip(Icons.Filled.Download, strings.roomSharedPlaylistButtonPlaylistImportNShuffle) {
-                                    // The flag is read by the picker's callback, so it is set before the launch.
+                                    // The picker callback reads the flag, so set it first.
                                     group = null
                                     shouldShuffle = true
                                     playlistLoadPicker.launch()
@@ -214,7 +218,7 @@ object CardSharedPlaylist {
             val dragScope = rememberCoroutineScope()
             val drag = remember(listState) { PlaylistDragState(listState, dragScope) }
             val lifted = drag.rows
-            // While a row is lifted the panel draws its own copy of the list, in the dragged order.
+            // While a row is lifted, the panel draws its own copy of the list, in the dragged order.
             val rows = lifted ?: items.mapIndexed { index, entry -> index to entry }
             LazyColumn(
                 state = listState,
@@ -259,7 +263,8 @@ object CardSharedPlaylist {
         Modal(open = target != null, onDismiss = { itemActions = null }, title = target?.let { items.getOrNull(it) }, size = ModalSize.Ask, inset = false) {
             if (target != null) {
                 ActionRow(PlayGlyph, strings.play) { itemActions = null; playlist.sendPlaylistSelection(target) }
-                // One step at a time, and the sheet stays on the same entry, so a remote can walk it.
+                // Each move is one step, and the modal stays on the moved entry, so a remote user
+                // can keep moving it.
                 if (target > 0) {
                     ActionRow(Icons.Filled.KeyboardArrowUp, strings.roomSharedPlaylistMoveUp) { playlist.moveItem(target, target - 1); itemActions = target - 1 }
                 }
@@ -282,13 +287,13 @@ object CardSharedPlaylist {
         AddUrlsModal(open = urlsOpen, onDismiss = { urlsOpen = false })
     }
 
-    /** A header glyph that shows which strip is open: accent when unfolded. */
+    /** A header key. It uses the accent color while its strip is open. */
     @Composable
     private fun HeaderKey(icon: ImageVector, name: String, open: Boolean, onClick: () -> Unit) {
         GlyphButton(icon, name = name, target = Space.row, tint = if (open) palette.accent else palette.ink, onClick = onClick)
     }
 
-    /** One option in the strip: a 36dp row with its glyph and word, like any list row. */
+    /** One option in the strip: a 36dp list row with a glyph and a label. */
     @Composable
     private fun Chip(icon: ImageVector, label: String, onClick: () -> Unit) {
         val p = palette
@@ -308,7 +313,7 @@ object CardSharedPlaylist {
         }
     }
 
-    /** URLs for the playlist, one per line, with paste. */
+    /** The modal that adds URLs to the playlist, one per line, with a paste button. */
     @Composable
     private fun AddUrlsModal(open: Boolean, onDismiss: () -> Unit) {
         if (!open) return

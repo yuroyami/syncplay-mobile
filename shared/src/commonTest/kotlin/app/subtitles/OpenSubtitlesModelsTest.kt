@@ -4,14 +4,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Pins the OpenSubtitles .com wire models against response shapes from the official docs
+ * Pins the OpenSubtitles.com wire models to the response shapes in the official docs
  * (https://opensubtitles.stoplight.io/docs/opensubtitles-api). The real API returns many
- * more attribute keys than we model — `ignoreUnknownKeys` must absorb them.
+ * more attribute keys than the models have, so `ignoreUnknownKeys` must absorb them.
  */
 class OpenSubtitlesModelsTest {
 
-    /* The production instance. A local copy here protected nothing: the shipping config could
-     * lose ignoreUnknownKeys and every one of these tests would still pass. */
+    /* The production instance. A local copy here would protect nothing: the shipping config could
+     * lose ignoreUnknownKeys and every test here would still pass. */
     private val json = SubtitleSearch.json
 
     @Test

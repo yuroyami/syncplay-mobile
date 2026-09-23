@@ -7,8 +7,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * The store is read once, blocking, behind the splash. An unreadable file used to throw there on
- * every launch, with nothing on screen to say why and no way out but reinstalling.
+ * The preference store is read once, blocking, behind the splash screen. If an unreadable file
+ * threw there, every launch would fail, with nothing on screen to say why and no way out but a
+ * reinstall.
  */
 class DatastoreRecoveryTest {
 

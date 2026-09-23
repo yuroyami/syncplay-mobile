@@ -75,30 +75,31 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
 
-/* Lazy singleton: a fresh `get()` would mint a new Darwin engine (and NSURLSession) on every
- * access (the GIF grid does this per-tile per-scroll), and iOS throttles new sessions, so Klipy
- * stops downloading a few seconds in. One shared client avoids that.
+/* Lazy singleton. A fresh `get()` would create a new Darwin engine (and NSURLSession) on every
+ * access, which the GIF grid does per tile and per scroll. iOS throttles new sessions, so Klipy
+ * (the GIF service) stops downloading after a few seconds. One shared client avoids that.
  *
- * Defaults here apply to every caller of `httpClient` (subtitle search, Klipy downloads,
- * AnimatedImage, etc.):
+ * These defaults apply to every caller of `httpClient` (subtitle search, Klipy downloads,
+ * AnimatedImage and others):
  *
  *  - HttpTimeout: NSURLSession on Darwin has no default timeouts, so a flaky CDN can hang a
- *    request forever. The 15s/10s/15s envelope matches KlipyUtils' own client.
- *  - defaultRequest User-Agent: some Cloudflare-fronted CDNs block requests with no UA.
+ *    request forever. The limits are 15 s per request, 10 s to connect and 15 s without data.
+ *  - defaultRequest User-Agent: some CDNs behind Cloudflare block requests with no User-Agent.
  *
- * Per-feature `HttpClient.config { … }` calls layer plugins on top without disturbing these. */
+ * A feature's own `HttpClient.config { … }` call adds plugins on top without changing these. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(Darwin) {
         engine {
-            /* Honor response `Cache-Control`. Ktor's Darwin engine sets
+            /* Respect the response's `Cache-Control`. Ktor's Darwin engine sets
              * `NSURLRequestReloadIgnoringCacheData` on every request in `toNSUrlRequest()`, which
-             * makes NSURLSession bypass NSURLCache, so cacheable GIFs (Klipy CDN sends
-             * `max-age=86400`) re-download on every HUD toggle. configureRequest runs after
-             * toNSUrlRequest(), so this overrides the policy back to protocol-driven caching. */
+             * makes NSURLSession skip NSURLCache, so cacheable GIFs (the Klipy CDN sends
+             * `max-age=86400`) download again on every HUD toggle. configureRequest runs after
+             * toNSUrlRequest(), so this sets the policy back to protocol-driven caching. */
             configureRequest { setCachePolicy(NSURLRequestUseProtocolCachePolicy) }
-            /* Enlarge NSURLCache (from ~4 MB mem / ~20 MB disk default) to hold a panel of GIFs
-             * (24 × ~200 KB) plus scroll history. Memory cache makes HUD toggles repaint instantly;
-             * disk cache survives restarts so the trending panel comes up populated. */
+            /* Enlarge NSURLCache (default about 4 MB in memory and 20 MB on disk) to hold a panel
+             * of GIFs (24 × about 200 KB) plus the scroll history. The memory cache makes a HUD
+             * toggle repaint at once. The disk cache survives restarts, so the trending panel
+             * opens already filled. */
             configureSession {
                 setURLCache(
                     NSURLCache(
@@ -114,16 +115,16 @@ actual val httpClient: HttpClient by lazy {
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
         }
-        /* HTTP transcript into loggy(), restricted to JSON API hosts (api.*) via the filter.
-         * Logging image/subtitle downloads breaks them on Darwin: the plugin tees
-         * `response.rawContent` into transcript and consumer channels, and on Kotlin/Native that
-         * split delivers truncated bytes under load, so a GIF body comes back partial and
-         * CGImageSourceCreateWithData returns null (blank tiles). API hosts cover all useful
-         * diagnostics; image fetches bypass the interceptor. */
+        /* Writes an HTTP transcript to loggy(), for JSON API hosts (api.*) only, through the
+         * filter. Logging image or subtitle downloads breaks them on Darwin: the plugin copies
+         * `response.rawContent` into a transcript channel and a consumer channel, and on
+         * Kotlin/Native that split delivers truncated bytes under load. A GIF body then comes
+         * back partial, and CGImageSourceCreateWithData returns null (blank tiles). API hosts
+         * cover all useful diagnostics, and image fetches skip the interceptor. */
         install(Logging) {
             logger = app.utils.KtorLoggyLogger
-            // A whole request line carries the URL, and the Klipy key lives in the URL. Full
-            // bodies are a debugging tool, not something to ship.
+            // Release builds log the request line only. That line carries the URL, which holds
+            // the Klipy key (loggy masks it). Full bodies are a debugging tool, not for release.
             level = if (KiteBuildConfig.IS_DEBUG) LogLevel.ALL else LogLevel.INFO
             sanitizeHeader { header -> header == "Api-Key" || header == HttpHeaders.Authorization }
             filter { request -> request.url.host.startsWith("api.") }
@@ -134,21 +135,22 @@ actual val httpClient: HttpClient by lazy {
     }
 }
 
-/** Media player engines on iOS: AVPlayer, VLCKit and KitePlayer. */
+/** The engines (video players the app can drive) on iOS: AVPlayer, VLCKit and KitePlayer. */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)
     add(VlcKitEngine)
-    // KitePlayer, the same KiteImpl the Android list ends with: one implementation, two phones.
-    // The renderer (native view or pure Compose) is an in-room toggle now, not a second engine.
+    // KitePlayer: the same KiteImpl that ends the Android list, so both phone platforms share
+    // one implementation. The renderer (native view or pure Compose) is an in-room toggle, not a
+    // second engine.
     add(KiteEngine(IosKiteMediaResolver))
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()
     return when (preferredEngine) {
-        // The factory is registered from Swift at startup, and swiftnio is the iOS default, so a
-        // build whose bridge never registered used to crash on the way into every room. Ktor is a
-        // worse engine, not a broken one: fall back to it and say so in the log.
+        // Swift registers the factory at startup, and swiftnio is the iOS default. A build whose
+        // bridge never registered must not crash on the way into every room. Ktor is a weaker
+        // engine (no TLS upgrade), not a broken one, so fall back to it and log that.
         "swiftnio" -> instantiateSwiftNioNetworkManager?.invoke(this) ?: run {
             loggy("SwiftNIO bridge is not registered; falling back to the Ktor transport.")
             KtorNetworkManager(this)
@@ -162,9 +164,10 @@ actual fun generateTimestampMillis(): Long {
 }
 
 /**
- * iOS states this through the locale's own hour template: the format it hands back for "j" (the
- * locale's preferred hour field) carries an "a" only on a 12-hour clock. This follows the
- * Settings switch as well, because that switch changes the current locale's format.
+ * True when the device uses a 24-hour clock. iOS states this through the locale's hour template:
+ * the format it returns for "j" (the locale's preferred hour field) contains an "a" only on a
+ * 12-hour clock. This also follows the Settings switch, because that switch changes the current
+ * locale's format.
  */
 actual fun deviceUses24HourClock(): Boolean {
     val format = NSDateFormatter.dateFormatFromTemplate("j", 0uL, NSLocale.currentLocale)
@@ -201,30 +204,31 @@ private val iosMajorVersion: Int by lazy {
 }
 
 /**
- * Applies an orientation mask: updates the delegate's `supportedInterfaceOrientationsForWindow`
- * answer, requests the new geometry, and pokes the root view controller with
- * `setNeedsUpdateOfSupportedInterfaceOrientations()`.
+ * Applies an orientation mask. It updates the delegate's `supportedInterfaceOrientationsForWindow`
+ * answer, requests the new geometry, and calls `setNeedsUpdateOfSupportedInterfaceOrientations()`
+ * on the root view controller.
  *
- * The poke is required: iOS 16+ caches the last supported-orientations answer and won't re-query
- * the delegate. A geometry request naming a concrete orientation (e.g. landscape) takes effect,
- * but an "All" mask names no target orientation, so without the poke the stale cached mask keeps
- * rotation locked after leaving a room.
+ * That last call is required. iOS 16 and later cache the last supported-orientations answer and
+ * do not ask the delegate again. A geometry request that names a concrete orientation (such as
+ * landscape) takes effect, but an "All" mask names no target orientation. Without the call, the
+ * stale cached mask keeps rotation locked after the user leaves a room (a group of people
+ * watching together).
  *
- * Everything after the delegate is iOS 16 and later. `UIWindowSceneGeometryPreferencesIOS` is
- * constructed, not merely called, so `respondsToSelector` cannot guard it and an iOS 14 or 15
- * device would meet a class that does not exist. The app's deployment target is 14.1 and this
- * runs on Home as well as in the room, so the version check comes first. Below 16 the delegate
- * answer is all there is, and it takes effect at the next rotation.
+ * Everything after the delegate needs iOS 16 or later. `UIWindowSceneGeometryPreferencesIOS` is
+ * constructed, not only called, so `respondsToSelector` cannot guard it, and on iOS 14 or 15 the
+ * class does not exist. The app supports systems below iOS 16, and this runs on Home as well as
+ * in the room, so the version check comes first. Below 16 the delegate answer is all there is,
+ * and it takes effect at the next rotation.
  */
 private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
     delegato.myOrientationMask = mask
 
     if (iosMajorVersion < 16) {
-        /* The delegate answer above is the whole fix here, and it applies at the next rotation
-         * or view-controller transition rather than immediately. Forcing one sooner needs
-         * UIViewController.attemptRotationToDeviceOrientation, a class method Kotlin's UIKit
-         * bindings do not expose; it would have to come from the Swift side. Not worth a bridge
-         * for two systems, and far better than the crash this replaced. */
+        /* The delegate answer above is the whole fix here. It applies at the next rotation or
+         * view-controller transition, not at once. Forcing it sooner needs
+         * UIViewController.attemptRotationToDeviceOrientation, a class method that Kotlin's
+         * UIKit bindings do not expose, so it would have to come from the Swift side. A bridge
+         * is not worth it for two old systems, and a late rotation is far better than a crash. */
         return
     }
 
@@ -244,7 +248,7 @@ private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
 @Composable
 actual fun EnterRoomMode(portrait: Boolean) {
     LaunchedEffect(portrait) {
-        // Reassert on every room entry, even when the app never left the foreground.
+        // Set it again on every room entry, even when the app never left the foreground.
         UIApplication.sharedApplication.idleTimerDisabled = true
         applyOrientationMask(
             if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
@@ -274,9 +278,9 @@ actual fun getDeviceIpAddress(): String? {
 }
 
 /**
- * Logs live under Library, out of the Files app's reach: Documents is shared on purpose for media,
- * and a week of protocol logs (usernames, room names, file names) does not belong there. The old
- * Documents/logs folder is removed the first time this runs.
+ * Returns the log folder, under Library, where the Files app cannot reach it. Documents is shared
+ * on purpose for media, and a week of protocol logs (usernames, room names, file names) does not
+ * belong there. A Documents/logs folder from an older version is removed.
  */
 actual fun getLogDirectoryPath(): String? {
     return try {
@@ -410,13 +414,13 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? {
 
 actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
 
-/** iOS ships no television target here; tvOS would be its own build. */
+/** Always false: there is no TV build for iOS (tvOS would be a separate target). */
 actual fun isTelevision(): Boolean = false
 
 actual fun localizedLanguageName(iso6391: String, inLanguage: String): String? {
     val displayIn = NSLocale(localeIdentifier = inLanguage)
     val name: String? = displayIn.displayNameForKey(NSLocaleLanguageCode, iso6391)
-    // Foundation hands the code straight back when it has no name for the language.
+    // Foundation returns the code unchanged when it has no name for the language.
     if (name.isNullOrBlank() || name.lowercase() == iso6391.lowercase()) return null
     return name.replaceFirstChar { c -> c.uppercaseChar() }
 }

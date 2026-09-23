@@ -68,13 +68,14 @@ import kotlin.test.assertTrue
  * The resize tests change the size of one live scene and check that the focused field keeps its
  * focus, its text and its caret, and takes more typing without another tap. The sizes cross
  * every threshold the form has: the split into two columns, and the short tier that puts
- * username and room in one row. The keyboard tests give the window a keyboard inset instead, the way an edge-to-edge
- * Android window and an iOS window meet their keyboards: nothing resizes, the bottom is covered.
+ * username and room in one row. The keyboard tests give the window a keyboard inset instead.
+ * That is how an edge-to-edge Android window and an iOS window meet their keyboards: nothing
+ * resizes, and the keyboard covers the bottom.
  *
- * The insets come from Compose internals (`InternalComposeUiApi`), the only door the harness has
- * to a keyboard. A Compose upgrade that moves them breaks this file at compile time, not the app.
+ * The insets come from Compose internals (`InternalComposeUiApi`), the only way the harness can
+ * fake a keyboard. A Compose upgrade that moves them breaks this file at compile time, not the app.
  *
- * What surrounds focus is checked here too: the IME actions, the background tap that closes the
+ * The tests also check what surrounds focus: the IME actions, the background tap that closes the
  * keyboard, and that a screen reader still reaches the form behind that tap.
  */
 @OptIn(InternalComposeUiApi::class)
@@ -223,7 +224,7 @@ class HomeFocusTest {
         }
     }
 
-    /** The background tap that closes the keyboard must not hide the form it sits behind. */
+    /** The background tap that closes the keyboard must not hide the form from a screen reader. */
     @Test
     fun aScreenReaderReachesTheFieldsAndTheJoinKey() {
         withHome(PHONE) { form ->
@@ -287,8 +288,8 @@ class HomeFocusTest {
     }
 
     /**
-     * On a television a remote starts in Username and must reach every part of the form, the join
-     * key above all. Before the remote could leave a text field, the walk ended at Username.
+     * On a television, a remote starts in Username and must reach every part of the form, above
+     * all the join key. A text field that keeps the arrow keys would end the walk at Username.
      */
     @Test
     fun aRemoteWalksTheJoinFormOnATelevision() {
@@ -301,7 +302,7 @@ class HomeFocusTest {
                 form.remote(Key.DirectionDown)
                 walk += form.focusedName()
             }
-            // Right as often as a person would: the server ports are a row of their own.
+            // Press Right as often as a person would: the server ports are a row of their own.
             repeat(6) {
                 if (walk.last() != JOIN) {
                     form.remote(Key.DirectionRight)
@@ -415,9 +416,9 @@ class HomeFocusTest {
     }
 
     /**
-     * Insets reach Compose on two roads: the `WindowInsets` getters read a composition local, and
+     * Insets reach Compose in two ways: the `WindowInsets` getters read a composition local, and
      * the padding modifiers such as `imePadding` read a node in the layout tree. A platform window
-     * feeds both, so the harness has to as well. This is the node.
+     * feeds both, so the harness must too. This class is the node.
      */
     private class WindowInsetsNode(var insets: PlatformWindowInsets) : PlatformWindowInsetsProviderNode() {
         override fun calculatePlatformInsets(ancestorWindowInsets: PlatformWindowInsets): PlatformWindowInsets = insets
@@ -555,8 +556,8 @@ class HomeFocusTest {
         fun isFocused(name: String): Boolean = editor(name).config.getOrNull(SemanticsProperties.Focused) == true
 
         /**
-         * A remote's key: down and up, and what Android's root view does with a key nothing took,
-         * which the desktop scene lacks: an arrow moves focus that way.
+         * Presses a remote key, down and up. A key that nothing took also gets what Android's root
+         * view does and the desktop scene lacks: an arrow moves focus in its direction.
          */
         @OptIn(InternalComposeUiApi::class)
         fun remote(key: Key) {

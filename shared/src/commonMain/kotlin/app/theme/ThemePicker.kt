@@ -35,9 +35,10 @@ import syncplaymobile.shared.generated.resources.edit
 val availableThemes = listOf(TRINITY, DAYLIGHT, SILVER_LAKE, PYNCSLAY, GrayOLED, ALLEY_LAMP)
 
 /**
- * The theme picker: a list of 54dp rows, each a miniature of the app in that theme, the name,
- * and whether it is dark, light or amoled. Built-in themes first, custom ones after a heading,
- * newest first, with edit and delete on their own targets. Delete asks first.
+ * The theme picker, in a modal. Each 54dp row shows a miniature of the app in that theme, the
+ * theme name, and whether the theme is dark, light or AMOLED. The built-in themes come first.
+ * Under the custom themes heading, one row opens the theme creator, and the custom themes follow,
+ * newest first, each with its own edit and delete buttons. Delete asks for confirmation first.
  */
 @Composable
 fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {

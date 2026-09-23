@@ -39,8 +39,9 @@ import app.theme.Space
 import app.theme.palette
 
 /**
- * A glyph in a 48dp target, no background at rest, press feedback only. [name] is required:
- * a glyph without a spoken name cannot be written. It is also the desktop tooltip text.
+ * An icon button: a glyph in a [target] box (48dp by default), no background at rest, press
+ * feedback only. [name] is required, so no icon button can exist without a spoken name. [name] is
+ * also the desktop tooltip text.
  */
 @Composable
 fun GlyphButton(
@@ -56,7 +57,7 @@ fun GlyphButton(
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
-    // Desktop only: the name under the glyph after 600 ms of hover. Touch never hovers.
+    // Desktop only: the name shows under the glyph after 600 ms of hover. Touch never hovers.
     val hovered by source.collectIsHoveredAsState()
     var tooltip by remember { mutableStateOf(false) }
     LaunchedEffect(hovered) {

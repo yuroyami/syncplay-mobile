@@ -5,11 +5,12 @@ import app.protocol.WireMessage
 import kotlinx.atomicfu.locks.synchronized
 
 /**
- * Moves this client to [name]: tells the server, forgets the old roster, asks for the new one.
+ * Moves this client to the room [name]. A room is the group of people watching together. The
+ * function trims and caps the name, tells the server, forgets the old roster (the list of users
+ * in the room) and asks the server for the new one.
  *
- * Changing rooms is four things, not one. Writing the new name over the old one and stopping
- * there left the previous room's people on screen until the next unrelated update, with no cap on
- * the name and nothing asking the server who is actually there.
+ * Every step is needed. Without the roster reset and the List request, the users of the previous
+ * room stay on screen until the next unrelated update.
  */
 fun RoomViewmodel.switchRoom(name: String) {
     val target = name.trim().take(Session.MAX_ROOM_NAME_CHARS)
@@ -21,7 +22,7 @@ fun RoomViewmodel.switchRoom(name: String) {
         networkManager.sendAsync(WireMessage.roomChange(target))
         networkManager.sendAsync(WireMessage.listRequest())
     }
-    // Only we are known to be in the new room until the List answer says otherwise.
+    // Until the List answer arrives, the local user is the only user known to be in the new room.
     session.userList.value = session.userList.value.filter { it.name == session.currentUsername }
     readiness.evaluate()
 }

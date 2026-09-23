@@ -33,13 +33,13 @@ import app.uicomponents.controls.Rule
 
 /*
  * The settings content, shared by the global screen and the in-room panel: the category list,
- * one category's console list, and the search index over a resolved category set.
+ * the rows of one category, and the search index over a resolved category set.
  */
 
 /**
- * One category as groups with headings, separated by rules. A row showing its explanation gets
- * an inset rule above and below, one rule between two such neighbours, and none where the
- * full-width group rule already separates.
+ * One category as groups with headings, separated by rules (thin divider lines). A row that shows
+ * its explanation gets an inset rule above and below it, one rule between two such neighbours,
+ * and none where the full-width group rule already separates them.
  */
 @Composable
 fun SettingsCategoryBody(category: SettingCategory, modifier: Modifier = Modifier, highlightKey: String? = null) {
@@ -70,7 +70,7 @@ fun SettingsCategoryBody(category: SettingCategory, modifier: Modifier = Modifie
     }
 }
 
-/** The territory rule: a hairline that stops short of the edges. */
+/** The inset rule: a thin divider line that stops short of the edges. */
 @Composable
 private fun InsetRule() {
     Rule(Modifier.padding(horizontal = Space.gutter))
@@ -121,12 +121,13 @@ class SettingsHit(
 )
 
 /**
- * The index over a resolved category set. Composable because titles are resources.
+ * The search index over a resolved category set. It is composable because it reads the strings of
+ * the current language.
  *
- * Remembered on the two things it depends on. Unremembered, it walked every category and every
- * preference and built a fresh [SettingsHit] for each one on every recomposition of the settings
- * screen, which includes every pixel of scroll, and the search below could never reuse its result
- * because the list it keyed on was a new object each time.
+ * The index is remembered on the two inputs that it depends on. Without that, every recomposition
+ * of the settings screen (every pixel of scroll included) would walk every category and preference
+ * and build a new [SettingsHit] for each. The search below could then never reuse its result,
+ * because the list that it keys on would be a new object each time.
  */
 @Composable
 fun settingsIndex(categories: List<SettingCategory>): List<SettingsHit> {

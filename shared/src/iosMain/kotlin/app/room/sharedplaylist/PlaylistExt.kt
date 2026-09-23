@@ -19,11 +19,11 @@ import platform.Foundation.NSURLIsDirectoryKey
 import platform.Foundation.NSURLNameKey
 
 /**
- * iOS directory walk. The picked directory's [NSURL] is security-scoped; we hold that scope for
- * the whole enumeration so every descendant is reachable, and — while the scope is held — mint
- * an independent security-scoped bookmark for each media file via FileKit's [bookmarkData].
- * Those per-file bookmarks resolve on their own afterwards (no directory scope required), which
- * is what lets the player keep a file open across a playback session.
+ * Walks a picked directory on iOS and returns a security-scoped bookmark for each media file,
+ * keyed by file name. The directory's [NSURL] is security-scoped, and that scope stays open for
+ * the whole walk so every file inside is reachable. While it is open, FileKit's [bookmarkData]
+ * creates a separate bookmark for each media file. Each bookmark resolves on its own later,
+ * without the directory scope, so the player can keep a file open for a whole playback.
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
@@ -47,8 +47,8 @@ actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
             if (!current.isDirectoryResource()) {
                 val childName = current.lastPathComponent
                 if (childName != null && isPlayableMediaFilename(childName) && !out.containsKey(childName)) {
-                    // The child is reachable because dirUrl's scope is active; minting a bookmark
-                    // now captures an independently-resolvable security scope for it.
+                    // The file is reachable only while dirUrl's scope is open. A bookmark made
+                    // now carries its own security scope, which resolves later on its own.
                     runCatching { PlatformFile(current).bookmarkData().bytes }
                         .onSuccess { out[childName] = it }
                         .onFailure { loggy("indexMediaTree: bookmark failed for $childName — ${it.message}") }

@@ -4,8 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The generated strings run every parameter through [format], so a mistake here shows up as
- * mangled text in every language at once.
+ * The generated strings of every language pass their parameters through [format], so a bug in
+ * [format] mangles the text in every language at once.
  */
 class FormatTest {
 

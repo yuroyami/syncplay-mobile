@@ -1,18 +1,18 @@
 package app.server.model
 
 /**
- * A token bucket, for keeping one hostile client from drowning a room.
+ * A token bucket that stops one hostile client from flooding a room.
  *
- * The hosted server bounds message size, the roster and the playlist, but nothing bounded the
- * *rate*: a peer that sends chat in a loop reaches everyone in the room as fast as the socket
- * allows. That is griefing rather than compromise, so the answer is a cap, not a rewrite.
+ * The hosted server bounds the message size, the roster and the playlist, and this bounds the
+ * *rate*. Without it, a peer that sends chat in a loop reaches everyone in the room as fast as
+ * the socket allows. That is griefing, not a compromise of the server, so a simple cap is enough.
  *
  * A bucket holds [capacity] tokens and refills at [refillPerSecond]. A burst of a few messages
- * costs nothing, which is what real people do; a sustained flood runs the bucket dry and the
- * extra messages are dropped rather than broadcast.
+ * costs nothing, which is what real people send. A sustained flood empties the bucket, and the
+ * extra messages are dropped, not broadcast.
  *
- * Not thread-safe on purpose: every server-side call already runs on the one confined
- * dispatcher, and adding a lock here would be pretending otherwise.
+ * Not thread-safe on purpose: every server-side call already runs on the one server dispatcher,
+ * and a lock here would suggest otherwise.
  */
 class RateLimiter(
     private val capacity: Double,
@@ -30,7 +30,7 @@ class RateLimiter(
         return true
     }
 
-    /** How much headroom is left, for a log line or a test. */
+    /** How many tokens are left, for a log line or a test. */
     fun available(nowSeconds: Double): Double {
         refill(nowSeconds)
         return tokens
@@ -38,7 +38,7 @@ class RateLimiter(
 
     private fun refill(nowSeconds: Double) {
         val elapsed = nowSeconds - lastRefillSeconds
-        // A clock that went backwards must not mint tokens or freeze the bucket.
+        // A clock that went backwards must not create tokens or freeze the bucket.
         if (elapsed <= 0.0) {
             lastRefillSeconds = nowSeconds
             return

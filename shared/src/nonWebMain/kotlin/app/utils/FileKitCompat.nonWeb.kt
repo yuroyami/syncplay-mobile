@@ -11,7 +11,8 @@ import io.github.vinceglb.filekit.fromBookmarkData
 import io.github.vinceglb.filekit.write
 import io.github.vinceglb.filekit.writeString
 
-/* Every one of these is FileKit's own call, unchanged. The indirection exists for the web. */
+/* Each function calls FileKit directly. The wrappers exist only for the web build, which has no
+ * filesystem. */
 
 actual fun platformFileAt(path: String): PlatformFile = PlatformFile(path)
 

@@ -13,7 +13,7 @@ import app.theme.palette
 
 enum class ChevronDirection { Left, Right, Up, Down }
 
-/** Two 1.4dp hairlines, drawn, not an icon font glyph. Square terminals like every other stroke. */
+/** A chevron drawn as two 1.4dp lines, not an icon font glyph, with flat ends like every stroke. */
 @Composable
 fun Chevron(
     direction: ChevronDirection,

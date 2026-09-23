@@ -29,22 +29,22 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 
 /**
- * Whether the app runs on a television. Provided once at the root, so composables never ask the
- * platform themselves and the render harness can set it in a test.
+ * Whether the app runs on a television. The root provides it once, so composables never ask the
+ * platform themselves and a screenshot test can set it.
  */
 val LocalIsTelevision = staticCompositionLocalOf { false }
 
 /**
- * The margin a television keeps clear at the edge of the picture. Older sets cut the outer few
- * percent away (overscan), and a set that does not still rounds its corners over the picture, so
- * nothing a person must read or reach belongs outside this.
+ * The margin a television keeps clear at the edge of the picture. Older sets cut away the outer
+ * few percent (overscan), and a set without overscan can still round its corners over the
+ * picture. Nothing a person must read or reach belongs outside this margin.
  */
 fun tvOverscan(): WindowInsets = WindowInsets(left = 48.dp, top = 27.dp, right = 48.dp, bottom = 27.dp)
 
 /**
- * Holds [content] inside [tvOverscan] on a television, and changes nothing anywhere else. The
- * background stays behind it, full width, so the margin shows the theme's own ground rather than
- * a black band.
+ * Keeps [content] inside [tvOverscan] on a television, and changes nothing elsewhere. The
+ * background stays full width behind it, so the margin shows the theme's ground colour and not a
+ * black band.
  */
 @Composable
 fun TvSafeArea(content: @Composable () -> Unit) {
@@ -56,16 +56,17 @@ fun TvSafeArea(content: @Composable () -> Unit) {
 }
 
 /**
- * On a television, the remote works a text field the way Android TV apps expect:
- * - Center calls [onCenter], which is where `Field` starts editing and the keyboard opens.
- * - A printable key from a hardware keyboard calls [onType], so a paired keyboard just types.
- *   While [editing], Left and Right stay with the caret; only Up and Down leave.
- * - A direction leaves the field instead of moving the caret, so a remote can never be trapped.
- * - While the keyboard is showing, every key is the keyboard's, because that is how a remote picks
- *   letters.
+ * Makes a remote work a text field on a television the way Android TV apps expect:
+ * - Center calls [onCenter], which is where `Field` starts editing, and the keyboard opens.
+ * - A printable key from a hardware keyboard calls [onType], so a paired keyboard types directly.
+ * - A direction leaves the field instead of moving the caret, so a remote is never trapped.
+ *   While [editing], Left and Right move the caret, and only Up and Down leave.
+ * - While the soft keyboard shows, every key goes to the keyboard, because that is how a remote
+ *   picks letters.
  *
- * A caller can name the control a direction leads to; otherwise the focus system searches that way.
- * Off a television this is the identity modifier. The mechanism comes from pull request #159.
+ * A caller can name the control that a direction leads to ([up], [down], [left], [right]).
+ * Otherwise the focus system searches in that direction. Off a television this modifier changes
+ * nothing. The mechanism comes from pull request #159.
  */
 @Composable
 fun Modifier.tvTextFieldNavigation(
@@ -86,7 +87,8 @@ fun Modifier.tvTextFieldNavigation(
     val type by rememberUpdatedState(onType)
     var pending by remember { mutableStateOf<FocusDirection?>(null) }
 
-    // Moved in an effect, not inside the key dispatch: moving focus from within it reenters the focus system.
+    // Focus moves in an effect, not inside the key dispatch, because a move from inside the
+    // dispatch re-enters the focus system.
     LaunchedEffect(pending) {
         val direction = pending ?: return@LaunchedEffect
         val explicit = when (direction) {
@@ -123,9 +125,10 @@ fun Modifier.tvTextFieldNavigation(
 }
 
 /**
- * Where the platform decides whether a key reaches [onKeyEvent] at all. Android has a soft keyboard
- * to defer to and a moment after Back when the insets still call it visible; the other platforms
- * have nothing between the key and the field. [onKeyEvent] returns whether it took the key.
+ * Lets the platform decide whether a key reaches [onKeyEvent] at all. Android has a soft keyboard
+ * to defer to, and a moment after Back when the insets still report the keyboard as visible. The
+ * other platforms have nothing between the key and the field. [onKeyEvent] returns whether it
+ * consumed the key.
  */
 @Composable
 internal expect fun Modifier.onTvTextFieldNavigationKeyEvent(onKeyEvent: (KeyEvent) -> Boolean): Modifier
@@ -165,6 +168,9 @@ internal fun isTvActivationKey(key: Key): Boolean = when (key) {
     else -> false
 }
 
-/** Whether the soft keyboard is showing. Visibility, not height: a television keyboard floats and reports none. */
+/**
+ * Whether the soft keyboard is showing. It checks visibility, not height, because a television
+ * keyboard floats and reports no height.
+ */
 @Composable
 internal expect fun softKeyboardVisible(): Boolean

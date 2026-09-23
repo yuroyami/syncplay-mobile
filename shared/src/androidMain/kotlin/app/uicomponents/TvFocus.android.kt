@@ -22,11 +22,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 /**
- * The Android half of a remote working a text field. It runs before the soft keyboard: while the
- * keyboard is up every key is the keyboard's, and only once it is gone, or Back has just been
- * pressed to send it away, does a key reach the field's own handling. The insets keep calling the
- * keyboard visible for a moment after Back, which is what the grace period covers.
- * Written for pull request #159 and verified there on a Google TV Streamer.
+ * The Android part of TV remote handling for a text field. It runs before the soft keyboard.
+ * While the keyboard is up, every key belongs to the keyboard. A key reaches the field's own
+ * handling only when the keyboard is gone, or when Back was just pressed to close it. The insets
+ * still report the keyboard as visible for a moment after Back, and the grace period covers that.
+ * From pull request #159, tested on a Google TV Streamer.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -54,7 +54,7 @@ internal actual fun Modifier.onTvTextFieldNavigationKeyEvent(onKeyEvent: (KeyEve
     }
 }
 
-/** How long after Back the insets may still call the keyboard visible before a key is trusted again. */
+/** The grace period after Back, while the insets may still report the keyboard as visible. */
 private const val IME_DISMISSAL_GRACE_PERIOD_MS = 2_000L
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {

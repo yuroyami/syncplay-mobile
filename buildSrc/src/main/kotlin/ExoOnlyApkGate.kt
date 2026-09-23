@@ -3,9 +3,9 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 
 /**
- * The exoOnly promise, checked on the bytes: an exoOnly APK carries no native player library.
- * Runs after every exoOnly package task and opens the APKs it produced. The exclusion list in
- * androidApp/build.gradle.kts is what keeps the promise; this is what proves it.
+ * Checks the finished files: an exoOnly APK (the ExoPlayer-only Android flavor) carries no native
+ * player library. The gate runs after every exoOnly package task and opens the APKs it produced.
+ * The exclusion list in androidApp/build.gradle.kts removes the libraries; this gate proves it.
  */
 fun Project.registerExoOnlyApkGate() {
     val forbiddenPrefixes = listOf("libmpv", "libmpvkt_jni", "libav", "libsw", "libkitecodec", "libc++_shared")

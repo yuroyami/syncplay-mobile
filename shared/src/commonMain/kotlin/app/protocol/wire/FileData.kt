@@ -13,13 +13,13 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * File metadata exchanged in `Set.file` (client→server) and inside [UserSetData] broadcasts
- * (server→client).
+ * File metadata exchanged in `Set.file` (client to server) and inside [UserSetData] broadcasts
+ * (server to client).
  *
- * `size` is polymorphic on the wire: the reference Python client emits a JSON **number** at
+ * `size` is polymorphic on the wire: the reference Python client sends a JSON **number** at
  * default privacy (raw byte count), a **string** when hashed, and `0` (number) when hidden.
- * [FileSizeSerializer] normalizes both shapes to [String] on decode and always emits a string
- * on encode.
+ * [FileSizeSerializer] normalizes both shapes to [String] on decode. On encode it writes a
+ * number for a value that reads as a byte count, and a string otherwise.
  */
 @Serializable
 data class FileData(
@@ -38,29 +38,28 @@ internal object FileSizeSerializer : KSerializer<String> {
 
     override fun deserialize(decoder: Decoder): String {
         if (decoder !is JsonDecoder) {
-            // SerializationException, not require(): it is the only type the
-            // skip-a-poisoned-line catch in the inbound path covers.
+            // SerializationException, not require(): it is the one type that both inbound paths
+            // catch (the client skips the line, the server drops the peer with an error).
             throw SerializationException("FileSizeSerializer requires a JSON decoder")
         }
         val element = decoder.decodeJsonElement()
-        // Must be SerializationException, not error()/IllegalStateException: file dicts are
-        // relayed verbatim from other clients by the server, and NetworkManager.handlePacket's
-        // skip-a-poisoned-line catch only covers SerializationException — anything else
-        // escapes the catch and kills the process instead of skipping the message.
+        // SerializationException again, not error() or IllegalStateException: the server relays
+        // file dicts from other clients verbatim, so a malformed `size` from any peer must fail
+        // as a parse error that both inbound paths handle.
         return (element as? JsonPrimitive)?.content
             ?: throw SerializationException("Expected JSON primitive for FileData.size, got: $element")
     }
 
     override fun serialize(encoder: Encoder, value: String) {
-        /* Match the python wire shape: a raw byte count (and the hidden-size sentinel 0) goes
-         * out as a JSON number, only the 12-char privacy hash is a string. PC's comparisons
-         * survive a stringified number via the hash path, but its UI parses the size as an int,
-         * and exact parity costs nothing here.
+        /* Match the Python wire shape: a raw byte count (and the hidden-size value 0) goes out
+         * as a JSON number, and only the 12-character privacy hash is a string. PC's comparisons
+         * survive a stringified number through the hash path, but its UI parses the size as an
+         * int, and exact parity costs nothing here.
          *
-         * A privacy hash is twelve digits and can start with a zero, and about one in 2500 does.
-         * Sent as a number it loses that zero, so the two people comparing the same file are
-         * told they have different ones. A real byte count never starts with a zero, which is
-         * how the two are told apart. */
+         * A privacy hash is twelve hex characters. When all twelve are decimal digits and the
+         * first is a zero (about one hash in 2800), sending it as a number drops that zero, and
+         * two people with the same file are told their files differ. A real byte count never
+         * starts with a zero, which is how the two are told apart. */
         val asLong = value.toLongOrNull()
         val isByteCount = asLong != null && (value == "0" || !value.startsWith("0"))
         if (encoder is JsonEncoder && isByteCount) {

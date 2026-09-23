@@ -34,16 +34,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Client-side implementation of [WireMessageHandler].
+ * The client-side [WireMessageHandler]. It reacts in the room (the group of people watching
+ * together) to each [WireMessage] that the server sends: playback sync, the user list, chat, the
+ * TLS upgrade and more. Only the server-to-client messages are overridden. The client-to-server
+ * ones keep the no-op defaults.
  *
- * Owns the room-level reactions to every incoming server-bound [WireMessage] — playback
- * synchronization, user-list rendering, chat broadcasts, TLS upgrade, etc. Only the
- * server→client variants are overridden; the client→server ones inherit the no-op
- * defaults.
- *
- * This is the place where the protocol's typed payloads meet the room's domain logic.
- * The wire models live in `app.protocol.wire` and are deliberately free of any client
- * coupling; only this class knows about [RoomViewmodel], the player, preferences, etc.
+ * This class is where the typed protocol payloads meet the room logic. The wire models in
+ * `app.protocol.wire` do not depend on the client. Only this class knows about [RoomViewmodel],
+ * the player and the preferences.
  */
 class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessageHandler {
 
@@ -54,8 +52,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     private val session get() = viewmodel.session
 
     override suspend fun onHello(message: WireMessage.Hello) {
-        /* We asked to upgrade and got a Hello instead: this server skipped the answer, so the
-         * socket is still plain text. Required means we leave rather than carry on. */
+        /* The client asked for a TLS upgrade and got a Hello instead. The server skipped the
+         * answer, so the socket is still plain text. When TLS is required, the client leaves. */
         if (network.tls == TlsState.TLS_ASK) {
             if (Preferences.TLS_REQUIRED.value()) {
                 callback.onTlsRequiredButUnavailable()
@@ -70,14 +68,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         data.username?.let { session.currentUsername = it.take(MAX_USERNAME_CHARS) }
         session.roomFeatures = data.features
 
-        // Ask for the user list right away — the server will send a `List` reply. Fire and
-        // forget: the answer arrives on the wire, and this runs on the serial inbound consumer,
-        // which must not sit on a write while State packets queue behind it.
+        // Ask for the user list now, and the server answers with a `List` message. Do not wait
+        // for the write: this runs on the serial inbound consumer, which must not block on a
+        // write while State packets queue behind it.
         network.sendAsync(WireMessage.listRequest())
         callback.onConnected()
 
-        // The server's message of the day, shown in chat like PC does (it may carry an update
-        // notice or house rules).
+        // The server's message of the day goes into chat, as on PC. It can hold an update
+        // notice or house rules.
         data.motd?.takeIf { it.isNotBlank() }?.let { motd ->
             val text = motd.take(MAX_CHAT_CHARS)
             dispatcher.broadcastMessage(message = { text }, isChat = false)
@@ -85,9 +83,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     override suspend fun onState(message: WireMessage.State) {
-        // Freshness stamp for the channel-health watchdog. Set before any other processing
-        // so even a State we end up ignoring still resets the "no State received" timer —
-        // the server is clearly alive.
+        // The time stamp for the channel-health watchdog. It is set before anything else, so a
+        // State that is later ignored still resets the "no State received" timer. The server is
+        // alive either way.
         protocol.lastStateReceivedAt = SyncClock.now()
 
         val state = message.data
@@ -109,12 +107,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             messageAge = protocol.pingService.forwardDelay
         }
 
-        /* The decision itself is a pure function; see app.protocol.sync.SyncDecision. Everything
+        /* The decision itself is a pure function ([decideSync] in `SyncDecision.kt`). Everything
          * it needs is gathered here, and everything it decides is applied below, in order.
          *
-         * Read, decide and write back are one step. The anchor is eight fields written back as a
-         * whole, so a reconnect or a file load landing between the read and the write would be
-         * erased. Nothing in here suspends. */
+         * Read, decide and write back are one step under the lock. The sync state is eight fields
+         * written back as a whole, so a reconnect or a file load between the read and the write
+         * would be erased. Nothing in here suspends. */
         var localSeek: LocalSeek? = null
         var sentPendingIntent = false
         var decisionMedia: MediaFile? = null
@@ -124,9 +122,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             decisionMedia = viewmodel.media
             protocol.syncState = protocol.syncState.withIgnoringOnTheFly(state.ignoringOnTheFly)
             localSeek = protocol.consumeLocalSeekEcho(state)
-            // A second user seek must survive the first seek's forced echo. The latest queued
-            // intent carries this ACK and re-arms the existing ignore gate before deciding any
-            // obsolete inbound correction. Nothing here waits for the main thread or the socket.
+            // A second user seek must survive the forced echo of the first seek. The latest queued
+            // intent carries this ACK and sets the ignore gate again, before any outdated inbound
+            // correction is decided. Nothing here waits for the main thread or the socket.
             sentPendingIntent = protocol.flushPendingLocalState(latencyCalculation)
             decisionRevision = protocol.localStateRevision
             decideSync(
@@ -156,13 +154,15 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 ),
             ).also { outcome ->
                 protocol.syncState = outcome.state
-                // Publish every accepted target before an ACK can release the server's stale-report gate.
+                // Queue every accepted seek target before an ACK can open the server's stale-report
+                // gate.
                 pendingActions = outcome.actions.map { it to protocol.queueSeekPosition(it) }
             }
         }
         pendingActions.forEach { (action, pendingSeek) ->
-            // Local origin metadata was matched to the sent packet before a newer seek flushed.
-            // Unmatched self echoes are duplicates/overrides, not new gestures to undo.
+            // A local seek was matched to its sent packet (localSeek) before a newer seek was
+            // flushed. A self echo without a match is a duplicate or an override, not a new
+            // gesture to undo.
             if (action !is SyncAction.SomeoneSeeked || action.by != session.currentUsername) {
                 apply(action, decisionMedia, decisionRevision, pendingSeek)
             }
@@ -175,39 +175,36 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         }
         if (sentPendingIntent) return
 
-        /* Acknowledge with our own State packet. The gate is "the message carried a playstate
-         * at all", not "it carried a position": the reference client reads a missing position
-         * as zero, and a State whose playstate omits it still gets a positioned ACK. */
+        /* Answer with a State packet from this client. The condition is "the message carried a
+         * playstate", not "it carried a position". The reference client reads a missing position
+         * as zero, so a State whose playstate has no position still gets an ACK with a position. */
         if (protocol.lastGlobalUpdate != null && state.playstate != null) {
             val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
-                // Use the room's *current* expected position, not the last 1 Hz snapshot —
-                // mirrors python's getGlobalPosition() extrapolation.
+                // Use the room's current expected position, not the last 1 Hz snapshot. This
+                // matches the extrapolation in Python's getGlobalPosition().
                 protocol.extrapolatedGlobalPositionMs() / 1000.0
             } else {
-                // While a freshly-loaded file is still catching up, this reports the room
-                // position instead of the engine's ~0, so we never drag the room back to us.
+                // While a newly loaded file is still catching up, this reports the room position
+                // instead of the engine's position near 0, so the room is never pulled back.
                 protocol.reportableStatePositionSec()
             }
-            /* `play` MUST be the state we just acknowledged from the server, NOT the transient
-             * viewmodel.player.isPlaying(). VLCKit 4's libvlc pause/play API is asynchronous:
-             * pause() returns before the player has transitioned, so isPlaying() right after
-             * pause() still reports true. ACKing that stale value would send State(play=true)
-             * when the server told us to pause, which the public Syncplay server reads as "this
-             * watcher is unpausing the room" and rebroadcasts. globalPaused is what the decision
-             * just recorded; a genuine application failure is caught later by the isNowPlaying
-             * divergence check in ProtocolManager, once the player has settled. */
+            /* `play` must be the state just acknowledged from the server, never the transient
+             * viewmodel.player.isPlaying(). The libvlc pause and play calls in VLCKit 4 are
+             * asynchronous: pause() returns before the player changes state, so isPlaying() right
+             * after pause() still reports true. An ACK with that stale value sends
+             * State(play=true) after the server asked for a pause. The public Syncplay server
+             * reads that as "this watcher unpauses the room" and broadcasts it. If the player
+             * really fails to apply the state, the isNowPlaying divergence check in
+             * ProtocolManager catches the failure after the player settles. */
             protocol.sendStateAcknowledgement(
                 serverTime = latencyCalculation,
-                // Mobile owns its embedded player, so every real seek is announced explicitly
-                // via dispatcher.sendSeek. There is no out-of-band seek to discover, so this
-                // periodic ACK never re-derives one — it omits doSeek, like the PC client
-                // (whose ACK compares the player against itself, never against the inbound
-                // server position).
+                // This app owns its embedded player, so dispatcher.sendSeek announces every real
+                // seek. No seek can happen outside that path, so this periodic ACK never derives
+                // one and omits doSeek. The PC client does the same: its ACK compares the player
+                // with itself, never with the inbound server position.
                 position = ackPos,
-                /* The state we just acknowledged from the server. Falls back to
-                 * globalPaused only when the inbound playstate carried no pause field, or
-                 * when we skipped the decision because we are ignoring the server on the
-                 * fly and globalPaused is therefore still the room state we last agreed on. */
+                /* The state just acknowledged from the server. The ACK falls back to
+                 * globalPaused only when the inbound playstate has no paused field. */
                 play = !(state.playstate?.paused ?: protocol.globalPaused)
             )
         } else {
@@ -219,23 +216,23 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         }
     }
 
-    /** Carries out one decision. The order the actions arrive in is the order they must happen. */
+    /** Applies one sync action. Actions must be applied in the order they arrive. */
     private fun apply(action: SyncAction, media: MediaFile?, revision: Long, pendingSeek: PendingSeekPosition?) {
-        // The serial inbound consumer never waits on Main. Commands retain the media they were
-        // decided for: a queued correction cannot seek or pause a newly installed file.
+        // The serial inbound consumer never waits on Main. Each command keeps the media it was
+        // decided for, so a queued correction cannot seek or pause a newly loaded file.
         val job = viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
             if (viewmodel.media !== media) return@launch
-            // A local command can land after the decision but before this Main task. Its seek
-            // or pause must win. Speed actions still apply: the reducer already changed its
-            // speedChanged flag, so dropping only the native half could leave rate at 0.95.
+            // A local command can arrive after the decision but before this Main task, and its
+            // seek or pause must win. Speed actions still apply: the decision already changed its
+            // speedChanged flag, so skipping only the player call could leave the rate at 0.95.
             val changesTransport = action !is SyncAction.SlowDown && action != SyncAction.RestoreSpeed
             if (changesTransport && !protocol.isLocalStateRevisionCurrent(revision)) return@launch
             when (action) {
                 is SyncAction.FirstSync -> {
-                    /* Set the expected pause state BEFORE touching the player. The collector watching
-                     * PlayerManager.isNowPlaying fires as soon as the engine catches up with our
-                     * pause()/play(); if expectedPaused were still at its default then, it would read
-                     * as a divergence and re-broadcast our own first sync back at the server. */
+                    /* Set the expected pause state before touching the player. The collector of
+                     * PlayerManager.isNowPlaying fires as soon as the engine applies pause() or
+                     * play(). If expectedPaused still had its default then, the collector would see
+                     * a divergence and send this first sync back to the server. */
                     protocol.noteExpectedPlaybackState(paused = action.paused)
                     viewmodel.player.seekTo(action.seekToMs)
                     if (action.paused) viewmodel.player.pause() else viewmodel.player.play()
@@ -247,7 +244,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 is SyncAction.SomeonePaused -> callback.onSomeonePaused(action.by)
                 is SyncAction.SlowDown -> {
                     viewmodel.player.setSpeed(SLOWDOWN_RATE)
-                    // PC's slowdown notification: the room hears it, the user must too.
+                    // The slowdown notice of the PC client. The user must see why playback slowed.
                     viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownNotification(action.by) }
                 }
                 SyncAction.RestoreSpeed -> {
@@ -256,28 +253,28 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 }
             }
         }
-        // Also runs when cancellation prevents the Main task from starting at all.
+        // This also runs when cancellation stops the Main task before it starts.
         if (pendingSeek != null) job.invokeOnCompletion { protocol.completeSeekPosition(pendingSeek) }
     }
 
 
     override suspend fun onSet(message: WireMessage.Set) {
         val set = message.data
-        // Process EVERY key present, not just the first — python's handleSet iterates the
-        // whole Set dict, and a server may legally bundle several commands in one message.
-        // playlistChange is applied before playlistIndex so a bundled index can resolve
-        // against the new entries.
+        // Process every key that is present, not only the first. Python's handleSet iterates the
+        // whole Set dict, and a server may bundle several commands in one message.
+        // playlistChange is applied before playlistIndex, so a bundled index can resolve against
+        // the new entries.
         set.user?.let { handleUserSet(it) }
         set.ready?.let { handleReadySet(it) }
         set.playlistChange?.let { handlePlaylistChange(it) }
         set.playlistIndex?.let { handlePlaylistIndex(it) }
         set.newControlledRoom?.let { handleNewControlledRoom(it) }
         set.controllerAuth?.let { handleControllerAuth(it) }
-        // No List request after every Set. The python client mutates its userlist in
-        // place from the very Set it just received (see `_SetUser` / `setReady` in
-        // protocols.py); [handleUserSet] and [handleReadySet] do the same. The public
-        // server only proactively pushes a List broadcast when persistent rooms are
-        // configured (`roomsDbFile` set on server), so we cannot rely on it.
+        // No List request after every Set. The Python client changes its user list in place
+        // from the Set it just received (`_SetUser` in protocols.py, `setReady` in client.py),
+        // and [handleUserSet] and [handleReadySet] do the same. The public server pushes a List
+        // broadcast only when persistent rooms are set up (`roomsDbFile` on the server), so the
+        // client cannot rely on one.
     }
 
     override suspend fun onListResponse(message: WireMessage.ListResponse) {
@@ -307,8 +304,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             newList.add(user)
         }
 
-        // Applied inline, on the serial consumer, like every other roster mutation: a launch here
-        // let a List reply land after the Set that followed it on the wire.
+        // Applied inline on the serial consumer, like every other roster change. A launch here
+        // would let a List reply land after the Set that followed it on the wire.
         session.userList.emit(newList)
         callback.onReceivedList()
     }
@@ -316,20 +313,20 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     override suspend fun onChatBroadcast(message: WireMessage.ChatBroadcast) {
         val sender = message.data.username ?: return
         val text = message.data.message ?: return
-        // Hard caps, above any honest server's limits: a hostile one must not be able to hand
-        // the chat a megabyte to lay out.
+        // Hard caps, above the limits of any honest server. A hostile server must not be able to
+        // hand the chat a megabyte of text to lay out.
         callback.onChatReceived(sender.take(MAX_USERNAME_CHARS), text.take(MAX_CHAT_CHARS))
     }
 
     override suspend fun onTLS(message: WireMessage.TLS) {
         val startTLS = message.data.startTLS ?: return
-        // Only the answer to our own request counts (PC acts on it only before login). An
-        // unsolicited TLS line would otherwise re-send Hello and re-pin the transport.
+        // Only the answer to this client's own request counts (PC acts on it only before login).
+        // An unsolicited TLS line would otherwise send Hello again and pin the transport again.
         if (network.tls != TlsState.TLS_ASK) {
             loggy("Ignoring an unsolicited TLS message from the server")
             return
         }
-        // Match python client semantics: `"true" in answer` / `"false" in answer`.
+        // The same substring test as the Python client: `"true" in answer`.
         val supported = startTLS.contains("true", ignoreCase = true)
         callback.onReceivedTLS(supported)
     }
@@ -337,8 +334,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     override suspend fun onError(message: WireMessage.Error) {
         val errorText = message.data.message ?: return
         loggy("Server error: $errorText")
-        // Surface server errors (e.g. "Wrong password supplied") to chat + OSD, like PC's
-        // ui.showErrorMessage. Shown verbatim — these originate in English on the server.
+        // Show server errors (for example "Wrong password supplied") in chat and on the OSD, like
+        // PC's ui.showErrorMessage. The text is shown as sent, because the server writes it in
+        // English.
         dispatcher.broadcastMessage(message = { errorText }, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING) { errorText }
     }
@@ -348,18 +346,18 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     // -----------------------------------------------------------
 
     /**
-     * Mirrors python's `_SetUser` (protocols.py): mutates the local user list directly
-     * from the Set we just received, instead of round-tripping a List request, so user-list
-     * changes show up immediately rather than on the next periodic probe.
+     * Updates the local user list straight from this Set, like Python's `_SetUser`
+     * (protocols.py). The change shows at once, not after a List round trip or the next
+     * periodic List probe.
      *
      * Wire shape per user:
-     *  - `event.joined` (with optional file) → add to list
-     *  - `event.left`                        → remove from list
-     *  - file present, no event              → update file in place (`modUser`)
+     *  - `event.joined` (with an optional file): add the user to the list.
+     *  - `event.left`: remove the user from the list.
+     *  - A file and no event: update the file in place (`modUser`).
      */
     private suspend fun handleUserSet(userMap: Map<String, UserSetData>) {
-        // Python iterates every user in the Set dict — the official server usually sends
-        // one, but nothing in the protocol forbids several.
+        // Python iterates every user in the Set dict. The official server usually sends one
+        // user, but the protocol allows several.
         for ((userName, userData) in userMap) handleSingleUserSet(userName, userData)
     }
 
@@ -369,11 +367,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         val updated = current.toMutableList()
         var changed = false
 
-        // The broadcast carries the user's room. Our user list models ONLY the current
-        // room (unlike PC's all-rooms pane), so the room field decides membership:
-        //  - join/switch INTO our room → appears in the list
-        //  - switch OUT of our room    → removed immediately (mirrors python's modUser)
-        // A missing room (defensive: python always sends one) is treated as ours.
+        // The broadcast carries the user's room. This user list holds only the current room
+        // (unlike the all-rooms list on PC), so the room field decides membership:
+        //  - A join or a switch into the current room adds the user to the list.
+        //  - A switch out of the current room removes the user at once (Python's modUser case).
+        // A missing room counts as the current room. Python always sends one, so this is only
+        // a fallback.
         val eventRoom = userData.room?.name
         val inOurRoom = eventRoom == null || eventRoom == session.currentRoom
 
@@ -395,29 +394,29 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     }
                     callback.onSomeoneJoined(userName)
                 }
-                // Joined another room (a server without isolated rooms): a quiet notice, PC's
-                // different-room OSD, and nothing in our roster.
+                // A join into another room (on a server without isolated rooms) gets a quiet
+                // notice, like the different-room OSD on PC, and no roster entry.
                 event.joined != null && eventRoom != null -> callback.onSomeoneJoinedOtherRoom(userName, eventRoom)
             }
         }
 
-        // No event but a room is present: a room SWITCH (server's sendRoomSwitchMessage
-        // broadcasts a bare `Set.user` with the new room).
+        // A room and no event means a room switch. The server's sendRoomSwitchMessage
+        // broadcasts a bare `Set.user` with the new room.
         if (userData.event == null && eventRoom != null && userName != session.currentUsername) {
             val idx = updated.indexOfFirst { it.name == userName }
             if (!inOurRoom && idx >= 0) {
-                // Moved away from our room — drop them from the list immediately.
+                // The user left the current room, so remove the user from the list at once.
                 updated.removeAt(idx)
                 changed = true
             } else if (inOurRoom && idx < 0 && updated.addNewUser(userName)) {
-                // Moved into our room.
+                // The user moved into the current room.
                 changed = true
                 callback.onSomeoneJoined(userName)
             }
         }
 
         userData.file?.let { file ->
-            // Re-resolve the index — the join branch above may have just inserted them.
+            // Look up the index again, because the join branch above may have just added the user.
             val idx = updated.indexOfFirst { it.name == userName }
             val name = file.name?.take(MAX_FILENAME_CHARS)
             if (idx >= 0 && name != null) {
@@ -429,7 +428,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 updated[idx] = updated[idx].copy(file = mediaFile)
                 changed = true
             }
-            // Announce file loads only for users we can see (our room).
+            // Announce file loads only for users in the current room.
             if (idx >= 0) callback.onSomeoneLoadedFile(userName, name ?: "", file.duration ?: 0.0)
         }
 
@@ -437,9 +436,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     /**
-     * Mirrors python's `setReady` (client.py): toggles the user's readiness flag in the
-     * local user list. The server sends `Set.ready` independently of `Set.user`, so this
-     * is its own branch.
+     * Sets the user's readiness flag in the local user list, like Python's `setReady`
+     * (client.py). The server sends `Set.ready` apart from `Set.user`, so this is its own branch.
      */
     private suspend fun handleReadySet(ready: ReadyData) {
         val userName = ready.username ?: return
@@ -454,8 +452,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         updated[idx] = updated[idx].copy(readiness = isReady)
         session.userList.emit(updated)
 
-        // A controller set someone ELSE's readiness (setOthersReadiness feature) — announce
-        // it like PC does, otherwise the change is invisible beyond the icon flip.
+        // A controller set the readiness of another user (the setOthersReadiness feature).
+        // Announce it as PC does, or the only sign of the change is the icon.
         val setBy = ready.setBy
         if (setBy != null && setBy != userName) {
             dispatcher.broadcastMessage(
@@ -468,8 +466,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             )
         }
 
-        // Keep our own ready flag in sync when WE are the one being set (otherwise the
-        // ready button and instaplay gating disagree with what the room sees).
+        // When the local user is the one being set, update the local ready flag too. Otherwise
+        // the ready button and the play gate (instaplayConditionsMet) disagree with the room.
         if (userName == session.currentUsername) {
             session.ready.value = isReady
         }
@@ -478,9 +476,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
-        // Self-initiated changes already updated spIndex locally before the round-trip;
-        // applying it again is harmless but prevents a brief stale-list window if our
-        // own echo arrives before the matching playlistChange.
+        // A change by the local user already set spIndex before the round trip. The echo is
+        // skipped, so an echo that arrives before the matching playlistChange cannot show a
+        // stale list for a moment.
         if (user != session.currentUsername) {
             session.spIndex.intValue = index
         }
@@ -490,8 +488,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     private fun handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
-        // One atomic replacement: a clear then an addAll from this thread let the playlist
-        // panel draw an empty list between the two.
+        // Replace the list in one atomic step. A separate clear and addAll from this thread
+        // would let the playlist panel draw an empty list between the two.
         Snapshot.withMutableSnapshot {
             session.sharedPlaylist.clear()
             session.sharedPlaylist.addAll(files)
@@ -515,10 +513,11 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     /**
-     * Adds an unknown user, or refuses when the roster is full. Says whether it was added.
+     * Adds an unknown user, or refuses when the roster (the list of users in the room) is full.
+     * Returns whether the user was added.
      *
-     * A hostile server streaming joins must not grow the roster without end, and both ways in,
-     * a join event and a room switch, have to say so.
+     * A hostile server that streams joins must not grow the roster without end. Both paths that
+     * add a user (a join event and a room switch) go through this cap.
      */
     private fun MutableList<User>.addNewUser(name: String): Boolean {
         if (size >= Session.MAX_USERS) return false
@@ -535,13 +534,13 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     private fun handleControllerAuth(data: ControllerAuthData) {
-        // Any answer settles a creation that is waiting on one, including a refusal.
+        // Any answer, including a refusal, ends a room creation that waits for one.
         viewmodel.protocol.endRoomChange()
         callback.onHandleControllerAuth(data)
     }
 
     private companion object {
-        /** Absolute ceilings on peer-supplied strings, well above any honest server's limits. */
+        /** Hard limits on strings from peers, well above the limits of any honest server. */
         const val MAX_USERNAME_CHARS = Session.MAX_USERNAME_CHARS
         const val MAX_CHAT_CHARS = 2000
         const val MAX_FILENAME_CHARS = 512

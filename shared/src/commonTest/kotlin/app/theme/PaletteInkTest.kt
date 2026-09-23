@@ -8,9 +8,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * A label on a filled control has to be readable against that fill. The add-media block broke
- * this: it turns the accent into dark ink so an accent fill reads on the brand gradient, and the
- * confirm key then drew a dark label on its own dark fill.
+ * A label on a filled control must be readable against that fill. The add-media block is the
+ * trap: it turns the accent into dark ink so that an accent fill reads on the brand gradient. A
+ * confirm key that takes its label from a stored dark colour then draws dark on its own dark fill.
  */
 class PaletteInkTest {
 
@@ -34,7 +34,7 @@ class PaletteInkTest {
         isDark = true,
     )
 
-    /** Contrast ratio, the WCAG definition, so a threshold means something. */
+    /** The WCAG contrast ratio, so that a threshold has a standard meaning. */
     private fun contrast(a: Color, b: Color): Float {
         val high = maxOf(a.luminance(), b.luminance())
         val low = minOf(a.luminance(), b.luminance())
@@ -52,7 +52,7 @@ class PaletteInkTest {
     @Test
     fun `the confirm key on the brand block is not its own colour`() {
         val block = dark.overVideo().onBrandBlock()
-        // What the label used to be: the same colour as the fill, which is the reported bug.
+        // On the brand block the accent is the ground colour, so a ground-coloured label vanishes.
         assertTrue(contrast(block.accent, block.ground) < 1.1f)
         assertTrue(
             contrast(block.accent, block.inkOn(block.accent)) > 4.5f,

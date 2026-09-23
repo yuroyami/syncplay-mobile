@@ -1,14 +1,14 @@
 package app.home.components
 
 /**
- * The third-party work this app is built on, with the licence each one is offered under.
+ * One piece of third-party work that the app is built on, with its licence and its home page.
  *
- * Names and licences are read from what each project ships, not from memory. The list covers what
- * actually ends up inside a build; a library used only to build the app is not in here.
+ * The names and licences come from what each project ships. The list covers only what ends up
+ * inside a build; a library used only to build the app is not listed.
  */
 data class Attribution(val name: String, val licence: String, val url: String)
 
-/** Grouped loosely by what the piece does, which is the order they appear in. */
+/** Grouped loosely by what each piece does, in the order they appear on screen. */
 val attributions: List<Attribution> = listOf(
     Attribution("Syncplay", "Apache 2.0", "https://syncplay.pl"),
     Attribution("Kotlin and kotlinx", "Apache 2.0", "https://github.com/JetBrains/kotlin"),

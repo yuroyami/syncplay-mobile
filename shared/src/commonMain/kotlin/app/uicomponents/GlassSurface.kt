@@ -41,12 +41,13 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * The backdrop every glass surface samples. Provided once at the root over the whole tree; null
- * only for a surface rendered outside it, which then gets a plain tonal panel.
+ * The backdrop that glass surfaces sample. [GlassBackdrop] provides it at the root, and the room
+ * provides its own for the video layer. It is null only for a surface drawn outside both, which
+ * then gets a plain tonal panel.
  */
 val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
 
-/** Counts the glass surfaces on screen, so the backdrop only captures when one needs it. */
+/** Counts the glass surfaces on screen, so the backdrop captures only while one needs it. */
 @Stable
 class GlassDemand {
     var count: Int by mutableIntStateOf(0)
@@ -59,29 +60,35 @@ class GlassDemand {
 val LocalGlassDemand = staticCompositionLocalOf { GlassDemand() }
 
 /**
- * True while the glass surfaces below are composed but invisible (the room's hidden HUD). They
- * release their demand, so no backdrop is captured for panels nobody can see.
+ * True while the glass surfaces below are composed but invisible (the room's HUD, its overlay
+ * controls, while hidden). They release their demand, so no backdrop is captured for panels that
+ * nobody can see.
  */
 val LocalGlassSuspended = staticCompositionLocalOf { false }
 
-/** The one switch for the whole glass system: no capture, no blur, solid panels when off. */
+/** Whether frosted glass is on. When off, nothing is captured or blurred and panels are solid. */
 @Composable
 fun glassEnabled(): Boolean = !Preferences.DISABLE_FROSTED_GLASS.watchPref().value
 
-/** The same switch outside composition, for the Android player views choosing a surface type. */
+/**
+ * The same switch read outside composition, combined with [videoSurfaceSupportsGlass]. The Android
+ * player views use it to choose a surface type.
+ */
 fun glassEnabledNow(): Boolean = !Preferences.DISABLE_FROSTED_GLASS.value() && videoSurfaceSupportsGlass()
 
 /**
- * Whether this device can usefully draw video into the view hierarchy for glass to sample.
- * Android answers by version and by how much memory the device has; everywhere else it is moot.
+ * Whether this device can afford to draw video into the view hierarchy, where glass can sample it.
+ * Android answers by OS version and by whether the device is low on RAM. Only the Android players
+ * read the answer, so on other platforms it changes nothing.
  */
 expect fun videoSurfaceSupportsGlass(): Boolean
 
 /**
- * Marks [content] as the backdrop every glass surface blurs, and publishes it as [LocalHazeState].
- * Wraps the app once above navigation. The capture is attached only while a glass surface is on
- * screen, or every device would pay for a full-screen capture continuously. Glass inside this
- * tree cannot sample this capture, which is why in-window chrome needs [glassBackdropLayer].
+ * Marks [content] as the backdrop that glass surfaces blur, and provides it as [LocalHazeState].
+ * It wraps the app once, above navigation. The capture is attached only while a glass surface is
+ * on screen, because a constant full-screen capture would cost every device. Glass inside this
+ * tree cannot sample this capture, which is why chrome inside the window needs
+ * [glassBackdropLayer].
  */
 @Composable
 fun GlassBackdrop(content: @Composable () -> Unit) {
@@ -107,15 +114,16 @@ val LocalInDialogWindow = staticCompositionLocalOf { false }
 /** Which sides of a panel draw the rim. */
 enum class GlassEdge { All, BottomOnly, None }
 
-/** Dim drawn under a modal: light when glass separates the panel, heavier when only the dim does. */
+/** The dim under a modal: light when glass sets the panel apart, heavier when only the dim does. */
 val glassScrim: Color
     @Composable
     get() = Color.Black.copy(alpha = if (glassEnabled()) 0.28f else 0.55f)
 
 /**
- * The surface tiers from DESIGN/GLASS_SURFACES. Callers say what kind of surface a thing is; the
- * material, rim and fallback follow from the tier and from whether it sits in a dialog window.
- * Shapes come from the caller's dock, never from a shape scale.
+ * Draws one of the surface tiers ([Tier]). The caller says what kind of surface a thing is, and
+ * the material, the rim and the fallback follow from the tier and from whether the surface sits in
+ * a dialog window. The shape comes from the caller, to match where the surface is docked, never
+ * from a shape scale.
  */
 @Composable
 fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge = GlassEdge.All): Modifier = when (tier) {
@@ -126,38 +134,41 @@ fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge =
 }
 
 /**
- * The chrome tier: no blur, so it is safe on chrome that stays composed while video plays. A
- * near black gradient body, the top-lit rim, and the one shadow in the app, because this floats
- * over moving video with no edge to anchor to.
+ * The chrome tier. It has no blur, so it is safe on chrome that stays composed while video plays.
+ * It has a near-black gradient body, a rim lit at the top, and the only shadow in the app, because
+ * it floats over moving video with no edge to anchor to.
  */
 fun Modifier.chromeSurface(shape: Shape = Radius.panelShape): Modifier = this
     .shadow(20.dp, shape)
     .clip(shape)
     .background(CHROME_BODY)
-    // Fixed on purpose: chrome only ever floats over video, which the room pins dark.
+    // Fixed on purpose: chrome only floats over video, which the room always keeps dark.
     .border(width = 1.dp, brush = OVER_VIDEO_RIM, shape = shape)
 
 /**
  * The chrome body, built once.
  *
- * Its colours never depend on the theme, and this is not a composable, so nothing memoised it: a
- * colour list and a gradient were allocated at every call site on every recomposition, and the
- * call sites include the scrub bubble, which recomposes for the length of a drag.
+ * Its colours never depend on the theme, and [chromeSurface] is not a composable, so nothing would
+ * remember a gradient built inside it. Each call would then allocate a colour list and a gradient
+ * on every recomposition, and one caller, the scrub bubble, recomposes for the length of a drag.
  */
 private val CHROME_BODY: Brush = Brush.verticalGradient(
     listOf(Color(0xFF1B1B21).copy(alpha = 0.90f), Color(0xFF08080B).copy(alpha = 0.94f))
 )
 
-/** A blur this wide is what buys readability on a translucent panel with a low tint. */
+/** A blur this wide keeps text readable on a translucent panel with a low tint. */
 private val GLASS_BLUR_RADIUS = 40.dp
 
-/** Dim baked into the glass, so the panel is not a hole of light over a bright scene. */
+/**
+ * The alpha of the wash built into the glass: black on a dark theme, white on a light one. On a
+ * dark theme it stops the panel from glowing over a bright scene.
+ */
 private const val GLASS_INNER_DIM = 0.40f
 
 /**
  * The panel tier: the backdrop blurred and tinted with the palette's panel colour, and a rim.
- * Haze can only sample what Compose draws, so over a platform video view, below Android 12, and
- * with glass off this is a plain tonal panel instead.
+ * Haze can sample only what Compose draws, so over a platform video view, below Android 12, and
+ * with glass off, this is a plain tonal panel instead.
  */
 @Composable
 private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): Modifier {
@@ -167,8 +178,8 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
     val tint = if (heavy) 0.38f else 0.26f
     val opaqueTint = if (heavy) 0.80f else 0.65f
 
-    // Demand is registered only when glass can run and the surface can be seen, so the disabled
-    // path never arms a capture and a hidden HUD stops paying for one.
+    // Demand counts only when glass is on and the surface is visible, so the disabled path never
+    // starts a capture and a hidden HUD stops paying for one.
     val demand = LocalGlassDemand.current
     val suspended = LocalGlassSuspended.current
     if (enabled && !suspended) {
@@ -178,15 +189,15 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
         }
     }
 
-    /* Which way the glass shades. A dark theme wants a dark inner wash and a lit rim; a light
-     * theme wants the opposite, and the old fixed white-on-black pair made Daylight panels look
-     * bruised at the bottom and edgeless at the top. */
+    /* Which way the glass shades. A dark theme needs a dark inner wash and a lit rim. A light theme
+     * needs the opposite: a fixed white-on-black pair makes a light panel (Daylight, for example)
+     * look stained at the bottom and edgeless at the top. */
     val isDark = palette.isDark
     val wash = if (isDark) Color.Black else Color.White
     val style = remember(container, tint, opaqueTint, isDark) {
         HazeBlurStyle {
             blurRadius(GLASS_BLUR_RADIUS)
-            // A transparent background is what makes it glass: only the blurred capture and a light tint.
+            // A transparent background makes it glass: only the blurred capture and a tint show.
             backgroundColor(Color.Transparent)
             colorEffects(listOf(HazeColorEffect.tint(wash.copy(alpha = GLASS_INNER_DIM)), HazeColorEffect.tint(container.copy(alpha = tint))))
             fallbackColorEffect(HazeColorEffect.tint(container.copy(alpha = opaqueTint)))
@@ -201,9 +212,9 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
         .clip(shape)
         .then(
             if (enabled && hazeState != null) {
-                /* Quality keeps the capture at full resolution, and the default Behind selection
-                 * is load-bearing: All would let glass inside a source sample the capture that
-                 * contains itself and the render thread recurses until it dies. */
+                /* Quality keeps the capture at full resolution. The default Behind selection must
+                 * stay: All would let glass inside a source sample the capture that contains the
+                 * glass itself, and the render thread would recurse until it crashes. */
                 Modifier.hazeBlur(input = HazeInput.Sources(hazeState), style = style, performanceMode = HazePerformanceMode.Quality)
             } else {
                 Modifier.background(fallback)
@@ -225,30 +236,30 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
         )
 }
 
-/** The rim over video: lit along the top edge, nearly gone at the bottom. */
+/** The rim over video and on dark panels: lit along the top edge, nearly gone at the bottom. */
 private val OVER_VIDEO_RIM: Brush =
     Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f)))
 
-/** A shaded rim for a light theme: the same idea, drawn in the only colour that shows there. */
+/** The rim for a light theme: the same gradient in black, the only colour that shows there. */
 private val LIGHT_PANEL_RIM: Brush =
     Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.14f), Color.Black.copy(alpha = 0.04f)))
 
 private fun panelRim(isDark: Boolean): Brush = if (isDark) OVER_VIDEO_RIM else LIGHT_PANEL_RIM
 
-/** The faint top light and bottom shade every panel wears, built once. */
+/** The faint top light and bottom shade of a dark panel, built once. */
 private val DARK_SHEEN: Brush =
     Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Black.copy(alpha = 0.20f)))
 
-/** A light panel takes a faint shade rather than a highlight, or the sheen simply is not there. */
+/** A light panel gets a faint shade instead of a highlight, which would not show on it. */
 private val LIGHT_SHEEN: Brush =
     Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.02f), Color.Black.copy(alpha = 0.08f)))
 
 private fun glassSheen(isDark: Boolean): Brush = if (isDark) DARK_SHEEN else LIGHT_SHEEN
 
 /**
- * Asks the platform to blur whatever sits behind the dialog window this is called from. The only
- * blur that reaches a platform video view; Android 12 and up, refused on weak GPUs and in battery
- * saver, so an enhancement over the panel tint, never a replacement.
+ * Asks the platform to blur whatever sits behind the dialog window that calls it. It is the only
+ * blur that reaches a platform video view. It works on Android 12 and up only, and the system
+ * refuses it on weak GPUs and in battery saver, so it adds to the panel tint and never replaces it.
  */
 @Composable
 expect fun DialogBackdropBlur()

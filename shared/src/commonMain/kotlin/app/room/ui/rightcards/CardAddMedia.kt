@@ -74,9 +74,10 @@ import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.done
 
 /**
- * Adding media, as a side panel: the routes a file can come in by, each a 54dp row. The link
- * route swaps the rows for the link form in the same panel. Pickers launch straight away (the
- * modal race, FileKit #575, does not apply to a panel) and the panel waits for their return.
+ * The add-media side panel. It lists the routes that media can come in by, each as a 54dp row.
+ * The link route swaps the rows for the link form in the same panel. The FileKit pickers start at
+ * once, because the modal race of FileKit #575 does not apply to a panel. The panel stays open
+ * until a picker returns.
  */
 object CardAddMedia {
 
@@ -105,9 +106,10 @@ object CardAddMedia {
     }
 
     /**
-     * The routes, or the link form when [linkMode] is on. Shared by the side panel and the
-     * morphing key the room shows before a file loads. Whoever hosts it must stay composed
-     * while a picker is out: closing first drops the launcher and the picked file with it.
+     * Shows the routes, or the link form when [linkMode] is true. The side panel uses it, and so
+     * does the add key of [app.room.ui.bottombar.RoomMediaAddButton] before a file loads. The host
+     * must stay composed while a picker is open. Closing the host first drops the launcher, and
+     * the picked file with it.
      */
     @Composable
     fun AddMediaBody(linkMode: Boolean, onLinkMode: (Boolean) -> Unit, onClose: () -> Unit) {
@@ -120,7 +122,7 @@ object CardAddMedia {
             file ?: return@rememberFilePickerLauncher
             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
         }
-        // A television has no picker app, so there it reads its own video library instead (#163).
+        // A television has no file picker app, so there the app reads the video library (#163).
         val tvPicker = rememberTvVideoPicker { file ->
             close()
             viewmodel.viewModelScope.launch { viewmodel.player.injectVideoFile(file) }
@@ -159,7 +161,7 @@ object CardAddMedia {
         }
     }
 
-    /** A 54dp route: glyph, name, one note line, never more. */
+    /** A route row, 54dp tall: the glyph, the name, and one line of note, never more. */
     @Composable
     private fun RouteRow(icon: ImageVector, label: String, note: String, onClick: () -> Unit) {
         val p = palette
@@ -174,9 +176,11 @@ object CardAddMedia {
     }
 
     /**
-     * The link form: the hairline field with paste, a note that says what the link is, and for
-     * a resolvable link the title and duration before confirming. A resolve that fails says so
-     * and offers to play the link as it is instead of failing quietly later.
+     * The link form: the link field with a paste button, and a note that says what the link is.
+     * A resolvable link is one that the media resolver can turn into a stream. For such a link,
+     * the note shows the title and the duration before the user confirms. When the resolve fails,
+     * the note says so, and the form offers to play the link as it is. The link then does not
+     * fail quietly later.
      */
     @Composable
     private fun LinkForm(onCancel: () -> Unit, onPlayed: () -> Unit) {
@@ -186,8 +190,9 @@ object CardAddMedia {
         val scope = rememberCoroutineScope()
         val resolverOn by MEDIA_RESOLVER_ENABLED.watchPref()
         var url by remember { mutableStateOf("") }
-        /* The form has one field and a remote came here to type in it, so it takes focus. The card
-         * swaps the routes for this form, so whatever was focused has just left the tree. */
+        /* With a remote or a keyboard, the one field takes focus, because the user came here to
+         * type in it. The panel swaps the routes for this form, so the element that had focus has
+         * just left the tree. */
         val urlFocus = remember { FocusRequester() }
         val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
         LaunchedEffect(remoteOrKeyboard) {
@@ -273,7 +278,7 @@ object CardAddMedia {
 
     private fun supportedSites(s: AppStrings) = if (platform == Platform.IOS) s.roomLinkSitesYt else s.roomLinkSitesFull
 
-    /** What the app can make of a pasted link before it is confirmed. */
+    /** The kind of a pasted link, as far as the app can tell before the user confirms it. */
     private enum class LinkKind { Empty, Direct, Resolvable, ResolverOff, Unknown }
 
     private fun recognise(url: String, resolverOn: Boolean): LinkKind {

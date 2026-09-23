@@ -49,13 +49,13 @@ import app.uicomponents.controls.pressFeedback
 import kotlin.math.ceil
 
 /**
- * The room's one gradient moment: a 60dp key filled with the brand field. It acts on the state it
- * shows, so the key can never show pause and send play.
+ * The play button: a 60dp button filled with the brand gradient (`brandField`). The button acts
+ * on the state that it shows, so it can never show pause and send play.
  *
- * Buffering is told by the key itself: the corners round out to a circle and the gradient walks
- * along the key, then settles back once the engine has caught up. Nothing appears under the key,
- * so the transport never moves while the engine fills its buffer. A thin bar used to grow under
- * it, and every buffering spell shoved the whole transport up by its height.
+ * The button itself shows buffering. Its corners round out to a circle and the gradient walks
+ * along the button, then comes back to rest after the engine (one of the video players that the
+ * app can drive, such as ExoPlayer or mpv) has caught up. Nothing may appear under the button,
+ * because an element there would push the transport keys up each time the engine buffers.
  */
 @Composable
 fun RoomPlayButton(modifier: Modifier) {
@@ -71,9 +71,10 @@ fun RoomPlayButton(modifier: Modifier) {
     val bufferingLabel = strings.roomBuffering
     val initialFocus = LocalRoomInitialFocus.current
 
-    // Translucent, like the rest of the chrome, so the picture reads through the key.
+    // Translucent like the other room controls, so the video shows through the button.
     val field = remember(p.brandField) { p.brandField.map { it.copy(alpha = 0.82f) } }
-    // Half the key is a circle; the panel radius is the shape at rest.
+    // A corner radius of half the button size makes a circle. At rest, the corners use the panel
+    // radius.
     val corner by animateDpAsState(if (buffering) Space.hero / 2 else Radius.panel, Motion.move(), label = "corner")
     val shape = RoundedCornerShape(corner)
     val walk = rememberGradientWalk(walking = buffering)
@@ -92,7 +93,8 @@ fun RoomPlayButton(modifier: Modifier) {
                 contentDescription = name
                 if (buffering) stateDescription = bufferingLabel
             }
-            // The gradient ring would vanish into the gradient fill, so the ring is ink.
+            // A gradient focus ring would vanish into the gradient fill, so the ring uses the
+            // ink color.
             .controlStates(source, shape, focusRing = SolidColor(p.ink))
             .pressFeedback(source),
         contentAlignment = Alignment.Center,
@@ -106,16 +108,17 @@ fun RoomPlayButton(modifier: Modifier) {
     }
 }
 
-/** One full walk of the gradient across the key. */
+/** The time of one full walk of the gradient across the button. */
 private const val WALK_CYCLE_MS = 1400
 
 /**
- * The walk phase. Whole numbers are rest, where the gradient sits exactly as it does idle.
- * Walking cycles the phase from 0 to 1 for as long as it is asked to; stopping finishes the lap
- * at the same pace and comes to rest on the next whole number, so the gradient neither jumps
- * nor changes speed on the way out.
+ * Returns the walk phase of the gradient. At a whole number, the gradient sits exactly where it
+ * sits at rest. While [walking] is true, the phase cycles from 0 to 1. When [walking] turns false,
+ * the phase finishes the cycle at the same pace and stops on the next whole number. The gradient
+ * then neither jumps nor changes speed on the way out.
  *
- * Reduced motion never starts the walk: the key still rounds out, so the state is still shown.
+ * With reduced motion, the walk never starts. The button still rounds out, so the buffering state
+ * still shows.
  */
 @Composable
 private fun rememberGradientWalk(walking: Boolean): State<Float> {
@@ -134,9 +137,9 @@ private fun rememberGradientWalk(walking: Boolean): State<Float> {
 }
 
 /**
- * The brand gradient at [phase]. Zero is the idle gradient, start to end across [width]; the
- * gradient slides forward as the phase grows and mirrors past its ends, so it wraps with no seam
- * and every whole phase lands back on the idle picture.
+ * Returns the brand gradient at [phase]. At phase 0, the gradient runs from start to end across
+ * [width]. As the phase grows, the gradient slides forward and mirrors past its ends. So the
+ * gradient wraps with no seam, and every whole phase looks the same as phase 0.
  */
 internal fun walkingBrand(colors: List<Color>, phase: Float, width: Float): Brush {
     val shift = phase * 2f * width

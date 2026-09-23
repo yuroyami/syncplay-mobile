@@ -23,12 +23,20 @@ import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 
+lateinit var globalViewmodel: SyncplayViewmodel
+
+val homeViewmodel: HomeViewmodel?
+    get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
+
+val roomViewmodel: RoomViewmodel?
+    get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
+
 /**
- * Creates the root UIViewController for the Syncplay iOS application.
+ * Creates the root UIViewController of the iOS app.
  *
- * A custom parent view controller hosts the Compose UI as a child. The parent-child pattern
- * is required because ComposeUIViewControllerDelegate emits lifecycle events unreliably;
- * overriding the parent's lifecycle methods directly is the workaround.
+ * A plain parent view controller hosts the Compose UI as a child. The parent is needed because
+ * ComposeUIViewControllerDelegate reports lifecycle events unreliably, so the parent overrides
+ * the lifecycle methods itself.
  *
  * ## Architecture
  * ```
@@ -38,30 +46,21 @@ import platform.UIKit.didMoveToParentViewController
  * ```
  *
  * ## Lifecycle Events
- * The parent controller intercepts iOS lifecycle events and forwards them to the watchdog:
+ * The parent forwards iOS lifecycle events to the current room (the group of people watching
+ * together) through its `RoomUiStateManager`:
  * - `viewDidLoad` → onCreate
  * - `viewWillAppear` → onStart
  * - `viewDidAppear` → onResume
  * - `viewWillDisappear` → onPause
  * - `viewDidDisappear` → onStop
- *
- * @return UIViewController configured to host the Syncplay Compose UI with proper lifecycle handling
  */
-lateinit var globalViewmodel: SyncplayViewmodel
-
-val homeViewmodel: HomeViewmodel?
-    get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
-
-val roomViewmodel: RoomViewmodel?
-    get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
-
 fun SyncplayController(): UIViewController {
     platformCallback = ApplePlatformCallback
     observeAppBackgrounding()
     installCrashHook()
 
     val parentController = object : UIViewController(nibName = null, bundle = null) {
-        /** Hosts the Compose UI as a child VC pinned to fill the parent. */
+        /** Adds the Compose UI as a child view controller, pinned to fill the parent. */
         override fun viewDidLoad() {
             super.viewDidLoad()
 
@@ -88,28 +87,24 @@ fun SyncplayController(): UIViewController {
             roomViewmodel?.uiState?.onLifecycleCreate()
         }
 
-        /** viewDidAppear → onResume. */
         override fun viewDidAppear(animated: Boolean) {
             super.viewDidAppear(animated)
 
             roomViewmodel?.uiState?.onLifecycleResume()
         }
 
-        /** viewDidDisappear → onStop. */
         override fun viewDidDisappear(animated: Boolean) {
             super.viewDidDisappear(animated)
 
             roomViewmodel?.uiState?.onLifecycleStop()
         }
 
-        /** viewWillAppear → onStart. */
         override fun viewWillAppear(animated: Boolean) {
             super.viewWillAppear(animated)
 
             roomViewmodel?.uiState?.onLifecycleStart()
         }
 
-        /** viewWillDisappear → onPause. */
         override fun viewWillDisappear(animated: Boolean) {
             super.viewWillDisappear(animated)
             roomViewmodel?.uiState?.onLifecyclePause()
@@ -122,30 +117,31 @@ fun SyncplayController(): UIViewController {
 private var backgroundObserversInstalled = false
 
 /**
- * The trace reaches the log file before the process dies.
+ * Installs a hook that writes an uncaught Kotlin exception to the log file before the process
+ * dies.
  *
- * Two things had to be added to the hook. The log writer is asynchronous, so returning straight
- * after queueing a line meant the trace was often still in the queue when the process went away.
- * And installing a hook at all stops the runtime terminating: it hands the exception to the hook
- * and returns, so the app carried on in whatever state the crash left it in.
+ * The log writer is asynchronous, so the hook flushes it before it returns. Otherwise the trace
+ * can still sit in the queue when the process goes away. The hook also ends the process itself:
+ * with a hook installed, the runtime hands the exception to the hook and returns, so the app would
+ * carry on in whatever state the crash left it in.
  */
 @OptIn(ExperimentalNativeApi::class)
 private fun installCrashHook() {
     setUnhandledExceptionHook { throwable ->
         loggy("Uncaught Kotlin exception: ${throwable.stackTraceToString()}")
-        // A bounded moment to land the trace; a crash report is worth a second and a half.
+        // Wait a bounded time for the flush. A crash report is worth a second and a half.
         runCatching { runBlocking { withTimeout(CRASH_LOG_FLUSH_TIMEOUT) { flushLogs() } } }
         terminateWithUnhandledException(throwable)
     }
 }
 
-/** Long enough for the writer to land a stack trace, short enough not to hang a dying process. */
+/** Long enough for the writer to save a stack trace, short enough not to hang a dying process. */
 private val CRASH_LOG_FLUSH_TIMEOUT = 1500.milliseconds
 
 /**
- * The root view controller never disappears when the app is sent to the background, so the
- * view-controller hooks above never see it. The application notifications do; they drive the
- * same room lifecycle as Android's ON_STOP and ON_START.
+ * Sends the app's moves to the background and back to the room lifecycle, like Android's ON_STOP
+ * and ON_START. The root view controller does not disappear when the app goes to the background,
+ * so the view-controller hooks above never see that move. The application notifications do.
  */
 private fun observeAppBackgrounding() {
     if (backgroundObserversInstalled) return

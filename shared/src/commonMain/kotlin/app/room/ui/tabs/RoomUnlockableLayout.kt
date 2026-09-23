@@ -40,11 +40,12 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * The locked room: a tap shows one unlock key on the chrome tier for a moment, nothing else.
+ * The locked room screen. A tap shows one unlock key for a moment, and nothing else. A room is
+ * the group of people watching together.
  *
- * Locking used to be a one-way door in practice. The key auto-hides, and nothing said a tap
- * brings it back, so a user who looked away could not tell the room from a frozen app. Locking
- * now says what to do, and the whole surface tells a screen reader what it is.
+ * The key hides by itself. Without a hint, a user who looked away could not tell the locked room
+ * from a frozen app. So locking shows a notice that says what to do, and the whole surface tells
+ * a screen reader what it is.
  */
 @Composable
 fun RoomUnlockableLayout() {
@@ -56,14 +57,14 @@ fun RoomUnlockableLayout() {
 
     var keyVisible by remember { mutableStateOf(true) }
 
-    // Said once, when the lock engages.
+    // The hint shows once, when the lock turns on.
     LaunchedEffect(lockedMode) {
         if (lockedMode) viewmodel.dispatchOSD(OSDCategory.SAME_ROOM) { Localization.strings.roomLockedHint }
     }
 
-    /* A remote has no stray tap to wake the key with, so focus is told where to sit: on the key
-     * while it shows, and on the surface once it hides, where the press key brings it back. The
-     * lock takes the whole screen, so nothing else is competing for that focus. */
+    /* A remote cannot tap the screen to wake the key, so this code sets the focus: on the key
+     * while it shows, and on the surface once it hides. On the surface, the press key brings the
+     * key back. The lock takes the whole screen, so nothing else competes for that focus. */
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     val surfaceFocus = remember { FocusRequester() }
     val keyFocus = remember { FocusRequester() }
@@ -71,7 +72,8 @@ fun RoomUnlockableLayout() {
     LaunchedEffect(keyVisible, isInPipMode, remoteOrKeyboard) {
         if (!remoteOrKeyboard || isInPipMode) return@LaunchedEffect
         val target = if (keyVisible) keyFocus else surfaceFocus
-        // The key arrives with the frame after this, so the request is retried while it appears.
+        // The key appears one frame later, so the request repeats up to 8 times, 50 ms apart,
+        // until it succeeds.
         repeat(8) {
             if (runCatching { target.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
             delay(50.milliseconds)
@@ -90,9 +92,9 @@ fun RoomUnlockableLayout() {
             },
     ) {
         if (keyVisible && !isInPipMode) {
-            /* The key leaves on its own, unless a remote is sitting on it: a finger taps the key
-             * itself, so two seconds is plenty, but a remote has to press the key that already
-             * holds focus, and the key was gone before the press landed. */
+            /* The key hides by itself after 2.2 seconds, unless it has focus. A finger taps the
+             * key directly, so 2.2 seconds is enough. A remote must press the key that holds
+             * focus, and without this exception the key could hide before the press arrives. */
             LaunchedEffect(keyFocused) {
                 if (keyFocused) return@LaunchedEffect
                 delay(2200.milliseconds)
@@ -100,7 +102,8 @@ fun RoomUnlockableLayout() {
             }
             Box(
                 Modifier.align(Alignment.TopEnd)
-                    // A television cuts the outer edge of the picture away, corner first.
+                    // A television can cut off the outer edge of the picture (overscan), so the key
+                    // keeps clear of that edge.
                     .then(if (LocalIsTelevision.current) Modifier.windowInsetsPadding(tvOverscan()) else Modifier)
                     .padding(top = Space.gap, end = Space.gutter).size(Space.hero).chromeSurface(Radius.panelShape),
                 contentAlignment = Alignment.Center,

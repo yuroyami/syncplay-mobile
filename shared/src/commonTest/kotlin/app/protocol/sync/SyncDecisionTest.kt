@@ -11,8 +11,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /**
- * The sync algorithm, finally under test. Everything here drives [decideSync] directly: no
- * player, no socket, no clock, no preferences.
+ * Tests for the sync algorithm. Every test drives [decideSync] directly, with no player, socket,
+ * clock or preferences. The anchor ([SyncState]) is the sync state that the client carries from
+ * one server message to the next.
  */
 class SyncDecisionTest {
 
@@ -47,7 +48,7 @@ class SyncDecisionTest {
         setBy: String? = "peer",
     ) = PlaystateData(position = position, paused = paused, doSeek = doSeek, setBy = setBy)
 
-    /** An anchor that already exists, so tests do not keep tripping the first-sync branch. */
+    /** An anchor that already exists, so the tests skip the first-sync branch. */
     private fun anchored(
         paused: Boolean = false,
         speedChanged: Boolean = false,
@@ -142,8 +143,8 @@ class SyncDecisionTest {
 
     @Test
     fun a_hostile_username_is_bounded() {
-        // The cap is an ingress ceiling on a peer-supplied string, not the protocol's own 16:
-        // a real server appends underscores past 16 to keep duplicate names apart.
+        // The cap is an input limit on a string from a peer, not the protocol's own 16 characters.
+        // A real server appends underscores past 16 to keep duplicate names apart.
         val out = decideSync(
             playstate(position = 10.0, doSeek = true, setBy = "a".repeat(500)),
             anchored(), ctx(playerSeconds = 10.0),
@@ -285,8 +286,8 @@ class SyncDecisionTest {
 
     @Test
     fun a_17_character_server_assigned_name_is_still_us() {
-        // A server that already has "abcdefghijklmnop" hands the next one an underscore on the
-        // end. Cutting at the protocol's 16 turned that back into the other person's name.
+        // A server that already has "abcdefghijklmnop" gives the next user an underscore on the
+        // end. A cut at the protocol's 16 characters would turn that into the other person's name.
         val me = "abcdefghijklmnop_"
         val out = decideSync(
             playstate(position = 10.0, paused = true, setBy = me),
@@ -345,7 +346,7 @@ class SyncDecisionTest {
     }
 }
 
-/** The three drift thresholds are settings now; the defaults must still be the PC values. */
+/** The three drift thresholds are settings, and their defaults must match the Syncplay PC client. */
 class SyncThresholdTest {
 
     private val t0 = kotlin.time.Instant.fromEpochMilliseconds(1_700_000_000_000L)
@@ -414,7 +415,7 @@ class SyncThresholdTest {
     }
 }
 
-/** The offset shifts where we aim, and leaves the room's own anchor alone. */
+/** The user offset shifts the local seek target and leaves the room's anchor alone. */
 class UserOffsetDecisionTest {
 
     private val t0 = kotlin.time.Instant.fromEpochMilliseconds(1_700_000_000_000L)

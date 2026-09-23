@@ -3,8 +3,8 @@ package app.player.kite
 import io.github.vinceglb.filekit.PlatformFile
 
 /**
- * Something KitePlayer's FFmpeg backend can open, together with the native resource that keeps
- * that answer valid. Android resolutions may own a file descriptor; ordinary paths and URLs own
+ * Something that KitePlayer's FFmpeg backend can open, together with the native resource that
+ * keeps it valid. An Android resolution may own a file descriptor; ordinary paths and URLs own
  * nothing.
  */
 internal class KiteMediaPath(
@@ -12,8 +12,8 @@ internal class KiteMediaPath(
     val uri: String,
 
     /**
-     * Demuxer options that must accompany [uri], for `MediaItem(openOptions = ...)`. Empty for an
-     * ordinary path. Carries `"fd"` when the answer is a descriptor rather than a path.
+     * Demuxer options that must go with [uri], for `MediaItem(openOptions = ...)`. Empty for an
+     * ordinary path. Carries `"fd"` when the resolution is a descriptor, not a path.
      */
     val openOptions: Map<String, String> = emptyMap(),
 
@@ -30,9 +30,9 @@ internal class KiteMediaPath(
 }
 
 /**
- * Platform bridge from the app's file picker to KitePlayer. The already-platform-specific engine
- * registry injects this into [KiteEngine], keeping the player implementation in common code
- * without adding another application-level expect/actual seam.
+ * Platform bridge from the app's file picker to KitePlayer. Each platform's engine list, which is
+ * platform code already, passes its resolver into [KiteEngine]. So the player implementation
+ * stays in shared code without one more expect/actual declaration.
  */
 internal fun interface KiteMediaResolver {
     /**
@@ -43,7 +43,7 @@ internal fun interface KiteMediaResolver {
 }
 
 /**
- * Wraps an already-openable string (a remote URL) as a path that holds nothing. Whether the
- * linked FFmpeg can actually reach that scheme is its own answer, reported as a typed failure.
+ * Wraps a string that FFmpeg can open as it is (a remote URL) as a path that holds nothing. If the
+ * linked FFmpeg cannot open that scheme, KitePlayer reports a typed failure.
  */
 internal fun kiteMediaPathOf(uri: String): KiteMediaPath = KiteMediaPath(uri)

@@ -4,16 +4,14 @@ import app.preferences.Preferences
 import app.preferences.value
 
 /**
- * Splits a user-provided VLC flags string into individual argument tokens suitable for handing to
- * `VLCLibrary(args)` on iOS.
+ * Splits the user's VLC flags string into argument tokens for `VLCLibrary(args)` on iOS.
  *
- * The splitter respects single- and double-quoted runs so values containing whitespace can be
- * passed, e.g. `--foo="a b c"` becomes one token. Quote characters are stripped from the token.
- * Empty tokens are dropped.
+ * Single- and double-quoted runs stay together, so a value can contain spaces: `--foo="a b c"`
+ * becomes one token. The quote characters are removed from the token, and empty tokens are
+ * dropped.
  *
- * This is deliberately a small hand-rolled splitter rather than a full shell parser: backslash
- * escapes, env-var expansion, comments, etc. are NOT supported — users who need those can use
- * mpv.conf instead.
+ * This is a small splitter on purpose, not a full shell parser. It does not support backslash
+ * escapes, environment variable expansion or comments.
  */
 fun tokenizeVlcFlags(raw: String): List<String> {
     if (raw.isBlank()) return emptyList()
@@ -40,8 +38,8 @@ fun tokenizeVlcFlags(raw: String): List<String> {
 }
 
 /**
- * Convenience: reads [Preferences.VLC_CUSTOM_FLAGS] and returns the parsed token list.
- * Returns an empty list if the preference is blank or unreadable.
+ * Reads [Preferences.VLC_CUSTOM_FLAGS] and returns its tokens. Returns an empty list when the
+ * preference is blank or cannot be read.
  */
 fun vlcCustomFlags(): List<String> {
     return try {

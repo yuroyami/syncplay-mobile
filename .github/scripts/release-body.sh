@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Writes the GitHub release notes for one version: a header with the logo and the store
-# buttons, then the changelog, the dependencies, the translation status and the downloads.
+# buttons, then the changelog, the translation status, the downloads and the dependencies.
 #
 #   release-body.sh <dir with the release files> <dependencies.md>
 #

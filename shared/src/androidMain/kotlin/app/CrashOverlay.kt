@@ -44,10 +44,12 @@ object CrashHandler {
     private const val MAX_LOOPER_RESTARTS = 10
 
     /**
+     * Installs the process-wide handler for uncaught exceptions.
+     *
      * Debug builds keep the process alive and draw the trace on screen, which is the fastest way
-     * to read a crash on a device. Release builds log it and hand it to the platform handler:
-     * a swallowed fatal never reached Play vitals, and the user was left with a frozen app
-     * instead of a clean restart.
+     * to read a crash on a device. Release builds log the trace and pass it to the previous
+     * handler. A swallowed crash never reaches Play vitals, and it leaves the user with a frozen
+     * app instead of a clean restart.
      */
     fun install() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
@@ -59,20 +61,20 @@ object CrashHandler {
                 crashTrace.value = trace
                 if (Looper.myLooper() == Looper.getMainLooper()) {
                     // Restart the main looper so Compose can still render the crash overlay.
-                    // Bounded: if the overlay itself is what keeps crashing, an endless restart
-                    // loop just spins the CPU behind a frozen screen, so after a few attempts the
-                    // crash goes to the platform handler and the app restarts cleanly.
+                    // Bounded: if the overlay itself keeps crashing, an endless restart loop
+                    // only spins the CPU behind a frozen screen. After MAX_LOOPER_RESTARTS
+                    // the loop ends and the handler returns below.
                     var restarts = 0
                     while (restarts < MAX_LOOPER_RESTARTS) {
                         restarts++
                         try {
                             Looper.loop()
                         } catch (_: Throwable) {
-                            // Swallow subsequent crashes to keep the overlay visible
+                            // Swallow later crashes to keep the overlay visible.
                         }
                     }
                 }
-                // Background thread: let it die, main thread + Compose keep running
+                // A background thread dies here while the main thread and Compose keep running.
                 return@setDefaultUncaughtExceptionHandler
             }
 
@@ -81,7 +83,10 @@ object CrashHandler {
     }
 }
 
-/** The last-resort overlay: the trace in monospace, copy and dismiss. Fixed colours on purpose. */
+/**
+ * The debug crash overlay: the trace in monospace, with Copy and Dismiss. The colors are fixed on
+ * purpose, so the overlay does not depend on the theme.
+ */
 @Composable
 fun CrashOverlay() {
     val crashTrace by CrashHandler.crashTrace.collectAsState()
@@ -97,8 +102,8 @@ fun CrashOverlay() {
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(Space.gutter)) {
             /* English on purpose. This screen appears when something has already gone wrong,
-             * so it must not depend on anything the app loads, and the trace below it is
-             * headed for a bug report that a maintainer reads in English. */
+             * so it must not depend on anything the app loads. The trace below it goes into a
+             * bug report that a maintainer reads in English. */
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

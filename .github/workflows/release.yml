@@ -24,21 +24,21 @@ on:
 permissions:
   contents: write
 
-# Every action is pinned to the commit its tag pointed at, with the tag kept as a comment.
-# A moving tag is a moving dependency: whoever controls it can change what runs here, and a
-# reproducible build cannot depend on something that changes underneath it (issue #105).
+# Every action is pinned to the commit that its tag pointed at, with the tag kept as a comment.
+# The owner of a tag can move it and change what runs here, and a reproducible build cannot
+# depend on something that changes under it (issue #105).
 env:
-  # Skip `brew update`: slow and rarely needed, since the macos runner image
-  # ships current Homebrew and a recent formula snapshot.
+  # Skip `brew update`: it is slow and rarely needed, because the macOS runner image
+  # ships a current Homebrew and a recent formula snapshot.
   HOMEBREW_NO_AUTO_UPDATE: 1
   HOMEBREW_NO_INSTALL_CLEANUP: 1
-  # Gradle daemon adds overhead in single-invocation CI steps.
+  # The Gradle daemon only adds overhead in CI steps that run Gradle once.
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=4"
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # One gate for the whole release. Every build waits on it, so nothing reaches a store
-  # unless the checks that are supposed to guard the upload have already passed.
+  # unless the checks that guard the upload have passed.
   # ───────────────────────────────────────────────────────────────────────────
   verify:
     runs-on: ubuntu-latest
@@ -50,17 +50,17 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # `packages` is spelled out because this pin still asks for `tools` by default, and the
-      # SDK repository stopped serving that package, so sdkmanager fails the job. The pin stays:
-      # a moving tag is what the comment at the top of this file forbids.
+      # `packages` is spelled out because this pinned version asks for `tools` by default. The SDK
+      # repository does not serve that package, so sdkmanager would fail the job. Keep the pin:
+      # the rule at the top of this file forbids a moving tag.
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
-      # The gates read sources and metadata; they do not need the full flavor, and the exoOnly
-      # model configures the Android app without the NDK.
+      # The gates read sources and metadata. They do not need the full flavor, and exoOnly
+      # configures the Android app without the NDK.
       - name: Verify release gates
         run: ./gradlew qualityGates detekt -PexoOnly=true
 
@@ -87,9 +87,9 @@ jobs:
         with:
           packages: platform-tools
 
-      # AGP needs the NDK to strip packaged libraries and to extract native symbols; nothing
-      # native is compiled. About 1GB, pinned in gradle.properties.
-      # Skip the install on cache hit.
+      # AGP needs the NDK to strip packaged libraries and to extract native symbols. Nothing
+      # native is compiled. The NDK is about 1 GB, and gradle.properties pins its version.
+      # A cache hit skips the install.
       - name: Cache Android NDK
         id: ndk-cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -101,8 +101,8 @@ jobs:
         if: steps.ndk-cache.outputs.cache-hit != 'true'
         run: sdkmanager "ndk;29.0.14206865"
 
-      # Gradle dependency cache + Gradle build cache + wrapper distribution.
-      # Saves the dependency-download phase (~2-3 min on cold start).
+      # Caches the Gradle dependencies, the Gradle build cache and the wrapper distribution.
+      # It saves the dependency download (about 2 to 3 minutes on a cold start).
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       # Ask Gradle for the identity rather than re-deriving it. The version code scheme belongs
@@ -131,14 +131,13 @@ jobs:
           keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           EOP
 
-      # One invocation. The ABI splits that used to keep the APK and the AAB in separate
-      # invocations are gone (0.24.0): the full flavor ships one universal APK, and the AAB
-      # lets Play serve each phone only its own libraries.
+      # One Gradle invocation builds both. The full flavor ships one universal APK, and the
+      # AAB lets Play serve each phone only its own libraries.
       - name: Build APK and AAB
         run: ./gradlew assembleFullRelease bundleFullRelease
 
-      # The release notes carry this table; it is generated here because this job has the
-      # whole build configured and the release job has no Android SDK.
+      # The release notes carry this table. This job generates it because this job has the
+      # whole build configured, and the release job has no Android SDK.
       - name: Write the dependency table for the release notes
         run: ./gradlew -q printDependencyTable | grep '^|' | tee dependencies.md
 
@@ -160,8 +159,8 @@ jobs:
           name: android-aab
           path: androidApp/build/outputs/bundle/fullRelease/*.aab
 
-      # Without these a crash report from a release build is unreadable. They were produced on
-      # every build and then thrown away with the runner.
+      # Without these files, a crash report from a release build is unreadable. Every build
+      # produces them, and the runner discards them unless this step uploads them.
       - name: Upload R8 mapping and native symbols
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -206,10 +205,9 @@ jobs:
           EOP
 
       - name: Build APK
-        # -PexoOnly=true selects the exo-only flavor (overrides the gradle.properties default).
-        # That is what creates the `exoOnly` flavor, and therefore the assembleExoOnlyRelease task.
-        # Replaces the old sed-the-constant hack, which no longer works now that exoOnly is read
-        # from a Gradle property (the property wins over the edited constant).
+        # -PexoOnly=true selects the exo-only flavor and overrides the gradle.properties default.
+        # The property creates the `exoOnly` flavor, and with it the assembleExoOnlyRelease task.
+        # Editing a constant in the source has no effect, because the Gradle property wins.
         run: ./gradlew assembleExoOnlyRelease -PexoOnly=true
 
       - name: Upload APK
@@ -220,8 +218,8 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   # Desktop → one installer per host OS. jpackage can only build for the OS it
-  # runs on, so this is a matrix rather than one job. Off by default until the
-  # desktop app is ready to ship; the release does not wait on it.
+  # runs on, so this is a matrix, not one job. The build_desktop input turns it
+  # on, and it is off by default. When it is off, the release does not wait on it.
   # ───────────────────────────────────────────────────────────────────────────
   build-desktop:
     if: inputs.build_desktop
@@ -253,8 +251,8 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
-      # Nothing native is downloaded for desktop any more: the only engine is KitePlayer and its
-      # decoder rides inside the KiteFFmpeg jar.
+      # Nothing native is downloaded for desktop: the only engine is KitePlayer, and its
+      # decoder ships inside the KiteFFmpeg jar.
       - name: Build installer
         run: ./gradlew :desktopApp:${{ matrix.task }}
 
@@ -310,14 +308,12 @@ jobs:
       # 3. iosApp/Pods, the installed Pods tree, restored as a unit to skip
       #    framework extraction
       #
-      # `pod install` always runs (cheap with sources cached) so the generated
-      # files inside Pods/ (xcfilelist inputs/outputs, .xcconfig, manifest,
-      # Pods.xcodeproj) are regenerated to match the installed CocoaPods/Xcode
-      # versions on the runner. Caching `iosApp/Pods` alone and skipping
-      # `pod install` is fragile: the cached tree carries over generated
-      # artifacts from an older CocoaPods version, and the new Xcode then fails
-      # with `Unable to load contents of file list ... .xcfilelist` (which is
-      # what blocked the 2026-05-18 release run).
+      # `pod install` always runs (cheap with sources cached), so the generated
+      # files inside Pods/ (xcfilelist inputs and outputs, .xcconfig, manifest,
+      # Pods.xcodeproj) match the CocoaPods and Xcode versions on the runner.
+      # Do not cache `iosApp/Pods` alone and skip `pod install`: the cached tree
+      # carries generated files from an older CocoaPods version, and a newer
+      # Xcode then fails with `Unable to load contents of file list ... .xcfilelist`.
       - name: Cache CocoaPods spec repo
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -342,16 +338,17 @@ jobs:
           key: pods-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
 
       # KMP needs a dummy framework on disk before CocoaPods can resolve the
-      # `:shared` pod dependency. Cheap (~10s) so we run it unconditionally
-      # rather than coupling it to the Pods cache.
+      # `:shared` pod dependency. The step is cheap (about 10 s), so it always
+      # runs instead of depending on the Pods cache.
       - name: Generate shared framework
         run: ./gradlew :shared:generateDummyFramework
 
-      # Always run pod install so the xcfilelist/xcconfig/manifest under
-      # iosApp/Pods/Target Support Files match the runner's current CocoaPods
-      # version. With sources cached this is ~30s.
-      # --repo-update only on cold start: refreshing the spec repo from CDN
-      # is the slow part and not needed when the lock hasn't changed.
+      # Always run pod install, so the xcfilelist, xcconfig and manifest under
+      # iosApp/Pods/Target Support Files match the runner's CocoaPods version.
+      # With sources cached, this takes about 30 s.
+      # Use --repo-update only when the Pods cache misses: refreshing the spec
+      # repo from the CDN is the slow part, and it is not needed while
+      # Podfile.lock is unchanged.
       - name: Install CocoaPods dependencies
         working-directory: ./iosApp
         run: |
@@ -420,8 +417,8 @@ jobs:
           path: ${{ steps.ipa.outputs.ipa_path }}
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Store uploads. Each is its own job so a store refusing the build is visible
-  # on its own line and never stops the GitHub release from being cut.
+  # Store uploads. Each is its own job, so a store that refuses the build shows
+  # on its own line and never stops the GitHub release.
   # ───────────────────────────────────────────────────────────────────────────
   upload-app-store:
     if: inputs.deploy_app_store
@@ -474,14 +471,14 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.yuroyami.syncplay
           releaseFiles: aab/*.aab
-          # Was hardcoded to beta while the README told users Play carried the same build.
+          # An input, not a fixed track: the README says Play carries the same build as GitHub.
           track: ${{ inputs.play_track }}
           status: completed
           whatsNewDirectory: fastlane/metadata/android/en-US/changelogs
 
   # ───────────────────────────────────────────────────────────────────────────
-  # The GitHub release: the files, the notes, and the AltStore feed. Waits on the
-  # builds only; a skipped desktop build is fine, a store upload is not its concern.
+  # The GitHub release: the files, the notes and the AltStore feed. It waits on
+  # the builds only. A skipped desktop build is fine, and it ignores the store uploads.
   # ───────────────────────────────────────────────────────────────────────────
   release:
     needs: [build-android-full, build-android-exo, build-ios, build-desktop]
@@ -522,9 +519,9 @@ jobs:
           echo "Release files:"
           ls -lh release-files/
 
-      # Three sections: the downloads table, the changelog since the previous release folded
-      # under a click, and the dependency table. CHANGELOG.md is written for people who use
-      # the app; --generate-notes would list commit subjects instead.
+      # Three sections: the downloads table, the changelog since the previous release in a
+      # collapsed block, and the dependency table. CHANGELOG.md is written for people who use
+      # the app, while --generate-notes would list commit subjects instead.
       - name: Write the release notes
         run: |
           bash .github/scripts/release-body.sh release-files artifacts/release-dependencies/dependencies.md
@@ -547,7 +544,6 @@ jobs:
               release-files/*
           fi
 
-      # AltStore JSON
       - name: Update AltStore source JSON
         run: |
           if jq -e --arg ver "$VERSION" 'any(.apps[0].versions[]; .version == $ver)' altstore_yuroyami.json >/dev/null; then
@@ -557,8 +553,8 @@ jobs:
           IPA_SIZE=$(stat -c%s "release-files/synkplay-${VERSION}-ios.ipa" 2>/dev/null || stat -f%z "release-files/synkplay-${VERSION}-ios.ipa")
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%S+00:00")
 
-          # Both of these were hardcoded empty, so every AltStore entry ever published said
-          # nothing about what changed and claimed no minimum iOS version.
+          # Fill the notes and the minimum iOS version. Without them, an AltStore entry says
+          # nothing about what changed and claims no minimum iOS version.
           jq --arg ver "$VERSION" \
              --arg code "$IOS_BUILD_NUMBER" \
              --arg size "$IPA_SIZE" \

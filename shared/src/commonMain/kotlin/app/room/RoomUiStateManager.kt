@@ -11,20 +11,27 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     val msg = MutableStateFlow<String>("")
 
-    /** Bumped on any pointer or key activity in the room; the HUD idle timer restarts on it. */
+    /**
+     * A counter bumped on each press or key event in the room. A room is the group of people
+     * watching together. The HUD (the controls over the video) restarts its idle timer on each
+     * bump.
+     */
     val hudActivity = MutableStateFlow(0L)
     fun noteHudActivity() { hudActivity.value = hudActivity.value + 1 }
 
-    /** Set by the rail, by system back and by desktop Escape; the room shows the leave question. */
+    /**
+     * Set by the rail (the strip of buttons that opens the panels), the system back action and
+     * Escape on desktop. The room then asks to leave.
+     */
     val askLeave = MutableStateFlow(false)
 
-    /** The chat composer's focus target, so a key can jump to it. */
+    /** The focus target of the chat input field, so a key can move focus to it. */
     val chatFocus = FocusRequester()
 
-    /** The control panel's own glyph, so focus can go back to it when the panel closes. */
+    /** The focus target of the control panel button, so focus can go back when the panel closes. */
     val controlsFocus = FocusRequester()
 
-    /** True while the track is being dragged; the HUD never hides mid-scrub. */
+    /** True while the user drags the seek bar. The HUD never hides during a drag. */
     val scrubbing = MutableStateFlow(false)
 
     /** Brings the HUD back and restarts its idle timer. */
@@ -35,32 +42,37 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)
-    /** The managed room modal, with create or identify chosen inside it. */
+    /** Whether the managed room dialog is open. The user picks create or identify inside it. */
     val managedRoom = MutableStateFlow(false)
 
     val tabCardUserInfo = MutableStateFlow(false)
     val tabCardSharedPlaylist = MutableStateFlow(false)
     val tabCardRoomPreferences = MutableStateFlow(false)
     val tabCardTracks = MutableStateFlow(false)
-    /** The tab the tracks card shows. Kept here because the card leaves the composition with the HUD. */
+    /**
+     * The tab that the tracks panel shows. It lives here, because the panel leaves composition
+     * when it closes, and also in picture-in-picture and locked mode.
+     */
     val tracksTab = MutableStateFlow(TrackType.AUDIO)
     val tabCardGestures = MutableStateFlow(false)
     val tabCardSeekTo = MutableStateFlow(false)
     val tabCardAddMedia = MutableStateFlow(false)
 
-    /** The rail's room actions, folded after a short period without input. */
+    /**
+     * Whether the room actions on the rail are unfolded. They fold after a short time without
+     * input.
+     */
     val railActionsExpanded = MutableStateFlow(false)
     val tabLock = MutableStateFlow(false)
 
     val controlPanel = MutableStateFlow(false)
 
-    /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
     val chatMediaSizeDp = MutableStateFlow(0f)
 
     /**
-     * Image URLs the user tapped to load. Chat does not fetch a peer's image host on sight, so
-     * this is what un-hides one, for this room session only.
+     * Image URLs that the user tapped to load. Chat does not fetch an image from a peer's host on
+     * its own, so a tap is what shows one, for this room session only.
      */
     val revealedImages = mutableStateSetOf<String>()
 
@@ -81,11 +93,11 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     private val sidePanels
         get() = listOf(tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences, tabCardTracks, tabCardGestures, tabCardSeekTo, tabCardAddMedia)
 
-    /** The panels the control strip opens; the strip and these never show together. */
+    /** The panels that the control strip opens. The strip and these panels never show together. */
     private val toolPanels
         get() = listOf(tabCardTracks, tabCardGestures, tabCardSeekTo, tabCardAddMedia)
 
-    /** One side panel at a time: opening one closes the others, and a tool panel closes the strip. */
+    /** Opens one side panel and closes the others. A tool panel also closes the control strip. */
     private fun openSide(target: MutableStateFlow<Boolean>, forcedState: Boolean?) {
         panelCoordinator.open(target, forcedState)
         if (target.value && toolPanels.any { it === target }) controlPanel.value = false
@@ -100,7 +112,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val anySidePanelOpen: Boolean
         get() = sidePanels.any { it.value }
 
-    /** Closes whatever side panel is open, for a control that needs the room's right side. */
+    /** Closes any open side panel, for a control that needs the side of the room. */
     fun closeSidePanels() = sidePanels.forEach { it.value = false }
 
     fun toggleControlPanel(forcedState: Boolean? = null) {
@@ -119,7 +131,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     fun toggleSeekTo(forcedState: Boolean? = null) = openSide(tabCardSeekTo, forcedState)
     fun toggleAddMedia(forcedState: Boolean? = null) = openSide(tabCardAddMedia, forcedState)
 
-    /** Room Lifecycle mapping according to platform (iOS/Android)
+    /** How the room lifecycle hooks map to each platform (iOS / Android):
     * - [onLifecycleCreate] → `viewDidLoad` / `onCreate`
     * - [onLifecycleStart] → `viewWillAppear` / `onStart`
     * - [onLifecycleResume] → `viewDidAppear` / `onResume`
@@ -127,7 +139,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     * - [onLifecycleStop] → `viewDidDisappear` / `onStop`
     */
 
-    /** True after [onLifecycleStop] unless in PiP mode. */
+    /** True after [onLifecycleStop] outside picture-in-picture, until the room is in front again. */
     @Volatile
     var background = false
 
@@ -144,9 +156,10 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     }
 
     /**
-     * Pauses playback unless in Picture-in-Picture mode. The pause is local: the expectation flips
-     * first so the divergence collector sees no news, and the outbound State keeps advertising the
-     * room's position, so a phone in a pocket never drags the room back to where it stopped.
+     * Pauses playback, unless the room is in picture-in-picture. The pause is local. The expected
+     * state changes first, so the divergence collector sees nothing new. The outbound State keeps
+     * reporting the room's position, so a phone in a pocket never pulls the room back to where it
+     * stopped.
      */
     fun onLifecycleStop() {
         if (hasEnteredPipMode.value) return
@@ -156,7 +169,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         onMainThread { viewmodel.player.pause() }
     }
 
-    /** Back in front: the next server State hard-seeks us to the room and re-applies play/pause. */
+    /** Back in front: the next server State seeks to the room position and applies play or pause. */
     private fun leaveBackground() {
         if (!background) return
         background = false

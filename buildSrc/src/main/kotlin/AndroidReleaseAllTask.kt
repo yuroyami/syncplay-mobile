@@ -14,12 +14,13 @@ import java.io.File
 import javax.inject.Inject
 
 /**
- * androidReleaseAll: builds every shippable Android artifact into AndroidAppOutput/
- * (1 full universal APK + 1 exoOnly universal APK + 1 full AAB) via TWO isolated
- * `./gradlew` sub-builds. Two processes are mandatory: -PexoOnly flips the whole project
- * model, so there is one flavor per invocation. The full APK and the AAB share one
- * invocation now that there are no ABI splits (that was what kept them apart, AGP
- * issuetracker 402800800).
+ * androidReleaseAll: builds every shippable Android artifact into AndroidAppOutput/: one full
+ * universal APK, one exoOnly universal APK and one full AAB. The exoOnly flavor is the Android
+ * build with ExoPlayer only and no native player library.
+ *
+ * The task runs two separate `./gradlew` sub-builds. -PexoOnly changes the whole project model,
+ * so one invocation builds only one flavor. The full APK and the AAB share one invocation, which
+ * works only while there are no ABI splits (AGP issuetracker 402800800).
  */
 abstract class AndroidReleaseAllTask @Inject constructor(
     private val execOps: ExecOperations,
@@ -68,8 +69,8 @@ abstract class AndroidReleaseAllTask @Inject constructor(
         logger.lifecycle("androidReleaseAll: [2/2] exoOnly release APK...")
         gradle(":androidApp:assembleExoOnlyRelease", "-PexoOnly=true")
 
-        /* Fresh output dir; copy only THIS version's files (build dirs keep stale
-         * older-version APKs around because the artifact name changes per release). */
+        /* Start from an empty output folder and copy only this version's files. The build
+         * folders keep older APKs, because the artifact name changes with each release. */
         val out = outputDir.get().asFile
         fsOps.delete { delete(out) }
         out.mkdirs()
@@ -85,8 +86,8 @@ abstract class AndroidReleaseAllTask @Inject constructor(
 
         val produced = out.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
 
-        // Nothing checked any of this before: an unsigned APK, or one left over from a version
-        // that no longer matches, would have been copied out and uploaded without a word.
+        // Without this check, an unsigned APK, or an APK left over from another version, gets
+        // copied out and uploaded without any warning.
         verifyArtifacts(produced, v)
 
         logger.lifecycle("androidReleaseAll: done. ${produced.size} artifact(s) in AndroidAppOutput/:")
@@ -94,9 +95,9 @@ abstract class AndroidReleaseAllTask @Inject constructor(
     }
 
     /**
-     * Refuses to finish on a set of artifacts that is not what a release is supposed to be: the
-     * expected count, every file named for this version, and every APK carrying a signature that
-     * apksigner accepts. A bundle is signed at upload, so only its name is checked.
+     * Fails the task unless the artifacts match a release: the expected count, every file named
+     * for this version, and every APK signed so that apksigner accepts it. A bundle is signed at
+     * upload, so only its name is checked.
      */
     private fun verifyArtifacts(produced: List<File>, version: String) {
         val apks = produced.filter { it.name.endsWith(".apk") }
@@ -134,7 +135,7 @@ abstract class AndroidReleaseAllTask @Inject constructor(
         logger.lifecycle("androidReleaseAll: ${apks.size} APK signature(s) verified.")
     }
 
-    /** The newest apksigner in the local SDK, or null when there is no SDK to look in. */
+    /** The newest apksigner in the local SDK, or null when there is no SDK or no apksigner. */
     private fun findApksigner(): File? {
         val sdk = listOfNotNull(
             System.getenv("ANDROID_HOME"),
@@ -152,15 +153,15 @@ abstract class AndroidReleaseAllTask @Inject constructor(
 
 private const val EXPECTED_APKS = 2
 
-/** Registers `androidReleaseAll` on the root project. [version] comes from the
- *  root kiteConfig { } block: buildSrc compiles before plugins apply, so it
- *  cannot read the accessor itself. */
+/** Registers `androidReleaseAll` on the root project. [version] comes from the root
+ *  kiteConfig block: buildSrc compiles before plugins apply, so it cannot read the
+ *  accessor itself. */
 fun Project.registerAndroidReleaseAllTask(version: String) {
     tasks.register<AndroidReleaseAllTask>("androidReleaseAll") {
         group = "syncplay"
         description = "Build the two release APKs (full universal + exoOnly) plus the full-flavor AAB into AndroidAppOutput/."
 
-        // Real work happens in nested builds whose outputs Gradle can't track from here.
+        // The real work happens in nested builds, whose outputs Gradle cannot track from here.
         outputs.upToDateWhen { false }
 
         val isWindows = System.getProperty("os.name").lowercase().contains("windows")

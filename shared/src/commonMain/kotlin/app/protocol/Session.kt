@@ -17,16 +17,16 @@ class Session(val protocol: ProtocolManager) {
     var serverPort: Int = 8997
 
     /**
-     * The host name the user typed, kept apart from [serverHost] because the official server's
-     * name is collapsed to an IP before connecting. TLS checks the certificate against this and
-     * sends it as SNI; the socket still dials [serverHost].
+     * The name the server's certificate must carry. It is kept apart from [serverHost] because
+     * the socket can dial another address: the official server's fallback address. TLS checks
+     * the certificate against this name and sends it as SNI; the socket still dials [serverHost].
      */
     var tlsPeerHost: String = OFFICIAL_SERVER_NAME
 
     /**
-     * An address to dial when [serverHost] cannot be reached, or null when there is nothing else
-     * to try. Only the official server has one: it is dialled by name, and this is the address it
-     * answered on when the app was built, for a network whose DNS is the thing that is broken.
+     * An address to dial when the name in [serverHost] does not resolve, or null when there is
+     * nothing else to try. Only the official server has one: it is dialled by name, and this is
+     * the address it answered on when the app was built, for a network whose DNS is broken.
      */
     var fallbackHost: String? = null
     var currentUsername: String = "Anonymous${(1000..9999).random()}"
@@ -49,7 +49,7 @@ class Session(val protocol: ProtocolManager) {
     val messageSequence = MutableStateFlow<List<Message>>(emptyList())
 
     /**
-     * Outgoing packets queued while disconnected, flushed on reconnection.
+     * Outgoing packets whose write failed, replayed after the next connect.
      * Guarded by [outboundQueueLock]: the failure path of `transmitPacket` appends from
      * arbitrary IO threads while `onConnected` drains, so the snapshot-then-clear in
      * [drainOutbound] must be atomic against concurrent appends.
@@ -60,11 +60,11 @@ class Session(val protocol: ProtocolManager) {
     suspend fun queueOutbound(json: String) {
         outboundQueueLock.withLock {
             outboundQueue.add(json)
-            // The one collection here that used to have no ceiling, and it grows fastest exactly
-            // when the network is worst: every failed write appends. A long outage with an active
-            // chat or playlist used to build a backlog that was then fired at the server in one
-            // burst on reconnect, which is a good way to be dropped again. The oldest entries go
-            // first; a chat line from ten minutes ago is not worth the reconnection.
+            // Capped, because this queue grows fastest exactly when the network is worst: every
+            // failed write appends. Without a cap, a long outage with an active chat or playlist
+            // builds a backlog that reaches the server in one burst on reconnect, which can get
+            // the client dropped again. The oldest entries go first; a chat line from ten
+            // minutes ago is not worth the reconnection.
             while (outboundQueue.size > MAX_QUEUED_OUTBOUND) outboundQueue.removeAt(0)
         }
     }
@@ -78,8 +78,10 @@ class Session(val protocol: ProtocolManager) {
 
     val sharedPlaylist = mutableStateListOf<String>()
 
-    /** This is the shared playlist playback index
-     *  -1 = no file selected. */
+    /**
+     * Index of the current item in the shared playlist (the file list that everyone in a room
+     * follows), or -1 when no file is selected.
+     */
     val spIndex = mutableIntStateOf(-1)
 
     val ready = mutableStateOf(Preferences.READY_FIRST_HAND.value())
@@ -91,16 +93,17 @@ class Session(val protocol: ProtocolManager) {
             .all { it.readiness }
     }
 
-    /** Us plus every other user who is ready with a file, PC's `usersInRoomCount` to the letter. */
+    /** Us plus every other user who is ready with a file, exactly like PC's `usersInRoomCount`. */
     fun usersInRoomCount(): Int {
         val othersReadyWithFile = userList.value.count { it.name != currentUsername && it.file != null && it.readiness }
         return 1 + othersReadyWithFile
     }
 
     /**
-     * True when we ARE in a controlled (+) room but are NOT a controller, so we must follow the
-     * controller's pace. Mirrors python's `!currentUser.canControl()`. In a normal room this is
-     * false (everyone can control).
+     * True when we ARE in a controlled room but are NOT a controller, so we must follow the
+     * controller's pace. A controlled room has a name that starts with "+", and only its
+     * controllers (who know its password) control playback. Mirrors Python's
+     * `not currentUser.canControl()`. In a normal room this is false (everyone can control).
      */
     fun isInControlledRoomWithoutController(): Boolean {
         if (!roomFeatures.supportsManagedRooms) return false

@@ -6,28 +6,28 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Pins the python-parity file identity helpers ([FileComparison]) against vectors computed
- * with the reference implementations (`utils.py`: stripfilename / hashFilename /
- * hashFilesize / sameHashed / sameFilename / sameFilesize / sameFileduration).
+ * Pins the file identity helpers of [FileComparison] to vectors computed with the Python
+ * reference functions in `utils.py`: stripfilename, hashFilename, hashFilesize, sameHashed,
+ * sameFilename, sameFilesize and sameFileduration.
  *
- * Hash vectors are sha256 hexdigests of the python-stripped names, truncated to 12 chars —
- * if any of these drift, privacy-mode users stop matching their own file on PC clients.
+ * The hash vectors are sha256 hex digests of the stripped names, cut to 12 characters. If a
+ * vector drifts, the app stops matching files with PC clients that send hashed names (privacy mode).
  */
 class FileComparisonTest {
 
-    // sha256("MovieName2024mkv")[:12] — separators ([-~_.\[\](): ]) stripped before hashing
+    // sha256("MovieName2024mkv")[:12]: the separators ([-~_.\[\](): ]) are stripped before hashing.
     @Test
     fun `hashFilename strips separators like python before hashing`() {
         assertEquals("755b2c97807b", FileComparison.hashFilename("Movie.Name.2024.mkv"))
     }
 
-    // sha256("MovieNamemkv")[:12] — spaces are separators too
+    // sha256("MovieNamemkv")[:12]: spaces are separators too.
     @Test
     fun `hashFilename strips spaces`() {
         assertEquals("a9858cb4803c", FileComparison.hashFilename("Movie Name.mkv"))
     }
 
-    // sha256("MyVideomp4")[:12] — URL: keep last path segment, percent-decode, then strip
+    // sha256("MyVideomp4")[:12]: a URL uses its last path segment, percent-decoded, then stripped.
     @Test
     fun `hashFilename of URL uses decoded last path segment`() {
         assertEquals("30e346a16db8", FileComparison.hashFilename("https://example.com/path/My%20Video.mp4"))
@@ -50,7 +50,7 @@ class FileComparisonTest {
     @Test
     fun `sameFilename matches raw against hashed from a privacy-mode peer`() {
         val raw = "Movie.Name.2024.mkv"
-        val theirHash = FileComparison.hashFilename(raw) // what a hashed-mode PC peer sends
+        val theirHash = FileComparison.hashFilename(raw) // what a PC peer in privacy mode sends
         assertTrue(FileComparison.sameFilename(raw, theirHash))
         assertTrue(FileComparison.sameFilename(theirHash, raw))
         assertTrue(FileComparison.sameFilename(theirHash, theirHash))
@@ -69,7 +69,7 @@ class FileComparisonTest {
 
     @Test
     fun `sameFilename matches a URL against its local filename`() {
-        // PC: stripURL = isURL(f1) XOR isURL(f2) — the URL side reduces to its last segment.
+        // PC client: stripURL = isURL(f1) XOR isURL(f2), so the URL side becomes its last segment.
         assertTrue(FileComparison.sameFilename("https://example.com/path/My%20Video.mp4", "My Video.mp4"))
     }
 

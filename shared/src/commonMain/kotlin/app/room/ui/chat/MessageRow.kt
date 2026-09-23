@@ -56,11 +56,12 @@ import app.uicomponents.AnimatedImage
 import app.uicomponents.controls.shimmer
 
 /**
- * How chat text is drawn: the size preference (floored at 5), the outline and shadow switches.
+ * How chat text is drawn: the size preference (at least 5), and the outline, shadow and time
+ * switches.
  *
- * A data class so two of these compare by what they say. The chat box builds one in its own body
- * and hands it to every visible row, so with identity equality a new instance arrived on every
- * recomposition and no row in the list could skip, however little had changed.
+ * A data class, so two instances compare by value. The chat box builds one in its own body and
+ * hands it to every visible row. With identity equality, a new instance would arrive on every
+ * recomposition, and no row in the list could skip, however little had changed.
  */
 data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
     val fontSize = fontSizePreference.coerceAtLeast(5)
@@ -68,15 +69,20 @@ data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val sh
 
 private const val GROUP_WINDOW_MS = 60_000L
 
-/** The GIF panel's flat tint over video, so a GIF still loading in chat looks like one in the panel. */
+/**
+ * The flat tint of the GIF panel over video, so a GIF that is still loading in chat looks like a
+ * loading GIF in the panel.
+ */
 private const val LOADING_TILE_TINT = 0.65f
 
 /**
- * One chat line in one of two shapes. A person: the name in the tag colour, the message under it,
- * no bubble; a second message from the same person inside a minute drops the repeated name. An
- * event: see [EventLine]. The time sits in a right hand column only when the switch is on and more
- * than a minute passed since the line above. The spoken description always carries the name and
- * the time.
+ * One chat line, in one of two shapes:
+ * - A person's message: the name in the tag color, the message under it, and no bubble. A second
+ *   message from the same person within a minute drops the repeated name.
+ * - An event: see [EventLine].
+ *
+ * The time sits in a column at the end only when the time switch is on and more than a minute
+ * passed since the line above. The spoken description always has the name and the time.
  */
 @Composable
 fun MessageRow(
@@ -98,9 +104,9 @@ fun MessageRow(
     val spoken = listOfNotNull(message.sender, message.timestamp, message.content).joinToString(", ")
     val showsImage = message.isImageUrl && (message.isFromTrustedImageHost || message.content in viewmodel.uiState.revealedImages)
     var menuOpen by remember { mutableStateOf(false) }
-    /* The line takes focus, so a remote and a keyboard need to see which one they are on. The
-     * source carries that state to the ring; the press state is still drawn by nothing, so a
-     * finger sees the line exactly as before. */
+    /* The line takes focus, so a remote or keyboard user must see which line has focus. The
+     * source carries that state to the ring. Nothing draws the press state, so a touch shows no
+     * change on the line. */
     val source = remember { MutableInteractionSource() }
 
     Row(
@@ -109,8 +115,9 @@ fun MessageRow(
             .padding(vertical = 2.dp)
             .controlStates(source, Radius.controlShape)
             /* A long press copies the line on touch platforms, where no selection container runs.
-             * On a GIF or sticker the link is no use as text, so it opens the image's menu. A
-             * remote holds its press key to do the same, which Compose reports as a long click. */
+             * On a GIF or sticker the link is of no use as text, so the long press opens the
+             * image's menu. A remote holds its press key to do the same, which Compose reports as
+             * a long click. */
             .combinedClickable(
                 interactionSource = source,
                 indication = null,
@@ -151,8 +158,8 @@ fun MessageRow(
                             /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
                             AnimatedImage(
                                 url = message.content,
-                                // A chat image said nothing at all to a screen reader. Now it at
-                                // least says who sent it, which is what the eye gets too.
+                                // A screen reader says who sent the image, which is what a sighted
+                                // user sees too.
                                 contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
                                 contentScale = ContentScale.Crop,
                                 alpha = imageAlpha,
@@ -162,15 +169,17 @@ fun MessageRow(
                             )
                             /* Over the image, not under it: on iOS the image is a native view that
                              * clears its own area of the Compose canvas. Chat has no panel behind
-                             * it, so the tile brings its own tint, or the sweep vanishes over video. */
+                             * it, so the tile brings its own tint, or the shimmer would vanish over
+                             * video. */
                             if (loading && imageAlpha > 0f) {
                                 Box(Modifier.matchParentSize().background(palette.panel.copy(alpha = LOADING_TILE_TINT)).shimmer())
                             }
                             if (menuOpen) ChatMediaMenu(link = message.content, onDismiss = { menuOpen = false })
                         }
                     } else {
-                        /* A peer's link is not fetched on sight: that would hand their chosen host
-                         * the address of every device in the room. One tap loads it. */
+                        /* A peer's image link does not load on its own. Loading it would send the IP
+                         * address of every device in the room to a host that the peer chose. One
+                         * tap loads it. */
                         Text(
                             text = strings.roomChatImageHidden(message.imageHost),
                             style = body,
@@ -197,8 +206,8 @@ fun MessageRow(
         }
         if (showTime) {
             Text(
-                // Whole, not the first five characters: a 12-hour clock reads "9:05 PM", and
-                // cutting at five turned that into "9:05" for every afternoon message.
+                // The whole string, not the first five characters: a 12-hour clock reads "9:05 PM",
+                // and a cut at five would show "9:05" for every afternoon message.
                 text = message.timestamp,
                 style = Type.value,
                 color = chatPalette.timestampColor,
@@ -210,8 +219,8 @@ fun MessageRow(
 }
 
 /**
- * An event: one line with a 2dp stub in the gutter, both in the event colour, red for errors. A
- * neutral event draws each person it names in their chat name colour; an error stays all red.
+ * An event line: one line with a 2dp stub in the gutter, both in the event color (red for errors).
+ * A neutral event draws each person it names in that person's name color. An error stays all red.
  */
 @Composable
 internal fun EventLine(message: Message, chatPalette: MessagePalette, style: MessageStyle, modifier: Modifier = Modifier) {
@@ -234,8 +243,8 @@ internal fun EventLine(message: Message, chatPalette: MessagePalette, style: Mes
 }
 
 /**
- * [content] with each of [people] in [self] or [friend]. A name counts only as a whole isolated
- * run, so a name that is also part of a file name or another word stays uncoloured there.
+ * Colors each of [people] in [content] with [self] or [friend]. A name counts only as a whole
+ * isolated run, so a name that is also part of a file name or another word stays uncolored there.
  */
 internal fun eventText(content: String, people: Map<String, Boolean>, self: Color, friend: Color): AnnotatedString {
     if (people.isEmpty()) return AnnotatedString(content)
@@ -274,7 +283,7 @@ private fun OutlinedText(
     val base = if (shadow) style.copy(shadow = Shadow(Color.Black, Offset(0f, 1f), blurRadius = 4f)) else style
     Box(modifier) {
         if (outline != null && outline > 0f) {
-            // Without the spans: a coloured name would otherwise get a coloured outline.
+            // Without the spans: a colored name would otherwise get a colored outline.
             Text(AnnotatedString(text.text), style = base.copy(color = Color.Black, drawStyle = Stroke(width = outline, join = StrokeJoin.Round)))
         }
         Text(text, style = base.copy(color = color))

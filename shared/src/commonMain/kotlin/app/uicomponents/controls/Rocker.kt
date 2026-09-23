@@ -28,9 +28,10 @@ import app.theme.Space
 import app.theme.palette
 
 /**
- * A hardware rocker: 38 x 20dp, hard edged, the knob sitting left or right. The row's value
- * column already spells the state, so the control only shows which side it is on.
- * Role Switch; [name] is spoken when the rocker stands alone rather than inside a merged row.
+ * The app's switch, drawn like a hardware rocker: 38 x 20dp, hard edges, and the knob on the left
+ * or the right. The row's value column already spells out the state, so the control only shows
+ * the side. It has the Switch role, and [name] is spoken when the rocker stands alone and not
+ * inside a merged row.
  */
 @Composable
 fun Rocker(

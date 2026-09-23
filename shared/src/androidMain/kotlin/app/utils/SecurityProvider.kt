@@ -6,17 +6,17 @@ import java.security.Security
 import kotlin.concurrent.thread
 
 /**
- * Installs Conscrypt, which is what gives the app TLS 1.3 on every supported Android version.
+ * Installs Conscrypt, which gives the app TLS 1.3 on every supported Android version.
  *
- * Building the provider loads a native library, which took the main thread for that long before
- * the first frame. It is done on its own thread instead, and the only thing that has to wait for
- * it is the TLS upgrade, which happens much later and off the main thread anyway.
+ * Building the provider loads a native library, which would delay the first frame on the main
+ * thread. So the install runs on its own thread. Only the TLS upgrade waits for it, and that
+ * upgrade happens much later and off the main thread.
  */
 object SecurityProvider {
 
     private val installed = CompletableDeferred<Unit>()
 
-    /** Called once from Application.onCreate. Safe to call again; later calls do nothing. */
+    /** Called once from Application.onCreate. A call after the install finished does nothing. */
     fun installInBackground() {
         if (installed.isCompleted) return
         thread(name = "conscrypt-install", isDaemon = true) {

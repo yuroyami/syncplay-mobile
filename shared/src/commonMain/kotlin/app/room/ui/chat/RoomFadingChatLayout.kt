@@ -31,12 +31,13 @@ import app.theme.Type
 import kotlinx.coroutines.delay
 
 /**
- * With the HUD hidden, the last few unseen lines from other people show over the video in the
- * same two shapes as the list, with no panel behind them: this is where the outline preference
- * earns its keep. The count is the fading count preference, the hold is the fading duration.
+ * Shows the last few unseen chat lines from other users over the video while the HUD (the
+ * controls over the video) is hidden. The lines keep the two shapes of the chat list, with no
+ * panel behind them, which is where the outline preference matters most. The fading count
+ * preference sets how many lines show, and the fading duration sets how long each one stays.
  *
- * It draws where the room puts it, under the notices on the centre line, and only caps its own
- * width to a notice's, so a line wraps at the same edge a notice would.
+ * [app.room.RoomScreenUI] places this layout under the notices on the center line. The layout only
+ * caps its own width to the width of a notice, so a line wraps at the same edge as a notice.
  */
 @Composable
 fun FadingMessageLayout() {
@@ -51,9 +52,10 @@ fun FadingMessageLayout() {
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
-    // PiP caps large text at the default, while respecting a smaller size chosen by the user.
-    // Anywhere else these lines are read from the middle of the picture, so they never go
-    // below a notice's size: the log's size is for a dense list, not for a glance over video.
+    // In picture-in-picture, large text is capped at the default size, and a smaller size that the
+    // user chose is kept. Elsewhere these lines are read from the middle of the picture, so they
+    // never go below the size of a notice: the chat list size is for a dense list, not for a
+    // glance over video.
     val noticeSize = Type.note.fontSize.value.toInt()
     val size = if (isInPiPMode) minOf(fontSize, MSG_FONTSIZE.default) else maxOf(fontSize, noticeSize)
     val style = MessageStyle(size, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, showTime = false)

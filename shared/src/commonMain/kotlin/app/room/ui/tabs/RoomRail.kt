@@ -73,10 +73,12 @@ import app.uicomponents.controls.touchTarget
 private class RailCell(val icon: ImageVector, val name: String, val active: Boolean = false, val onClick: () -> Unit)
 
 /**
- * The rail: 42dp cells on the chrome tier. The panel cells come first. The room actions (PiP,
- * managed room, leave) start folded behind one More cell; the first tap unfolds them with a
- * slide and fold after six seconds without input. Vertical at the end edge when the
- * window is tall enough for the column, a row at the top end otherwise.
+ * The rail: the strip of buttons that opens the panels, made of 42dp cells. A room is the group
+ * of people watching together. The panel cells come first. The room actions (picture in
+ * picture, share invite, managed room, leave) start folded behind one More cell. The first tap
+ * unfolds them with a slide, and they fold again after six seconds without input. The rail is a
+ * column at the end edge in a landscape window at least 480dp tall, and a row at the top end
+ * otherwise.
  */
 @Composable
 fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
@@ -101,14 +103,15 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
             ui.railActionsExpanded.value = false
         }
     }
-    // Starts at the session's value, so a rebuilt rail (rotation) does not replay the unfold.
+    // Starts at the stored value, so a rail rebuilt after a rotation does not replay the unfold.
     val unfolded = remember { MutableTransitionState(expanded) }
     unfolded.targetState = expanded
 
-    /* The More cell leaves as the actions arrive, and the actions leave when they fold again, each
-     * taking focus with them. Under a remote focus follows: onto the first action on unfold, back
-     * onto More on fold. Only on a flip, so a rail rebuilt by rotation pulls no focus. */
-    // Where a closing panel sends focus back: the cell whose panel was open, else the first.
+    /* The More cell leaves as the actions arrive, and the actions leave when they fold again.
+     * Each takes focus with it. With a remote, focus follows: onto the first action on unfold,
+     * and back onto More on fold. This happens only when the state flips, so a rail rebuilt
+     * after a rotation takes no focus. */
+    // Where a closing panel sends focus back: the cell whose panel was open, or else the first.
     val railFocus = LocalRoomRailFocus.current
     val moreFocus = remember { FocusRequester() }
     val firstActionFocus = remember { FocusRequester() }
@@ -124,7 +127,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
                 else -> null
             }
             if (target != null) {
-                // A frame's grace: the cell has to exist before it can be asked.
+                // Wait 50 ms first, because the cell must exist before it can take focus.
                 delay(50)
                 target.requestFocus()
             }
@@ -152,8 +155,8 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
             add(RailCell(Icons.Filled.PictureInPicture, strings.roomOverflowPip) { platformCallback.onPictureInPicture(true) })
         }
         if (!solo) {
-            // The room as one line: the link carries the server, the port and the password, so
-            // nobody has to read five fields down a phone line.
+            // The whole room in one link: the link carries the server, the port and the password,
+            // so nobody has to read out five fields.
             add(RailCell(Icons.Filled.Share, strings.roomShareInvite) {
                 viewmodel.joinConfig?.let { config ->
                     platformCallback.shareText(inviteMessage + "\n" + InviteLink.shareUrl(config))
@@ -206,8 +209,9 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
 }
 
 /**
- * One cell: a glyph in a 42dp square. An open panel tints the cell and draws a 2dp accent edge
- * along the bottom of a row rail, or along the start edge of a column rail, facing its panel.
+ * One rail cell: a glyph in a 42dp square. An open panel tints the cell and draws a 2dp accent
+ * edge along the bottom of a row rail, or along the left edge of a column rail. In a left-to-right
+ * layout, that left edge faces the panel.
  */
 @Composable
 private fun RailCell(cell: RailCell, horizontal: Boolean, focusRequester: FocusRequester? = null, onFocus: ((Boolean) -> Unit)? = null) {

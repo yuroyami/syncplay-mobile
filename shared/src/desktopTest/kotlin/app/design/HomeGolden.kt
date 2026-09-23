@@ -50,13 +50,13 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * The home form across the windows it really meets. Every size here is a device's screen with
- * its system bars already taken off, because the harness has no insets of its own: 360x640 with
- * three-button navigation leaves 360x568, an iPhone 14 leaves 390x763, a Pixel 412x867.
+ * The home form across the windows that it meets on real devices. Every size here is a device's
+ * screen with its system bars already taken off, because the harness has no insets of its own:
+ * 360x640 with three-button navigation leaves 360x568, an iPhone 14 leaves 390x763, a Pixel 412x867.
  *
  * Two things are pinned. No label is ever cut at the default text size, and the join key is on
- * screen at rest wherever the form is meant to fit without scrolling. The join key sat below the
- * fold on most phones before the form learned to tighten.
+ * screen at rest wherever the form is meant to fit without scrolling. On most phones the join key
+ * stays on screen only because the form tightens at short heights.
  */
 class HomeGolden {
 
@@ -172,18 +172,19 @@ class HomeGolden {
         }
         saveJoin(custom)
         for ((w, h) in listOf(360 to 568, 390 to 763, 800 to 312, 768 to 1000, 1280 to 720)) renderHome("custom", w, h).assertAllTextFits()
-        // Custom has two more rows; the phones that carry them at rest.
+        // Custom mode has two more rows. These phones still show the join key at rest.
         for ((w, h) in listOf(390 to 763, 412 to 867, 800 to 312)) renderHome("custom", w, h).assertJoinOnScreen()
         saveJoin(hosted)
         for ((w, h) in listOf(360 to 568, 390 to 763, 800 to 312, 768 to 1000, 1280 to 720)) renderHome("host", w, h).assertAllTextFits()
-        // The hosting panel outgrows a phone, but on a wide window the join key stays put.
+        // The hosting panel outgrows a phone, but on a wide window the join key stays on screen.
         for ((w, h) in listOf(800 to 312, 1024 to 744, 1280 to 720)) renderHome("host", w, h).assertJoinOnScreen()
         saveJoin(official)
     }
 
     /**
-     * The three-engine picker Android shows, which the desktop harness never composes on its
-     * own. 284dp is the narrowest column the split form makes; 320dp phones get 284 too.
+     * The picker of the three Android engines (the video players that the app can drive), which
+     * the desktop harness never composes on its own. 284dp is the narrowest column that the split
+     * form makes, and 320dp phones get 284dp too.
      */
     @Test
     fun threeEnginePickerKeepsEveryWordFromTheNarrowestColumn() {

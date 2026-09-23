@@ -6,9 +6,9 @@ import app.room.ui.chat.GifSource
 import kotlin.test.Test
 
 /**
- * The GIF drawer's header at the widths the chat column really gives it. The chat column is 36
+ * The GIF drawer's header at the widths that the chat column gives it. The chat column is 36
  * percent of the room: about 313dp inside the drawer on a 914dp phone, 272dp on an 800dp one,
- * 420dp and up on a tablet or desktop. The three source labels must keep every word at each.
+ * and 420dp or more on a tablet or desktop. The three source labels must keep every word at each.
  */
 class GifSourcesGolden {
 

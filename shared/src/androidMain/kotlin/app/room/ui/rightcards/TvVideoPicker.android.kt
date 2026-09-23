@@ -77,14 +77,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The television answer to picking a local file. It reads the device's own video library rather
- * than asking another app to show a picker.
+ * The TV way to pick a local file: it reads the device's own video library instead of asking
+ * another app to show a picker.
  *
- * A television does have a system picker (the photo picker answers `PICK_IMAGES` and
- * `GET_CONTENT`), but a remote cannot work it: focus reaches its tabs and its banner and never
- * the grid of videos. The documents picker, which is what the app asks for elsewhere, is a stub
- * that only says no app can do this. Pull request #163 reported that and wrote the library query
- * and the permission flow below; the list is drawn with this app's own controls and thumbnails.
+ * A TV does have a system picker (the photo picker answers `PICK_IMAGES` and `GET_CONTENT`), but
+ * a remote cannot use it: focus reaches its tabs and its banner, never the grid of videos. The
+ * documents picker, which the app uses elsewhere, is a stub on TV that only says no app can do
+ * this. The library query and the permission flow below come from pull request #163. The list
+ * uses this app's own controls and thumbnails.
  */
 @Composable
 internal actual fun rememberTvVideoPicker(onPicked: (PlatformFile) -> Unit): (() -> Unit)? {
@@ -96,8 +96,8 @@ internal actual fun rememberTvVideoPicker(onPicked: (PlatformFile) -> Unit): (()
     var loading by remember { mutableStateOf(false) }
     var refused by remember { mutableStateOf(false) }
     var videos by remember { mutableStateOf(emptyList<LocalVideo>()) }
-    /* The list arrives after the dialog opens, so the frame's own entry focus has already settled
-     * on Close by then. The first video asks for focus itself once it exists. */
+    /* The list arrives after the dialog opens, when the dialog's first focus is already on Close.
+     * So the first video asks for focus itself once it exists. */
     val firstCell = remember { FocusRequester() }
     LaunchedEffect(videos) {
         if (videos.isEmpty()) return@LaunchedEffect
@@ -146,8 +146,8 @@ internal actual fun rememberTvVideoPicker(onPicked: (PlatformFile) -> Unit): (()
                 PrimaryAction(strings.roomTvVideosAllow, onClick = { ask.launch(permission) })
             }
             videos.isEmpty() -> Note(strings.roomTvVideosEmpty, hint = strings.roomTvVideosEmptyHint)
-            /* Bounded on purpose: the modal's body scrolls, so a lazy grid inside it would be
-             * measured with no height at all and draw nothing. */
+            /* The height is capped on purpose. The modal's body scrolls, so an uncapped lazy grid
+             * inside it would get no usable height and draw nothing. */
             else -> LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = TILE_MIN),
                 modifier = Modifier.fillMaxWidth().heightIn(max = GRID_MAX),
@@ -174,14 +174,17 @@ internal actual fun rememberTvVideoPicker(onPicked: (PlatformFile) -> Unit): (()
     }
 }
 
-/** One video: its own picture where the library has one, its length over the corner, its name under it. */
+/**
+ * One video tile: the library's thumbnail when there is one, the length in a corner, and the name
+ * and size below.
+ */
 @Composable
 private fun VideoTile(video: LocalVideo, modifier: Modifier, onPick: () -> Unit) {
     val context = LocalContext.current
     val source = remember { MutableInteractionSource() }
     val p = palette
     val spoken = "${video.name}, ${video.details}"
-    // Only the tiles on screen are composed, so only those ask the library for a picture.
+    // Only the tiles on screen are composed, so only those ask the library for a thumbnail.
     val thumbnail by produceState<ImageBitmap?>(null, video.uri) {
         value = withContext(Dispatchers.IO) { context.videoThumbnail(video)?.asImageBitmap() }
     }
@@ -226,7 +229,7 @@ private fun VideoTile(video: LocalVideo, modifier: Modifier, onPick: () -> Unit)
     }
 }
 
-/** Anything the list cannot show: a wait, a refusal, an empty library. Readable over a picture. */
+/** A message in place of the list: loading, a refused permission, or an empty library. */
 @Composable
 private fun Note(text: String, hint: String? = null, action: @Composable (() -> Unit)? = null) {
     Column(
@@ -237,12 +240,13 @@ private fun Note(text: String, hint: String? = null, action: @Composable (() -> 
         Icon(Icons.Filled.VideoLibrary, contentDescription = null, tint = palette.inkDim, modifier = Modifier.size(Space.hero))
         Text(text, style = Type.label, color = palette.ink, textAlign = TextAlign.Center)
         if (hint != null) Text(hint, style = Type.note, color = palette.inkDim, textAlign = TextAlign.Center)
-        // An action here answers one line of text, so it takes a button's width, not the dialog's.
+        // An action here belongs to one line of text, so it gets a button's width, not the dialog's
+        // width.
         if (action != null) Box(Modifier.widthIn(max = 260.dp)) { action() }
     }
 }
 
-/** A tile no narrower than this, and a grid no taller, so the dialog keeps its own scroll. */
+/** The minimum tile width and the maximum grid height, so the dialog keeps its own scroll. */
 private val TILE_MIN = 170.dp
 private val GRID_MAX = 330.dp
 
@@ -258,7 +262,7 @@ private data class LocalVideo(
     val details: String get() = "$duration  $size"
 }
 
-/** Newest first, which is what someone looking for the film they just copied over wants. */
+/** The device's videos, newest first, so a film that was just copied over is at the top. */
 private fun Context.localVideos(): List<LocalVideo> {
     val collection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
     val columns = arrayOf(
@@ -292,9 +296,9 @@ private fun Context.localVideos(): List<LocalVideo> {
 }
 
 /**
- * The library's own picture for a video. It is kept by the system, so this costs a read rather
- * than a decode. A library with none (a file just copied over) answers null and the tile keeps
- * its glyph.
+ * The library's own thumbnail for a video. The system keeps it, so this costs a read, not a
+ * decode. When the library has none (a file just copied over), this returns null and the tile
+ * keeps its icon.
  */
 private fun Context.videoThumbnail(video: LocalVideo): Bitmap? = runCatching {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

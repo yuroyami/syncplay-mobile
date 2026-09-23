@@ -37,7 +37,7 @@ import app.uicomponents.controls.SettingsGlyph
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-/** Every FOUNDATION control on one sheet, so a change to any of them is seen at once. */
+/** Every shared control from `app.uicomponents.controls` on one sheet, so any change shows. */
 class ControlsGolden {
 
     @Composable

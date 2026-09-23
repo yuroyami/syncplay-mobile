@@ -4,14 +4,14 @@ import app.utils.loggy
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-/** iOS resolver — backed by YouTubeKit (Swift) via [YouTubeKitBridge].
+/** The iOS media resolver, built on YouTubeKit (Swift) through [YouTubeKitBridge]. A media
+ *  resolver turns a page URL into a direct stream URL.
  *
- *  YT only. Other URLs fall through to the player unresolved (which is fine for direct
- *  media files; fails predictably for other page URLs the player can't handle natively).
+ *  It handles YouTube only. Other URLs reach the player unresolved, which works for direct
+ *  media files and fails for other page URLs that the player cannot open.
  *
- *  If the bridge factory was never registered (e.g. running unit tests without the iosApp
- *  target wired up), [resolve] returns null silently and the caller passes the original URL
- *  through unchanged. */
+ *  If the bridge factory was never registered (for example, in unit tests without the iosApp
+ *  target), [resolve] logs this and returns null, and the caller uses the original URL. */
 internal object YouTubeKitMediaResolver : MediaResolver {
 
     private val bridge: YouTubeKitBridge? by lazy { instantiateYouTubeKitBridge?.invoke() }

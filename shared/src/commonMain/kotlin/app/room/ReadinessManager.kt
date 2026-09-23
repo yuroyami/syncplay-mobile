@@ -21,14 +21,12 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Who the room is waiting for, and the countdown once it is not waiting for anyone.
+ * Tracks who the room is waiting for, and runs the autoplay countdown once it waits for nobody.
+ * A room is the group of people watching together. Like the desktop Syncplay client, the room
+ * starts playback on its own when every user with a file is ready.
  *
- * The gate that blocks an unpause has always been here. What was missing is everything around
- * it: the room never said whose readiness it was waiting on, and it never started on its own
- * when everyone arrived, which the desktop client has always done.
- *
- * The decisions live in [app.protocol.sync.Readiness] and are tested there. This part only
- * watches, times and acts.
+ * The decisions ([summariseReadiness], [shouldCountDown]) live in `Readiness.kt` and are tested
+ * there. This class only watches, times and acts.
  */
 class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
@@ -44,11 +42,12 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     private var roster: Job? = null
 
     /**
-     * Watches the roster, our own readiness and the room's pause state.
+     * Starts watching the roster (the list of users in the room) and calls [evaluate] on every
+     * roster change.
      *
-     * Idempotent, and the job is owned. Every connect used to launch another collector that
-     * nothing held or stopped, so a room that reconnected a few times re-evaluated the same
-     * roster change once per attempt ever made.
+     * Runs on every connect, so a second call while the collector runs does nothing. Without
+     * this guard, each reconnect would add a collector, and one roster change would run
+     * [evaluate] once per collector.
      */
     fun start() {
         if (viewmodel.isSoloMode) return
@@ -58,7 +57,7 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
         }
     }
 
-    /** Nothing to wait for while there is no connection. */
+    /** Stops watching the roster and cancels the countdown. Called when the connection drops. */
     fun stop() {
         roster?.cancel()
         roster = null
@@ -67,8 +66,9 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     }
 
     /**
-     * Re-reads the room. Called on every roster change and after anything that could move the
-     * readiness picture: our own ready toggle, a pause, a play.
+     * Reads the room's readiness again, then starts or cancels the countdown. Called on every
+     * roster change and after anything that can change readiness: the local user's ready
+     * toggle, a pause, a play.
      */
     fun evaluate() {
         if (viewmodel.isSoloMode) return
@@ -101,8 +101,8 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
             for (remaining in AUTOPLAY_COUNTDOWN_SECONDS downTo 1) {
                 state.value = AutoplayState.CountingDown(remaining)
                 delay(1.seconds)
-                // Anything that changed the picture mid-count stops it: someone unreadied,
-                // someone left, the room started playing anyway.
+                // A change during the count stops the countdown: a user is no longer ready, a
+                // user left, or the room started playing.
                 if (!stillEligible()) {
                     state.value = AutoplayState.Idle
                     return@launch
@@ -115,7 +115,7 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     }
 
     private fun stillEligible(): Boolean {
-        // A countdown that survives losing the room would start playback into nothing.
+        // Without a connection, the play at the end of the countdown would reach no one.
         if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return false
         if (viewmodel.uiState.isInBackground || viewmodel.media == null) return false
         val session = viewmodel.session

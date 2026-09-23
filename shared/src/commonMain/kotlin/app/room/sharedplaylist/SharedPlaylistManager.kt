@@ -33,25 +33,30 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     private val session get() = viewmodel.session
 
     /**
-     * The playlist entry (filename or URL) most recently started loading into the player.
+     * The playlist entry (file name or URL) that most recently started loading into the player.
+     * The shared playlist is the file list that everyone in a room follows, and a room is the
+     * group of people watching together.
      *
-     * [changePlaylistSelection] guards on this, NOT [Session.spIndex], to decide whether an
-     * incoming index change needs a (re)load. The receive path sets `spIndex` to the new index
-     * before `changePlaylistSelection` runs, so an `index != spIndex` guard would always be false
-     * and the file would never load. Tracking the loaded source works for both local files and
-     * remote URLs and skips the redundant reload when our own index echo returns.
+     * [changePlaylistSelection] checks this and [lastLoadedIndex], never
+     * [app.protocol.Session.spIndex], to decide whether an index change needs a load. The receive
+     * path sets `spIndex` to the new index before `changePlaylistSelection` runs, so an
+     * `index != spIndex` check would always be false and the file would never load. Tracking the
+     * loaded entry works for local files and remote URLs, and it skips the extra load when the
+     * echo of this client's own index change comes back.
      */
     private var lastLoadedSource: String? = null
 
     /**
-     * When the playlist index last moved, from any source. Auto-advance refuses to fire again
-     * within the near-end window: at the end of a file every client in the room reaches EOF at
-     * about the same moment, and without this each one sends its own "next item", walking the room
-     * several entries forward at once. Mirrors PC's notJustChangedPlaylist.
+     * When the playlist index last moved, from any source. Auto-advance does not fire again inside
+     * the near-end window. At the end of a file, every client in the room reaches the end at about
+     * the same moment. Without this guard, each client sends its own "next item", and the room
+     * moves several entries forward at once. Mirrors PC's notJustChangedPlaylist.
      */
     private var lastIndexChangeAtMs: Long = 0L
 
-    /** True while the index has just moved, so an end-of-file advance must stand down. */
+    /**
+     * True when the index moved less than [withinMs] ago, so an end-of-file advance must not fire.
+     */
     fun justChangedIndex(withinMs: Long): Boolean =
         lastIndexChangeAtMs != 0L && generateTimestampMillis() - lastIndexChangeAtMs < withinMs
 
@@ -60,38 +65,41 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         get() = session.sharedPlaylist.getOrNull(session.spIndex.intValue)
 
     /**
-     * True when this client is playing the entry the playlist currently points at. Compared on the
-     * playlist's own string, which is its unit of identity for both filenames and URLs.
+     * True when this client plays the entry that the playlist points at. The check compares the
+     * playlist's own string, which identifies both file names and URLs.
      */
     val isPlayingSelectedEntry: Boolean
         get() = lastLoadedSource != null && lastLoadedSource == selectedEntry
 
-    /** The index [lastLoadedSource] was loaded from, so a playlist with the same name twice can move between them. */
+    /**
+     * The index that [lastLoadedSource] was loaded from. With it, a playlist that holds the same
+     * name twice can move between the two entries.
+     */
     private var lastLoadedIndex: Int = -1
 
     /**
-     * URLs the *local user* explicitly added (typed in, or imported from a local playlist file).
+     * URLs that the *local user* added (typed in, imported from a local playlist file, or allowed
+     * at the prompt).
      *
-     * These are exempt from the trusted-domain gate in [isUrlTrusted]: adding a URL yourself is an
-     * explicit act of consent, so it should always be allowed to load even with no trusted domains
-     * configured. The gate exists to block auto-switching onto *peer-pushed* untrusted URLs, which
-     * never pass through here.
+     * These skip the trusted-domain check in [isUrlTrusted]. Adding a URL yourself is explicit
+     * consent, so the URL loads even with no trusted domains set. The check exists to stop an
+     * automatic switch to an untrusted URL that a *peer* added. Such a URL comes here only after
+     * the user allows it at the prompt.
      */
     private val locallyAddedUrls = linkedSetOf<String>()
 
     /**
-     * A peer-pushed URL from a host nobody has trusted, waiting on an answer.
+     * A URL that a peer added, from a host that is not trusted, waiting for the user's answer.
      *
-     * Blocking it outright was a dead end: the room said "untrusted" and the file simply never
-     * played, with the only way forward buried in a settings field the user had to guess the
-     * syntax of. Asking is the same safety with a way through it.
+     * Asking keeps the safety of a block and adds a way forward. A plain block would leave the
+     * file unplayed, and the only fix would be a settings field with a syntax to guess.
      */
     data class UntrustedUrl(val url: String, val domain: String)
 
     val pendingUntrusted: StateFlow<UntrustedUrl?>
         field = MutableStateFlow(null)
 
-    /** Answers the prompt. [always] adds the host to the trusted list for good. */
+    /** Allows the pending URL. When [always] is true, the host also goes into the trusted list. */
     fun allowPendingUrl(always: Boolean) {
         val pending = pendingUntrusted.value ?: return
         pendingUntrusted.value = null
@@ -100,7 +108,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             val updated = if (existing.isEmpty()) pending.domain else existing + "\n" + pending.domain
             onIOThread { Preferences.TRUSTED_DOMAINS.set(updated) }
         }
-        // Consent given here is consent either way, so this one plays even without the list.
+        // The user consented here either way, so this URL plays even when its host is not listed.
         rememberLocalUrl(pending.url)
         onIOThread { retrieveFile(pending.url) }
     }
@@ -114,17 +122,20 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     private val playlistsRefused: Boolean
         get() = !session.roomFeatures.supportsSharedPlaylists
 
-    /** A list the room lost to a dropped connection, with the entry that was selected in it. */
+    /** A list that the room lost in a dropped connection, with the index that was selected in it. */
     data class LostPlaylist(val entries: List<String>, val index: Int)
 
-    /** Set while the room offers a lost list back. It asks once. */
+    /** Set while the room offers to restore a lost list. The room asks once. */
     val restoreOffer: StateFlow<LostPlaylist?>
         field = MutableStateFlow(null)
 
-    /** The list as it stood when the connection dropped, held until the room's first list after it. */
+    /** The list at the moment the connection dropped, kept until the room's first list after it. */
     private var heldAcrossDrop: LostPlaylist? = null
 
-    /** The connection dropped: hold the list, so a room that comes back without it can have it back. */
+    /**
+     * Called when the connection drops. Keeps the list, so a room that comes back without it can
+     * get it back.
+     */
     fun noteConnectionLost() {
         if (heldAcrossDrop == null && session.sharedPlaylist.isNotEmpty()) {
             heldAcrossDrop = LostPlaylist(session.sharedPlaylist.toList(), session.spIndex.intValue)
@@ -132,22 +143,24 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * The server replaced the list. The loaded entry is found again in it, so an index that follows
-     * that entry does not reload the file, and a room that came back empty is offered its list.
+     * Called when the server replaces the list. It finds the loaded entry in the new list, so an
+     * index that follows that entry does not load the file again. A room that came back empty is
+     * offered its old list.
      */
     fun onServerPlaylist(setBy: String) {
         realignLoadedIndex()
         val held = heldAcrossDrop ?: return
         heldAcrossDrop = null
         if (!cameBackEmpty(held.entries, session.sharedPlaylist, setBy)) return
-        // Undo brings it back too, for whoever dismisses the question and then changes their mind.
+        // Undo can bring the list back too, for a user who dismisses the question and then changes
+        // their mind.
         undoStack.addLast(held.entries)
         while (undoStack.size > MAX_UNDO_STEPS) undoStack.removeFirst()
         canUndo.value = true
         restoreOffer.value = held
     }
 
-    /** Puts the lost list back with its selection, unless someone filled the room meanwhile. */
+    /** Sends the lost list back with its selection, unless someone filled the playlist meanwhile. */
     fun restoreLostPlaylist() {
         val lost = restoreOffer.value ?: return
         restoreOffer.value = null
@@ -160,7 +173,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         restoreOffer.value = null
     }
 
-    /** Finds the loaded entry in a new list: its own place if it is still there, or its first one. */
+    /**
+     * Finds the loaded entry in a new list: at its old index if it is still there, or else its
+     * first match.
+     */
     private fun realignLoadedIndex() {
         val source = lastLoadedSource ?: return
         val list = session.sharedPlaylist
@@ -169,11 +185,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * The playlists this room had before the last few edits.
+     * The playlists of this room before the last few edits.
      *
-     * A shuffle, a clear or a wrong delete is one tap and reaches everyone, and until now there
-     * was no way back except retyping the list. The stack is small on purpose: this is an undo,
-     * not a history.
+     * A shuffle, a clear or a wrong delete is one tap and reaches everyone, so it needs a way
+     * back. The stack is small on purpose: this is an undo, not a history.
      */
     private val undoStack = ArrayDeque<List<String>>()
 
@@ -195,26 +210,29 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(previous))
     }
 
-    /** Remembers a consented URL, forgetting the oldest past the cap so a long session stays bounded. */
+    /**
+     * Remembers a URL that the user consented to. Past the cap, the oldest URL is forgotten, so a
+     * long session stays bounded.
+     */
     private fun rememberLocalUrl(url: String) {
         locallyAddedUrls.remove(url)
         locallyAddedUrls.add(url)
         while (locallyAddedUrls.size > MAX_LOCAL_URLS) locallyAddedUrls.remove(locallyAddedUrls.first())
     }
 
-    /** Shuffles the current playlist and sends it to the server.
-     * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
+    /**
+     * Shuffles the current playlist and sends it to the server.
+     * @param mode False shuffles the whole playlist. True shuffles only the entries after the
+     *   current one.
+     */
     suspend fun shuffle(mode: Boolean) {
         if (playlistsRefused) return
         rememberForUndo()
-        /* If the shared playlist is empty, do nothing */
         if (session.spIndex.intValue < 0 || session.sharedPlaylist.isEmpty()) return
 
-        /* Shuffling as per the mode selected: False = shuffle all, True = Shuffle rest */
         if (mode) {
-            /* Shuffling the rest of playlist is a bit trickier, we split the shared playlist into two
-             * grp1 is gonna be the group that doesn't change (everything until current index)
-             * grp2 is the group to be shuffled since it's the 'remaining group' */
+            /* Split the playlist in two. grp1 (up to and including the current index) stays as it
+             * is, and grp2 (the rest) is shuffled. */
 
             val grp1 = session.sharedPlaylist.take(session.spIndex.intValue + 1).toMutableList()
             val grp2 = session.sharedPlaylist.takeLast(session.sharedPlaylist.size - grp1.size).shuffled()
@@ -222,17 +240,16 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             session.sharedPlaylist.clear()
             session.sharedPlaylist.addAll(grp1)
 
-            /* Only the tail past the current index moved, so the current file stays put — announce
-             * the new list and we're done. */
+            /* Only the entries after the current index moved, so the current file stays. Sending
+             * the new list is all that is needed. */
             viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
         } else {
-            /* Shuffling everything is easy as Kotlin gives us the 'shuffle()' method */
             session.sharedPlaylist.shuffle()
 
             /* A full shuffle moves every entry, so the old index now points at a different file.
-             * Match PC's shuffleEntirePlaylist: reset to index 0 and broadcast BOTH the new list and
-             * the new index, so every peer re-selects index 0 instead of staying on its stale index
-             * (which would land each client on a different file). */
+             * Like PC's shuffleEntirePlaylist, reset to index 0 and send both the new list and the
+             * new index. Every peer then selects index 0, instead of keeping its stale index and
+             * landing on a different file. */
             session.spIndex.intValue = 0
             viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
             viewmodel.networkManager.send(WireMessage.playlistIndex(0))
@@ -241,11 +258,11 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Rejects playlists exceeding the protocol's caps (python's `playlistIsValid`,
-     * 250 items / 10000 characters) BEFORE broadcasting. The official server refuses
-     * an oversized `playlistChange` and re-sends the old playlist — without this gate
-     * the user's additions just silently vanish a round-trip later.
-     * @return true when the list is over the limits (caller must abort the broadcast).
+     * Rejects a playlist over the protocol limits (Python's `playlistIsValid`: 250 items and 10000
+     * characters) before it is sent. The official server refuses an oversized `playlistChange` and
+     * sends the old playlist again. Without this check, the user's additions would vanish one
+     * round trip later with no message.
+     * @return true when the list is over the limits. The caller must then not send it.
      */
     private fun rejectsOversizedPlaylist(files: List<String>): Boolean {
         if (playlistIsValid(files)) return false
@@ -256,8 +273,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         return true
     }
 
-    /** Adds URLs from the url adding popup, de-duplicating against the existing list and within
-     *  the incoming batch itself. */
+    /** Adds URLs from the add-URL popup. Duplicates of the existing list, and duplicates within
+     *  the batch itself, are skipped. */
     fun addURLs(urls: List<String>) {
         if (playlistsRefused) return
         val merged = session.sharedPlaylist.toMutableList()
@@ -265,8 +282,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             val url = raw.trim()
             if (url.isNotEmpty() && !merged.contains(url)) {
                 merged.add(url)
-                // The local user typed this URL in, so it's trusted by consent regardless of the
-                // trusted-domains setting (see [locallyAddedUrls] / [isUrlTrusted]).
+                // The local user typed this URL in, so it is trusted by consent, whatever the
+                // trusted-domains setting says (see [locallyAddedUrls] and [isUrlTrusted]).
                 if (isRemoteUrl(url)) rememberLocalUrl(url)
             }
         }
@@ -277,24 +294,23 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Adds locally-picked files to the shared playlist.
+     * Adds files that the user picked to the shared playlist.
      *
-     * Each file's name goes into the shared playlist (the only thing the protocol transmits),
-     * while a durable bookmark is persisted via [MediaAccessRegistry] so the file can be
-     * re-opened later — on iOS the picker's security scope is alive *right now* and would be
-     * lost if we only kept its path string.
+     * Each file's name goes into the shared playlist, because the protocol sends only names.
+     * [MediaAccessRegistry] saves a lasting bookmark, so the file can open again later. On iOS,
+     * the picker's security scope is alive only now, and a path string alone would lose it.
      *
-     * Ordering matters: we broadcast the playlist change *before* the index change so peers
-     * receive the list first, then the index, and their `changePlaylistSelection()` finds the
-     * entry and auto-loads it. If the playlist was empty we also load the first file locally
-     * straight from the live (still-scoped) [PlatformFile] for an instant start.
+     * The order matters: the playlist change goes out before the index change. Peers get the list
+     * first, then the index, so their `changePlaylistSelection()` finds the entry and loads it.
+     * When the playlist was empty, the first file also loads locally, straight from the live
+     * [PlatformFile] with its scope still open, for an instant start.
      */
     suspend fun addFiles(files: List<PlatformFile>) {
         if (playlistsRefused) return
         val playlistWasEmpty = session.sharedPlaylist.isEmpty() && session.spIndex.intValue == -1
 
-        // Collect the genuinely-new files, de-duplicating against the existing playlist and
-        // within this batch (by filename — the playlist's unit of identity).
+        // Collect the new files. Skip duplicates of the existing playlist and within this batch,
+        // by file name (the playlist's unit of identity).
         val toAdd = mutableListOf<PlatformFile>()
         for (file in files) {
             val filename = file.name
@@ -311,9 +327,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
 
         if (playlistWasEmpty) {
-            // Load the first added file locally right away (works in solo mode too) from the live,
-            // still-scoped handle, and mark it as the loaded source so our own index echo doesn't
-            // reload it.
+            // Load the first added file locally now (also in solo mode), from the live handle with
+            // its scope still open. Mark it as the loaded source, so the echo of this client's own
+            // index does not load it again.
             val first = toAdd.first()
             lastLoadedSource = first.name
             lastLoadedIndex = 0
@@ -324,9 +340,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Adds an entire folder to the shared playlist: persists durable access to the folder,
-     * walks it for media files (capturing a durable per-file handle for each), appends their
-     * names to the playlist, and — if nothing was playing — starts the first one.
+     * Adds a whole folder to the shared playlist. It saves lasting access to the folder, walks it
+     * for media files (with a lasting handle for each), adds their names to the playlist and,
+     * when the playlist had no selection, starts the first one.
      */
     suspend fun addFolderToPlaylist(dir: PlatformFile) {
         if (playlistsRefused) return
@@ -350,8 +366,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         for (n in names) if (!merged.contains(n)) merged.add(n)
         if (rejectsOversizedPlaylist(merged)) return
 
-        // Broadcast the new list *before* the index (same reasoning as addFiles): peers must
-        // have the entries before their index update can resolve and auto-load one.
+        // Send the new list before the index, as in addFiles. Peers need the entries before their
+        // index update can resolve and load one.
         viewmodel.networkManager.send(WireMessage.playlistChange(merged))
 
         if (playlistWasEmpty && merged.isNotEmpty()) {
@@ -361,22 +377,20 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
     }
 
-    /** Clears the shared playlist */
     fun clearPlaylist() {
         if (playlistsRefused || session.sharedPlaylist.isEmpty()) return
         rememberForUndo()
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(emptyList()))
     }
 
-    /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
         if (playlistsRefused || i !in session.sharedPlaylist.indices) return
         rememberForUndo()
         session.sharedPlaylist.removeAt(i)
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(session.sharedPlaylist.toList()))
 
-        // The highlighted entry keeps pointing at the same file: an item removed above it moves
-        // it up one, and removing the current one leaves the highlight on what took its place.
+        // The highlight stays on the same file. Removing an item above it moves it up by one.
+        // Removing the current item leaves the highlight on the item that took its place.
         val current = session.spIndex.intValue
         session.spIndex.intValue = when {
             session.sharedPlaylist.isEmpty() -> -1
@@ -384,9 +398,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             else -> current.coerceAtMost(session.sharedPlaylist.lastIndex)
         }
 
-        /* And tell the room. The move was only ever local, so everyone else kept a highlight on
-         * whatever slid into that position. One writer drains the queue in order, so the shorter
-         * list lands first and the index that follows it still names our file. */
+        /* Tell the room too. Without this index, the other clients keep the highlight on whatever
+         * slid into the old position. One writer sends the queue in order, so the shorter list
+         * arrives first and the index after it still names this client's file. */
         val moved = session.spIndex.intValue
         if (moved != current && moved >= 0) {
             viewmodel.networkManager.sendAsync(WireMessage.playlistIndex(moved))
@@ -394,8 +408,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Moves one entry and tells the room. The selection keeps its entry, and nobody's file reloads:
-     * the loaded index follows the move here, and every other client finds it again in the new list.
+     * Moves one entry and tells the room. The selection stays on its entry, and no file loads
+     * again: the loaded index follows the move here, and every other client finds its entry again
+     * in the new list.
      */
     fun moveItem(from: Int, to: Int) {
         val list = session.sharedPlaylist
@@ -414,9 +429,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (selected != current && selected >= 0) viewmodel.networkManager.sendAsync(WireMessage.playlistIndex(selected))
     }
 
-    /** Selects a playlist item. Online, this announces the index to the server, whose echo
-     * drives the (synchronized) load on every client including us. In solo mode there is no
-     * server round-trip, so we apply the selection directly. */
+    /** Selects a playlist item. Online, this sends the index to the server, and the server's echo
+     * starts the synchronized load on every client, this one included. Solo mode has no server
+     * round trip, so the selection applies directly. */
     fun sendPlaylistSelection(i: Int) {
         if (playlistsRefused) return
         lastIndexChangeAtMs = generateTimestampMillis()
@@ -434,41 +449,43 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Applies a playlist index selection: records it as the room position and loads the file at
-     * that index unless it is already the loaded one.
+     * Applies a playlist index selection: it stores the index as the room's selection and loads
+     * the file at that index, unless that file is already loaded.
      *
-     * Called for both local and remote selections (see [app.protocol.event.RoomCallback.onPlaylistIndexChanged]).
-     * The guard is [lastLoadedSource], NOT [Session.spIndex]: the receive path already advanced
-     * spIndex by the time we get here, so an spIndex-equality guard would always short-circuit
-     * and nothing would ever play.
+     * Called for local and remote selections (see
+     * [app.protocol.event.RoomCallback.onPlaylistIndexChanged]). The check uses [lastLoadedSource]
+     * and [lastLoadedIndex], never [app.protocol.Session.spIndex]. The receive path has already
+     * set spIndex at this point, so an spIndex check would always return early and nothing would
+     * play.
      */
     suspend fun changePlaylistSelection(index: Int) {
-        if (index !in session.sharedPlaylist.indices) return /* In rare cases when this was called on an empty/short list */
+        if (index !in session.sharedPlaylist.indices) return /* In rare cases this runs on an empty or short list. */
         session.spIndex.intValue = index
         lastIndexChangeAtMs = generateTimestampMillis()
         val target = session.sharedPlaylist[index]
-        // Name AND index: a playlist holding the same filename twice could not move between the
-        // two entries, because the name alone always matched what was already loaded.
+        // Check the name and the index. With the name alone, a playlist that holds the same file
+        // name twice could not move between the two entries, because the name always matches.
         if (target == lastLoadedSource && index == lastLoadedIndex) return
         lastLoadedIndex = index
         retrieveFile(target)
     }
 
     /**
-     * Resolves a shared-playlist entry to actual media and loads it into the player.
+     * Resolves a shared playlist entry to real media and loads it into the player.
      *
-     * Remote URLs are gated by the trusted-domains check and handed straight to the player.
-     * Local entries (filenames) are resolved through [MediaAccessRegistry], which checks the
-     * direct per-file bookmark first and self-heals by re-indexing remembered media directories
-     * if needed. Only when nothing resolves do we surface a "not found" / "no directories" hint.
+     * A remote URL must pass the trusted-domains check before it goes straight to the player. An
+     * untrusted URL raises the [pendingUntrusted] prompt instead. A local entry (a file name) is
+     * resolved through [MediaAccessRegistry], which checks the direct file bookmark first and
+     * indexes the remembered media directories again if needed. Only when nothing resolves does
+     * the user see a "not found" or "no directories" hint.
      */
     suspend fun retrieveFile(fileName: String) {
         if (isRemoteUrl(fileName)) {
             if (!isUrlTrusted(fileName)) {
-                // No host at all still needs a name for the prompt; the raw string is honest.
+                // A URL with no host still needs a name for the prompt, so the raw string stands in.
                 val domain = urlHost(fileName) ?: fileName
-                // Ask instead of refusing. The answer is the user's, and the safe default
-                // (nothing plays until they say so) is unchanged.
+                // Ask instead of refusing. The user decides, and the safe default stays: nothing
+                // plays until the user says so.
                 pendingUntrusted.value = UntrustedUrl(fileName, domain)
                 val warning = Localization.strings.roomUntrustedDomainWarning(domain)
                 viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
@@ -479,8 +496,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             return
         }
 
-        // A peer's selection arrives on the main thread; resolving may walk every remembered
-        // media folder, which on a SAF tree is seconds of IO.
+        // A peer's selection arrives on the main thread. Resolving may walk every remembered media
+        // folder, which takes seconds of IO on a SAF tree.
         val resolved = withContext(ioDispatcher) { MediaAccessRegistry.resolvePlayableFile(fileName) }
         if (resolved != null) {
             lastLoadedSource = fileName
@@ -488,7 +505,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             return
         }
 
-        // Nothing resolved. Don't nag if the requested file is in fact already the one playing.
+        // Nothing resolved. Show no warning when the requested file is already the one playing.
         if (viewmodel.media?.fileName == fileName) return
 
         val message: suspend () -> String = if (Preferences.MEDIA_DIRECTORIES.value().isEmpty()) {
@@ -512,8 +529,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Loads playlist entries from a previously-exported plain-text file, one per line.
-     * @param alsoShuffle whether to shuffle the loaded entries before broadcasting.
+     * Loads playlist entries from an exported plain-text file, one entry per line.
+     * @param alsoShuffle Whether to shuffle the loaded entries before they are sent.
      */
     fun loadPlaylistLocally(source: PlatformFile, alsoShuffle: Boolean) {
         if (playlistsRefused) return
@@ -536,22 +553,21 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             s.startsWith("https://", true)
 
     /**
-     * Checks whether a remote URL is allowed to auto-load.
+     * Checks whether a remote URL may load on its own.
      *
-     * Mirrors PC's `_isURITrustableAndTrusted` (client.py:565) with `onlySwitchToTrustedDomains`
-     * at its safe default (on): a peer-pushed http(s) URL is only trusted if it matches a
-     * configured trusted-domain entry. Crucially, when *no* trusted domains are configured we
-     * do NOT blanket-allow every URL — that would let any peer silently auto-switch the room
-     * onto an arbitrary URL. URLs the local user added themselves are exempt (see
-     * [locallyAddedUrls]), since adding one is explicit consent.
+     * Mirrors PC's `_isURITrustableAndTrusted` (client.py) with `onlySwitchToTrustedDomains` at
+     * its safe default (on): an http(s) URL from a peer is trusted only when it matches a
+     * trusted-domain entry. When *no* trusted domains are set, every such URL is refused. Allowing
+     * all of them would let any peer switch the room to any URL without a question. URLs that the
+     * local user added are exempt (see [locallyAddedUrls]), because adding one is explicit consent.
      */
     private fun isUrlTrusted(url: String): Boolean {
-        // The local user added this URL — explicit consent, always allowed.
+        // The local user added this URL. That is explicit consent, so it is always allowed.
         if (locallyAddedUrls.contains(url)) return true
 
         val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
         val trustedEntries = trustedRaw.split("\n", ",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
-        // Nothing configured: do not auto-trust arbitrary peer-pushed URLs (PC safe default).
+        // Nothing set: do not trust any URL from a peer (the PC safe default).
         if (trustedEntries.isEmpty()) return false
 
         // A URL whose host cannot be read is not a URL anyone approved.
@@ -568,12 +584,13 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         private const val MAX_LOCAL_URLS = 500
 
         /**
-         * One trusted-domain entry against one URL, with PC's exact matching rules
-         * (client.py:565-602):
-         *  - entry `host/path` splits on the first `/`; the path is a required URL-path prefix
-         *  - the host matches itself and its `www.` variant, NOT arbitrary subdomains
-         *  - explicit wildcards are supported: each `*` matches exactly one label,
-         *    e.g. `*.example.com` trusts `cdn.example.com` but not `a.b.example.com`
+         * Matches one trusted-domain entry against one URL, with the exact rules of PC's
+         * `_isURITrustableAndTrusted` (client.py):
+         *  - An entry `host/path` splits on the first `/`. The path must be a prefix of the URL
+         *    path.
+         *  - The host matches itself and its `www.` form, not any other subdomain.
+         *  - Wildcards work: each `*` matches exactly one label. For example, `*.example.com`
+         *    trusts `cdn.example.com` but not `a.b.example.com`.
          */
         internal fun trustedEntryMatches(entry: String, urlDomain: String, urlPath: String): Boolean {
             val trustedDomain = entry.substringBefore('/')

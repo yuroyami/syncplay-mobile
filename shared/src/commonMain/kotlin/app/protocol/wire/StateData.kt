@@ -3,11 +3,12 @@ package app.protocol.wire
 import kotlinx.serialization.Serializable
 
 /**
- * Inner payload of a `State` message — symmetric across both directions.
+ * Inner payload of a `State` message, with the same shape in both directions.
  *
- * Server broadcasts authoritative state; client reports its own state back. Both sides
- * populate [playstate] and [ping]; [ignoringOnTheFly] is sent when feedback suppression
- * counters are active.
+ * The server broadcasts the room's state; the client reports its own state back. Both sides
+ * send [ping]. The client leaves out [playstate] when it has no position to report, or while
+ * it ignores the server on the fly. [ignoringOnTheFly] is sent while either feedback
+ * suppression counter is non-zero.
  */
 @Serializable
 data class StateData(

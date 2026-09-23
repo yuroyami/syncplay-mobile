@@ -12,7 +12,7 @@ typedef NS_ENUM(NSInteger, SyncplayVlcInputState) {
     SyncplayVlcInputStateFailed,
 };
 
-/** Read native capability, not VLCKit's asynchronously updated state property. */
+/** Reads the native input state, not VLCKit's state property, which updates asynchronously. */
 static inline SyncplayVlcInputState SyncplayVlcReadInputState(VLCMediaPlayer *player) {
     if (player == nil || player.media == nil) return SyncplayVlcInputStateInactive;
     libvlc_media_player_t *nativePlayer = (libvlc_media_player_t *)player.libVLCMediaPlayer;
@@ -69,20 +69,21 @@ static inline bool SyncplayVlcHasCurrentMedia(VLCMediaPlayer *player, VLCMedia *
 
 /**
  * VLCKit 4.0.0a19's `time` property reads its notification/interpolation cache. That cache
- * can stop updating while playback continues. Read the native player instead, on Main and
- * outside libVLC callbacks. The wrapper owns the handle borrowed through its bridging header.
+ * can stop updating while playback continues. Read the native player instead, on the main
+ * thread and outside libVLC callbacks. The handle is borrowed through VLCKit's bridging header,
+ * and the wrapper owns it, so never release it.
  *
- * Version-sensitive: this bundled libVLC API returns milliseconds. Recheck the headers and
- * bridge when upgrading VLCKit; newer VLC versions changed the native time units.
+ * Version-sensitive: this bundled libVLC API returns milliseconds. Newer VLC versions use
+ * microseconds, so recheck the headers and this bridge when upgrading VLCKit.
  */
 static inline int64_t SyncplayVlcCurrentTimeMs(VLCMediaPlayer *player) {
     if (player == nil || player.media == nil) return -1;
     libvlc_media_player_t *nativePlayer = (libvlc_media_player_t *)player.libVLCMediaPlayer;
     if (nativePlayer == NULL) return -1;
     int64_t time = libvlc_media_player_get_time(nativePlayer);
-    // This bundle returns zero after its native input is gone. Read the authoritative
-    // state AFTER the clock so a stop racing this read cannot publish a fake rewind.
-    // VLCKit's async cached state may still say Playing until its Main event arrives.
+    // This build returns zero after its native input is gone. Read the native state after
+    // the clock, so a stop that races this read cannot publish a false rewind. VLCKit's
+    // cached state can still say Playing until its main-thread event arrives.
     switch (libvlc_media_player_get_state(nativePlayer)) {
         case libvlc_NothingSpecial:
         case libvlc_Stopped:

@@ -4,10 +4,10 @@ import app.protocol.models.User
 
 /**
  * What the room's readiness actually says, and whether it is time to start playing.
+ * Readiness is each user's "ready to watch" flag.
  *
- * Mobile has only ever had the gate: a blocked unpause marks you ready and says nothing more.
- * The desktop client also tells you who everyone is waiting for and starts a countdown once
- * they are all there. Both of those are decisions, so they are functions.
+ * Like the desktop client, the room tells you who everyone is waiting for, and starts a
+ * countdown once they are all ready. Both are decisions, so they are plain functions here.
  */
 
 /** The room's readiness in one value, ready to be turned into a sentence. */

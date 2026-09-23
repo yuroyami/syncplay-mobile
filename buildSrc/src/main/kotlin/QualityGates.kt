@@ -5,27 +5,29 @@ import org.gradle.kotlin.dsl.register
 import java.io.File
 
 /**
- * The build-time gates: rules this codebase relies on that nothing was checking.
+ * The build-time gates: checks for rules that this codebase relies on.
  *
- * Each one exists because the thing it checks has already gone wrong once, or because a
- * standing decision was being kept by memory alone. They are plain scans rather than lint or
- * detekt rules, because every one of them needs to see files a Kotlin analyser does not read:
- * eight locale XMLs, a resource tree, the settings registry.
+ * Each gate covers a rule that broke once, or a standing decision that no tool checked. The
+ * gates are plain file scans, not lint or detekt rules, because each one reads files that a
+ * Kotlin analyser does not read: the locale XMLs, a resource tree, the settings registry.
  *
- * Registered by [registerQualityGates] and wired into `:shared:check`.
+ * [registerQualityGates] registers them, and `:shared:check` depends on them.
  */
 
 private const val GATE_GROUP = "verification"
 
 /**
- * Gates always run. They are millisecond scans, and declaring the source and resource trees as
- * inputs collides with the tasks that generate into them.
+ * Gates always run. Each scan takes milliseconds, and declaring the source and resource trees as
+ * inputs collides with the tasks that generate files into them.
  */
 private fun org.gradle.api.Task.alwaysRun() {
     outputs.upToDateWhen { false }
 }
 
-/** Every gate, in one place, hung off the module that owns the code. */
+/**
+ * Registers every gate and a `qualityGates` task that runs them all, and makes `:shared:check`
+ * depend on the gates. The root build script calls it, so the tasks belong to the root project.
+ */
 fun Project.registerQualityGates(androidVersionCode: String) {
     val gates = listOf(
         registerProtocolThrowsGate(),
@@ -50,17 +52,17 @@ fun Project.registerQualityGates(androidVersionCode: String) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Inbound protocol code must throw SerializationException and nothing else, because that is the
- * only type the skip-a-poisoned-line catch covers. An `error()`, `check()` or `require()` there
- * turns one malformed line into a dropped connection.
+ * Inbound protocol code must throw SerializationException and nothing else. That is the only
+ * type that the catch which skips a malformed line covers. An `error()`, `check()` or
+ * `require()` there turns one malformed line into a dropped connection.
  *
- * A scan rather than detekt's ForbiddenMethodCall, which needs type resolution the plain detekt
- * task does not have: written as a rule, it looked right and never fired once.
+ * This is a file scan, not detekt's ForbiddenMethodCall. That rule needs type resolution, which
+ * the plain detekt task does not have, so as a detekt rule it never fires.
  */
 private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
     val sources = listOf(
         file("shared/src/commonMain/kotlin/app/protocol"),
-        // Transports live per source set now: Ktor sockets in nonWebMain, WebSocket in wasmJs.
+        // Transports in their own source sets: Ktor sockets in nonWebMain, WebSocket in wasmJsMain.
         file("shared/src/nonWebMain/kotlin/app/protocol"),
         file("shared/src/wasmJsMain/kotlin/app/protocol"),
         file("shared/src/commonMain/kotlin/app/server/ClientConnection.kt"),
@@ -76,7 +78,7 @@ private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
                 f.readLines().withIndex()
                     .filter { (_, line) ->
                         val code = line.substringBefore("//").trim()
-                        // A declaration named error() is our own WireMessage builder.
+                        // A declaration named error() is the WireMessage builder, not a throw.
                         !code.startsWith("*") && !code.contains("fun error(") && banned.containsMatchIn(code)
                     }
                     .map { (i, line) -> "${f.relativeTo(root).path}:${i + 1}: ${line.trim()}" }
@@ -94,8 +96,8 @@ private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
 }
 
 /**
- * String resources must be loadable. A duplicate key is a crash at first use rather than a build
- * error, and this app has shipped one.
+ * String resources must load. A duplicate key does not fail the build; the app crashes when it
+ * first reads the key.
  */
 private fun Project.registerStringResourceGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
@@ -124,8 +126,8 @@ private fun Project.registerStringResourceGate(): TaskProvider<*> {
                     problems += "$where: '$it' is both a string and a plural"
                 }
 
-                // Deliberately no apostrophe rule: these are Compose Resources, not Android
-                // res/, and the copy pass that removed those escapes was correct.
+                // No apostrophe rule, on purpose: these are Compose Resources, not Android res/,
+                // so an apostrophe needs no escape.
             }
             if (problems.isNotEmpty()) {
                 throw GradleException("String resources will not load:\n" + problems.joinToString("\n") { "  $it" })
@@ -135,12 +137,12 @@ private fun Project.registerStringResourceGate(): TaskProvider<*> {
 }
 
 /**
- * Locale parity, reported rather than enforced by default.
+ * Locale parity: by default the gate reports missing translations and does not fail on them.
  *
  * Translations arrive through Weblate on their own schedule, so a missing key must not stop a
- * build. What must stop a build is the other direction: a key that exists in a translation and
- * not in the source, which means the source key was renamed or deleted and the translation is
- * now dead weight. Run with `-PstrictLocales=true` to fail on missing keys as well.
+ * build. The other direction must stop a build: a key that exists in a translation but not in
+ * the source. Then the source key was renamed or deleted, and the translation is unused. Run with
+ * `-PstrictLocales=true` to fail on missing keys as well.
  */
 private fun Project.registerLocaleParityGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
@@ -195,12 +197,12 @@ private fun Project.registerLocaleParityGate(): TaskProvider<*> {
 }
 
 /**
- * Placeholders must line up across languages.
+ * Placeholders must match across languages.
  *
- * The string generator strips the `%1$` position markers and fills what is left from left to
- * right, so a translation that reorders its placeholders would put the room name where the
- * password goes, and nothing would say so at runtime. Repeats are refused for the same reason:
- * `%1$s` twice becomes two separate arguments.
+ * The string generator (Lyricist) strips the `%1$` position markers and fills the rest from left
+ * to right. So a translation that reorders its placeholders puts the room name where the password
+ * goes, and nothing reports it at runtime. Repeats fail for the same reason: `%1$s` twice becomes
+ * two separate arguments.
  */
 private fun Project.registerStringArgumentGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
@@ -252,8 +254,8 @@ private fun Project.registerStringArgumentGate(): TaskProvider<*> {
 }
 
 /**
- * Resources nobody references. The last dead-resource sweep was done by hand and found 117 dead
- * string keys, a shadowed launcher icon set and three unused drawables. This makes it mechanical.
+ * Reports string keys and drawables that nothing references. It warns only; it does not fail
+ * the build.
  */
 private fun Project.registerDeadResourceGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
@@ -322,16 +324,16 @@ internal fun camelCased(key: String): String {
 }
 
 /**
- * A preference that declares a title, a summary and an icon is meant to be seen. If nothing
- * outside its own declaration ever names it, nobody can reach it, and nobody finds out until
- * someone asks where a setting went.
+ * A preference that declares a title, a summary and an icon is meant to be shown. If no code
+ * outside its own declaration names it, no screen can show it, and nobody notices until someone
+ * asks where a setting went.
  *
- * Deliberately wider than the settings console: plenty of preferences surface through a
- * purpose-built panel instead (gestures on their card, chat colours in the palette, the hosted
- * server on its own panel). What this catches is a pref that reaches no screen at all.
+ * The scan covers the whole app, not only the settings screen, on purpose. Many preferences
+ * appear on their own panel instead (gestures on their card, chat colours in the palette, the
+ * hosted server on its own panel). The gate catches a preference that reaches no screen at all.
  *
- * A scan, not a test: nothing enumerates the members of the Preferences object at runtime, and
- * Kotlin/Native has no reflection to do it with.
+ * This is a file scan, not a test: nothing lists the members of the Preferences object at
+ * runtime, and Kotlin/Native has no reflection for it.
  */
 private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
     val prefsFile = file("shared/src/commonMain/kotlin/app/preferences/Preferences.kt")
@@ -355,7 +357,7 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
                 .map { it.groupValues[1] }
                 .toSet()
 
-            // Engines attach their own rows, so their files count as places a pref can surface.
+            // Engines attach their own settings rows, so engine files count as places to show one.
             val consumers = buildString {
                 (listOf(settingsDir) + engineDirs).forEach { dir ->
                     dir.walkTopDown()
@@ -381,21 +383,20 @@ private fun Project.registerSettingsReachabilityGate(): TaskProvider<*> {
 
 
 /**
- * The engine destroy contract, enforced.
+ * Checks the engine destroy contract. An engine is one of the video players the app can drive.
  *
- * Every `destroy()` must flip `isInitialized = false` first, then cancel `playerSupervisorJob`,
- * and only then release the native engine. The order is not cosmetic: a position tracker that
- * outlives teardown sails past its own guard into a released engine. When mpv's handle was
- * process-global that aborted the process; the same mistake still leaks the whole RoomViewmodel
- * graph on every engine.
+ * Every `destroy()` must set `isInitialized = false` first, then cancel `playerSupervisorJob`,
+ * and only then release the native engine. The gate checks the first two steps and their order.
+ * The order matters: a position tracker that outlives teardown gets past its own guard and calls
+ * into a released engine. On every engine that leaks the whole RoomViewmodel graph, and a call
+ * into a released native handle can abort the process.
  *
- * A scan, because three of the five engines are iOS or Android actuals that no JVM test can
- * construct, and this is exactly the kind of ordering a well-meaning edit reverses.
+ * This is a file scan, because most engines are iOS or Android actuals that no JVM test can
+ * construct, and an edit can easily reverse this order.
  */
 private fun Project.registerDestroyContractGate(): TaskProvider<*> {
-    // Every source set that can hold an engine. nonWebMain and wasmJsMain joined the list when
-    // the web target arrived: KitePlayer moved out of commonMain that day, and without them the
-    // gate would have quietly stopped checking it.
+    // Every source set that can hold an engine. Keep nonWebMain (KitePlayer) and wasmJsMain (the
+    // browser engine) in the list, or the gate silently stops checking those engines.
     val engineRoots = listOf(
         file("shared/src/commonMain/kotlin/app/player"),
         file("shared/src/nonWebMain/kotlin/app/player"),
@@ -419,8 +420,8 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
                         if (!line.contains("override suspend fun destroy()")) return@forEachIndexed
                         checked++
                         val where = f.relativeTo(root).path + ":" + (i + 1)
-                        // Read to the end of the function: the first line indented exactly as
-                        // the declaration and closing a brace.
+                        // Read to the end of the function: the first line that has the same
+                        // indent as the declaration and closes a brace.
                         val indent = line.takeWhile { it == ' ' }
                         val body = lines.drop(i + 1)
                             .takeWhile { it.trimEnd() != "$indent}" }
@@ -449,12 +450,11 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
 }
 
 /**
- * Store copy has hard limits the stores enforce on upload, not at build time, so an overlong
- * file only fails at the point where a release is already half-published. The 0.24.0 What's New
- * was 1635 characters against a 500 limit and nothing had noticed.
+ * The stores enforce hard length limits on store text at upload, not at build time. So a text
+ * that is too long fails only when a release is already half-published.
  *
- * Also checks that a changelog exists for the version being built, since a release with no notes
- * is one of the two things standing between this app and a tagged version.
+ * The gate also checks that a changelog exists for the version being built. The release workflow
+ * runs the gates before any build, so a version without release notes does not get released.
  */
 private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider<*> {
     val metadata = file("fastlane/metadata/android/en-US")
@@ -496,19 +496,18 @@ private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider
 }
 
 /**
- * Keeps the version numbers written in the docs honest.
+ * Keeps the version table in CLAUDE.md in line with the build.
  *
- * Dependency tables in the documentation were typed by hand, which means they were right on
- * the day they were written and drifting ever since. This reads
- * `gradle/libs.versions.toml` and rewrites the numbers between the markers.
+ * A version table typed by hand goes stale. So these tasks read `gradle/libs.versions.toml`,
+ * gradle.properties and the Gradle wrapper, and write the numbers between the markers.
  *
- * `checkDocVersions` fails when they have drifted; `updateDocVersions` fixes them.
+ * `checkDocVersions` fails when the table no longer matches; `updateDocVersions` rewrites it.
  */
 private fun Project.registerDocVersionGates(): List<TaskProvider<*>> {
     val doc = file("CLAUDE.md")
 
     fun rendered(): String {
-        // The same reader the release page's dependency table uses, so the two cannot disagree.
+        // The same reader as the release page's dependency table, so the two cannot disagree.
         val tools = ToolVersions(projectDir)
         val versions = tools.catalog
 
@@ -572,8 +571,8 @@ private fun Project.registerDocVersionGates(): List<TaskProvider<*>> {
     val check = tasks.register("checkDocVersions") {
         group = GATE_GROUP
         description = "Fails when the version table in CLAUDE.md has drifted from the catalog."
-        // The maintainer may remove the optional architecture document. Keep checking
-        // its version block whenever it exists without making its removal break builds.
+        // CLAUDE.md is optional. Check its version table when the file exists, and skip the
+        // check when it does not, so a removed file never breaks the build.
         onlyIf { doc.isFile }
         alwaysRun()
         doLast {

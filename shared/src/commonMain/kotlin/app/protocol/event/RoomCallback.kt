@@ -50,7 +50,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun String.isSelf(): Boolean = (this == session.currentUsername)
     fun String.isNotSelf(): Boolean = (this != session.currentUsername)
 
-    /** Triggers a platform haptic feedback event if the given preference is enabled */
+    /** Triggers a platform haptic feedback event if the given preference is enabled. */
     private fun hapticIf(pref: app.preferences.Pref<Boolean>) {
         if (pref.value()) viewmodel.uiState.triggerHaptic()
     }
@@ -63,12 +63,11 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (pauser.isNotSelf()) {
             hapticIf(HAPTIC_ON_PAUSED)
-            // Snap to the room's *current* expected position, not the last 1 Hz snapshot —
-            // mirrors python's SYNC_ON_PAUSE which seeks to getGlobalPosition() (extrapolated).
+            // Snap to the room's *current* expected position, not the last 1 Hz snapshot. This
+            // mirrors Python's SYNC_ON_PAUSE, which seeks to the extrapolated getGlobalPosition().
             // Otherwise we land on a frame from up to 1 s ago and look out of sync with peers.
-            // Gate on media: seekTo on an unloaded VLCKit 4 player segfaults the same way
-            // controlPlayback does — same NULL libvlc handle, same dispatch-queue race. The
-            // controlPlayback call below has its own internal gate.
+            // Gate on media: VLCKit 4 crashes natively on a seek with no media loaded. The
+            // controlPlayback call below has its own media gate.
             if (viewmodel.media != null) {
                 // The room's position translated into our own copy's time.
                 val target = roomToLocalMs(protocol.extrapolatedGlobalPositionMs(), protocol.userTimeOffsetSeconds())
@@ -128,7 +127,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onSomeoneLeft(leaver: String) {
         // Our own "left" arrives when the server moves us between rooms (an isolated server tells
         // the old room, us included). It is not news, and it is not a lost connection: tearing
-        // the socket down here started a reconnect on a healthy session.
+        // the socket down here would start a reconnect on a healthy session.
         if (leaver.isSelf()) return
 
         loggy("SYNCPLAY Protocol: $leaver left the room.")
@@ -140,17 +139,20 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
-                // Pause LOCALLY only. PC's pauseOnLeave (client.py:474) calls the player's
-                // setPaused directly without sending State — it does not broadcast. Passing
-                // tellServer=true here would echo a redundant "X paused" to the room, and with
-                // multiple clients each reacting to the same leave it multiplies the pause
-                // events. Local-only matches PC.
+                // Pause LOCALLY only. With pauseOnLeave set, PC's `onDisconnect` (client.py) calls
+                // `setPaused(True)` on the player without sending a State, so it does not
+                // broadcast. Passing tellServer=true here would echo a redundant "X paused" to the
+                // room, and with several clients reacting to the same leave, the pause events
+                // multiply. Local-only matches PC.
                 this@RoomCallback.dispatcher.controlPlayback(Playback.PAUSE, false)
             }
         }
     }
 
-    /** The handler owns Main dispatch and protects the target until this call returns. */
+    /**
+     * Applies and announces a seek from the room. The message handler calls it on Main, and
+     * keeps the seek target pending until this call returns.
+     */
     @UiThread
     fun onSomeoneSeeked(seeker: String, toPosition: Double, localSeek: LocalSeek? = null) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
@@ -250,10 +252,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         network.state.value = ConnectionState.CONNECTED
 
-        // Channel-health monitoring: starts a periodic List-probe and a State watchdog
-        // that detects silent disconnects. Bound to this room session — stopped in
-        // onDisconnected/onConnectionFailed and on ProtocolManager.invalidate(), so it
-        // never leaks into solo mode or after the user leaves the room.
+        // Channel-health monitoring: starts a periodic List probe, a State watchdog that detects
+        // silent disconnects, and the playback divergence check. Bound to this room session:
+        // stopped in onDisconnected/onConnectionFailed and on ProtocolManager.invalidate(), so
+        // it never leaks into solo mode or past the moment the user leaves the room.
         protocol.startChannelHealthMonitoring()
 
         // Watches the roster so the room can say who it is waiting for, and start on its own
@@ -268,17 +270,17 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
-        // Atomic snapshot-and-clear under the queue's lock — a failed transmit during the
+        // Atomic snapshot-and-clear under the queue's lock, so a failed transmit during the
         // replay loop below re-queues safely without racing the drain.
         val drained = session.drainOutbound()
         // Not awaited, one by one: this runs on the serial inbound consumer, and waiting here
         // stops that consumer reading State packets, which is what the channel watchdog counts.
         for (m in drained) network.sendRawAsync(m, queueable = true)
 
-        // Mirror python's reIdentifyAsController — after every (re)connect, if we're
-        // in a controlled room and we know the operator password, re-auth so the server
-        // restores our control privileges. Without this, a network blip silently demotes
-        // the operator and their pause/seek attempts get reverted by forcePositionUpdate.
+        // Mirrors Python's reIdentifyAsController: after every connect or reconnect, if we are
+        // in a controlled room and know the operator password, authenticate again so the server
+        // restores our control. Without this, a short network drop silently demotes the
+        // operator, and forcePositionUpdate reverts their pause and seek attempts.
         if (session.currentRoom.startsWith("+") && session.currentOperatorPassword.isNotEmpty()) {
             network.sendAsync(
                 WireMessage.controllerAuth(
@@ -353,16 +355,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             network.tls = TlsState.TLS_YES
             try {
                 network.upgradeTls()
-                // Only now is the socket really encrypted; the room's lock reads this.
+                // Only now is the socket really encrypted; the room's lock icon reads this.
                 network.encrypted.value = true
                 loggy("Handshake: TLS established after ${network.sinceHandshakeStart()}")
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // A failed handshake (bad/expired cert, MITM, transport dropped mid-upgrade)
-                // must surface as a connection failure, NOT propagate: the packet-dispatch
-                // coroutine's catch only covers SerializationException, so anything else here
-                // would crash the process. Treat the socket as dead and let the retry loop
+                // A failed handshake (bad or expired certificate, MITM, transport dropped during
+                // the upgrade) must surface as a connection failure, NOT propagate. The inbound
+                // consumer would only log it, and the room would sit on a half-upgraded socket
+                // until the handshake deadline. Treat the socket as dead and let the retry loop
                 // take over (it re-arms TLS_ASK itself).
                 network.encrypted.value = false
                 loggy("TLS upgrade failed: ${e.stackTraceToString()}")
@@ -391,9 +393,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         session.currentRoom = data.roomName
         session.currentOperatorPassword = data.password
 
-        /* The notice has always told the user this is on their clipboard. Now it is. What goes
-         * there is the operator join string, "room:password", which is the thing an operator
-         * pastes into the room field to authenticate on the way in. */
+        /* The notice tells the user that the operator join string is on their clipboard. The
+         * string is "room:password", which an operator pastes into the room field to
+         * authenticate on the way in. */
         val operatorJoin = "${data.roomName}:${data.password}"
         runCatching { platformCallback.copyText(operatorJoin) }
 
@@ -411,8 +413,8 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (data.success && user.isSelf() && session.lastControlPasswordAttempt.isNotEmpty()) {
             session.currentOperatorPassword = session.lastControlPasswordAttempt
         }
-        // Whatever the answer, the attempt is spent. Keeping a refused one meant a later
-        // success by somebody else could save the wrong password as ours.
+        // Whatever the answer, the attempt is spent. Keeping a refused one would let a later
+        // success by somebody else save the wrong password as ours.
         if (user.isSelf()) session.lastControlPasswordAttempt = ""
 
         network.sendAsync(WireMessage.listRequest())
@@ -431,11 +433,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     companion object {
         /**
-         * Below this from→to delta (ms), a seek is considered visually a no-op and we
-         * skip the room/OSD announcement plus the Undo Seek history entry. 1 second is
-         * also the protocol-wide [ProtocolManager.SEEK_THRESHOLD], so anything tighter
-         * than that wouldn't even register as a seek in the desync-detection algorithm
-         * on either side.
+         * Below this from-to distance in milliseconds, a seek counts as a visual no-op: the room
+         * message, the OSD notice (the on-screen message over the video) and the undo entry are
+         * skipped. One second matches PC's `SEEK_THRESHOLD` ([ProtocolManager.SEEK_THRESHOLD]),
+         * below which the PC client does not detect a seek at all.
          */
         const val SEEK_NOOP_THRESHOLD_MS = 1000L
     }

@@ -4,32 +4,30 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * Where each file was left, so it can be picked up again.
+ * Where the viewer left one file, so that playback can resume there later.
  *
- * Nothing persisted a position, which is the one thing every competing player does. The store is
- * deliberately small and dumb: a bounded list keyed by file name, kept as JSON in a single
- * preference, because a database for a few dozen entries would be more machinery than the
- * feature is worth.
+ * The store is small on purpose: a bounded list keyed by file name, kept as JSON in one
+ * preference. A database for a few dozen entries is not worth the extra code.
  *
- * The policy lives here too, and it is the part worth being careful about. Offering to resume a
- * file the viewer barely started, or one they finished, is worse than not offering at all.
+ * The policy for which points to offer lives here too, and it needs care. Offering to resume a
+ * file that the viewer barely started, or one that they finished, is worse than no offer at all.
  */
 @Serializable
 data class ResumePoint(
     val fileName: String,
     val positionMs: Long,
     val durationMs: Long,
-    /** When it was recorded, so the oldest entries fall out first. */
+    /** When the point was recorded, so that the oldest entries drop out first. */
     val recordedAtMs: Long,
 )
 
-/** How many files are remembered. Past this the least recently watched falls out. */
+/** How many files the store keeps. Past this count, the least recently recorded file drops out. */
 const val MAX_RESUME_POINTS = 50
 
-/** Below this, the viewer has effectively not started, so there is nothing to resume. */
+/** Below this position, the viewer has barely started, so there is nothing to resume. */
 const val RESUME_MIN_POSITION_MS = 60_000L
 
-/** Within this of the end, the viewer has effectively finished. */
+/** Within this distance of the end, the file counts as finished. */
 const val RESUME_END_MARGIN_MS = 90_000L
 
 private val resumeJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -42,11 +40,12 @@ fun decodeResumePoints(raw: String): List<ResumePoint> =
 fun encodeResumePoints(points: List<ResumePoint>): String = resumeJson.encodeToString(points)
 
 /**
- * Records where a file was left, replacing any earlier point for the same file and dropping the
- * least recently recorded once the store is full.
+ * Records where a file was left. The new point replaces any earlier point for the same file, and
+ * the least recently recorded point drops out once the store is full.
  *
- * A position that would never be offered back is not stored at all: there is no reason to
- * remember that someone watched ninety seconds of something, or that they finished it.
+ * A position that would never be offered back is not stored, and the earlier point for that file
+ * goes too. There is no reason to remember that someone watched less than a minute of a file, or
+ * that they finished it.
  */
 fun withResumePoint(existing: List<ResumePoint>, point: ResumePoint): List<ResumePoint> {
     val others = existing.filterNot { it.fileName == point.fileName }

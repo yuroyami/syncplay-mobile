@@ -4,13 +4,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** A bounded PiP wait. A timeout releases the system completion without claiming seek success. */
+/**
+ * A bounded wait for a picture-in-picture (PiP) seek to reach the native player. A timeout
+ * releases the system's completion callback without claiming that the seek succeeded.
+ */
 internal class VlcSeekCompletion(private val completion: (Result) -> Unit) {
     enum class Result { CONVERGED, SUPERSEDED, UNAVAILABLE, TIMED_OUT, CANCELLED, FAILED }
 
     private var finished = false
 
-    /** All calls, including completion delivery, are confined to Main by the native adapter. */
+    /** The native adapter makes all calls on the main thread, the completion delivery included. */
     fun finish(result: Result) {
         if (finished) return
         finished = true
@@ -34,8 +37,8 @@ internal class VlcSeekCompletion(private val completion: (Result) -> Unit) {
                         outcome = when {
                             target == null -> Result.UNAVAILABLE
                             native == null || native < 0L -> null
-                            // Match the adapter's existing 1 s convergence tolerance. Read the
-                            // native clock directly: a displayed seek target is not evidence.
+                            // Use the adapter's 1 s convergence tolerance. Read the native clock
+                            // directly, because a displayed seek target proves nothing.
                             (if (native >= target) native - target else target - native) <= 1_000L ->
                                 Result.CONVERGED
                             else -> null
@@ -50,7 +53,7 @@ internal class VlcSeekCompletion(private val completion: (Result) -> Unit) {
             finish(Result.CANCELLED)
             throw cancelled
         } finally {
-            // Also release the system callback if a native read fails. finish is idempotent.
+            // Also release the system callback when a native read throws. Only the first finish counts.
             finish(Result.FAILED)
         }
     }

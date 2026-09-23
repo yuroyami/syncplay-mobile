@@ -24,12 +24,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * iOS Ktor-based TCP server engine.
+ * The TCP server engine for iOS, built on Ktor sockets. It runs the app's own Syncplay server.
  *
- * Each accepted client gets two coroutines: a reader that hands whole lines to
- * [ClientConnection.handlePacket], and a writer draining one channel, so the server's replies
- * reach the socket in the order the server produced them. A per-line `launch` used to let a
- * later reply overtake an earlier one, and an error line raced the close that followed it.
+ * Each accepted client gets two coroutines: a reader that passes whole lines to
+ * [ClientConnection.handlePacket], and a writer that drains one channel. The single writer keeps
+ * the replies in the order the server produced them. Do not launch a coroutine per line: a later
+ * reply can then overtake an earlier one, and an error line can race the close that follows it.
  */
 actual class ServerNetworkEngine actual constructor(
     private val server: SyncplayServer,
@@ -39,15 +39,18 @@ actual class ServerNetworkEngine actual constructor(
     private var acceptJob: Job? = null
 
     /**
-     * The listening socket, held so [stop] can close it itself.
+     * The listening socket, kept so [stop] can close it directly.
      *
-     * It used to be closed only by the accept loop's own `finally`, which [stop] cancels without
-     * waiting for. The port was therefore still bound when stop returned, and starting the server
-     * again straight away could be refused for an address already in use.
+     * [stop] cancels the accept loop without waiting for it, so the loop's own `finally` can run
+     * too late. The port would then still be bound when stop returns, and an immediate restart
+     * could fail with "address already in use".
      */
     private var listeningSocket: ServerSocket? = null
 
-    /** Live client coroutines. Guarded: entries are added on the accept loop and removed on whatever thread finishes one. */
+    /**
+     * Live client coroutines, guarded by [clientsLock]. The accept loop adds entries, and
+     * whichever thread finishes a job removes it.
+     */
     private val clientsLock = SynchronizedObject()
     private val clientJobs = mutableListOf<Job>()
 
@@ -67,17 +70,18 @@ actual class ServerNetworkEngine actual constructor(
             try {
                 var consecutiveFailures = 0
                 while (isActive) {
-                    // One client failing to be accepted must not end the server. Before this, a
-                    // single throw from accept() took the whole listener down silently.
+                    // One failed accept must not end the server. Without this catch, a single
+                    // throw from accept() stops the whole listener silently.
                     val clientSocket = try {
                         serverSocket.accept()
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        /* A failure that repeats is a different thing from a failure that
-                         * happens: a listening socket in a bad state, or no file descriptors
-                         * left, fails instantly and forever. Retrying it with no pause burned a
-                         * core and wrote a log line per attempt. Back off, then give up. */
+                        /* A repeating failure is not the same as a single one. A listening
+                         * socket in a bad state, or a process with no file descriptors left,
+                         * fails at once and forever. Retrying with no pause keeps a CPU core
+                         * busy and writes a log line per attempt. So wait between attempts, and
+                         * give up after a limit. */
                         consecutiveFailures++
                         loggy("Server: accept failed (${consecutiveFailures}): ${e.message}")
                         if (consecutiveFailures >= MAX_CONSECUTIVE_ACCEPT_FAILURES) {
@@ -96,7 +100,7 @@ actual class ServerNetworkEngine actual constructor(
         }
     }
 
-    /** Wires one accepted socket to a reader, an ordered writer, and the shared connection handler. */
+    /** Connects one accepted socket to a reader, an ordered writer and the connection handler. */
     private fun serve(clientSocket: Socket) {
         val remoteAddress = clientSocket.remoteAddress.toString()
         loggy("Server: Client connected from $remoteAddress")
@@ -108,8 +112,8 @@ actual class ServerNetworkEngine actual constructor(
         val connection = ClientConnection(
             server = server,
             sendFn = { line -> outbound.trySend(line) },
-            // Closing the queue rather than the socket: the writer sends what is already queued,
-            // so a client is told why it was dropped before the socket goes.
+            // Close the queue, not the socket: the writer sends what is already queued, so a
+            // client learns why it was dropped before the socket closes.
             dropFn = { outbound.close() }
         )
 
@@ -181,7 +185,7 @@ actual class ServerNetworkEngine actual constructor(
         /** Pause between accept attempts once one has failed. */
         const val ACCEPT_RETRY_DELAY_MS = 250L
 
-        /** After this many failures in a row the listener is not coming back. */
+        /** After this many failures in a row, the listener gives up. */
         const val MAX_CONSECUTIVE_ACCEPT_FAILURES = 20
     }
 }

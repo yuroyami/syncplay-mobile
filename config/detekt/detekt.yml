@@ -1,8 +1,10 @@
-# Detekt for this codebase, not detekt in general.
+# Detekt settings for this codebase.
 #
-# Nearly everything detekt ships with is off. What is on are the rules that map to a defect this
-# repository actually had, plus one custom rule enforcing the standing decision that inbound
-# protocol code must throw SerializationException and nothing else.
+# The build applies this file on top of detekt's default config (buildUponDefaultConfig), so a
+# rule that is not named here keeps detekt's default. A rule named here is either switched off
+# or kept on because it matches a defect that this repository has had. The rule that inbound
+# protocol code throws only SerializationException is not a detekt rule: it is the
+# checkProtocolThrows task in buildSrc.
 
 build:
   maxIssues: 0
@@ -11,7 +13,7 @@ config:
   validation: true
   warningsAsErrors: false
 
-# Everything below is off unless it is turned back on by name.
+# A rule set or rule with active: false is off. A rule that is not named keeps its default.
 comments:
   active: false
 complexity:
@@ -36,8 +38,8 @@ complexity:
 coroutines:
   active: true
   GlobalCoroutineUsage:
-    # The ledger's rule: no GlobalScope. PlayerManager.invalidate is the one deliberate
-    # exception, because teardown must outlive the ViewModel scope that is being cancelled.
+    # No GlobalScope. PlayerManager.invalidate is the one deliberate exception, because
+    # teardown must outlive the ViewModel scope that is being cancelled.
     active: true
     excludes: ['**/player/PlayerManager.kt']
   RedundantSuspendModifier:
@@ -48,7 +50,7 @@ coroutines:
 empty-blocks:
   active: true
   EmptyCatchBlock:
-    active: false      # a documented swallow is a real pattern here
+    active: false      # an empty catch with a comment is a deliberate pattern here
   EmptyFunctionBlock:
     active: false
 
@@ -72,11 +74,11 @@ naming:
     excludes: ['**/commonTest/**', '**/desktopTest/**', '**/androidHostTest/**']
     functionPattern: '[a-z][a-zA-Z0-9_]*'
   ConstructorParameterNaming:
-    active: false      # _name and friends mirror the Python port
+    active: false      # names like _name mirror the Python original
   ClassNaming:
     active: true
   VariableNaming:
-    active: false      # _position and friends mirror the Python port
+    active: false      # names like _position mirror the Python original
   TopLevelPropertyNaming:
     active: false
   MatchingDeclarationName:

@@ -1,6 +1,5 @@
 [versions] #####################################################
 #KMM-Plugins
-# 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
 kotlin = "2.4.20"
 ksp = "2.3.11"
 agp = "9.3.2"
@@ -11,7 +10,7 @@ detekt = "1.23.8"
 kover = "0.9.9"
 ktorfit = "2.7.5"
 # Runtime language switching. The XML processor reads values-*/strings.xml, so the resource
-# files stay the source of truth and translators keep Weblate.
+# files stay the source of truth and translators keep using Weblate.
 lyricist = "1.9.0"
 
 #KMM-Libs
@@ -21,9 +20,8 @@ lifecycleViewmodelCompose = "2.11.0"
 navigation3Runtime = "1.1.7"
 navigation3Ui = "1.1.2"
 compose-unstyled = "2.9.2"
-# Backdrop blur. Built against Kotlin 2.4.10 + Compose Multiplatform 1.12.0, both of which
-# this project already runs, and publishes exactly our four targets (no iosX64, which we
-# don't declare either).
+# Backdrop blur. Haze publishes every target that this project declares. It has no iosX64,
+# which this project does not declare either.
 haze = "2.0.0-beta03"
 kermit = "2.1.0"
 krypto = "0.8.0"
@@ -39,10 +37,10 @@ atomicfu = "0.33.0"
 # DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
 kotlinxBrowser = "0.5.0"
 coil = "3.6.2"
-# Skiko: Compose 1.12.1 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
-# Pin to the more recent (Compose's), explicitly forced so neither side regresses
-# silently when either library is bumped. Bump this to whatever the new Compose
-# release ships when upgrading compose-multiplatform.
+# Skiko: Compose 1.12.1 ships with 0.150.1, and Coil 3.6.2 declares 0.150.1 too.
+# The version is forced to Compose's, so a bump of either library cannot change
+# Skiko silently. On an upgrade of compose-multiplatform, set this to the Skiko
+# version that the new Compose release ships.
 skiko = "0.150.1"
 
 #Android
@@ -53,15 +51,15 @@ appcompat = "1.8.0"
 coreKtx = "1.19.0"
 desugaring = "2.1.5"
 media3 = "1.11.0"
-netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
+netty = "4.1.131.Final" # 4.2.x and later need Android API 26 or higher
 conscrypt = "2.7.0"
 newpipeExtractor = "v0.26.5"
 
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
 kiteplayer = "0.0.26"
-# libmpv for Android. Version 0.2.0 is unpublished and resolves from Maven Local by default.
-# settings.gradle.kts restricts this local override to libmpvKt 0.2.0.
+# libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
+# from Central. settings.gradle.kts limits that repository to the libmpvkt modules.
 libmpvkt = "0.2.0"
 
 #iOS (VLCKit pod)
@@ -141,9 +139,9 @@ m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "m
 # The lock screen, the notification transport and headset buttons, for every engine.
 m3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
-# Only what the client and the built-in server actually use. netty-all pulls the whole family
-# (about forty jars) for the seventeen classes below: a bootstrap, a channel, the codec pair and
-# the TLS context builder.
+# Only the Netty modules that the client and the built-in server use. netty-all pulls the whole
+# family (about forty jars) for the seventeen classes that the code needs: a bootstrap, a channel,
+# the codec pair and the TLS context builder.
 netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
 netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
 netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
@@ -187,9 +185,8 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 
 
-# Supplies the FFmpeg libraries required by KitePlayer's iOS link.
-
-# Root-applied single source of truth for app identity, version, and SDK levels.
+# Applied at the root: the single source of truth for the app identity, the version and the
+# SDK levels.
 kiteconfig = { id = "io.github.yuroyami.kiteconfig", version.ref = "kiteconfig" }
 
 android-application = { id = "com.android.application", version.ref = "agp" }

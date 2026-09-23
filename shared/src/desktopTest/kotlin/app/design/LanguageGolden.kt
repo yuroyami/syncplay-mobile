@@ -19,11 +19,11 @@ import syncplaymobile.shared.generated.resources.mpv
 import kotlin.test.Test
 
 /**
- * The same screens in every language the app ships.
+ * The same screens in every language that the app ships.
  *
- * German and Russian words are longer than English ones and Arabic is read the other way, so a
- * layout that only ever gets checked in English is a layout nobody has checked. These renders
- * fail when a translated label is clipped or ellipsised.
+ * German and Russian words are longer than English ones, and Arabic reads right to left, so a
+ * layout that passes in English can still fail in another language. These renders fail when a
+ * translated label is clipped or ellipsised.
  */
 class LanguageGolden {
 
@@ -58,7 +58,10 @@ class LanguageGolden {
         }
     }
 
-    /** The engine picker is the tightest row on the home screen: three cells, each with a badge. */
+    /**
+     * The engine picker, where the user chooses a video player, is the tightest row on the home
+     * screen: three cells, each with a badge.
+     */
     @Test
     fun theEnginePickerSurvivesEveryLanguage() {
         DesignHarness.initDatastore()

@@ -44,10 +44,10 @@ import java.awt.Dimension
 import java.awt.Toolkit
 import kotlin.math.roundToInt
 
-/** Global viewmodel handle, mirroring the Android Activity / iOS controller pattern. */
+/** Global viewmodel handle, as in the Android Activity and the iOS controller. */
 var globalViewmodel: SyncplayViewmodel? by mutableStateOf(null)
 
-/** Process-lifetime scope for fire-and-forget UI work (keyboard shortcuts). */
+/** Process-lifetime scope for fire-and-forget UI work (the --media auto-load). */
 private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
 /** How long --media waits for a room's player before giving up. */
@@ -59,7 +59,7 @@ private var mutedFrom: Int? = null
 fun main(args: Array<String>) {
     initializeDatastore()
     warmPreferences()
-    // The trace reaches the log file before the JVM's own handler prints and exits.
+    // Write the trace to the log file before the previous handler prints it and exits.
     val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         loggy("Uncaught exception on ${thread.name}: ${throwable.stackTraceToString()}")
@@ -76,22 +76,24 @@ fun main(args: Array<String>) {
             onCloseRequest = ::exitApplication,
             title = "Synkplay",
             state = windowState,
-            // Arrows are claimed before focus dispatch, or Compose spends them moving focus and the
-            // room never sees them. Everything else stays after dispatch, so a space typed into
-            // chat is a space. Nothing is claimed while a text field has focus.
+            // The arrow keys are handled before focus dispatch, or Compose uses them to move focus
+            // and the room never sees them. All other keys are handled after dispatch, so a space
+            // typed into chat stays a space. No arrow key is taken while someone is typing.
             onPreviewKeyEvent = { event -> handleArrowKey(event) },
             onKeyEvent = { event -> handleGlobalKey(event, windowState) },
         ) {
-            // A 320dp side dock beside a 16:9 picture that is 480dp tall.
+            // 800 wide fits the 320dp side panel next to a 16:9 picture that is 480dp wide.
             LaunchedEffect(Unit) { window.minimumSize = Dimension(800, 480) }
 
-            // Size, position and placement are remembered; the write waits for the drag to settle.
+            // The window remembers its size, position and placement. The save waits 400 ms, so a
+            // drag is saved once, when it stops.
             LaunchedEffect(windowState.size, windowState.position, windowState.placement) {
                 delay(400)
                 saveWindow(windowState)
             }
 
-            // Leaving the room always returns to the floating placement, or home inherits fullscreen.
+            // Leaving the room returns the window to the floating placement, so the home screen
+            // does not open in fullscreen.
             val vm = globalViewmodel
             LaunchedEffect(vm) {
                 vm ?: return@LaunchedEffect
@@ -135,9 +137,9 @@ private suspend fun saveWindow(state: WindowState) {
 }
 
 /**
- * Command-line auto-join, the desktop analog of mobile shortcuts:
+ * Command-line auto-join, the desktop version of the mobile shortcuts:
  *   synkplay --user Alice --room movienight [--host syncplay.pl] [--port 8997] [--pw secret]
- * Only user+room are required; host/port fall back to the JoinConfig defaults.
+ * Only --user and --room are required; host and port fall back to the JoinConfig defaults.
  */
 private fun parseJoinArgs(args: Array<String>) {
     fun value(flag: String): String? =
@@ -151,14 +153,14 @@ private fun parseJoinArgs(args: Array<String>) {
     value("--pw")?.let { config = config.copy(pw = it) }
     app.utils.pendingDesktopJoin = config
 
-    // Optional: load a media URL once the room's player engine is up (useful for scripted
-    // testing and "synkplay --room X --media http://..." power users).
+    // Optional: load a media URL once the room's player engine is ready (for scripted tests and
+    // for "synkplay --room X --media http://..."). --autoplay also starts playback 8 s later.
     value("--media")?.let { url ->
         val autoplay = args.contains("--autoplay")
         mainScope.launch {
-            /* Bounded. This runs on the main dispatcher and mainScope is never cancelled, so
-             * without a ceiling a --media argument on a launch that never reaches a room left a
-             * twice-a-second poll running on the UI thread for the life of the app. */
+            /* The wait has a time limit. This runs on the main dispatcher and mainScope is never
+             * cancelled. Without the limit, a launch that never reaches a room keeps a
+             * twice-a-second poll on the UI thread for the life of the app. */
             val vm = withTimeoutOrNull(MEDIA_WAIT_TIMEOUT_MS) {
                 var found = globalViewmodel?.roomWeakRef?.get()
                 while (found == null || !found.playerManager.isPlayerReady.value) {
@@ -182,8 +184,9 @@ private fun parseJoinArgs(args: Array<String>) {
 }
 
 /**
- * The arrows: seek on the horizontal pair, volume on the vertical one, claimed before Compose's
- * focus traversal gets them. They act only inside the room, and never while someone is typing.
+ * The arrow keys: left and right seek, up and down change the volume. They are handled before
+ * Compose's focus traversal gets them. They act only in a room with a video, and never while
+ * someone is typing.
  */
 private fun handleArrowKey(event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
@@ -206,9 +209,11 @@ private fun handleArrowKey(event: KeyEvent): Boolean {
 }
 
 /**
- * The window-level key map, run after focus dispatch (onKeyEvent, not onPreviewKeyEvent) so a
- * space typed into the chat field never toggles playback. Escape is the one key that acts
- * anywhere: leave fullscreen, else close the open panels, else hide the HUD, else pop a page.
+ * The window-level key map. It runs after focus dispatch (onKeyEvent, not onPreviewKeyEvent), so
+ * a space typed into the chat field never toggles playback. Ctrl or Cmd plus comma opens the
+ * settings from any screen. Escape first leaves fullscreen. Then, in the room, it closes the
+ * open panels, else hides the HUD (the controls over the video), else asks to leave the room.
+ * Outside the room it goes back one page.
  */
 private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
@@ -228,8 +233,8 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
         }
         if (inRoom && vm != null) {
             val ui = vm.uiState
-            // All seven, not the three that happened to exist when this was written: Escape used
-            // to walk past an open Tracks or Gestures panel and hide the HUD instead.
+            // anySidePanelOpen covers every side panel. A hand-picked list misses panels such as
+            // Tracks or Gestures, and Escape then hides the HUD behind the open panel.
             val panelOpen = ui.anySidePanelOpen || ui.controlPanel.value
             when {
                 panelOpen -> {
@@ -277,7 +282,8 @@ private fun handleGlobalKey(event: KeyEvent, windowState: WindowState): Boolean 
 
     return when (event.key) {
         Key.Spacebar -> {
-            // The app's own intent, never a live engine probe (a probe mid-buffer says "not playing").
+            // Toggle from the app's own intent, never from a live engine probe: a probe during
+            // buffering says "not playing".
             vm.dispatcher.controlPlayback(if (vm.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true)
             true
         }

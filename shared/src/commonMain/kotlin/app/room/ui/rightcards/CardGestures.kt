@@ -28,10 +28,10 @@ import app.utils.platformCallback
 import kotlin.math.roundToInt
 
 /**
- * The gesture switches, plus the two things the gestures change.
+ * The gestures panel: the gesture switches, and the two values that the swipe gestures change.
  *
- * Volume and brightness were reachable by swipe alone, which is nothing at all to someone using a
- * screen reader or a keyboard. The same two values sit here as ordinary tracks.
+ * A swipe is of no use to someone with a screen reader or a keyboard. So volume and brightness
+ * also sit here, as ordinary slider rows.
  */
 object CardGestures {
 

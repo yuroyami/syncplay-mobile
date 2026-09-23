@@ -6,12 +6,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 
-/** The three width classes every surface reads: compact under 480dp, medium to 839dp, expanded above. */
+/** The three window width classes: compact below 480dp, medium below 840dp, expanded from 840dp. */
 enum class WidthClass { Compact, Medium, Expanded }
 
 val LocalWidthClass = compositionLocalOf { WidthClass.Compact }
 
-/** The window's width class right now; provided once at the root. */
+/** The window's current width class. The root provides it once as [LocalWidthClass]. */
 @Composable
 fun currentWidthClass(): WidthClass {
     val width = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }

@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/** Who the room is waiting for, and whether it may start on its own. */
+/** Tests for who the room waits for, and whether the room may start on its own. */
 class ReadinessTest {
 
     private fun user(name: String, ready: Boolean, hasFile: Boolean = true) = User(

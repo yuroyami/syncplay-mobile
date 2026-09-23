@@ -9,25 +9,25 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.kiteplayer
 
 /**
- * KitePlayer: a media engine written in Kotlin Multiplatform from the ground up, decoding through
- * FFmpeg (KiteFFmpeg) and rendering through the platform's own output.
+ * KitePlayer, one of the engines (the video players the app can drive). KitePlayer is written in
+ * Kotlin Multiplatform, decodes through FFmpeg (KiteFFmpeg) and renders through the platform's
+ * own output.
  *
  * It is the only engine here whose implementation is shared: [KiteImpl] is written once and runs
- * unchanged on Android and iOS, because the engine itself is common code and only the audio
- * device, the video surface and the hardware decoder differ per platform. Hardware decode is
- * MediaCodec on Android and VideoToolbox on iOS, both inside FFmpeg, with a measured software
- * fallback rather than a silent failure.
+ * unchanged on Android, iOS and desktop. The engine itself is common code; only the audio device,
+ * the video surface and the hardware decoder differ per platform. Hardware decode is MediaCodec
+ * on Android and VideoToolbox on iOS, both inside FFmpeg, with a measured software fallback
+ * instead of a silent failure.
  *
- * Presentation is KitePlayerVideo since 0.0.20: one composable hosting either the native view or
- * the pure-Compose renderer, switchable while media plays through the in-room
- * [app.preferences.Preferences.KITE_COMPOSE_RENDERER] toggle. The old per-platform presentation
- * strategies and the separate debug-only "Kite Compose" engine are gone with it.
+ * The video shows through KitePlayerVideo: one composable that hosts either the native view or
+ * the pure-Compose renderer. The in-room [app.preferences.Preferences.KITE_COMPOSE_RENDERER]
+ * toggle switches between them while media plays.
  *
- * Experimental, and honestly so: KitePlayer has no public release and no full qualification on
- * physical hardware. Its subtitle support covers SubRip and WebVTT, embedded or loaded as
- * external files during playback; styled ASS subtitles are seen as tracks but not yet drawn.
- * Speed (0.25x to 4x, pitch preserved), chapters, aspect modes and runtime subtitle/audio
- * delays arrived with 0.0.5.
+ * KitePlayer is experimental: it has no stable release and no full qualification on physical
+ * hardware. Its subtitle support covers SubRip and WebVTT, embedded or loaded as external files
+ * during playback; styled ASS subtitles are listed as tracks but not drawn. It supports speed
+ * (0.25x to 4x, pitch preserved), chapters, aspect modes, and subtitle and audio delays at
+ * runtime.
  */
 @Suppress("KotlinConstantConditions")
 internal class KiteEngine(
@@ -35,10 +35,10 @@ internal class KiteEngine(
     /** Desktop passes true: it is the only engine there, so it must also be the default one. */
     override val isDefault: Boolean = false,
     /**
-     * Desktop passes true. Since KitePlayer 0.0.21 the JVM native view is a real AWT canvas, and
-     * macOS routes a click to the topmost native view, so the room's controls, which all sit over
-     * the video, would be painted and never pressed. The Compose canvas is the only path this
-     * room can use there, whatever the two preferences say.
+     * Desktop passes true. KitePlayer's JVM native view is an AWT canvas, and macOS sends a click
+     * to the topmost native view. So the room's controls, which all sit over the video, would be
+     * drawn but never take a click. The Compose canvas is the only path the room can use there,
+     * whatever KITE_COMPOSE_RENDERER and the frosted-glass setting say.
      */
     val forcesComposeCanvas: Boolean = false,
 ) : PlayerEngine {
@@ -47,8 +47,8 @@ internal class KiteEngine(
 
     /**
      * False in the `exoOnly` Android flavor, which ships no native player libraries: that build
-     * strips `libkitecodec_jni.so` from its jniLibs, so offering the engine there would hand the
-     * user a picker entry that cannot load. Always true on iOS, where the flag is never set.
+     * removes `libkitecodec_jni.so` from its jniLibs, so the engine picker would offer an entry
+     * that cannot load. Always true on iOS, which has no exoOnly flavor.
      */
     override val isAvailable: Boolean
         get() = KitePlayerPlatform.isAvailable

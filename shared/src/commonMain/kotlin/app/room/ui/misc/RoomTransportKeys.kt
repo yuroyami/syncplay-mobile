@@ -52,9 +52,9 @@ import app.uicomponents.controls.pressFeedback
 import app.uicomponents.controls.touchTarget
 
 /**
- * The transport at the centre of the video: the play key on the exact centre, the two jump keys
- * under it. The top padding equals the jump row plus its gap, so the column's centre stays on
- * the play key.
+ * The transport keys in the center of the video: the play button exactly in the center, and the
+ * jump keys under it. The top padding equals the height of the jump row plus its gap, so the
+ * center of the column stays on the play button.
  */
 @Composable
 fun RoomTransportKeys(modifier: Modifier = Modifier) {
@@ -73,8 +73,8 @@ fun RoomTransportKeys(modifier: Modifier = Modifier) {
             JumpKey(Icons.Filled.FastRewind, strings.roomJumpBack(back), "$back s") {
                 viewmodel.dispatcher.seekBckwd()
             }
-            // The longer skip from the settings sits between the two jumps when the setting asks
-            // for it, so back stays at the start and forward at the end whatever is in between.
+            // When the setting is on, the custom skip key sits between the two jump keys. Back
+            // then stays at the start, and forward stays at the end.
             if (customSkip) {
                 JumpKey(Icons.Filled.Update, strings.roomCustomSkipButton(timestampFromMillis(customAmount * 1000L)), "$customAmount s") {
                     viewmodel.customSkip()
@@ -87,7 +87,10 @@ fun RoomTransportKeys(modifier: Modifier = Modifier) {
     }
 }
 
-/** A 42dp chrome cell: the glyph and the jump amount, so the amount is visible without settings. */
+/**
+ * A jump key, 42dp tall, with the glyph and the jump amount. The amount shows on the key, so the
+ * user does not need to open the settings to see it.
+ */
 @Composable
 private fun JumpKey(icon: ImageVector, name: String, amount: String, onClick: () -> Unit) {
     val p = palette

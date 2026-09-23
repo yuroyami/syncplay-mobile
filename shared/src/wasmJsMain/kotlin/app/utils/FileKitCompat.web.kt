@@ -5,8 +5,8 @@ import androidx.compose.runtime.remember
 import io.github.vinceglb.filekit.PlatformFile
 
 /**
- * None of this exists in a browser, and each function says so the way the call sites already
- * handle: by throwing, into the `runCatching` that was already there.
+ * A browser has no filesystem for any of these functions. Each one throws
+ * UnsupportedOperationException, which the call sites already catch with `runCatching`.
  */
 private fun noFilesystem(what: String): Nothing =
     throw UnsupportedOperationException("$what is not available in a browser.")
@@ -31,10 +31,9 @@ actual suspend fun PlatformFile.stillExists(): Boolean =
 /**
  * Always answers null.
  *
- * A browser saves by downloading, which produces no handle the app can then write into, so there
- * is nothing to hand back. Wiring a real download later means building a blob from the bytes and
- * clicking a synthetic link, which is a different shape from this contract and would be its own
- * function rather than a fill-in here.
+ * A browser saves by downloading, which gives the app no handle to write into, so there is
+ * nothing to return. A real download (a blob from the bytes plus a click on a synthetic link)
+ * does not fit this contract and needs its own function.
  */
 @Composable
 actual fun rememberFileSaver(onResult: (PlatformFile?) -> Unit): FileSaver = remember(onResult) {

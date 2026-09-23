@@ -4,54 +4,51 @@ import app.home.HomeViewmodel
 import app.home.JoinConfig
 
 /**
- * Platform-specific callback interface for handling system-level operations.
- *
- * Provides abstractions for Android/iOS/Desktop platform functionality that needs
- * to be implemented differently per platform, such as brightness control, shortcuts,
- * and system UI states.
+ * The system operations that each platform (Android, iOS, desktop, web) implements in its own
+ * way, such as brightness, shortcuts, the media session and the file picker.
  */
 interface PlatformCallback {
 
 
     /**
-     * Saves a room configuration as a platform-specific shortcut.
+     * Saves the join details of a room as a shortcut. A room is the group of people who watch
+     * together. Android adds a launcher shortcut and asks to pin it; iOS adds a Quick Action.
      *
-     * On Android, this creates a launcher shortcut or dynamic link.
-     *
-     * @receiver The HomeViewmodel instance managing the configuration
-     * @param joinInfo The room join configuration to save as a shortcut
+     * @receiver The home screen's view model
+     * @param joinInfo The join details to save as a shortcut
      */
     fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig)
 
     /**
-     * Removes all saved configuration shortcuts from the platform.
+     * Removes all saved room shortcuts.
      */
     fun onEraseConfigShortcuts()
 
     /**
-     * Gets the current system brightness level.
+     * Gets the current screen brightness.
      *
-     * @return The current brightness value (typically 0.0 to 1.0 or 0 to max)
+     * @return The brightness, from 0 to [getMaxBrightness]
      */
     fun getCurrentBrightness(): Float
 
     /**
-     * Gets the maximum possible brightness level for the device.
+     * Gets the highest brightness value that [changeCurrentBrightness] accepts.
      *
-     * @return The maximum brightness value supported by the device
+     * @return The highest brightness value. Every platform returns 1.
      */
     fun getMaxBrightness(): Float
 
     /**
-     * Changes the system brightness to the specified value.
+     * Sets the screen brightness.
      *
-     * @param v The new brightness value (range depends on platform implementation)
+     * @param v The new brightness, from 0 to [getMaxBrightness]
      */
     fun changeCurrentBrightness(v: Float)
 
     /**
-     * The device's own music volume. [deviceVolumeSteps] is its step count, 0 where the platform
-     * gives no way to set it (iOS, desktop); the other two are only called when it is above 0.
+     * The device's own music volume. [deviceVolumeSteps] is its number of steps, or 0 where the
+     * platform gives no way to set it (iOS, desktop, web). The other two functions are called only
+     * when it is above 0.
      */
     fun deviceVolumeSteps(): Int = 0
     fun getDeviceVolume(): Int = 0
@@ -59,8 +56,8 @@ interface PlatformCallback {
 
 
     /**
-     * Puts the room on the lock screen. Takes the room because the player behind the session is
-     * whichever engine the room built, and there are five of them.
+     * Puts the room on the lock screen. It takes the room because the player behind the media
+     * session is whichever engine (video player) the room built.
      */
     fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel)
     fun mediaSessionFinalize()
@@ -75,18 +72,17 @@ interface PlatformCallback {
     val supportsBrightness: Boolean get() = true
 
     /**
-     * Called when playback state changes.
-     *
-     * Used to update system UI elements, particularly during PiP mode.
+     * Called when playback pauses or resumes. Android uses it to update the Picture-in-Picture
+     * controls.
      *
      * @param paused True if playback is paused, false if playing
      */
     fun onPlayback(paused: Boolean)
 
     /**
-     * Called when Picture-in-Picture mode should be enabled or disabled.
+     * Enters or leaves Picture-in-Picture mode.
      *
-     * @param enable True to enter PiP mode, false to exit
+     * @param enable True to enter Picture-in-Picture mode, false to leave it
      */
     fun onPictureInPicture(enable: Boolean)
 
@@ -94,16 +90,15 @@ interface PlatformCallback {
     fun performHapticFeedback()
 
     /**
-     * Launches the OS-native file picker WITHOUT any extension/MIME filtering, so that
-     * third-party DocumentsProviders (notably SMB share providers on Android) whose files
-     * report unrecognized MIME types still appear and can be selected.
+     * Opens the system file chooser with no extension or MIME filter. Some third-party document
+     * providers (for example SMB shares on Android) report MIME types that FileKit's filtered
+     * picker hides, and this chooser still shows their files.
      *
-     * Used as a fallback for mpv playback of SMB-backed files which the default FileKit
-     * picker hides when an extension filter is applied.
+     * Only Android implements it. The other platforms pass null to [onResult] at once.
      *
-     * @param onResult invoked on the main thread with the picked URI as a string,
-     *                 or null if the user cancelled. Android returns a `content://` URI
-     *                 with persistable read permission; iOS returns a `file://` path.
+     * @param onResult invoked on the main thread with the picked URI as a string, or null if
+     *                 the user cancelled. On Android it is a `content://` URI, and its read
+     *                 grant may last only for this session.
      */
     fun launchSystemFilePicker(onResult: (String?) -> Unit)
 

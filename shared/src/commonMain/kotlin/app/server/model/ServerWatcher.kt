@@ -7,10 +7,8 @@ import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.utils.SyncClock
 
 /**
- * Represents a connected client on the server side.
- * Port of the Python Watcher class (syncplay-pc-src-master/syncplay/server.py).
- *
- * Tracks per-client state: position, pause, file info, readiness.
+ * A watcher: one connected user on the built-in server, with its position, file and readiness.
+ * A port of the Watcher class in the Syncplay PC server (syncplay/server.py).
  */
 class ServerWatcher(
     val server: SyncplayServer,
@@ -23,7 +21,7 @@ class ServerWatcher(
     private var _position: Double? = null
     private var _lastUpdatedOn: Double = currentTimeSeconds()
 
-    /** Seconds (wall clock) at which this client last sent a State; the server's silence check reads it. */
+    /** When this client last sent a State, in wall-clock seconds. The silence check reads it. */
     val lastUpdatedOn: Double get() = _lastUpdatedOn
 
     var file: FileData? = null
@@ -58,10 +56,7 @@ class ServerWatcher(
         return file.copy(name = name.take(MAX_FILENAME_LENGTH))
     }
 
-    /**
-     * Processes an incoming state update from this client.
-     * Port of Python's Watcher.updateState().
-     */
+    /** Handles a state update from this client. A port of Python's Watcher.updateState(). */
     fun updateState(position: Double?, paused: Boolean?, doSeek: Boolean?, messageAge: Double) {
         val pauseChanged = hasPauseChanged(paused)
         _lastUpdatedOn = currentTimeSeconds()

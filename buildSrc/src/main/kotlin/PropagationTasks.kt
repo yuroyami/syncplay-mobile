@@ -12,16 +12,16 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 /**
- * The two source rewrites this repo does for itself, as real tasks.
+ * The two tasks that rewrite source files in this repo: syncDefaultStrings and syncTrinityColors.
  *
- * They used to run at configuration time, on every single Gradle invocation, whatever the build
- * was actually asked to do. As tasks they run when their input changes and not otherwise, and
- * Gradle can see what they read and write.
+ * Keep them as tasks, not as configuration-time code. As tasks they run only when their input
+ * changes, and Gradle can see what they read and write. Configuration-time code runs on every
+ * Gradle invocation, whatever the build was asked to do.
  */
 object PropagationTasks {
 
     /**
-     * Registers both tasks and makes the Compose resource preparation depend on the strings one,
+     * Registers both tasks and makes the Compose resource preparation depend on the strings task,
      * so the default-language fallback is always in place before resources are read.
      */
     fun Project.registerPropagationTasks() {
@@ -38,8 +38,8 @@ object PropagationTasks {
             stops.set(listOf(AppConfig.TRINITY_1, AppConfig.TRINITY_2, AppConfig.TRINITY_3).map(::hex))
         }
 
-        // Everything that reads composeResources has to run after the fallback is written.
-        // Gradle names these per source set, so they are matched by prefix.
+        // Every task that reads composeResources must run after the fallback is written.
+        // Most of these task names end with a source set name, so they are matched by prefix.
         val readers = listOf(
             "prepareComposeResourcesTaskFor",
             "convertXmlValueResourcesFor",
@@ -57,9 +57,9 @@ object PropagationTasks {
 }
 
 /**
- * Copies the English strings into the default-qualifier file, minus any key that is already
+ * Copies the English strings into the default-qualifier file, without any key that is already
  * declared as untranslatable. Two declarations of one key under the default qualifier make the
- * resource lookup throw on every device whose language has no translation of it.
+ * resource lookup throw on every device whose language has no translation of that key.
  */
 @CacheableTask
 abstract class SyncDefaultStringsTask : DefaultTask() {

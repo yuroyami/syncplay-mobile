@@ -8,15 +8,15 @@ plugins {
     alias(libs.plugins.compose.plugin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kSerialization)
-    // Required by the Ktorfit plugin, which registers its code generator as a KSP processor.
+    // The Ktorfit plugin needs KSP, because it registers its code generator as a KSP processor.
     alias(libs.plugins.ksp)
-    //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.ktorfit)
-    // Coverage, measured on the desktop test run; the report is configured in the root build.
+    // Coverage comes from the desktop test run. The root build configures the report.
     alias(libs.plugins.kover)
 }
 
-// KiteConfig exposes only the major SDK; keep AGP on the required 37.2 API.
+// KiteConfig exposes only the major SDK level, so set the minor level here to keep AGP on the
+// required 37.2 API (android.compileSdkMinor in gradle.properties).
 extensions.configure<KotlinMultiplatformAndroidComponentsExtension> {
     finalizeDsl { dsl ->
         dsl.compileSdk {
@@ -27,8 +27,9 @@ extensions.configure<KotlinMultiplatformAndroidComponentsExtension> {
     }
 }
 
-// CocoaPods records the custom header path in its generated definition, but does not
-// track that header's contents. Regenerate both bindings when the native bridge changes.
+// The CocoaPods plugin records the custom header path in its generated definition file, but it
+// does not track the header's contents. This input regenerates both VLCKit bindings (device and
+// simulator) when VlcClock.h changes.
 tasks.matching { it.name.startsWith("cinteropVLCKit") }.configureEach {
     inputs.file(layout.projectDirectory.file("src/nativeInterop/cinterop/VlcClock.h"))
 }
@@ -46,8 +47,8 @@ kotlin {
         namespace = "app"
         androidResources { enable = true }
 
-        // This module holds essentially all the code, and produced no lint task at all, which is
-        // also what made the repo's lint.xml suppression apply to nothing.
+        // This module holds almost all the code. Without a lint task here, the repo's lint.xml
+        // suppressions apply to nothing.
         lint {
             xmlReport = true
             htmlReport = true
@@ -55,28 +56,29 @@ kotlin {
             checkDependencies = false
         }
 
-        // commonTest compiled but never ran against the Android actuals. It does now.
+        // Runs commonTest against the Android actuals on the host JVM.
         withHostTest { }
     }
 
-    // Desktop (JVM) target — Windows/macOS/Linux via Compose for Desktop, hosted by :desktopApp.
+    // Desktop (JVM) target for Windows, macOS and Linux through Compose for Desktop.
+    // :desktopApp hosts the app.
     jvm("desktop")
 
-    /* Web (browser), through Kotlin/Wasm; the app shell is :webApp.
+    /* Web (browser) target through Kotlin/Wasm. The app shell is :webApp.
      *
-     * Compose Multiplatform's web target is Beta while the other three are stable, so treat a
-     * failure here as the target's, not the app's. Two things a browser genuinely cannot do are
-     * kept out of the way rather than worked around: it has no raw TCP socket, so the Syncplay
-     * protocol needs a WebSocket transport, and it has no native decoder, so the four existing
-     * engines do not exist here. Everything that depends on either lives in nonWebMain. */
+     * Compose Multiplatform's web target is Beta while the other three are stable, so a failure
+     * here may come from the target and not from the app. Two things a browser cannot do are kept
+     * out of the web build, not worked around. It has no raw TCP socket, so the Syncplay protocol
+     * needs a WebSocket transport. It has no native decoder, so none of the native engines (video
+     * players) run here. Everything that needs either one lives in nonWebMain. */
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
         browser()
     }
 
-    // Activating iOS targets (iosMain)
+    // iOS targets (iosMain)
     listOf(
-        iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
+        iosSimulatorArm64(), // Needed only to run on the simulator
         iosArm64()
     ).forEach {
         val podSdk = if (it.name == "iosArm64") "iphoneos" else "iphonesimulator"
@@ -90,14 +92,14 @@ kotlin {
             cinterops.configureEach {
                 if (name == "VLCKit") {
                     // libVLC's C headers use <vlc/...> and the bridge uses <VLCMediaPlayer.h>.
-                    // Resolve both from the same framework copied by this target's podBuild task.
+                    // Resolve both from the framework that this target's podBuild task copies.
                     compilerOpts("-I${project.file("build/cocoapods/synthetic/ios/build/Debug-$podSdk/XCFrameworkIntermediates/VLCKit/VLCKit.framework/Headers")}")
                 }
             }
         }
     }
 
-    // iOS configuration
+    // The iOS framework and its pods
     cocoapods {
         summary = "${kiteConfig.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
@@ -111,52 +113,51 @@ kotlin {
 
         pod("VLCKit") {
             version = libs.versions.libvlc.ios.get()
-            // Keep the live clock bridge in this binding so it uses the exact bundled headers.
+            // Keep the VlcClock.h bridge in this binding, so it compiles against the exact VLCKit
+            // headers that ship in the pod.
             headers = project.file("src/nativeInterop/cinterop/VlcClock.h").absolutePath
         }
     }
 
-    /* Declaring a dependsOn edge by hand switches the default hierarchy template off, which
-     * silently detaches iosMain from the tree and loses every iOS actual. Asking for it
+    /* A hand-written dependsOn edge turns the default hierarchy template off. iosMain then
+     * silently leaves the source set tree, and every iOS actual is lost. Applying the template
      * explicitly keeps both. */
     applyDefaultHierarchyTemplate()
 
     sourceSets {
         /**
-         * Everything except the browser: Android, iOS and desktop.
+         * Code for every target except the browser: Android, iOS and desktop.
          *
-         * Common code is what all four targets can run. This is what the other three can run and
-         * the web cannot, which is a real category, not a dumping ground: a TCP socket, a native
-         * player engine, a filesystem, a thread that may block. Adding the web target is what
-         * made the distinction necessary. Before it, "not common" and "one platform" were the
-         * only two options.
+         * commonMain holds what all four targets can run. nonWebMain holds what the other three
+         * can run and the web cannot: a TCP socket, a native player engine, a filesystem, a
+         * thread that may block.
          *
-         * Ask one question before putting something here: would this compile in a browser? If it
-         * would, it belongs in commonMain.
+         * Before you put code here, ask one question: does it compile in a browser? If it does,
+         * it belongs in commonMain.
          */
         val nonWebMain by creating { dependsOn(commonMain.get()) }
 
         /**
-         * The JVM platforms' shared source set.
+         * The source set that Android and desktop share.
          *
-         * Android and desktop are both the JVM and both run Netty and NewPipe, so code that is
-         * genuinely identical between them lived as two files that had to be edited twice. Every
-         * Netty fix in the ledger landed twice for exactly this reason.
+         * Both run on the JVM and both use Netty and NewPipe, so code that is the same on both
+         * lives here once and gets each fix once.
          *
-         * Only put something here when it is the same on both. Anything that reads SAF, a
-         * Context, Conscrypt or a security scope is Android's alone and stays there.
+         * Put code here only when it is the same on both. Anything that reads SAF (the Storage
+         * Access Framework), a Context or Conscrypt belongs to Android alone and stays in
+         * androidMain.
          */
         val jvmShared by creating { dependsOn(nonWebMain) }
 
-        /* Where the Lyricist processor writes Strings.kt and the per-locale objects. */
+        /* The Lyricist processor writes Strings.kt and the per-locale objects here. */
         commonMain.get().kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
         androidMain.get().dependsOn(jvmShared)
         getByName("desktopMain").dependsOn(jvmShared)
         iosMain.get().dependsOn(nonWebMain)
 
-        /* The test side mirrors the main side: a test that blocks a thread cannot run in a
-         * browser, so it lives here rather than in commonTest. Coverage is unaffected, the
-         * desktop run still executes all of it. */
+        /* Tests follow the same split. A test that blocks a thread cannot run in a browser, so
+         * it goes in nonWebTest, not commonTest. Coverage does not change, because the desktop
+         * run still executes every test. */
         val nonWebTest by creating { dependsOn(commonTest.get()) }
         listOf("desktopTest", "iosTest", "androidHostTest").forEach { name ->
             findByName(name)?.dependsOn(nonWebTest)
@@ -176,30 +177,31 @@ kotlin {
         }
 
         commonMain.dependencies {
-            /* The @Preview annotation for the drawn control set. Annotation only: the IDE
-             * supplies the renderer, so this adds nothing to a shipped build. */
+            /* The @Preview annotation for the control previews (app.uicomponents.previews).
+             * Annotation only: the IDE supplies the renderer, so this adds nothing to a shipped
+             * build. */
             implementation(compose.components.uiToolingPreview)
 
-            /* Forcing Kotlin libs to match the compiler */
+            /* Keeps the Kotlin standard library on the compiler's version */
             implementation(libs.kotlin.stdlib)
 
-            /* Explicitly specifying a newer coroutines version */
+            /* Pins the coroutines version instead of taking the transitive one */
             implementation(libs.kotlin.coroutines.core)
 
-            /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
+            /* Dates and times (for example, a date from an epoch timestamp) */
             implementation(libs.kotlinx.datetime)
 
             /* Holds the display language in Compose state, so switching it recomposes the app
              * instead of restarting it. The strings themselves are generated below. */
             implementation(libs.lyricist)
 
-            /* JSON serializer/deserializer to communicate with Syncplay servers */
+            /* JSON serialization for the Syncplay protocol */
             implementation(libs.kotlinx.serialization.json)
 
-            /* Android's "Uri" class but rewritten for Kotlin multiplatform */
+            /* A multiplatform version of Android's Uri class */
             implementation(libs.uriKmp)
 
-            /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
+            /* Jetpack DataStore for preferences; Compose observes the values live */
             implementation(libs.datastore)
 
             /* Compose core dependencies */
@@ -208,39 +210,39 @@ kotlin {
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
 
-            /* Navigation support with the modern nav3 library */
+            /* Screen navigation with Navigation 3 */
             implementation(libs.bundles.navigation3)
 
-            /* ComposableHorizons' unstyled composables for more granularly-controlled components */
+            /* Compose Unstyled (Composable Horizons): building blocks for custom components */
             implementation(libs.bundles.compose.unstyled)
 
-            /* Haze: backdrop blur for the glass popup/chrome surfaces. Only samples pixels that
-             * Compose itself draws, so it blurs the whole UI everywhere but reaches video only on
-             * KitePlayer's Compose-canvas path (see GlassSurface.kt). */
+            /* Haze: backdrop blur for the glass popups and for the controls over the video. Haze
+             * samples only pixels that Compose draws. So it blurs the whole UI, but it blurs video
+             * only on KitePlayer's Compose-canvas path (see GlassSurface.kt). */
             implementation(libs.bundles.haze)
 
             /* MaterialKolor generates Material3 themes from seed colors */
             implementation(libs.materialKolor)
 
-            /* Helps with color calculations for color preferences */
+            /* Color calculations for the color preferences */
             implementation(libs.kolorpicker)
 
-            /* Hash digesters */
+            /* Hash functions */
             implementation(libs.bundles.krypto)
 
             /* Logging */
             implementation(libs.logging.kermit)
 
-            /* File opener/saver multiplatform */
+            /* Multiplatform file picker and saver (FileKit) */
             implementation(libs.filekit)
 
-            /* Atomics (used only for logs at the moment) */
+            /* Atomics (kotlinx.atomicfu) */
             implementation(libs.atomicfu)
 
-            /* Coil for async image loading (GIF panel) */
+            /* Coil for async image loading (the GIF panel) */
             implementation(libs.bundles.coil)
 
-            /* Ktor HTTP client for REST API calls (Klipy GIF API) */
+            /* Ktor HTTP client for REST calls (the KLIPY GIF API and OpenSubtitles) */
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.ktorfit)
@@ -252,10 +254,10 @@ kotlin {
              * browser's, so this stays out of commonMain. */
             implementation(libs.bundles.ktor)
 
-            /* KitePlayerVideo, the runtime-choice layer: one coordinate re-exports both
-             * rendering products plus KitePlayer's default assembly, facade and core API.
-             * The in-room renderer toggle rides its path parameter. Its decoder is FFmpeg
-             * through JNI and cinterop, so there is no web build of it to depend on. */
+            /* KitePlayerVideo, which picks the renderer at runtime. This one dependency
+             * re-exports both renderers plus KitePlayer's default assembly, facade and core API.
+             * The renderer toggle in the room passes its choice through the `path` parameter.
+             * The decoder is FFmpeg through JNI and cinterop, so there is no web build. */
             implementation(libs.kiteplayer.compose)
             implementation(libs.kiteplayer.audioviz)
         }
@@ -265,7 +267,7 @@ kotlin {
             implementation(libs.ktor.client.js)
 
             /* window, document, localStorage, WebSocket. Kotlin/JS gets these from the stdlib;
-             * Kotlin/Wasm moved them into their own artifact. */
+             * Kotlin/Wasm has them in a separate artifact. */
             implementation(libs.kotlinx.browser)
         }
 
@@ -273,32 +275,34 @@ kotlin {
             /* Coil GIF decoder for animated GIF support on Android */
             implementation(libs.coil.gif)
 
-            /* Backward compatibility APIs from Google's Jetpack AndroidX */
-            /* Contains AndroidX Libs: Core (+CoreSplashScreen +CorePiP), AppCompat, Activity Compose, DocumentFile */
+            /* AndroidX (Jetpack) libraries: Core, Core SplashScreen, AppCompat, Activity Compose
+             * and DocumentFile */
             implementation(libs.bundles.jetpack.androidx.extensions)
 
-            /* Extended coroutine support for Android threading */
+            /* Coroutine support for the Android main thread */
             implementation(libs.kotlin.coroutines.android)
 
             /* Network and TLS */
             implementation(libs.netty.handler)
             implementation(libs.netty.codec)
             implementation(libs.netty.transport)
-            implementation(libs.conscrypt) //TLSv1.3 with backward compatibility
+            implementation(libs.conscrypt) // TLS 1.3, also on older Android versions
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
             implementation(libs.bundles.media3)
 
-            /* ExoPlayer's FFmpeg-powered audio renderer extension (this does not need to be updated with every media3 release)  */
+            /* ExoPlayer's FFmpeg audio renderer extension. It does not need an update with every
+             * Media3 release. */
             implementation(files(File(projectDir, "libs/libffmpeg_media3exo_1.8.0.aar")))
 
-            /* libmpv for Android, prebuilt by libmpvKt (mpv, FFmpeg, libass and libplacebo), with its
-             * typed API and the view that hosts the video. The exoOnly flavor keeps both so the engine
-             * code compiles; androidApp strips every native library they bring at packaging time. */
+            /* libmpv for Android, prebuilt by libmpvKt (mpv, FFmpeg, libass and libplacebo), with
+             * its typed API and the view that hosts the video. The exoOnly flavor keeps both so the
+             * engine code compiles; androidApp removes all of their native libraries at packaging
+             * time. */
             implementation(libs.libmpvkt)
             implementation(libs.libmpvkt.view)
 
-            /* YT/SoundCloud/PeerTube stream URL extractor (no Python, pure JVM) */
+            /* NewPipe Extractor: stream URLs for YouTube, SoundCloud and PeerTube (pure JVM) */
             implementation(libs.newpipe.extractor)
 
             /* Ktor HTTP client engine for Android */
@@ -312,24 +316,24 @@ kotlin {
 
         val desktopMain by getting {
             dependencies {
-                /* Network and TLS: same Netty engine as Android (pure JVM); TLS comes from the JDK,
-                 * no Conscrypt needed on desktop. */
+                /* Network and TLS: the same Netty engine as Android (pure JVM). TLS comes from the
+                 * JDK, so desktop needs no Conscrypt. */
                 implementation(libs.netty.handler)
                 implementation(libs.netty.codec)
                 implementation(libs.netty.transport)
 
 
-                /* YT/SoundCloud/PeerTube stream URL extractor (pure JVM, same as Android) */
+                /* NewPipe Extractor: stream URLs for YouTube, SoundCloud and PeerTube (pure JVM) */
                 implementation(libs.newpipe.extractor)
 
                 /* Ktor HTTP client engine for desktop (also backs Coil's network fetcher) */
                 implementation(libs.ktor.client.okhttp)
 
-                /* Swing interop + desktop-specific Compose APIs */
+                /* Swing interop and the desktop-specific Compose APIs */
                 implementation(compose.desktop.common)
 
-                /* Registers Dispatchers.Main on the AWT event thread — the whole codebase
-                 * dispatches on Dispatchers.Main(.immediate), which has no default on JVM. */
+                /* Registers Dispatchers.Main on the AWT event thread. The whole codebase dispatches
+                 * on Dispatchers.Main (and .immediate), which has no default on the JVM. */
                 implementation(libs.kotlin.coroutines.swing)
             }
         }
@@ -351,21 +355,22 @@ kotlin {
     }
 }
 
-/* Skiko's native binary must match what Compose was compiled against — a transitive bump
- * would silently swap Skia under Compose. Bump `skiko` in libs.versions.toml together with
- * compose-multiplatform. Full rationale: CLAUDE.md "Key Dependencies". */
+/* Skiko's native binary must match what Compose was compiled against. A transitive bump would
+ * silently swap Skia under Compose. Bump `skiko` in libs.versions.toml together with
+ * compose-multiplatform (see the note on `skiko` there). */
 configurations.configureEach {
     resolutionStrategy.force("org.jetbrains.skiko:skiko:${libs.versions.skiko.get()}")
 }
 
-/* The live subtitle test spends a unit of the key's small daily quota, so it runs only on request:
+/* The live subtitle test uses up part of the key's small daily quota, so it runs only on request:
  * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest */
 tasks.withType<Test>().configureEach {
     systemProperty("synkplay.liveSubtitles", providers.gradleProperty("liveSubtitles").isPresent)
 }
 
-// The repo's two source rewrites, as tasks with declared inputs and outputs. The strings one is
-// wired into resource preparation; the launcher colours are on demand (syncTrinityColors).
+// The two tasks that rewrite source files in this repo, with declared inputs and outputs.
+// Resource preparation depends on the strings task; the launcher colours task runs on demand
+// (syncTrinityColors).
 with(PropagationTasks) {
     registerPropagationTasks()
 }
@@ -383,25 +388,25 @@ ksp {
     arg("lyricist.xml.resourcesPath", file("src/commonMain/composeResources").absolutePath)
 }
 
-/* The generator writes the language table in whatever order it read the resource folders, which
- * differs per machine and reaches the compiled code. Sorting it is what lets a published APK be
- * rebuilt and compared byte for byte. See buildSrc/LocaleOrder.kt. */
+/* The generator writes the language table in the order it read the resource folders. That order
+ * differs per machine and reaches the compiled code. The sort lets anyone rebuild a published APK
+ * and compare it byte for byte. See buildSrc/LocaleOrder.kt. */
 val sortGeneratedLocales = with(LocaleOrder) { registerLocaleOrderTask() }
 
-/* Every compilation reads the generated sources, so all of them wait for the generator, and for
- * the sort that follows it. */
+/* Every compilation reads the generated sources, so each one waits for the generator and for the
+ * sort after it. */
 tasks.matching { it.name.startsWith("compile") || it.name.startsWith("ksp") }.configureEach {
     if (name != "kspCommonMainKotlinMetadata") dependsOn(sortGeneratedLocales)
 }
 
-/* Lint's host-test model reads KSP output. Gradle 9 refuses to infer the ordering and fails the
- * build with an implicit-dependency error, so it is declared. */
+/* Lint's host-test model reads KSP output. Gradle 9 does not infer that order and fails the build
+ * with an implicit-dependency error, so the dependency is declared here. */
 tasks.matching { it.name == "generateAndroidHostTestLintModel" || it.name == "lintAnalyzeAndroidHostTest" }
     .configureEach { dependsOn("kspAndroidHostTest") }
 
 ktorfit {
     // The Ktorfit compiler plugin is built against a specific Kotlin compiler ABI, so this
-    // must track the `kotlin` version in libs.versions.toml, NOT the ktorfit lib version.
+    // version follows the `kotlin` version in libs.versions.toml, not the ktorfit library version.
     // A mismatch crashes compilation with "IrGenerationExtension cannot be cast to
     // ProjectExtensionDescriptor". Map: Kotlin 2.3.x -> 2.3.3, Kotlin 2.4.0+ -> 2.3.5.
     compilerPluginVersion.set("2.3.5")

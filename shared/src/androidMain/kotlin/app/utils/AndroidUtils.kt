@@ -30,25 +30,21 @@ import java.util.Locale
 import java.util.WeakHashMap
 
 /**
- * Global accessor for the application Context, initialized at app startup. Safe because the
- * app runs as a single task with one visible context (the SyncplayActivity), so there is no
- * multi-process ambiguity.
+ * A global getter for the application Context. SynkplayApp.onCreate sets it at startup. The app
+ * runs in a single process, so one application Context serves all code.
  */
 lateinit var contextObtainer: () -> Context
 
-/**
- * Creates a DataStore in the app's internal files directory, resolving the path before
- * delegating to the common-code factory.
- */
+/** Creates a DataStore file in the app's internal files directory, through the common factory. */
 fun dataStore(context: Context, fileName: String): DataStore<Preferences> =
     createDataStore(
         producePath = { context.filesDir.resolve(fileName).absolutePath }
     )
 
 /**
- * Returns a new Context whose resources resolve against the given locale.
+ * Returns a new Context whose resources use the given locale. It also sets the default locale.
  *
- * @param lang ISO 639-1 language code (e.g., "en", "fr", "ar")
+ * @param lang An ISO 639-1 language code, such as "en", "fr" or "ar".
  */
 @Suppress("DEPRECATION")
 fun Context.changeLanguage(lang: String): Context {
@@ -60,9 +56,10 @@ fun Context.changeLanguage(lang: String): Context {
 }
 
 /**
- * Forwards Activity lifecycle events (CREATE/START/RESUME/PAUSE/STOP) to the room's UI state
- * manager. Registered once in onCreate, before any room exists, so the room is looked up at
- * event time: resolving it at registration time bound nothing and left every background gate dead.
+ * Forwards Activity lifecycle events (CREATE, START, RESUME, PAUSE, STOP) to the room's UI state
+ * manager. It is registered once in onCreate, before any room exists, so it looks the room up at
+ * event time. A room looked up at registration time would be null, and the room's background
+ * handling would never run.
  */
 fun SyncplayActivity.bindWatchdog() {
     lifecycle.addObserver(
@@ -81,16 +78,13 @@ fun SyncplayActivity.bindWatchdog() {
 }
 
 /**
- * Hides system UI bars (status bar and navigation bar) for immersive fullscreen mode.
+ * Hides the status bar and the navigation bar for immersive fullscreen, and marks the window for
+ * [maskHiddenSystemBars].
  *
- * Provides two implementation strategies:
- * - **Modern** (default): Uses WindowInsetsControllerCompat for Android 11+ compatibility
- * - **Deprecated**: Uses legacy systemUiVisibility flags for older devices
+ * By default it uses WindowInsetsControllerCompat: a swipe shows the bars for a moment, and then
+ * they hide again.
  *
- * Modern implementation allows system bars to be revealed temporarily by swiping,
- * then auto-hides them again (transient behavior).
- *
- * @param useDeprecated If true, uses deprecated systemUiVisibility API (for compatibility)
+ * @param useDeprecated If true, uses the legacy systemUiVisibility flags instead.
  */
 @Suppress("DEPRECATION")
 fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
@@ -119,17 +113,16 @@ fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
 }
 
 /**
- * Shows system UI bars (status bar and navigation bar) after being hidden.
+ * Shows the status bar and the navigation bar again, with the default bar behavior, and ends
+ * [maskHiddenSystemBars] for the window.
  *
- * Restores normal system bar visibility with default behavior. Provides two
- * implementation strategies matching [hideSystemUI].
- *
- * @param useDeprecated If true, uses deprecated systemUiVisibility API (for compatibility)
+ * @param useDeprecated If true, uses the legacy systemUiVisibility flags. That path only adds
+ *   SYSTEM_UI_FLAG_VISIBLE, which is 0, so it leaves the bars as they are.
  */
 @Suppress("DEPRECATION")
 fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
     runOnUiThread {
-        // Before the show call: its animation is dispatched at once and must pass the mask.
+        // Unmark the window first: the show animation starts at once and must not be masked.
         windowsWithHiddenBars -= window
         if (!useDeprecated) {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->
@@ -156,25 +149,28 @@ fun ComponentActivity.applyActivityUiProperties() {
         window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     }
 
-    /** Telling Android that it should keep the screen on */
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     WindowCompat.setDecorFitsSystemWindows(window, false)
 }
 
-/** The windows whose bars [hideSystemUI] has hidden. Weak keys: an activity window must not outlive its activity. */
+/**
+ * The windows whose bars [hideSystemUI] has hidden. The keys are weak, because an activity window
+ * must not outlive its activity.
+ */
 private val windowsWithHiddenBars: MutableSet<Window> = Collections.newSetFromMap(WeakHashMap())
 
 /**
- * Reports no system bars to the view tree while [hideSystemUI] is in effect in a fullscreen window.
+ * Reports no system bars to the view tree while [hideSystemUI] is in effect in a fullscreen
+ * window.
  *
- * Android tells the window about hidden bars anyway. When the notification shade opens it takes
- * the bars over and the window is told they are visible; when it closes, the window gets them back
- * and runs the hide animation itself. Below Android 16 the fade-out of the transient bars after a
- * top-edge swipe arrives the same way. Everything padded on the status bar followed each of these,
- * so the room chrome dropped and slid back up. Here the bar insets are zeroed in the plain dispatch
- * and in every animation frame, so Compose sees no bar until [showSystemUI] asks for the bars back.
- * Split screen and the other multi-window modes pass through: there the system keeps the bars
- * visible and the padding has to be real.
+ * Android tells the window about hidden bars anyway. When the notification shade opens, it takes
+ * over the bars and the window is told they are visible. When the shade closes, the window gets
+ * the bars back and runs the hide animation itself. Below Android 16, the fade-out of the
+ * transient bars after a top-edge swipe arrives the same way. Without this mask, everything
+ * padded by the status bar follows each of these, so the room controls drop and slide back up.
+ * This zeroes the bar insets in the plain dispatch and in every animation frame, so Compose sees
+ * no bar until [showSystemUI] asks for the bars back. Split screen and the other multi-window
+ * modes pass through: there the system keeps the bars visible, and the padding must be real.
  */
 fun ComponentActivity.maskHiddenSystemBars() {
     if (Build.VERSION.SDK_INT < 30) return
@@ -202,14 +198,13 @@ val PlatformFile.uri: Uri
     get() = toAndroidUri(contextObtainer().packageName+".provider")
 
 /**
- * A directly-openable Android [Uri] for handing this file to a player engine.
+ * An Android [Uri] that a player engine can open directly.
  *
- * Picker results wrap a `content://` Uri (SAF) and pass through untouched. Files we wrote
- * ourselves (e.g. a subtitle downloaded into our own storage) wrap a [java.io.File] and become
- * a `file://` Uri. Unlike [uri], this never routes through FileProvider, so it also works for
- * app-internal paths (filesDir/logs) that aren't declared in provider_paths.xml — which is where
- * downloaded subtitles land. A bare filesystem path (no scheme) makes ExoPlayer's content
- * resolver and mpv's resolveUri both reject the file silently.
+ * Picker results wrap a `content://` Uri (SAF) and pass through unchanged. Files that the app
+ * wrote itself (such as a downloaded subtitle) wrap a [java.io.File] and become a `file://` Uri.
+ * Unlike [uri], this never goes through FileProvider, so it works for any app-internal path,
+ * whether or not provider_paths.xml declares it. A bare filesystem path (no scheme) makes
+ * ExoPlayer's content resolver and mpv's resolveUri both reject the file silently.
  */
 val PlatformFile.playableUri: Uri
     get() = when (val af = androidFile) {

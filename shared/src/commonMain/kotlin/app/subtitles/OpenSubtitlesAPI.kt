@@ -9,24 +9,24 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * The OpenSubtitles **.com** REST API (the .org XML-RPC API is dead).
+ * The OpenSubtitles **.com** REST API (the .org XML-RPC API no longer works).
  *
  * Docs: https://opensubtitles.stoplight.io/docs/opensubtitles-api
  * Base URL: `https://api.opensubtitles.com/api/v1/`
  *
  * Every request must carry an `Api-Key` header and a non-generic `User-Agent` of the form
- * `AppName vX.Y.Z`; both are applied client-wide in [SubtitleSearch]'s client.
+ * `AppName vX.Y.Z`. [SubtitleService] sets both on its client.
  */
 interface OpenSubtitlesAPI {
 
     /**
-     * Searches subtitles. [languages] must be lower-case, comma-separated and alphabetically
-     * sorted; queries match case-insensitively server-side. Passing null omits the filter
-     * entirely, so the API returns matches in every language.
+     * Searches subtitles. [languages] must be lower-case, comma-separated and sorted
+     * alphabetically. The server matches the query without regard to case. Null omits the
+     * language filter, so the API returns matches in every language.
      *
-     * Parameters are declared in ALPHABETICAL order: the API 301-redirects any request whose
-     * query string isn't in canonical (sorted) order, and Ktorfit emits parameters in declaration
-     * order, so keeping them sorted avoids a redirect round-trip on every search.
+     * Keep the parameters in alphabetical order. The API answers a query string that is not in
+     * sorted order with a 301 redirect, and Ktorfit emits parameters in declaration order. Sorted
+     * parameters save a redirect round trip on every search.
      */
     @GET("subtitles")
     suspend fun search(
@@ -38,14 +38,14 @@ interface OpenSubtitlesAPI {
     ): OpenSubtitlesSearchResponse
 
     /**
-     * Requests a download link for a subtitle file. MUST be a POST with a JSON body
-     * (`{"file_id": N}`); the API rejects a GET with a query parameter. The returned link is a
-     * direct, UTF-8, ~3-hour-valid URL to the subtitle text.
+     * Requests a download link for a subtitle file. The request must be a POST with a JSON body
+     * (`{"file_id": N}`), because the API rejects a GET with a query parameter. The returned link
+     * is a direct URL to the UTF-8 subtitle text and stays valid for about 3 hours.
      *
-     * The explicit Content-Type header is LOAD-BEARING: Ktorfit's @Body only calls setBody(),
-     * and Ktor's ContentNegotiation serializes an outbound body only when the request declares
-     * a matching Content-Type. Without it the call dies client-side before any network I/O
-     * ("Fail to prepare request body for sending... Content-Type: null").
+     * Do not remove the explicit Content-Type header. Ktorfit's @Body only calls setBody(), and
+     * Ktor's ContentNegotiation serializes an outgoing body only when the request declares a
+     * matching Content-Type. Without the header, the call fails in the client before any network
+     * I/O ("Fail to prepare request body for sending... Content-Type: null").
      */
     @POST("download")
     @Headers("Content-Type: application/json")
@@ -99,9 +99,9 @@ data class OpenSubtitlesDownloadRequest(
 data class OpenSubtitlesDownloadResponse(
     val link: String = "",
     @SerialName("file_name") val fileName: String = "",
-    /** Downloads consumed in the current window. */
+    /** Downloads used in the current quota window. */
     val requests: Int = 0,
-    /** Downloads left in the current window — the API enforces a daily quota per key/IP. */
+    /** Downloads left in the current window. The API enforces a daily quota per key or IP. */
     val remaining: Int = 0,
     val message: String = "",
     @SerialName("reset_time") val resetTime: String = ""

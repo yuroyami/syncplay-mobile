@@ -51,10 +51,10 @@ import app.theme.Type
 import app.theme.palette
 
 /**
- * The hairline field: a single underline that thickens to 2dp and takes the accent on focus.
- * No box. Optional leading glyph in the gutter, optional trailing clear glyph on its own target
- * that the keyboard's focus traversal skips. A controlled field, so a host that re-keys its
- * state never leaves a stale callback behind.
+ * The app's text field: a single thin underline, with no box, that thickens to 2dp and takes the
+ * accent on focus. It has an optional leading icon, and an optional trailing clear button on its
+ * own target that keyboard focus traversal skips. It is a controlled field ([value] in,
+ * [onValueChange] out), so a host that re-keys its state never leaves a stale callback behind.
  */
 @Composable
 fun Field(
@@ -79,9 +79,9 @@ fun Field(
     val modalEntry = LocalModalFieldEntry.current
     val source = remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
-    /* On a television the field stays read-only until Center: a writable field that takes focus
-     * opens the keyboard at once, so a remote passing through would meet it at every field. Editing
-     * ends when the keyboard goes away or focus leaves. */
+    /* On a television the field stays read-only until Center is pressed. A writable field opens
+     * the keyboard as soon as it takes focus, so a remote moving through the form would open the
+     * keyboard at every field. Editing ends when the keyboard goes away or focus leaves. */
     var tvEditing by remember { mutableStateOf(false) }
     /* Visibility, not height: a television keyboard floats over the app and reports no height.
      * Read only on a television, so a phone's fields do not recompose through every keyboard frame. */
@@ -96,9 +96,10 @@ fun Field(
         }
     }
     val writable = !readOnly && (!television || tvEditing)
-    /* A hardware keyboard types into an idle field. The field cannot take those keys until it is
-     * writable, a frame later, so they are held here and sent as one edit from the text that was
-     * there when typing began; without that the first letters land in the field's stale buffer. */
+    /* A hardware keyboard can type into an idle field. The field cannot take those keys until it
+     * is writable, a frame later, so the keys are held here and sent as one edit on top of the
+     * text from when typing began. Without this, the first letters land in the field's stale
+     * buffer. */
     var typedBase by remember { mutableStateOf<String?>(null) }
     var typedBuffer by remember { mutableStateOf("") }
     LaunchedEffect(writable) {
@@ -107,7 +108,7 @@ fun Field(
             typedBuffer = ""
         }
     }
-    // Reported for the desktop key map, which must not spend the arrows on seeking mid-sentence.
+    // Reported to the desktop key map, so the arrow keys move the caret and do not seek.
     DisposableEffect(focused) {
         if (focused) TextInputFocus.report(true)
         onDispose { if (focused) TextInputFocus.report(false) }
@@ -179,7 +180,7 @@ fun Field(
                         name = strings.actionClear,
                         onClick = { onValueChange("") },
                         tint = p.inkDim,
-                        // Never a focus stop: keyboard traversal jumps field to field, not to the clear glyph.
+                        // Never a focus stop: keyboard traversal goes from field to field.
                         modifier = Modifier.focusProperties { canFocus = false },
                     )
                 }

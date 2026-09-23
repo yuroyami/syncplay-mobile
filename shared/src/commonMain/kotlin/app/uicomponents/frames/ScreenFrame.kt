@@ -38,10 +38,10 @@ import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Rule
 
 /**
- * The frame every page shares: a 54dp bar plus the status inset with a back glyph, a `display`
- * title and up to two trailing glyph buttons, a hairline that appears once content has scrolled
- * under the bar, and the insets solved once. The room does not use this; it is a mode with its
- * own frame, on purpose.
+ * The frame that every page shares. It has a 54dp bar (plus the status bar inset) with a back
+ * button, a `display` title and up to two trailing icon buttons. A thin line appears under the bar
+ * once content has scrolled under it ([scrolled]), and the window insets are handled here once.
+ * The room does not use this frame: the room is a separate mode with its own frame, on purpose.
  */
 @Composable
 fun ScreenFrame(

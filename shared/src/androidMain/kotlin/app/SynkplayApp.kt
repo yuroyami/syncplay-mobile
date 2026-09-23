@@ -12,26 +12,25 @@ import app.utils.contextObtainer
 import app.utils.dataStore
 
 /**
- * Application entry point. Runs one-time process init: starts the Conscrypt install (TLS 1.3),
- * initializes DataStore, and registers the global context provider. Lives for the whole app
- * process.
+ * The Application class. It runs the one-time process setup: StrictMode in debug builds, the
+ * background Conscrypt install (TLS 1.3), DataStore and its first read, and the global context
+ * provider.
  */
 class SynkplayApp: Application() {
 
     override fun onCreate() {
         super.onCreate()
 
-        // Written long ago and never called. It is worth having: main-thread disk and network
-        // reads are exactly the class of bug this app keeps finding.
+        // Main-thread disk and network reads are a common bug here, and StrictMode logs them.
         if (KiteBuildConfig.IS_DEBUG) enableStrictMode()
 
-        /* Conscrypt gives us TLS 1.3, and building it loads a native library, so it is installed
-         * off the main thread. The TLS upgrade is the only caller that waits for it. */
+        /* Conscrypt adds TLS 1.3. Building it loads a native library, so it installs off the main
+         * thread. The TLS upgrade is the only caller that waits for it. */
         SecurityProvider.installInBackground()
 
         datastore = dataStore(applicationContext, Preferences.SYNKPLAY_PREFS)
-        // Read off disk on a background thread. The activity's splash waits on it, so the first
-        // frame still sees real values without the main thread doing the reading.
+        // Read the preferences on a background thread. The activity's splash screen waits for
+        // them, so the first frame sees real values and the main thread does no disk reads.
         warmPreferences()
 
         contextObtainer = ::returnAppContext
@@ -42,10 +41,10 @@ class SynkplayApp: Application() {
     }
 
     /**
-     * Debug only: flags main-thread disk and network reads, and leaked resources.
+     * Debug only: logs main-thread disk and network access, and leaked resources.
      *
-     * Logging only, deliberately. penaltyDeath would turn any third-party leak into a crash on
-     * every developer's machine, and penaltyFlashScreen makes the app unusable to look at.
+     * It only logs, on purpose. penaltyDeath would turn any third-party leak into a crash on
+     * every developer's machine, and penaltyFlashScreen makes the app too hard to look at.
      */
     private fun enableStrictMode() {
         StrictMode.setThreadPolicy(
