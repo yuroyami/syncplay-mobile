@@ -45,8 +45,8 @@ import app.theme.palette
  * A stepper: `‹ value ›` in place, for small option sets (a settings row uses it below five
  * options). Changing a choice never opens anything. Screen readers treat it as a slider with
  * discrete steps, and the current option is spoken by name. The Left and Right keys step it.
- * Each arrow is a 32 x 42dp target around a 14dp chevron. [autoSize] keeps the value on one line
- * and shrinks it to fit.
+ * Each arrow is 32dp wide and 48dp tall around a 14dp chevron. [autoSize] keeps the value on one
+ * line and shrinks it to fit.
  */
 @Composable
 fun Stepper(
@@ -128,8 +128,10 @@ private fun StepperArrow(direction: ChevronDirection, enabled: Boolean, onClick:
     val name = if (direction == ChevronDirection.Left) strings.stepperPrevious else strings.stepperNext
     Box(
         modifier = Modifier
+            // 48dp tall, because the rows above and below take their own taps. Compose widens a touch
+            // to the 48dp minimum over the value text, which takes none, so the width stays 32dp.
             .width(32.dp)
-            .height(Space.row)
+            .height(Space.touchMin)
             // Never a focus stop: the stepper itself takes focus and steps on Left and Right.
             .focusProperties { canFocus = false }
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)

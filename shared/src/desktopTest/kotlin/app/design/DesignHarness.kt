@@ -15,6 +15,9 @@ import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusDirection
@@ -202,6 +205,15 @@ object DesignHarness {
             frames(3)
             onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp, codePoint = codePoint)) }
             frames(5)
+        }
+
+        /** One finger tap at [position], in scene pixels, then a few frames for the click to land. */
+        fun tap(position: Offset) {
+            onUiThread {
+                scene.sendPointerEvent(PointerEventType.Press, position, type = PointerType.Touch)
+                scene.sendPointerEvent(PointerEventType.Release, position, type = PointerType.Touch)
+            }
+            frames(3)
         }
     }
 
