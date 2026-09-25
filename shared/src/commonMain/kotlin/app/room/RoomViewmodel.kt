@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import app.Screen
 import app.home.JoinConfig
 import app.i18n.Localization
+import app.player.PlayerEngine
 import app.player.PlayerImpl
 import app.player.PlayerManager
 import app.player.models.MediaFile
@@ -58,8 +59,17 @@ enum class OSDCategory {
  *
  * @property joinConfig The room connection settings, or null for solo mode.
  * @property backStack The navigation stack, used to leave the room.
+ * @param engineOverride The engine to use instead of the platform's choice. Only the sync tests
+ * pass one: an engine whose playhead is a clock.
+ * @param transportOverride Builds the network transport instead of the platform. Only the sync
+ * tests pass one: an in-memory link to the app's own server.
  */
-class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateList<Screen>) : ViewModel() {
+class RoomViewmodel(
+    val joinConfig: JoinConfig?,
+    val backStack: SnapshotStateList<Screen>,
+    private val engineOverride: PlayerEngine? = null,
+    private val transportOverride: ((RoomViewmodel) -> NetworkManager)? = null,
+) : ViewModel() {
 
     /************ Managers ***************/
 
@@ -73,7 +83,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      * The network connection to the Syncplay server. It is built on first use, not inside a
      * coroutine, so a callback, the dispatcher or a fast leave can never reach it before it exists.
      */
-    private val networkManagerHolder = lazy { instantiateNetworkManager() }
+    private val networkManagerHolder = lazy { transportOverride?.invoke(this) ?: instantiateNetworkManager() }
     val networkManager: NetworkManager by networkManagerHolder
 
     /** The Syncplay protocol state and its events. */
@@ -111,8 +121,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 // global to the process). Never build the next engine over it.
                 PlayerManager.awaitPendingDestroy()
                 val preferred = Preferences.PLAYER_ENGINE.value()
-                val engine = availablePlatformPlayerEngines
-                    .firstOrNull { it.name == preferred && it.isAvailable }
+                val engine = engineOverride
+                    ?: availablePlatformPlayerEngines.firstOrNull { it.name == preferred && it.isAvailable }
                     ?: availablePlatformPlayerEngines.firstOrNull { it.isAvailable }
                 if (engine == null) {
                     // No engine can play here, for example on desktop when KitePlayer is missing.
@@ -121,7 +131,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     dispatcher.broadcastMessage(isChat = false, isError = true) { Localization.strings.roomNoPlayerEngine }
                     return@launch
                 }
-                if (engine.name != preferred) {
+                if (engineOverride == null && engine.name != preferred) {
                     // A debug-only engine can disappear when a release build replaces the app.
                     // Save the fallback engine, so the picker never shows a stale engine name
                     // that is not the one in use.
