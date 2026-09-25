@@ -215,10 +215,10 @@ private val iosMajorVersion: Int by lazy {
  * watching together).
  *
  * Everything after the delegate needs iOS 16 or later. `UIWindowSceneGeometryPreferencesIOS` is
- * constructed, not only called, so `respondsToSelector` cannot guard it, and on iOS 14 or 15 the
- * class does not exist. The app supports systems below iOS 16, and this runs on Home as well as
- * in the room, so the version check comes first. Below 16 the delegate answer is all there is,
- * and it takes effect at the next rotation.
+ * constructed, not only called, so `respondsToSelector` cannot guard it, and on iOS 15 the class
+ * does not exist. The app supports iOS 15, and this runs on Home as well as in the room, so the
+ * version check comes first. On iOS 15 the delegate answer is all there is, and it takes effect
+ * at the next rotation.
  */
 private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
     delegato.myOrientationMask = mask
@@ -228,7 +228,7 @@ private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
          * view-controller transition, not at once. Forcing it sooner needs
          * UIViewController.attemptRotationToDeviceOrientation, a class method that Kotlin's
          * UIKit bindings do not expose, so it would have to come from the Swift side. A bridge
-         * is not worth it for two old systems, and a late rotation is far better than a crash. */
+         * is not worth it for one old system, and a late rotation is far better than a crash. */
         return
     }
 

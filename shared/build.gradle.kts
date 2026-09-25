@@ -104,7 +104,7 @@ kotlin {
         summary = "${kiteConfig.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
-        ios.deploymentTarget = "14.1"
+        ios.deploymentTarget = "15.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = AppConfig.SHARED_MODULE_NAME
