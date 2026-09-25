@@ -46,6 +46,7 @@ object WebPlatformCallback : PlatformCallback {
     override fun onPlayback(paused: Boolean) = Unit
 
     /** Document picture-in-picture needs a user gesture, so it belongs on the room's own control. */
+    override val supportsPictureInPicture: Boolean = false
     override fun onPictureInPicture(enable: Boolean) = Unit
 
     override fun performHapticFeedback() {

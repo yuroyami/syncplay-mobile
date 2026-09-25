@@ -80,6 +80,12 @@ interface PlatformCallback {
     fun onPlayback(paused: Boolean)
 
     /**
+     * Whether the device has picture-in-picture at all. Many televisions have none, and there the
+     * system refuses the window, so the room does not offer it.
+     */
+    val supportsPictureInPicture: Boolean get() = true
+
+    /**
      * Enters or leaves Picture-in-Picture mode.
      *
      * @param enable True to enter Picture-in-Picture mode, false to leave it

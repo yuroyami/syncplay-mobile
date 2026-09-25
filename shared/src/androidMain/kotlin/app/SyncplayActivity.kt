@@ -281,15 +281,22 @@ class SyncplayActivity : ComponentActivity() {
     /**
      * Enters picture-in-picture (PiP) with the current play or pause action, and hides the HUD
      * (the on-screen controls).
+     *
+     * The system can refuse: the device has no PiP, or the person turned it off for this app. The
+     * room then stays as it was, with its controls on screen.
      */
     internal fun initiatePIPmode() {
-        roomViewmodel?.uiState?.hasEnteredPipMode?.value = true
+        val ui = roomViewmodel?.uiState
+        // Set first, because the lifecycle calls that follow the request read it.
+        ui?.hasEnteredPipMode?.value = true
 
         val params = buildPiPParams(roomViewmodel?.playerManager?.isNowPlaying?.value == true)
-        runCatching {
-            enterPictureInPictureMode(params)
+        val entered = runCatching { enterPictureInPictureMode(params) }.getOrDefault(false)
+        if (!entered) {
+            ui?.hasEnteredPipMode?.value = false
+            return
         }
-        roomViewmodel?.uiState?.visibleHUD?.value = false
+        ui?.visibleHUD?.value = false
     }
 
     /** Localized labels for the PiP actions, set in onCreate. English stands in until then. */

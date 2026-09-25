@@ -47,6 +47,9 @@ object ApplePlatformCallback : PlatformCallback {
      *
      * @param enable True to enter PiP mode, false to exit it.
      */
+    override val supportsPictureInPicture: Boolean
+        get() = AVPictureInPictureController.isPictureInPictureSupported()
+
     override fun onPictureInPicture(enable: Boolean) {
         if (!AVPictureInPictureController.isPictureInPictureSupported()) return
 

@@ -151,7 +151,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         })
     }
     val actions = buildList {
-        if (playerIsReady && viewmodel.player.supportsPictureInPicture) {
+        if (playerIsReady && viewmodel.player.supportsPictureInPicture && platformCallback.supportsPictureInPicture) {
             add(RailCell(Icons.Filled.PictureInPicture, strings.roomOverflowPip) { platformCallback.onPictureInPicture(true) })
         }
         if (!solo) {

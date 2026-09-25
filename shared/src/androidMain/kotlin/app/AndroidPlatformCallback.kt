@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.AudioAttributes
 import android.os.VibratorManager
@@ -48,6 +49,11 @@ internal class AndroidPlatformCallback(
     private val appContext: Context get() = contextObtainer().applicationContext
 
     private val audioManager by lazy { appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+
+    // A device feature cannot change while the app runs, so the system is asked once.
+    override val supportsPictureInPicture: Boolean by lazy {
+        appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+    }
 
     @OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
