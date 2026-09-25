@@ -85,6 +85,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     private var core: Mpv? = null
 
     /** Collects [core]'s events and properties. Cancelled before that core closes. */
+    @Volatile
     private var coreJob: Job? = null
 
     /** The last `time-pos` mpv reported, in ms. */
@@ -114,7 +115,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override fun initialize() {
         ctx = mpvView.context.applicationContext
         copyAssets(ctx)
-        startCore()
+        startCore()?.let { mpv -> playerScopeIO.launch(coreCalls) { onThisCore(mpv, ::prepare) } }
         isInitialized = true
         startTrackingProgress()
     }
@@ -293,12 +294,17 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        installMpvSubfontIfNeeded()
-        ctx.resolveUri(location.file.uri)?.let { playOnFreshCore(it) }
+        // A documents provider can be slow (a network share, for example), so the lookup runs off
+        // the interface thread. There it would stall the picture and every key.
+        val path = withContext(ioDispatcher) {
+            installMpvSubfontIfNeeded()
+            ctx.resolveUri(location.file.uri)
+        } ?: return
+        playOnFreshCore(path)
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
-        installMpvSubfontIfNeeded()
+        withContext(ioDispatcher) { installMpvSubfontIfNeeded() }
         playOnFreshCore(location.url)
     }
 
@@ -397,24 +403,36 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     /**
      * Plays [pathOrUrl] on a new core. Every file gets its own core, and the view hands it the
-     * surface.
+     * surface. The settings and the load go to [coreCalls], because each call waits for the core.
      */
     @UiThread
-    private fun playOnFreshCore(pathOrUrl: String) {
-        startCore()
-        mpvView.playFile(pathOrUrl).getOrThrow()
+    private suspend fun playOnFreshCore(pathOrUrl: String) {
+        val mpv = startCore() ?: return
+        withContext(coreCalls) {
+            onThisCore(mpv) {
+                prepare(it)
+                it.command(MpvCommands.loadFile(pathOrUrl)).getOrThrow()
+            }
+        }
     }
 
     /**
      * Starts a new core on [mpvView]. The view hands the old core's surface to the new one and closes
-     * the old core in the background, after its flows stop here.
+     * the old core in the background, after its flows stop here. The view owns the surface, so the
+     * start runs on the interface thread. Run [prepare] on the new core before anything else.
      */
     @UiThread
-    private fun startCore() {
+    private fun startCore(): Mpv? {
         releaseCore()
         mpvView.initialize(startOptions())
-        val mpv = mpvView.mpv ?: return
-        // Set these after the start, so a user's mpv.conf cannot override them.
+        return mpvView.mpv?.also { core = it }
+    }
+
+    /**
+     * Sets what a user's mpv.conf must not override, then follows the core. It runs on [coreCalls]
+     * before any file loads, so the first pause state the room sees is the one set here.
+     */
+    private fun prepare(mpv: Mpv) {
         val playerOptions = PlayerOptions.get()
         mpv[MpvProperties.SavePositionOnQuit] = false
         mpv[MpvProperties.Idle] = IdleMode.Once
@@ -423,8 +441,21 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mpv[MpvProperties.Pause] = true
         // Raise the volume cap for gain: mpv caps volume at 130 by default.
         mpv[MpvProperties.VolumeMax] = gainMax.toDouble()
-        core = mpv
         watch(mpv)
+    }
+
+    /**
+     * Runs [block] on [mpv] while it is still the running core. A newer load replaces the core, and
+     * then this has nothing left to do. A core that closes during the call throws, which reads the
+     * same way.
+     */
+    private inline fun onThisCore(mpv: Mpv, block: (Mpv) -> Unit) {
+        if (core !== mpv) return
+        try {
+            block(mpv)
+        } catch (e: IllegalStateException) {
+            if (!mpv.isClosed) throw e
+        }
     }
 
     /** How each core starts, from the mpv settings. Everything else keeps libmpvKt's phone defaults. */
@@ -452,13 +483,17 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     /**
      * Forgets the running core and stops its flows, so none of its last events reach the next core.
-     * The view closes that core on its own thread, so this pauses it first to keep it silent.
+     * The view closes that core on its own thread, and a pause keeps it silent meanwhile. The pause
+     * waits for the core, and a busy core would freeze the picture, so it goes to [coreCalls].
      */
     private fun releaseCore() {
+        val old = core
+        /* Forget the core before stopping its flows. [watch] may be starting them on [coreCalls] at
+         * this moment. It stores its job and then checks the core, so one of the two stops them. */
+        core = null
         coreJob?.cancel()
         coreJob = null
-        core?.let { old -> runCatching { old[MpvProperties.Pause] = true } }
-        core = null
+        old?.let { playerScopeIO.launch(coreCalls) { runCatching { it[MpvProperties.Pause] = true } } }
         mpvPos = 0L
         mpvSeekable = true
     }
@@ -467,6 +502,11 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     private fun watch(mpv: Mpv) {
         val job = SupervisorJob(playerSupervisorJob)
         coreJob = job
+        // A newer load may have released this core meanwhile. Its flows must not start then.
+        if (core !== mpv) {
+            job.cancel()
+            return
+        }
         val scope = CoroutineScope(Dispatchers.Default + job)
         // Events have no replay. An undispatched start subscribes before the caller's loadfile goes out.
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
