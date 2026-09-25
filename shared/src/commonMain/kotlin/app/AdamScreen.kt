@@ -45,10 +45,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import app.theme.Motion
 import app.uicomponents.LocalIsTelevision
+import app.uicomponents.LocalScreenReaderActive
 import app.uicomponents.TvSafeArea
 import app.uicomponents.LocalWidthClass
 import app.uicomponents.currentWidthClass
 import app.utils.isTelevision
+import app.utils.rememberScreenReaderActive
 import app.utils.reducedMotion
 import app.utils.get
 import app.preferences.Preferences.REDUCE_MOTION
@@ -129,6 +131,7 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalSurfacePalette provides designPalette,
         LocalWidthClass provides currentWidthClass(),
         LocalIsTelevision provides remember { isTelevision() },
+        LocalScreenReaderActive provides rememberScreenReaderActive().value,
     ) {
         /* Applies the display language before anything below reads a string, so the first frame
          * already uses it. A language change updates the whole app without a restart. */

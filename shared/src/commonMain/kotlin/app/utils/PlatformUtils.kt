@@ -1,6 +1,7 @@
 package app.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import app.PlatformCallback
@@ -177,6 +178,14 @@ expect fun consumePendingShortcut(): app.home.JoinConfig?
  * or the web's `prefers-reduced-motion` query. Always false on desktop.
  */
 expect fun reducedMotion(): Boolean
+
+/**
+ * True while a screen reader runs: TalkBack or another spoken feedback service on Android,
+ * VoiceOver on iOS. The state follows the person turning one on or off. Always false on desktop
+ * and the web.
+ */
+@Composable
+expect fun rememberScreenReaderActive(): State<Boolean>
 
 /** The OS and the hardware, one line, for a bug report: "Android 15 (API 35, Google Pixel 7)". */
 expect fun platformDescription(): String

@@ -155,4 +155,33 @@ class HudAutoHideTest {
         elapse(60_000)
         assertTrue(states.value.hudVisible)
     }
+
+    /** A screen reader's gestures send no presses, so the timer would hide the controls mid-read. */
+    @Test
+    fun aRunningScreenReaderNeverHidesTheControls() = runTest {
+        val states = startTimer(playing.copy(screenReader = true))
+        elapse(60_000)
+        assertTrue(states.value.hudVisible)
+    }
+
+    @Test
+    fun aScreenReaderThatStartsBringsBackControlsTheTimerHid() = runTest {
+        val states = startTimer(playing)
+        elapse(15_000)
+        assertFalse(states.value.hudVisible)
+        states.value = states.value.copy(screenReader = true)
+        runCurrent()
+        assertTrue(states.value.hudVisible)
+    }
+
+    @Test
+    fun controlsTheUserHidStayHiddenWhenAScreenReaderStarts() = runTest {
+        val states = startTimer(playing)
+        states.value = states.value.copy(hudVisible = false, activity = 1)
+        runCurrent()
+        states.value = states.value.copy(screenReader = true)
+        runCurrent()
+        elapse(30_000)
+        assertFalse(states.value.hudVisible)
+    }
 }

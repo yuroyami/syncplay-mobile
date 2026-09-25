@@ -43,9 +43,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
+import app.i18n.strings
 import app.player.VolumeLadder
 import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.GESTURES
@@ -161,6 +165,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     Box(modifier) {
         val softwareKB = LocalSoftwareKeyboardController.current
         val seekGestures = gesturesEnabled && doubletapEnabled && hasVideo
+        /* The hidden controls fade to zero alpha, and Compose reports such nodes as hidden, so a
+         * screen reader reaches none of them. This layer offers them back as one named action. */
+        val showLabel = strings.roomControlsHidden
 
         Box(
             content = {},
@@ -306,6 +313,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     wash = null
                                 },
                             )
+                        }
+                        .semantics {
+                            contentDescription = showLabel
+                            onClick(label = showLabel) { viewmodel.uiState.showHud(); true }
                         }
                 } else Modifier
             ),

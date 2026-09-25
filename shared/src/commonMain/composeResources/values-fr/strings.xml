@@ -485,6 +485,7 @@
     <string name="room_lock">Verrouiller l'écran</string>
     <string name="room_locked_hint">Écran verrouillé. Touchez n'importe où pour afficher la touche de déverrouillage.</string>
     <string name="room_locked_surface">Écran verrouillé. Activez pour afficher la touche de déverrouillage.</string>
+    <string name="room_controls_hidden">Commandes masquées. Activez pour les afficher.</string>
     <string name="room_managed_room">Salle gérée</string>
     <string name="room_msg_resolve_failed">Lien non résolu. Il sera essayé comme flux direct.</string>
     <string name="room_msg_resolved_url">Résolu : %1$s</string>

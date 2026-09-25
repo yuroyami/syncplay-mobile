@@ -2,7 +2,11 @@ package app.utils
 
 import SyncplayMobile.shared.KiteBuildConfig
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import app.delegato
 import app.player.PlayerEngine
@@ -55,7 +59,11 @@ import platform.Foundation.seekToEndOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.Foundation.writeToFile
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
+import platform.UIKit.UIAccessibilityIsVoiceOverRunning
+import platform.UIKit.UIAccessibilityVoiceOverStatusDidChangeNotification
 import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
@@ -413,6 +421,20 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? {
 }
 
 actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
+
+@Composable
+actual fun rememberScreenReaderActive(): State<Boolean> {
+    val active = remember { mutableStateOf(UIAccessibilityIsVoiceOverRunning()) }
+    DisposableEffect(Unit) {
+        val observer = NSNotificationCenter.defaultCenter.addObserverForName(
+            name = UIAccessibilityVoiceOverStatusDidChangeNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue,
+        ) { _ -> active.value = UIAccessibilityIsVoiceOverRunning() }
+        onDispose { NSNotificationCenter.defaultCenter.removeObserver(observer) }
+    }
+    return active
+}
 
 /** Always false: there is no TV build for iOS (tvOS would be a separate target). */
 actual fun isTelevision(): Boolean = false

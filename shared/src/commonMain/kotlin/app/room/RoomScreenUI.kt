@@ -71,6 +71,7 @@ import app.uicomponents.LocalGlassDemand
 import app.uicomponents.LocalGlassSuspended
 import app.uicomponents.LocalHazeState
 import app.uicomponents.LocalIsTelevision
+import app.uicomponents.LocalScreenReaderActive
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.glassBackdropLayer
 import app.utils.EnterRoomMode
@@ -465,8 +466,10 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     val draft by ui.msg.collectAsState()
     val held = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
 
+    val screenReader = LocalScreenReaderActive.current
+
     val state by rememberUpdatedState(
-        HudAutoHideState(idleSeconds, hudVisible, hasVideo, isPlaying, isBuffering, held, activity)
+        HudAutoHideState(idleSeconds, hudVisible, hasVideo, isPlaying, isBuffering, held, activity, screenReader)
     )
     LaunchedEffect(ui) {
         autoHideHud(snapshotFlow { state }) { ui.visibleHUD.value = it }

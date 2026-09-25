@@ -458,6 +458,7 @@
     <string name="room_lock">锁定屏幕</string>
     <string name="room_locked_hint">屏幕已锁定。点按任意位置显示解锁键。</string>
     <string name="room_locked_surface">屏幕已锁定。激活以显示解锁键。</string>
+    <string name="room_controls_hidden">控件已隐藏。激活以显示控件。</string>
     <string name="room_managed_room">管理房间</string>
     <string name="room_msg_resolve_failed">链接解析失败，改按直链播放。</string>
     <string name="room_msg_resolved_url">已解析：%1$s</string>

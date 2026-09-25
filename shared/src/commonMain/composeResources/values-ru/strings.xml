@@ -470,6 +470,7 @@
     <string name="room_lock">Заблокировать экран</string>
     <string name="room_locked_hint">Экран заблокирован. Нажмите в любом месте, чтобы показать кнопку разблокировки.</string>
     <string name="room_locked_surface">Заблокированный экран. Активируйте, чтобы показать кнопку разблокировки.</string>
+    <string name="room_controls_hidden">Элементы управления скрыты. Активируйте, чтобы показать их.</string>
     <string name="room_managed_room">Управляемая комната</string>
     <string name="room_msg_resolve_failed">Не удалось разобрать ссылку. Пробуем как прямой поток.</string>
     <string name="room_msg_resolved_url">Разобрано: %1$s</string>

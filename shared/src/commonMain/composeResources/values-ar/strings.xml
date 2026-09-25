@@ -470,6 +470,7 @@
     <string name="room_lock">اقفل الشاشة</string>
     <string name="room_locked_hint">الشاشة مقفلة. اضغط في أي مكان لإظهار مفتاح الفتح.</string>
     <string name="room_locked_surface">شاشة مقفلة. فعّل لإظهار مفتاح الفتح.</string>
+    <string name="room_controls_hidden">عناصر التحكم مخفية. فعّل لإظهارها.</string>
     <string name="room_managed_room">غرفة مُدارة</string>
     <string name="room_msg_resolve_failed">تعذّر تحليل هذا الرابط. سنجربه كبثّ مباشر.</string>
     <string name="room_msg_resolved_url">تم التحليل: %1$s</string>

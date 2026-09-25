@@ -468,6 +468,7 @@
     <string name="room_lock">Bildschirm sperren</string>
     <string name="room_locked_hint">Bildschirm gesperrt. Irgendwo tippen, um die Entsperrtaste zu zeigen.</string>
     <string name="room_locked_surface">Gesperrter Bildschirm. Aktivieren, um die Entsperrtaste zu zeigen.</string>
+    <string name="room_controls_hidden">Steuerelemente ausgeblendet. Aktivieren, um sie zu zeigen.</string>
     <string name="room_managed_room">Verwalteter Raum</string>
     <string name="room_msg_resolve_failed">Link ließ sich nicht auflösen. Wird als direkter Stream versucht.</string>
     <string name="room_msg_resolved_url">Aufgelöst: %1$s</string>

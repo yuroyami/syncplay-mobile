@@ -1,6 +1,9 @@
 package app.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import app.player.PlayerEngine
 import app.player.kite.desktopKiteEngine
@@ -212,6 +215,9 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? =
     pendingDesktopJoin.also { pendingDesktopJoin = null }
 
 actual fun reducedMotion(): Boolean = false
+
+@Composable
+actual fun rememberScreenReaderActive(): State<Boolean> = remember { mutableStateOf(false) }
 
 /** A desktop window is never subject to overscan. */
 actual fun isTelevision(): Boolean = false

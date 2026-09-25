@@ -481,6 +481,7 @@
     <string name="room_lock">Zablokuj ekran</string>
     <string name="room_locked_hint">Ekran zablokowany. Dotknij gdziekolwiek, aby pokazać przycisk odblokowania.</string>
     <string name="room_locked_surface">Zablokowany ekran. Aktywuj, aby pokazać przycisk odblokowania.</string>
+    <string name="room_controls_hidden">Elementy sterujące ukryte. Aktywuj, aby je pokazać.</string>
     <string name="room_managed_room">Zarządzany pokój</string>
     <string name="room_msg_resolve_failed">Nie udało się rozwiązać linku. Spróbuję jako bezpośredni strumień.</string>
     <string name="room_msg_resolved_url">Rozwiązano: %1$s</string>

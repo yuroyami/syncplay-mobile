@@ -1,5 +1,6 @@
 package app.utils
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.ActivityInfo
@@ -7,11 +8,16 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import android.view.accessibility.AccessibilityManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
@@ -292,6 +298,42 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? = null
 actual fun reducedMotion(): Boolean = runCatching {
     android.provider.Settings.Global.getFloat(contextObtainer().contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 }.getOrDefault(false)
+
+@Composable
+actual fun rememberScreenReaderActive(): State<Boolean> {
+    val manager = remember { contextObtainer().getSystemService(AccessibilityManager::class.java) }
+    val active = remember { mutableStateOf(manager.speaksScreen()) }
+    DisposableEffect(manager) {
+        if (manager == null) return@DisposableEffect onDispose { }
+        val update = { active.value = manager.speaksScreen() }
+        val onState = AccessibilityManager.AccessibilityStateChangeListener { update() }
+        val onTouch = AccessibilityManager.TouchExplorationStateChangeListener { update() }
+        manager.addAccessibilityStateChangeListener(onState)
+        manager.addTouchExplorationStateChangeListener(onTouch)
+        // From Android 13, a switch from one service to another while a third stays on is reported too.
+        val onServices = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            AccessibilityManager.AccessibilityServicesStateChangeListener { update() }
+                .also { manager.addAccessibilityServicesStateChangeListener(it) }
+        } else null
+        update()
+        onDispose {
+            manager.removeAccessibilityStateChangeListener(onState)
+            manager.removeTouchExplorationStateChangeListener(onTouch)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && onServices != null) {
+                manager.removeAccessibilityServicesStateChangeListener(onServices)
+            }
+        }
+    }
+    return active
+}
+
+/**
+ * TalkBack on a phone turns on touch exploration. A television has no touch screen, so there the
+ * test is any enabled service that speaks. Services that only automate (password managers, for
+ * example) do not count.
+ */
+private fun AccessibilityManager?.speaksScreen(): Boolean = this != null && isEnabled &&
+    (isTouchExplorationEnabled || getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_SPOKEN).isNotEmpty())
 
 actual fun localizedLanguageName(iso6391: String, inLanguage: String): String? {
     val displayIn = java.util.Locale.forLanguageTag(inLanguage)

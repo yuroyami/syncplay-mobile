@@ -1,6 +1,9 @@
 package app.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import app.home.JoinConfig
 import app.player.PlayerEngine
@@ -144,6 +147,10 @@ actual fun platformDescription(): String = runCatching { window.navigator.userAg
 /** Honours the OS-level "reduce motion" switch, which browsers expose as a media query. */
 actual fun reducedMotion(): Boolean =
     runCatching { window.matchMedia("(prefers-reduced-motion: reduce)").matches }.getOrDefault(false)
+
+/** A browser does not tell a page whether a screen reader runs. */
+@Composable
+actual fun rememberScreenReaderActive(): State<Boolean> = remember { mutableStateOf(false) }
 
 /**
  * A join request passed in the address bar. It is the web version of a launcher shortcut and of

@@ -470,6 +470,7 @@
     <string name="room_lock">Bloquear la pantalla</string>
     <string name="room_locked_hint">Pantalla bloqueada. Toca en cualquier sitio para ver el botón de desbloqueo.</string>
     <string name="room_locked_surface">Pantalla bloqueada. Activa para ver el botón de desbloqueo.</string>
+    <string name="room_controls_hidden">Controles ocultos. Activa para mostrarlos.</string>
     <string name="room_managed_room">Sala gestionada</string>
     <string name="room_msg_resolve_failed">No se pudo resolver el enlace. Se probará como flujo directo.</string>
     <string name="room_msg_resolved_url">Resuelto: %1$s</string>
