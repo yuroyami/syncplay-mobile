@@ -155,18 +155,13 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                 NavDisplay(
                 backStack = backstack,
                 onBack = {
-                    /* In the room, Back closes one open layer at a time, and asks to leave only
-                     * when nothing is open. On a TV remote, Back is the only way out of a panel. */
+                    // In the room, Back closes one open layer at a time (RoomUiStateManager.back).
                     val room = globalviewmodel.roomWeakRef?.get()
                     val ui = room?.uiState
-                    when {
-                        backstack.lastOrNull() !is Screen.Room || ui == null ->
-                            if (backstack.size > 1) backstack.removeAt(backstack.lastIndex)
-                        ui.gifPanelVisible.value -> ui.gifPanelVisible.value = false
-                        ui.anySidePanelOpen -> ui.closeSidePanels()
-                        ui.controlPanel.value -> ui.toggleControlPanel(false)
-                        ui.railActionsExpanded.value -> ui.railActionsExpanded.value = false
-                        else -> ui.askLeave.value = true
+                    if (backstack.lastOrNull() !is Screen.Room || ui == null) {
+                        if (backstack.size > 1) backstack.removeAt(backstack.lastIndex)
+                    } else {
+                        ui.back()
                     }
                 },
                 transitionSpec = { pageTransition(pop = false, slidePx) },

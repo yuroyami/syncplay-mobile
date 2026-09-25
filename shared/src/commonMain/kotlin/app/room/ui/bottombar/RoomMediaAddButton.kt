@@ -93,7 +93,7 @@ fun RoomMediaAddButton() {
      * needs a focus handover: into the card's first route when it opens, and back to the key when
      * it closes. */
     val cardFocus = remember { FocusRequester() }
-    val keyFocus = remember { FocusRequester() }
+    val keyFocus = ui.mediaKeyFocus
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     var seenExpanded by remember { mutableStateOf(expanded) }
     // After the link form closes, the routes are new again and need focus of their own.
@@ -107,11 +107,14 @@ fun RoomMediaAddButton() {
     }
     LaunchedEffect(expanded) {
         if (expanded != seenExpanded && remoteOrKeyboard) {
-            repeat(8) {
-                delay(60)
-                val target = if (expanded) cardFocus else keyFocus
-                val direction = if (expanded) FocusDirection.Enter else FocusDirection.Exit
-                if (runCatching { target.requestFocus(direction) }.getOrDefault(false)) return@repeat
+            // Stop at the first request that lands. A later one would undo a key pressed meanwhile.
+            run tries@{
+                repeat(8) {
+                    delay(60)
+                    val target = if (expanded) cardFocus else keyFocus
+                    val direction = if (expanded) FocusDirection.Enter else FocusDirection.Exit
+                    if (runCatching { target.requestFocus(direction) }.getOrDefault(false)) return@tries
+                }
             }
         }
         seenExpanded = expanded

@@ -8,6 +8,9 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +64,12 @@ private fun PanelSlot(modifier: Modifier, enter: EnterTransition, exit: ExitTran
  */
 private const val PANEL_FOCUS_TRIES = 8
 
+/** The moves a direction key or Tab makes. An open panel keeps focus against these. */
+private val directionKeys = setOf(
+    FocusDirection.Up, FocusDirection.Down, FocusDirection.Left, FocusDirection.Right,
+    FocusDirection.Next, FocusDirection.Previous,
+)
+
 /**
  * The contents of the side dock (the side area of the screen that holds the panels). The dock
  * shows one panel at a time, at a real reading width: 38 percent of the window, kept between
@@ -90,30 +99,52 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
     val enter = if (tall) slideInVertically(Motion.move()) { it } else slideInHorizontally(Motion.move()) { it }
     val exit = if (tall) slideOutVertically(Motion.move()) { it } else slideOutHorizontally(Motion.move()) { it }
 
-    /* A remote user who opens a panel wants its controls, so focus moves into the panel, and back
-     * to the rail when the panel closes. The spatial focus search alone skips a panel whose rows
-     * do not line up with the rail button that opened it. */
+    /* A remote user who opens a panel wants its controls, so focus moves into the panel. The open
+     * panel holds focus the way a dialog does: a direction that would leave it keeps focus inside,
+     * and Back closes it. Otherwise a remote could leave the panel and find no key that leads back.
+     * The spatial focus search alone also skips a panel whose rows do not line up with the button
+     * that opened it. */
     val panelFocus = remember { FocusRequester() }
     val railFocus = LocalRoomRailFocus.current
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
-    val openPanel = listOf(
-        stateUserInfo, statePlaylist && sharedPlaylists, statePrefs,
-        stateTracks, stateGestures, stateSeekTo, stateAddMedia,
-    ).indexOfFirst { it }
+    /* Each panel, with the control that takes focus back when it closes. The control strip closes
+     * when one of its panels opens, so the strip's own button takes focus back. The rail keeps its
+     * focus target on the cell of the panel that was open last. */
+    val panels = listOf(
+        stateUserInfo to railFocus,
+        (statePlaylist && sharedPlaylists) to railFocus,
+        statePrefs to railFocus,
+        stateTracks to ui.controlsFocus,
+        stateGestures to ui.controlsFocus,
+        stateSeekTo to ui.controlsFocus,
+        stateAddMedia to ui.mediaKeyFocus,
+    )
+    val openPanel = panels.indexOfFirst { it.first }
+    val holdFocus by rememberUpdatedState(openPanel >= 0)
+    var panelHasFocus by remember { mutableStateOf(false) }
     var seenPanel by remember { mutableStateOf(openPanel) }
     LaunchedEffect(openPanel) {
-        if (openPanel != seenPanel && remoteOrKeyboard) {
+        val closed = seenPanel
+        seenPanel = openPanel
+        // A panel that closes while focus is elsewhere, after a tap for example, takes no focus back.
+        val handBack = openPanel < 0 && panelHasFocus
+        if (openPanel != closed && remoteOrKeyboard && (openPanel >= 0 || handBack)) {
+            val targets = if (openPanel >= 0) {
+                listOf(panelFocus to FocusDirection.Enter)
+            } else {
+                listOfNotNull(panels.getOrNull(closed)?.second, railFocus).distinct().map { it to FocusDirection.Exit }
+            }
             /* The panel slides in and out over a few frames, and the rail rebuilds during the
-             * slide, so the target may not exist at the first request. So ask again, 60 ms apart,
-             * PANEL_FOCUS_TRIES times. */
-            repeat(PANEL_FOCUS_TRIES) {
-                delay(60)
-                val target = if (openPanel >= 0) panelFocus else railFocus
-                val direction = if (openPanel >= 0) FocusDirection.Enter else FocusDirection.Exit
-                if (target != null && runCatching { target.requestFocus(direction) }.getOrDefault(false)) return@repeat
+             * slide, so a target may not exist at the first request. So ask again, 60 ms apart, up
+             * to PANEL_FOCUS_TRIES times. Stop at the first request that lands: a later one would
+             * undo a key pressed meanwhile. */
+            run tries@{
+                repeat(PANEL_FOCUS_TRIES) {
+                    delay(60)
+                    if (targets.any { (target, direction) -> runCatching { target.requestFocus(direction) }.getOrDefault(false) }) return@tries
+                }
             }
         }
-        seenPanel = openPanel
     }
 
     Column(modifier, horizontalAlignment = Alignment.End) {
@@ -122,6 +153,10 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
                 .weight(1f)
                 .then(if (tall) Modifier.fillMaxWidth() else Modifier.width(panelWidth))
                 .focusRequester(panelFocus)
+                .onFocusChanged { panelHasFocus = it.hasFocus }
+                .focusProperties {
+                    onExit = { if (holdFocus && requestedFocusDirection in directionKeys) cancelFocusChange() }
+                }
                 .focusGroup(),
             enter,
             exit,

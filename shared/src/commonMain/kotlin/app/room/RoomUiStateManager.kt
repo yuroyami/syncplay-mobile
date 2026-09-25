@@ -31,6 +31,9 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** The focus target of the control panel button, so focus can go back when the panel closes. */
     val controlsFocus = FocusRequester()
 
+    /** The focus target of the add key in the bottom bar, so focus can go back when its panel closes. */
+    val mediaKeyFocus = FocusRequester()
+
     /** True while the user drags the seek bar. The HUD never hides during a drag. */
     val scrubbing = MutableStateFlow(false)
 
@@ -114,6 +117,20 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** Closes any open side panel, for a control that needs the side of the room. */
     fun closeSidePanels() = sidePanels.forEach { it.value = false }
+
+    /**
+     * What Back does in the room. It closes the top open layer, and asks to leave only when
+     * nothing is open. On a TV remote, Back is the only way out of a panel.
+     */
+    fun back() {
+        when {
+            gifPanelVisible.value -> gifPanelVisible.value = false
+            anySidePanelOpen -> closeSidePanels()
+            controlPanel.value -> toggleControlPanel(false)
+            railActionsExpanded.value -> railActionsExpanded.value = false
+            else -> askLeave.value = true
+        }
+    }
 
     fun toggleControlPanel(forcedState: Boolean? = null) {
         controlPanel.value = forcedState ?: !controlPanel.value

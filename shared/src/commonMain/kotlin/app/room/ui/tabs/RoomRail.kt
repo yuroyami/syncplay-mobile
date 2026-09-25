@@ -111,7 +111,7 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
      * Each takes focus with it. With a remote, focus follows: onto the first action on unfold,
      * and back onto More on fold. This happens only when the state flips, so a rail rebuilt
      * after a rotation takes no focus. */
-    // Where a closing panel sends focus back: the cell whose panel was open, or else the first.
+    // Where a closing panel sends focus back: the cell whose panel was open last, or else the first.
     val railFocus = LocalRoomRailFocus.current
     val moreFocus = remember { FocusRequester() }
     val firstActionFocus = remember { FocusRequester() }
@@ -169,7 +169,12 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         add(RailCell(Icons.AutoMirrored.Filled.Logout, strings.roomOverflowLeaveRoom) { ui.askLeave.value = true })
     }
     val more = RailCell(MoreGlyph, strings.roomRailMore) { ui.railActionsExpanded.value = true }
-    val activeCell = panels.indexOfFirst { it.active }.coerceAtLeast(0)
+    /* The rail's focus target sits on the cell whose panel is open. After that panel closes, it
+     * stays on the same cell, so Back returns focus to the cell that opened the panel. */
+    val openCell = panels.firstOrNull { it.active }?.name
+    var lastOpenCell by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(openCell) { if (openCell != null) lastOpenCell = openCell }
+    val activeCell = panels.indexOfFirst { it.name == (openCell ?: lastOpenCell) }.coerceAtLeast(0)
 
     if (horizontal) {
         Row(modifier.chromeSurface(Radius.panelShape), verticalAlignment = Alignment.CenterVertically) {
