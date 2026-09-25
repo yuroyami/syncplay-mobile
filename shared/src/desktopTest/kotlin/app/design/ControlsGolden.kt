@@ -44,9 +44,9 @@ class ControlsGolden {
     private fun Sheet() {
         Column(Modifier.fillMaxWidth()) {
             GroupHeading("Rows")
-            ListRow { RowLabel("Secure connection (TLS)"); RowGap(); RowValue("On", accent = true, width = 36.dp); RowGap(); Rocker(on = true, onChange = {}) }
-            ListRow { RowLabel("Pause when someone leaves"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}) }
-            ListRow(enabled = false) { RowLabel("Chapter marks clickable"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}, enabled = false) }
+            ListRow { RowLabel("Secure connection (TLS)"); RowGap(); RowValue("On", accent = true, width = 36.dp); RowGap(); Rocker(on = true, onChange = {}, name = "Secure connection (TLS)") }
+            ListRow { RowLabel("Pause when someone leaves"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}, name = "Pause when someone leaves") }
+            ListRow(enabled = false) { RowLabel("Chapter marks clickable"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}, enabled = false, name = "Chapter marks clickable") }
             ListRow { RowLabel("Network engine"); RowGap(); Stepper(listOf("Netty", "Ktor"), 0, {}) }
             ListRow(onClick = {}) { RowLabel("Trusted domains"); RowGap(); RowValue("None"); RowGap(Space.gapTight); Chevron(ChevronDirection.Right) }
             ListRow(onClick = {}, selected = true) { RowLabel("Selected row"); RowGap(); RowValue("value") }

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
@@ -67,7 +68,12 @@ object DesignHarness {
     val outDir: File = File(System.getenv("DESIGN_GOLDEN_OUT") ?: "build/design-goldens").also { it.mkdirs() }
 
     /** The output of one render: the PNG file, the content height in dp, and the text layouts. */
-    data class Result(val file: File, val contentHeightDp: Int, val textLayouts: List<TextLayoutResult>) {
+    data class Result(
+        val file: File,
+        val contentHeightDp: Int,
+        val textLayouts: List<TextLayoutResult>,
+        val unnamedControls: List<String> = emptyList(),
+    ) {
         fun assertAllTextFits() {
             assertTrue(textLayouts.isNotEmpty(), "No text layouts in ${file.name}")
             for (layout in textLayouts) {
@@ -84,6 +90,22 @@ object DesignHarness {
                 }
             }
         }
+    }
+
+    /**
+     * The controls in the spoken tree (what a screen reader reads) that have no name. A control is
+     * a node with a click action. Its name is a description or a text that is not blank. A role
+     * does not count, because a role says what a control is, not what it does.
+     */
+    private fun unnamedControls(node: SemanticsNode): List<String> {
+        val config = node.config
+        val unnamed = config.getOrNull(SemanticsActions.OnClick) != null &&
+            SemanticsProperties.HideFromAccessibility !in config &&
+            (config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
+                config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } +
+                listOfNotNull(config.getOrNull(SemanticsProperties.EditableText)?.text)).all { it.isBlank() }
+        val here = if (unnamed) listOf("a ${config.getOrNull(SemanticsProperties.Role) ?: "control"} at ${node.positionInRoot}, size ${node.size}") else emptyList()
+        return here + node.children.flatMap(::unnamedControls)
     }
 
     private fun textLayouts(node: SemanticsNode): List<TextLayoutResult> {
@@ -241,6 +263,8 @@ object DesignHarness {
         overVideo: Boolean = false,
         /** The shipped language to render the screen in. The default is English. */
         language: String = "en",
+        /** Fails the render when a control has no spoken name. Only a test that plants one turns it off. */
+        requireNamedControls: Boolean = true,
         content: @Composable () -> Unit,
     ): Result {
         initDatastore()
@@ -272,7 +296,11 @@ object DesignHarness {
             val heightDpMeasured = (measuredPx / density.density).toInt()
             println("GOLDEN $name$suffix height=${heightDpMeasured}dp -> ${file.absolutePath}")
             val layouts = onUiThread { scene.semanticsOwners.flatMap { textLayouts(it.unmergedRootSemanticsNode) } }
-            Result(file, heightDpMeasured, layouts)
+            val unnamed = onUiThread { scene.semanticsOwners.flatMap { unnamedControls(it.rootSemanticsNode) } }
+            if (requireNamedControls) {
+                assertTrue(unnamed.isEmpty(), "A screen reader meets controls with no name in ${file.name}:\n" + unnamed.joinToString("\n"))
+            }
+            Result(file, heightDpMeasured, layouts, unnamed)
         } finally {
             onUiThread { scene.close() }
         }

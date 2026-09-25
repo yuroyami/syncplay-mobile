@@ -67,9 +67,9 @@ private fun Sheet(content: @Composable () -> Unit) {
 @Composable
 private fun RowsPreview() = Sheet {
     GroupHeading("Rows")
-    ListRow { RowLabel("Secure connection"); RowGap(); RowValue("On", accent = true, width = 36.dp); RowGap(); Rocker(on = true, onChange = {}) }
-    ListRow { RowLabel("Pause when someone leaves"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}) }
-    ListRow(enabled = false) { RowLabel("Disabled row"); RowGap(); Rocker(on = false, onChange = {}, enabled = false) }
+    ListRow { RowLabel("Secure connection"); RowGap(); RowValue("On", accent = true, width = 36.dp); RowGap(); Rocker(on = true, onChange = {}, name = "Secure connection") }
+    ListRow { RowLabel("Pause when someone leaves"); RowGap(); RowValue("Off", width = 36.dp); RowGap(); Rocker(on = false, onChange = {}, name = "Pause when someone leaves") }
+    ListRow(enabled = false) { RowLabel("Disabled row"); RowGap(); Rocker(on = false, onChange = {}, enabled = false, name = "Disabled row") }
     ListRow(onClick = {}, selected = true) { RowLabel("Selected row"); RowGap(); RowValue("value") }
     ListRow { RowLabel("Video background"); RowGap(); RowValue("#000000"); RowGap(); Swatch(Color.Black, onClick = {}) }
 }

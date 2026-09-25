@@ -8,10 +8,11 @@ import kotlin.test.assertTrue
  * Source checks for the design rules. Each rule has a baseline count that may only go down. Lower
  * the baseline in the same commit that removes the usages.
  *
- * The last rule is about reachability, not looks. A `.clickable {}` with no role and no
+ * The last two rules are about reachability, not looks. A `.clickable {}` with no role and no
  * description is invisible to a screen reader and unreachable by a remote: it is a tap target
  * that announces nothing. The shared controls carry their own semantics, so any direct call to
- * clickable must say what it is.
+ * clickable must say what it is. A source scan cannot tell whether a role comes with a name, so
+ * [DesignHarness.render] also fails on a rendered control that has no spoken name.
  */
 class DesignLint {
 
@@ -29,6 +30,9 @@ class DesignLint {
         "MaterialTheme or ripple" to 0,
         "text sizes under 11sp" to 0,
         "clickable without semantics" to 0,
+        // Both hide a switch inside a row that already speaks as that switch. Raise this only
+        // after checking that the new use hides no control from a screen reader.
+        "clearAndSetSemantics" to 2,
     )
 
     private fun sources(): List<File> = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
@@ -53,6 +57,11 @@ class DesignLint {
                         hit("sp literals outside Tokens.kt", file, n, line)
                         if (m.groupValues[1].toFloat() < 11f && !line.contains("letterSpacing")) hit("text sizes under 11sp", file, n, line)
                     }
+                }
+                /* clearAndSetSemantics hides every node inside, controls included, and a render
+                 * cannot see what it hid. So each use needs a person to check it. */
+                if (line.contains("clearAndSetSemantics") && !line.trimStart().startsWith("import ")) {
+                    hit("clearAndSetSemantics", file, n, line)
                 }
                 if (line.contains("MaterialTheme") || line.contains("ripple(")) {
                     if (file.name !in bridgeFiles) hit("MaterialTheme or ripple", file, n, line)
