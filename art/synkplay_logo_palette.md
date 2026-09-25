@@ -1,13 +1,12 @@
 # Synkplay logo palette
 
-Approved on 2026-08-31. This is the **26% softer** evolution of the original
-Kotlin-inspired palette. The logo geometry, cutouts, gradient axes, and highlight
-geometry are locked; this document records color only.
+This file records the colors of the Synkplay logo. It covers color only. Do not change the logo
+geometry, the cutouts, the gradient axes or the highlight geometry through this file.
 
 ## Linear color field
 
-The primary gradient runs diagonally from `(250, 1200)` to `(1160, 100)` in
-the `1254 × 1254` vector viewport.
+The primary gradient runs diagonally from `(250, 1200)` to `(1160, 100)` in the `1254 × 1254`
+vector viewport.
 
 | Offset | Color | Role |
 |---:|:---:|---|
@@ -19,7 +18,7 @@ the `1254 × 1254` vector viewport.
 
 ## Diffuse lilac light
 
-The soft radial veil is centered at `(440, 527)` with radius `602`.
+The soft radial light is centered at `(440, 527)` with a radius of `602`.
 
 | Offset | Color | Opacity |
 |---:|:---:|---:|
@@ -27,11 +26,12 @@ The soft radial veil is centered at `(440, 527)` with radius `602`.
 | 42% | `#F3ECFF` | 14% |
 | 100% | `#F3ECFF` | 0% |
 
-## Trinity: the three colors the app itself uses
+## Trinity: the three colors that the app uses
 
-The UI cannot draw a five stop field everywhere, so the theme and the launcher
-vector run on three seeds. They are the stops that cover most of the logo's
-visible sail area, and they live in `buildSrc/src/main/kotlin/AppConfig.kt`.
+Trinity is the name of three brand colors. They are the logo stops that cover most of the visible
+logo. The app themes and the launcher vector take three seed colors, not the five-stop field, so
+they use these three. The values live in
+[`buildSrc/src/main/kotlin/AppConfig.kt`](../buildSrc/src/main/kotlin/AppConfig.kt).
 
 | Seed | Color | Logo stop |
 |---|:---:|---|
@@ -39,35 +39,55 @@ visible sail area, and they live in `buildSrc/src/main/kotlin/AppConfig.kt`.
 | `TRINITY_2` | `#C331D8` | 55% |
 | `TRINITY_3` | `#D86B75` | 88% |
 
-The `#793695` stop at 0% is a shadow anchor for the artwork only. It is left out
-of the Trinity because the app draws these three raw, and a near black violet
-would kill the gradient on a dark screen.
+The `#793695` stop at 0% is not a seed. The in-app logo computes that stop from the first two
+seeds: it mixes them and darkens the mix in the Oklab color space. With the Trinity seeds, the
+result is `#793695`.
 
-From `AppConfig` the three values flow out in two directions:
+From `AppConfig`, the three values go two ways:
 
-- `KiteBuildConfig.TRINITY_COLOR_1/2/3` (declared in the root `build.gradle.kts`)
-  become `Theming.NeoSP1/2/3` and `Theming.SP_GRADIENT`, which seed the Trinity
-  and Daylight built in themes and every brand gradient in the UI.
-- `propagateTrinityColors()` rewrites the three gradient stops in
-  `shared/src/androidMain/res/drawable/ic_launcher_foreground.xml`, the legacy
-  vector still used for notification small icons and the Android TV banner.
+- The root `build.gradle.kts` turns them into `KiteBuildConfig.TRINITY_COLOR_1`, `_2` and `_3`.
+  These become `Theming.NeoSP1`, `NeoSP2` and `NeoSP3` in the app. They seed the built-in themes
+  `TRINITY` (shown as "Violet") and `DAYLIGHT`. A theme without its own seed colors falls back to
+  them.
+- The `syncTrinityColors` task writes them into the three gradient stops of
+  `shared/src/androidMain/res/drawable/ic_launcher_foreground.xml`. The small icon of the server
+  notification and the Android TV banner use that vector.
 
-Change a color here and both paths follow. Never hand edit the launcher vector.
+The task does not run by itself. After you change a Trinity color in `AppConfig.kt`, run it:
+
+```bash
+./gradlew :shared:syncTrinityColors
+```
+
+Never edit the gradient stops of the launcher vector by hand.
 
 ## Source and generated assets
 
+KiteConfig is a Gradle plugin. Its block in the root `build.gradle.kts` holds the app name, the
+app ID, the version and the two logo images of the app icons.
+
 - `art/synkplay_logo.svg` is the canonical vector artwork.
-- `shared/src/commonMain/composeResources/drawable/synkplay_logo.xml` is the equivalent Compose VectorDrawable.
-- `shared/src/commonMain/composeResources/drawable/synkplay_fg.png` is the transparent 1024 x 1024 KiteConfig foreground.
-- `shared/src/commonMain/composeResources/drawable/synkplay_bg.png` is the opaque platform plate. It is neutral gray, so a palette change does not touch it.
-- Android launcher resources and `iosApp/iosApp/Assets.xcassets/AppIcon.appiconset` are generated and owned by KiteConfig.
+- `shared/src/commonMain/kotlin/app/uicomponents/SynkplayLogo.kt` draws the same shape in code, so
+  that the logo takes the colors of the active theme.
+- `shared/src/commonMain/composeResources/drawable/synkplay_fg.png` is the transparent
+  1024 × 1024 foreground of the app icons.
+- `shared/src/commonMain/composeResources/drawable/synkplay_bg.png` is the opaque background plate
+  of the app icons. It is neutral gray, so a palette change does not affect it.
+- KiteConfig generates and owns the Android launcher resources and
+  `iosApp/iosApp/Assets.xcassets/AppIcon.appiconset`.
 
-Regenerate the raster and platform assets from the repository root:
+Run the commands below from the repository root.
 
-```shell
+Render the foreground from the SVG:
+
+```bash
 rsvg-convert --width 1024 --height 1024 \
   --output shared/src/commonMain/composeResources/drawable/synkplay_fg.png \
   art/synkplay_logo.svg
+```
 
-./gradlew kiteRewriteLogo
+Regenerate the platform icons:
+
+```bash
+./gradlew kiteApply
 ```

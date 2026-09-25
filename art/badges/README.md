@@ -1,7 +1,8 @@
 # Download badges
 
-One family for GitHub, IzzyOnDroid, Google Play, App Store, AltSource and direct IPA downloads.
-The existing PNG filenames remain stable; `app-store.png` replaces the formerly remote badge.
+This folder holds one family of download buttons for GitHub, IzzyOnDroid, Google Play, the App
+Store, AltSource and the direct IPA download. They are custom Synkplay buttons that use the brand
+mark of each destination, with one shared layout and type system.
 
 | GitHub | IzzyOnDroid | Google Play |
 |---|---|---|
@@ -9,15 +10,19 @@ The existing PNG filenames remain stable; `app-store.png` replaces the formerly 
 | **App Store** | **AltSource** | **IPA** |
 | ![Download on the App Store](app-store.png) | ![Add AltSource](AltSource_Blue.png) | ![Download IPA](Download_Blue.png) |
 
+Keep the file names. The README and the release notes link to them.
+
 ## Shared geometry
 
-Every SVG has `viewBox="0 0 240 72"` and intrinsic dimensions **480 × 144**; every PNG is also
-**480 × 144**. The PNGs cover a 160 × 48 display at 3× density. Current consumers display them at
-140px (README) or 150px (release notes) wide. Set the same width and preserve the aspect ratio.
-Release-note image URLs are pinned to the source checkout's commit, so rerunning an existing
-version includes its current artwork without changing old image URLs.
-There is no outer transparent padding; only the rounded corners are transparent. Keep spacing
-between buttons in the surrounding layout.
+Every SVG has `viewBox="0 0 240 72"` and an intrinsic size of **480 × 144**. Every PNG is also
+**480 × 144**, which covers a 160 × 48 display at 3× density.
+
+- The README shows the badges 140 pixels wide, and the release notes show them 150 pixels wide.
+  Set the width, and keep the aspect ratio.
+- The release notes load each image through the commit that the release workflow checks out. So
+  an old release page keeps its images when the artwork changes later.
+- A badge has no transparent padding. Only the rounded corners are transparent. Put the space
+  between buttons in the surrounding layout.
 
 All geometry below uses SVG viewBox units:
 
@@ -26,43 +31,52 @@ All geometry below uses SVG viewBox units:
 | Plate | x/y 0.5; width 239; height 71; fill `#080808` |
 | Border | 1; `#91959C` |
 | Corner radius | 8 |
-| Icon slot | x 14; y 16; 40 × 40; proportionally fitted and centred |
+| Icon slot | x 14; y 16; 40 × 40; fitted with the proportions kept, centered |
 | Text left ink edge | 68 |
 | Header | Lexend 400; size 9; tracking 0.5; baseline 25 |
 | Title | Lexend 450; size 22; baseline 51 |
 | Right text limit | 226 |
 
-The plates and PNG alpha channels match exactly. Brand marks retain their natural proportions
-inside the shared slot. Titles keep one font size even when their lengths differ.
+The plates and the PNG alpha channels match exactly. Each brand mark keeps its natural proportions
+inside the shared slot. All titles use one font size, whatever their length.
 
 ## Rebuild
 
-Edit `generate.py` for layout/copy, or `marks/*.svg` for a mark, then run from the repository root:
+Edit `generate.py` to change the layout or the text. Edit `marks/*.svg` to change a mark.
 
-```sh
-# Requires uv and librsvg's rsvg-convert (Homebrew: brew install librsvg).
+The script needs `uv` and `rsvg-convert` (from librsvg). On macOS, you can install librsvg with
+Homebrew:
+
+```bash
+brew install librsvg
+```
+
+Rebuild the badges from the repository root:
+
+```bash
 uv run art/badges/generate.py
 ```
 
-The script pins FontTools through its inline dependency metadata. It reads the existing
-`shared/src/commonMain/composeResources/font/Lexend_variable.ttf`, outlines the type into each
-standalone SVG, then renders each PNG with librsvg. SVGs contain no font dependency, script,
-remote image or external stylesheet. Commit the generator/marks and regenerated SVG/PNG pairs
-together. Rebuilding does not contact brand websites.
+- The script pins FontTools through its inline dependency metadata.
+- It reads `shared/src/commonMain/composeResources/font/Lexend_variable.ttf` and turns the text
+  into outlines in each SVG. Then librsvg renders each PNG.
+- The SVGs contain no font dependency, no script, no remote image and no external stylesheet.
+- The rebuild does not contact any brand website.
+
+Commit the generator, the marks and the regenerated SVG and PNG pairs together.
 
 ## Mark sources
 
 - GitHub: `GitHub Logos/SVG/GitHub_Invertocat_White.svg` from the
-  [official logo archive](https://brand.github.com/GitHub_Logos.zip). The visible path is preserved.
-- Apple: the two Apple-mark paths from the
-  [official badge previously used by the README](https://developer.apple.com/assets/elements/icons/download-on-the-app-store/download-on-the-app-store.svg).
-- IzzyOnDroid: [official logo](https://codeberg.org/IzzyOnDroid/assets/raw/branch/main/IzzyOnDroidLogo.svg),
-  [source and usage terms](https://codeberg.org/IzzyOnDroid/assets/raw/branch/main/README.md).
-  Upstream combines vector shapes with a raster Android mascot. This set preserves those shapes
-  and embeds a proportionally reduced 128 × 128 mascot, sufficient for its roughly 50px rendered
-  size in the PNG. **This mark is not entirely vector.** The SVG remains self-contained.
-- Google Play, IPA and AltSource: compact vector redraws of the marks in the previous local
-  `google-play.png`, `Download_Blue.png` and `AltSource_Blue.png` respectively.
-
-These are custom Synkplay download buttons using the respective brand marks, with a shared
-layout and type system. Original local badges remain recoverable through Git history.
+  [official logo archive](https://brand.github.com/GitHub_Logos.zip). The visible path is kept.
+- Apple: the two Apple-mark paths from Apple's
+  [official App Store badge](https://developer.apple.com/assets/elements/icons/download-on-the-app-store/download-on-the-app-store.svg).
+- IzzyOnDroid: the [official logo](https://codeberg.org/IzzyOnDroid/assets/raw/branch/main/IzzyOnDroidLogo.svg),
+  with its [source and usage terms](https://codeberg.org/IzzyOnDroid/assets/raw/branch/main/README.md).
+  The upstream logo combines vector shapes with a raster Android mascot. This set keeps those
+  shapes and embeds the mascot, reduced to 128 × 128. That resolution is enough for a mascot of
+  about 50 pixels in the PNG. **This mark is not entirely vector.** The SVG is still
+  self-contained.
+- Google Play, IPA and AltSource: compact vector redraws of the marks in older versions of
+  `google-play.png`, `Download_Blue.png` and `AltSource_Blue.png`. Git history keeps those older
+  files.

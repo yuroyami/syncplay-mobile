@@ -1,105 +1,235 @@
 # Developing Synkplay
 
-Run the commands below from the repository root unless a block changes directories. On Windows,
-use `gradlew.bat` in place of `./gradlew`.
+This guide explains how to build, run and check Synkplay, a Kotlin Multiplatform client for
+[Syncplay](https://syncplay.pl/). Run every command from the repository root. On Windows, use
+`gradlew.bat` in place of `./gradlew`.
+
+Two words appear everywhere in this repository:
+
+- A **room** is the group of people who watch together. A Syncplay server keeps everyone in the
+  room at the same position.
+- An **engine** is one of the video players that the app can drive, such as ExoPlayer or mpv.
 
 ## Project map
 
-| Location | Responsibility |
+| Location | Contents |
 |---|---|
-| [`shared/`](../shared) | Compose UI, room state, protocol, sync decisions and built-in server; platform integrations live in their source sets |
-| [`shared/src/nonWebMain/`](../shared/src/nonWebMain) | Everything the browser cannot run: TCP sockets, the KitePlayer engine, blocking reads |
-| [`shared/src/jvmShared/`](../shared/src/jvmShared) | Netty client and NewPipe resolver shared by Android and desktop |
-| [`androidApp/`](../androidApp), [`iosApp/`](../iosApp), [`desktopApp/`](../desktopApp), [`webApp/`](../webApp) | Platform application shells |
-| [`buildSrc/`](../buildSrc) | Release tasks, dependency reporting and quality gates |
+| [`shared/`](../shared) | The Compose UI, the room state, the protocol, the sync decisions and the built-in server. Platform code lives in the platform source sets. |
+| [`shared/src/nonWebMain/`](../shared/src/nonWebMain) | Code that a browser cannot run: TCP sockets, the KitePlayer engine and blocking reads. |
+| [`shared/src/jvmShared/`](../shared/src/jvmShared) | The Netty client and the NewPipe media resolver, for Android and desktop. A media resolver turns a page link, such as a YouTube link, into a video stream. |
+| [`androidApp/`](../androidApp), [`iosApp/`](../iosApp), [`desktopApp/`](../desktopApp), [`webApp/`](../webApp) | The platform app shells. |
+| [`buildSrc/`](../buildSrc) | The release tasks, the dependency report and the quality gates. |
 
-The networking protocol is a Kotlin port of the official Syncplay client. `RoomViewmodel` owns
-the room managers; the sync decision is a pure function in `app.protocol.sync.SyncDecision`.
-Netty handles client TCP/TLS on Android and desktop, SwiftNIO on iOS. The shared Ktor transport
-is a fallback without opportunistic TLS; the built-in server does not offer TLS.
+The protocol code is a Kotlin port of the official Syncplay client. `RoomViewmodel` holds one
+room. It owns the managers of that room, such as `PlayerManager`, `ProtocolManager` and
+`SharedPlaylistManager`. The sync decision is a pure function: `decideSync()` in
+`app/protocol/sync/SyncDecision.kt`.
 
-Read [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the ground rules, the gate commands, the
-source-set rules and the traps worth knowing before you change anything. Open work lives in
-the issue tracker.
+Netty carries the client connection on Android and desktop. SwiftNIO carries it on iOS. Both can
+upgrade the connection to TLS when the server offers it. The shared Ktor transport is a fallback
+without TLS. The built-in server does not offer TLS.
+
+Read [`CONTRIBUTING.md`](../CONTRIBUTING.md) before you change anything. It has the ground rules,
+the gate commands, the source-set rules and the known traps. Open work is in the issue tracker.
 
 ## Toolchain
 
-- Install **JDK 21**. The build requests it without a vendor constraint; do not add a JVM vendor
-  pin or a toolchain downloader to work around a missing local JDK.
-- Use Android Studio compatible with the AGP version in
-  [`gradle/libs.versions.toml`](../gradle/libs.versions.toml), and the committed Gradle wrapper.
-- Android currently uses **compile/target SDK 37**, **Build Tools 37.0.0**, **NDK 29.0.14206865**,
-  and **min SDK 26 (Android 8.0)**. The authoritative pins are in
-  [`gradle.properties`](../gradle.properties).
-- iOS requires macOS, Xcode and CocoaPods. The deployment target is **iOS 15.0**; arm64 device
-  and arm64 simulator targets are configured.
+- Install **JDK 21**. The build asks for JDK 21 and names no vendor. Do not add a JVM vendor pin or
+  a toolchain downloader. The IzzyOnDroid rebuild servers bring their own JDK 21 (issue #105).
+- Use an Android Studio version that supports the AGP version in
+  [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). Use the committed Gradle wrapper.
+- Android uses compile and target **SDK 37**, **Build Tools 37.0.0**, **NDK 29.0.14206865** and
+  **min SDK 26** (Android 8.0). The pins are in [`gradle.properties`](../gradle.properties).
+- iOS needs macOS, Xcode and CocoaPods. The deployment target is **iOS 15.0**. The build has an
+  arm64 device target and an arm64 simulator target.
 
-Set `sdk.dir` in your local `local.properties`, or configure `ANDROID_HOME`, for the Android SDK.
-Dependency versions live in the version catalog; application identity and version live in the
-root [`kiteConfig` block](../build.gradle.kts).
+Set `sdk.dir` in `local.properties`, or set `ANDROID_HOME`, so that Gradle finds the Android SDK.
+
+Dependency versions are in the version catalog. The app name, the app ID and the version are in
+the root [`kiteConfig` block](../build.gradle.kts). KiteConfig is a Gradle plugin. It keeps these
+values in one place and writes them into the Android, iOS and desktop projects.
 
 ## Android
 
-Build a debug APK:
+The Android app has two flavors:
 
-```sh
+- **full**: ExoPlayer, mpv and KitePlayer. The app ID is `com.yuroyami.syncplay`.
+- **exoOnly**: ExoPlayer only. The app ID is `com.reddnek.syncplay`, so this app installs next to
+  the full app.
+
+The `-PexoOnly` property selects one flavor for the whole Gradle run. Do not mix full and exoOnly
+tasks in one Gradle run.
+
+Build a debug APK of the full flavor:
+
+```bash
 ./gradlew :androidApp:assembleFullDebug -PexoOnly=false
 ```
 
-Build the smaller ExoPlayer-only variant in a separate invocation:
+Build a debug APK of the exoOnly flavor in a separate Gradle run:
 
-```sh
+```bash
 ./gradlew :androidApp:assembleExoOnlyDebug -PexoOnly=true
 ```
 
-APKs are written under `androidApp/build/outputs/apk/`. There is one universal APK per flavor.
-`-PexoOnly` selects the project's flavor model, so full and exo-only tasks must not be mixed in
-one Gradle invocation.
+Gradle writes the APKs under `androidApp/build/outputs/apk/`. Each flavor has one universal APK
+that holds every ABI.
 
-The full flavor contains ExoPlayer, mpv and KitePlayer and uses `com.yuroyami.syncplay`.
-The exo-only flavor uses `com.reddnek.syncplay`; it can coexist with the full app. It strips the
-native mpv and KitePlayer libraries, but still contains other native code, including the
-ExoPlayer FFmpeg audio extension. `verifyExoOnlyApk` checks the packaged APK for player libraries.
+The exoOnly build removes the mpv libraries and the KitePlayer decoder library
+(`libkitecodec_jni.so`). It still carries other native code:
 
-mpv arrives prebuilt through [`libmpvKt`](https://github.com/yuroyami/libmpvKt), from the Maven
-repository declared in [`settings.gradle.kts`](../settings.gradle.kts). There is no local mpv
-native build. AGP still uses the pinned NDK to strip packaged libraries and extract symbols.
-KitePlayer resolves from Maven Central; `-PuseMavenLocal=true` explicitly enables local overrides
-for the maintainer's libraries.
+- the ExoPlayer FFmpeg audio extension, which ExoPlayer uses
+- the KitePlayer subtitle library (`libkiteplayer_libass_jni.so`), which this flavor never uses
+
+The removal of the subtitle library is tracked in #ISSUE(exo-only-apk-carries-kiteplayer-libass).
+`verifyExoOnlyApk` reads each exoOnly APK and fails the build when a player library from its list
+is inside. That list does not contain the subtitle library.
+
+mpv comes prebuilt from [libmpvKt](https://github.com/yuroyami/libmpvKt), through the Maven
+repository that [`settings.gradle.kts`](../settings.gradle.kts) declares. There is no local mpv
+build. AGP still uses the pinned NDK to strip the packaged libraries and to extract symbols.
+KitePlayer comes from Maven Central.
+
+To test local builds of the `io.github.yuroyami` libraries (such as KiteConfig and KitePlayer),
+add `-PuseMavenLocal=true`. Gradle then takes those libraries from your local Maven repository. A
+release build with this flag fails on purpose, because nobody else could rebuild it.
+
+## Android TV
+
+The same APK runs on phones and on Android TV. On a television, people use the app with a remote
+(D-pad). The app keeps its content inside a safe margin at the screen edge. It also lists the
+videos on the device itself, because a remote cannot use the system file picker.
+
+These rules apply to television work:
+
+- An Android phone emulator never counts as verification.
+- You can use the Android TV emulator for television work. A real television decides the final
+  pass.
+- Do not add a second focus style for television. The drawn controls already paint the focus
+  ring (see `app/uicomponents/controls/ControlSupport.kt`).
+
+### Check focus without an emulator
+
+`TvFieldEscapeTest`, `TvModalFocusTest` and `TvControlsTest` press keys against the render harness.
+The render harness is a set of desktop tests that draw real composables without a device. So most
+focus rules need no emulator. These tests run with `./gradlew :shared:desktopTest`.
+
+### Set up the emulator
+
+The steps and the faults below come from an Apple silicon Mac. Another host can need a different
+GPU mode, or an x86_64 system image.
+
+Install the system image:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "system-images;android-36;google-tv;arm64-v8a"
+```
+
+Create the device:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n tv-1080p -k "system-images;android-36;google-tv;arm64-v8a" -d tv_1080p
+```
+
+Start the emulator. It boots in about a minute.
+
+```bash
+$ANDROID_HOME/emulator/emulator -avd tv-1080p -no-snapshot -gpu swiftshader_indirect -no-audio -no-boot-anim
+```
+
+### Use the emulator
+
+Send a remote key. The other keys are `KEYCODE_DPAD_UP`, `KEYCODE_DPAD_LEFT`,
+`KEYCODE_DPAD_RIGHT`, `KEYCODE_DPAD_CENTER` and `KEYCODE_BACK`.
+
+```bash
+adb shell input keyevent KEYCODE_DPAD_DOWN
+```
+
+Take a screenshot. The focused control draws its focus ring, so the screenshot shows where the
+focus is.
+
+```bash
+adb exec-out screencap -p > tv.png
+```
+
+The system image has no file picker, so the app shows its own video list. Copy a video to the
+emulator:
+
+```bash
+adb push video.mp4 /sdcard/Movies/
+```
+
+Then tell the media scanner about the file. After that, the video list of the app shows it.
+
+```bash
+adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Movies/video.mp4
+```
+
+### Known faults
+
+- The accessibility dump returns no root node while a video decodes. During playback, read the
+  screen from screenshots.
+- mpv's video output on the software renderer takes all the processor time of the emulator. Test
+  with ExoPlayer, and judge mpv on a real device.
+- Both GPU modes of the emulator can fail after a while, and `adb` then hangs. Restart the
+  emulator.
+- The official server drops connections that arrive less than 3 seconds apart. When you restart
+  the app often, test in solo mode (watching alone, with no server). To start solo mode, open
+  About from the logo on Home, then pick **Watch alone**.
+- The television keyboard floats over the app and reports a height of zero. Code must check
+  whether the keyboard is visible, not how tall it is.
 
 ## iOS
 
-Prepare the shared framework placeholder before resolving the local CocoaPod:
+Build the placeholder shared framework. CocoaPods needs it to resolve the local pod.
 
-```sh
+```bash
 ./gradlew :shared:generateDummyFramework
-cd iosApp
-pod install
-open iosApp.xcworkspace
 ```
 
-Build the `iosApp` scheme in Xcode. Select a development team for a device build. Use the
-workspace so CocoaPods dependencies are included; VLCKit is declared once in
-[`shared/build.gradle.kts`](../shared/build.gradle.kts) and linked through the shared pod.
-If the local CocoaPods spec cache cannot resolve the locked dependencies, run
-`pod install --repo-update`.
+Install the pods:
 
-For a Kotlin-only compile check from the repository root:
+```bash
+pod install --project-directory=iosApp
+```
 
-```sh
+Open the workspace:
+
+```bash
+open iosApp/iosApp.xcworkspace
+```
+
+Build the `iosApp` scheme in Xcode. For a device build, select a development team. Always open
+the workspace, not the project, so that the CocoaPods dependencies are part of the build.
+[`shared/build.gradle.kts`](../shared/build.gradle.kts) declares VLCKit once, and the shared pod
+links it.
+
+If the local CocoaPods spec cache cannot resolve the locked versions, update the cache:
+
+```bash
+pod install --repo-update --project-directory=iosApp
+```
+
+To check that the Kotlin code compiles for iOS:
+
+```bash
 ./gradlew :shared:compileKotlinIosArm64
 ```
 
-This does not compile the Swift shell or its bridges. Changes to exported Kotlin types also
-need a complete Xcode workspace build against the regenerated framework.
+This check does not compile the Swift shell or its bridges. A change to a Kotlin type that Swift
+uses also needs a full Xcode build of the workspace.
 
 ## Desktop
 
-```sh
+Run the desktop app:
+
+```bash
 ./gradlew :desktopApp:run
 ```
 
-Build an installer on its matching operating system:
+Build an installer on the operating system that it is for. jpackage cannot build an installer for
+another operating system.
 
 | Host | Command | Output directory |
 |---|---|---|
@@ -107,154 +237,227 @@ Build an installer on its matching operating system:
 | Windows | `gradlew.bat :desktopApp:packageMsi` | `desktopApp/build/compose/binaries/main/msi/` |
 | Linux | `./gradlew :desktopApp:packageDeb` | `desktopApp/build/compose/binaries/main/deb/` |
 
-`jpackage` does not cross-build installers. `:desktopApp:createDistributable` builds an
-application image. macOS package versions use a leading `1` for the app's `0.x` versions to meet
-jpackage's version requirement; the app's own version remains unchanged.
+`:desktopApp:createDistributable` builds an app image without an installer. On macOS, jpackage
+does not accept a version that starts with 0. So the macOS package of a `0.x.y` app has the
+version `1.x.y`. The app itself still shows its real version.
 
-KitePlayer is the only desktop engine. Its decoder arrives with the KiteFFmpeg dependency;
-there is no separate native-player download task. Desktop rendering uses the Compose canvas
-so the room controls can receive input over video. Add `-PdebugProtocol=true` to a Gradle
-invocation when investigating wire traffic.
+KitePlayer is the only desktop engine. Its decoder comes with the KiteFFmpeg dependency, so there
+is no separate download task. The desktop app draws video on the Compose canvas, so that the room
+controls over the video can take clicks. To log every protocol line, add `-PdebugProtocol=true`
+to the Gradle command.
 
 ## Web
 
-Early scaffolding. The target builds and the interface runs in a browser, but it cannot reach a
-server and cannot play video yet. Treat it as a place to work, not a client to use.
+The web target is early work. It builds, and the interface runs in a browser. It cannot reach a
+server, and it cannot play video.
 
-```sh
+Start a local development server:
+
+```bash
 ./gradlew :webApp:wasmJsBrowserDevelopmentRun
 ```
 
-That serves the app on a local development port with hot reload. For a static bundle:
+Build a static bundle:
 
 | Purpose | Command | Output directory |
 |---|---|---|
-| Development bundle | `./gradlew :webApp:wasmJsBrowserDevelopmentWebpack` | `webApp/build/dist/wasmJs/developmentExecutable/` |
+| Development bundle | `./gradlew :webApp:wasmJsBrowserDevelopmentExecutableDistribution` | `webApp/build/dist/wasmJs/developmentExecutable/` |
 | Production bundle | `./gradlew :webApp:wasmJsBrowserDistribution` | `webApp/build/dist/wasmJs/productionExecutable/` |
 
-Compile without bundling while working on shared code:
+Compile the shared code for the browser without a bundle:
 
-```sh
+```bash
 ./gradlew :shared:compileKotlinWasmJs
 ```
 
-Two gaps are deliberate and both need real work rather than configuration.
+Two gaps block a usable web client. Both are tracked:
+#ISSUE(web-client-has-no-server-to-reach) and #ISSUE(web-client-has-no-video).
 
-- **Nothing to connect to.** A browser tab cannot open a TCP socket, which is what the Syncplay
-  protocol runs on. `WebSocketNetworkManager` sends the same CRLF-delimited JSON over a WebSocket
-  instead, and no Syncplay server answers that today. The two ways forward are a bridge process
-  that translates WebSocket to TCP, or a WebSocket listener added beside the TCP one in this
-  app's own built-in server. The second needs no hosted infrastructure.
-- **Nothing to play with.** All four existing engines decode natively. The web engine wraps the
-  browser's own `<video>` element, and the element is not attached yet: `WebVideoImpl` satisfies
-  the player contract and records state so the rest of the app runs. Attaching it means one
-  element placed through Compose Multiplatform's `HtmlElementView`.
+- **No server to reach.** A browser tab cannot open a TCP socket, and the Syncplay protocol runs
+  over TCP. `WebSocketNetworkManager` sends the same JSON lines, each one ending in CRLF, over a
+  WebSocket. No Syncplay server accepts WebSocket connections today. One fix is a bridge process
+  that translates WebSocket to TCP. The other fix is a WebSocket listener beside the TCP listener
+  in the app's own built-in server. The second fix needs no hosting.
+- **No video.** Every other engine decodes in native code, which a browser cannot load. The web
+  engine, `WebVideoImpl`, wraps the browser's `<video>` element, but no element is attached yet.
+  The engine follows the engine contract and records state, so the rest of the app runs. To
+  attach the element, place one `<video>` through Compose Multiplatform's `HtmlElementView`.
 
-Some features are absent by nature rather than unfinished: hosting a server, the stream-URL
-resolvers, folder scanning for shared playlists, and any filesystem access, so logs, downloaded
-subtitles and resume positions have nowhere to go. Settings do persist, in the browser's
-localStorage.
+Some features cannot exist in a browser:
 
-Compose Multiplatform's web target is Beta while the other three are stable. A failure that shows
-up only in the browser is the target's before it is the app's.
+- hosting a server, because a tab cannot listen on a port
+- the media resolvers, because NewPipe Extractor is a JVM library and YouTubeKit is Swift
+- scanning a folder for the shared playlist (the list of files that everyone in the room follows)
+- files on disk, so the web client keeps no log file and no downloaded subtitles
 
-## Player capabilities
+Settings persist in the browser's localStorage. The saved resume positions are a setting, so they
+persist too.
 
-Choose the engine on Home before joining. The room creates that engine once; in-room settings
-configure the selected engine and do not switch to another one.
+## Engine capabilities
 
-| Platform / engine | Default | Playback and subtitles | Chapters | Picture-in-picture |
+Pick the engine on Home before you join. Home shows what each engine supports. The room creates
+the engine once. The room settings configure that engine, and they do not switch to another one.
+
+| Platform and engine | Default | Playback and subtitles | Chapters | Picture-in-picture |
 |---|---|---|---|---|
-| Android / mpv | Full flavor | Broad formats; embedded and external subtitles, including libass styling | Yes | Android host |
-| Android / ExoPlayer | Exo-only flavor | Device video codecs plus bundled FFmpeg audio extension; embedded and external subtitles | No | Android host |
-| Android / KitePlayer | No; experimental | FFmpeg playback; embedded and external subtitles, including styled ASS | Yes | Android host |
-| iOS / VLCKit | Yes | Broad formats; embedded and external subtitles | Yes | Yes |
-| iOS / AVPlayer | No | System-supported media; embedded text tracks, no external subtitle loading | No | Yes |
-| iOS / KitePlayer | No; experimental | FFmpeg playback; embedded and external subtitles, including styled ASS | Yes | No |
-| Desktop / KitePlayer | Yes; only engine | FFmpeg playback; embedded and external subtitles, including styled ASS | Yes | No |
+| Android, mpv | Yes, in the full flavor | Broad format support. Embedded and external subtitles, with libass styling. | Yes | Yes |
+| Android, ExoPlayer | Yes, in the exoOnly flavor | The device's video codecs, plus the bundled FFmpeg audio extension. Embedded and external subtitles. | No | Yes |
+| Android, KitePlayer | No (experimental) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | Yes |
+| iOS, VLCKit | Yes | Broad format support. Embedded and external subtitles. | Yes | Yes |
+| iOS, AVPlayer | No | The formats that iOS supports. Embedded text tracks. No external subtitle files. | No | Yes |
+| iOS, KitePlayer | No (experimental) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | No |
+| Desktop, KitePlayer | Yes (the only engine) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | No |
+| Web, browser video | Yes (the only engine) | Nothing plays yet. See [Web](#web). | No | No |
 
-Support depends on the actual media and device. Keep engine lifecycle, subtitle selection and
-playback behavior covered by the relevant device checks when changing adapters.
+On Android, picture-in-picture belongs to the app window, so it works with every engine. On
+Android, KitePlayer needs a 64-bit device, because its decoder library exists only for arm64-v8a
+and x86_64.
 
-Component licenses are not interchangeable with the app's [AGPL-3.0 license](../LICENSE).
-The [in-app attribution list](../shared/src/commonMain/kotlin/app/home/components/Attributions.kt)
-records Media3 as Apache 2.0, mpv as GPL 2.0 or later, VLCKit/libVLC as LGPL 2.1 or later, and
-the KitePlayer/KiteFFmpeg libraries as Apache 2.0. Their bundled FFmpeg builds have separate
-notices: see the [Exo audio extension's provenance](../shared/libs/README.md) and the corresponding
-upstream native release/source notices, including [libmpvKt releases](https://github.com/yuroyami/libmpvKt/releases).
-Do not infer a bundled decoder's license from the Kotlin wrapper's license.
+What plays depends on the file and on the device. When you change an engine adapter, check its
+lifecycle, its subtitle selection and its playback on a real device.
+
+The app is under the [AGPL-3.0 licence](../LICENSE). Its components keep their own licences. The
+[in-app attribution list](../shared/src/commonMain/kotlin/app/home/components/Attributions.kt)
+lists Media3 as Apache 2.0, mpv as GPL 2.0 or later, VLCKit and libVLC as LGPL 2.1 or later, and
+KitePlayer and KiteFFmpeg as Apache 2.0. Each bundled FFmpeg build has its own licence:
+
+- the FFmpeg in the ExoPlayer audio extension: see [`shared/libs/README.md`](../shared/libs/README.md)
+- the FFmpeg in mpv: see the [libmpvKt releases](https://github.com/yuroyami/libmpvKt/releases)
+- the FFmpeg in KitePlayer: see [KiteFFmpeg](https://github.com/yuroyami/KiteFFmpeg)
+
+Do not infer the licence of a bundled decoder from the licence of its Kotlin wrapper.
 
 ## Verification
 
-```sh
+Run the tests:
+
+```bash
 ./gradlew :shared:desktopTest :shared:testAndroidHostTest
+```
+
+Run the static checks:
+
+```bash
 ./gradlew qualityGates detekt koverVerify
+```
+
+Compile the web target:
+
+```bash
 ./gradlew :shared:compileKotlinWasmJs
 ```
 
-The shared tests run against both desktop and Android host implementations. They cover sync
-decisions and position reporting, wire parsing, server flows, room passwords, invites, file
-comparison, ping/clock offset, slash commands, resume storage, settings backup and rate limiting.
-Desktop design tests also render real composables; their images appear in
-`shared/build/design-goldens/`. The network-dependent subtitle E2E test is intentionally ignored.
+What these tasks check:
 
-`qualityGates` checks source and resource invariants; `detekt` uses the repository's focused
-configuration. `koverVerify` enforces the protocol/server coverage floor in the root build file.
-Keep that floor as a ratchet. When dependency versions change, run `./gradlew updateDocVersions`
-to refresh the generated version tables.
+- `:shared:desktopTest` runs the common tests on the desktop JVM, and the desktop-only tests.
+  `:shared:testAndroidHostTest` runs the common tests against the Android implementations on the
+  host JVM.
+- The common tests cover sync decisions and position reports, wire parsing, server flows, room
+  passwords, invite links, file comparison, ping and clock offset, slash commands, resume
+  storage, settings backup and rate limiting.
+- The render harness writes its images to `shared/build/design-goldens/`.
+- `qualityGates` runs nine build-time checks, such as the string resource and locale checks.
+  `detekt` uses the rule set of this repository.
+- `koverVerify` fails when the line coverage of `app.protocol` and `app.server` drops below
+  `COVERAGE_FLOOR` in the root [`build.gradle.kts`](../build.gradle.kts). Raise the floor when
+  coverage grows. Do not lower it.
 
-Host tests do not prove native decoder behavior, PiP, background/interruption handling,
-lock-screen controls, television remote navigation, or two-device synchronization. Use a real
-Android device over ADB, not an Android emulator, and a physical iOS device for those paths.
-A sync change needs a two-device session through file changes, pause/seek, EOF, backgrounding
-and reconnect. A platform compile alone does not establish that these work.
+The live subtitle test is off by default. It needs the network, and each run uses one download
+from the daily quota of the OpenSubtitles key (5 a day on the free plan). Run it only when you
+need it:
+
+```bash
+./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest
+```
+
+Tests on the host do not prove native decoding, picture-in-picture, backgrounding and
+interruptions, lock-screen controls, television remote navigation, or sync between two devices.
+
+- Check these paths on a real Android device over ADB, and on a real iPhone or iPad.
+- An Android phone emulator does not count as verification. For television work, see
+  [Android TV](#android-tv).
+- Check a sync change with two devices in one room. Go through a file change, a pause, a seek,
+  the end of a file, backgrounding and a reconnect. A compile on each platform does not show that
+  these work.
 
 ## Releases
 
-The manual [Release workflow](../.github/workflows/release.yml) runs `qualityGates` and `detekt`
-before building Android and iOS. Host tests and coverage are separate checks to run before
-starting it. Store uploads are optional; the Play track is an input. Desktop packaging is
-optional and off by default. The GitHub release waits for enabled desktop builds, but not for
-store upload jobs; it attaches APKs, the IPA and any built desktop installers. The AAB goes to
-the Play upload job.
+The manual [Release workflow](../.github/workflows/release.yml) runs `qualityGates` and `detekt`,
+then builds Android and iOS. It does not run the tests or the coverage check, so run them before
+you start the workflow.
 
-1. Update `version` in the root `kiteConfig` block. Run `./gradlew printReleaseIdentity` to obtain
-   the effective version and version code.
-2. Add release notes to [`CHANGELOG.md`](../CHANGELOG.md), and a Play summary of at most 500
-   characters to `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
-3. Run `./gradlew kiteRewriteXcode` and review the generated identity/version changes. Run the
-   relevant verification above and commit the release inputs.
-4. Start the Release workflow with the intended Play track and optional destinations.
-5. Check the resulting artifacts and destination statuses. A rerun for an existing version
-   replaces that release's uploaded files and notes; the workflow also updates the AltStore feed.
+- The store uploads are optional. You select the Play track when you start the workflow.
+- The desktop packages are optional and off by default.
+- The GitHub release waits for the builds, including enabled desktop builds. It does not wait for
+  the store uploads.
+- The GitHub release gets the APKs, the IPA and any desktop installers. The AAB goes only to the
+  Play upload job.
 
-The [release-body script](../.github/scripts/release-body.sh) builds the download table, changelog
-and dependency table. `./gradlew printDependencyTable` prints the dependency information it uses.
-Use `./gradlew androidReleaseAll` for local release APKs and the full AAB in `AndroidAppOutput/`;
-the task invokes the two flavor builds separately and checks the output set.
+To make a release:
 
-Local Android release signing requires `keystore/syncplaykey.jks` and `keystore.keyAlias`,
-`keystore.keyPassword`, and `keystore.storePassword` in `local.properties`. CI signing uses
-repository secrets. A release build without the keystore fails; contributors can build debug
-variants without the maintainer's signing credentials.
+1. Set `version` in the root `kiteConfig` block.
+2. Print the version and the version code that the build uses:
+
+   ```bash
+   ./gradlew printReleaseIdentity
+   ```
+
+3. Add the release notes to [`CHANGELOG.md`](../CHANGELOG.md).
+4. Add a Play summary of 500 characters or fewer to
+   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+5. Write the version into the Xcode project, then review the change:
+
+   ```bash
+   ./gradlew kiteApplyIos
+   ```
+
+6. Run the checks in [Verification](#verification). Commit the release inputs.
+7. Start the Release workflow. Select the Play track and the destinations.
+8. Check the artifacts and the status of each destination.
+
+A second run for a version that already has a release replaces the files and the notes of that
+release. The workflow also adds the version to the AltStore feed, `altstore_yuroyami.json`.
+
+The [release-body script](../.github/scripts/release-body.sh) writes the download table, the
+changelog and the dependency table of the release notes. Print the dependency data that it uses:
+
+```bash
+./gradlew printDependencyTable
+```
+
+Build the release APKs and the full AAB on your machine, into `AndroidAppOutput/`:
+
+```bash
+./gradlew androidReleaseAll
+```
+
+This task builds the two flavors in separate Gradle runs and checks the set of output files.
+
+A local release build needs the signing keystore: `keystore/syncplaykey.jks`, plus
+`keystore.keyAlias`, `keystore.keyPassword` and `keystore.storePassword` in `local.properties`.
+The CI signs with repository secrets. A release build without the keystore fails. Debug builds
+need no keystore, so contributors can build them without the signing credentials.
 
 ### Reproducing a published APK
 
-The ExoPlayer-only APK is the one built to be rebuilt from source and compared with the published
-file, which is how IzzyOnDroid verifies a release. That build needs no keystore, no
+The exoOnly APK is built so that anyone can rebuild it from source and compare it with the
+published file. IzzyOnDroid checks each release this way. The build needs no keystore, no
 `local.properties` and no repository secret.
 
-Check out the tag of the release you are verifying. A tag is `v` and the version, so release
-0.24.0 is `v0.24.0`. Build it with **JDK 21**, the same version the Toolchain section above
-requires:
+A `yuroyami.keyOpenSubsApi` entry in `local.properties` replaces the committed OpenSubtitles key,
+and your APK then differs from the published file. Remove that entry before you build.
 
-```sh
-./gradlew assembleExoOnlyRelease -PexoOnly=true -PunsignedRelease=true
-```
+1. Check out the tag of the release. A tag is `v` followed by the version, so release 0.25.0 has
+   the tag `v0.25.0`.
+2. Build with **JDK 21**, the version that [Toolchain](#toolchain) names:
 
-`-PunsignedRelease` skips signing on purpose, and it skips it even on a machine that holds the
-keystore. The APK carries `unsigned` in its name, so the file cannot be mistaken for a release. It
-is written to `androidApp/build/outputs/apk/exoOnly/release/`.
+   ```bash
+   ./gradlew assembleExoOnlyRelease -PexoOnly=true -PunsignedRelease=true
+   ```
 
-Copy the signature from the published APK onto that file with
-[`apksigcopier`](https://github.com/obfusk/apksigcopier), then compare the two byte for byte.
+3. Find the APK in `androidApp/build/outputs/apk/exoOnly/release/`. Its name contains `unsigned`,
+   so nobody can take it for a release. `-PunsignedRelease=true` skips signing on purpose, even
+   on a machine that holds the keystore.
+4. Copy the signature from the published APK onto your APK with
+   [apksigcopier](https://github.com/obfusk/apksigcopier).
+5. Compare the two files byte for byte.

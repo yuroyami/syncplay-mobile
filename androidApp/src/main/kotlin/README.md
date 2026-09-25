@@ -1,5 +1,8 @@
 ## Where is the Android code?
 
-All Android code (including activities and the application class) lives in `shared/src/androidMain/` — this is intentional.
+All Android code lives in `shared/src/androidMain/`, on purpose. This includes the activity
+(`app.SyncplayActivity`) and the application class (`app.SynkplayApp`).
 
-The app was originally single-module, but AGP 9.0+ requires a dedicated app module separate from the shared KMP module. The `androidApp` module is therefore kept as thin as possible, acting only as an entry point, similar to how iosApp does it.
+AGP 9 needs the Android application in its own module, separate from the Kotlin Multiplatform
+module. So the `androidApp` module is only a thin entry point: its manifest, its resources and its
+build file. The `iosApp` shell is thin in the same way.

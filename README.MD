@@ -18,12 +18,13 @@
   <a href="docs/DEVELOPING.md">Build</a>
 </p>
 
-Synkplay is an independent [Syncplay](https://syncplay.pl/) client for phones, tablets and Android TV, with a browser version on the way.
+Synkplay is an independent [Syncplay](https://syncplay.pl/) client for phones, tablets and Android TV.
+A browser version is in development, and it cannot join a room yet.
 When one person in the room pauses, plays or skips, the same thing happens for everyone else.
-It speaks the same protocol as the original Syncplay, so friends on a computer can join the same room.
+Synkplay speaks the same protocol as the original Syncplay, so friends on a computer can join the same room.
 
 > [!NOTE]
-> Each person opens the same video from their own file or link. Synkplay only keeps playback in step. Nothing from your video or screen is sent to anyone.
+> Each person opens the same video from their own file or link. Synkplay only keeps playback in step. It never sends your video or your screen to anyone.
 
 ## Download
 
@@ -71,28 +72,31 @@ It speaks the same protocol as the original Syncplay, so friends on a computer c
   </tr>
 </table>
 
-Android 8.0 or newer. The IPA needs iOS 15.0 or newer. Store builds usually land a few days after the GitHub release.
+Android needs version 8.0 or newer. iPhone and iPad need iOS 15.0 or newer.
+The stores review each build first, so a store update can arrive later than the GitHub release.
 
 The browser version is not ready yet. On a computer, install the [official Syncplay client](https://syncplay.pl/download/) and join the same room.
 
 <details>
 <summary><b>Which download should I choose?</b></summary>
 
-- **Android:** Google Play is the easy route. The full APK on GitHub is the same app, with mpv, ExoPlayer and KitePlayer, and it runs on every supported CPU.
+- **Android:** Google Play is the simplest option. The full APK on GitHub is the same app, with mpv, ExoPlayer and KitePlayer, and it runs on every supported CPU. KitePlayer needs a 64-bit device.
 - **IzzyOnDroid:** a smaller build with ExoPlayer only. It installs next to the full app as a separate app, with its own settings.
-- **iPhone and iPad:** the App Store. If you would rather sideload, [set up AltStore Classic](https://faq.altstore.io/), then use **Add to AltStore** above.
+- **iPhone and iPad:** the App Store. To sideload instead, [set up AltStore Classic](https://faq.altstore.io/), then use **Add to AltStore** above.
 
 </details>
 
 ## Start a room
 
-1. Everyone joins the same room: same server, same port, same room name. The default public server works fine.
+1. Everyone joins the same room: the same server, the same port and the same room name. The official Syncplay server (syncplay.pl) is the default.
 2. Everyone opens the same video, from a file on their device or from a link.
-3. Tap **Ready**. When everyone is ready, press play.
+3. Press play when everyone shows as **Ready**. Synkplay marks you as ready when you join. A setting turns this off.
 
-You can share an invite link from inside the room. The link only opens on a device that has Synkplay installed.
+To invite people, use **Share the room** inside the room. The link opens a web page that offers to open Synkplay or to install it.
+To join from a link, paste it into the room field on Home. Synkplay then fills in the server, the port, the room name and the password.
+When the server has a password, the link contains it, so share the link only with the people you want in the room.
 
-To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no server, and it remembers where you stopped.
+To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no server, and it offers to continue where you stopped.
 
 ## What you can do
 
@@ -100,9 +104,9 @@ To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no
 - Chat with text, emoji and GIFs while you watch.
 - Share a playlist that moves on to the next file by itself.
 - Set your own time offset when your copy has a longer intro.
-- Load your own subtitle files, on players that support them.
-- Host a room on your own device with **Host mine** on Home.
-- Work the whole app with a remote on Android TV.
+- Load subtitle files, or search OpenSubtitles from the room, on engines that support subtitle files.
+- Host a room on your own device: pick **Host mine** on Home.
+- Use the whole app with a remote on Android TV.
 
 <details>
 <summary><b>Also in there</b></summary>
@@ -111,8 +115,8 @@ To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no
 - Undo for the shared playlist.
 - Preferred audio and subtitle languages.
 - Picture-in-Picture on Android, and on iOS with AVPlayer or VLCKit.
-- Managed rooms, where one controller decides playback.
-- Hidden or hashed filenames and file sizes.
+- Managed rooms, on servers that support them. In a managed room, only the room operators control playback and the playlist.
+- A choice to share your file name and file size as they are, hashed, or not at all.
 - Encrypted connections, when the server supports them.
 
 </details>
@@ -132,17 +136,17 @@ To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no
 <details>
 <summary><b>Can my friends use Syncplay on PC?</b></summary>
 
-Yes. They join the same server, port and room, and open the same video. Synkplay and the official Syncplay client mix fine in one room.
+Yes. They join the same server, port and room, and open the same video. Synkplay and the official Syncplay client work together in one room.
 
 </details>
 
 <details>
 <summary><b>A video or subtitle does not play right.</b></summary>
 
-Leave the room, pick a different player on Home, and join again.
-The defaults are **mpv** on the full Android build and **VLCKit** on iOS.
-KitePlayer is still experimental on phones. AVPlayer cannot load subtitle files.
-[Compare the players](docs/DEVELOPING.md#player-capabilities).
+Leave the room, pick a different engine on Home, and join again. An engine is one of the video players that Synkplay can use.
+The default engine is **mpv** in the full Android app, **ExoPlayer** in the IzzyOnDroid app and **VLCKit** on iOS.
+KitePlayer is still experimental. AVPlayer cannot load subtitle files.
+Home shows what each engine supports. [Compare the engines](docs/DEVELOPING.md#engine-capabilities).
 
 </details>
 
