@@ -45,6 +45,10 @@ the gate commands, the source-set rules and the known traps. Open work is in the
 
 Set `sdk.dir` in `local.properties`, or set `ANDROID_HOME`, so that Gradle finds the Android SDK.
 
+`gradle.properties` turns on the Gradle build cache and the configuration cache. A task that
+reads the `Project` object while it runs breaks the configuration cache. Read what the task
+needs while it is configured, as `printDependencyTable` does.
+
 Dependency versions are in the version catalog. The app name, the app ID and the version are in
 the root [`kiteConfig` block](../build.gradle.kts). KiteConfig is a Gradle plugin. It keeps these
 values in one place and writes them into the Android, iOS and desktop projects.
