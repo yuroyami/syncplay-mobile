@@ -90,6 +90,8 @@ fun ScrubTrack(
         }
     }
 
+    // Reported to the desktop key map, so the arrow keys move this track and do not seek.
+    ReportArrowKeyFocus(source)
     Canvas(
         modifier = modifier
             .fillMaxWidth()

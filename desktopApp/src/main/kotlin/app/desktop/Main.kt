@@ -32,7 +32,7 @@ import app.protocol.WireMessage
 import app.utils.initializeDatastore
 import app.utils.loggy
 import app.utils.platformCallback
-import app.uicomponents.controls.TextInputFocus
+import app.uicomponents.controls.ArrowKeyFocus
 import app.preferences.warmPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +78,8 @@ fun main(args: Array<String>) {
             state = windowState,
             // The arrow keys are handled before focus dispatch, or Compose uses them to move focus
             // and the room never sees them. All other keys are handled after dispatch, so a space
-            // typed into chat stays a space. No arrow key is taken while someone is typing.
+            // typed into chat stays a space. No arrow key is taken while a text field, a slider or
+            // a stepper has focus.
             onPreviewKeyEvent = { event -> handleArrowKey(event) },
             onKeyEvent = { event -> handleGlobalKey(event, windowState) },
         ) {
@@ -185,12 +186,12 @@ private fun parseJoinArgs(args: Array<String>) {
 
 /**
  * The arrow keys: left and right seek, up and down change the volume. They are handled before
- * Compose's focus traversal gets them. They act only in a room with a video, and never while
- * someone is typing.
+ * Compose's focus traversal gets them. They act only in a room with a video, and never while a
+ * control that uses the arrow keys (a text field, a slider or a stepper) has focus.
  */
 private fun handleArrowKey(event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
-    if (TextInputFocus.isTyping) return false
+    if (ArrowKeyFocus.isClaimed) return false
     val global = globalViewmodel ?: return false
     if (global.backstack.lastOrNull() !is Screen.Room) return false
     val vm = global.roomWeakRef?.get() ?: return false

@@ -22,7 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -110,10 +109,7 @@ fun Field(
         }
     }
     // Reported to the desktop key map, so the arrow keys move the caret and do not seek.
-    DisposableEffect(focused) {
-        if (focused) TextInputFocus.report(true)
-        onDispose { if (focused) TextInputFocus.report(false) }
-    }
+    ReportArrowKeyFocus(focused)
     val lineColor by animateColorAsState(if (focused) p.accent else p.rule, Motion.quick(), label = "line")
     val lineWidth by animateDpAsState(if (focused) 2.dp else Space.hair, Motion.quick(), label = "lineWidth")
 

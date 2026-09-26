@@ -77,6 +77,8 @@ fun Stepper(
     val canBack = enabled && options.isNotEmpty() && (wrap || current > 0)
     val canForward = enabled && options.isNotEmpty() && (wrap || current < last)
 
+    // Reported to the desktop key map, so the arrow keys step this control and do not seek.
+    ReportArrowKeyFocus(source)
     Row(
         modifier = modifier
             .widthIn(min = Space.valueCol + 32.dp * 2, max = Space.valueMax + 32.dp * 2)
