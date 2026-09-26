@@ -159,10 +159,14 @@ confirm that the gate fails on it.
 
 Other checks:
 
-- `verifyExoOnlyApk` runs after every package task of the ExoPlayer-only flavour. That flavour is
-  the Android build with ExoPlayer as its only engine (`-PexoOnly=true`). The task fails when the
-  APK carries a native library whose name starts with a forbidden prefix, such as `libmpv` or
-  `libkitecodec` (`buildSrc/src/main/kotlin/ExoOnlyApkGate.kt`).
+- `verifyExoOnlyDebugApk` and `verifyExoOnlyReleaseApk` run with the assemble task of the
+  ExoPlayer-only flavour. That flavour is the Android build with ExoPlayer as its only engine
+  (`-PexoOnly=true`). The task fails when the APK carries a native library whose name starts with
+  a forbidden prefix, such as `libmpv`, `libkitecodec` or `libkiteplayer`
+  (`buildSrc/src/main/kotlin/ExoOnlyApkGate.kt`).
+- `verifyFullDebugDecoders` and `verifyFullReleaseDecoders` run with the assemble task of the full
+  flavour. They fail when the APK has an ABI without the KitePlayer decoder, `libkitecodec_jni.so`
+  (`buildSrc/src/main/kotlin/KiteDecoderApkGate.kt`).
 - The design lint is a test in `shared/src/desktopTest` (`DesignLint.kt`). It fails on:
   - a Material 3 component import (`ColorScheme` is allowed)
   - an `sp` literal outside `Tokens.kt`

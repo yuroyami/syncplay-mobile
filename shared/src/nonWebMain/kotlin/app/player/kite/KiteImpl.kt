@@ -53,7 +53,6 @@ import io.github.yuroyami.kiteplayer.audioviz.AudioVizState
 import io.github.yuroyami.kiteplayer.audioviz.SongMapStore
 import io.github.yuroyami.kiteplayer.audioviz.SongScanPolicy
 import io.github.yuroyami.kiteplayer.audioviz.rememberAudioVizState
-import io.github.yuroyami.kiteplayer.audioviz.viz.VizFamily
 import io.github.yuroyami.kiteplayer.audioviz.viz.Visualization
 import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
@@ -772,9 +771,6 @@ internal class KiteImpl(
                     viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
                     // Every display frame on a 120 Hz phone costs battery for no visible gain.
                     viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
-                    // The library starts on a random drawing from its whole catalogue, which is
-                    // larger than what this app offers, so the first pick is made again here.
-                    viz.offeredDrawings().randomOrNull()?.let { viz.drawing = it }
                     viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
                 }
                 DisposableEffect(viz) {
@@ -821,18 +817,6 @@ internal class KiteImpl(
 }
 
 /**
- * The drawings this app offers, out of the whole catalogue KitePlayer ships.
- *
- * Matched by name and by family, not by class, so the library stays free to add and drop drawings:
- * a name that leaves the catalogue leaves this row with it, and a new drawing in the Battery family
- * joins on its own. The rest of the catalogue is not removed from the library, only from the row.
- */
-private val OFFERED_DRAWING_NAMES = setOf(
-    "Bars", "Alchemy", "Ocean Mist", "Neon Lo-Fi", "Aurora Field", "Reactor", "Pipe", "Drift", "Smoke Rise",
-)
-
-/** Whole families this app offers, however many drawings they hold. */
-/**
  * What one engine status means for the room. [playing] is the play state to mirror, or null to
  * leave it as it is. [ownStop] marks a stop that the engine made by itself, so the room is not
  * told about it: a failure is local, shown to the user and never broadcast as a pause.
@@ -852,24 +836,16 @@ internal fun mirrorOf(status: PlaybackStatus): KiteStatusMirror = when (status) 
     PlaybackStatus.Failed -> KiteStatusMirror(playing = false, buffering = false, ownStop = true)
 }
 
-private val OFFERED_DRAWING_FAMILIES = setOf(VizFamily.Battery)
-
-/** The offered drawings, in catalogue order. */
-private fun AudioVizState.offeredDrawings(): List<Visualization> =
-    catalogue.filter { it.family in OFFERED_DRAWING_FAMILIES || it.name in OFFERED_DRAWING_NAMES }
-
 /** The tracks card's view of the visualizer: reads are snapshot state, the director switch persists. */
 private class KiteVisualizerControls(private val viz: AudioVizState, private val scope: CoroutineScope) : VisualizerControls {
-    /** Held once: the library builds its catalogue at construction and never changes it. */
-    private val offered: List<Visualization> = viz.offeredDrawings()
+    /**
+     * The whole catalogue, which the director also draws from. Held once: the library builds its
+     * catalogue at construction and never changes it.
+     */
+    private val offered: List<Visualization> = viz.catalogue
 
     override val drawings: List<String> = offered.map { it.name }
 
-    /**
-     * The director draws from the library's whole catalogue, not from [offered], so while it is on
-     * the drawing on screen can be one this row does not list. The row then falls back to its first
-     * entry, because there is no index to point at.
-     */
     override val showing: Int get() = offered.indexOf(viz.showing)
 
     override fun show(index: Int) {

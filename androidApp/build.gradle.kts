@@ -1,3 +1,4 @@
+import com.android.build.api.artifact.SingleArtifact
 import io.github.yuroyami.kiteconfig.kiteConfig
 
 plugins {
@@ -115,8 +116,8 @@ android {
             jniLibs {
                 // The exoOnly APK carries no native player library. The libmpvkt dependency
                 // stays so that the engine code compiles, and this block drops its libraries.
-                // verifyExoOnlyApk (buildSrc/ExoOnlyApkGate.kt) reads the finished APK and fails
-                // the build if one of them is still inside.
+                // The APK gate (buildSrc/ExoOnlyApkGate.kt) reads the finished APK and fails the
+                // build if one of them is still inside.
                 for (lib in AppConfig.libmpvNativeLibs) {
                     excludes += ("**/$lib")
                 }
@@ -124,6 +125,8 @@ android {
                 // links all of FFmpeg statically. It costs more size than mpv, so the exoOnly
                 // APK drops it too. KitePlayerPlatform.isAvailable detects that it is missing.
                 excludes += ("**/libkitecodec_jni.so")
+                // KitePlayer's subtitle renderer has no user once its decoder is gone.
+                excludes += ("**/libkiteplayer_libass_jni.so")
             }
         }
     }
@@ -152,12 +155,17 @@ android {
     }
 }
 
-if (exoOnly) {
-    // Check every exoOnly APK for native player libraries. See buildSrc/ExoOnlyApkGate.kt.
-    registerExoOnlyApkGate()
-}
-
 androidComponents {
+    // Each APK gets its native library check as part of its assemble task: no player library in
+    // exoOnly (buildSrc/ExoOnlyApkGate.kt), and KitePlayer's decoder for every ABI in full
+    // (buildSrc/KiteDecoderApkGate.kt).
+    onVariants { variant ->
+        val apks = variant.artifacts.get(SingleArtifact.APK)
+        val gate = if (exoOnly) registerExoOnlyApkGate(variant.name, apks) else registerKiteDecoderApkGate(variant.name, apks)
+        val assemble = "assemble" + variant.name.replaceFirstChar { it.uppercase() }
+        tasks.matching { it.name == assemble }.configureEach { dependsOn(gate) }
+    }
+
     // KiteConfig sets the major compile SDK. AGP needs the minor level set again after that.
     finalizeDsl { it.compileSdkMinor = providers.gradleProperty("android.compileSdkMinor").get().toInt() }
     onVariants { variant ->

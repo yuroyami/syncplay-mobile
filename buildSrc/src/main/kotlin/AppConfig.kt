@@ -52,8 +52,8 @@ object AppConfig {
     /**
      * Every native library the libmpvkt AAR carries. The exoOnly flavor removes them at packaging
      * time, so that build ships no native player, which IzzyOnDroid's reproducible build relies
-     * on. Keep the list equal to what the pinned libmpvkt version ships; verifyExoOnlyApk fails
-     * the build if a player library still reaches the APK.
+     * on. Keep the list equal to what the pinned libmpvkt version ships; the exoOnly APK gate
+     * fails the build if a player library still reaches the APK.
      */
     val libmpvNativeLibs = listOf(
         "libavcodec.so", "libavdevice.so", "libavfilter.so", "libavformat.so", "libavutil.so",

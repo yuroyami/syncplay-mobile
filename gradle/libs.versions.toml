@@ -56,7 +56,7 @@ newpipeExtractor = "v0.26.5"
 
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
-kiteplayer = "0.0.26"
+kiteplayer = "0.0.27"
 # libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
 # from Central. settings.gradle.kts limits that repository to the libmpvkt modules.
 libmpvkt = "0.2.0"

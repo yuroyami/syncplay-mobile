@@ -75,15 +75,17 @@ Build a debug APK of the exoOnly flavor in a separate Gradle run:
 Gradle writes the APKs under `androidApp/build/outputs/apk/`. Each flavor has one universal APK
 that holds every ABI.
 
-The exoOnly build removes the mpv libraries and the KitePlayer decoder library
-(`libkitecodec_jni.so`). It still carries other native code:
+The exoOnly build removes the mpv libraries and the KitePlayer libraries (`libkitecodec_jni.so`
+and `libkiteplayer_libass_jni.so`). The only player code left is the ExoPlayer FFmpeg audio
+extension, which ExoPlayer uses.
 
-- the ExoPlayer FFmpeg audio extension, which ExoPlayer uses
-- the KitePlayer subtitle library (`libkiteplayer_libass_jni.so`), which this flavor never uses
+Each APK gets a native library check as part of its assemble task:
 
-The removal of the subtitle library is tracked in #ISSUE(exo-only-apk-carries-kiteplayer-libass).
-`verifyExoOnlyApk` reads each exoOnly APK and fails the build when a player library from its list
-is inside. That list does not contain the subtitle library.
+- `verifyExoOnlyDebugApk` and `verifyExoOnlyReleaseApk` fail the build when a player library is
+  inside the exoOnly APK.
+- `verifyFullDebugDecoders` and `verifyFullReleaseDecoders` fail the build when the full APK has
+  an ABI without the KitePlayer decoder. The one exception is 32-bit x86, which KitePlayer does
+  not build for.
 
 mpv comes prebuilt from [libmpvKt](https://github.com/yuroyami/libmpvKt), through the Maven
 repository that [`settings.gradle.kts`](../settings.gradle.kts) declares. There is no local mpv
