@@ -41,6 +41,10 @@ With **Host mine** on Home, your device runs a Syncplay server. The people who j
 in the list above to your device. Each time you start the server, the app asks a public-IP lookup
 service (api.ipify.org) for your public address, so that the screen can show it.
 
+When you turn on **Encrypt connections** for the server (Android and desktop), the app makes a
+certificate once. The hosting panel shows its fingerprint, so that the people who join can check
+it.
+
 ### Klipy (GIFs and stickers)
 
 - When you open the GIF panel, the app loads GIFs from Klipy: the trending list or your recent
@@ -59,7 +63,11 @@ service (api.ipify.org) for your public address, so that the screen can show it.
 
 - When you open **Search subtitles** while a video is open, the search starts at once. The app
   sends a search text that it makes from the file name of the video, and your language filter.
-- When you search again, the app sends your new search text.
+  When the file name holds a season and an episode number, the app sends them too. For a file on
+  your device, the app also sends the OpenSubtitles hash of the file: a number that the app
+  calculates from the file size and from the first and last 64 KB of the file. OpenSubtitles uses
+  it to find subtitles made for that exact file.
+- When you search again, the app sends your new search text, without the hash.
 - When you download a subtitle, the app sends the ID of that subtitle.
 
 ### Media resolvers
@@ -79,7 +87,8 @@ asks you first. **Resolve streaming URLs** in the settings turns the resolvers o
 ### The site of a video link
 
 When you or the room play a link, your device loads the video directly from the site that hosts
-it.
+it. The chapter list takes its still frames from the same video, so it can load parts of the video
+from that site again.
 
 ### GitHub
 
@@ -101,6 +110,11 @@ part to the server of the page. An invite link never holds the operator password
 - Your last join details: name, room, server, port, server password and operator password. The
   app saves them while **Remember joining info** is on, which is the default. The app saves the
   passwords in plain text.
+- Your recent rooms: up to five, each with the name, the room, the server and the port. The list
+  holds no password. The app keeps it while **Remember joining info** is on.
+- The certificates that you chose to trust: for each server address, the fingerprint of its
+  certificate. A different certificate at that address later gets a warning.
+- The certificate of a server that you host with encryption, and its private key.
 - The room shortcuts that you save. A shortcut holds the join details, including the server
   password. On iOS, a shortcut also holds the operator password when you pasted it with the room
   name. On Android, a shortcut pinned to the home screen stays on the launcher until you remove
@@ -121,8 +135,9 @@ On Android, the app turns off cloud backup and device-to-device transfer for its
 
 None of these permissions sends data anywhere beyond what this policy lists.
 
-- **Notifications** (Android 13 and newer): the app asks when it starts. It uses notifications for
-  the playback controls and for a server that you host.
+- **Notifications** (Android 13 and newer): the app asks when it starts. It uses notifications to
+  show what plays in a room, and for a server that you host. The notification has no playback
+  controls, so it cannot pause, play or seek the room.
 - **Vibration** (Android): the app gives short feedback when you touch a control.
 - **Videos** (Android TV only): on a television, the app asks to read the video library, so that
   it can list your videos. Android 12 and older call this permission storage. A phone or a tablet
