@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
+import app.player.chapterStills
 import app.theme.Space
 import app.theme.palette
 import app.uicomponents.controls.ListRow
@@ -34,7 +35,9 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
     if (!open) return
     val viewmodel = LocalRoomViewmodel.current
     val media by viewmodel.playerManager.media.collectAsState()
+    val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
     val chapters = media?.chapters ?: emptyList()
+    val stills = chapterStills
     val p = palette
 
     Modal(open = true, onDismiss = onDismiss, title = strings.roomChapters, size = ModalSize.Panel, inset = false) {
@@ -51,7 +54,7 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
             RowLabel(strings.roomChaptersSkip)
         }
         Rule()
-        chapters.forEach { chapter ->
+        chapters.forEachIndexed { index, chapter ->
             ListRow(onClick = {
                 onDismiss()
                 viewmodel.viewModelScope.launch {
@@ -60,6 +63,12 @@ fun ChaptersModal(open: Boolean, onDismiss: () -> Unit) {
                     viewmodel.dispatchOSD { Localization.strings.roomChaptersJump(chapter.name) }
                 }
             }) {
+                val shown = media
+                if (stills != null && shown != null) {
+                    val endMs = chapters.getOrNull(index + 1)?.timeOffsetMillis ?: durationMs.takeIf { it > 0L }
+                    ChapterStill(stills, shown, chapter, endMs)
+                    RowGap()
+                }
                 RowLabel(chapter.name)
                 RowGap()
                 RowValue(timestampFromMillis(chapter.timeOffsetMillis))

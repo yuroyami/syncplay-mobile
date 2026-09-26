@@ -1,5 +1,13 @@
 package app.room.ui.bottombar
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntSize
+import app.player.chapterStills
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
@@ -211,10 +219,20 @@ fun RoomSeekbar(modifier: Modifier) {
             }
 
             if (dragging && known && trackWidthPx > 0) {
+                // The still of the chapter under the finger, from the file itself (see ChapterStills).
+                val stills = chapterStills
+                var still by remember { mutableStateOf<ImageBitmap?>(null) }
+                LaunchedEffect(chapterUnderPlayhead, media?.location) {
+                    val shown = media
+                    val chapter = chapterUnderPlayhead
+                    still = if (stills == null || shown == null || chapter == null) null
+                    else stills.still(shown, chapter, marks.getOrNull(activeMark + 1)?.first?.timeOffsetMillis ?: durationMs)
+                }
                 ScrubBubble(
                     text = formatTimecode(shownMs) + (chapterUnderPlayhead?.name?.let { "  $it" } ?: ""),
                     fraction = preview,
                     trackWidthPx = trackWidthPx,
+                    still = if (chapterUnderPlayhead != null) still else null,
                     modifier = Modifier.align(Alignment.TopStart),
                 )
             }
@@ -225,18 +243,31 @@ fun RoomSeekbar(modifier: Modifier) {
     ChaptersModal(open = showChapters, onDismiss = { showChapters = false })
 }
 
-/** The target time above the finger, on a chromeSurface panel, kept inside the track. */
+/**
+ * The target time above the finger, on a chromeSurface panel, kept inside the track. With a
+ * [still], the chapter's frame sits above the time. The bubble grows upward, so its foot stays
+ * 4dp above the track.
+ */
 @Composable
-private fun ScrubBubble(text: String, fraction: Float, trackWidthPx: Int, modifier: Modifier = Modifier) {
-    var bubbleWidthPx by remember { mutableIntStateOf(0) }
-    val x = (fraction * trackWidthPx - bubbleWidthPx / 2f).coerceIn(0f, (trackWidthPx - bubbleWidthPx).toFloat().coerceAtLeast(0f))
-    Box(
+private fun ScrubBubble(text: String, fraction: Float, trackWidthPx: Int, still: ImageBitmap?, modifier: Modifier = Modifier) {
+    var bubbleSize by remember { mutableStateOf(IntSize.Zero) }
+    val x = (fraction * trackWidthPx - bubbleSize.width / 2f).coerceIn(0f, (trackWidthPx - bubbleSize.width).toFloat().coerceAtLeast(0f))
+    Column(
         modifier = modifier
-            .offset { IntOffset(x.toInt(), -34.dp.roundToPx()) }
-            .onSizeChanged { bubbleWidthPx = it.width }
+            .offset { IntOffset(x.toInt(), -(bubbleSize.height + 4.dp.roundToPx())) }
+            .onSizeChanged { bubbleSize = it }
             .chromeSurface(Radius.panelShape)
             .padding(horizontal = Space.gap, vertical = Space.gapTight),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (still != null) {
+            Image(
+                still,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.padding(bottom = Space.gapTight).size(128.dp, 72.dp).clip(Radius.tightShape),
+            )
+        }
         Text(text, style = Type.value, color = palette.ink, maxLines = 1)
     }
 }

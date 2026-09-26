@@ -27,6 +27,8 @@ import app.room.models.Message
 import app.room.models.MessagePalette
 import app.room.sharedplaylist.MediaAccessRegistry.FolderState
 import app.room.ui.bottombar.ChaptersModal
+import java.io.File
+import io.github.vinceglb.filekit.PlatformFile
 import app.room.ui.bottombar.RoomControlPanelCard
 import app.room.ui.bottombar.SubtitleSearchModal
 import app.room.ui.bottombar.SubtitleSearchResults
@@ -245,7 +247,8 @@ class SurfaceGoldens {
             }.assertAllTextFits()
 
             RoomRig.render("chapters", 360, heightDp = 700, fontScale = scale, solo = false, setup = { room ->
-                room.playerManager.media.value = MediaFile(location = MediaFileLocation.Remote("https://example.com/clip.mp4"), fileName = "clip.mp4").apply {
+                // A local file that does not exist: the chapter stills fail at once, with no network.
+                room.playerManager.media.value = MediaFile(location = MediaFileLocation.Local(PlatformFile(File("missing/clip.mp4"))), fileName = "clip.mp4").apply {
                     chapters.addAll(listOf(Chapter(0, "Opening", 0), Chapter(1, "The long middle part of the story", 90_000), Chapter(2, "Credits", 1_380_000)))
                 }
             }) { ChaptersModal(open = true, onDismiss = {}) }.assertAllTextFits()

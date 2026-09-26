@@ -31,7 +31,7 @@ import syncplaymobile.shared.generated.resources.kiteplayer
  */
 @Suppress("KotlinConstantConditions")
 internal class KiteEngine(
-    private val mediaResolver: KiteMediaResolver,
+    internal val mediaResolver: KiteMediaResolver,
     /** Desktop passes true: it is the only engine there, so it must also be the default one. */
     override val isDefault: Boolean = false,
     /**
