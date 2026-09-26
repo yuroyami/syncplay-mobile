@@ -1,5 +1,7 @@
 package app.design
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,7 @@ import app.preferences.LocalPrefsState
 import app.preferences.createDataStore
 import app.preferences.datastore
 import app.preferences.datastoreStateFlow
+import app.preferences.resetPreferencesForTesting
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.SemanticsActions
@@ -115,20 +118,27 @@ object DesignHarness {
         return layouts
     }
 
-    private var datastoreReady = false
+    private var harnessStore: DataStore<Preferences>? = null
 
     /**
      * Surfaces read preferences (the glass switch, the settings rows), so the harness owns a
-     * throwaway datastore.
+     * throwaway datastore. A test that swaps the process-wide store (DatastoreRecoveryTest) leaves
+     * its own behind, so every call puts the harness store back. It is created once: a second
+     * store on the same file is not allowed.
      */
     @Synchronized
     fun initDatastore() {
-        if (datastoreReady) return
-        val dir = File(System.getProperty("java.io.tmpdir"), "synkplay-design-harness").also { it.mkdirs() }
-        File(dir, "harness.preferences_pb").delete()
-        datastore = createDataStore { File(dir, "harness.preferences_pb").absolutePath }
+        val store = harnessStore ?: run {
+            val dir = File(System.getProperty("java.io.tmpdir"), "synkplay-design-harness").also { it.mkdirs() }
+            File(dir, "harness.preferences_pb").delete()
+            createDataStore { File(dir, "harness.preferences_pb").absolutePath }.also { harnessStore = it }
+        }
+        if (runCatching { datastore }.getOrNull() !== store) {
+            datastore = store
+            // The cached snapshot still reads the other store.
+            resetPreferencesForTesting()
+        }
         datastoreStateFlow.value
-        datastoreReady = true
     }
 
     @Composable
