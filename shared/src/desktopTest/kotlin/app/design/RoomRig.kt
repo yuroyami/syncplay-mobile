@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
 import app.LocalChatPalette
+import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.LocalScreen
 import app.PlatformCallback
@@ -107,7 +108,52 @@ internal object RoomRig {
         widthDp: Int = 960,
         heightDp: Int = 540,
         drive: Room.() -> Unit,
-    ) {
+    ) = inRoom(solo, withVideo, pictureInPicture) { viewmodel, destination ->
+        DesignHarness.drive(widthDp = widthDp, heightDp = heightDp, television = television, content = {
+            CompositionLocalProvider(
+                LocalRoomViewmodel provides viewmodel,
+                LocalScreen provides destination,
+                LocalChatPalette provides MessagePalette(),
+                LocalScreenReaderActive provides screenReader,
+            ) {
+                RoomScreenUI(viewmodel)
+            }
+        }) {
+            Room(viewmodel, this).drive()
+        }
+    }
+
+    /**
+     * Renders [content] once as a golden, inside a room model built as [drive] builds it. [setup]
+     * fills the room before the first frame, and the room is closed after the render.
+     */
+    fun render(
+        name: String,
+        widthDp: Int,
+        heightDp: Int = 800,
+        fontScale: Float = 1f,
+        solo: Boolean = true,
+        withVideo: Boolean = false,
+        overVideo: Boolean = false,
+        setup: (RoomViewmodel) -> Unit = {},
+        content: @Composable () -> Unit,
+    ): DesignHarness.Result = inRoom(solo, withVideo, pictureInPicture = true) { viewmodel, destination ->
+        setup(viewmodel)
+        DesignHarness.render(name, widthDp, heightDp, fontScale, overVideo = overVideo) {
+            CompositionLocalProvider(
+                LocalRoomViewmodel provides viewmodel,
+                LocalRoomUiState provides viewmodel.uiState,
+                LocalScreen provides destination,
+                LocalChatPalette provides MessagePalette(),
+                LocalScreenReaderActive provides false,
+            ) {
+                content()
+            }
+        }
+    }
+
+    /** Builds a room with no network and an [InertPlayer], runs [block], and closes the room. */
+    private fun <T> inRoom(solo: Boolean, withVideo: Boolean, pictureInPicture: Boolean, block: (RoomViewmodel, Screen.Room) -> T): T {
         DesignHarness.initDatastore()
         val destroyField = PlayerManager::class.java.getDeclaredField("pendingDestroy").apply { isAccessible = true }
         val previousDestroy = destroyField.get(null)
@@ -134,18 +180,7 @@ internal object RoomRig {
             if (withVideo) {
                 viewmodel.playerManager.media.value = MediaFile(location = MediaFileLocation.Remote("https://example.com/clip.mp4"), fileName = "clip.mp4")
             }
-            DesignHarness.drive(widthDp = widthDp, heightDp = heightDp, television = television, content = {
-                CompositionLocalProvider(
-                    LocalRoomViewmodel provides viewmodel,
-                    LocalScreen provides destination,
-                    LocalChatPalette provides MessagePalette(),
-                    LocalScreenReaderActive provides screenReader,
-                ) {
-                    RoomScreenUI(viewmodel)
-                }
-            }) {
-                Room(viewmodel, this).drive()
-            }
+            return block(viewmodel, destination)
         } finally {
             try {
                 store.clear()

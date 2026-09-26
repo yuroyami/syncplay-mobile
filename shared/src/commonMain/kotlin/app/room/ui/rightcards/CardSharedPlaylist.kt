@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -269,18 +270,7 @@ object CardSharedPlaylist {
                                 else -> Modifier
                             },
                         ) {
-                            if (source == current) {
-                                Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
-                            } else {
-                                Spacer(Modifier.size(Space.glyph))
-                            }
-                            RowGap()
-                            val absent = entry in missing
-                            MiddleCutText(entry, Type.note, if (absent) p.inkDim else p.ink, Modifier.weight(1f))
-                            if (absent) {
-                                RowGap()
-                                Icon(Icons.Filled.SearchOff, contentDescription = strings.roomSharedPlaylistMissing, tint = p.warn, modifier = Modifier.size(Space.glyph))
-                            }
+                            PlaylistEntry(entry, playing = source == current, missing = entry in missing)
                         }
                     }
                 }
@@ -316,6 +306,23 @@ object CardSharedPlaylist {
     }
 
     /** A header key. It uses the accent color while its strip is open. */
+    /** The inside of one playlist row: the play mark, the name, and a mark when this device lacks the file. */
+    @Composable
+    internal fun RowScope.PlaylistEntry(entry: String, playing: Boolean, missing: Boolean) {
+        val p = palette
+        if (playing) {
+            Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
+        } else {
+            Spacer(Modifier.size(Space.glyph))
+        }
+        RowGap()
+        MiddleCutText(entry, Type.note, if (missing) p.inkDim else p.ink, Modifier.weight(1f))
+        if (missing) {
+            RowGap()
+            Icon(Icons.Filled.SearchOff, contentDescription = strings.roomSharedPlaylistMissing, tint = p.warn, modifier = Modifier.size(Space.glyph))
+        }
+    }
+
     /** One line of [text], cut in the middle when it is too long, so an episode number and extension stay. */
     @Composable
     private fun MiddleCutText(text: String, style: TextStyle, color: Color, modifier: Modifier) {

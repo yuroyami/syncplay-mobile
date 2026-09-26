@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import app.i18n.strings
 import app.uicomponents.controls.Text
+import app.uicomponents.controls.FontSizeRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -73,6 +74,7 @@ fun ScreenFrame(
                 if (onBack != null) {
                     GlyphButton(BackGlyph, name = strings.actionBack, onClick = onBack, size = Space.glyphLarge)
                 }
+                // A long title in a large text size shrinks before it is cut.
                 Text(
                     text = title,
                     style = Type.display,
@@ -80,6 +82,7 @@ fun ScreenFrame(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).padding(start = if (onBack != null) Space.gapTight else 0.dp),
+                    autoSize = FontSizeRange(Type.display.fontSize),
                 )
                 actions()
             }

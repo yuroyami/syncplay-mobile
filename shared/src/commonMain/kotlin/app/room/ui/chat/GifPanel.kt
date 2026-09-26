@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -286,73 +288,18 @@ fun GifPanel(
                 contentDescription = strings.roomGifPoweredBy,
                 modifier = Modifier.align(Alignment.BottomEnd).zIndex(1f).padding(Space.gapTight).height(10.dp).aspectRatio(640 / 107f).alpha(0.7f),
             )
-            when {
-                isLoading -> ProgressBar(null, Modifier.fillMaxWidth().align(Alignment.TopCenter))
-                failed -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(strings.roomGifFailed, style = Type.note, color = p.inkDim)
-                    Spacer(Modifier.height(Space.gapTight))
-                    SecondaryAction(strings.roomGifRetry, onClick = { retry++ })
-                }
-                results.isEmpty() -> Text(
-                    text = strings.roomGifNoResults,
-                    style = Type.note,
-                    color = p.inkDim,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-                else -> ScrollbarHost(gridState, Modifier.fillMaxSize()) {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        modifier = Modifier.fillMaxSize(),
-                        columns = GridCells.Fixed(CHAT_MEDIA_COLUMNS),
-                        contentPadding = PaddingValues(CHAT_MEDIA_GAP),
-                        horizontalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
-                        verticalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
-                    ) {
-                        items(results, key = { it.id }) { media ->
-                            /* Fixed width and height on the tile: an empty UIImageView reports zero
-                             * size, and Compose never measures UIKit interop again after the image
-                             * loads. Alpha is a parameter for the same interop reason, and it follows
-                             * the HUD only. At alpha 0 Android composes no image at all, so an alpha
-                             * gated on "loaded" would never start the load, and the shimmer would
-                             * stay. The shimmer sits over the image until the image loads or fails:
-                             * on iOS the image is a native view that clears its own area of the
-                             * Compose canvas, so a shimmer under it would never show. */
-                            var loading by remember(media.id) { mutableStateOf(true) }
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clip(Radius.tightShape)
-                                    /* The name goes on the tile, not on the image inside it. On iOS
-                                     * the image is a native view that the Compose accessibility
-                                     * bridge cannot reach, so the grid would read as unlabeled
-                                     * buttons. */
-                                    .semantics(mergeDescendants = true) {
-                                        contentDescription = media.title.ifBlank { untitledGif }
-                                        role = Role.Button
-                                    }
-                                    .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
-                            ) {
-                                AnimatedImage(
-                                    url = media.previewUrl,
-                                    contentDescription = media.title.ifBlank { null },
-                                    contentScale = ContentScale.Crop,
-                                    alpha = if (isHUDVisible) 1f else 0f,
-                                    onLoaded = { loading = false },
-                                    onFailed = { loading = false },
-                                    modifier = Modifier.matchParentSize(),
-                                )
-                                if (loading && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
-                            }
-                        }
-                        if (isLoadingMore) {
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                ProgressBar(null, Modifier.fillMaxWidth().padding(Space.gapTight))
-                            }
-                        }
-                    }
-                }
-            }
+            GifResults(
+                isLoading = isLoading,
+                failed = failed,
+                results = results,
+                isLoadingMore = isLoadingMore,
+                gridState = gridState,
+                isHUDVisible = isHUDVisible,
+                untitledGif = untitledGif,
+                onRetry = { retry++ },
+                onSend = ::send,
+                onLongPress = { longPressed = it },
+            )
         }
     }
 
@@ -380,6 +327,94 @@ fun GifPanel(
                 Icon(if (isFav) Icons.Filled.HeartBroken else Icons.Filled.Favorite, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
                 RowGap()
                 RowLabel(if (isFav) strings.roomGifActionUnfavorite else strings.roomGifActionFavorite)
+            }
+        }
+    }
+}
+
+/**
+ * The drawer's lower part: a progress bar while the first page loads, the failure and retry, the
+ * empty state, or the grid of tiles.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun BoxScope.GifResults(
+    isLoading: Boolean,
+    failed: Boolean,
+    results: List<KlipyMedia>,
+    isLoadingMore: Boolean,
+    gridState: LazyGridState,
+    isHUDVisible: Boolean,
+    untitledGif: String,
+    onRetry: () -> Unit,
+    onSend: (KlipyMedia) -> Unit,
+    onLongPress: (KlipyMedia) -> Unit,
+) {
+    val p = palette
+    when {
+        isLoading -> ProgressBar(null, Modifier.fillMaxWidth().align(Alignment.TopCenter))
+        failed -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(strings.roomGifFailed, style = Type.note, color = p.inkDim)
+            Spacer(Modifier.height(Space.gapTight))
+            SecondaryAction(strings.roomGifRetry, onClick = onRetry)
+        }
+        results.isEmpty() -> Text(
+            text = strings.roomGifNoResults,
+            style = Type.note,
+            color = p.inkDim,
+            modifier = Modifier.align(Alignment.Center),
+        )
+        else -> ScrollbarHost(gridState, Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                state = gridState,
+                modifier = Modifier.fillMaxSize(),
+                columns = GridCells.Fixed(CHAT_MEDIA_COLUMNS),
+                contentPadding = PaddingValues(CHAT_MEDIA_GAP),
+                horizontalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
+                verticalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
+            ) {
+                items(results, key = { it.id }) { media ->
+                    /* Fixed width and height on the tile: an empty UIImageView reports zero
+                     * size, and Compose never measures UIKit interop again after the image
+                     * loads. Alpha is a parameter for the same interop reason, and it follows
+                     * the HUD only. At alpha 0 Android composes no image at all, so an alpha
+                     * gated on "loaded" would never start the load, and the shimmer would
+                     * stay. The shimmer sits over the image until the image loads or fails:
+                     * on iOS the image is a native view that clears its own area of the
+                     * Compose canvas, so a shimmer under it would never show. */
+                    var loading by remember(media.id) { mutableStateOf(true) }
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(Radius.tightShape)
+                            /* The name goes on the tile, not on the image inside it. On iOS
+                             * the image is a native view that the Compose accessibility
+                             * bridge cannot reach, so the grid would read as unlabeled
+                             * buttons. */
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = media.title.ifBlank { untitledGif }
+                                role = Role.Button
+                            }
+                            .combinedClickable(onClick = { onSend(media) }, onLongClick = { onLongPress(media) }),
+                    ) {
+                        AnimatedImage(
+                            url = media.previewUrl,
+                            contentDescription = media.title.ifBlank { null },
+                            contentScale = ContentScale.Crop,
+                            alpha = if (isHUDVisible) 1f else 0f,
+                            onLoaded = { loading = false },
+                            onFailed = { loading = false },
+                            modifier = Modifier.matchParentSize(),
+                        )
+                        if (loading && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
+                    }
+                }
+                if (isLoadingMore) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        ProgressBar(null, Modifier.fillMaxWidth().padding(Space.gapTight))
+                    }
+                }
             }
         }
     }

@@ -105,38 +105,16 @@ object PopupMediaDirs {
                 )
             }
             dirs.forEach { item ->
-                // Android document ids carry a storage prefix before the path; only the folder
-                // name matters here.
-                val name = (Uri.parseOrNull(item)?.pathSegments?.lastOrNull() ?: item)
-                    .substringAfter("primary:").substringAfter("secondary:").substringAfterLast("/")
                 // Walking a large folder takes seconds on a SAF tree, so the count arrives later.
                 val state by produceState<FolderState>(FolderState.Checking, item, recount) {
                     value = withContext(ioDispatcher) { MediaAccessRegistry.folderState(item) }
                 }
-                val lost = state == FolderState.Lost
-                ListRow(
-                    minHeight = Space.rowTall,
-                    onClick = if (lost) ({ replacing = item; directoryPicker.launch() }) else null,
-                ) {
-                    Icon(Icons.Filled.Folder, contentDescription = null, tint = if (lost) p.warn else p.inkDim, modifier = Modifier.size(Space.glyph))
-                    RowGap()
-                    Column(Modifier.weight(1f).padding(vertical = Space.gapTight)) {
-                        Text(name, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        when (val s = state) {
-                            FolderState.Checking -> Text(strings.mediaFolderCounting, style = Type.note, color = p.inkDim)
-                            FolderState.Lost -> Text(strings.mediaFolderLost, style = Type.note, color = p.warn)
-                            is FolderState.Open -> Text(strings.mediaFolderFiles(s.mediaFiles), style = Type.note, color = p.inkDim)
-                        }
-                        Text(item, style = Type.note, color = p.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    if (lost) {
-                        RowGap()
-                        Text(strings.mediaFolderGrant, style = Type.label, color = p.accent, maxLines = 1)
-                    }
-                    GlyphButton(CloseGlyph, name = strings.mediaDirectoriesDelete, tint = p.inkDim) {
-                        scope.launch { removeFolder(item) }
-                    }
-                }
+                MediaFolderRow(
+                    item = item,
+                    state = state,
+                    onGrant = { replacing = item; directoryPicker.launch() },
+                    onRemove = { scope.launch { removeFolder(item) } },
+                )
             }
         }
 
@@ -152,6 +130,35 @@ object PopupMediaDirs {
                 }
             },
         )
+    }
+
+    /**
+     * One remembered folder: its name, its media file count, and its path. A folder that the app
+     * can no longer open says so, and a tap on the row asks for access again.
+     */
+    @Composable
+    internal fun MediaFolderRow(item: String, state: FolderState, onGrant: () -> Unit, onRemove: () -> Unit) {
+        val p = palette
+        // Android document ids carry a storage prefix before the path; only the folder name matters here.
+        val name = (Uri.parseOrNull(item)?.pathSegments?.lastOrNull() ?: item)
+            .substringAfter("primary:").substringAfter("secondary:").substringAfterLast("/")
+        val lost = state == FolderState.Lost
+        ListRow(minHeight = Space.rowTall, onClick = if (lost) onGrant else null) {
+            Icon(Icons.Filled.Folder, contentDescription = null, tint = if (lost) p.warn else p.inkDim, modifier = Modifier.size(Space.glyph))
+            RowGap()
+            Column(Modifier.weight(1f).padding(vertical = Space.gapTight)) {
+                Text(name, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                when (state) {
+                    FolderState.Checking -> Text(strings.mediaFolderCounting, style = Type.note, color = p.inkDim)
+                    FolderState.Lost -> Text(strings.mediaFolderLost, style = Type.note, color = p.warn)
+                    is FolderState.Open -> Text(strings.mediaFolderFiles(state.mediaFiles), style = Type.note, color = p.inkDim)
+                }
+                Text(item, style = Type.note, color = p.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // Under the reason, so the reason keeps the full width of the row.
+                if (lost) Text(strings.mediaFolderGrant, style = Type.label, color = p.accent)
+            }
+            GlyphButton(CloseGlyph, name = strings.mediaDirectoriesDelete, tint = p.inkDim, onClick = onRemove)
+        }
     }
 
     private suspend fun removeFolder(dirId: String) {

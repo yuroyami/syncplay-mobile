@@ -55,6 +55,7 @@ import app.uicomponents.controls.ProgressBar
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
+import app.uicomponents.controls.FontSizeRange
 import app.uicomponents.controls.Tone
 import app.utils.Platform
 import app.utils.platform
@@ -163,7 +164,8 @@ private fun AddressRow(address: String, label: String) {
     val p = palette
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(address, style = Type.display, color = p.ink, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            // The port is the part a friend needs most, so the address shrinks before anything is cut.
+            Text(address, style = Type.display, color = p.ink, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, autoSize = FontSizeRange(Type.display.fontSize))
             Text(label, style = Type.note, color = p.inkDim)
         }
         GlyphButton(Icons.Filled.ContentCopy, name = strings.serverHostCopy) {

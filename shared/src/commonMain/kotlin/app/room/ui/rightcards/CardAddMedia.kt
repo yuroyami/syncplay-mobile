@@ -61,6 +61,7 @@ import app.uicomponents.controls.ProgressBar
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Text
+import app.uicomponents.controls.FontSizeRange
 import app.uicomponents.frames.PanelFrame
 import app.utils.Platform
 import app.utils.platform
@@ -169,8 +170,9 @@ object CardAddMedia {
             Icon(icon, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
             RowGap()
             Column(Modifier.weight(1f).padding(vertical = Space.gapTight)) {
-                Text(label, style = Type.label, color = p.ink, maxLines = 1)
-                Text(note, style = Type.note, color = p.inkDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // One line each: a large text size shrinks them before anything is cut.
+                Text(label, style = Type.label, color = p.ink, maxLines = 1, autoSize = FontSizeRange(Type.label.fontSize))
+                Text(note, style = Type.note, color = p.inkDim, maxLines = 1, overflow = TextOverflow.Ellipsis, autoSize = FontSizeRange(Type.note.fontSize))
             }
         }
     }

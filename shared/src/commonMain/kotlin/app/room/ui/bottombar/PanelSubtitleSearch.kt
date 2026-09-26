@@ -72,7 +72,6 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
     val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    val p = palette
 
     val initialQuery = remember { viewmodel.media?.fileName?.let { SubtitleSearch.cleanMediaName(it) } ?: "" }
     var query by remember { mutableStateOf(initialQuery) }
@@ -147,90 +146,43 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
             Chevron(ChevronDirection.Right)
         }
 
-        error?.let { message ->
-            Row(Modifier.fillMaxWidth().padding(vertical = Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(2.dp).height(Space.rowCompact).background(p.bad))
-                Spacer(Modifier.width(Space.gutter - 2.dp))
-                Text(message, style = Type.note, color = p.bad, modifier = Modifier.weight(1f).padding(end = Space.gutter))
-            }
-        }
-
-        if (!searching && results.isEmpty()) {
-            Text(
-                text = strings.roomSubSearchNoResults,
-                style = Type.note,
-                color = p.inkDim,
-                modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gap),
-            )
-        }
-
-        results.forEach { result ->
-            val busy = downloading != null || downloadedOk != null
-            ListRow(
-                enabled = !busy,
-                minHeight = Space.rowTall,
-                onClick = {
-                    error = null
-                    downloading = result.fileId
-                    // The media that this subtitle was searched for. A download takes seconds, and
-                    // the room can move to the next file during that time.
-                    val forMedia = viewmodel.media?.location?.commonUri
-                    scope.launch(ioDispatcher) {
-                        when (val outcome = SubtitleSearch.download(result.fileId)) {
-                            is SubtitleDownloadResult.Success -> {
-                                if (viewmodel.media?.location?.commonUri != forMedia) {
-                                    downloading = null
-                                    error = Localization.strings.roomSubsMediaChanged
-                                    return@launch
-                                }
-                                val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
-                                downloading = null
-                                if (injected) {
-                                    // The tracks panel stays open behind this modal, so its
-                                    // list must update.
-                                    viewmodel.media?.let { viewmodel.player.analyzeTracks(it) }
-                                    // Free plan keys allow a few downloads a day. Searches are
-                                    // unlimited.
-                                    viewmodel.dispatchOSD { Localization.strings.roomSubsDownloadedRemaining(outcome.remaining) }
-                                    downloadedOk = result.fileId
-                                    delay(1000) // let the check mark show before the modal closes
-                                    onDismiss()
-                                } else {
-                                    error = Localization.strings.roomSelectedSubError
-                                }
-                            }
-                            is SubtitleDownloadResult.QuotaExceeded -> {
-                                downloading = null
-                                error = Localization.strings.roomSubsQuotaReached(outcome.resetTime)
-                            }
-                            SubtitleDownloadResult.Failed -> {
-                                downloading = null
-                                error = Localization.strings.roomSubsDownloadFailed
-                            }
+        SubtitleSearchResults(searching, error, results, downloading, downloadedOk) { result ->
+            error = null
+            downloading = result.fileId
+            // The media that this subtitle was searched for. A download takes seconds, and
+            // the room can move to the next file during that time.
+            val forMedia = viewmodel.media?.location?.commonUri
+            scope.launch(ioDispatcher) {
+                when (val outcome = SubtitleSearch.download(result.fileId)) {
+                    is SubtitleDownloadResult.Success -> {
+                        if (viewmodel.media?.location?.commonUri != forMedia) {
+                            downloading = null
+                            error = Localization.strings.roomSubsMediaChanged
+                            return@launch
+                        }
+                        val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
+                        downloading = null
+                        if (injected) {
+                            // The tracks panel stays open behind this modal, so its
+                            // list must update.
+                            viewmodel.media?.let { viewmodel.player.analyzeTracks(it) }
+                            // Free plan keys allow a few downloads a day. Searches are
+                            // unlimited.
+                            viewmodel.dispatchOSD { Localization.strings.roomSubsDownloadedRemaining(outcome.remaining) }
+                            downloadedOk = result.fileId
+                            delay(1000) // let the check mark show before the modal closes
+                            onDismiss()
+                        } else {
+                            error = Localization.strings.roomSelectedSubError
                         }
                     }
-                },
-            ) {
-                when {
-                    downloadedOk == result.fileId -> Icon(CheckGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
-                    downloading == result.fileId -> Box(Modifier.size(Space.glyph)) { ProgressBar(progress = null, modifier = Modifier.align(Alignment.Center)) }
-                    else -> Icon(Icons.Filled.Download, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
-                }
-                RowGap()
-                Column(Modifier.weight(1f)) {
-                    Text(result.releaseInfo.ifBlank { result.filename }, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "${result.language.uppercase()} · ${result.downloadCount} ${strings.roomSubSearchDownloads}",
-                            style = Type.value,
-                            color = p.inkDim,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (result.hearingImpaired) {
-                            Spacer(Modifier.width(Space.gapTight))
-                            Icon(Icons.Filled.HearingDisabled, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(12.dp))
-                        }
+                    is SubtitleDownloadResult.QuotaExceeded -> {
+                        downloading = null
+                        error = Localization.strings.roomSubsQuotaReached(outcome.resetTime)
+                    }
+                    SubtitleDownloadResult.Failed -> {
+                        downloading = null
+                        error = Localization.strings.roomSubsDownloadFailed
                     }
                 }
             }
@@ -252,6 +204,68 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
                     scope.launch { SUBTITLE_SEARCH_LANG.set(code) }
                 },
             ) { RowLabel(name) }
+        }
+    }
+}
+
+/** The error line, the empty state, and one row per result with its download state. */
+@Composable
+internal fun SubtitleSearchResults(
+    searching: Boolean,
+    error: String?,
+    results: List<SubtitleResult>,
+    downloading: Int?,
+    downloadedOk: Int?,
+    onPick: (SubtitleResult) -> Unit,
+) {
+    val p = palette
+    error?.let { message ->
+        Row(Modifier.fillMaxWidth().padding(vertical = Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.width(2.dp).height(Space.rowCompact).background(p.bad))
+            Spacer(Modifier.width(Space.gutter - 2.dp))
+            Text(message, style = Type.note, color = p.bad, modifier = Modifier.weight(1f).padding(end = Space.gutter))
+        }
+    }
+
+    if (!searching && results.isEmpty()) {
+        Text(
+            text = strings.roomSubSearchNoResults,
+            style = Type.note,
+            color = p.inkDim,
+            modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gap),
+        )
+    }
+
+    results.forEach { result ->
+        val busy = downloading != null || downloadedOk != null
+        ListRow(
+            enabled = !busy,
+            minHeight = Space.rowTall,
+            onClick = { onPick(result) },
+        ) {
+            when {
+                downloadedOk == result.fileId -> Icon(CheckGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
+                downloading == result.fileId -> Box(Modifier.size(Space.glyph)) { ProgressBar(progress = null, modifier = Modifier.align(Alignment.Center)) }
+                else -> Icon(Icons.Filled.Download, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(Space.glyph))
+            }
+            RowGap()
+            Column(Modifier.weight(1f)) {
+                // A release name carries its details at the end, so it gets a second line.
+                Text(result.releaseInfo.ifBlank { result.filename }, style = Type.label, color = p.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${result.language.uppercase()} · ${result.downloadCount} ${strings.roomSubSearchDownloads}",
+                        style = Type.value,
+                        color = p.inkDim,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (result.hearingImpaired) {
+                        Spacer(Modifier.width(Space.gapTight))
+                        Icon(Icons.Filled.HearingDisabled, contentDescription = null, tint = p.inkDim, modifier = Modifier.size(12.dp))
+                    }
+                }
+            }
         }
     }
 }

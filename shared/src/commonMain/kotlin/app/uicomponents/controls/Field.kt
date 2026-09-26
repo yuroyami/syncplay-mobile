@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import app.i18n.strings
 import app.uicomponents.LocalIsTelevision
 import app.uicomponents.frames.LocalModalFieldEntry
@@ -169,7 +170,8 @@ fun Field(
                     contentAlignment = if (centred) Alignment.Center else Alignment.CenterStart,
                 ) {
                     if (value.isEmpty() && placeholder != null) {
-                        Text(placeholder, style = textStyle, color = p.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        // A hint in a large text size shrinks before it is cut.
+                        Text(placeholder, style = textStyle, color = p.inkFaint, maxLines = 1, overflow = TextOverflow.Ellipsis, autoSize = textStyle.fontSize.takeIf { it.isSpecified }?.let { FontSizeRange(it) })
                     }
                     // The editor gets the full width, so a centred style has something to centre in.
                     Box(Modifier.fillMaxWidth()) { inner() }

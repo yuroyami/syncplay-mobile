@@ -60,18 +60,20 @@ class FramesGolden {
 
     @Test
     fun notices() {
-        DesignHarness.render("notices", 360, heightDp = 260, overVideo = true) {
-            Column(Modifier.padding(Space.gutter)) {
-                Notice("Alice paused", NoticeSeverity.Info)
-                Box(Modifier.height(Space.gapTight))
-                Notice("Bob has joined the room: 'lobby'", NoticeSeverity.Quiet)
-                Box(Modifier.height(Space.gapTight))
-                Notice("Slowing down due to time difference with Carol", NoticeSeverity.Sync)
-                Box(Modifier.height(Space.gapTight))
-                Notice("Your file differs in the following way(s): name, duration", NoticeSeverity.Warn)
-                Box(Modifier.height(Space.gapTight))
-                Notice("Saved", NoticeSeverity.Info, overVideo = false)
-            }
+        for (scale in listOf(1f, 1.3f)) {
+            DesignHarness.render("notices", 360, heightDp = 360, fontScale = scale, overVideo = true) {
+                Column(Modifier.padding(Space.gutter)) {
+                    Notice("Alice paused", NoticeSeverity.Info)
+                    Box(Modifier.height(Space.gapTight))
+                    Notice("Bob has joined the room: 'lobby'", NoticeSeverity.Quiet)
+                    Box(Modifier.height(Space.gapTight))
+                    Notice("Slowing down due to time difference with Carol", NoticeSeverity.Sync)
+                    Box(Modifier.height(Space.gapTight))
+                    Notice("Your file differs in the following way(s): name, duration", NoticeSeverity.Warn)
+                    Box(Modifier.height(Space.gapTight))
+                    Notice("Saved", NoticeSeverity.Info, overVideo = false)
+                }
+            }.assertAllTextFits()
         }
     }
 
