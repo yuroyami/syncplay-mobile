@@ -212,10 +212,11 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
         .clip(shape)
         .then(
             if (enabled && hazeState != null) {
-                /* Quality keeps the capture at full resolution. The default Behind selection must
-                 * stay: All would let glass inside a source sample the capture that contains the
-                 * glass itself, and the render thread would recurse until it crashes. */
-                Modifier.hazeBlur(input = HazeInput.Sources(hazeState), style = style, performanceMode = HazePerformanceMode.Quality)
+                /* Performance samples the capture at a lower resolution, which costs the GPU less
+                 * under a playing video. A 40dp blur hides the lost detail. The default Behind
+                 * selection must stay: All would let glass inside a source sample the capture that
+                 * contains the glass itself, and the render thread would recurse until it crashes. */
+                Modifier.hazeBlur(input = HazeInput.Sources(hazeState), style = style, performanceMode = HazePerformanceMode.Performance)
             } else {
                 Modifier.background(fallback)
             }

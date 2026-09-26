@@ -1187,9 +1187,9 @@
         },
         {
             "uniqueId": "androidx.tracing:tracing",
-            "artifactVersion": "2.0.1",
+            "artifactVersion": "2.0.2",
             "name": "Tracing",
-            "website": "https://developer.android.com/jetpack/androidx/releases/tracing#2.0.1",
+            "website": "https://developer.android.com/jetpack/androidx/releases/tracing#2.0.2",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -1199,9 +1199,9 @@
         },
         {
             "uniqueId": "androidx.tracing:tracing-ktx",
-            "artifactVersion": "2.0.1",
+            "artifactVersion": "2.0.2",
             "name": "Tracing Kotlin Extensions",
-            "website": "https://developer.android.com/jetpack/androidx/releases/tracing#2.0.1",
+            "website": "https://developer.android.com/jetpack/androidx/releases/tracing#2.0.2",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -1630,7 +1630,7 @@
         },
         {
             "uniqueId": "dev.chrisbanes.haze:haze",
-            "artifactVersion": "2.0.0-beta03",
+            "artifactVersion": "2.0.0",
             "name": "Haze",
             "website": "https://github.com/chrisbanes/haze/",
             "licenses": [
@@ -1645,7 +1645,7 @@
         },
         {
             "uniqueId": "dev.chrisbanes.haze:haze-blur",
-            "artifactVersion": "2.0.0-beta03",
+            "artifactVersion": "2.0.0",
             "name": "Haze Blur",
             "website": "https://github.com/chrisbanes/haze/",
             "licenses": [
@@ -1660,7 +1660,7 @@
         },
         {
             "uniqueId": "dev.chrisbanes.haze:haze-utils",
-            "artifactVersion": "2.0.0-beta03",
+            "artifactVersion": "2.0.0",
             "name": "Haze Utils",
             "website": "https://github.com/chrisbanes/haze/",
             "licenses": [

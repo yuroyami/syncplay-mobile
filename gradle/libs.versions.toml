@@ -21,7 +21,7 @@ navigation3Runtime = "1.1.7"
 navigation3Ui = "1.1.2"
 # Backdrop blur. Haze publishes every target that this project declares. It has no iosX64,
 # which this project does not declare either.
-haze = "2.0.0-beta03"
+haze = "2.0.0"
 kermit = "2.1.0"
 krypto = "0.8.0"
 datastore = "1.3.0-alpha11"

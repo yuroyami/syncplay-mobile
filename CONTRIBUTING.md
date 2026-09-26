@@ -416,8 +416,9 @@ Glass:
 - Only `glassEnabled()` and `glassEnabledNow()` decide whether glass is on. ExoPlayer and mpv
   choose their video surface from `glassEnabledNow()` once, when they are created. KitePlayer reads
   `glassEnabled()` during composition and switches its render path live.
-- Glass keeps a transparent background, a 40 percent inner dim applied before the tint, and the
-  Quality performance mode. The dim is black on dark themes and white on light themes.
+- Glass keeps a transparent background, a 40 percent inner dim applied before the tint, and Haze's
+  Performance mode, which samples the capture at a lower resolution. The dim is black on dark
+  themes and white on light themes.
 - Glass cannot sample a `SurfaceView` or a native video view. Over one, a glass panel shows a plain
   tonal fill, and that is correct. With glass on, ExoPlayer and mpv draw into a `TextureView` and
   KitePlayer draws on the Compose canvas, so glass can blur their video.
