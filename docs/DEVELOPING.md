@@ -431,7 +431,11 @@ Build the release APKs and the full AAB on your machine, into `AndroidAppOutput/
 ./gradlew androidReleaseAll
 ```
 
-This task builds the two flavors in separate Gradle runs and checks the set of output files.
+This task builds the two flavors in separate Gradle runs and checks the set of output files. It
+also checks that the release certificate signed each APK, and that each APK carries the version
+being released. The check needs `apksigner` and `aapt2` from the SDK build tools. The task finds
+them through `ANDROID_HOME` or `sdk.dir` in `local.properties`, and fails when it cannot. Pass
+`-PallowUnverifiedApks=true` only for a test build that is not for release.
 
 A local release build needs the signing keystore: `keystore/syncplaykey.jks`, plus
 `keystore.keyAlias`, `keystore.keyPassword` and `keystore.storePassword` in `local.properties`.

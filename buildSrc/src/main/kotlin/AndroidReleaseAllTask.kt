@@ -1,4 +1,5 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
@@ -29,6 +30,10 @@ abstract class AndroidReleaseAllTask @Inject constructor(
 
     @get:Input
     abstract val versionName: Property<String>
+
+    /** Set by `-PallowUnverifiedApks=true`: the artifacts pass without apksigner and aapt2. */
+    @get:Input
+    abstract val allowUnverified: Property<Boolean>
 
     @get:Internal
     abstract val gradlewScript: RegularFileProperty
@@ -115,43 +120,89 @@ abstract class AndroidReleaseAllTask @Inject constructor(
             }
         }
 
-        val apksigner = findApksigner()
-        if (apksigner == null) {
-            logger.warn("androidReleaseAll: apksigner not found, signatures NOT verified. Set ANDROID_HOME.")
-            return
+        val apksigner = findBuildTool("apksigner")
+        val aapt2 = findBuildTool("aapt2")
+        if (apksigner == null || aapt2 == null) {
+            if (allowUnverified.get()) {
+                logger.warn("androidReleaseAll: -PallowUnverifiedApks is set, so the signatures and versions are NOT verified.")
+                return
+            }
+            throw GradleException(
+                "androidReleaseAll: apksigner or aapt2 was not found, so the APKs cannot be verified. " +
+                    "Set ANDROID_HOME or sdk.dir in local.properties, or pass -PallowUnverifiedApks=true to skip the check."
+            )
         }
         apks.forEach { apk ->
-            val out = java.io.ByteArrayOutputStream()
-            val result = execOps.exec {
-                commandLine(apksigner.absolutePath, "verify", "--print-certs", apk.absolutePath)
-                standardOutput = out
-                errorOutput = out
-                isIgnoreExitValue = true
+            val signed = run(apksigner, "verify", "--print-certs", apk.absolutePath)
+            require(signed.first == 0) { "androidReleaseAll: ${apk.name} failed signature verification:\n${signed.second}" }
+            // One line per signing scheme, for example "V2 Signer: certificate SHA-256 digest: ..."
+            val digests = signed.second.lines()
+                .filter { "certificate SHA-256 digest:" in it }
+                .map { it.substringAfter("digest:").trim().lowercase() }
+                .toSet()
+            require(digests == setOf(RELEASE_CERT_SHA256)) {
+                "androidReleaseAll: ${apk.name} is not signed with the release certificate. Found: $digests"
             }
-            require(result.exitValue == 0) {
-                "androidReleaseAll: ${apk.name} failed signature verification:\n${out.toString().trim()}"
+
+            val badging = run(aapt2, "dump", "badging", apk.absolutePath)
+            val embedded = Regex("""versionName='([^']*)'""").find(badging.second)?.groupValues?.get(1)
+            require(embedded == version) {
+                "androidReleaseAll: ${apk.name} carries version $embedded inside, not $version"
             }
         }
-        logger.lifecycle("androidReleaseAll: ${apks.size} APK signature(s) verified.")
+        logger.lifecycle("androidReleaseAll: ${apks.size} APK(s) signed with the release certificate and carrying version $version.")
     }
 
-    /** The newest apksigner in the local SDK, or null when there is no SDK or no apksigner. */
-    private fun findApksigner(): File? {
+    /** Runs a build tool and returns its exit code and its combined output. */
+    private fun run(tool: File, vararg args: String): Pair<Int, String> {
+        val out = java.io.ByteArrayOutputStream()
+        val result = execOps.exec {
+            commandLine(listOf(tool.absolutePath) + args)
+            standardOutput = out
+            errorOutput = out
+            isIgnoreExitValue = true
+        }
+        return result.exitValue to out.toString().trim()
+    }
+
+    /** The newest [name] tool in the SDK's build-tools, or null when there is no SDK or no such tool. */
+    private fun findBuildTool(name: String): File? {
+        val fromLocal = AppConfig.localProperties(repoRoot.get().asFile).getProperty("sdk.dir")
         val sdk = listOfNotNull(
             System.getenv("ANDROID_HOME"),
             System.getenv("ANDROID_SDK_ROOT"),
+            fromLocal,
         ).map(::File).firstOrNull { it.isDirectory } ?: return null
 
         return File(sdk, "build-tools").listFiles()
             ?.filter { it.isDirectory }
-            ?.sortedBy { it.name }
+            ?.sortedWith(compareBy<File, String>(VersionOrder) { it.name })
             ?.reversed()
-            ?.map { File(it, "apksigner") }
+            ?.map { File(it, name) }
             ?.firstOrNull { it.canExecute() }
     }
 }
 
 private const val EXPECTED_APKS = 2
+
+/**
+ * The SHA-256 digest of the release signing certificate, as `apksigner verify --print-certs`
+ * prints it. It is public: anyone can read it from a published APK.
+ */
+private const val RELEASE_CERT_SHA256 = "cfeed0f6458db903ef44f558ed97a6edd0a656bb76bc645178b3f266de2a9566"
+
+/** Orders build-tools folders by version number, so 37.0.0 comes after 9.0.0. */
+private object VersionOrder : Comparator<String> {
+    override fun compare(a: String, b: String): Int {
+        val x = a.split('.', '-').map { it.toIntOrNull() ?: 0 }
+        val y = b.split('.', '-').map { it.toIntOrNull() ?: 0 }
+        for (i in 0 until maxOf(x.size, y.size)) {
+            val c = (x.getOrElse(i) { 0 }).compareTo(y.getOrElse(i) { 0 })
+            if (c != 0) return c
+        }
+        return 0
+    }
+}
 
 /** Registers `androidReleaseAll` on the root project. [version] comes from the root
  *  kiteConfig block: buildSrc compiles before plugins apply, so it cannot read the
@@ -166,6 +217,7 @@ fun Project.registerAndroidReleaseAllTask(version: String) {
 
         val isWindows = System.getProperty("os.name").lowercase().contains("windows")
         versionName.set(version)
+        allowUnverified.set(providers.gradleProperty("allowUnverifiedApks").map { it.toBoolean() }.orElse(false))
         gradlewScript.set(layout.projectDirectory.file(if (isWindows) "gradlew.bat" else "gradlew"))
         repoRoot.set(layout.projectDirectory)
         fullApkDir.set(layout.projectDirectory.dir("androidApp/build/outputs/apk/full/release"))
