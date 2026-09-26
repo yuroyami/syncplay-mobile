@@ -92,11 +92,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true
 
-    /** True when the engine announces a new file to the room itself, usually from its own
-     *  "file loaded" event once the real duration is known. [parseMedia] then skips its iOS
-     *  [announceFileLoaded] call. Without this flag, such an engine announces the file twice:
-     *  once too early with no duration, and once from the event. An engine with no load event
-     *  leaves this false and relies on the [parseMedia] announce. */
+    /** True when the engine reports a new file itself, from its own "file loaded" event, through
+     *  [onEngineFileReady]. [parseMedia] then skips its iOS call. An engine with no load event
+     *  leaves this false and relies on the [parseMedia] call. */
     protected open val announcesFileLoadViaEvent: Boolean = false
 
     /** Volatile: teardown sets it on one thread while trackers and callbacks read it on others. */
@@ -231,22 +229,44 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun reapplyTrackChoices()
 
     /**
-     * Applies the preferred audio and subtitle languages to a newly read track list.
-     *
-     * It skips a track type that the user already chose for this media. The track panel re-reads
-     * the list after every pick, so without that check the preference would undo the user's pick.
-     * A track with no language tag never matches, so an engine without tags keeps its own native
-     * language handling.
+     * True when the engine applies the preferred audio and subtitle languages by itself, as
+     * ExoPlayer's track selector and mpv's core options do. [applyTrackRules] then only restores
+     * the picks carried over from the previous file.
      */
-    protected suspend fun applyPreferredLanguages(mediafile: MediaFile) {
+    protected open val appliesPreferredLanguagesItself: Boolean = false
+
+    /**
+     * Applies the picks carried over from the previous file, then the preferred languages, to a
+     * newly read track list. It runs once per file, from [onEngineFileReady]. Opening a panel
+     * only reads the tracks and changes nothing.
+     *
+     * A track type that the user already picked in this file is left alone. A track with no
+     * language tag never matches, so an engine without tags keeps its own native handling.
+     */
+    private suspend fun applyTrackRules(mediafile: MediaFile) {
         val options = PlayerOptions.get()
-        val wanted = mapOf(
+        val preferred = mapOf(
             TrackType.AUDIO to options.audioPreference,
             TrackType.SUBTITLE to options.ccPreference,
         )
-        for ((type, language) in wanted) {
-            if (language == "und" || language.isBlank()) continue
-            if (playerManager.currentTrackChoices[type] != null) continue
+        for ((type, language) in preferred) {
+            when (val choice = playerManager.currentTrackChoices[type]) {
+                null -> Unit
+                TrackChoice.Off -> {
+                    selectTrack(null, type)
+                    continue
+                }
+                is TrackChoice.ByLanguage -> {
+                    val same = mediafile.tracks.firstOrNull { it.type == type && it.language.equals(choice.language, ignoreCase = true) }
+                    if (same != null) {
+                        selectTrack(same, type)
+                        continue
+                    }
+                }
+                // A pick in this file.
+                else -> continue
+            }
+            if (appliesPreferredLanguagesItself || language == "und" || language.isBlank()) continue
             mediafile.tracks
                 .firstOrNull { it.type == type && it.language?.contains(language, ignoreCase = true) == true }
                 ?.let { selectTrack(it, type) }
@@ -267,7 +287,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                 is TrackChoice.ByIndex -> tracks
                     .firstOrNull { it.type == type && it.index == choice.index }
                     ?.let { selectTrack(it, type) }
-                is TrackChoice.ByOverride -> {}
+                is TrackChoice.ByOverride, is TrackChoice.ByLanguage -> {}
             }
         }
     }
@@ -337,8 +357,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      *  Each client resolves the URL itself, at load time. The shared playlist (the file list that
      *  everyone in the room follows) keeps the original page URL. YouTube stream URLs are tied to
      *  one IP address and expire, so they do not work for the other clients in the room. */
-    suspend fun injectVideoURL(url: String) = inject(
+    suspend fun injectVideoURL(url: String, onInstalled: (MediaFile) -> Unit = {}) = inject(
         source = url,
+        onInstalled = onInstalled,
         toMedia = { input ->
             val resolved = maybeResolve(input)
             val finalUrl = resolved?.directUrl ?: input
@@ -353,7 +374,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         injectVideoURLImpl(it.location as MediaFileLocation.Remote)
     }
 
-    suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) {
+    suspend fun injectVideoFile(file: PlatformFile, onInstalled: (MediaFile) -> Unit = {}) = inject(file, onInstalled, { it.mediaFromFile() }) {
         val location = it.location as MediaFileLocation.Local
         // Open this file's security scope (iOS) before the engine touches the file, and release
         // the previous file's scope. Without an open scope, a bookmark-resolved URL becomes
@@ -390,8 +411,13 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      */
     protected open val injectSettleDelayMs: Long = 0L
 
+    /**
+     * Loads one file: [toMedia] builds it, [installMedia] makes it the active file, [onInstalled]
+     * hands it to the caller before any engine event can arrive, and [impl] gives it to the engine.
+     */
     private suspend inline fun <T> inject(
         source: T,
+        noinline onInstalled: (MediaFile) -> Unit,
         crossinline toMedia: suspend (T) -> MediaFile,
         crossinline impl: suspend (MediaFile) -> Unit,
     ) {
@@ -407,6 +433,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                     // second or later file could be announced with the previous file's name, size
                     // and duration.
                     installMedia(media)
+                    onInstalled(media)
                     impl(media)
                     parseMedia(media)
                 } catch (cancellation: CancellationException) {
@@ -414,6 +441,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                 } catch (e: Exception) {
                     e.printStackTrace()
                     viewmodel.dispatchWarning { Localization.strings.roomMsgProblemLoadingFile }
+                    onEngineLoadFailed(media)
                 }
             }
         }
@@ -433,6 +461,10 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         // the reporter already falls back to the room position, so this order is safe.
         if (!viewmodel.isSoloMode) viewmodel.protocol.markAwaitingRoomResync()
         LogRedactor.register(LogRedactor.Kind.File, media.fileName)
+        // An open offer to continue belongs to the previous file.
+        viewmodel.resume.onMediaReplaced()
+        // A track index from the previous file means nothing in this one. Only a language carries over.
+        playerManager.currentTrackChoices = playerManager.currentTrackChoices.forNextFile()
         playerManager.media.value = media
         // Arm the room re-anchor for this new file (see [fileLoadResyncPending] and
         // ProtocolManager.reanchorSyncOnFileLoad).
@@ -466,8 +498,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         }
 
         if (platform == Platform.IOS && !announcesFileLoadViaEvent) {
-            //TODO Better come up with a better DSL to streamline file loading announcement
-            announceFileLoaded()
+            onEngineFileReady(playerManager.timeFullMillis.value)
         }
 
         changeSubtitleSize(SUBTITLE_SIZE.value())
@@ -530,7 +561,62 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     /** The room's volume control: the base first, then the gain where the engine has any. */
     val volume: VolumeController by lazy { VolumeController(this) }
 
-    fun announceFileLoaded() {
+    /** The media that [onEngineFileReady] announced. Each new media is announced once. */
+    @Volatile
+    private var announcedMedia: MediaFile? = null
+
+    /**
+     * An engine calls this once the current file has opened, with its duration in milliseconds
+     * when it is known (null or 0 for a live stream). The first call for each media announces it:
+     * the offer to continue when watching alone, the file itself in a room. Neither the mode nor
+     * the duration decides whether that happens. A later call counts as a duration change.
+     */
+    fun onEngineFileReady(durationMs: Long?) {
+        val media = viewmodel.media ?: return
+        if (media === announcedMedia) return onEngineDurationChanged(durationMs)
+        publishDuration(media, durationMs)
+        announcedMedia = media
+        announceFileLoaded()
+        // The tracks are known once the file opened, so the language rule runs now, not when a panel opens.
+        playerScopeMain.launch {
+            runCatching {
+                analyzeTracks(media)
+                if (viewmodel.media === media) applyTrackRules(media)
+            }.onFailure { if (it is CancellationException) throw it else loggy("Track rules failed: ${it.message}") }
+        }
+    }
+
+    /**
+     * An engine calls this when the duration of the current file changes, as when a stream
+     * refines its length. A room hears the new duration once the file was announced. It never
+     * raises the offer to continue again.
+     */
+    fun onEngineDurationChanged(durationMs: Long?) {
+        val media = viewmodel.media ?: return
+        val changed = publishDuration(media, durationMs)
+        if (changed && media === announcedMedia && !viewmodel.isSoloMode) announceFileLoaded()
+    }
+
+    /** Stores a known duration on [media] and the room's clock. True when [media] had another one. */
+    private fun publishDuration(media: MediaFile, durationMs: Long?): Boolean {
+        val known = durationMs?.takeIf { it > 0 } ?: return false
+        playerManager.timeFullMillis.value = known
+        val seconds = known / 1000.0
+        if (media.fileDuration == seconds) return false
+        media.fileDuration = seconds
+        return true
+    }
+
+    /**
+     * An engine calls this when the current file fails to open or to play. The shared playlist
+     * then forgets that it loaded the file, so selecting its entry again loads it again.
+     */
+    fun onEngineLoadFailed(media: MediaFile? = viewmodel.media) {
+        media?.let { viewmodel.playlistManager.onLoadFailed(it) }
+    }
+
+    /** Only [onEngineFileReady] and [onEngineDurationChanged] call this, so a file is announced once. */
+    private fun announceFileLoaded() {
         // In solo mode (watching alone), a load only offers to resume where this file was left.
         // In a room, the room's position decides instead.
         if (viewmodel.isSoloMode) {

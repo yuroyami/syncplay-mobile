@@ -562,7 +562,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * file to the room's position and applies the room's pause state (the
      * `lastGlobalUpdate == null` branch of [app.protocol.sync.decideSync]).
      *
-     * Called once per newly loaded file, from [app.player.PlayerImpl.announceFileLoaded]: the
+     * Called once per newly loaded file, from [app.player.PlayerImpl.onEngineFileReady]: the
      * engine has confirmed the load or knows the duration, so it can seek by the time the next
      * `State` arrives. Without this call, one `State` that arrives while the media is still
      * loading sets [lastGlobalUpdate] (every applied `State` sets it, with or without media). The

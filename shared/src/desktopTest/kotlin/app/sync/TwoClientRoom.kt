@@ -11,6 +11,7 @@ import app.home.JoinConfig
 import app.player.Playback
 import app.player.PlayerEngine
 import app.player.PlayerImpl
+import app.player.PlayerImpl.TrackType
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
@@ -321,22 +322,54 @@ internal class ClockPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Clo
         speeds += speed
     }
 
+    /** The duration this engine reports when a file opens. Null behaves like a live stream. */
+    @Volatile
+    var readyDurationMs: Long? = TwoClientRoom.CLIP_LENGTH_MS
+
+    /** When true, the next load fails the way an engine error does, and the flag goes back to false. */
+    @Volatile
+    var failNextLoad = false
+
+    /** The name of every file or link given to this engine, in order. */
+    val loads: MutableList<String> = Collections.synchronizedList(mutableListOf())
+
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        loads += viewmodel.media?.fileName.orEmpty()
         moveTo(0L)
         playing = false
-        playerManager.timeFullMillis.value = TwoClientRoom.CLIP_LENGTH_MS
-        // A real engine announces once it knows the duration. This one knows it at once.
-        announceFileLoaded()
+        if (failNextLoad) {
+            failNextLoad = false
+            onEngineLoadFailed()
+            return
+        }
+        // A real engine reports the file once it opens. This one opens at once.
+        onEngineFileReady(readyDurationMs)
     }
 
-    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) = Unit
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        loads += viewmodel.media?.fileName.orEmpty()
+    }
     override suspend fun isPlaying() = playing
     override suspend fun hasMedia() = playerManager.media.value != null
     override suspend fun isSeekable() = true
     override suspend fun destroy() = Unit
     override suspend fun configurableSettings(): SettingCategory? = null
-    override suspend fun analyzeTracks(mediafile: MediaFile) = Unit
-    override suspend fun selectTrack(track: Track?, type: TrackType) = Unit
+    /** The tracks that each file of this engine has. */
+    @Volatile
+    var fileTracks: List<Track> = emptyList()
+
+    /** Every track pick given to this engine, in order: the type, and the index or null for off. */
+    val picks: MutableList<Pair<TrackType, Int?>> = Collections.synchronizedList(mutableListOf())
+
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
+        mediafile.tracks.clear()
+        mediafile.tracks.addAll(fileTracks)
+    }
+
+    override suspend fun selectTrack(track: Track?, type: TrackType) {
+        picks += type to track?.index
+        playerManager.currentTrackChoices.remember(type, track)
+    }
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
     override suspend fun reapplyTrackChoices() = Unit
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) = Unit

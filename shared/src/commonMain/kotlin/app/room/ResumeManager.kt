@@ -39,17 +39,24 @@ class ResumeManager(private val viewmodel: RoomViewmodel) : AbstractManager(view
         onIOThread {
             val point = resumePointFor(decodeResumePoints(Preferences.RESUME_POSITIONS.value()), fileName)
             // A file that is shorter than the saved position is a different file with the same
-            // name. Do not offer to seek past its end.
-            if (point != null && (durationMs <= 0L || point.positionMs < durationMs)) {
+            // name. Do not offer to seek past its end. The file may also have changed meanwhile.
+            if (point != null && (durationMs <= 0L || point.positionMs < durationMs) && viewmodel.media?.fileName == fileName) {
                 offer.value = point
             }
         }
     }
 
+    /** Seeks to the offered position, but only while the file that it belongs to is loaded. */
     fun continueFromOffer() {
         val point = offer.value ?: return
         offer.value = null
+        if (viewmodel.media?.fileName != point.fileName) return
         viewmodel.dispatcher.seek(point.positionMs, recordUndo = false)
+    }
+
+    /** A new file replaces the loaded one, so an open offer no longer applies. */
+    fun onMediaReplaced() {
+        offer.value = null
     }
 
     fun startOver() {

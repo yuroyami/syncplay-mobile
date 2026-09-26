@@ -51,7 +51,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
-import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -63,6 +62,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     private lateinit var exoView: PlayerView
 
     override val supportsVideoTrackSelection = true
+
+    // The track selector applies the preferred languages (see the options), so the shared pass does not.
+    override val appliesPreferredLanguagesItself: Boolean = true
     override val supportsChapters: Boolean = false
 
     override val trackerJobInterval: Duration = 500.milliseconds
@@ -141,32 +143,19 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         exoplayer?.addListener(object : Player.Listener {
 
-            /* When loading stops, store the duration, and announce the file to the server when
-             * its duration changed. */
+            /* When loading stops, a stream may know a longer or a final duration. */
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
-
                 val player = exoplayer ?: return
-                if (!isLoading) {
-                    // C.TIME_UNSET means "not known yet"; its absolute value is not a duration.
-                    val raw = player.duration
-                    val durationMs = if (raw == C.TIME_UNSET || raw < 0) 0L else raw
-                    viewmodel.playerManager.timeFullMillis.value = durationMs
-
-                    if (viewmodel.isSoloMode) return
-                    val durationSec = durationMs / 1000.0
-                    if (abs(durationSec - (viewmodel.media?.fileDuration ?: -1.0)) > 0.001) {
-                        viewmodel.media?.fileDuration = durationSec
-
-                        announceFileLoaded()
-                    }
-                }
+                if (!isLoading) onEngineDurationChanged(knownDuration(player))
             }
 
-            /* Display only: the room shows a waiting indicator, nothing is broadcast from here. */
+            /* Buffering is display only: the room shows a waiting indicator and hears nothing.
+             * The first READY of each file announces it. Later ones follow a seek or a refill. */
             override fun onPlaybackStateChanged(playbackState: Int) {
                 super.onPlaybackStateChanged(playbackState)
                 viewmodel.playerManager.isBuffering.value = playbackState == Player.STATE_BUFFERING
+                if (playbackState == Player.STATE_READY) exoplayer?.let { onEngineFileReady(knownDuration(it)) }
             }
 
             /* Tracks local pause/play transitions. */
@@ -208,6 +197,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
                     Localization.strings.roomPlaybackError(reason)
                 }
+                onEngineLoadFailed()
             }
         })
 
@@ -338,6 +328,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         /* Clear only the override for the type being changed. */
         val cleared = builder.clearOverridesOfType(exoType)
 
+        playerManager.currentTrackChoices.rememberLanguage(type, exoTrack)
         if (exoTrack == null) {
             /* Off means off. Removing the override alone lets the selector pick a track by
              * preferred language, so "no subtitles" would still show subtitles. */
@@ -518,6 +509,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     }
 
     @UiThread
+    /** The duration, or null while ExoPlayer does not know it. C.TIME_UNSET is not a duration. */
+    private fun knownDuration(player: Player): Long? = player.duration.takeIf { it != C.TIME_UNSET && it > 0 }
+
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
 

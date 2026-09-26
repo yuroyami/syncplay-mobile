@@ -18,6 +18,7 @@ import app.utils.generateTimestampMillis
 import app.utils.urlHost
 import app.utils.urlPath
 import app.utils.writeTextCompat
+import app.player.models.MediaFile
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
@@ -44,6 +45,42 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * echo of this client's own index change comes back.
      */
     private var lastLoadedSource: String? = null
+
+    /**
+     * The media that the last load from the playlist installed. An engine failure for this media
+     * clears the loaded markers, so selecting the entry again retries it.
+     */
+    private var loadedMedia: MediaFile? = null
+
+    /** Grows with each load. A file that finishes resolving after a newer selection is dropped. */
+    private var loadGeneration = 0L
+
+    /**
+     * Finds a local entry by name. A test can replace it to control how long resolving takes.
+     */
+    internal var resolveLocalFile: suspend (String) -> PlatformFile? = { MediaAccessRegistry.resolvePlayableFile(it) }
+
+    /** The engine could not open or play [media]. When the playlist loaded it, its entry may be loaded again. */
+    fun onLoadFailed(media: MediaFile) {
+        if (media !== loadedMedia) return
+        loadedMedia = null
+        lastLoadedSource = null
+        lastLoadedIndex = -1
+    }
+
+    /** Loads [file] for the entry [source] and remembers what it installed. */
+    private suspend fun load(source: String, file: PlatformFile) {
+        loadGeneration++
+        lastLoadedSource = source
+        viewmodel.player.injectVideoFile(file) { loadedMedia = it }
+    }
+
+    /** Loads the link [url], which is also its entry, and remembers what it installed. */
+    private suspend fun loadUrl(url: String) {
+        loadGeneration++
+        lastLoadedSource = url
+        viewmodel.player.injectVideoURL(url) { loadedMedia = it }
+    }
 
     /**
      * When the playlist index last moved, from any source. Auto-advance does not fire again inside
@@ -140,8 +177,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         missingFile.value = null
         MediaAccessRegistry.rememberFiles(listOf(file))
         localFilesVersion.value++
-        lastLoadedSource = file.name
-        viewmodel.player.injectVideoFile(file)
+        load(file.name, file)
     }
 
     /** Tries the selected entry again when this device does not play it, after the media folders changed. */
@@ -365,10 +401,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             // its scope still open. Mark it as the loaded source, so the echo of this client's own
             // index does not load it again.
             val first = toAdd.first()
-            lastLoadedSource = first.name
             lastLoadedIndex = 0
             session.spIndex.intValue = 0
-            viewmodel.player.injectVideoFile(first)
+            load(first.name, first)
             viewmodel.networkManager.send(WireMessage.playlistIndex(0))
         }
     }
@@ -526,17 +561,18 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
                 return
             }
-            lastLoadedSource = fileName
-            viewmodel.player.injectVideoURL(fileName)
+            loadUrl(fileName)
             return
         }
 
         // A peer's selection arrives on the main thread. Resolving may walk every remembered media
-        // folder, which takes seconds of IO on a SAF tree.
-        val resolved = withContext(ioDispatcher) { MediaAccessRegistry.resolvePlayableFile(fileName) }
+        // folder, which takes seconds of IO on a SAF tree. A newer selection made meanwhile wins,
+        // so this one must not replace it when it finishes late.
+        val generation = ++loadGeneration
+        val resolved = withContext(ioDispatcher) { resolveLocalFile(fileName) }
+        if (generation != loadGeneration) return
         if (resolved != null) {
-            lastLoadedSource = fileName
-            viewmodel.player.injectVideoFile(resolved)
+            load(fileName, resolved)
             return
         }
 

@@ -102,17 +102,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val trackerJobInterval: Duration
         get() = 250.milliseconds
 
-    // This engine announces the loaded file once the real duration is known: from
-    // mediaPlayerLengthChanged, or from parseMedia when the length is already final. So the base
-    // parseMedia must not announce it early with a duration that may still be zero. See
-    // PlayerImpl.announcesFileLoadViaEvent.
+    // This engine reports the loaded file itself: from the first positive length (in
+    // mediaPlayerLengthChanged, or in parseMedia when the length is already final), or when the
+    // opened input first pauses or plays, which covers a live stream with no length. So the base
+    // parseMedia must not announce it early. See PlayerImpl.announcesFileLoadViaEvent.
     override val announcesFileLoadViaEvent: Boolean = true
-
-    /**
-     * The media whose duration was last announced. It is the app's own [MediaFile], because
-     * VLCKit can replace its Objective-C media wrapper for the same media.
-     */
-    private var announcedDurationMedia: MediaFile? = null
 
     private val seekGuard = VlcSeekGuard()
     private val seekRequests = VlcSeekRequests(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
@@ -641,19 +635,16 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         publishDuration(media, lengthMs)
     }
 
+    /** The first positive length announces the file. A later one only updates the room's copy. */
     private fun publishDuration(media: MediaFile, lengthMs: Long) {
         if (lengthMs <= 0L || viewmodel.media !== media) return
-        val previousLengthMs = playerManager.timeFullMillis.value
-        val firstAnnouncement = announcedDurationMedia !== media
-        playerManager.timeFullMillis.value = lengthMs
-        media.fileDuration = lengthMs / 1000.0
-        // Resolver metadata can hold the right duration before native playback opens, and that
-        // must not suppress the first ready announcement. A later duration change may update the
-        // room's metadata, but must not reopen a solo resume offer that the user dismissed.
-        if (firstAnnouncement || (!viewmodel.isSoloMode && previousLengthMs != lengthMs)) {
-            announcedDurationMedia = media
-            announceFileLoaded()
-        }
+        onEngineFileReady(lengthMs)
+    }
+
+    /** The input opened: announce it once, with its length when VLCKit knows one. */
+    private fun announceOpenedInput(player: VLCMediaPlayer) {
+        if (viewmodel.media == null) return
+        onEngineFileReady(SyncplayVlcCurrentLengthMs(player))
     }
 
     /**
@@ -934,10 +925,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     pauseDebounceJob?.cancel()
                     if (!primingFirstFrame) {
                         playerManager.isNowPlaying.value = true
+                        announceOpenedInput(player)
                     }
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
                     primingFirstFrame = false
+                    announceOpenedInput(player)
                     // Debounce (see [pauseDebounceJob]): count a Paused only if the player is
                     // still paused a moment later. A deliberate command or a media change also
                     // cancels this delayed check.
@@ -989,6 +982,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
                         Localization.strings.roomPlaybackError(reason)
                     }
+                    onEngineLoadFailed()
                 }
                 else -> { /* Opening, Buffering, Stopping: leave isNowPlaying alone */ }
             }

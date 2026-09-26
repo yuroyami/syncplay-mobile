@@ -59,10 +59,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -74,6 +72,9 @@ import io.github.yuroyami.libmpvkt.TrackType as MpvTrackType
 
 class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override val supportsVideoTrackSelection = true
+
+    // The alang and slang core options apply the preferred languages on every file.
+    override val appliesPreferredLanguagesItself: Boolean = true
     override val supportsChapters: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
 
@@ -109,8 +110,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
      * one call at a time also keeps the calls in the order they were made.
      */
     private val coreCalls = ioDispatcher.limitedParallelism(1)
-
-    private var durationWaitJob: Job? = null
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
@@ -512,7 +511,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             mpv.events.collect { event ->
                 when (event) {
-                    is MpvEvent.StartFile -> if (!viewmodel.isSoloMode) announceWhenDurationKnown(scope)
+                    // Each core plays one file, so its first FileLoaded is that file opening. A
+                    // live stream has no duration yet, and the observer below sends one later.
+                    is MpvEvent.FileLoaded -> onEngineFileReady(playerManager.timeFullMillis.value)
                     is MpvEvent.EndFile -> scope.launch(Dispatchers.Main) { onFileEnded(event.reason) }
                     else -> Unit
                 }
@@ -524,7 +525,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         scope.follow(mpv, mpv.observe(MpvProperties.Seekable)) { if (it != null) mpvSeekable = it }
         scope.follow(mpv, mpv.observe(MpvProperties.Volume)) { if (it != null) mpvVolume = it.toInt() }
         scope.follow(mpv, mpv.observe(MpvProperties.Duration)) {
-            if (it != null) playerManager.timeFullMillis.value = (it * 1000).toLong()
+            if (it != null) onEngineDurationChanged((it * 1000).toLong())
         }
         // isNowPlaying drives the UI, and ProtocolManager compares it with the room's state.
         scope.follow(mpv, mpv.observe(MpvProperties.Pause)) { if (it != null) playerManager.isNowPlaying.value = !it }
@@ -541,27 +542,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     /**
-     * Announces the file once mpv knows its duration. One wait per file: the next core cancels it,
-     * so a fast second load cannot announce the new file with the old file's duration.
-     */
-    private fun announceWhenDurationKnown(scope: CoroutineScope) {
-        durationWaitJob?.cancel()
-        durationWaitJob = scope.launch {
-            // PlayerImpl.installMedia resets timeFullMillis to 0 on every inject, so this waits for
-            // this file's duration. A stale value would announce the old name, size and duration.
-            // Bounded: a file with no duration (a live stream) still announces, with 0.
-            var waitedMs = 0L
-            while (isActive && playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
-                delay(50)
-                waitedMs += 50
-            }
-            if (!isActive) return@launch
-            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
-            announceFileLoaded()
-        }
-    }
-
-    /**
      * Only a real end of the file reaches the room. mpv also reports Eof when a stream drops early, so
      * the position has to agree. Anything else (a decode error, a stop) ends locally, and the room is
      * told nothing.
@@ -573,6 +553,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         if (!atEnd) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
         pause()
         if (atEnd) onPlaybackEnded()
+        if (reason == EndFileReason.Error) onEngineLoadFailed()
     }
 
     /**

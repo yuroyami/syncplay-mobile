@@ -38,6 +38,7 @@ import platform.AVFoundation.AVMediaTypeText
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
+import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
@@ -206,15 +207,13 @@ object AVPlayerEngine: PlayerEngine {
             ) {
                 when (keyPath) {
                     "timeControlStatus" -> {
-                        // Only the Playing status counts as playing. The third status,
-                        // WaitingToPlayAtSpecifiedRate (buffering or stalled), does not. AVPlayer
-                        // can enter it briefly while the room is paused (for example, after a
-                        // rate change in code), and counting it would send a false unpause.
-                        val isPlaying = avPlayer?.timeControlStatus == AVPlayerTimeControlStatusPlaying
+                        val status = avPlayer?.timeControlStatus
+                        val isPlaying = status == AVPlayerTimeControlStatusPlaying
 
-                        // The same third status only drives the room's buffering indicator.
-                        viewmodel.playerManager.isBuffering.value =
-                            avPlayer?.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+                        // The third status, WaitingToPlayAtSpecifiedRate, is a stalled buffer or
+                        // a start that waits for data. It only drives the buffering indicator.
+                        val waiting = status == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+                        viewmodel.playerManager.isBuffering.value = waiting
 
                         // A failed player or item pauses by itself. That pause stays local and is
                         // not sent to the room.
@@ -228,10 +227,14 @@ object AVPlayerEngine: PlayerEngine {
                                 viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
                                     Localization.strings.roomPlaybackError(reason)
                                 }
+                                onEngineLoadFailed()
                             }
                         }
 
-                        viewmodel.playerManager.isNowPlaying.value = isPlaying
+                        // A stall is not a pause, and the room must never hear it as one. So while
+                        // AVPlayer waits, the play state stays as it was, as on the other engines.
+                        // Counting the wait as playing would send a false unpause to a paused room.
+                        if (!waiting || failure != null) viewmodel.playerManager.isNowPlaying.value = isPlaying
                     }
                 }
             }
@@ -359,8 +362,6 @@ object AVPlayerEngine: PlayerEngine {
                     }
                 }
             }
-
-            applyPreferredLanguages(mediafile)
         }
 
         /**
@@ -466,6 +467,9 @@ object AVPlayerEngine: PlayerEngine {
          * the teardown. Cancelling the supervisor in onClosing would kill the engine's scopes while
          * isInitialized is still true, which is the reverse of the destroy contract. */
 
+        // parseMedia reports the file itself, after the item is ready, so the base does not.
+        override val announcesFileLoadViaEvent: Boolean = true
+
         override suspend fun parseMedia(media: MediaFile) {
             hookPlayerAgain()
 
@@ -476,11 +480,13 @@ object AVPlayerEngine: PlayerEngine {
                 }
             }
 
-            // The item is ready, or the wait ended. Publish the duration.
-            avMedia!!.asset.duration.toMillis().let { dur ->
-                val actualDur = if (dur < 0) 0 else dur
-                playerManager.timeFullMillis.value = actualDur
-                playerManager.media.value?.fileDuration = actualDur / 1000.0
+            // The item is ready, or the wait ended. A live stream has no duration, and still
+            // opens. An item that failed is not announced: its error is already on screen.
+            val item = avMedia
+            if (item?.status == AVPlayerItemStatusFailed) {
+                onEngineLoadFailed()
+            } else if (item != null) {
+                onEngineFileReady(item.asset.duration.toMillis().coerceAtLeast(0L))
             }
 
             super.parseMedia(media)
@@ -557,8 +563,10 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
 
+        /** 0 for an indefinite time, such as a live stream's duration, which has no seconds. */
         private fun CValue<CMTime>.toMillis(): Long {
-            return CMTimeGetSeconds(this).times(1000.0).roundToLong()
+            val seconds = CMTimeGetSeconds(this)
+            return if (seconds.isFinite()) (seconds * 1000.0).roundToLong() else 0L
         }
 
 

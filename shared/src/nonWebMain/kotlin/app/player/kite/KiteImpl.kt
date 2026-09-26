@@ -276,7 +276,6 @@ internal class KiteImpl(
         durationWatcher?.cancel()
         durationWatcher = playerScopeMain.launch {
             var wasEnded = false
-            var announcedMedia: MediaFile? = null
             var reportedError: PlaybackError? = null
             player.state.collect { snapshot ->
                 // The play button and the protocol's divergence broadcast both collect
@@ -296,26 +295,18 @@ internal class KiteImpl(
                         viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
                             Localization.strings.roomPlaybackError(reason)
                         }
+                        onEngineLoadFailed()
                     }
                 }
                 val durationMs = snapshot.duration?.inWholeMilliseconds ?: 0L
                 if (durationMs > 0) playerManager.timeFullMillis.value = durationMs
 
-                // Announce every new MediaFile once it has opened, with whatever duration is
-                // known (a live stream has none and still needs announcing, as 0). A later
-                // duration or an HLS/DASH refinement is announced again for the same file.
-                // Duration equality is not file identity: a resolver may hand two files the
-                // same length.
+                // The first opened snapshot of a file announces it, with whatever duration is
+                // known (a live stream has none). A later HLS or DASH refinement only updates the
+                // room, and never raises the offer to continue again.
                 val opened = snapshot.status != PlaybackStatus.Idle && snapshot.status != PlaybackStatus.Opening
-                val media = viewmodel.media
-                if (media != null && opened && snapshot.status != PlaybackStatus.Failed) {
-                    val durationSeconds = durationMs / 1000.0
-                    val durationChanged = durationMs > 0 && media.fileDuration != durationSeconds
-                    if (durationChanged) media.fileDuration = durationSeconds
-                    if (media !== announcedMedia || durationChanged) {
-                        announcedMedia = media
-                        announceFileLoaded()
-                    }
+                if (viewmodel.media != null && opened && snapshot.status != PlaybackStatus.Failed) {
+                    onEngineFileReady(durationMs)
                 }
 
                 val ended = snapshot.status == PlaybackStatus.Ended
@@ -482,8 +473,6 @@ internal class KiteImpl(
                 ),
             )
         }
-
-        applyPreferredLanguages(mediafile)
     }
 
     /** KitePlayer sets both flags on the track itself, so nothing is read from the label. */
