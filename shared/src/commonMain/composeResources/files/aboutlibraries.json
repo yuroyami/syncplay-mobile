@@ -2103,7 +2103,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:libmpvkt",
-            "artifactVersion": "0.2.0",
+            "artifactVersion": "0.3.0",
             "name": "libmpvkt",
             "website": "https://github.com/yuroyami/libmpvKt",
             "licenses": [
@@ -2116,7 +2116,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:libmpvkt-native",
-            "artifactVersion": "0.2.0",
+            "artifactVersion": "0.3.0",
             "name": "libmpvkt-native",
             "website": "https://github.com/yuroyami/libmpvKt",
             "licenses": [
@@ -2129,7 +2129,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:libmpvkt-view",
-            "artifactVersion": "0.2.0",
+            "artifactVersion": "0.3.0",
             "name": "libmpvkt-view",
             "website": "https://github.com/yuroyami/libmpvKt",
             "licenses": [

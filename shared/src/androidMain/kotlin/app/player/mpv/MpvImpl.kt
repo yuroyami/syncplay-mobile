@@ -58,10 +58,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.concurrent.Volatile
@@ -115,11 +118,18 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
      */
     private val coreCalls = ioDispatcher.limitedParallelism(1)
 
+    /** Core starts run one at a time, see [startCore]. */
+    private val coreStart = Mutex()
+
     override fun initialize() {
         ctx = mpvView.context.applicationContext
         copyAssets(ctx)
-        startCore()?.let { mpv -> playerScopeIO.launch(coreCalls) { onThisCore(mpv, ::prepare) } }
+        // Set before the start: a start that finds the engine gone closes its core instead.
         isInitialized = true
+        // An empty core, so the settings have one before the first file. A file that started first keeps its core.
+        playerScopeMain.launch {
+            startCore(replace = false)?.let { mpv -> withContext(coreCalls) { onThisCore(mpv, ::prepare) } }
+        }
         startTrackingProgress()
     }
 
@@ -410,7 +420,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
      * Plays [pathOrUrl] on a new core. Every file gets its own core, and the view hands it the
      * surface. The settings and the load go to [coreCalls], because each call waits for the core.
      */
-    @UiThread
     private suspend fun playOnFreshCore(pathOrUrl: String) {
         val mpv = startCore() ?: return
         withContext(coreCalls) {
@@ -422,15 +431,32 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     /**
-     * Starts a new core on [mpvView]. The view hands the old core's surface to the new one and closes
-     * the old core in the background, after its flows stop here. The view owns the surface, so the
-     * start runs on the interface thread. Run [prepare] on the new core before anything else.
+     * Starts a new core and gives it to [mpvView]. The start (mpv_initialize) loads the
+     * configuration and starts the core's threads. On a slow device that freezes the picture and
+     * every key, so the start runs on an IO thread. The attach runs on the interface thread: the
+     * view hands the old core's surface to the new one and closes the old core in the background,
+     * after its flows stop here. Starts run one at a time, so a later file never loses to an
+     * earlier start. With [replace] false, a running core stays and nothing starts. Neither step
+     * can be cancelled halfway, because a started core that no view takes would leak.
+     * Run [prepare] on the new core before anything else.
      */
-    @UiThread
-    private fun startCore(): Mpv? {
-        releaseCore()
-        mpvView.initialize(startOptions())
-        return mpvView.mpv?.also { core = it }
+    private suspend fun startCore(replace: Boolean = true): Mpv? = coreStart.withLock {
+        if (!replace && core != null) return@withLock null
+        val options = startOptions()
+        val started = withContext(ioDispatcher + NonCancellable) {
+            runCatching { mpvView.prepare(options) }
+                .onFailure { loggy("mpv: a core did not start: ${it.message}") }
+                .getOrNull()
+        } ?: return@withLock null
+        withContext(Dispatchers.Main.immediate + NonCancellable) {
+            if (!isInitialized) {
+                started.close()
+                return@withContext null
+            }
+            releaseCore()
+            mpvView.attach(started)
+            mpvView.mpv?.also { core = it }
+        }
     }
 
     /**

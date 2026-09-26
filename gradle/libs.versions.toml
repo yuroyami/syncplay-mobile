@@ -60,7 +60,7 @@ kiteplayer = "0.0.27"
 aboutlibraries = "15.2.0"
 # libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
 # from Central. settings.gradle.kts limits that repository to the libmpvkt modules.
-libmpvkt = "0.2.0"
+libmpvkt = "0.3.0"
 
 #iOS (VLCKit pod)
 libvlc-ios = "4.0.0a19"
