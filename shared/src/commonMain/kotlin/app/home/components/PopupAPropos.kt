@@ -1,6 +1,7 @@
 package app.home.components
 
 import SyncplayMobile.shared.KiteBuildConfig
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,6 +29,7 @@ import app.preferences.value
 import app.preferences.Preferences
 import app.home.HomeViewmodel
 import app.theme.Space
+import app.theme.Radius
 import app.theme.Type
 import app.theme.palette
 import app.uicomponents.LocalWidthClass
@@ -87,7 +89,8 @@ object PopupAPropos {
      * The body of the About popup, without its dialog, so the desktop screenshot tests can draw
      * it. Normally the story sits above the links. In a window too short for that (a phone in
      * landscape, where the panel is 330dp tall), the story sits beside the links, so Watch alone
-     * and the update check show without scrolling.
+     * and the update check show without scrolling. On a short phone held upright, the logo sits
+     * beside the name, which saves most of the height.
      */
     @Composable
     internal fun AboutBody(
@@ -102,48 +105,71 @@ object PopupAPropos {
         val sideBySide = windowHeight < SHORT_WINDOW && LocalWidthClass.current != WidthClass.Compact
         if (sideBySide) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.gutter), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { Story(compact = true) }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) { Story(StoryHead.Small) }
                 Column(Modifier.weight(1f)) { Links(updateResult, updateChecking, onCheckUpdate, onOpenUri, onLicences, onWatchAlone) }
             }
         } else {
+            val short = windowHeight < SHORT_PHONE
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Story(compact = false)
-                Spacer(Modifier.height(Space.gap))
+                Story(if (short) StoryHead.Beside else StoryHead.Large)
+                Spacer(Modifier.height(if (short) Space.gapTight else Space.gap))
                 Links(updateResult, updateChecking, onCheckUpdate, onOpenUri, onLicences, onWatchAlone)
             }
         }
     }
 
-    /** The logo, the wordmark, what the app is, and three facts. [compact] draws a smaller logo. */
+    /** How the story starts: a large logo, a small one, or a small one beside the name. */
+    private enum class StoryHead { Large, Small, Beside }
+
+    /** The logo, the wordmark, what the app is, and three facts. */
     @Composable
-    private fun ColumnScope.Story(compact: Boolean) {
+    private fun ColumnScope.Story(head: StoryHead) {
         val p = palette
-        SynkplayLogo(modifier = Modifier.size(if (compact) 48.dp else 84.dp))
+        val tagline = strings.aboutTagline(platform.label)
+        if (head == StoryHead.Beside) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                SynkplayLogo(modifier = Modifier.size(52.dp))
+                Column {
+                    SyncplayishText(string = appName, size = 24f)
+                    Text(text = tagline, style = Type.value, color = platform.color)
+                }
+            }
+        } else {
+            SynkplayLogo(modifier = Modifier.size(if (head == StoryHead.Small) 48.dp else 84.dp))
+            Spacer(Modifier.height(Space.gap))
+            SyncplayishText(string = appName, textAlign = TextAlign.Center, size = 26f)
+            Text(
+                text = tagline,
+                style = Type.value,
+                color = platform.color,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Spacer(Modifier.height(Space.gap))
-        SyncplayishText(string = appName, textAlign = TextAlign.Center, size = 26f)
-        Text(
-            text = strings.aboutTagline(platform.label),
-            style = Type.value,
-            color = platform.color,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(Space.gap))
-        Text(
-            text = strings.aboutBlurb,
-            style = Type.note,
-            color = p.ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(Space.gapTight))
-        Text(
-            text = strings.aboutIndependent,
-            style = Type.note,
-            color = p.inkDim,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        // What the app is, in a box drawn like the buttons below it and as wide as two of them.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(Space.hair, p.rule, Radius.controlShape)
+                .padding(Space.gap),
+            verticalArrangement = Arrangement.spacedBy(Space.gapTight),
+        ) {
+            Text(
+                text = strings.aboutBlurb,
+                style = Type.note,
+                color = p.ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = strings.aboutIndependent,
+                style = Type.note,
+                color = p.inkDim,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Spacer(Modifier.height(Space.gap))
         // When the text grows, the three facts wrap to a second line instead of running together.
         FlowRow(
@@ -197,6 +223,9 @@ object PopupAPropos {
 
     /** Under this window height the story sits beside the links instead of above them. */
     private val SHORT_WINDOW = 480.dp
+
+    /** Under this window height, a phone held upright puts the logo beside the name. */
+    private val SHORT_PHONE = 720.dp
 
     /** The licences popup: every third-party piece inside the app, with its licence and a link. */
     @Composable

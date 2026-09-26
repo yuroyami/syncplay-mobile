@@ -38,6 +38,11 @@ class AboutGolden {
             DesignHarness.render("about-modal", w, heightDp = h) { About() }.assertAllTextFits()
         }
         DesignHarness.render("about-modal", 375, heightDp = 812, fontScale = 1.3f) { About() }.assertAllTextFits()
+        // Short phones upright: the logo moves beside the name.
+        for ((w, h) in listOf(320 to 568, 360 to 640, 375 to 667)) {
+            DesignHarness.render("about-modal", w, heightDp = h) { About() }.assertAllTextFits()
+        }
+        DesignHarness.render("about-modal", 360, heightDp = 640, fontScale = 1.3f) { About() }.assertAllTextFits()
         DesignHarness.render("about-modal", 375, heightDp = 812, theme = DesignHarness.lightTheme) { About(UpdateCheck.Result.UpToDate) }.assertAllTextFits()
         // A phone on its side: a wide panel with the story beside the links.
         for ((w, h) in listOf(812 to 375, 874 to 402)) {
