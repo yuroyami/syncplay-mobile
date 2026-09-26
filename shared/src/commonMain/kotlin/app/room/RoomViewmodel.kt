@@ -16,6 +16,7 @@ import app.preferences.set
 import app.preferences.value
 import app.protocol.ProtocolManager
 import app.protocol.Session
+import app.protocol.SessionTap
 import app.protocol.resolveServerEndpoint
 import app.protocol.event.RoomCallback
 import app.protocol.event.RoomEventDispatcher
@@ -72,6 +73,8 @@ enum class OSDCategory {
  * pass one: an engine whose playhead is a clock.
  * @param transportOverride Builds the network transport instead of the platform. Only the sync
  * tests pass one: an in-memory link to the app's own server.
+ * @property sessionTap Sees every protocol line and sync decision. Only the recorded-session tests
+ * pass one.
  */
 class RoomViewmodel(
     val joinConfig: JoinConfig?,
@@ -79,6 +82,7 @@ class RoomViewmodel(
     startMedia: DroppedMedia? = null,
     private val engineOverride: PlayerEngine? = null,
     private val transportOverride: ((RoomViewmodel) -> NetworkManager)? = null,
+    val sessionTap: SessionTap? = null,
 ) : ViewModel() {
 
     /************ Managers ***************/

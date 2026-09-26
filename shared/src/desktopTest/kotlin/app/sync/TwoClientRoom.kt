@@ -18,6 +18,7 @@ import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.flow
 import app.preferences.set
 import app.preferences.settings.SettingCategory
+import app.protocol.SessionTap
 import app.protocol.models.ConnectionState
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
@@ -52,6 +53,15 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class TwoClientRoom(
     /** The link from each client to the server. A test can pass one that behaves like another server. */
     private val transport: (RoomViewmodel, SyncplayServer) -> NetworkManager = ::LoopbackTransport,
+    /** Where the clients join. The recorder of real sessions points them at a public server. */
+    private val host: String = "loopback",
+    private val port: Int = 8999,
+    val roomName: String = "harness",
+    names: Pair<String, String> = "alice" to "bob",
+    /** A pause between the two joins. The public server drops connections that come less than 3 s apart. */
+    joinSpacingMs: Long = 0,
+    /** Sees each client's lines and decisions, by user name. */
+    private val tap: (String) -> SessionTap? = { null },
 ) : AutoCloseable {
 
     private val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -72,18 +82,23 @@ internal class TwoClientRoom(
             withTimeout(2_000) { UNPAUSE_ACTION.flow().first { it == "Always" } }
         }
         platformCallback = RoomRig.inertPlatform(pictureInPicture = false)
-        alice = join("alice")
-        bob = join("bob")
+        alice = join(names.first)
+        if (joinSpacingMs > 0) {
+            waitUntil("${names.first} connects", timeoutMs = 30_000) { alice.connected }
+            Thread.sleep(joinSpacingMs)
+        }
+        bob = join(names.second)
     }
 
     private fun join(name: String): Client {
-        val config = JoinConfig(user = name, room = "harness", ip = "loopback", port = 8999)
+        val config = JoinConfig(user = name, room = roomName, ip = host, port = port)
         val destination = Screen.Room(config)
         val viewmodel = RoomViewmodel(
             joinConfig = config,
             backStack = mutableStateListOf(Screen.Home, destination),
             engineOverride = ClockEngine,
             transportOverride = { transport(it, server) },
+            sessionTap = tap(name),
         )
         stores += ViewModelStore().also { it.put("room-$name", viewmodel) }
         return Client(name, viewmodel)

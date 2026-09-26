@@ -449,6 +449,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     private suspend fun processPacket(jsonString: String) {
         if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
+        viewmodel.sessionTap?.line(inbound = true, line = jsonString)
 
         try {
             val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
@@ -566,6 +567,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
+                viewmodel.sessionTap?.line(inbound = false, line = json)
                 consecutiveWriteTimeouts.value = 0
                 return
             } catch (_: SocketGoneException) {

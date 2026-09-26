@@ -360,9 +360,12 @@ configurations.configureEach {
 }
 
 /* The live subtitle test uses up part of the key's small daily quota, so it runs only on request:
- * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest */
+ * ./gradlew :shared:desktopTest -PliveSubtitles --tests app.subtitles.SubtitleDownloadE2ETest
+ * The session recorder joins the public Syncplay server, so it also runs only on request:
+ * ./gradlew :shared:desktopTest -PrecordSessions --tests app.sync.RecordSessionsTest */
 tasks.withType<Test>().configureEach {
     systemProperty("synkplay.liveSubtitles", providers.gradleProperty("liveSubtitles").isPresent)
+    systemProperty("synkplay.recordSessions", providers.gradleProperty("recordSessions").isPresent)
 }
 
 // The two tasks that rewrite source files in this repo, with declared inputs and outputs.

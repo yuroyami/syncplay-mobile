@@ -130,32 +130,31 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // correction is decided. Nothing here waits for the main thread or the socket.
             sentPendingIntent = protocol.flushPendingLocalState(latencyCalculation)
             decisionRevision = protocol.localStateRevision
-            decideSync(
-                playstate = state.playstate,
-                state = protocol.syncState,
-                ctx = SyncContext(
-                    now = SyncClock.now(),
-                    playerPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
-                    hasMedia = decisionMedia != null,
-                    isInBackground = viewmodel.uiState.isInBackground,
-                    supportsSpeedAdjustment = viewmodel.player.supportsSpeedAdjustment,
-                    selfName = session.currentUsername,
-                    followerInControlledRoom = session.isInControlledRoomWithoutController(),
-                    prefs = SyncPrefs(
-                        rewind = Preferences.SYNC_REWIND.value(),
-                        fastForward = Preferences.SYNC_FASTFORWARD.value(),
-                        slowdown = Preferences.SYNC_SLOWDOWN.value(),
-                        dontSlowWithMe = Preferences.SYNC_DONT_SLOW_WITH_ME.value(),
-                    ),
-                    messageAge = messageAge,
-                    // Stored in tenths of a second so the sliders are whole numbers.
-                    rewindThreshold = Preferences.SYNC_REWIND_THRESHOLD.value() / 10.0,
-                    slowdownThreshold = Preferences.SYNC_SLOWDOWN_THRESHOLD.value() / 10.0,
-                    fastForwardThreshold = Preferences.SYNC_FASTFORWARD_THRESHOLD.value() / 10.0,
-                    userOffsetSeconds = protocol.userTimeOffsetSeconds(),
-                    seekPending = protocol.isSeekPending,
+            val before = protocol.syncState
+            val ctx = SyncContext(
+                now = SyncClock.now(),
+                playerPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
+                hasMedia = decisionMedia != null,
+                isInBackground = viewmodel.uiState.isInBackground,
+                supportsSpeedAdjustment = viewmodel.player.supportsSpeedAdjustment,
+                selfName = session.currentUsername,
+                followerInControlledRoom = session.isInControlledRoomWithoutController(),
+                prefs = SyncPrefs(
+                    rewind = Preferences.SYNC_REWIND.value(),
+                    fastForward = Preferences.SYNC_FASTFORWARD.value(),
+                    slowdown = Preferences.SYNC_SLOWDOWN.value(),
+                    dontSlowWithMe = Preferences.SYNC_DONT_SLOW_WITH_ME.value(),
                 ),
-            ).also { outcome ->
+                messageAge = messageAge,
+                // Stored in tenths of a second so the sliders are whole numbers.
+                rewindThreshold = Preferences.SYNC_REWIND_THRESHOLD.value() / 10.0,
+                slowdownThreshold = Preferences.SYNC_SLOWDOWN_THRESHOLD.value() / 10.0,
+                fastForwardThreshold = Preferences.SYNC_FASTFORWARD_THRESHOLD.value() / 10.0,
+                userOffsetSeconds = protocol.userTimeOffsetSeconds(),
+                seekPending = protocol.isSeekPending,
+            )
+            decideSync(playstate = state.playstate, state = before, ctx = ctx).also { outcome ->
+                viewmodel.sessionTap?.decision(state.playstate, before, ctx, outcome)
                 protocol.syncState = outcome.state
                 // Queue every accepted seek target before an ACK can open the server's stale-report
                 // gate.
