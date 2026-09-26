@@ -181,6 +181,36 @@ class ServerProtocolFlowTest {
         assertEquals(0, client.allOf<WireMessage.ListResponse>().size)
     }
 
+    /**
+     * Each command before Hello meets the same gate as the list request. The handlers also do
+     * nothing without a watcher, so only the drop and the error line prove that the gate ran.
+     */
+    private suspend fun assertRefusedBeforeHello(line: String) {
+        val server = server()
+        val member = TestClient(server).apply { receive(helloFor("member", "room")) }
+        member.clearSent()
+        val stranger = TestClient(server)
+        stranger.receiveRaw(line)
+        assertEquals(true, stranger.dropped, "a command before Hello must drop the connection: $line")
+        assertNotNull(stranger.lastOf<WireMessage.Error>(), "and say why: $line")
+        assertEquals(emptyList(), member.sent, "and reach nobody in the room: $line")
+    }
+
+    @Test
+    fun `State before Hello is rejected`(): Unit = runBlocking {
+        assertRefusedBeforeHello("""{"State": {"playstate": {"position": 42.0, "paused": false, "doSeek": true}, "ping": {"latencyCalculation": 1.0, "clientRtt": 0.0}}}""")
+    }
+
+    @Test
+    fun `Set before Hello is rejected`(): Unit = runBlocking {
+        assertRefusedBeforeHello("""{"Set": {"file": {"name": "a.mkv", "duration": 60.0, "size": 1000}}}""")
+    }
+
+    @Test
+    fun `Chat before Hello is rejected`(): Unit = runBlocking {
+        assertRefusedBeforeHello(WireMessage.chatRequest("hello").toJson())
+    }
+
     // -----------------------------------------------------------
     // Multi-client room broadcast
     // -----------------------------------------------------------
