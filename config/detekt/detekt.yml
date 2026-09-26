@@ -23,7 +23,7 @@ complexity:
   LongMethod:
     active: true
     threshold: 120
-    excludes: ['**/commonTest/**', '**/desktopTest/**', '**/*Screen.kt', '**/ui/**']
+    excludes: ['**/*Test/**', '**/*Screen.kt', '**/ui/**']
   LongParameterList:
     active: false
   TooManyFunctions:
@@ -71,7 +71,8 @@ naming:
     active: true
     # Composables are PascalCase by convention; tests read as sentences here on purpose.
     ignoreAnnotated: ['Composable']
-    excludes: ['**/commonTest/**', '**/desktopTest/**', '**/androidHostTest/**']
+    # Every test source set, including ones added later (commonTest, desktopTest, nonWebTest...).
+    excludes: ['**/*Test/**']
     functionPattern: '[a-z][a-zA-Z0-9_]*'
   ConstructorParameterNaming:
     active: false      # names like _name mirror the Python original

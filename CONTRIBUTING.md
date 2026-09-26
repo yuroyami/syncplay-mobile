@@ -223,16 +223,14 @@ commonTest ─── nonWebTest ─┬─ desktopTest
   - `readBlockingOrNull`. On the web it returns null.
   - `FileKitCompat`. On the web its functions throw `UnsupportedOperationException`.
 
-Two build lists name source sets, and neither covers all of them. This is tracked in
-#ISSUE(gates-skip-the-newest-source-sets).
+Two build checks read source sets, and both find them on disk, so a new source set is covered
+with no edit:
 
-- The detekt `source` list in the root `build.gradle.kts` names `commonMain`, `androidMain`,
-  `desktopMain`, `jvmShared`, `iosMain`, `commonTest`, `desktopTest`, `androidApp/src/main/java`
-  and `desktopApp/src/main/kotlin`. It misses `nonWebMain`, `wasmJsMain`, `nonWebTest` and
-  `webApp`. The `androidApp/src/main/java` folder does not exist.
-- `checkProtocolThrows` scans `app/protocol` in `commonMain`, `nonWebMain` and `wasmJsMain`, and
-  the server's `ClientConnection.kt`. It misses the protocol code in `jvmShared` and `iosMain`.
-- When you add a source set, add it to both lists.
+- detekt scans every `kotlin` and `java` folder under `src/` of `shared`, `androidApp`,
+  `desktopApp` and `webApp` (the `source` list in the root `build.gradle.kts`). Its test
+  exclusions match any folder whose name ends in `Test`.
+- `checkProtocolThrows` scans `app/protocol` in every main source set of `shared`, including
+  `jvmShared`, and the server's `ClientConnection.kt`.
 
 ## 5. Traps
 

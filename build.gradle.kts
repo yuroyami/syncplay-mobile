@@ -176,19 +176,14 @@ detekt {
     buildUponDefaultConfig = true
     allRules = false
     config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    // Every Kotlin source folder of every module, read from disk, so a new source set is scanned
+    // without an edit here.
     source.setFrom(
-        files(
-            "shared/src/commonMain/kotlin",
-            "shared/src/androidMain/kotlin",
-            "shared/src/desktopMain/kotlin",
-            // Android and desktop share these files; without this line detekt does not scan them.
-            "shared/src/jvmShared/kotlin",
-            "shared/src/iosMain/kotlin",
-            "shared/src/commonTest/kotlin",
-            "shared/src/desktopTest/kotlin",
-            "androidApp/src/main/java",
-            "desktopApp/src/main/kotlin",
-        )
+        listOf("shared", "androidApp", "desktopApp", "webApp").flatMap { module ->
+            file("$module/src").listFiles().orEmpty().sortedBy { it.name }
+                .flatMap { set -> listOf(File(set, "kotlin"), File(set, "java")) }
+                .filter { it.isDirectory }
+        }
     )
 }
 

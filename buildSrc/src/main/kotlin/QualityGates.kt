@@ -60,13 +60,14 @@ fun Project.registerQualityGates(androidVersionCode: String, versionName: String
  * the plain detekt task does not have, so as a detekt rule it never fires.
  */
 private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
-    val sources = listOf(
-        file("shared/src/commonMain/kotlin/app/protocol"),
-        // Transports in their own source sets: Ktor sockets in nonWebMain, WebSocket in wasmJsMain.
-        file("shared/src/nonWebMain/kotlin/app/protocol"),
-        file("shared/src/wasmJsMain/kotlin/app/protocol"),
-        file("shared/src/commonMain/kotlin/app/server/ClientConnection.kt"),
-    ).filter { it.exists() }
+    // The protocol folder of every main source set, read from disk, so a transport in a new source
+    // set is checked without an edit here (Netty lives in jvmShared, Ktor sockets in nonWebMain).
+    val sources = file("shared/src").listFiles().orEmpty()
+        .filter { it.name.endsWith("Main") || it.name == "jvmShared" }
+        .sortedBy { it.name }
+        .map { File(it, "kotlin/app/protocol") }
+        .plus(file("shared/src/commonMain/kotlin/app/server/ClientConnection.kt"))
+        .filter { it.exists() }
     val root = rootDir
     return tasks.register("checkProtocolThrows") {
         group = GATE_GROUP
