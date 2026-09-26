@@ -250,6 +250,30 @@ internal class ClockPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Clo
     /** Moves the playhead without telling anyone, the way a stalled decoder or a skip would. */
     fun jumpBy(deltaMs: Long) = moveTo(currentPositionMs() + deltaMs)
 
+    /**
+     * The engine stops by itself, as on a stream error or while it opens the next file. A [marked]
+     * stop is recorded as expected first, which is how every engine keeps such a stop local.
+     */
+    fun stopByItself(marked: Boolean) {
+        if (marked) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+        moveTo(currentPositionMs())
+        playing = false
+        playerManager.isNowPlaying.value = false
+    }
+
+    /** A buffering stall: the engine still means to play, so only the buffering flag changes. */
+    fun stall(stalled: Boolean) {
+        playerManager.isBuffering.value = stalled
+    }
+
+    /** The real end of the file, as MpvImpl.onFileEnded handles it: an unmarked stop, then the end hook. */
+    fun reachEnd() {
+        moveTo(TwoClientRoom.CLIP_LENGTH_MS)
+        playing = false
+        playerManager.isNowPlaying.value = false
+        onPlaybackEnded()
+    }
+
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
         moveTo(toPositionMs)

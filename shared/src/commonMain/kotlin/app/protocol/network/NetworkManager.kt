@@ -209,12 +209,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     private var handshakeDeadlineJob: Job? = null
 
+    /** How long a connection may stay in the handshake. A test transport shortens it. */
+    protected open val handshakeTimeout: Duration get() = HANDSHAKE_TIMEOUT
+
     private fun armHandshakeDeadline() {
         handshakeDeadlineJob?.cancel()
         handshakeDeadlineJob = viewmodel.viewModelScope.launch(ioDispatcher) {
-            delay(HANDSHAKE_TIMEOUT)
+            delay(handshakeTimeout)
             if (state.value == ConnectionState.CONNECTING) {
-                loggy("Handshake timed out after ${HANDSHAKE_TIMEOUT.inWholeSeconds}s")
+                loggy("Handshake timed out after ${handshakeTimeout.inWholeMilliseconds}ms")
                 terminateExistingConnection()
                 viewmodel.callback.onConnectionFailed()
             }

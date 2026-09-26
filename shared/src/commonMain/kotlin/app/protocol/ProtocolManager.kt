@@ -335,8 +335,11 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * [RoomEventDispatcher.controlPlayback]) and server-driven pauses (applied by
      * [RoomServerMessageHandler]) are not broadcast again. The path that updates the player also
      * calls [noteExpectedPlaybackState], so the engine's resulting flow emission matches the
-     * expectation. Only engine-driven pauses and resumes (buffer underrun, audio focus loss,
-     * EOF) cause an actual broadcast.
+     * expectation. Only engine-driven pauses and resumes that the engine did not mark as expected
+     * (audio focus loss, the end of the file) cause an actual broadcast. A stop that the engine
+     * causes itself (an error, opening the next file) is marked first, so it stays local. A
+     * buffering stall is never sent: engines report it in [PlayerManager.isBuffering], which
+     * nothing here reads.
      *
      * Driven by the flow rather than by polling: the engines expose event APIs for everything,
      * and a poll that samples a player still converging on a seek target produces phantom seeks.
@@ -451,9 +454,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
-     * Engine-driven pause or resume (buffer underrun, audio focus loss, EOF): tells the room and
+     * Engine-driven pause or resume (audio focus loss, the end of the file): tells the room and
      * updates the expectation, so neither the collector nor the watchdog says it twice. Anything
-     * the app does on purpose notes its expectation first, so it matches here and sends nothing.
+     * the app or the engine does on purpose notes its expectation first, so it matches here and
+     * sends nothing.
      */
     private fun broadcastPlaybackDivergence(isPlaying: Boolean) {
         if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return

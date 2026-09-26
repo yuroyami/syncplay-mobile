@@ -282,32 +282,22 @@ internal class KiteImpl(
             player.state.collect { snapshot ->
                 // The play button and the protocol's divergence broadcast both collect
                 // isNowPlaying, so mirror the engine's status as every other engine mirrors its
-                // events. Buffering counts as playing: the engine is trying to advance
-                // (isActive), and KitePlayer never pauses by itself on underrun, so buffering
-                // must not look like a pause. Opening is media lifecycle, not a playback intent,
-                // and is left alone, like VLCKit's transitional states.
-                playerManager.isBuffering.value =
-                    snapshot.status == PlaybackStatus.Buffering || snapshot.status == PlaybackStatus.Opening
-                when (snapshot.status) {
-                    PlaybackStatus.Playing, PlaybackStatus.Buffering ->
-                        playerManager.isNowPlaying.value = true
-                    PlaybackStatus.Paused, PlaybackStatus.Ended, PlaybackStatus.Idle ->
-                        playerManager.isNowPlaying.value = false
-                    PlaybackStatus.Failed -> {
-                        // A failure is local: shown to the user, never broadcast as a pause.
-                        viewmodel.protocol.noteExpectedPlaybackState(paused = true)
-                        playerManager.isNowPlaying.value = false
-                        val error = snapshot.error
-                        if (error != null && error !== reportedError) {
-                            reportedError = error
-                            val reason = error.message
-                            viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomPlaybackError(reason) }
-                            viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
-                                Localization.strings.roomPlaybackError(reason)
-                            }
+                // events. See mirrorOf for what each status means for the room.
+                val mirror = mirrorOf(snapshot.status)
+                playerManager.isBuffering.value = mirror.buffering
+                // Marked before the stop shows, so the room is not told about it.
+                if (mirror.ownStop) viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                mirror.playing?.let { playerManager.isNowPlaying.value = it }
+                if (snapshot.status == PlaybackStatus.Failed) {
+                    val error = snapshot.error
+                    if (error != null && error !== reportedError) {
+                        reportedError = error
+                        val reason = error.message
+                        viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomPlaybackError(reason) }
+                        viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
+                            Localization.strings.roomPlaybackError(reason)
                         }
                     }
-                    PlaybackStatus.Opening -> Unit
                 }
                 val durationMs = snapshot.duration?.inWholeMilliseconds ?: 0L
                 if (durationMs > 0) playerManager.timeFullMillis.value = durationMs
@@ -842,6 +832,26 @@ private val OFFERED_DRAWING_NAMES = setOf(
 )
 
 /** Whole families this app offers, however many drawings they hold. */
+/**
+ * What one engine status means for the room. [playing] is the play state to mirror, or null to
+ * leave it as it is. [ownStop] marks a stop that the engine made by itself, so the room is not
+ * told about it: a failure is local, shown to the user and never broadcast as a pause.
+ */
+internal data class KiteStatusMirror(val playing: Boolean?, val buffering: Boolean, val ownStop: Boolean)
+
+/**
+ * Buffering counts as playing: the engine is trying to advance, and KitePlayer never pauses by
+ * itself on underrun, so a stall must not look like a pause. Opening is the media's lifecycle,
+ * not a playback intent, so the play state stays as it is, as with VLCKit's transitional states.
+ */
+internal fun mirrorOf(status: PlaybackStatus): KiteStatusMirror = when (status) {
+    PlaybackStatus.Playing -> KiteStatusMirror(playing = true, buffering = false, ownStop = false)
+    PlaybackStatus.Buffering -> KiteStatusMirror(playing = true, buffering = true, ownStop = false)
+    PlaybackStatus.Opening -> KiteStatusMirror(playing = null, buffering = true, ownStop = false)
+    PlaybackStatus.Paused, PlaybackStatus.Ended, PlaybackStatus.Idle -> KiteStatusMirror(playing = false, buffering = false, ownStop = false)
+    PlaybackStatus.Failed -> KiteStatusMirror(playing = false, buffering = false, ownStop = true)
+}
+
 private val OFFERED_DRAWING_FAMILIES = setOf(VizFamily.Battery)
 
 /** The offered drawings, in catalogue order. */
