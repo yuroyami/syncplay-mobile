@@ -20,6 +20,7 @@
 		0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED312BB9375000FCDAB5 /* _NIOFileSystem */; };
 		0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */; };
 		0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */; };
+		D5678880AB67AF8510BFF507 /* NioConnectionHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */; };
 		0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED382BB96D4C00FCDAB5 /* NIOSSL */; };
 		0424B733C25F1A6509DE1F07 /* Pods_iosApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */; };
 		045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */; };
@@ -39,6 +40,7 @@
 
 /* Begin PBXFileReference section */
 		0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNioNetworkManager.swift; sourceTree = "<group>"; };
+		F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NioConnectionHandlers.swift; sourceTree = "<group>"; };
 		045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncplayScreen.swift; sourceTree = "<group>"; };
 		04BF80012B9704B9002E2EDE /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		04BF80032B9704C1002E2EDE /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -165,6 +167,7 @@
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */,
 				0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */,
+				F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
@@ -356,6 +359,7 @@
 				02FB671D91E24A7CB7E7A012 /* YouTubeKitBridge.swift in Sources */,
 				045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */,
 				0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */,
+				D5678880AB67AF8510BFF507 /* NioConnectionHandlers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

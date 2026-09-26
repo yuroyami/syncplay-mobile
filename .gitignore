@@ -69,3 +69,7 @@ desktopApp/resources/
 
 # Plan documents written by local tooling. They are not project documentation and docs/ is published.
 docs/superpowers/
+
+# The iOS handler tests (swift test)
+iosApp/NioHandlerTests/.build/
+iosApp/NioHandlerTests/.swiftpm/

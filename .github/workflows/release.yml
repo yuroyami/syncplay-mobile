@@ -317,6 +317,10 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      # The two SwiftNIO handlers of the iOS client have tests of their own, which run on the Mac.
+      - name: Test the iOS connection handlers
+        run: swift test --package-path iosApp/NioHandlerTests
+
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
       # Let KiteConfig stamp its resolved iOS version and rebuild counter before Xcode

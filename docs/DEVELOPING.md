@@ -425,6 +425,12 @@ Compile the web target:
 ./gradlew :shared:compileKotlinWasmJs
 ```
 
+Test the connection handlers of the iOS client on a Mac, with no simulator:
+
+```bash
+swift test --package-path iosApp/NioHandlerTests
+```
+
 What these tasks check:
 
 - `:shared:desktopTest` runs the common tests on the desktop JVM, and the desktop-only tests.
@@ -434,7 +440,10 @@ What these tasks check:
   passwords, invite links, file comparison, ping and clock offset, slash commands, resume
   storage, settings backup and rate limiting.
 - The render harness writes its images to `shared/build/design-goldens/`.
-- `qualityGates` runs nine build-time checks, such as the string resource and locale checks.
+- The Swift package in `iosApp/NioHandlerTests` tests the line decoder and the TLS handshake
+  tracker of the iOS client. Its source is a link to `iosApp/iosApp/NioConnectionHandlers.swift`,
+  so the app and the tests build the same file.
+- `qualityGates` runs ten build-time checks, such as the string resource and locale checks.
   `detekt` uses the rule set of this repository.
 - `koverVerify` fails when the line coverage of `app.protocol` and `app.server` drops below
   `COVERAGE_FLOOR` in the root [`build.gradle.kts`](../build.gradle.kts). Raise the floor when
