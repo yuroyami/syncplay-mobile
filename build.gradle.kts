@@ -93,7 +93,9 @@ kiteConfig {
         version { rebuild = 1 }
         infoPlist {
             proMotion = true
-            nonExemptEncryption = false
+            // True: the app bundles its own TLS (SwiftNIO SSL), so a French declaration is due for
+            // the French store. See "App Store encryption answer" in docs/DEVELOPING.md.
+            nonExemptEncryption = true
         }
     }
 
