@@ -16,8 +16,11 @@ package app.protocol.models
  * of that error. NTP's clock filter works the same way, and picking the least-delayed sample is
  * why a clock filter beats an average.
  *
- * **Nothing corrects playback from this yet.** It is only measured and logged, so a real
- * two-device session can show whether the numbers are sane.
+ * The room uses it to age each `State` by that message's own delay: see [messageAgeSeconds].
+ * No timestamp method can see a delay that is always the same in one direction: the offset takes
+ * half of it in, and the age computed from that offset is half the round trip again. What the
+ * offset does see is a delay that changes from one message to the next, such as a `State` that
+ * waited in a queue on its way down.
  */
 class ClockOffsetEstimator(
     /** How many samples the filter keeps. NTP uses eight for the same reason. */
@@ -41,9 +44,33 @@ class ClockOffsetEstimator(
     var dispersionSeconds: Double = 0.0
         private set
 
-    /** Enough samples, and they agree closely enough to be trusted. */
+    /** Enough samples, and they agree closely enough to be trusted. The log reports it. */
     val settled: Boolean
         get() = window.size >= windowSize && dispersionSeconds <= MAX_SETTLED_DISPERSION_SECONDS
+
+    /**
+     * Enough samples that the least-delayed one is a fair estimate. Unlike [settled], it ignores
+     * how far the other samples spread: a delayed message spreads them, and a delayed message is
+     * exactly when [messageAgeSeconds] matters.
+     */
+    val usable: Boolean
+        get() = window.size >= windowSize / 2
+
+    /**
+     * How long one message from the server took to arrive, from its own timestamps: its send time
+     * on the server's clock and its receive time on ours. A message that waited in a queue on its
+     * way down counts as older than the rest, which a smoothed average cannot show.
+     *
+     * Null until the estimate is [usable], and for an age that no link produces. That means a
+     * clock was stepped after the estimate, and the caller then keeps its smoothed estimate.
+     */
+    fun messageAgeSeconds(serverSendTime: Double, ourReceiveTime: Double): Double? {
+        if (!usable || serverSendTime <= 0.0) return null
+        val age = ourReceiveTime + offsetSeconds - serverSendTime
+        // A little below zero is the estimate's own error on a fast link. Far below is a stepped clock.
+        if (age < -MAX_NEGATIVE_AGE_SECONDS || age > PingService.MAX_PLAUSIBLE_RTT_SECONDS) return null
+        return age.coerceAtLeast(0.0)
+    }
 
     /**
      * Feeds one exchange.
@@ -87,5 +114,8 @@ class ClockOffsetEstimator(
     companion object {
         /** Offsets spread wider than this are still settling, or the link is unstable. */
         const val MAX_SETTLED_DISPERSION_SECONDS = 0.25
+
+        /** How far below zero an age may fall and still count as a fast message, not a stepped clock. */
+        const val MAX_NEGATIVE_AGE_SECONDS = 0.1
     }
 }

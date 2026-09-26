@@ -124,10 +124,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     var pingService = PingService()
 
     /**
-     * How far our clock sits from the server's, from the timestamps already on the wire.
-     *
-     * Nothing acts on it yet. It is only measured and logged, so a real two-device session can
-     * check whether the numbers are sane.
+     * How far our clock sits from the server's, from the timestamps already on the wire. `onState`
+     * ages each message by its own delay with it, once it is usable.
      */
     val clockOffset = ClockOffsetEstimator()
 
@@ -407,8 +405,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 // silently, so the same comparison runs on this tick too.
                 broadcastPlaybackDivergence(viewmodel.playerManager.isNowPlaying.value)
 
-                /* Logs the clock estimate on every tick once it has settled. Nothing acts on it;
-                 * the log lets a real two-device session check whether it is sane. */
+                /* Logs the clock estimate on every tick once it has settled, so a real
+                 * two-device session can check whether it is sane. */
                 if (clockOffset.settled) {
                     loggy(
                         "Clock offset: ${(clockOffset.offsetSeconds * 1000).toInt()}ms " +

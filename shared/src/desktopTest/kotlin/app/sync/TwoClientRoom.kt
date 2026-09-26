@@ -169,11 +169,14 @@ internal open class LoopbackTransport(viewmodel: RoomViewmodel, private val serv
         lateinit var link: ClientConnection
         link = ClientConnection(
             server = server,
-            sendFn = { line -> if (connection === link) handlePacket(line) },
+            sendFn = { line -> if (connection === link) deliver(line) },
             dropFn = { lost(link) },
         )
         connection = link
     }
+
+    /** Hands a line from the server to the client. A test link can hold it back first. */
+    protected open fun deliver(line: String) = handlePacket(line)
 
     /** The server dropped this link, the way a socket closes from the other side. */
     private fun lost(link: ClientConnection) {

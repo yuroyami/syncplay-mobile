@@ -8,8 +8,8 @@ import kotlin.test.assertTrue
 
 /**
  * Tests for [ClockOffsetEstimator], which estimates how far the server clock is from the local
- * clock, from the timestamps already on the wire. The app measures the offset, but nothing
- * corrects playback from it.
+ * clock, from the timestamps already on the wire. The room ages each `State` by that message's
+ * own delay with it.
  */
 class ClockOffsetEstimatorTest {
 
@@ -113,5 +113,37 @@ class ClockOffsetEstimatorTest {
         e.reset()
         assertEquals(0.0, e.offsetSeconds)
         assertFalse(e.settled)
+    }
+
+    /** Four exchanges make the estimate usable; the spread of the others does not matter. */
+    @Test
+    fun the_estimate_is_usable_after_half_a_window() {
+        val e = ClockOffsetEstimator()
+        repeat(3) { e.exchange(offset = 2.0, up = 0.05, down = 0.05, at = 1000.0 + it) }
+        assertFalse(e.usable)
+        assertEquals(null, e.messageAgeSeconds(serverSendTime = 1100.0, ourReceiveTime = 1098.05))
+        e.exchange(offset = 2.0, up = 0.05, down = 1.5, at = 1004.0)
+        assertTrue(e.usable)
+        assertFalse(e.settled, "One slow reply spreads the offsets, and the estimate is still usable")
+    }
+
+    /** A message that waited on its way down is older by exactly that wait. */
+    @Test
+    fun a_delayed_message_is_aged_by_its_own_delay() {
+        val e = ClockOffsetEstimator()
+        repeat(4) { e.exchange(offset = 2.0, up = 0.05, down = 0.05, at = 1000.0 + it) }
+        // Sent at server time 2010.0 (our 2008.0), delivered 0.6 s later.
+        assertEquals(0.6, e.messageAgeSeconds(serverSendTime = 2010.0, ourReceiveTime = 2008.6)!!, 1e-9)
+        assertEquals(0.05, e.messageAgeSeconds(serverSendTime = 2010.0, ourReceiveTime = 2008.05)!!, 1e-9)
+    }
+
+    /** An age no link produces means a clock was stepped, and the caller keeps its smoothed estimate. */
+    @Test
+    fun an_impossible_age_is_refused() {
+        val e = ClockOffsetEstimator()
+        repeat(4) { e.exchange(offset = 2.0, up = 0.05, down = 0.05, at = 1000.0 + it) }
+        assertEquals(null, e.messageAgeSeconds(serverSendTime = 2010.0, ourReceiveTime = 2007.0), "One second in the future")
+        assertEquals(null, e.messageAgeSeconds(serverSendTime = 2010.0, ourReceiveTime = 2030.0), "Twenty seconds old")
+        assertEquals(0.0, e.messageAgeSeconds(serverSendTime = 2010.0, ourReceiveTime = 2007.95)!!, 1e-9, "A little early counts as no delay")
     }
 }

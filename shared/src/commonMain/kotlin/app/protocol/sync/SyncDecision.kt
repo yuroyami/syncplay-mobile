@@ -49,7 +49,7 @@ data class SyncContext(
     /** True for a follower in a controlled room, the only case where PC forces a fast-forward. */
     val followerInControlledRoom: Boolean,
     val prefs: SyncPrefs,
-    /** Seconds the inbound position is already stale, from the ping service. */
+    /** Seconds the inbound position is already stale: this message's own delay, or the ping service's estimate. */
     val messageAge: Double,
     /**
      * How far our copy of the file runs ahead of the room's, in seconds.

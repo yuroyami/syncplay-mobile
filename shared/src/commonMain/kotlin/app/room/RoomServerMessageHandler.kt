@@ -94,17 +94,20 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
         state.ping?.let { ping ->
             latencyCalculation = ping.latencyCalculation
+            val receivedAt = SyncClock.nowSeconds()
             ping.clientLatencyCalculation?.let { timestamp ->
                 val serverRtt = ping.serverRtt ?: return@let
                 protocol.pingService.receiveMessage(timestamp, serverRtt)
-                // Measured, not acted on: see ProtocolManager.clockOffset.
                 protocol.clockOffset.observe(
                     ourSendTime = timestamp,
                     serverSendTime = ping.latencyCalculation ?: 0.0,
-                    ourReceiveTime = SyncClock.nowSeconds(),
+                    ourReceiveTime = receivedAt,
                 )
             }
-            messageAge = protocol.pingService.forwardDelay
+            // This message's own delay once the clock offset is usable, else the smoothed estimate
+            // that the reference client uses.
+            messageAge = ping.latencyCalculation?.let { protocol.clockOffset.messageAgeSeconds(it, receivedAt) }
+                ?: protocol.pingService.forwardDelay
         }
 
         /* The decision itself is a pure function ([decideSync] in `SyncDecision.kt`). Everything
