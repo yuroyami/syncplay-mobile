@@ -79,6 +79,13 @@
     <string name="room_ping_disconnected">غير متصل</string>
     <string name="room_connected_to_server">تم الاتصال بالخادم بنجاح</string>
     <string name="room_connection_failed">فشل الاتصال بالخادم</string>
+    <string name="room_connection_failed_name">فشل الاتصال بالخادم. لم يُعثر على اسم الخادم.</string>
+    <string name="room_connection_failed_refused">فشل الاتصال بالخادم. رفض الخادم الاتصال.</string>
+    <string name="room_connection_failed_timeout">فشل الاتصال بالخادم. لم يستجب الخادم في الوقت المحدد.</string>
+    <string name="room_status_failure_name">الاسم غير موجود</string>
+    <string name="room_status_failure_refused">مرفوض</string>
+    <string name="room_status_failure_timeout">لا استجابة</string>
+    <string name="room_status_failure_tls">فشل الاتصال الآمن</string>
     <string name="room_attempting_reconnection">انقطع الاتصال بالخادم، جارٍ محاولة إعادة الاتصال</string>
     <string name="room_attempting_tls">محاولة الاتصال الآمن</string>
     <string name="room_tls_supported">تم إنشاء اتصال آمن (%1$s)</string>

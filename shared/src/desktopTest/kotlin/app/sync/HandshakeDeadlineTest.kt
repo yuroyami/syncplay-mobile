@@ -1,5 +1,6 @@
 package app.sync
 
+import app.i18n.Localization
 import app.protocol.models.ConnectionState
 import app.room.RoomViewmodel
 import app.server.SyncplayServer
@@ -25,8 +26,9 @@ class HandshakeDeadlineTest {
         val alice = room.alice.viewmodel
         room.waitUntil("alice starts connecting") { alice.networkManager.state.value == ConnectionState.CONNECTING }
         val connectingAt = System.nanoTime()
+        // The notice names the reason: the server did not answer in time.
         room.waitUntil("the failed-connection path runs") {
-            alice.session.messageSequence.value.any { it.content == "Connection with server failed" }
+            alice.session.messageSequence.value.any { it.content == Localization.strings.roomConnectionFailedTimeout }
         }
         val waitedMs = (System.nanoTime() - connectingAt) / 1_000_000
         assertTrue(waitedMs >= DEADLINE.inWholeMilliseconds - 100, "It waits for the deadline: ${waitedMs}ms")

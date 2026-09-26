@@ -70,6 +70,13 @@
     <string name="room_ping_disconnected">已断开连接</string>
     <string name="room_connected_to_server">服务器连接成功</string>
     <string name="room_connection_failed">服务器连接失败</string>
+    <string name="room_connection_failed_name">连接服务器失败。找不到服务器名称。</string>
+    <string name="room_connection_failed_refused">连接服务器失败。服务器拒绝了连接。</string>
+    <string name="room_connection_failed_timeout">连接服务器失败。服务器未及时响应。</string>
+    <string name="room_status_failure_name">找不到名称</string>
+    <string name="room_status_failure_refused">被拒绝</string>
+    <string name="room_status_failure_timeout">无响应</string>
+    <string name="room_status_failure_tls">安全连接失败</string>
     <string name="room_attempting_reconnection">服务器连接中断，正在尝试重连</string>
     <string name="room_attempting_tls">正在尝试安全连接</string>
     <string name="room_tls_supported">安全连接已建立（%1$s）</string>

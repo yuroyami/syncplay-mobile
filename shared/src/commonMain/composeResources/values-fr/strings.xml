@@ -79,6 +79,13 @@
     <string name="room_ping_disconnected">Déconnecté</string>
     <string name="room_connected_to_server">Connexion réussie au serveur</string>
     <string name="room_connection_failed">Échec de la connexion avec le serveur</string>
+    <string name="room_connection_failed_name">La connexion au serveur a échoué. Le nom du serveur est introuvable.</string>
+    <string name="room_connection_failed_refused">La connexion au serveur a échoué. Le serveur a refusé la connexion.</string>
+    <string name="room_connection_failed_timeout">La connexion au serveur a échoué. Le serveur n'a pas répondu à temps.</string>
+    <string name="room_status_failure_name">Nom introuvable</string>
+    <string name="room_status_failure_refused">Refusée</string>
+    <string name="room_status_failure_timeout">Pas de réponse</string>
+    <string name="room_status_failure_tls">Connexion sécurisée échouée</string>
     <string name="room_attempting_reconnection">Connexion avec le serveur perdue, tentative de reconnexion</string>
     <string name="room_attempting_tls">Tentative de connexion sécurisée</string>
     <string name="room_tls_supported">Connexion sécurisée établie (%1$s)</string>

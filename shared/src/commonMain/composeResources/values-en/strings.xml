@@ -139,6 +139,13 @@
     <string name="room_ping_disconnected">Disconnected</string>
     <string name="room_connected_to_server">Successfully connected to server</string>
     <string name="room_connection_failed">Connection with server failed</string>
+    <string name="room_connection_failed_name">Connection with server failed. The server name was not found.</string>
+    <string name="room_connection_failed_refused">Connection with server failed. The server refused the connection.</string>
+    <string name="room_connection_failed_timeout">Connection with server failed. The server did not answer in time.</string>
+    <string name="room_status_failure_name">Name not found</string>
+    <string name="room_status_failure_refused">Refused</string>
+    <string name="room_status_failure_timeout">No answer</string>
+    <string name="room_status_failure_tls">Secure connection failed</string>
     <string name="room_attempting_reconnection">Connection with server lost, attempting to reconnect</string>
     <string name="room_attempting_tls">Attempting secure connection</string>
     <!-- %1$s is the TLS version, such as TLSv1.3. -->

@@ -10,6 +10,8 @@ import app.LocalRoomViewmodel
 import app.room.CertificateAsk
 import app.protocol.network.UntrustedCertificate
 import app.server.tls.HostCertificate
+import app.protocol.models.ConnectionState
+import app.protocol.network.ConnectionFailure
 import app.i18n.strings
 import app.klipy.KlipyMedia
 import app.player.models.Chapter
@@ -154,6 +156,13 @@ class SurfaceGoldens {
     fun statusLineRailAndControlPanelFit() {
         for (scale in scales) {
             RoomRig.render("room-status", 360, heightDp = 200, fontScale = scale, solo = false, withVideo = true) { RoomStatusInfoSection() }.assertAllTextFits()
+            // A failed join keeps its reason in the status line until an attempt connects.
+            val failed = RoomRig.render("room-status-failed", 360, heightDp = 200, fontScale = scale, solo = false, withVideo = true, setup = { room ->
+                room.networkManager.state.value = ConnectionState.DISCONNECTED
+                room.networkManager.lastFailure.value = ConnectionFailure.NameNotFound
+            }) { RoomStatusInfoSection() }
+            failed.assertAllTextFits()
+            assertTrue(failed.texts().contains("Name not found"), failed.texts().toString())
             RoomRig.render("room-rail", 360, heightDp = 600, fontScale = scale, solo = false, withVideo = true) { RoomRail() }
             RoomRig.render("room-rail-horizontal", 360, heightDp = 120, fontScale = scale, solo = false, withVideo = true) { RoomRail(horizontal = true) }
             // The control panel is glyphs only: the render checks that each one has a spoken name.

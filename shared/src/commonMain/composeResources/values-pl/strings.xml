@@ -79,6 +79,13 @@
     <string name="room_ping_disconnected">Rozłączono</string>
     <string name="room_connected_to_server">Pomyślnie połączono z serwerem</string>
     <string name="room_connection_failed">Połączenie z serwerem nie powiodło się</string>
+    <string name="room_connection_failed_name">Połączenie z serwerem nie powiodło się. Nie znaleziono nazwy serwera.</string>
+    <string name="room_connection_failed_refused">Połączenie z serwerem nie powiodło się. Serwer odrzucił połączenie.</string>
+    <string name="room_connection_failed_timeout">Połączenie z serwerem nie powiodło się. Serwer nie odpowiedział na czas.</string>
+    <string name="room_status_failure_name">Nie znaleziono nazwy</string>
+    <string name="room_status_failure_refused">Odrzucono</string>
+    <string name="room_status_failure_timeout">Brak odpowiedzi</string>
+    <string name="room_status_failure_tls">Błąd bezpiecznego połączenia</string>
     <string name="room_attempting_reconnection">Utracono połączenie z serwerem, próba ponownego połączenia</string>
     <string name="room_attempting_tls">Próba bezpiecznego połączenia</string>
     <string name="room_tls_supported">Bezpieczne połączenie ustanowione (%1$s)</string>

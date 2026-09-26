@@ -70,6 +70,13 @@
     <string name="room_ping_disconnected">Отключено</string>
     <string name="room_connected_to_server">Соединение с сервером установлено</string>
     <string name="room_connection_failed">Не удалось подключиться к серверу</string>
+    <string name="room_connection_failed_name">Не удалось подключиться к серверу. Имя сервера не найдено.</string>
+    <string name="room_connection_failed_refused">Не удалось подключиться к серверу. Сервер отклонил подключение.</string>
+    <string name="room_connection_failed_timeout">Не удалось подключиться к серверу. Сервер не ответил вовремя.</string>
+    <string name="room_status_failure_name">Имя не найдено</string>
+    <string name="room_status_failure_refused">Отклонено</string>
+    <string name="room_status_failure_timeout">Нет ответа</string>
+    <string name="room_status_failure_tls">Сбой защищённого соединения</string>
     <string name="room_attempting_reconnection">Соединение с сервером потеряно, переподключение</string>
     <string name="room_attempting_tls">Попытка установить защищенное соединение</string>
     <string name="room_tls_supported">Безопасное соединение установлено (%1$s)</string>

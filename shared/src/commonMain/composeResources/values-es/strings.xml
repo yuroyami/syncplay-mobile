@@ -70,6 +70,13 @@
     <string name="room_ping_disconnected">Desconectado</string>
     <string name="room_connected_to_server">Conectado al servidor exitosamente</string>
     <string name="room_connection_failed">La conexión con el servidor falló</string>
+    <string name="room_connection_failed_name">Falló la conexión con el servidor. No se encontró el nombre del servidor.</string>
+    <string name="room_connection_failed_refused">Falló la conexión con el servidor. El servidor rechazó la conexión.</string>
+    <string name="room_connection_failed_timeout">Falló la conexión con el servidor. El servidor no respondió a tiempo.</string>
+    <string name="room_status_failure_name">Nombre no encontrado</string>
+    <string name="room_status_failure_refused">Rechazada</string>
+    <string name="room_status_failure_timeout">Sin respuesta</string>
+    <string name="room_status_failure_tls">Falló la conexión segura</string>
     <string name="room_attempting_reconnection">Se perdió la conexión con el servidor, intentando reconectar</string>
     <string name="room_attempting_tls">Intentando conexión segura</string>
     <string name="room_tls_supported">Conexión segura establecida (%1$s)</string>

@@ -20,6 +20,7 @@ import app.preferences.value
 import app.protocol.WireMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
+import app.protocol.network.ConnectionFailure
 import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
 import app.room.OSDCategory
@@ -252,6 +253,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Connected! Handshake took ${network.sinceHandshakeStart()}")
 
         network.state.value = ConnectionState.CONNECTED
+        network.lastFailure.value = null
 
         // Channel-health monitoring: starts a periodic List probe, a State watchdog that detects
         // silent disconnects, and the playback divergence check. Bound to this room session:
@@ -306,10 +308,15 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         )
     }
 
-    fun onConnectionFailed() {
-        loggy("SYNCPLAY Protocol: Connection failed :/")
+    /** A failure with no known reason, such as a server that closed the socket during the handshake. */
+    fun onConnectionFailed() = onConnectionFailed(null)
+
+    /** A failed attempt. [reason] is said in the notice, and the status line keeps it until a connect. */
+    fun onConnectionFailed(reason: ConnectionFailure?) {
+        loggy("SYNCPLAY Protocol: Connection failed :/ ${reason ?: ""}")
         // The room is asking whether to trust the server's certificate. A retry would only ask again.
         if (network.untrustedCertificate.value != null) return
+        if (reason != null) network.lastFailure.value = reason
 
         hapticIf(HAPTIC_ON_CONNECTION)
         protocol.stopChannelHealthMonitoring()
@@ -317,7 +324,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         viewmodel.readiness.stop()
         network.state.value = ConnectionState.DISCONNECTED
         viewmodel.playlistManager.noteConnectionLost()
-        val osdMessage: suspend () -> String = { Localization.strings.roomConnectionFailed }
+        val osdMessage: suspend () -> String = {
+            val s = Localization.strings
+            when (reason) {
+                ConnectionFailure.NameNotFound -> s.roomConnectionFailedName
+                ConnectionFailure.Refused -> s.roomConnectionFailedRefused
+                ConnectionFailure.TimedOut -> s.roomConnectionFailedTimeout
+                // The encryption failure already said its reason in its own notice.
+                ConnectionFailure.Encryption, null -> s.roomConnectionFailed
+            }
+        }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
         network.reconnect()
@@ -390,7 +406,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 dispatcher.broadcastMessage(message = failure, isChat = false, isError = true)
                 viewmodel.dispatchOSD(OSDCategory.WARNING, getter = failure)
                 network.terminateExistingConnection()
-                onConnectionFailed()
+                onConnectionFailed(ConnectionFailure.Encryption)
                 return
             }
         } else {

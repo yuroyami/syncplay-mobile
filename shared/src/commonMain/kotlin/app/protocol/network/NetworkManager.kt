@@ -143,13 +143,13 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
              * own deadline firing, not the caller giving up. */
             loggy("Handshake: dial gave up after ${sinceHandshakeStart()}")
             terminateExistingConnection()
-            viewmodel.callback.onConnectionFailed()
+            viewmodel.callback.onConnectionFailed(ConnectionFailure.TimedOut)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             loggy("Handshake: failed after ${sinceHandshakeStart()}")
             loggy(e.stackTraceToString())
-            viewmodel.callback.onConnectionFailed()
+            viewmodel.callback.onConnectionFailed(classifyDialFailure(e))
         }
     }
 
@@ -220,12 +220,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (state.value == ConnectionState.CONNECTING) {
                 loggy("Handshake timed out after ${handshakeTimeout.inWholeMilliseconds}ms")
                 terminateExistingConnection()
-                viewmodel.callback.onConnectionFailed()
+                viewmodel.callback.onConnectionFailed(ConnectionFailure.TimedOut)
             }
         }
     }
 
     /** Drops the connection for good: no reconnect loop. For a refused plain-text downgrade. */
+    /** Why the last attempt failed, kept until an attempt connects. The room's status line shows it. */
+    val lastFailure = MutableStateFlow<ConnectionFailure?>(null)
+
     /**
      * A server certificate that the last TLS upgrade refused because nothing trusts it yet. The
      * room asks the person about it, and no retry runs until they answer. See [CertificatePins].

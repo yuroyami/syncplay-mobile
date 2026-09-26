@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.protocol.models.ConnectionState
+import app.protocol.network.ConnectionFailure
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
@@ -79,12 +80,21 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         else -> strings.roomEveryoneReady(readiness.participantCount)
     }
 
+    // Why the last attempt failed, until an attempt connects: a person can act on it.
+    val lastFailure by viewmodel.networkManager.lastFailure.collectAsState()
+    val failureText = when (lastFailure) {
+        ConnectionFailure.NameNotFound -> strings.roomStatusFailureName
+        ConnectionFailure.Refused -> strings.roomStatusFailureRefused
+        ConnectionFailure.TimedOut -> strings.roomStatusFailureTimeout
+        ConnectionFailure.Encryption -> strings.roomStatusFailureTls
+        null -> null
+    }
     val state = when (connectionState) {
         ConnectionState.CONNECTED -> readinessLine
             ?: strings.roomUserCount(totalUsers)
         ConnectionState.CONNECTING -> strings.roomConnecting
-        ConnectionState.SCHEDULING_RECONNECT -> strings.roomReconnecting
-        ConnectionState.DISCONNECTED -> strings.roomPingDisconnected
+        ConnectionState.SCHEDULING_RECONNECT -> failureText ?: strings.roomReconnecting
+        ConnectionState.DISCONNECTED -> failureText ?: strings.roomPingDisconnected
     }
     val media by viewmodel.playerManager.media.collectAsState()
     val episode = remember(media?.fileName) {
