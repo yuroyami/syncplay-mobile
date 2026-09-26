@@ -25,8 +25,8 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import app.home.HomeViewmodel
 import app.home.InviteLink
+import app.home.PendingJoin
 import app.home.JoinConfig
 import app.i18n.Localization
 import app.player.Playback
@@ -63,9 +63,6 @@ import app.room.VideoBounds
 class SyncplayActivity : ComponentActivity() {
 
     lateinit var globalViewmodel: SyncplayViewmodel
-
-    val homeViewmodel: HomeViewmodel?
-        get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
 
     val roomViewmodel: RoomViewmodel?
         get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
@@ -176,9 +173,8 @@ class SyncplayActivity : ComponentActivity() {
             intent.action == Intent.ACTION_VIEW -> intent.dataString?.let { InviteLink.parse(it) } ?: return
             else -> return
         }
-        lifecycleScope.launch {
-            homeViewmodel?.joinRoom(config)
-        }
+        // Home may not exist yet at a cold start, so the join waits for it there.
+        PendingJoin.post(config)
     }
 
     /**

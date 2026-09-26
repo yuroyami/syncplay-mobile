@@ -3,7 +3,6 @@
 package app
 
 import androidx.compose.ui.window.ComposeUIViewController
-import app.home.HomeViewmodel
 import app.room.RoomViewmodel
 import app.utils.flushLogs
 import app.utils.loggy
@@ -24,9 +23,6 @@ import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 
 lateinit var globalViewmodel: SyncplayViewmodel
-
-val homeViewmodel: HomeViewmodel?
-    get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
 
 val roomViewmodel: RoomViewmodel?
     get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null

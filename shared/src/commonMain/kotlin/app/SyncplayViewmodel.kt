@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.home.HomeViewmodel
 import app.preferences.Preferences.CURRENT_THEME
 import app.theme.migrated
 import app.preferences.Preferences.CUSTOM_THEMES
@@ -54,11 +53,10 @@ class SyncplayViewmodel : ViewModel() {
      */
     var hasEnteredRoomOnce = false
 
-    /** Weak references to the child view models. The platform hosts (SyncplayActivity, the iOS and
-     * desktop apps) reach them through these, and a cleared view model can still be collected.
-     * AdamScreen sets [roomWeakRef]. Nothing sets [homeWeakRef], so it is always null.
+    /** A weak reference to the room's view model. The platform hosts (SyncplayActivity, the iOS
+     * and desktop apps) reach it through this, and a cleared view model can still be collected.
+     * AdamScreen sets it. A join from outside the form goes through [app.home.PendingJoin].
      */
-    var homeWeakRef: WeakRef<HomeViewmodel>? = null
     var roomWeakRef: WeakRef<RoomViewmodel>? = null
 
     /**

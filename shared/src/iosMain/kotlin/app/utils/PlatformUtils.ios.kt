@@ -418,11 +418,8 @@ actual fun readFileBytes(path: String): ByteArray? {
  */
 actual fun getMpvConfFilePath(): String? = null
 
-actual fun consumePendingShortcut(): app.home.JoinConfig? {
-    return app.pendingShortcutJoinConfig.value?.also {
-        app.pendingShortcutJoinConfig.value = null
-    }
-}
+/** iOS hands its links and Quick Actions to app.home.PendingJoin directly, see IncomingJoins.kt. */
+actual fun consumePendingShortcut(): app.home.JoinConfig? = null
 
 actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
 

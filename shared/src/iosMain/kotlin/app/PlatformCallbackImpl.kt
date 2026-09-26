@@ -101,7 +101,7 @@ object ApplePlatformCallback : PlatformCallback {
 
     /**
      * Adds a Home Screen Quick Action for joining a room. The shortcut's `type` string holds the
-     * [JoinConfig] as JSON, and [handleShortcut] decodes it.
+     * [JoinConfig] as JSON, and [onQuickAction] decodes it.
      */
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
         val type = Json.encodeToString(joinInfo)

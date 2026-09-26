@@ -218,9 +218,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     // must pick one.
     val hasSavedConfig = remember { Preferences.JOIN_CONFIG.value() != null }
 
-    // A pending shortcut joins once, when the screen appears, with the same limits as the form.
+    // A join from a link, a shortcut or the command line runs once, with the same limits as the
+    // form: when the screen appears, and at once when one arrives while the screen shows.
     LaunchedEffect(Unit) {
-        consumePendingShortcut()?.let { viewmodel.joinRoom(it.sanitised()) }
+        consumePendingShortcut()?.let(PendingJoin::post)
+        PendingJoin.waiting.collect { waiting ->
+            if (waiting != null) PendingJoin.take()?.let { viewmodel.joinRoom(it.sanitised()) }
+        }
     }
 
     // When the settings file could not be read, the app runs on defaults. The screen says so once,
