@@ -108,6 +108,12 @@ repository that [`settings.gradle.kts`](../settings.gradle.kts) declares. There 
 build. AGP still uses the pinned NDK to strip the packaged libraries and to extract symbols.
 KitePlayer comes from Maven Central.
 
+libmpvKt ships mpv and FFmpeg stripped, so AGP has no symbols to extract from them. The release
+workflow runs [`add-libmpvkt-symbols.sh`](../.github/scripts/add-libmpvkt-symbols.sh), which takes
+their symbol files from the libmpvKt release and adds them to the native debug symbols. The Play
+upload sends that file. Each libmpvKt release from 0.3.0 on attaches these symbol files. The
+script fails when a symbol file does not match the library in the APK.
+
 To test local builds of the `io.github.yuroyami` libraries (such as KiteConfig and KitePlayer),
 add `-PuseMavenLocal=true`. Gradle then takes those libraries from your local Maven repository. A
 release build with this flag fails on purpose, because nobody else could rebuild it.

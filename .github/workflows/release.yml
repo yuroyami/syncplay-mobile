@@ -161,6 +161,14 @@ jobs:
       - name: Build APK and AAB
         run: ./gradlew assembleFullRelease bundleFullRelease
 
+      # libmpvKt ships mpv and FFmpeg stripped. This step adds their symbol files from the
+      # libmpvKt release to the native debug symbols. The Play upload sends that file.
+      - name: Add the mpv symbols to the native debug symbols
+        run: >-
+          .github/scripts/add-libmpvkt-symbols.sh
+          androidApp/build/outputs/apk/full/release/*.apk
+          androidApp/build/outputs/native-debug-symbols/fullRelease/native-debug-symbols.zip
+
       # The release notes carry this table. This job generates it because this job has the
       # whole build configured, and the release job has no Android SDK.
       - name: Write the dependency table for the release notes
@@ -190,7 +198,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: android-symbols
-          if-no-files-found: warn
+          if-no-files-found: error
           path: |
             androidApp/build/outputs/mapping/fullRelease/mapping.txt
             androidApp/build/outputs/native-debug-symbols/fullRelease/native-debug-symbols.zip
@@ -490,12 +498,20 @@ jobs:
           name: android-aab
           path: aab
 
+      # The AAB carries only the symbols that the build extracted. This file adds mpv's.
+      - name: Download native symbols
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: android-symbols
+          path: symbols
+
       - name: Upload AAB to Google Play
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.yuroyami.syncplay
           releaseFiles: aab/*.aab
+          debugSymbols: symbols/native-debug-symbols/fullRelease/native-debug-symbols.zip
           # An input, not a fixed track: the README says Play carries the same build as GitHub.
           track: ${{ inputs.play_track }}
           status: completed
