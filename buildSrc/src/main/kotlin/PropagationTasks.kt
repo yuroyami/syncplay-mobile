@@ -82,13 +82,11 @@ abstract class SyncDefaultStringsTask : DefaultTask() {
         if (!src.exists()) return
         val reservedFile = untranslatable.orNull?.asFile
         val reserved = if (reservedFile != null && reservedFile.exists()) {
-            Regex("""<string(?:-array)?\s+name="([^"]+)"""")
-                .findAll(reservedFile.readText())
-                .map { it.groupValues[1] }
-                .toSet()
+            StringResources.read(reservedFile).map { it.name }.toSet()
         } else emptySet()
 
-        val nameOf = Regex("""^\s*<string\s+name="([^"]+)"""")
+        // Space around the equals sign is allowed, as the XML parser of the gates allows it.
+        val nameOf = Regex("""^\s*<string\s+name\s*=\s*"([^"]+)"""")
         val text = src.readLines()
             .filterNot { nameOf.find(it)?.groupValues?.get(1) in reserved }
             .joinToString("\n") + "\n"

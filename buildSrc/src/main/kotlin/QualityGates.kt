@@ -96,8 +96,8 @@ private fun Project.registerProtocolThrowsGate(): TaskProvider<*> {
 }
 
 /**
- * String resources must load. A duplicate key does not fail the build; the app crashes when it
- * first reads the key.
+ * String resources must load, and each key must have one value. The string files are read with
+ * an XML parser ([StringResources]), so a key written as `name ="key"` is seen like any other.
  */
 private fun Project.registerStringResourceGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
@@ -110,15 +110,15 @@ private fun Project.registerStringResourceGate(): TaskProvider<*> {
             val problems = mutableListOf<String>()
             resourceRoot.listFiles().orEmpty().sortedBy { it.name }.forEach { dir ->
                 val xml = File(dir, "strings.xml").takeIf { it.isFile } ?: return@forEach
-                val text = xml.readText()
+                val entries = StringResources.read(xml)
                 val where = xml.relativeTo(root).path
 
-                val names = Regex("""<string name="([^"]+)"""").findAll(text).map { it.groupValues[1] }.toList()
+                val names = entries.filter { it.kind == ResourceKind.STRING }.map { it.name }
                 names.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.sorted().forEach {
                     problems += "$where: duplicate key '$it'"
                 }
 
-                val plurals = Regex("""<plurals name="([^"]+)"""").findAll(text).map { it.groupValues[1] }.toList()
+                val plurals = entries.filter { it.kind == ResourceKind.PLURALS }.map { it.name }
                 plurals.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.sorted().forEach {
                     problems += "$where: duplicate plural '$it'"
                 }
@@ -155,10 +155,7 @@ private fun Project.registerLocaleParityGate(): TaskProvider<*> {
             fun keysIn(dir: String): Set<String> {
                 val xml = File(File(resourceRoot, dir), "strings.xml")
                 if (!xml.isFile) return emptySet()
-                val text = xml.readText()
-                return (Regex("""<string name="([^"]+)"""").findAll(text) +
-                    Regex("""<plurals name="([^"]+)"""").findAll(text))
-                    .map { it.groupValues[1] }.toSet()
+                return StringResources.keys(xml).toSet()
             }
 
             val source = keysIn("values-en")
@@ -211,14 +208,13 @@ private fun Project.registerStringArgumentGate(): TaskProvider<*> {
         description = "Fails when a translation's placeholders differ in order or number from English."
         alwaysRun()
         doLast {
-            val entry = Regex("""<string name="([^"]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
             val marker = Regex("""%(\d+)\$""")
 
             fun argsIn(dir: String): Map<String, List<Int>> {
                 val xml = File(File(resourceRoot, dir), "strings.xml")
                 if (!xml.isFile) return emptyMap()
-                return entry.findAll(xml.readText()).associate { m ->
-                    m.groupValues[1] to marker.findAll(m.groupValues[2]).map { it.groupValues[1].toInt() }.toList()
+                return StringResources.read(xml).filter { it.kind == ResourceKind.STRING }.associate { e ->
+                    e.name to marker.findAll(e.text).map { it.groupValues[1].toInt() }.toList()
                 }
             }
 
@@ -277,9 +273,7 @@ private fun Project.registerDeadResourceGate(): TaskProvider<*> {
         doLast {
             val sourceXml = File(File(resourceRoot, "values-en"), "strings.xml")
             if (!sourceXml.isFile) return@doLast
-            val declared = (Regex("""<string name="([^"]+)"""").findAll(sourceXml.readText()) +
-                Regex("""<plurals name="([^"]+)"""").findAll(sourceXml.readText()))
-                .map { it.groupValues[1] }.toSet()
+            val declared = StringResources.keys(sourceXml).toSet()
 
             val code = buildString {
                 codeRoots.filter { it.exists() }.forEach { r ->

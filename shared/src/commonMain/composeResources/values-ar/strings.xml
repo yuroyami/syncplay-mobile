@@ -122,8 +122,6 @@
     <string name="room_msg_problem_loading_file">حدثت مشكلة في تحميل هذا الملف.</string>
     <string name="room_managed_room_popup_create">أدخل اسم الغرفة المُدارة\nراجع https://syncplay.pl/guide/ لتعليمات الاستخدام)</string>
     <string name="room_managed_room_popup_pw_identify_as_operator">أدخل كلمة مرور المشغل لهذه الغرفة\nراجع https://syncplay.pl/guide/ لتعليمات الاستخدام)</string>
-    <string name ="room_setting_pick_color">اختر لوناً</string>
-    <string name ="room_reconnect_button">إعادة الاتصال</string>
     <string name="room_volume">مستوى الصوت</string>
     <string name="room_brightness">السطوع</string>
     <string name="room_chapters_skip">تخطي الفصل</string>

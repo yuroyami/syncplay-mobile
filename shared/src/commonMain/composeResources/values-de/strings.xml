@@ -122,8 +122,6 @@
     <string name="room_msg_problem_loading_file">Beim Laden dieser Datei ist ein Problem aufgetreten.</string>
     <string name="room_managed_room_popup_create">Namen des verwalteten Raums eingeben\n(siehe https://syncplay.pl/guide/ für Anleitung)</string>
     <string name="room_managed_room_popup_pw_identify_as_operator">Operator-Passwort für diesen Raum eingeben\n(siehe https://syncplay.pl/guide/ für Anleitung)</string>
-    <string name ="room_setting_pick_color">Farbe auswählen</string>
-    <string name ="room_reconnect_button">Erneut verbinden</string>
     <string name="room_volume">Lautstärke</string>
     <string name="room_brightness">Helligkeit</string>
     <string name="room_chapters_skip">Kapitel überspringen</string>
