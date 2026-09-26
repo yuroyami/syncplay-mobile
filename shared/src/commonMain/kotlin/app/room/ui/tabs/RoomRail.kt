@@ -67,10 +67,43 @@ import app.uicomponents.controls.VerticalRule
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
 import app.home.InviteLink
+import kotlinx.coroutines.flow.collectLatest
+import app.room.RoomViewmodel
+import app.room.RoomUiStateManager
+import app.i18n.Localization
 import app.utils.platformCallback
 import app.uicomponents.controls.touchTarget
 
-private class RailCell(val icon: ImageVector, val name: String, val active: Boolean = false, val onClick: () -> Unit)
+/** One cell. A value: an unchanged cell compares equal, so Compose skips it on a recomposition. */
+private data class RailCell(val icon: ImageVector, val name: String, val active: Boolean = false, val onClick: () -> Unit)
+
+/**
+ * The rail's click actions, made once for each room. A cell that is built again then holds the
+ * same action and still compares equal. The share action reads the room name when it runs.
+ */
+private class RailClicks(ui: RoomUiStateManager, viewmodel: RoomViewmodel) {
+    val prefs = { ui.toggleRoomPreferences() }
+    val playlist = { ui.toggleSharedPlaylist() }
+    val people = { ui.toggleUserInfo() }
+    val lock = {
+        ui.tabLock.value = true
+        ui.visibleHUD.value = false
+    }
+    val pip = { platformCallback.onPictureInPicture(true) }
+
+    // The whole room in one link: the link carries the server, the port and the password, so
+    // nobody has to read out five fields.
+    val share = {
+        viewmodel.joinConfig?.let { config ->
+            val message = Localization.strings.roomShareInviteMessage(viewmodel.session.currentRoom)
+            platformCallback.shareText(message + "\n" + InviteLink.shareUrl(config))
+        }
+        Unit
+    }
+    val managed = { ui.managedRoom.value = true }
+    val leave = { ui.askLeave.value = true }
+    val more = { ui.railActionsExpanded.value = true }
+}
 
 /**
  * The rail: the strip of buttons that opens the panels, made of 42dp cells. A room is the group
@@ -92,13 +125,14 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val managedRooms by viewmodel.protocol.supportsManagedRooms.collectAsState()
     val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
-    val inviteMessage = strings.roomShareInviteMessage(viewmodel.session.currentRoom)
     val expanded by ui.railActionsExpanded.collectAsState()
-    val activity by ui.hudActivity.collectAsState()
     val managing by ui.managedRoom.collectAsState()
     val leaving by ui.askLeave.collectAsState()
-    LaunchedEffect(expanded, activity, managing, leaving) {
-        if (expanded && !managing && !leaving) {
+    LaunchedEffect(expanded, managing, leaving) {
+        if (!expanded || managing || leaving) return@LaunchedEffect
+        // Each input in the room starts the six seconds again. The count is collected here, not
+        // read in composition, so an input does not recompose the rail.
+        ui.hudActivity.collectLatest {
             delay(6_000)
             ui.railActionsExpanded.value = false
         }
@@ -135,40 +169,30 @@ fun RoomRail(modifier: Modifier = Modifier, horizontal: Boolean = false) {
         seenExpanded = expanded
     }
 
+    val clicks = remember(ui, viewmodel) { RailClicks(ui, viewmodel) }
     val panels = buildList {
         if (playerIsReady) {
-            add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs) { ui.toggleRoomPreferences() })
+            add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs, clicks.prefs))
         }
         if (!solo) {
             if (playerIsReady && sharedPlaylists) {
-                add(RailCell(Icons.AutoMirrored.Filled.PlaylistPlay, strings.roomSharedPlaylist, statePlaylist) { ui.toggleSharedPlaylist() })
+                add(RailCell(Icons.AutoMirrored.Filled.PlaylistPlay, strings.roomSharedPlaylist, statePlaylist, clicks.playlist))
             }
-            add(RailCell(Icons.Filled.Groups, strings.roomCardTitleUserInfo, stateUserInfo) { ui.toggleUserInfo() })
+            add(RailCell(Icons.Filled.Groups, strings.roomCardTitleUserInfo, stateUserInfo, clicks.people))
         }
-        add(RailCell(Icons.Filled.Lock, strings.roomLock) {
-            ui.tabLock.value = true
-            ui.visibleHUD.value = false
-        })
+        add(RailCell(Icons.Filled.Lock, strings.roomLock, onClick = clicks.lock))
     }
     val actions = buildList {
         if (playerIsReady && viewmodel.player.supportsPictureInPicture && platformCallback.supportsPictureInPicture) {
-            add(RailCell(Icons.Filled.PictureInPicture, strings.roomOverflowPip) { platformCallback.onPictureInPicture(true) })
+            add(RailCell(Icons.Filled.PictureInPicture, strings.roomOverflowPip, onClick = clicks.pip))
         }
-        if (!solo) {
-            // The whole room in one link: the link carries the server, the port and the password,
-            // so nobody has to read out five fields.
-            add(RailCell(Icons.Filled.Share, strings.roomShareInvite) {
-                viewmodel.joinConfig?.let { config ->
-                    platformCallback.shareText(inviteMessage + "\n" + InviteLink.shareUrl(config))
-                }
-            })
-        }
+        if (!solo) add(RailCell(Icons.Filled.Share, strings.roomShareInvite, onClick = clicks.share))
         if (!solo && managedRooms) {
-            add(RailCell(Icons.Filled.SupervisedUserCircle, strings.roomManagedRoom) { ui.managedRoom.value = true })
+            add(RailCell(Icons.Filled.SupervisedUserCircle, strings.roomManagedRoom, onClick = clicks.managed))
         }
-        add(RailCell(Icons.AutoMirrored.Filled.Logout, strings.roomOverflowLeaveRoom) { ui.askLeave.value = true })
+        add(RailCell(Icons.AutoMirrored.Filled.Logout, strings.roomOverflowLeaveRoom, onClick = clicks.leave))
     }
-    val more = RailCell(MoreGlyph, strings.roomRailMore) { ui.railActionsExpanded.value = true }
+    val more = RailCell(MoreGlyph, strings.roomRailMore, onClick = clicks.more)
     /* The rail's focus target sits on the cell whose panel is open. After that panel closes, it
      * stays on the same cell, so Back returns focus to the cell that opened the panel. */
     val openCell = panels.firstOrNull { it.active }?.name

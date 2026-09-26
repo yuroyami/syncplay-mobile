@@ -17,7 +17,7 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -94,30 +94,34 @@ fun Modifier.controlStates(
     // The selected state is spoken as well as drawn, so a screen reader can tell which playlist
     // item is playing, which track is chosen or which theme is on. Every control that draws a
     // selected state comes through here, so this one line covers all of them.
-    return semantics { this.selected = selected }.drawWithContent {
+    // The outlines, the stroke and the full-strength ring are made once for each size, not on
+    // every draw. The animated alphas are read only while drawing, so a fade redraws and nothing more.
+    return semantics { this.selected = selected }.drawWithCache {
         val outline = shape.createOutline(size, layoutDirection, this)
-        if (selected) drawOutline(outline, p.accent.copy(alpha = 0.08f))
-        if (hoverAlpha > 0f) drawOutline(outline, p.ink.copy(alpha = 0.06f * hoverAlpha))
-        if (focusAlpha > 0f) drawOutline(outline, p.accent.copy(alpha = 0.12f * focusAlpha))
-        drawContent()
-        if (selected) {
-            val w = 2.dp.toPx()
-            val x = if (layoutDirection == LayoutDirection.Ltr) 0f else size.width - w
-            drawRect(p.accent, Offset(x, 0f), Size(w, size.height))
-        }
-        if (focusAlpha > 0f) {
-            val inset = 1.dp.toPx()
-            val stroke = 2.dp.toPx()
-            val inner = shape.createOutline(Size(size.width - 2 * inset, size.height - 2 * inset), layoutDirection, this)
-            translate(inset, inset) {
-                if (focusRing != null) {
-                    drawOutline(outline = inner, brush = focusRing, alpha = focusAlpha, style = Stroke(stroke))
-                } else {
-                    drawOutline(
-                        outline = inner,
-                        brush = Brush.linearGradient(brand.map { it.copy(alpha = it.alpha * focusAlpha) }),
-                        style = Stroke(stroke),
-                    )
+        val edge = 2.dp.toPx()
+        val edgeX = if (layoutDirection == LayoutDirection.Ltr) 0f else size.width - edge
+        val inset = 1.dp.toPx()
+        val stroke = Stroke(2.dp.toPx())
+        val inner = shape.createOutline(Size(size.width - 2 * inset, size.height - 2 * inset), layoutDirection, this)
+        val fullRing = focusRing ?: Brush.linearGradient(brand)
+        onDrawWithContent {
+            if (selected) drawOutline(outline, p.accent.copy(alpha = 0.08f))
+            if (hoverAlpha > 0f) drawOutline(outline, p.ink.copy(alpha = 0.06f * hoverAlpha))
+            if (focusAlpha > 0f) drawOutline(outline, p.accent.copy(alpha = 0.12f * focusAlpha))
+            drawContent()
+            if (selected) drawRect(p.accent, Offset(edgeX, 0f), Size(edge, size.height))
+            if (focusAlpha > 0f) {
+                translate(inset, inset) {
+                    when {
+                        focusRing != null -> drawOutline(outline = inner, brush = focusRing, alpha = focusAlpha, style = stroke)
+                        focusAlpha == 1f -> drawOutline(outline = inner, brush = fullRing, style = stroke)
+                        // Mid-fade, the gradient's own colours carry the alpha.
+                        else -> drawOutline(
+                            outline = inner,
+                            brush = Brush.linearGradient(brand.map { it.copy(alpha = it.alpha * focusAlpha) }),
+                            style = stroke,
+                        )
+                    }
                 }
             }
         }
