@@ -6,8 +6,7 @@ import java.io.File
 /**
  * Every version number the build pins, read from the file that owns it: the version catalog,
  * gradle.properties, the Gradle wrapper, the Swift package lock and the CocoaPods lock. The
- * version table in the docs and the release page's dependency table both come from here, so
- * the two cannot disagree.
+ * release page's dependency table comes from here.
  */
 internal class ToolVersions(root: File) {
     val catalog: Map<String, String> = Regex("""^([A-Za-z0-9_-]+)\s*=\s*"([^"]+)"""", RegexOption.MULTILINE)

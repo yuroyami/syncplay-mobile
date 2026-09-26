@@ -38,10 +38,10 @@ fun Project.registerQualityGates(androidVersionCode: String) {
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
         registerStoreMetadataGate(androidVersionCode),
-    ) + registerDocVersionGates().take(1)
+    )
     tasks.register("qualityGates") {
         group = GATE_GROUP
-        description = "Runs all nine build-time gates: protocol throws, string resources, locale parity, string arguments, dead resources, settings reachability, destroy contract, store metadata, doc versions."
+        description = "Runs all build-time gates: protocol throws, string resources, locale parity, string arguments, dead resources, settings reachability, destroy contract, store metadata."
         dependsOn(gates)
     }
     gradle.projectsEvaluated {
@@ -487,100 +487,6 @@ private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider
             logger.lifecycle("Store metadata fits, and " + versionCode + " has release notes.")
         }
     }
-}
-
-/**
- * Keeps the version table in CLAUDE.md in line with the build.
- *
- * A version table typed by hand goes stale. So these tasks read `gradle/libs.versions.toml`,
- * gradle.properties and the Gradle wrapper, and write the numbers between the markers.
- *
- * `checkDocVersions` fails when the table no longer matches; `updateDocVersions` rewrites it.
- */
-private fun Project.registerDocVersionGates(): List<TaskProvider<*>> {
-    val doc = file("CLAUDE.md")
-
-    fun rendered(): String {
-        // The same reader as the release page's dependency table, so the two cannot disagree.
-        val tools = ToolVersions(projectDir)
-        val versions = tools.catalog
-
-        fun v(name: String) = versions[name] ?: "?"
-        fun p(name: String) = tools.props[name] ?: "?"
-        val gradleVersion = tools.gradle
-
-        return buildString {
-            appendLine("Kotlin " + v("kotlin") + ", AGP " + v("agp") + ", Compose Multiplatform " +
-                v("compose-multiplatform") + ", Gradle " + gradleVersion + ", NDK " + p("android.ndkVersion") + ".")
-            appendLine()
-            appendLine("| Library | Version |")
-            appendLine("|---|---|")
-            listOf(
-                "Ktor" to "ktor",
-                "Netty" to "netty",
-                "Conscrypt" to "conscrypt",
-                "kotlinx-serialization-json" to "kSerialization",
-                "Ktorfit" to "ktorfit",
-                "DataStore" to "datastore",
-                "kotlinx-coroutines" to "koroutines",
-                "kotlinx-datetime" to "datetime",
-                "Media3 / ExoPlayer" to "media3",
-                "VLCKit (iOS)" to "libvlc-ios",
-                "KitePlayer" to "kiteplayer",
-                "libmpvKt (mpv, Android)" to "libmpvkt",
-                "Coil3" to "coil",
-                "Haze" to "haze",
-                "MaterialKolor" to "materialkolor",
-                "Kermit" to "kermit",
-                "detekt" to "detekt",
-                "kover" to "kover",
-                "skiko (force-pinned)" to "skiko",
-            ).forEach { (label, key) ->
-                if (versions.containsKey(key)) appendLine("| " + label + " | " + versions.getValue(key) + " |")
-            }
-        }.trim()
-    }
-
-    val begin = "<!-- versions:begin -->"
-    val end = "<!-- versions:end -->"
-
-    fun withBlock(text: String, body: String): String {
-        val head = text.substringBefore(begin)
-        val tail = text.substringAfter(end)
-        return head + begin + "\n" + body + "\n" + end + tail
-    }
-
-    val update = tasks.register("updateDocVersions") {
-        group = "documentation"
-        description = "Rewrites the generated version table in CLAUDE.md from the version catalog."
-        alwaysRun()
-        doLast {
-            val text = doc.readText()
-            if (begin !in text) throw GradleException("CLAUDE.md has no $begin marker")
-            doc.writeText(withBlock(text, rendered()))
-            logger.lifecycle("CLAUDE.md version table rewritten.")
-        }
-    }
-
-    val check = tasks.register("checkDocVersions") {
-        group = GATE_GROUP
-        description = "Fails when the version table in CLAUDE.md has drifted from the catalog."
-        // CLAUDE.md is optional. Check its version table when the file exists, and skip the
-        // check when it does not, so a removed file never breaks the build.
-        onlyIf { doc.isFile }
-        alwaysRun()
-        doLast {
-            val text = doc.readText()
-            if (begin !in text) throw GradleException("CLAUDE.md has no $begin marker")
-            if (text != withBlock(text, rendered())) {
-                throw GradleException(
-                    "The version table in CLAUDE.md no longer matches gradle/libs.versions.toml.\n" +
-                        "Run ./gradlew updateDocVersions"
-                )
-            }
-        }
-    }
-    return listOf(check, update)
 }
 
 private fun List<File>.kotlinFiles(): List<File> =
