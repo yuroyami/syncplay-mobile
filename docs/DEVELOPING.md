@@ -385,8 +385,8 @@ interruptions, lock-screen controls, television remote navigation, or sync betwe
 ## Releases
 
 The manual [Release workflow](../.github/workflows/release.yml) runs `qualityGates` and `detekt`,
-then builds Android and iOS. It does not run the tests or the coverage check, so run them before
-you start the workflow.
+and in a second job the desktop tests, the Android host tests and `koverVerify`. It builds Android
+and iOS only after both jobs pass, so a failing test stops the release before any upload.
 
 - The store uploads are optional. You select the Play track when you start the workflow.
 - The desktop packages are optional and off by default.
