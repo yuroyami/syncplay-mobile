@@ -80,7 +80,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                 Row {
                     SyncplayishText(string = appName, size = 20f, modifier = Modifier.alignByBaseline())
                     Spacer(Modifier.width(Space.gapTight))
-                    SyncplayishText(string = KiteBuildConfig.APP_VERSION, size = 11f, modifier = Modifier.alignByBaseline())
+                    SyncplayishText(string = "v" + KiteBuildConfig.APP_VERSION, size = 11f, modifier = Modifier.alignByBaseline())
                 }
             }
             Spacer(Modifier.weight(1f))
