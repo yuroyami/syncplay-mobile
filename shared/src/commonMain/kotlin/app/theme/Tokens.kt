@@ -62,10 +62,13 @@ object Radius {
     val panelShape = RoundedCornerShape(panel)
 }
 
-/** Animation timing: two durations, one easing curve and one spring. */
+/** Animation timing: three durations, one easing curve and one spring. */
 object Motion {
     const val quickMs = 120
     const val moveMs = 220
+
+    /** For things that come and go on their own, such as notices: slow enough to follow, never a jolt. */
+    const val fadeMs = 400
 
     val easing: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
@@ -78,6 +81,7 @@ object Motion {
 
     fun <T> quick(): TweenSpec<T> = tween(if (reduced) 0 else quickMs, easing = easing)
     fun <T> move(): TweenSpec<T> = tween(if (reduced) 0 else moveMs, easing = easing)
+    fun <T> fade(): TweenSpec<T> = tween(if (reduced) 0 else fadeMs, easing = easing)
     fun <T> drag(): SpringSpec<T> = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
 }
 

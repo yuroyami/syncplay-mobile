@@ -4,10 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -22,9 +22,14 @@ import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,16 +46,24 @@ import app.theme.Type
 import app.theme.palette
 import app.uicomponents.chromeSurface
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 enum class NoticeSeverity { Info, Quiet, Sync, Warn }
 
-class NoticeItem(val id: Long, val text: String, val severity: NoticeSeverity, val holdMs: Long)
+class NoticeItem(val id: Long, val text: String, val severity: NoticeSeverity, val holdMs: Long) {
+    /** True once the notice is on its way out. It fades first, and then the host removes it. */
+    var leaving by mutableStateOf(false)
+        internal set
+}
 
 /**
- * The queue of notices (short-lived messages). It holds at most [max] notices. When it is full, a
+ * The queue of notices (short-lived messages). It shows at most [max] notices. When it is full, a
  * new warning pushes out the oldest notice, and any other new notice pushes out the oldest
  * non-warning, or is dropped when only warnings are left. Blank text or a zero or negative hold
  * posts nothing, which is how the notice duration setting turns notices off.
+ *
+ * A notice that leaves (at the end of its hold, pushed out, or cleared) first fades out in
+ * [NoticeHost], which then removes it. So no notice vanishes from one frame to the next.
  */
 @Stable
 class NoticeQueue(private val max: Int = 3) {
@@ -59,19 +72,29 @@ class NoticeQueue(private val max: Int = 3) {
 
     fun post(text: String, severity: NoticeSeverity = NoticeSeverity.Info, holdMs: Long) {
         if (holdMs <= 0 || text.isBlank()) return
-        if (items.size >= max) {
+        val shown = items.filterNot { it.leaving }
+        if (shown.size >= max) {
             val victim = when (severity) {
-                NoticeSeverity.Warn -> items.first()
-                else -> items.firstOrNull { it.severity != NoticeSeverity.Warn } ?: return
+                NoticeSeverity.Warn -> shown.first()
+                else -> shown.firstOrNull { it.severity != NoticeSeverity.Warn } ?: return
             }
-            items.remove(victim)
+            victim.leaving = true
+        }
+        // With no host on screen to finish the fades, leaving notices would pile up.
+        while (items.size >= max * 3) {
+            items.firstOrNull { it.leaving }?.let(items::remove) ?: break
         }
         items.add(NoticeItem(nextId++, text, severity, holdMs))
     }
 
-    fun dismiss(item: NoticeItem) { items.remove(item) }
+    /** Starts the fade out of [item]. */
+    fun dismiss(item: NoticeItem) { item.leaving = true }
 
-    fun clear() = items.clear()
+    /** Starts the fade out of every notice. */
+    fun clear() = items.forEach { it.leaving = true }
+
+    /** Removes [item] once its fade out has ended. */
+    internal fun remove(item: NoticeItem) { items.remove(item) }
 }
 
 /**
@@ -120,23 +143,35 @@ fun Notice(
     }
 }
 
-/** Renders a [NoticeQueue] as a stack, newest at the bottom, each fading after its hold. */
+/**
+ * Renders a [NoticeQueue] as a stack, newest at the bottom. A notice fades in while its place
+ * opens, and after its hold it fades out while its place closes, so the others glide instead of
+ * jumping. The gap between notices sits inside each one, so it closes with it.
+ */
 @Composable
 fun NoticeHost(queue: NoticeQueue, modifier: Modifier = Modifier, overVideo: Boolean = true) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.gapTight), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         queue.items.forEach { item ->
             key(item.id) {
-                val visible = remember { MutableTransitionState(false) }.apply { targetState = true }
+                val visible = remember { MutableTransitionState(false) }
+                visible.targetState = !item.leaving
                 LaunchedEffect(item) {
                     delay(item.holdMs)
                     queue.dismiss(item)
                 }
+                LaunchedEffect(item.leaving) {
+                    if (!item.leaving) return@LaunchedEffect
+                    // One frame first, so the fade out has started, then the end of that fade.
+                    withFrameNanos { }
+                    snapshotFlow { visible.isIdle && !visible.currentState }.first { it }
+                    queue.remove(item)
+                }
                 AnimatedVisibility(
                     visibleState = visible,
-                    enter = fadeIn(Motion.quick()) + slideInVertically(Motion.move()) { -it / 3 },
-                    exit = fadeOut(Motion.move()),
+                    enter = fadeIn(Motion.fade()) + expandVertically(Motion.fade(), expandFrom = Alignment.Top),
+                    exit = fadeOut(Motion.fade()) + shrinkVertically(Motion.fade(), shrinkTowards = Alignment.Top),
                 ) {
-                    Notice(item.text, item.severity, overVideo = overVideo)
+                    Notice(item.text, item.severity, overVideo = overVideo, modifier = Modifier.padding(vertical = Space.gapTight / 2))
                 }
             }
         }
