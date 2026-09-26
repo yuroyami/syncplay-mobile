@@ -731,6 +731,14 @@
     <string name="room_visualizer_director">Regie</string>
     <string name="room_visualizer_director_summary">Wechselt das Muster mit der Musik</string>
     <string name="room_visualizer_pattern">Muster</string>
+    <string name="room_drop_play_file">Ablegen, um %1$s abzuspielen</string>
+    <string name="room_drop_play_link">Ablegen, um diesen Link abzuspielen</string>
+    <string name="home_drop_watch_alone_file">Ablegen, um %1$s allein zu schauen</string>
+    <string name="home_drop_watch_alone_link">Ablegen, um diesen Link allein zu schauen</string>
+    <string name="media_drop_hint">Eine Videodatei oder einen Link ablegen</string>
+    <string name="media_drop_not_media">Dieser Dateityp kann nicht abgespielt werden.</string>
+    <string name="media_drop_folder">Ein Ordner kann nicht abgespielt werden. Lege eine Videodatei ab.</string>
+    <string name="media_drop_unsupported">Hier kannst du nur eine Videodatei oder einen Link ablegen.</string>
     <string-array name="tips">
         <item>Damit gemeinsame Playlists funktionieren, muss %1$s wissen, wo Ihre Mediendateien gespeichert sind. Fügen Sie Ihre Medienordner unter 'Einstellungen > Allgemein > Medienverzeichnisse für gemeinsame Playlist' hinzu.</item>
         <item>Möchten Sie den Video-Player solo verwenden? Wählen Sie einen Player, tippen Sie auf das %1$s-Logo oben und wählen Sie dann 'Offline-Modus'.</item>

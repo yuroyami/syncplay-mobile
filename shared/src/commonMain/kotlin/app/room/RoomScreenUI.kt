@@ -95,6 +95,10 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.PrimaryAction
 import app.uicomponents.frames.ModalSize
 import app.uicomponents.frames.Modal
+import app.uicomponents.DroppedMedia
+import app.uicomponents.MediaDropOverlay
+import app.uicomponents.MediaDropTarget
+import app.uicomponents.mediaDropTarget
 import app.utils.timestampFromMillis
 
 /**
@@ -158,7 +162,9 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         LocalPalette provides videoPalette,
         LocalSurfacePalette provides videoPalette,
     ) {
-        Box(Modifier.fillMaxSize().roomPointer(viewmodel.uiState, pointerHidden)) {
+        // A file or link dropped onto the room opens like one picked with the add key (desktop).
+        val drop = remember(viewmodel) { MediaDropTarget(viewmodel::onMediaDrop) }
+        Box(Modifier.fillMaxSize().roomPointer(viewmodel.uiState, pointerHidden).mediaDropTarget(drop)) {
             Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {
                 if (!hasVideo) RoomBackgroundArtwork()
 
@@ -211,6 +217,13 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 ) {
                     NoticeHost(queue = viewmodel.notices)
                     if (!soloMode) FadingMessageLayout()
+                }
+            }
+
+            MediaDropOverlay(drop) { media ->
+                when (media) {
+                    is DroppedMedia.File -> strings.roomDropPlayFile(media.name)
+                    is DroppedMedia.Link -> strings.roomDropPlayLink
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.Screen
 import app.home.components.UpdateCheckController
+import app.uicomponents.DroppedMedia
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
 import app.utils.ioDispatcher
@@ -19,11 +20,11 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /**
      * Saves [joinConfig] when the remember setting is on, then opens the room. A null [joinConfig]
-     * opens solo mode (offline playback).
+     * opens solo mode (offline playback). [startMedia] opens in the room once its engine is ready.
      */
-    suspend fun joinRoom(joinConfig: JoinConfig?) {
+    suspend fun joinRoom(joinConfig: JoinConfig?, startMedia: DroppedMedia? = null) {
         withContext(ioDispatcher) { joinConfig?.save() }
-        withContext(Dispatchers.Main) { backStack.add(Screen.Room(joinConfig)) }
+        withContext(Dispatchers.Main) { backStack.add(Screen.Room(joinConfig, startMedia)) }
     }
 
     val notices = NoticeQueue()

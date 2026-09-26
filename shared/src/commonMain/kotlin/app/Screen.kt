@@ -3,6 +3,7 @@ package app
 import androidx.navigation3.runtime.NavKey
 import app.home.JoinConfig
 import app.theme.SaveableTheme
+import app.uicomponents.DroppedMedia
 import kotlinx.serialization.Serializable
 
 /**
@@ -21,9 +22,11 @@ sealed interface Screen : NavKey {
      *
      * @property joinConfig The details to join the room with, or null for solo mode (offline
      *   playback).
+     * @property startMedia Media to open once the engine is ready: a file or link dropped onto the
+     *   home screen.
      */
     @Serializable
-    data class Room(val joinConfig: JoinConfig?) : Screen
+    data class Room(val joinConfig: JoinConfig?, val startMedia: DroppedMedia? = null) : Screen
 
     /**
      * The theme editor. [themeToEdit] is the custom theme to edit, or null to start a new theme

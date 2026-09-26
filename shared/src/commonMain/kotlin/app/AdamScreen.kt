@@ -187,7 +187,7 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                             key = "room_viewmodel",
                             modelClass = RoomViewmodel::class,
                             factory = viewModelFactory {
-                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = globalviewmodel.backstack) }
+                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = globalviewmodel.backstack, startMedia = room.startMedia) }
                             }
                         )
 

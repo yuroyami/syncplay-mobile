@@ -733,6 +733,14 @@
     <string name="room_visualizer_director">المخرج</string>
     <string name="room_visualizer_director_summary">يغيّر النمط مع الموسيقى</string>
     <string name="room_visualizer_pattern">النمط</string>
+    <string name="room_drop_play_file">أفلِت لتشغيل %1$s</string>
+    <string name="room_drop_play_link">أفلِت لتشغيل هذا الرابط</string>
+    <string name="home_drop_watch_alone_file">أفلِت لمشاهدة %1$s بمفردك</string>
+    <string name="home_drop_watch_alone_link">أفلِت لمشاهدة هذا الرابط بمفردك</string>
+    <string name="media_drop_hint">أفلِت ملف فيديو أو رابطًا</string>
+    <string name="media_drop_not_media">لا يمكن تشغيل هذا النوع من الملفات.</string>
+    <string name="media_drop_folder">لا يمكن تشغيل مجلد. أفلِت ملف فيديو واحدًا.</string>
+    <string name="media_drop_unsupported">يمكن هنا إفلات ملف فيديو أو رابط فقط.</string>
     <string-array name="tips">
         <item>لكي تعمل قوائم التشغيل المشتركة، يحتاج %1$s لمعرفة مكان تخزين ملفات الوسائط. أضف مجلدات الوسائط في 'الإعدادات > عام > مجلدات الوسائط لقائمة التشغيل المشتركة'.</item>
         <item>تريد استخدام مشغل الفيديو بمفردك؟ اختر مشغلاً، اضغط على شعار %1$s في الأعلى، ثم اختر 'الوضع غير المتصل'.</item>

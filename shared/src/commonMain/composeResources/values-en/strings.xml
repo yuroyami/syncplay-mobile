@@ -780,6 +780,14 @@
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Changes the pattern with the music</string>
     <string name="room_visualizer_pattern">Pattern</string>
+    <string name="room_drop_play_file">Drop to play %1$s</string>
+    <string name="room_drop_play_link">Drop to play this link</string>
+    <string name="home_drop_watch_alone_file">Drop to watch %1$s alone</string>
+    <string name="home_drop_watch_alone_link">Drop to watch this link alone</string>
+    <string name="media_drop_hint">Drop a video file or a link</string>
+    <string name="media_drop_not_media">This file type cannot be played.</string>
+    <string name="media_drop_folder">A folder cannot be played. Drop one video file.</string>
+    <string name="media_drop_unsupported">Only a video file or a link can be dropped here.</string>
     <string-array name="tips">
         <item>For shared playlists to work, %1$s needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
         <item>Want to use the video player solo? Select a player, tap the %1$s logo above, then choose 'Offline Mode'.</item>

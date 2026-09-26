@@ -721,6 +721,14 @@
     <string name="room_visualizer_director">导演</string>
     <string name="room_visualizer_director_summary">随音乐切换图案</string>
     <string name="room_visualizer_pattern">图案</string>
+    <string name="room_drop_play_file">松开以播放 %1$s</string>
+    <string name="room_drop_play_link">松开以播放此链接</string>
+    <string name="home_drop_watch_alone_file">松开以独自观看 %1$s</string>
+    <string name="home_drop_watch_alone_link">松开以独自观看此链接</string>
+    <string name="media_drop_hint">拖入视频文件或链接</string>
+    <string name="media_drop_not_media">无法播放此类型的文件。</string>
+    <string name="media_drop_folder">无法播放文件夹。请拖入一个视频文件。</string>
+    <string name="media_drop_unsupported">此处只能拖入视频文件或链接。</string>
     <string-array name="tips">
         <item>要使共享播放列表正常工作，%1$s需要知道您的媒体文件存储位置。在"设置 > 常规 > 共享播放列表的媒体目录"中添加您的媒体文件夹。</item>
         <item>想单独使用视频播放器吗？选择一个播放器，点击上方的%1$s徽标，然后选择"离线模式"。</item>

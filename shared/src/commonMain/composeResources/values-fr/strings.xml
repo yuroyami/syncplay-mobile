@@ -748,6 +748,14 @@
     <string name="room_visualizer_director">Réalisateur</string>
     <string name="room_visualizer_director_summary">Change de motif avec la musique</string>
     <string name="room_visualizer_pattern">Motif</string>
+    <string name="room_drop_play_file">Déposez pour lire %1$s</string>
+    <string name="room_drop_play_link">Déposez pour lire ce lien</string>
+    <string name="home_drop_watch_alone_file">Déposez pour regarder %1$s seul</string>
+    <string name="home_drop_watch_alone_link">Déposez pour regarder ce lien seul</string>
+    <string name="media_drop_hint">Déposez un fichier vidéo ou un lien</string>
+    <string name="media_drop_not_media">Ce type de fichier ne peut pas être lu.</string>
+    <string name="media_drop_folder">Un dossier ne peut pas être lu. Déposez un fichier vidéo.</string>
+    <string name="media_drop_unsupported">Seul un fichier vidéo ou un lien peut être déposé ici.</string>
     <string-array name="tips">
         <item>Pour que les playlists partagées fonctionnent, %1$s doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
         <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo %1$s, puis choisissez 'Mode hors ligne'.</item>

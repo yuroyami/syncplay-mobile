@@ -119,6 +119,13 @@ import app.uicomponents.controls.pressFeedback
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.frames.NoticeSeverity
 import app.uicomponents.frames.ScrollbarHost
+import app.uicomponents.DropPlan
+import app.uicomponents.DroppedMedia
+import app.uicomponents.MediaDropOverlay
+import app.uicomponents.MediaDropTarget
+import app.uicomponents.dropRefusal
+import app.uicomponents.mediaDropTarget
+import app.i18n.Localization
 import app.utils.ExitRoomMode
 import app.utils.Platform
 import app.utils.availablePlatformPlayerEngines
@@ -241,7 +248,17 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    // A file or link dropped onto the home screen plays in a room of its own, as Watch alone does (desktop).
+    val drop = remember(viewmodel) {
+        MediaDropTarget { plan ->
+            when (plan) {
+                is DropPlan.Open -> globalViewmodel.viewModelScope.launch { viewmodel.joinRoom(null, startMedia = plan.media) }
+                is DropPlan.Refuse -> viewmodel.notices.post(Localization.strings.dropRefusal(plan.why), NoticeSeverity.Warn, holdMs = 3000L)
+            }
+        }
+    }
+
+    Box(Modifier.fillMaxSize().mediaDropTarget(drop)) {
         Column(Modifier.fillMaxSize()) {
             HomeTopBar(viewmodel)
 
@@ -611,6 +628,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 .imePadding()
                 .padding(Space.gutter),
         )
+
+        MediaDropOverlay(drop) { media ->
+            when (media) {
+                is DroppedMedia.File -> strings.homeDropWatchAloneFile(media.name)
+                is DroppedMedia.Link -> strings.homeDropWatchAloneLink
+            }
+        }
     }
 }
 

@@ -733,6 +733,14 @@
     <string name="room_visualizer_director">Режиссёр</string>
     <string name="room_visualizer_director_summary">Меняет узор вместе с музыкой</string>
     <string name="room_visualizer_pattern">Узор</string>
+    <string name="room_drop_play_file">Отпустите, чтобы воспроизвести %1$s</string>
+    <string name="room_drop_play_link">Отпустите, чтобы воспроизвести эту ссылку</string>
+    <string name="home_drop_watch_alone_file">Отпустите, чтобы смотреть %1$s в одиночку</string>
+    <string name="home_drop_watch_alone_link">Отпустите, чтобы смотреть эту ссылку в одиночку</string>
+    <string name="media_drop_hint">Перетащите сюда видеофайл или ссылку</string>
+    <string name="media_drop_not_media">Этот тип файла нельзя воспроизвести.</string>
+    <string name="media_drop_folder">Папку нельзя воспроизвести. Перетащите один видеофайл.</string>
+    <string name="media_drop_unsupported">Сюда можно перетащить только видеофайл или ссылку.</string>
     <string-array name="tips">
         <item>Для работы общих списков воспроизведения %1$s необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
         <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип %1$s выше, затем выберите 'Автономный режим'.</item>

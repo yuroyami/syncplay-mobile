@@ -733,6 +733,14 @@
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Cambia el patrón con la música</string>
     <string name="room_visualizer_pattern">Patrón</string>
+    <string name="room_drop_play_file">Suelta para reproducir %1$s</string>
+    <string name="room_drop_play_link">Suelta para reproducir este enlace</string>
+    <string name="home_drop_watch_alone_file">Suelta para ver %1$s a solas</string>
+    <string name="home_drop_watch_alone_link">Suelta para ver este enlace a solas</string>
+    <string name="media_drop_hint">Suelta un archivo de vídeo o un enlace</string>
+    <string name="media_drop_not_media">Este tipo de archivo no se puede reproducir.</string>
+    <string name="media_drop_folder">No se puede reproducir una carpeta. Suelta un archivo de vídeo.</string>
+    <string name="media_drop_unsupported">Aquí solo puedes soltar un archivo de vídeo o un enlace.</string>
     <string-array name="tips">
         <item>Para que las listas de reproducción compartidas funcionen, %1$s necesita saber dónde se almacenan tus archivos multimedia. Añade tus carpetas de medios en 'Configuración > General > Directorios de medios para lista de reproducción compartida'.</item>
         <item>¿Quieres usar el reproductor de video solo? Selecciona un reproductor, toca el logo de %1$s arriba, luego elige 'Modo sin conexión'.</item>

@@ -744,6 +744,14 @@
     <string name="room_visualizer_director">Reżyser</string>
     <string name="room_visualizer_director_summary">Zmienia wzór wraz z muzyką</string>
     <string name="room_visualizer_pattern">Wzór</string>
+    <string name="room_drop_play_file">Upuść, aby odtworzyć %1$s</string>
+    <string name="room_drop_play_link">Upuść, aby odtworzyć ten link</string>
+    <string name="home_drop_watch_alone_file">Upuść, aby obejrzeć %1$s w pojedynkę</string>
+    <string name="home_drop_watch_alone_link">Upuść, aby obejrzeć ten link w pojedynkę</string>
+    <string name="media_drop_hint">Upuść plik wideo lub link</string>
+    <string name="media_drop_not_media">Nie można odtworzyć tego typu pliku.</string>
+    <string name="media_drop_folder">Nie można odtworzyć folderu. Upuść jeden plik wideo.</string>
+    <string name="media_drop_unsupported">Tutaj można upuścić tylko plik wideo lub link.</string>
     <string-array name="tips">
         <item>Aby wspólne listy odtwarzania działały, %1$s musi wiedzieć, gdzie przechowywane są twoje pliki multimedialne. Dodaj swoje foldery z mediami w 'Ustawienia > Ogólne > Katalogi mediów dla wspólnej listy odtwarzania'.</item>
         <item>Chcesz używać odtwarzacza wideo solo? Wybierz odtwarzacz, stuknij w logo %1$s powyżej, a następnie wybierz 'Tryb offline'.</item>

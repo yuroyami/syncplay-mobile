@@ -21,6 +21,9 @@ import app.protocol.event.RoomCallback
 import app.protocol.event.RoomEventDispatcher
 import app.protocol.network.NetworkManager
 import app.room.sharedplaylist.SharedPlaylistManager
+import app.uicomponents.DropPlan
+import app.uicomponents.DroppedMedia
+import app.uicomponents.dropRefusal
 import app.utils.FileComparison
 import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
@@ -28,8 +31,12 @@ import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
 import app.utils.ioDispatcher
 import app.utils.loggy
+import app.utils.platformFileAt
 import kotlin.time.TimeSource
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 /**
@@ -59,6 +66,8 @@ enum class OSDCategory {
  *
  * @property joinConfig The room connection settings, or null for solo mode.
  * @property backStack The navigation stack, used to leave the room.
+ * @param startMedia Media to open once the engine is ready: a file or link dropped onto the home
+ * screen.
  * @param engineOverride The engine to use instead of the platform's choice. Only the sync tests
  * pass one: an engine whose playhead is a clock.
  * @param transportOverride Builds the network transport instead of the platform. Only the sync
@@ -67,6 +76,7 @@ enum class OSDCategory {
 class RoomViewmodel(
     val joinConfig: JoinConfig?,
     val backStack: SnapshotStateList<Screen>,
+    startMedia: DroppedMedia? = null,
     private val engineOverride: PlayerEngine? = null,
     private val transportOverride: ((RoomViewmodel) -> NetworkManager)? = null,
 ) : ViewModel() {
@@ -110,6 +120,9 @@ class RoomViewmodel(
     /** The seeks so far, as (from, to) pairs in milliseconds, used to undo a seek. */
     val seeks = mutableStateListOf<Pair<Long, Long>>()
 
+    /** Media dropped onto the window. It waits here until the engine is ready: see [openDropped]. */
+    private val dropped = MutableStateFlow(startMedia)
+
     init {
         // The log shows how long after entering the room the engine was ready and the connection
         // started. For a slow join, the log must show whether the wait was the engine, the dial
@@ -140,6 +153,16 @@ class RoomViewmodel(
                 playerManager.player = engine.createImpl(this@RoomViewmodel)
                 playerManager.isPlayerReady.value = true
                 loggy("Room: ${engine.name} ready ${roomEnteredAt.elapsedNow().inWholeMilliseconds}ms after entering the room")
+            }
+
+            // Dropped media opens once the engine exists, so a drop during the start is kept.
+            launch {
+                playerInitialization.join()
+                if (!playerManager.isPlayerReady.value) return@launch
+                dropped.filterNotNull().collect { media ->
+                    dropped.value = null
+                    openDroppedNow(media)
+                }
             }
 
             joinConfig?.let {
@@ -181,6 +204,38 @@ class RoomViewmodel(
         // Leaving is the last chance to save the position in this file.
         resume.record()
         backStack.removeAt(backStack.lastIndex)
+    }
+
+    /** What the room does with a drop: it opens the media, or says why it refused the drop. */
+    fun onMediaDrop(plan: DropPlan) = when (plan) {
+        is DropPlan.Open -> openDropped(plan.media)
+        is DropPlan.Refuse -> dispatchWarning { Localization.strings.dropRefusal(plan.why) }
+    }
+
+    /**
+     * Opens dropped media with the calls of the add-media routes, so the announcement, the shared
+     * playlist and the resume offer work the same. The add-media card and panel close, as they do
+     * after a pick. Before the engine is ready, the media waits for it.
+     */
+    fun openDropped(media: DroppedMedia) {
+        if (uiState.mediaAddExpanded.value) uiState.collapseMediaAdd()
+        uiState.toggleAddMedia(false)
+        dropped.value = media
+    }
+
+    private suspend fun openDroppedNow(media: DroppedMedia) {
+        try {
+            when (media) {
+                is DroppedMedia.File -> player.injectVideoFile(platformFileAt(media.path))
+                is DroppedMedia.Link -> player.injectVideoURL(media.url)
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (e: Exception) {
+            // A file can vanish or become unreadable between the drop and the load.
+            loggy("Room: the dropped media did not open: $e")
+            dispatchWarning { Localization.strings.roomMsgProblemLoadingFile }
+        }
     }
 
     /**
