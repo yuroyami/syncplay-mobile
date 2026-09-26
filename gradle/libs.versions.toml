@@ -19,7 +19,6 @@ compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
 navigation3Runtime = "1.1.7"
 navigation3Ui = "1.1.2"
-compose-unstyled = "2.9.2"
 # Backdrop blur. Haze publishes every target that this project declares. It has no iosX64,
 # which this project does not declare either.
 haze = "2.0.0-beta03"
@@ -92,10 +91,6 @@ datastore = { module = "androidx.datastore:datastore-preferences-core", version.
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
-compose-unstyled-text-field = { module = "com.composables:composeunstyled-text-field", version.ref = "compose-unstyled" }
-compose-unstyled-icon = { module = "com.composables:composeunstyled-icon", version.ref = "compose-unstyled" }
-compose-unstyled-slider = { module = "com.composables:composeunstyled-slider", version.ref = "compose-unstyled" }
-compose-unstyled-scrollbars = { module = "com.composables:composeunstyled-scrollbars", version.ref = "compose-unstyled" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
@@ -165,10 +160,6 @@ media3 = [
     "m3-ui", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common", "m3-session"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
-compose-unstyled = [
-    "compose-unstyled-text-field", "compose-unstyled-icon",
-    "compose-unstyled-slider", "compose-unstyled-scrollbars"
-]
 haze = ["haze", "haze-blur"]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]

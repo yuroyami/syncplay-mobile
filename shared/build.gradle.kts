@@ -213,9 +213,6 @@ kotlin {
             /* Screen navigation with Navigation 3 */
             implementation(libs.bundles.navigation3)
 
-            /* Compose Unstyled (Composable Horizons): building blocks for custom components */
-            implementation(libs.bundles.compose.unstyled)
-
             /* Haze: backdrop blur for the glass popups and for the controls over the video. Haze
              * samples only pixels that Compose draws. So it blurs the whole UI, but it blurs video
              * only on KitePlayer's Compose-canvas path (see GlassSurface.kt). */
