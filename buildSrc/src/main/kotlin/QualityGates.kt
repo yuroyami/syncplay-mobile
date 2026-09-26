@@ -34,6 +34,7 @@ fun Project.registerQualityGates(androidVersionCode: String, versionName: String
         registerStringResourceGate(),
         registerLocaleParityGate(),
         registerStringArgumentGate(),
+        registerPlaceholderCommentGate(),
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
@@ -42,7 +43,7 @@ fun Project.registerQualityGates(androidVersionCode: String, versionName: String
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
-        description = "Runs all build-time gates: protocol throws, string resources, locale parity, string arguments, dead resources, settings reachability, destroy contract, blocking reads, store metadata."
+        description = "Runs all build-time gates: protocol throws, string resources, locale parity, string arguments, placeholder comments, dead resources, settings reachability, destroy contract, blocking reads, store metadata."
         dependsOn(gates)
     }
     gradle.projectsEvaluated {
@@ -245,6 +246,39 @@ private fun Project.registerStringArgumentGate(): TaskProvider<*> {
                     "Placeholders do not match the source. Filled left to right, these would\n" +
                         "print the wrong value or none at all:\n" +
                         problems.joinToString("\n") { "  $it" }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A translator sees `%1$s` and cannot tell what it will hold. So every English string with a
+ * placeholder has a comment directly above it that names each of its placeholders, for example
+ * `<!-- %1$s is a user name, %2$s is a time, such as 1:23:45. -->`. Weblate shows that comment next
+ * to the source text.
+ */
+private fun Project.registerPlaceholderCommentGate(): TaskProvider<*> {
+    val source = file("shared/src/commonMain/composeResources/values-en/strings.xml")
+    return tasks.register("checkPlaceholderComments") {
+        group = GATE_GROUP
+        description = "Fails when an English string with a placeholder has no comment that names each placeholder."
+        alwaysRun()
+        doLast {
+            val marker = Regex("""%(\d+)\$""")
+            val missing = StringResources.read(source)
+                .filter { it.kind == ResourceKind.STRING }
+                .mapNotNull { entry ->
+                    val numbers = marker.findAll(entry.text).map { it.groupValues[1] }.toSet()
+                    val named = marker.findAll(entry.comment.orEmpty()).map { it.groupValues[1] }.toSet()
+                    val unnamed = numbers - named
+                    if (unnamed.isEmpty()) null else "${entry.name}: no comment names ${unnamed.sorted().joinToString { "%$it" }}"
+                }
+            if (missing.isNotEmpty()) {
+                throw GradleException(
+                    "Add a comment directly above each of these strings in values-en/strings.xml,\n" +
+                        "saying what each placeholder holds:\n" +
+                        missing.joinToString("\n") { "  $it" }
                 )
             }
         }

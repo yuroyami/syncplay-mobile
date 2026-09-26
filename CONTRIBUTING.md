@@ -154,6 +154,7 @@ confirm that the gate fails on it.
 | `checkStringResources` | A duplicate string or plural key in any language |
 | `checkLocaleParity` | A key that exists in a translation but not in English. It only reports missing translations, unless you pass `-PstrictLocales=true` |
 | `checkStringArguments` | A translation whose placeholders differ in order or number from English, or an English string that repeats a placeholder |
+| `checkPlaceholderComments` | An English string with a placeholder that has no comment directly above it naming each placeholder |
 | `checkDeadResources` | Nothing. It only warns about strings and drawables that nothing references |
 | `checkSettingsReachable` | A preference that declares a title, a summary and an icon, but that no settings or engine code names |
 | `checkDestroyContract` | An engine `destroy()` that does not set `isInitialized = false` before it cancels `playerSupervisorJob` |
@@ -520,6 +521,10 @@ string through them.
 - **Never reorder placeholders in a translation.** Lyricist strips the position markers (`%1$`)
   and fills the placeholders from left to right. A reordered translation prints the room name where
   the password goes. `checkStringArguments` catches it.
+- **Say what each placeholder holds.** Put a comment directly above every English string with a
+  placeholder, for example `<!-- %1$s is a user name, %2$s is a time, such as 1:23:45. -->`. Say
+  where the string appears when its length matters. Weblate shows the comment to translators.
+  `checkPlaceholderComments` fails on a string whose comment does not name each placeholder.
 - Edit only `values-en/strings.xml`. The `syncDefaultStrings` task writes `values/strings.xml` from
   it, without the keys in `values/strings_untranslatable.xml`.
 - Lyricist copies each string into a Kotlin string literal, so a backslash in `strings.xml` is a

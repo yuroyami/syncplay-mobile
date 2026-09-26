@@ -71,25 +71,40 @@
     <string name="server_host_status_starting">Starting…</string>
     <string name="server_host_status_running">Running</string>
     <string name="server_host_status_error">Error</string>
+    <!-- %1$s is the port number. -->
     <string name="server_host_port_forward_hint">For friends outside your network, port %1$s must be forwarded on your router.</string>
     <string name="server_host_server_log">Server Log</string>
 
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
+    <!-- %1$s is a file name. Shown over the video. -->
     <string name="room_selected_vid">Selected video file: %1$s</string>
+    <!-- %1$s is a file name. Shown over the video. -->
     <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
+    <!-- %1$s is a server address, %2$s is its port. -->
     <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
+    <!-- %1$s is a user name. -->
     <string name="room_guy_played">%1$s unpaused</string>
+    <!-- %1$s is a user name, %2$s is a time, such as 1:23:45. -->
     <string name="room_guy_paused">%1$s paused at %2$s</string>
+    <!-- %1$s is a user name, %2$s and %3$s are times, such as 1:23:45. -->
     <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
+    <!-- %1$s is a user name. -->
     <string name="room_rewinded">Rewound due to time difference with %1$s</string>
+    <!-- %1$s is a user name. -->
     <string name="room_fastforwarded">Fast-forwarded due to time difference with %1$s</string>
+    <!-- %1$s is a user name. -->
     <string name="room_guy_left">%1$s has left</string>
+    <!-- %1$s is a user name, %2$s is a room name. -->
     <string name="room_guy_joined">%1$s has joined the room: '%2$s'</string>
+    <!-- %1$s is a user name, %2$s is a file name, %3$s is its length, such as 1:23:45. -->
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
+    <!-- %1$s is your user name, %2$s is a room name. -->
     <string name="room_you_joined_room">%1$s has joined the room: '%2$s'</string>
     <string name="room_share_invite">Share the room</string>
     <string name="room_reconnect_now">Try again now</string>
+    <!-- %1$s is a website, such as example.com. A screen reader reads it. -->
     <string name="room_chat_show_image">Show image from %1$s</string>
+    <!-- %1$s is a website, such as example.com. -->
     <string name="room_chat_image_hidden">Image hidden. Tap to load it from %1$s.</string>
     <string name="room_user_mute">Mute</string>
     <string name="room_user_unmute">Unmute</string>
@@ -97,15 +112,23 @@
     <string name="room_user_set_not_ready">Mark not ready</string>
     <string name="setting_room_portrait_title">Follow device rotation</string>
     <string name="setting_room_portrait_summary">Allow the room and video to rotate between portrait and landscape as you turn your device. When off, the room stays in landscape.</string>
+    <!-- %1$s is a room name. The invite link follows on the next line. -->
     <string name="room_share_invite_message">Join me in %1$s on Synkplay:</string>
+    <!-- %1$s lists the words for name, size and duration, joined with commas. -->
     <string name="room_file_mismatch_warning_core">Your file differs in the following way(s): %1$s</string>
+    <!-- %1$s is a user name. -->
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
+    <!-- %1$s is a user name. -->
     <string name="room_shared_playlist_changed">%1$s changed the playlist selection</string>
+    <!-- %1$s is a length of time, such as 1:30. -->
     <string name="room_custom_skip_button">Skip %1$s</string>
     <string name="media_directories_setting_summary">Folders searched for a playlist's files.</string>
 
+    <!-- %1$s and %3$s are the room name, %2$s is the operator password, %4$s is the name that operators join with. -->
     <string name="room_on_newcontrolledroom">Created managed room '%1$s' with password '%2$s'. Please save this information for future reference!\n\nIn managed rooms everyone is kept in sync with the room operator(s) who are the only ones who can pause, unpause, seek, and change the playlist.\n\nYou should ask regular viewers to join the room '%3$s' but the room operators can join the room '%4$s' to automatically authenticate themselves. The name for operators is on your clipboard.</string>
+    <!-- %1$s is a user name. -->
     <string name="room_on_controller_auth_success">%1$s authenticated as a room operator</string>
+    <!-- %1$s is a user name. -->
     <string name="room_on_controller_auth_failed">%1$s failed to identify as a room operator</string>
 
     <!-- Room Screen -->
@@ -118,6 +141,7 @@
     <string name="room_connection_failed">Connection with server failed</string>
     <string name="room_attempting_reconnection">Connection with server lost, attempting to reconnect</string>
     <string name="room_attempting_tls">Attempting secure connection</string>
+    <!-- %1$s is the TLS version, such as TLSv1.3. -->
     <string name="room_tls_supported">Secure connection established (%1$s)</string>
     <string name="room_tls_not_supported">This server does not support TLS</string>
     <string name="room_scaling_fit_screen">Resize mode: fit to screen</string>
@@ -136,6 +160,7 @@
     <string name="room_file_mismatch_warning_size">size</string>
     <string name="room_shared_playlist">Shared Playlist</string>
     <string name="room_shared_playlist_no_directories">No media directories have been set. Add your media folders in Settings.</string>
+    <!-- %1$s is a file name. -->
     <string name="room_shared_playlist_not_found">Could not find file %1$s in media directories for playlist switch!</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
@@ -149,6 +174,7 @@
     <string name="room_shared_playlist_clear_playlist">Clear the playlist</string>
     <string name="room_shared_playlist_playlist_is_empty">The shared playlist is empty, so there is nothing to save.</string>
     <string name="room_shared_playlist_add_url">Add URL to Shared Playlist</string>
+    <!-- %1$s is the app name, Synkplay. -->
     <string name="room_shared_playlist_add_url_subtext">This line will be added as an entry to the shared playlist.\n%1$s Android supports only direct links for now.</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
@@ -162,17 +188,24 @@
     <string name="room_card_title_user_info">User info</string>
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
+    <!-- %1$s is the engine's own error message, in English. -->
     <string name="room_playback_error">Media player error: "%1$s"</string>
     <string name="room_no_player_engine">No video engine is available on this device.</string>
     <string name="room_msg_resolve_failed">Could not find a video in this link. Trying to play the link as it is.</string>
+    <!-- %1$s is a user name. -->
     <string name="room_slowdown_notification">Slowing down due to time difference with %1$s</string>
     <string name="room_slowdown_reverted">Reverting speed back to normal</string>
+    <!-- %1$s is the reason, in English. -->
     <string name="room_tls_handshake_failed">Secure connection failed: %1$s. For a server with a self-signed certificate, turn off Secure connection in Settings.</string>
     <string name="room_tls_required_downgrade">This server does not support TLS. Turn off Require encryption in Settings to join.</string>
+    <!-- %1$s is a user name, %2$s is a room name. -->
     <string name="room_guy_joined_other_room">%1$s has joined the room: '%2$s'</string>
+    <!-- %1$s is a user name. -->
     <string name="room_guy_left_other_room">%1$s has left</string>
+    <!-- %1$d is the length of the message, %2$d is the limit. -->
     <string name="room_chat_too_long">This message has %1$d characters, and the limit is %2$d. Shorten it to send it.</string>
     <string name="room_shared_playlist_clear_question">Clear the whole shared playlist for everyone in the room?</string>
+    <!-- %1$s is a file name. -->
     <string name="room_shared_playlist_exported">Playlist saved as %1$s</string>
     <string name="room_shared_playlist_export_failed">Could not save the playlist.</string>
     <string name="room_aspect_original">Aspect: original</string>
@@ -180,8 +213,11 @@
     <string name="room_aspect_fill">Aspect: fill (crop)</string>
     <string name="room_aspect_stretch">Aspect: stretch</string>
     <string name="room_aspect_panscan">Aspect: pan and scan</string>
+    <!-- %1$s is an aspect ratio, such as 16:9. -->
     <string name="room_aspect_ratio_label">Aspect: %1$s</string>
+    <!-- %1$s is a user name. A screen reader reads it. -->
     <string name="room_user_ready_label">%1$s, ready</string>
+    <!-- %1$s is a user name. A screen reader reads it. -->
     <string name="room_user_not_ready_label">%1$s, not ready</string>
     <string name="room_chat_copied">Copied</string>
     <string name="room_chat_copy_link">Copy link</string>
@@ -193,16 +229,19 @@
     <string name="room_volume">Volume</string>
     <string name="room_brightness">Brightness</string>
     <string name="room_chapters_skip">Skipped to next chapter</string>
+    <!-- %1$s is a chapter name. -->
     <string name="room_chapters_jump">Chapter: %1$s</string>
     <string name="room_chapters">Chapters</string>
     <string name="room_no_recent_seek">There is no recent seek in this room.</string>
     <string name="room_seek_undone">Seek undone.</string>
     <string name="room_undo_seek_title">Undo your last seek?</string>
+    <!-- %1$s is where you jumped to, %2$s is where you were before. Both are times, such as 1:23:45. -->
     <string name="room_undo_seek_message">This will rewind everyone in the room back to where you were before your last seek (%1$s → %2$s).</string>
     <string name="room_undo_seek_confirm">Undo seek</string>
     <string name="room_undo_seek_cancel">Cancel</string>
     <string name="room_undo_seek_always">Don't ask again</string>
     <string name="room_seek_toposition_title">Seek to precise position</string>
+    <!-- %1$s is a time, such as 1:23:45. -->
     <string name="room_seek_toposition_success">Seeking to %1$s</string>
 
     <!-- GIF Panel -->
@@ -252,6 +291,7 @@
     <string name="setting_erase_shortcuts_dialog">Do you really wish to erase all existing shortcuts ?</string>
     <string name="setting_display_language_title">Display language</string>
     <string name="setting_display_language_system">System language</string>
+    <!-- %1$s is the app name, Synkplay. -->
     <string name="setting_display_language_summry">Select your language of choice with which %1$s is displayed.</string>
     <string name="setting_language_no_preference">No preference</string>
     <string name="setting_audio_default_language_title">Preferred audio language</string>
@@ -268,13 +308,18 @@
     <string name="setting_ready_firsthand_summary">Mark yourself as ready automatically when you enter a room. Turn this off if you want to mark yourself ready after choosing a video.</string>
     <string name="setting_autoplay_title">Autoplay when everyone is ready</string>
     <string name="setting_autoplay_summary">Start a countdown when you and the other viewers with a video loaded are all ready, then begin playback together.</string>
+    <!-- %1$s is a user name. One line in the status bar. -->
     <string name="room_waiting_for_one">Waiting for %1$s</string>
+    <!-- %1$d is a number of people. One line in the status bar. -->
     <string name="room_waiting_for_many">Waiting for %1$d people</string>
+    <!-- %1$d is a number of people. One line in the status bar. -->
     <string name="room_everyone_ready">Everyone is ready (%1$d)</string>
+    <!-- %1$d is a number of seconds. One line in the status bar. -->
     <string name="room_starting_in">Starting in %1$d</string>
     <string name="setting_resume_title">Continue watching</string>
     <string name="setting_resume_summary">Pick a file up where you left it.</string>
     <string name="room_resume_title">Continue watching?</string>
+    <!-- %1$s is a file name, %2$s is a time, such as 1:23:45. -->
     <string name="room_resume_body">You left %1$s at %2$s.</string>
     <string name="room_resume_continue">Continue</string>
     <string name="room_resume_restart">Start over</string>
@@ -439,15 +484,24 @@
 
     <string name="setting_trusted_domains_title">Trusted domains</string>
     <string name="setting_trusted_domains_summary">Only links from these hosts auto-load.</string>
+    <!-- %1$s is a website, such as example.com. -->
     <string name="room_untrusted_ask_title">Play from %1$s?</string>
+    <!-- %1$s is a website, such as example.com. -->
     <string name="room_untrusted_ask_body">Someone in the room added a link from %1$s. Nothing plays from a host you have not allowed.</string>
     <string name="room_untrusted_ask_once">Play once</string>
+    <!-- %1$s is a website, such as example.com. -->
     <string name="room_untrusted_ask_always">Always allow %1$s</string>
+    <!-- %1$s is a file name or a link. -->
     <string name="room_untrusted_domain_warning">Could not automatically load %1$s because it is not on a trusted domain. You can play it from the prompt, or add its domain to Trusted domains in Settings.</string>
+    <!-- %1$d is the most entries, %2$d is the most characters. -->
     <string name="room_shared_playlist_limit">The shared playlist holds at most %1$d entries and %2$d characters. Remove some first.</string>
+    <!-- %1$s is the user whose state changed, %2$s is the user who changed it. -->
     <string name="room_ready_set_by">%1$s was set as ready by %2$s</string>
+    <!-- %1$s is the user whose state changed, %2$s is the user who changed it. -->
     <string name="room_not_ready_set_by">%1$s was set as not ready by %2$s</string>
+    <!-- %1$d is the number of downloads left today. -->
     <string name="room_subs_downloaded_remaining">Subtitle loaded. %1$d subtitle downloads left today (searching is unlimited).</string>
+    <!-- %1$s is the time until the reset, as the subtitle service writes it, in English. -->
     <string name="room_subs_quota_reached">Daily subtitle download limit reached. Resets in %1$s.</string>
     <string name="room_subs_download_failed">Subtitle download failed. Check your connection and try again.</string>
 
@@ -456,6 +510,7 @@
     <string name="setting_media_resolver_title">Resolve streaming URLs</string>
     <string name="setting_media_resolver_summary">Plays page links from supported sites.</string>
     <string name="room_msg_resolving_url">Finding the video in this link…</string>
+    <!-- %1$s is a video title, or a link when the title is unknown. -->
     <string name="room_msg_resolved_url">Found the video: %1$s</string>
 
     <string name="uisetting_osd_duration_title">Room notice display time</string>
@@ -511,9 +566,11 @@
     <string name="media_directories_add_folder">Add folder</string>
     <string name="media_directories_delete">Remove from list</string>
 
+    <!-- %1$s is a platform name, such as Android or iOS. -->
     <string name="about_tagline">a Syncplay client for %1$s</string>
     <string name="about_source_button">Source code</string>
     <string name="about_report_button">Report a bug</string>
+    <!-- %1$s is a version number, such as 0.25.0. -->
     <string name="about_version_value">Version %1$s</string>
     <string name="about_author">Built by yuroyami</string>
     <string name="about_blurb">Watch anything in sync with friends, wherever they are. Synkplay keeps everyone\u2019s playback lined up to the moment, so a pause here is a pause there.</string>
@@ -551,7 +608,9 @@
     <string name="room_buffering">Buffering</string>
     <string name="room_pause">Pause</string>
     <string name="room_seekbar_name">Position</string>
+    <!-- %1$d is a number of seconds. A screen reader reads it. -->
     <string name="room_jump_back">Back %1$d seconds</string>
+    <!-- %1$d is a number of seconds. A screen reader reads it. -->
     <string name="room_jump_forward">Forward %1$d seconds</string>
     <!-- Control panel (design overhaul) -->
     <string name="room_control_panel">Controls</string>
@@ -564,13 +623,17 @@
     <string name="room_user_details_shown">Expanded</string>
     <string name="room_user_details_hidden">Collapsed</string>
     <string name="room_user_controller">Room operator</string>
+    <!-- %1$s is a length, such as 1:23:45. -->
     <string name="room_roster_duration">Duration: %1$s</string>
+    <!-- %1$s is a file size, such as 1.4 GB. -->
     <string name="room_roster_size">Size: %1$s</string>
     <string name="room_roster_view_compact">Compact</string>
     <string name="room_roster_view_standard">Expanded</string>
     <string name="room_rail_more">More</string>
     <string name="room_seek_toposition_hint">Type a time, for example 1:23:45 or 12:30.</string>
+    <!-- %1$s is the name of an audio track, as the file names it. -->
     <string name="room_audio_track_selected">Audio: %1$s</string>
+    <!-- %1$s is the name of a subtitle track, as the file names it. -->
     <string name="room_subtitle_track_selected">Subtitles: %1$s</string>
     <string name="room_sub_search_language">Language</string>
     <!-- Room shell (design overhaul) -->
@@ -584,9 +647,13 @@
     <string name="room_controls_hidden">Controls hidden. Activate to show them.</string>
     <string name="room_connection_encrypted">Encrypted connection</string>
     <string name="room_connection_plaintext">Unencrypted connection</string>
+    <!-- %1$s is a list of commands, such as /help, /room. -->
     <string name="room_command_help">Commands: %1$s</string>
+    <!-- %1$s is the command that was typed, without its slash. -->
     <string name="room_command_unknown">There is no /%1$s. Type /help for the list.</string>
+    <!-- %1$s is a command name, without its slash. %2$s is one of the room_command_arg strings. -->
     <string name="room_command_bad_argument">/%1$s needs %2$s.</string>
+    <!-- %1$s is a list of user names, joined with commas. -->
     <string name="room_command_users">In the room: %1$s</string>
     <string name="room_command_needs_media">Open a file first.</string>
     <string name="room_connecting">Connecting</string>
@@ -621,6 +688,7 @@
     <string name="room_link_play_anyway">Play anyway</string>
     <string name="room_link_paste">Paste</string>
     <string name="media_folders">Media folders</string>
+    <!-- %1$s is the app name, Synkplay. -->
     <string name="media_folders_brief">%1$s looks in these folders for a file a shared playlist names. Small folders are faster.</string>
     <string name="media_folders_empty">No folders yet.</string>
     <!-- Server host (design overhaul) -->
@@ -628,6 +696,7 @@
     <string name="server_host_over_internet">Over the internet</string>
     <string name="server_host_copy">Copy</string>
     <string name="server_host_share">Share</string>
+    <!-- %1$d is a port number. -->
     <string name="server_host_port_taken">Port %1$d is taken</string>
     <string name="server_host_log_errors_only">Errors only</string>
     <string name="server_host_ios_paused">Hosting pauses while the app is in the background.</string>
@@ -637,6 +706,7 @@
     <string name="connect_watch_alone">Watch alone</string>
     <string name="connect_official">Official</string>
     <string name="connect_custom">Custom</string>
+    <!-- %1$s is a room name. -->
     <string name="home_shortcut_saved">Shortcut saved: %1$s</string>
     <string name="tips_next">Next</string>
     <!-- Theming (design overhaul) -->
@@ -682,7 +752,9 @@
     <string name="stepper_previous">Previous</string>
     <string name="stepper_next">Next</string>
     <string name="home_settings_were_reset">Settings could not be read and were reset.</string>
+    <!-- %1$d is the number of settings applied, %2$d is the number skipped. -->
     <string name="settings_import_done">%1$d settings applied, %2$d skipped.</string>
+    <!-- %1$s is the reason, in English, such as "not a settings file". -->
     <string name="settings_import_refused">Not imported: %1$s</string>
     <string name="settings_export_done">Settings saved.</string>
     <string name="settings_file_error">The file could not be read or written.</string>
@@ -694,6 +766,7 @@
     <!-- Home revisions -->
     <string name="help_tip">Help</string>
     <string name="connect_host_mine">Host mine</string>
+    <!-- %1$s is a local address with its port, such as 127.0.0.1:8999. -->
     <string name="connect_host_join_note">Join lands on your own server at %1$s.</string>
     <string name="connect_custom_tip">The address and port the host gave you. Official servers are syncplay.pl on ports 8995 to 8999; a friend hosting from this app shares an address like 192.168.1.20:8999. Add the password only if the host set one.</string>
     <string name="engine_desc_exoplayer">Google's Media3 player, part of Android. Video is decoded by the device's own hardware. Comes with a tiny audio-only FFmpeg enhancer to play all types of audio files.</string>
@@ -727,16 +800,25 @@
     <string name="room_track_trait_forced">Forced</string>
     <string name="setting_gif_recents_title">Remember recent GIFs</string>
     <string name="setting_gif_recents_summary">One ID kept with the GIF service</string>
+    <!-- %1$s is a user name, %2$s is a room name. -->
     <string name="server_log_joined">%1$s joined the room %2$s</string>
+    <!-- %1$s is a user name. -->
     <string name="server_log_disconnected">%1$s disconnected</string>
+    <!-- %1$s is a user name, %2$d is a number of seconds. -->
     <string name="server_log_timed_out">%1$s timed out after %2$d seconds of silence</string>
+    <!-- %1$s is a user name, %2$d is the number of wrong passwords. -->
     <string name="server_log_bad_passwords">%1$s dropped after %2$d wrong operator passwords</string>
     <string name="server_log_shutting_down">Server shutting down</string>
+    <!-- %1$d is a port number. -->
     <string name="server_log_started">Server started on port %1$d</string>
     <string name="server_log_stopped">Server stopped</string>
+    <!-- %1$s is what was typed as the port. -->
     <string name="server_log_invalid_port">That is not a usable port: %1$s</string>
+    <!-- %1$s is the reason, in English. -->
     <string name="server_log_start_failed">Could not start: %1$s</string>
+    <!-- %1$s is the reason, in English. -->
     <string name="server_log_stop_failed">Could not stop: %1$s</string>
+    <!-- %1$s is the app name, Synkplay. -->
     <string name="server_notification_title">%1$s server</string>
     <string name="server_notification_channel_description">Shows while you are hosting a server</string>
     <string name="room_volume_label">Volume</string>
@@ -747,45 +829,68 @@
     <string name="about_update_button">Check for updates</string>
     <string name="about_update_checking">Checking…</string>
     <string name="about_update_current">You are on the newest release</string>
+    <!-- %1$s is a version number, such as 0.26.0. -->
     <string name="about_update_available">Version %1$s is out</string>
     <string name="about_update_failed">Could not check for updates. Try again</string>
+    <!-- %1$s is a user name. A screen reader reads it. -->
     <string name="room_chat_image_from">Image sent by %1$s</string>
 
     <!-- Counted lines. One key per plural form, because a language decides which form a
          number takes: English needs two, Russian and Polish need four, Arabic six.
          Fill the forms your language actually uses; the rest fall back to _other. -->
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_zero">%1$d users</string>
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_one">%1$d user</string>
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_two">%1$d users</string>
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_few">%1$d users</string>
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_many">%1$d users</string>
+    <!-- %1$d is the number of people in the room. One line in the status bar. -->
     <string name="room_user_count_other">%1$d users</string>
 
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_zero">%1$d people connected</string>
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_one">%1$d person connected</string>
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_two">%1$d people connected</string>
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_few">%1$d people connected</string>
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_many">%1$d people connected</string>
+    <!-- %1$d is the number of people connected. -->
     <string name="server_host_clients_other">%1$d people connected</string>
 
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_zero">Running on port %1$d, %2$d people connected</string>
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_one">Running on port %1$d, %2$d person connected</string>
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_two">Running on port %1$d, %2$d people connected</string>
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_few">Running on port %1$d, %2$d people connected</string>
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_many">Running on port %1$d, %2$d people connected</string>
+    <!-- %1$d is a port number, %2$d is the number of people connected. -->
     <string name="server_notification_text_other">Running on port %1$d, %2$d people connected</string>
     <string name="room_visualizer_summary">Draws the sound in place of the picture</string>
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Changes the pattern with the music</string>
     <string name="room_visualizer_pattern">Pattern</string>
+    <!-- %1$s is a file name. -->
     <string name="room_drop_play_file">Drop to play %1$s</string>
     <string name="room_drop_play_link">Drop to play this link</string>
+    <!-- %1$s is a file name. -->
     <string name="home_drop_watch_alone_file">Drop to watch %1$s alone</string>
     <string name="home_drop_watch_alone_link">Drop to watch this link alone</string>
     <string name="media_drop_hint">Drop a video file or a link</string>
     <string name="media_drop_not_media">This file type cannot be played.</string>
     <string name="media_drop_folder">A folder cannot be played. Drop one video file.</string>
     <string name="media_drop_unsupported">Only a video file or a link can be dropped here.</string>
+    <!-- %1$s lists the words for name, size and duration, joined with commas. -->
     <string name="room_file_mismatch_warning_room">File differences: %1$s</string>
     <string name="room_shared_playlist_folder_empty">No media files were found in this folder.</string>
     <string name="room_track_change_refused">This track cannot be selected.</string>
@@ -793,11 +898,14 @@
     <string name="room_command_arg_operator">a password shaped like AB-123-456</string>
     <string name="room_command_arg_seek">a time like 1:23:45, or +30</string>
     <string-array name="tips">
+        <!-- %1$s is the app name, Synkplay. -->
         <item>For shared playlists to work, %1$s needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
+        <!-- %1$s is the app name, Synkplay. -->
         <item>Want to use the video player solo? Select a player, tap the %1$s logo above, then choose 'Offline Mode'.</item>
         <item>You can always reset settings to their default states by going to 'Settings -> Advanced -> Reset to Default'</item>
         <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to 'Join Room'.</item>
         <item>Each player has different strengths. If one doesn't work well with your video format, try another.</item>
+        <!-- %1$s is the app name, Synkplay. -->
         <item>%1$s plays direct links and, on Android, YT and a few other sites. Paste the link under Add Media.</item>
         <item>If you want to minimize the room temporarily without leaving, you can go into "Picture-in-Picture" mode where the screen is a small floating screen above other apps.</item>
     </string-array>
