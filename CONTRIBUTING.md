@@ -157,6 +157,7 @@ confirm that the gate fails on it.
 | `checkDeadResources` | Nothing. It only warns about strings and drawables that nothing references |
 | `checkSettingsReachable` | A preference that declares a title, a summary and an icon, but that no settings or engine code names |
 | `checkDestroyContract` | An engine `destroy()` that does not set `isInitialized = false` before it cancels `playerSupervisorJob` |
+| `checkBlockingReads` | A `runBlocking` or `readBlockingOrNull` call in app code, other than the startup read of the preference store in `Datastore.kt`, the helper behind it and the iOS crash hook |
 | `checkStoreMetadata` | A store short description over 80 characters, a full description over 4000, a Play release note that is missing, over 500 characters or a placeholder, or a version with no section in `CHANGELOG.md` |
 
 Other checks:

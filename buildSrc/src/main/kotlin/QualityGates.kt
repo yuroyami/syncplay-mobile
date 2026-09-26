@@ -37,11 +37,12 @@ fun Project.registerQualityGates(androidVersionCode: String, versionName: String
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
+        registerBlockingReadGate(),
         registerStoreMetadataGate(androidVersionCode, versionName),
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
-        description = "Runs all build-time gates: protocol throws, string resources, locale parity, string arguments, dead resources, settings reachability, destroy contract, store metadata."
+        description = "Runs all build-time gates: protocol throws, string resources, locale parity, string arguments, dead resources, settings reachability, destroy contract, blocking reads, store metadata."
         dependsOn(gates)
     }
     gradle.projectsEvaluated {
@@ -440,6 +441,57 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
                 )
             }
             logger.lifecycle("All " + checked + " engine destroy() bodies follow the contract.")
+        }
+    }
+}
+
+/**
+ * A blocking read on the main thread freezes the interface. The preference store is read without
+ * blocking everywhere, except one deliberate startup read in `Datastore.kt`, which goes through
+ * `readBlockingOrNull`. This gate fails on any other `runBlocking` or `readBlockingOrNull` call in
+ * app code. The web build rejects blocking calls in common code already; this covers the platform
+ * source sets too.
+ */
+private fun Project.registerBlockingReadGate(): TaskProvider<*> {
+    val roots = (file("shared/src").listFiles().orEmpty().filter { it.name.endsWith("Main") || it.name == "jvmShared" } +
+        listOf(file("androidApp/src/main"), file("desktopApp/src/main")) +
+        file("webApp/src").listFiles().orEmpty().toList())
+        .filter { it.isDirectory }
+    // Each allowed call, by file, with its reason.
+    val allowed = mapOf(
+        // The one helper: its actual blocks on purpose, for the startup read below.
+        "shared/src/nonWebMain/kotlin/app/preferences/BlockingRead.nonWeb.kt" to "runBlocking",
+        // The one startup read of the whole store, before the first frame.
+        "shared/src/commonMain/kotlin/app/preferences/Datastore.kt" to "readBlockingOrNull",
+        // The crash hook waits on purpose while it flushes the log, because the process is ending.
+        "shared/src/iosMain/kotlin/app/IOSApp.kt" to "runBlocking",
+    )
+    val root = rootDir
+    return tasks.register("checkBlockingReads") {
+        group = GATE_GROUP
+        description = "Fails on a runBlocking or readBlockingOrNull call outside the allowed places."
+        alwaysRun()
+        doLast {
+            val call = Regex("""\b(runBlocking|readBlockingOrNull)\s*[({<]""")
+            val offenders = roots.kotlinFiles().flatMap { f ->
+                val where = f.relativeTo(root).path
+                f.readLines().withIndex()
+                    .filter { (_, line) ->
+                        val code = line.substringBefore("//").trim()
+                        !code.startsWith("*") && !code.startsWith("import ") && !code.contains("fun <T> readBlockingOrNull")
+                    }
+                    .flatMap { (i, line) -> call.findAll(line.substringBefore("//")).map { i to it.groupValues[1] } }
+                    .filter { (_, name) -> allowed[where] != name }
+                    .map { (i, name) -> "$where:${i + 1}: $name" }
+            }
+            if (offenders.isNotEmpty()) {
+                throw GradleException(
+                    "A blocking call on the main thread freezes the interface. Read the preference\n" +
+                        "store without blocking, or add the call to the allowed list with its reason:\n" +
+                        offenders.joinToString("\n") { "  $it" }
+                )
+            }
+            logger.lifecycle("No blocking reads outside the allowed places.")
         }
     }
 }
