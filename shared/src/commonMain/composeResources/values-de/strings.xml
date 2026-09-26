@@ -488,8 +488,7 @@
     <string name="room_link_play_anyway">Trotzdem abspielen</string>
     <string name="room_link_resolver_off">Dieser Link braucht den Link-Auflöser, der in den Einstellungen aus ist.</string>
     <string name="room_link_resolving">Wird nachgeschlagen</string>
-    <string name="room_link_sites_full">YT, SoundCloud und mehr, oder ein direkter Link</string>
-    <string name="room_link_sites_yt">YT, oder ein direkter Link</string>
+    <string name="room_link_sites_full">Ein direkter Link oder ein Link von einer Medienseite</string>
     <string name="room_link_unknown">Kein direkter Medienlink. Die Wiedergabe kann fehlschlagen.</string>
     <string name="room_lock">Bildschirm sperren</string>
     <string name="room_locked_hint">Bildschirm gesperrt. Irgendwo tippen, um die Entsperrtaste zu zeigen.</string>

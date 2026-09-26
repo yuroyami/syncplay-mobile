@@ -480,8 +480,7 @@
     <string name="room_link_play_anyway">仍然播放</string>
     <string name="room_link_resolver_off">这个链接需要链接解析功能，而它在设置里是关闭的。</string>
     <string name="room_link_resolving">正在查找</string>
-    <string name="room_link_sites_full">YT、SoundCloud 等，或直链</string>
-    <string name="room_link_sites_yt">YT，或直链</string>
+    <string name="room_link_sites_full">直链，或来自媒体网站的链接</string>
     <string name="room_link_unknown">不是直链媒体地址，播放可能失败。</string>
     <string name="room_lock">锁定屏幕</string>
     <string name="room_locked_hint">屏幕已锁定。点按任意位置显示解锁键。</string>

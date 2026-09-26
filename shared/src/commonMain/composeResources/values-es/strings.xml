@@ -492,8 +492,7 @@
     <string name="room_link_play_anyway">Reproducir igualmente</string>
     <string name="room_link_resolver_off">Este enlace necesita el resolutor de enlaces, que está apagado en Ajustes.</string>
     <string name="room_link_resolving">Buscando</string>
-    <string name="room_link_sites_full">YT, SoundCloud y más, o un enlace directo</string>
-    <string name="room_link_sites_yt">YT o un enlace directo</string>
+    <string name="room_link_sites_full">Un enlace directo o un enlace de un sitio de medios</string>
     <string name="room_link_unknown">No es un enlace directo a un medio. La reproducción puede fallar.</string>
     <string name="room_lock">Bloquear la pantalla</string>
     <string name="room_locked_hint">Pantalla bloqueada. Toca en cualquier sitio para ver el botón de desbloqueo.</string>

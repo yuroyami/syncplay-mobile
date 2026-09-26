@@ -490,8 +490,7 @@
     <string name="room_link_play_anyway">شغّل على أي حال</string>
     <string name="room_link_resolver_off">هذا الرابط يحتاج محلّل الروابط، وهو مُعطَّل في الإعدادات.</string>
     <string name="room_link_resolving">جارٍ البحث</string>
-    <string name="room_link_sites_full">YT وSoundCloud وغيرهما، أو رابط مباشر</string>
-    <string name="room_link_sites_yt">YT، أو رابط مباشر</string>
+    <string name="room_link_sites_full">رابط مباشر، أو رابط من موقع وسائط</string>
     <string name="room_link_unknown">ليس رابط وسائط مباشرًا. قد يفشل التشغيل.</string>
     <string name="room_lock">اقفل الشاشة</string>
     <string name="room_locked_hint">الشاشة مقفلة. اضغط في أي مكان لإظهار مفتاح الفتح.</string>

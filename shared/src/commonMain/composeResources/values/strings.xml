@@ -695,8 +695,7 @@
     <string name="room_route_share_note">SMB, cloud and other providers</string>
     <string name="room_route_playlist">Import a playlist</string>
     <string name="room_route_playlist_note">m3u or txt, into the shared playlist</string>
-    <string name="room_link_sites_full">YT, SoundCloud and more, or a direct link</string>
-    <string name="room_link_sites_yt">YT, or a direct link</string>
+    <string name="room_link_sites_full">A direct link, or a link from a media site</string>
     <string name="room_link_direct">A direct media link. It will play as it is.</string>
     <string name="room_link_resolving">Looking it up</string>
     <string name="room_link_failed">Could not resolve this link. You can still try it as it is.</string>

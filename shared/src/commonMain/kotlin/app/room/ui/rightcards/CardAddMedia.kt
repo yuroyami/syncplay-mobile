@@ -278,7 +278,8 @@ object CardAddMedia {
         }
     }
 
-    private fun supportedSites(s: AppStrings) = if (platform == Platform.IOS) s.roomLinkSitesYt else s.roomLinkSitesFull
+    // No site names here: a direct link is what the app is built for, and a media site is extra.
+    private fun supportedSites(s: AppStrings) = s.roomLinkSitesFull
 
     /** The kind of a pasted link, as far as the app can tell before the user confirms it. */
     private enum class LinkKind { Empty, Direct, Resolvable, ResolverOff, Unknown }

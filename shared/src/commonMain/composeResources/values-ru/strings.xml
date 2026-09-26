@@ -492,8 +492,7 @@
     <string name="room_link_play_anyway">Всё равно играть</string>
     <string name="room_link_resolver_off">Для этой ссылки нужен разбор ссылок, а он выключен в настройках.</string>
     <string name="room_link_resolving">Ищем</string>
-    <string name="room_link_sites_full">YT, SoundCloud и другие, или прямая ссылка</string>
-    <string name="room_link_sites_yt">YT или прямая ссылка</string>
+    <string name="room_link_sites_full">Прямая ссылка или ссылка с медиасайта</string>
     <string name="room_link_unknown">Это не прямая ссылка на медиа. Воспроизведение может не пойти.</string>
     <string name="room_lock">Заблокировать экран</string>
     <string name="room_locked_hint">Экран заблокирован. Нажмите в любом месте, чтобы показать кнопку разблокировки.</string>

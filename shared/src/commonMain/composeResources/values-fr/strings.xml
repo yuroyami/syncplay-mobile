@@ -507,8 +507,7 @@
     <string name="room_link_play_anyway">Lire quand même</string>
     <string name="room_link_resolver_off">Ce lien a besoin du résolveur de liens, désactivé dans les Réglages.</string>
     <string name="room_link_resolving">Recherche en cours</string>
-    <string name="room_link_sites_full">YT, SoundCloud et d'autres, ou un lien direct</string>
-    <string name="room_link_sites_yt">YT, ou un lien direct</string>
+    <string name="room_link_sites_full">Un lien direct, ou un lien d'un site de médias</string>
     <string name="room_link_unknown">Ce n'est pas un lien média direct. La lecture peut échouer.</string>
     <string name="room_lock">Verrouiller l'écran</string>
     <string name="room_locked_hint">Écran verrouillé. Touchez n'importe où pour afficher la touche de déverrouillage.</string>
