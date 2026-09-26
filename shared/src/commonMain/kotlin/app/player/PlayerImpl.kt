@@ -24,6 +24,7 @@ import app.protocol.WireMessage
 import app.room.toFileData
 import app.room.OSDCategory
 import app.room.RoomViewmodel
+import app.utils.LogRedactor
 import app.utils.Platform
 import app.utils.ccExs
 import app.utils.getFileName
@@ -431,6 +432,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         // of an incoming State never sees media != null with the mask off. While media is null,
         // the reporter already falls back to the room position, so this order is safe.
         if (!viewmodel.isSoloMode) viewmodel.protocol.markAwaitingRoomResync()
+        LogRedactor.register(LogRedactor.Kind.File, media.fileName)
         playerManager.media.value = media
         // Arm the room re-anchor for this new file (see [fileLoadResyncPending] and
         // ProtocolManager.reanchorSyncOnFileLoad).

@@ -31,6 +31,12 @@ expect suspend fun PlatformFile.writeBytesCompat(bytes: ByteArray)
 expect suspend fun PlatformFile.writeTextCompat(text: String)
 
 /**
+ * Replaces the file's contents with the files at [paths], each under a line with its name. It
+ * copies one file at a time through a small buffer. Throws on the web, like [writeBytesCompat].
+ */
+expect suspend fun PlatformFile.writeFilesCompat(paths: List<String>)
+
+/**
  * A durable handle that survives the process: an iOS security-scoped bookmark, an Android
  * persistable document URI. Throws on the web, which has no equivalent.
  */

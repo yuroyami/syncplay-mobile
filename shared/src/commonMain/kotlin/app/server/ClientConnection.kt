@@ -7,6 +7,7 @@ import app.protocol.WireMessageDeserializer
 import app.protocol.WireMessageHandler
 import app.protocol.models.PingService
 import app.protocol.models.RoomFeatures
+import app.protocol.registerLogIdentifiers
 import app.protocol.syncplayJson
 import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.FileData
@@ -162,6 +163,7 @@ class ClientConnection(
             if (dropped) return@onServerThread
             try {
                 val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
+                message.registerLogIdentifiers()
                 message.dispatch(this)
             } catch (e: SerializationException) {
                 // A bounded excerpt: an unauthenticated peer must not write 64 KiB frames into the log.

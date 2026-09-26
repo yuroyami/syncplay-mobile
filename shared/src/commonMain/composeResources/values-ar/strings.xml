@@ -189,7 +189,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO (موصى به + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (تجريبي)</string>
     <string name="setting_export_log_title">تصدير السجلات</string>
-    <string name="setting_export_log_summary">يحفظ سجل هذه الجلسة كملف نصي.</string>
+    <string name="setting_export_log_summary">يحفظ سجل الأيام السبعة الأخيرة كملف نصي. تظهر الأسماء والغرف والملفات والعناوين كرموز بديلة.</string>
     
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">ألوان المحادثة</string>

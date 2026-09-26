@@ -3,6 +3,7 @@ package app.room
 import app.i18n.Localization
 import app.player.Playback
 import app.protocol.WireMessage
+import app.utils.LogRedactor
 import app.utils.loggy
 
 /**
@@ -59,6 +60,7 @@ suspend fun RoomViewmodel.runSlashCommand(command: SlashCommand): Boolean {
             )
 
         is SlashCommand.JoinRoom -> {
+            LogRedactor.register(LogRedactor.Kind.Room, command.name)
             loggy("Slash command: joining room ${command.name}")
             switchRoom(command.name)
         }

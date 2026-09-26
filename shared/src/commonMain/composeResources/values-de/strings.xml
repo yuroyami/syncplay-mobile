@@ -189,7 +189,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO (Empfohlen + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (Experimentell)</string>
     <string name="setting_export_log_title">Protokolle exportieren</string>
-    <string name="setting_export_log_summary">Speichert das Protokoll dieser Sitzung als Textdatei.</string>
+    <string name="setting_export_log_summary">Speichert das Protokoll der letzten sieben Tage als Textdatei. Namen, Räume, Dateien und Adressen erscheinen als Platzhalter.</string>
     
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Chat-Farben</string>

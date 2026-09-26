@@ -87,7 +87,8 @@ import app.utils.get
 import app.utils.clearLogs
 import app.utils.getMpvConfFilePath
 import app.utils.loggy
-import app.utils.readLogsForExport
+import app.utils.logFilesForExport
+import app.utils.writeFilesCompat
 import app.utils.readFileBytes
 import app.utils.writeFileBytes
 import app.utils.platform
@@ -1096,7 +1097,7 @@ object Preferences {
 
                 val logSaver = rememberFileSaver { file ->
                     scope.launch {
-                        file?.writeBytesCompat(readLogsForExport())
+                        file?.writeFilesCompat(logFilesForExport())
                     }
                 }
 

@@ -379,6 +379,9 @@ actual fun deleteFile(path: String) {
 actual fun fileExists(path: String): Boolean =
     NSFileManager.defaultManager.fileExistsAtPath(path)
 
+actual fun fileLength(path: String): Long =
+    (NSFileManager.defaultManager.attributesOfItemAtPath(path, error = null)?.get(NSFileSize) as? Number)?.toLong() ?: 0L
+
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 actual fun writeFileBytes(path: String, bytes: ByteArray) {
     try {

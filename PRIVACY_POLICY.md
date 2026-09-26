@@ -109,10 +109,11 @@ part to the server of the page. An invite link never holds the operator password
   uses them for the offer to continue watching. **Continue watching** in the settings turns this
   off.
 - The subtitles that you download.
-- A local log for troubleshooting, kept for 7 days. It records what the app does, such as room
-  events and web requests, so it can contain usernames, file names and search text. The app masks
-  service keys in the log. The app never sends the log anywhere. You can export it or clear it in
-  the settings.
+- A local log for troubleshooting, kept for 7 days and at most 10 MB. It records what the app
+  does, such as room events and web requests. Before a line is written, the app masks service
+  keys, replaces usernames, room names, file names, server addresses, IP addresses and search text
+  with placeholders such as `<user-1>`, and hides the part of each web address after the question
+  mark. The app never sends the log anywhere. You can export it or clear it in the settings.
 
 On Android, the app turns off cloud backup and device-to-device transfer for its data.
 

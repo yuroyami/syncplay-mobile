@@ -102,6 +102,8 @@ actual fun getCacheDirectoryPath(subdir: String): String? = null
 
 actual fun appendToFile(path: String, content: String) = Unit
 
+actual fun fileLength(path: String): Long = 0L
+
 actual fun writeTextFile(path: String, content: String) = Unit
 
 actual fun listFiles(directoryPath: String): List<String> = emptyList()

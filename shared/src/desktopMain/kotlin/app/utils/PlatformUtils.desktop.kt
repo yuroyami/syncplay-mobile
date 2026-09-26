@@ -160,6 +160,8 @@ actual fun writeTextFile(path: String, content: String) {
     } catch (_: Exception) { }
 }
 
+actual fun fileLength(path: String): Long = File(path).length()
+
 actual fun listFiles(directoryPath: String): List<String> {
     return try {
         File(directoryPath).listFiles()?.map { it.name } ?: emptyList()

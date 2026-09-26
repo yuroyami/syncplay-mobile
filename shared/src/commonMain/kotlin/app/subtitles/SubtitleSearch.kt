@@ -1,6 +1,7 @@
 package app.subtitles
 
 import SyncplayMobile.shared.KiteBuildConfig
+import app.utils.LogRedactor
 import app.utils.getCacheDirectoryPath
 import app.utils.httpClient
 import app.utils.loggy
@@ -107,6 +108,7 @@ internal class SubtitleService(baseUrl: String, transport: HttpClient, private v
                 .joinToString(",")
                 .ifEmpty { null }
 
+            LogRedactor.register(LogRedactor.Kind.Search, query)
             val response = api.search(query = query.trim().lowercase(), languages = languages)
             loggy("SubtitleSearch: ${response.totalCount} results for '$query' [${languages ?: "all"}]")
 

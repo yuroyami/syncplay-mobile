@@ -19,6 +19,9 @@ actual suspend fun PlatformFile.writeBytesCompat(bytes: ByteArray): Unit =
 actual suspend fun PlatformFile.writeTextCompat(text: String): Unit =
     noFilesystem("Writing to a file")
 
+actual suspend fun PlatformFile.writeFilesCompat(paths: List<String>): Unit =
+    noFilesystem("Writing to a file")
+
 actual suspend fun PlatformFile.durableBookmark(): ByteArray =
     noFilesystem("A durable file handle")
 

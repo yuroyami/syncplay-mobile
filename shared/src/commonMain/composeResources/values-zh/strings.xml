@@ -180,7 +180,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO（推荐 + TLS）</string>
     <string name="setting_network_engine_ktor">Ktor（实验性）</string>
     <string name="setting_export_log_title">导出日志</string>
-    <string name="setting_export_log_summary">把本次会话的日志保存为文本文件。</string>
+    <string name="setting_export_log_summary">把最近七天的日志保存为文本文件。名称、房间、文件和地址以占位符显示。</string>
     
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">聊天颜色</string>

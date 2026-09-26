@@ -359,7 +359,7 @@
     <string name="setting_import_settings_title">Import settings</string>
     <string name="setting_import_settings_summary">Read settings back from a file.</string>
     <string name="setting_export_log_title">Export logs</string>
-    <string name="setting_export_log_summary">Saves this session's log as a text file.</string>
+    <string name="setting_export_log_summary">Saves the log of the last seven days as a text file. Names, rooms, files and addresses show as placeholders.</string>
     <string name="setting_clear_logs_title">Clear logs</string>
     <string name="setting_clear_logs_summary">Delete all stored log files</string>
     <string name="setting_clear_logs_dialog">Are you sure you want to delete all log files? This cannot be undone.</string>

@@ -189,7 +189,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO (Zalecane + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (Eksperymentalne)</string>
     <string name="setting_export_log_title">Eksportuj logi</string>
-    <string name="setting_export_log_summary">Zapisuje dziennik tej sesji jako plik tekstowy.</string>
+    <string name="setting_export_log_summary">Zapisuje dziennik z ostatnich siedmiu dni jako plik tekstowy. Nazwy, pokoje, pliki i adresy są zastąpione znacznikami.</string>
     
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Kolory czatu</string>

@@ -4,6 +4,7 @@ import SyncplayMobile.shared.KiteBuildConfig
 
 import co.touchlab.kermit.Logger
 import io.ktor.client.plugins.logging.Logger as KtorLogger
+import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CompletableDeferred
@@ -23,6 +24,21 @@ private val logLock = SynchronizedObject()
 
 /** How many days a log file stays before [cleanupOldLogs] deletes it. */
 private const val LOG_RETENTION_DAYS = 7
+
+/** Lines waiting for the writer. Past this, or past [MAX_PENDING_BYTES], a new line is dropped. */
+private const val MAX_PENDING_LINES = 5_000
+
+/** Characters waiting for the writer, across all queued lines. */
+private const val MAX_PENDING_BYTES = 1_000_000
+
+/** Entries the writer takes from the queue for one append. */
+private const val MAX_BATCH = 500
+
+/** A day's log starts a new part file past this size. */
+private const val MAX_FILE_BYTES = 2_000_000L
+
+/** All log files together. Past this, the oldest part files are deleted first. */
+private const val MAX_TOTAL_BYTES = 10_000_000L
 
 /** The date and the timestamp of one instant, worked out together. */
 private class Stamped(val date: String, val timestamp: String)
@@ -55,7 +71,14 @@ private sealed interface LogEntry {
 }
 
 private val logScope = CoroutineScope(SupervisorJob() + ioDispatcher)
-private val logQueue = Channel<LogEntry>(Channel.UNLIMITED)
+
+/**
+ * Bounded in lines and in characters. A flood of log lines drops the newest ones, and the writer
+ * records how many, so a long or noisy session never competes with playback for memory.
+ */
+private val logQueue = Channel<LogEntry>(MAX_PENDING_LINES)
+private val pendingChars = atomic(0)
+private val droppedLines = atomic(0)
 
 /**
  * The one log writer. It drains the queue on the IO dispatcher and joins the lines that are
@@ -68,7 +91,7 @@ private val logPump: Job by lazy {
         for (first in logQueue) {
             batch.clear()
             batch += first
-            while (true) batch += logQueue.tryReceive().getOrNull() ?: break
+            while (batch.size < MAX_BATCH) batch += logQueue.tryReceive().getOrNull() ?: break
             writeBatch(batch)
         }
     }
@@ -76,13 +99,17 @@ private val logPump: Job by lazy {
 
 private fun writeBatch(batch: List<LogEntry>) {
     val lines = batch.filterIsInstance<LogEntry.Line>()
-    if (lines.isNotEmpty()) {
+    pendingChars.addAndGet(-lines.sumOf { it.text.length })
+    val dropped = droppedLines.getAndSet(0)
+    if (lines.isNotEmpty() || dropped > 0) {
         synchronized(logLock) {
             try {
                 val logDir = getLogDirectoryPath() ?: return@synchronized
-                for ((date, group) in lines.groupBy { it.date }) {
+                val now = stamp(generateTimestampMillis())
+                val marker = if (dropped > 0) listOf(LogEntry.Line(now.timestamp, now.date, "$dropped log lines dropped: the log queue was full")) else emptyList()
+                for ((date, group) in (marker + lines).groupBy { it.date }) {
                     val text = group.joinToString("") { "${it.timestamp} | ${it.text}\n" }
-                    appendToFile("$logDir/$date.log", text)
+                    appendToFile(logFileFor(logDir, date, text.length), text)
                 }
             } catch (_: Exception) {
                 // Losing a log line must never crash the app.
@@ -90,6 +117,45 @@ private fun writeBatch(batch: List<LogEntry>) {
         }
     }
     batch.filterIsInstance<LogEntry.Flush>().forEach { it.done.complete(Unit) }
+}
+
+/** One log file: a date, and a part number that grows as the day's log passes [MAX_FILE_BYTES]. */
+internal data class LogPart(val name: String, val date: String, val part: Int)
+
+/** "2026-09-26.log" is part 1 of that day, "2026-09-26.2.log" part 2. Null for any other name. */
+internal fun logPartOf(fileName: String): LogPart? {
+    if (!fileName.endsWith(".log")) return null
+    val stem = fileName.removeSuffix(".log")
+    val date = stem.substringBefore('.')
+    val part = if ('.' in stem) stem.substringAfter('.').toIntOrNull() ?: return null else 1
+    if (date.length != 10) return null
+    return LogPart(fileName, date, part)
+}
+
+/** The day's current part file, and a new one when [adding] characters would pass the size cap. */
+internal fun logFileFor(
+    logDir: String,
+    date: String,
+    adding: Int,
+    maxFileBytes: Long = MAX_FILE_BYTES,
+    maxTotalBytes: Long = MAX_TOTAL_BYTES,
+): String {
+    val latest = listFiles(logDir).mapNotNull(::logPartOf).filter { it.date == date }.maxByOrNull { it.part }
+    val current = latest ?: return "$logDir/$date.log"
+    if (fileLength("$logDir/${current.name}") + adding <= maxFileBytes) return "$logDir/${current.name}"
+    enforceTotalLogSize(logDir, maxTotalBytes)
+    return "$logDir/$date.${current.part + 1}.log"
+}
+
+/** Deletes the oldest part files until all of them together fit in [MAX_TOTAL_BYTES]. */
+internal fun enforceTotalLogSize(logDir: String, maxTotalBytes: Long = MAX_TOTAL_BYTES) {
+    val parts = listFiles(logDir).mapNotNull(::logPartOf).sortedWith(compareBy({ it.date }, { it.part }))
+    var total = parts.sumOf { fileLength("$logDir/${it.name}") }
+    for (part in parts.dropLast(1)) {
+        if (total <= maxTotalBytes) break
+        total -= fileLength("$logDir/${part.name}")
+        deleteFile("$logDir/${part.name}")
+    }
 }
 
 /**
@@ -103,7 +169,8 @@ fun loggy(s: Any?) {
     } else {
         s.toString()
     }
-    val string = redactSecrets(raw, knownSecrets)
+    // Both at the one place that every line passes through: service keys, then who was there.
+    val string = LogRedactor.redact(redactSecrets(raw, knownSecrets))
 
     /* Always print to the console (the Xcode console on iOS, logcat on Android), in release builds
      * too, so runtime errors stay visible. The queued file write keeps the log for the export
@@ -113,7 +180,9 @@ fun loggy(s: Any?) {
     logPump // starts the log writer on first use
     val stamped = stamp(generateTimestampMillis())
     for (line in string.lineSequence()) {
-        logQueue.trySend(LogEntry.Line(stamped.timestamp, stamped.date, line))
+        val fits = pendingChars.value + line.length <= MAX_PENDING_BYTES &&
+            logQueue.trySend(LogEntry.Line(stamped.timestamp, stamped.date, line)).isSuccess
+        if (fits) pendingChars.addAndGet(line.length) else droppedLines.incrementAndGet()
     }
 }
 
@@ -124,48 +193,39 @@ suspend fun flushLogs() {
     if (logQueue.trySend(LogEntry.Flush(done)).isSuccess) done.await()
 }
 
-/** Every log file, concatenated, with anything still queued written out first. */
-suspend fun readLogsForExport(): ByteArray {
+/**
+ * The paths of every log file, oldest first, with anything still queued written out first. The
+ * export copies them one at a time, so it never holds the whole log in memory.
+ */
+suspend fun logFilesForExport(): List<String> {
     flushLogs()
-    return withContext(ioDispatcher) { logFile }
+    return withContext(ioDispatcher) {
+        synchronized(logLock) {
+            val logDir = getLogDirectoryPath() ?: return@synchronized emptyList()
+            listFiles(logDir).mapNotNull(::logPartOf)
+                .sortedWith(compareBy({ it.date }, { it.part }))
+                .map { "$logDir/${it.name}" }
+        }
+    }
 }
 
-/**
- * Every log file, concatenated, as bytes. It does not flush the queue first, so prefer
- * [readLogsForExport].
- */
-val logFile: ByteArray
-    get() = synchronized(logLock) {
-        try {
-            val logDir = getLogDirectoryPath() ?: return@synchronized ""
-            val files = listFiles(logDir).sorted()
-            files.joinToString("\n") { fileName ->
-                "=== $fileName ===\n${readFile("$logDir/$fileName")}"
-            }
-        } catch (_: Exception) {
-            ""
-        }
-    }.encodeToByteArray()
-
-/** Removes log files older than [LOG_RETENTION_DAYS]. */
+/** Removes log files older than [LOG_RETENTION_DAYS], then the oldest past [MAX_TOTAL_BYTES]. */
 fun cleanupOldLogs() {
     try {
         val logDir = getLogDirectoryPath() ?: return
-        val todayDate = formatDate(generateTimestampMillis())
-        val todayEpochDays = todayDate.toEpochDays()
+        val todayEpochDays = formatDate(generateTimestampMillis()).toEpochDays()
 
-        listFiles(logDir).forEach { fileName ->
+        listFiles(logDir).mapNotNull(::logPartOf).forEach { part ->
             try {
-                val datePart = fileName.removeSuffix(".log")
-                val fileDays = datePart.toEpochDays()
                 // Today counts as day one, so a file from LOG_RETENTION_DAYS ago is the first to go.
-                if (todayEpochDays - fileDays >= LOG_RETENTION_DAYS) {
-                    deleteFile("$logDir/$fileName")
+                if (todayEpochDays - part.date.toEpochDays() >= LOG_RETENTION_DAYS) {
+                    deleteFile("$logDir/${part.name}")
                 }
             } catch (_: Exception) {
                 // Skip files that don't match date format
             }
         }
+        synchronized(logLock) { enforceTotalLogSize(logDir) }
     } catch (_: Exception) { }
 }
 

@@ -30,6 +30,7 @@ import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
+import app.utils.LogRedactor
 import app.utils.ioDispatcher
 import app.utils.loggy
 import app.utils.platformFileAt
@@ -170,6 +171,10 @@ class RoomViewmodel(
             }
 
             joinConfig?.let {
+                // Before anything can log them: the log shows placeholders for who and where.
+                LogRedactor.register(LogRedactor.Kind.User, it.user)
+                LogRedactor.register(LogRedactor.Kind.Room, it.room)
+                LogRedactor.register(LogRedactor.Kind.Host, it.ip)
                 launch {
                     // The first State and playlist messages can read player capabilities or load
                     // media at once, so the player must be ready before that inbound path opens.
@@ -181,6 +186,8 @@ class RoomViewmodel(
                         return@launch
                     }
                     val endpoint = resolveServerEndpoint(joinConfig.ip)
+                    LogRedactor.register(LogRedactor.Kind.Host, endpoint.dialHost)
+                    LogRedactor.register(LogRedactor.Kind.Host, endpoint.fallbackDialHost)
                     session.tlsPeerHost = endpoint.certificateHost
                     session.serverHost = endpoint.dialHost
                     session.fallbackHost = endpoint.fallbackDialHost

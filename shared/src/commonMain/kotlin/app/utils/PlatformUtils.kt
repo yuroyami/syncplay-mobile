@@ -153,6 +153,9 @@ expect fun writeFileBytes(path: String, bytes: ByteArray)
  */
 expect fun readFileBytes(path: String): ByteArray?
 
+/** The size of the file at [path] in bytes, or 0 when it is missing. It does not read the file. */
+expect fun fileLength(path: String): Long
+
 /**
  * Whether a file exists at [path]. A one-time install (for example the mpv libass fallback font)
  * uses it to skip work that is already done, without reading the file.

@@ -11,6 +11,7 @@ import app.utils.stillExists
 import kotlinx.coroutines.flow.first
 import app.preferences.set
 import app.preferences.value
+import app.utils.LogRedactor
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
@@ -68,6 +69,7 @@ object MediaAccessRegistry {
      */
     suspend fun rememberDirectory(dir: PlatformFile) {
         val id = dir.path
+        LogRedactor.register(LogRedactor.Kind.File, id)
         runCatching { dir.durableBookmark() }
             .onSuccess { putBookmark(DIR_BOOKMARKS, id, it) }
             .onFailure { loggy("MediaAccessRegistry: failed to bookmark directory $id — ${it.message}") }
@@ -86,6 +88,7 @@ object MediaAccessRegistry {
         for (file in files) {
             val name = file.name
             if (name.isBlank()) continue
+            LogRedactor.register(LogRedactor.Kind.File, name)
             runCatching { file.durableBookmark() }
                 .onSuccess { bookmarks[name] = it }
                 .onFailure { loggy("MediaAccessRegistry: failed to bookmark file $name — ${it.message}") }

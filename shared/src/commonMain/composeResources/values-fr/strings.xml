@@ -189,7 +189,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO (Recommandé + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (Expérimental)</string>
     <string name="setting_export_log_title">Exporter les journaux</string>
-    <string name="setting_export_log_summary">Enregistre le journal de cette session dans un fichier texte.</string>
+    <string name="setting_export_log_summary">Enregistre le journal des sept derniers jours dans un fichier texte. Les noms, salons, fichiers et adresses apparaissent comme des marqueurs.</string>
 
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Couleurs du chat</string>

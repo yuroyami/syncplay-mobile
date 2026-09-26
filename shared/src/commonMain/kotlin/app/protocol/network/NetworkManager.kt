@@ -12,6 +12,7 @@ import app.protocol.WireMessageDeserializer
 import app.protocol.WireMessageHandler
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
+import app.protocol.registerLogIdentifiers
 import app.protocol.syncplayJson
 import app.room.RoomViewmodel
 import app.utils.ioDispatcher
@@ -453,6 +454,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         try {
             val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
+            message.registerLogIdentifiers()
             message.dispatch(viewmodel.serverHandler)
         } catch (e: SerializationException) {
             // A single unparseable line must NOT tear down the session. The Syncplay Python
