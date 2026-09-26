@@ -39,6 +39,18 @@ class HudAutoHideTest {
         runCurrent()
     }
 
+    /** The mouse pointer hides only with controls that are hidden during playback. */
+    @Test
+    fun thePointerHidesOnlyWhileHiddenControlsLeaveTheVideoPlaying() {
+        val hidden = playing.copy(hudVisible = false)
+        assertTrue(hidden.hidesPointer, "Hidden controls during playback hide the pointer")
+        assertFalse(playing.hidesPointer, "Visible controls keep the pointer")
+        assertFalse(hidden.copy(isPlaying = false).hidesPointer, "A paused video keeps the pointer")
+        assertFalse(hidden.copy(isBuffering = true).hidesPointer, "A stalled video keeps the pointer")
+        assertFalse(hidden.copy(held = true).hidesPointer, "An open panel, menu or text field keeps the pointer")
+        assertFalse(hidden.copy(screenReader = true).hidesPointer, "A screen reader keeps the pointer")
+    }
+
     @Test
     fun defaultIsFifteenSecondsAndNoTimeAccruesBeforePlayback() = runTest {
         assertEquals(15, HUD_AUTO_HIDE_SECONDS.default)

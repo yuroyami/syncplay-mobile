@@ -3,12 +3,6 @@ package app.design
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import app.i18n.EnAppStrings
-import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
-import app.preferences.flow
-import app.preferences.set
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -44,7 +38,7 @@ class HiddenControlsAccessTest {
      * one running the controls must stay. The run without a screen reader proves the timer fires.
      */
     @Test
-    fun aRunningScreenReaderKeepsTheControlsUpDuringPlayback() = withIdleSeconds(1) {
+    fun aRunningScreenReaderKeepsTheControlsUpDuringPlayback() = RoomRig.withIdleSeconds(1) {
         for (screenReader in listOf(false, true)) {
             RoomRig.drive(television = false, withVideo = true, screenReader = screenReader) {
                 viewmodel.playerManager.isNowPlaying.value = true
@@ -53,20 +47,6 @@ class HiddenControlsAccessTest {
                 driver.frames(10)
                 assertEquals(screenReader, ui.visibleHUD.value, "Controls visible after the idle time, screen reader $screenReader")
             }
-        }
-    }
-
-    private fun withIdleSeconds(seconds: Int, block: () -> Unit) {
-        DesignHarness.initDatastore()
-        val pref = HUD_AUTO_HIDE_SECONDS
-        runBlocking {
-            pref.set(seconds)
-            withTimeout(2_000) { pref.flow().first { it == seconds } }
-        }
-        try {
-            block()
-        } finally {
-            runBlocking { pref.set(pref.default) }
         }
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.ClipEntry
 import app.delegato
 import app.player.PlayerEngine
@@ -421,6 +422,8 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? {
 }
 
 actual fun reducedMotion(): Boolean = UIAccessibilityIsReduceMotionEnabled()
+
+actual val hiddenPointerIcon: PointerIcon? = null
 
 @Composable
 actual fun rememberScreenReaderActive(): State<Boolean> {

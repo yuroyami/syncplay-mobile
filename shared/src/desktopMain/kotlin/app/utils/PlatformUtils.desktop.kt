@@ -1,5 +1,6 @@
 package app.utils
 
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +24,9 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
+import java.awt.Point
 import java.awt.Toolkit
+import java.awt.image.BufferedImage
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import java.lang.ref.WeakReference
@@ -215,6 +218,14 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? =
     pendingDesktopJoin.also { pendingDesktopJoin = null }
 
 actual fun reducedMotion(): Boolean = false
+
+// A cursor made of one transparent pixel. A headless machine (a test run) has no cursors at all.
+actual val hiddenPointerIcon: PointerIcon? by lazy {
+    runCatching {
+        val blank = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)
+        PointerIcon(Toolkit.getDefaultToolkit().createCustomCursor(blank, Point(0, 0), "hidden"))
+    }.getOrNull()
+}
 
 @Composable
 actual fun rememberScreenReaderActive(): State<Boolean> = remember { mutableStateOf(false) }

@@ -18,6 +18,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -245,6 +246,26 @@ object DesignHarness {
                 scene.sendPointerEvent(PointerEventType.Press, position, type = PointerType.Touch)
                 scene.sendPointerEvent(PointerEventType.Release, position, type = PointerType.Touch)
             }
+            frames(3)
+        }
+
+        /** A mouse pointer moves to [position], in scene pixels, with no button down. */
+        fun hover(position: Offset) {
+            onUiThread { scene.sendPointerEvent(PointerEventType.Move, position, type = PointerType.Mouse) }
+            frames(3)
+        }
+
+        /** A mouse press at [from], a drag in [steps] moves to [to], and a release there. */
+        fun mouseDrag(from: Offset, to: Offset, steps: Int = 8) {
+            hover(from)
+            onUiThread { scene.sendPointerEvent(PointerEventType.Press, from, type = PointerType.Mouse, button = PointerButton.Primary) }
+            frames(2)
+            for (step in 1..steps) {
+                val at = from + (to - from) * (step / steps.toFloat())
+                onUiThread { scene.sendPointerEvent(PointerEventType.Move, at, type = PointerType.Mouse) }
+                frames(1)
+            }
+            onUiThread { scene.sendPointerEvent(PointerEventType.Release, to, type = PointerType.Mouse, button = PointerButton.Primary) }
             frames(3)
         }
     }

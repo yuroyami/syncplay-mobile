@@ -6,10 +6,11 @@ import kotlinx.coroutines.flow.collectLatest
 
 /**
  * The inputs of [autoHideHud]. The HUD is the set of controls drawn over the video.
- * Every change restarts the idle timer. [activity] changes on each touch or key press, so an
- * interaction restarts the timer even when playback stays the same. [screenReader] is true while
- * a screen reader runs. Its gestures send no presses, so the timer would hide the controls while
- * the person is still reading them.
+ * Every change restarts the idle timer. [activity] changes on each touch, key press or mouse move,
+ * so an interaction restarts the timer even when playback stays the same. [held] is true while
+ * something keeps the controls open: a panel, a menu, the keyboard, or a mouse pointer that rests
+ * on a control. [screenReader] is true while a screen reader runs. Its gestures send no presses,
+ * so the timer would hide the controls while the person is still reading them.
  */
 internal data class HudAutoHideState(
     val idleSeconds: Int,
@@ -22,6 +23,9 @@ internal data class HudAutoHideState(
     val screenReader: Boolean = false,
 ) {
     val playbackActive: Boolean get() = hasVideo && isPlaying && !isBuffering
+
+    /** The mouse pointer hides with controls that are hidden during playback, and only then. */
+    val hidesPointer: Boolean get() = !hudVisible && playbackActive && !held && !screenReader
 }
 
 /**

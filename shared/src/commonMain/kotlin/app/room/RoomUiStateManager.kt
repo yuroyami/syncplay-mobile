@@ -6,6 +6,12 @@ import app.AbstractManager
 import app.player.PlayerImpl.TrackType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+/** The shortest time between two idle-timer restarts from mouse moves. */
+private val POINTER_ACTIVITY_SPACING = 250.milliseconds
 
 class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
@@ -41,6 +47,25 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     fun showHud() {
         visibleHUD.value = true
         noteHudActivity()
+    }
+
+    /** True while the room hides the mouse pointer. See [HudAutoHideState.hidesPointer]. */
+    val pointerHidden = MutableStateFlow(false)
+
+    /** How many controls a mouse pointer rests on. Any number above zero holds the HUD open. */
+    val hoveredControls = MutableStateFlow(0)
+
+    private var lastPointerActivity: TimeMark? = null
+
+    /**
+     * A mouse pointer moved. Hidden controls come back, and visible ones restart their idle timer.
+     * A mouse sends dozens of moves a second, so the timer restarts at most every quarter second.
+     */
+    fun notePointerMoved() {
+        val last = lastPointerActivity
+        if (visibleHUD.value && last != null && last.elapsedNow() < POINTER_ACTIVITY_SPACING) return
+        lastPointerActivity = TimeSource.Monotonic.markNow()
+        showHud()
     }
 
     val hasEnteredPipMode = MutableStateFlow(false)

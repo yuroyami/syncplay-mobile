@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.ClipEntry
 import app.home.JoinConfig
 import app.player.PlayerEngine
@@ -149,6 +150,8 @@ actual fun reducedMotion(): Boolean =
     runCatching { window.matchMedia("(prefers-reduced-motion: reduce)").matches }.getOrDefault(false)
 
 /** A browser does not tell a page whether a screen reader runs. */
+actual val hiddenPointerIcon: PointerIcon? = null
+
 @Composable
 actual fun rememberScreenReaderActive(): State<Boolean> = remember { mutableStateOf(false) }
 

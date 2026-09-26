@@ -18,6 +18,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
@@ -298,6 +299,8 @@ actual fun consumePendingShortcut(): app.home.JoinConfig? = null
 actual fun reducedMotion(): Boolean = runCatching {
     android.provider.Settings.Global.getFloat(contextObtainer().contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 }.getOrDefault(false)
+
+actual val hiddenPointerIcon: PointerIcon? = null
 
 @Composable
 actual fun rememberScreenReaderActive(): State<Boolean> {

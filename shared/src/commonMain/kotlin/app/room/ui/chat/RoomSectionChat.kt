@@ -37,6 +37,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import app.room.holdsHudWhileHovered
 import app.LocalChatPalette
 import app.LocalRoomViewmodel
 import app.i18n.Localization
@@ -101,6 +102,7 @@ fun RoomChatSection(modifier: Modifier) {
                 viewmodel = viewmodel,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .holdsHudWhileHovered(viewmodel.uiState)
                     // Tap shield first, then the insets, so a missed tap around the input does
                     // nothing.
                     .pointerInput(Unit) { detectTapGestures { } }

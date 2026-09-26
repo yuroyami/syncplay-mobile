@@ -23,6 +23,9 @@ import app.player.PlayerManager
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
+import app.preferences.flow
+import app.preferences.set
 import app.preferences.settings.SettingCategory
 import app.room.RoomScreenUI
 import app.room.RoomViewmodel
@@ -32,6 +35,7 @@ import app.utils.platformCallback
 import io.github.vinceglb.filekit.PlatformFile
 import java.lang.reflect.Proxy
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import syncplaymobile.shared.generated.resources.Res
@@ -153,6 +157,21 @@ internal object RoomRig {
                 destroyField.set(null, previousDestroy)
                 callbackField.set(null, previousCallback)
             }
+        }
+    }
+
+    /** Runs [block] with the controls' idle timer set to [seconds], then restores the default. */
+    fun withIdleSeconds(seconds: Int, block: () -> Unit) {
+        DesignHarness.initDatastore()
+        val pref = HUD_AUTO_HIDE_SECONDS
+        runBlocking {
+            pref.set(seconds)
+            withTimeout(2_000) { pref.flow().first { it == seconds } }
+        }
+        try {
+            block()
+        } finally {
+            runBlocking { pref.set(pref.default) }
         }
     }
 

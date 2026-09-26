@@ -50,6 +50,9 @@ fun roomTopInsets(): WindowInsets =
  * - [bottom]: the bottom bar, which pads its own gesture inset.
  * - [center]: the play button and the jump keys.
  *
+ * [controls] goes on the rail, the status line, the bottom bar and the center keys: the docks
+ * that hold only controls. The chat and the panels are left out, because they cover the video.
+ *
  * The video under the docks and the notices over them are not part of this frame.
  */
 @Composable
@@ -57,6 +60,7 @@ fun RoomFrame(
     tall: Boolean,
     railHorizontal: Boolean,
     modifier: Modifier = Modifier,
+    controls: Modifier = Modifier,
     status: (@Composable BoxScope.() -> Unit)? = null,
     rail: (@Composable BoxScope.() -> Unit)? = null,
     chat: (@Composable BoxScope.() -> Unit)? = null,
@@ -83,7 +87,8 @@ fun RoomFrame(
                     .windowInsetsPadding(topInsets)
                     .windowInsetsPadding(sideInsets)
                     .padding(end = Space.gapTight, top = Space.gapTight)
-                    .onSizeChanged { railWidth = with(density) { it.width.toDp() } },
+                    .onSizeChanged { railWidth = with(density) { it.width.toDp() } }
+                    .then(controls),
             ) { rail() }
         }
         // The status line sits on the exact center, under the rail row on a tall window. On a
@@ -93,7 +98,8 @@ fun RoomFrame(
                 Modifier.align(Alignment.TopCenter).focusGroup()
                     .windowInsetsPadding(topInsets)
                     .padding(top = if (tall) Space.row + Space.gap else Space.gapTight)
-                    .then(if (tall) Modifier.fillMaxWidth(0.6f) else Modifier.fillMaxWidth(0.26f)),
+                    .then(if (tall) Modifier.fillMaxWidth(0.6f) else Modifier.fillMaxWidth(0.26f))
+                    .then(controls),
                 contentAlignment = Alignment.TopCenter,
             ) { status() }
         }
@@ -124,10 +130,10 @@ fun RoomFrame(
             ) { side() }
         }
         if (bottom != null) {
-            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().focusGroup()) { bottom() }
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().focusGroup().then(controls)) { bottom() }
         }
         if (center != null) {
-            Box(Modifier.align(Alignment.Center).focusGroup()) { center() }
+            Box(Modifier.align(Alignment.Center).focusGroup().then(controls)) { center() }
         }
     }
 }

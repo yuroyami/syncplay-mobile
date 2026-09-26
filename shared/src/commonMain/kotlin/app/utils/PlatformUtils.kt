@@ -3,6 +3,7 @@ package app.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.ClipEntry
 import app.PlatformCallback
 import app.player.PlayerEngine
@@ -186,6 +187,12 @@ expect fun reducedMotion(): Boolean
  */
 @Composable
 expect fun rememberScreenReaderActive(): State<Boolean>
+
+/**
+ * A mouse pointer icon that shows nothing, used while the room hides its controls during
+ * playback. Null where the room keeps the system pointer: every platform except desktop.
+ */
+expect val hiddenPointerIcon: PointerIcon?
 
 /** The OS and the hardware, one line, for a bug report: "Android 15 (API 35, Google Pixel 7)". */
 expect fun platformDescription(): String

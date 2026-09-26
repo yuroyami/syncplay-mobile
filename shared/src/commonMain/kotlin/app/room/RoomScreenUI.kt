@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
@@ -123,6 +124,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
+    val pointerHidden by viewmodel.uiState.pointerHidden.collectAsState()
     val initialFocusRequester = remember { FocusRequester() }
     val railFocusRequester = remember { FocusRequester() }
     val measuredChatMediaSize by viewmodel.uiState.chatMediaSizeDp.collectAsState()
@@ -156,7 +158,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         LocalPalette provides videoPalette,
         LocalSurfacePalette provides videoPalette,
     ) {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().roomPointer(viewmodel.uiState, pointerHidden)) {
             Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {
                 if (!hasVideo) RoomBackgroundArtwork()
 
@@ -420,6 +422,7 @@ private fun RoomHud(
         RoomFrame(
             tall = tall,
             railHorizontal = railHorizontal,
+            controls = Modifier.holdsHudWhileHovered(ui),
             status = if (soloMode || !playerIsReady) null else ({ RoomStatusInfoSection() }),
             rail = { RoomRail(horizontal = railHorizontal) },
             chat = if (soloMode) null else ({ RoomChatSection(modifier = Modifier.fillMaxSize()) }),
@@ -442,9 +445,10 @@ private fun RoomHud(
 }
 
 /**
- * Runs [autoHideHud] for the room. The idle timer runs only while video plays. Open panels, the
- * keyboard, scrubbing and an unsent message hold the HUD open. After each release or playback
- * restart, the timer starts again from the full delay.
+ * Runs [autoHideHud] for the room. The idle timer runs only while video plays. Open panels, menus
+ * and dialogs, the keyboard, scrubbing, an unsent message and a mouse pointer that rests on a
+ * control hold the HUD open. After each release or playback restart, the timer starts again from
+ * the full delay. It also decides when the room hides the mouse pointer.
  */
 @Composable
 private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardOpen: Boolean, hasVideo: Boolean) {
@@ -464,7 +468,12 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     val gifs by ui.gifPanelVisible.collectAsState()
     val scrubbing by ui.scrubbing.collectAsState()
     val draft by ui.msg.collectAsState()
-    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs || scrubbing || keyboardOpen || draft.isNotBlank()
+    val railMenu by ui.railActionsExpanded.collectAsState()
+    val askLeave by ui.askLeave.collectAsState()
+    val managedRoom by ui.managedRoom.collectAsState()
+    val hovered by ui.hoveredControls.collectAsState()
+    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs || scrubbing ||
+        keyboardOpen || draft.isNotBlank() || railMenu || askLeave || managedRoom || hovered > 0
 
     val screenReader = LocalScreenReaderActive.current
 
@@ -473,5 +482,12 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     )
     LaunchedEffect(ui) {
         autoHideHud(snapshotFlow { state }) { ui.visibleHUD.value = it }
+    }
+    LaunchedEffect(ui) {
+        snapshotFlow { state.hidesPointer }.collect { ui.pointerHidden.value = it }
+    }
+    // Lock mode and picture-in-picture remove this timer. The pointer must not stay hidden there.
+    DisposableEffect(ui) {
+        onDispose { ui.pointerHidden.value = false }
     }
 }
