@@ -399,6 +399,10 @@
     <string name="help_tip">Hilfe</string>
     <string name="home_shortcut_explain">Diese Angaben als Startbildschirm-Verknüpfung speichern</string>
     <string name="home_shortcut_saved">Verknüpfung gespeichert: %1$s</string>
+    <string name="home_recent_title">Letzte Räume</string>
+    <string name="home_recent_join">%1$s auf %2$s beitreten</string>
+    <string name="home_recent_forget">%1$s aus den letzten Räumen entfernen</string>
+    <string name="home_recent_password">Dieser Server braucht sein Passwort. Gib es ein und tritt dann bei.</string>
     <string name="media_folders">Medienordner</string>
     <string name="media_folders_brief">%1$s sucht in diesen Ordnern nach einer Datei, die eine geteilte Playlist nennt. Kleine Ordner gehen schneller.</string>
     <string name="media_folders_empty">Noch keine Ordner.</string>

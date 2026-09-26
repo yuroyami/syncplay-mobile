@@ -745,6 +745,12 @@
     <string name="connect_custom">Custom</string>
     <!-- %1$s is a room name. -->
     <string name="home_shortcut_saved">Shortcut saved: %1$s</string>
+    <string name="home_recent_title">Recent rooms</string>
+    <!-- %1$s is a room name. %2$s is a server address with its port. -->
+    <string name="home_recent_join">Join %1$s on %2$s</string>
+    <!-- %1$s is a room name. -->
+    <string name="home_recent_forget">Remove %1$s from recent rooms</string>
+    <string name="home_recent_password">This server needs its password. Type it, then join.</string>
     <string name="tips_next">Next</string>
     <!-- Theming (design overhaul) -->
     <string name="theme_delete_question">Delete this theme?</string>

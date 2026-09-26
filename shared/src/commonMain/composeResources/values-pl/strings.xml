@@ -412,6 +412,10 @@
     <string name="help_tip">Pomoc</string>
     <string name="home_shortcut_explain">Zapisz to jako skrót na ekranie głównym</string>
     <string name="home_shortcut_saved">Zapisano skrót: %1$s</string>
+    <string name="home_recent_title">Ostatnie pokoje</string>
+    <string name="home_recent_join">Dołącz do %1$s na %2$s</string>
+    <string name="home_recent_forget">Usuń %1$s z ostatnich pokoi</string>
+    <string name="home_recent_password">Ten serwer wymaga hasła. Wpisz je, a potem dołącz.</string>
     <string name="media_folders">Foldery multimediów</string>
     <string name="media_folders_brief">%1$s szuka w tych folderach pliku, który wskazuje wspólna lista. Małe foldery są szybsze.</string>
     <string name="media_folders_empty">Brak folderów.</string>

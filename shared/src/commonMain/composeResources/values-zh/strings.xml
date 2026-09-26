@@ -391,6 +391,10 @@
     <string name="help_tip">帮助</string>
     <string name="home_shortcut_explain">把这套设置存为主屏幕快捷方式</string>
     <string name="home_shortcut_saved">快捷方式已保存：%1$s</string>
+    <string name="home_recent_title">最近的房间</string>
+    <string name="home_recent_join">加入 %1$s（%2$s）</string>
+    <string name="home_recent_forget">从最近的房间中移除 %1$s</string>
+    <string name="home_recent_password">此服务器需要密码。请输入密码，然后加入。</string>
     <string name="media_folders">媒体文件夹</string>
     <string name="media_folders_brief">%1$s 会在这些文件夹里查找共享播放列表提到的文件。文件夹越小越快。</string>
     <string name="media_folders_empty">还没有文件夹。</string>

@@ -403,6 +403,10 @@
     <string name="help_tip">Справка</string>
     <string name="home_shortcut_explain">Сохранить это как ярлык на главном экране</string>
     <string name="home_shortcut_saved">Ярлык сохранён: %1$s</string>
+    <string name="home_recent_title">Недавние комнаты</string>
+    <string name="home_recent_join">Присоединиться к %1$s на %2$s</string>
+    <string name="home_recent_forget">Удалить %1$s из недавних комнат</string>
+    <string name="home_recent_password">Этому серверу нужен пароль. Введите его и присоединитесь.</string>
     <string name="media_folders">Папки с медиа</string>
     <string name="media_folders_brief">%1$s ищет в этих папках файл, названный в общем плейлисте. Небольшие папки быстрее.</string>
     <string name="media_folders_empty">Папок пока нет.</string>

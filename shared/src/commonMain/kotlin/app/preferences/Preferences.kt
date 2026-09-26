@@ -134,6 +134,9 @@ object Preferences {
     /** How many cold starts have shown the tips. The tips stop on their own after a few. */
     val TIPS_SHOWN_COUNT = Pref("misc_tips_shown_count", 0)
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
+
+    /** The recent joins as JSON, newest first, with no password. See RecentJoins. */
+    val RECENT_JOINS = Pref<String?>("misc_recent_joins", null)
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
 

@@ -55,13 +55,15 @@ data class JoinConfig(
 
     /**
      * Saves these join details when the [Preferences.REMEMBER_INFO] setting is on, so the join
-     * form shows them next time. Does nothing when the setting is off.
+     * form shows them next time, and puts them first in [RecentJoins]. Does nothing when the
+     * setting is off.
      */
     suspend fun save() {
         val saveInfo = Preferences.REMEMBER_INFO.value()
 
         if (saveInfo) {
             Preferences.JOIN_CONFIG.set(Json.encodeToString(this))
+            RecentJoins.add(this)
         }
     }
 }

@@ -418,6 +418,10 @@
     <string name="help_tip">Aide</string>
     <string name="home_shortcut_explain">Enregistrer ceci comme raccourci sur l'écran d'accueil</string>
     <string name="home_shortcut_saved">Raccourci enregistré : %1$s</string>
+    <string name="home_recent_title">Salles récentes</string>
+    <string name="home_recent_join">Rejoindre %1$s sur %2$s</string>
+    <string name="home_recent_forget">Retirer %1$s des salles récentes</string>
+    <string name="home_recent_password">Ce serveur demande son mot de passe. Saisissez-le, puis rejoignez la salle.</string>
     <string name="media_folders">Dossiers multimédias</string>
     <string name="media_folders_brief">%1$s cherche dans ces dossiers le fichier nommé par une playlist partagée. Les petits dossiers sont plus rapides.</string>
     <string name="media_folders_empty">Aucun dossier pour l'instant.</string>

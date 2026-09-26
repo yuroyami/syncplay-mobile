@@ -24,6 +24,7 @@ import app.home.HomeScreenUI
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.home.JoinRow
+import app.home.RecentJoin
 import app.home.components.HomeEnginePicker
 import app.player.PlayerEngine
 import app.player.PlayerImpl
@@ -114,6 +115,8 @@ class HomeGolden {
 
     private fun saveJoin(config: JoinConfig?) = runBlocking {
         Preferences.NEVER_SHOW_TIPS.set(true)
+        // The store is shared by every test in this run, so a join made elsewhere must not add a row here.
+        saveRecents(emptyList())
         if (config == null) {
             datastore.edit { it.remove(Preferences.JOIN_CONFIG.prefKey()) }
             var tries = 0
@@ -124,6 +127,13 @@ class HomeGolden {
             var tries = 0
             while (Preferences.JOIN_CONFIG.value() != json && tries++ < 50) Thread.sleep(20)
         }
+    }
+
+    private fun saveRecents(list: List<RecentJoin>) = runBlocking {
+        val json = Json.encodeToString(list)
+        Preferences.RECENT_JOINS.set(json)
+        var tries = 0
+        while (Preferences.RECENT_JOINS.value() != json && tries++ < 50) Thread.sleep(20)
     }
 
     private val official = JoinConfig(user = "yuroyami", room = "movie-night", ip = "syncplay.pl", port = 8997)
@@ -178,6 +188,25 @@ class HomeGolden {
         for ((w, h) in listOf(360 to 568, 390 to 763, 800 to 312, 768 to 1000, 1280 to 720)) renderHome("host", w, h).assertAllTextFits()
         // The hosting panel outgrows a phone, but on a wide window the join key stays on screen.
         for ((w, h) in listOf(800 to 312, 1024 to 744, 1280 to 720)) renderHome("host", w, h).assertJoinOnScreen()
+        saveJoin(official)
+    }
+
+    @Test
+    fun recentRoomsSitUnderTheJoinKeyAndKeepTheirWords() {
+        saveJoin(official)
+        saveRecents(
+            listOf(
+                RecentJoin("yuroyami", "movie-night", "syncplay.pl", 8997),
+                RecentJoin("yuroyami", "anime-club", "192.168.1.20", 8999, hasPassword = true),
+                RecentJoin("mina", "sunday-films", "watch.example.org", 8999),
+            ),
+        )
+        for ((w, h) in listOf(360 to 708, 390 to 763, 412 to 867, 800 to 312, 1024 to 744, 1280 to 720)) {
+            val home = renderHome("recent", w, h)
+            home.assertAllTextFits()
+            home.assertJoinOnScreen()
+        }
+        renderHome("recent", 390, 763, fontScale = 1.3f).assertAllTextFits()
         saveJoin(official)
     }
 

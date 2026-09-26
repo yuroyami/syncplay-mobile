@@ -403,6 +403,10 @@
     <string name="help_tip">Ayuda</string>
     <string name="home_shortcut_explain">Guardar esto como acceso directo en la pantalla de inicio</string>
     <string name="home_shortcut_saved">Acceso directo guardado: %1$s</string>
+    <string name="home_recent_title">Salas recientes</string>
+    <string name="home_recent_join">Unirse a %1$s en %2$s</string>
+    <string name="home_recent_forget">Quitar %1$s de las salas recientes</string>
+    <string name="home_recent_password">Este servidor necesita su contraseña. Escríbela y luego únete.</string>
     <string name="media_folders">Carpetas de medios</string>
     <string name="media_folders_brief">%1$s busca en estas carpetas el archivo que nombre una lista compartida. Las carpetas pequeñas son más rápidas.</string>
     <string name="media_folders_empty">Aún no hay carpetas.</string>

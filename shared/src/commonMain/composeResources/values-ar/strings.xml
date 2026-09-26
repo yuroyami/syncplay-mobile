@@ -401,6 +401,10 @@
     <string name="help_tip">مساعدة</string>
     <string name="home_shortcut_explain">احفظ هذه الإعدادات كاختصار على الشاشة الرئيسية</string>
     <string name="home_shortcut_saved">حُفظ الاختصار: %1$s</string>
+    <string name="home_recent_title">الغرف الأخيرة</string>
+    <string name="home_recent_join">الانضمام إلى %1$s على %2$s</string>
+    <string name="home_recent_forget">إزالة %1$s من الغرف الأخيرة</string>
+    <string name="home_recent_password">يحتاج هذا الخادم إلى كلمة مروره. اكتبها ثم انضم.</string>
     <string name="media_folders">مجلدات الوسائط</string>
     <string name="media_folders_brief">يبحث %1$s في هذه المجلدات عن ملف تسمّيه قائمة تشغيل مشتركة. المجلدات الصغيرة أسرع.</string>
     <string name="media_folders_empty">لا مجلدات بعد.</string>

@@ -84,12 +84,14 @@ import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
+import app.home.components.RecentRooms
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.i18n.AppStrings
 import app.i18n.strings
 import app.preferences.Preferences
 import app.preferences.Preferences.NEVER_SHOW_TIPS
 import app.preferences.Preferences.PLAYER_ENGINE
+import app.preferences.Preferences.REMEMBER_INFO
 import app.preferences.Preferences.SERVER_PASSWORD
 import app.preferences.Preferences.SERVER_PORT
 import app.preferences.Preferences.TIPS_SHOWN_COUNT
@@ -147,7 +149,7 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 val officialPorts = listOf("8995", "8996", "8997", "8998", "8999")
 
 private const val OFFICIAL_HOST = OFFICIAL_SERVER_NAME
-private const val LOCAL_HOST = "127.0.0.1"
+internal const val LOCAL_HOST = "127.0.0.1"
 
 /** Where the join goes: the official server, someone else's, or the one this app hosts. */
 private enum class ServerMode { Official, Custom, Host }
@@ -306,6 +308,19 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 val roomFocus = remember { FocusRequester() }
                 val portFocus = remember { FocusRequester() }
                 val passwordFocus = remember { FocusRequester() }
+
+                // The recent rooms show while the remember setting is on, which is also when joins are kept.
+                val rememberInfo by REMEMBER_INFO.watchPref()
+                val recentJson by Preferences.RECENT_JOINS.watchPref()
+                val recents = remember(recentJson) { RecentJoins.decode(recentJson) }
+                // A recent room whose server has a password fills the form, and then the password
+                // field takes focus. The field exists only after the Custom fields compose.
+                var askPassword by remember { mutableStateOf(0) }
+                LaunchedEffect(askPassword) {
+                    if (askPassword == 0) return@LaunchedEffect
+                    delay(100)
+                    runCatching { passwordFocus.requestFocus() }
+                }
 
                 // Focuses the first field only in keyboard input mode, so a touch user gets no soft
                 // keyboard when the screen opens.
@@ -534,26 +549,51 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
                 }
 
-                /* Join, with the shortcut key beside it. Desktop has no home screen to pin a
-                 * shortcut to, so it shows the join key alone. */
+                /* Join, with the shortcut key beside it, and the recent rooms under both. Desktop and
+                 * the web have no home screen to pin a shortcut to, so they show the join key alone. */
                 val joinBlock: @Composable () -> Unit = {
                     val shortcutSaved = strings.homeShortcutSaved(room)
-                    JoinRow(
-                        onJoin = {
-                            error = validate()
-                            if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
-                        },
-                        // A TV launcher cannot pin a shortcut, so a TV shows no shortcut key.
-                        onSaveShortcut = if (platform == Platform.Desktop || television) null else {
-                            {
+                    val passwordNeeded = strings.homeRecentPassword
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                        JoinRow(
+                            onJoin = {
                                 error = validate()
-                                if (error == null) {
-                                    with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
-                                    viewmodel.snackItAsync(shortcutSaved)
+                                if (error == null) globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(currentConfig()) }
+                            },
+                            // A TV launcher cannot pin a shortcut, so a TV shows no shortcut key.
+                            onSaveShortcut = if (platform == Platform.Desktop || platform == Platform.Web || television) null else {
+                                {
+                                    error = validate()
+                                    if (error == null) {
+                                        with(platformCallback) { viewmodel.onSaveConfigShortcut(currentConfig()) }
+                                        viewmodel.snackItAsync(shortcutSaved)
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                        if (rememberInfo) {
+                            RecentRooms(
+                                entries = recents,
+                                onPick = { entry ->
+                                    if (!entry.hasPassword) {
+                                        globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(entry.toJoinConfig().sanitised()) }
+                                    } else {
+                                        // No password is kept, so the form takes the entry and asks for it.
+                                        username = entry.user
+                                        room = entry.room
+                                        mode = ServerMode.Custom
+                                        address = entry.ip
+                                        port = entry.port.toString()
+                                        password = ""
+                                        error = null
+                                        viewmodel.notices.post(passwordNeeded, NoticeSeverity.Info, holdMs = 4000L)
+                                        askPassword++
+                                    }
+                                },
+                                onForget = { entry -> globalViewmodel.viewModelScope.launch { RecentJoins.remove(entry) } },
+                            )
+                        }
+                    }
                 }
 
                 /* The arrangement, measured from the window without the keyboard. The width picks
