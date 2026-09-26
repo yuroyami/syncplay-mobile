@@ -1,0 +1,24 @@
+# A hand-written first profile: every class of the app on the way from a cold start to an open
+# room. The :baselineprofile generator replaces this file with a measured one. Hosting (app/server),
+# GIF search (app/klipy) and subtitle search (app/subtitles) are left out, because a start never
+# reaches them.
+HSPLapp/*;->**(**)**
+HSPLapp/home/**->**(**)**
+HSPLapp/i18n/**->**(**)**
+HSPLapp/player/**->**(**)**
+HSPLapp/preferences/**->**(**)**
+HSPLapp/protocol/**->**(**)**
+HSPLapp/room/**->**(**)**
+HSPLapp/theme/**->**(**)**
+HSPLapp/uicomponents/**->**(**)**
+HSPLapp/utils/**->**(**)**
+Lapp/*;
+Lapp/home/**;
+Lapp/i18n/**;
+Lapp/player/**;
+Lapp/preferences/**;
+Lapp/protocol/**;
+Lapp/room/**;
+Lapp/theme/**;
+Lapp/uicomponents/**;
+Lapp/utils/**;

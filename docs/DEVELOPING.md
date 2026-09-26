@@ -19,6 +19,7 @@ Two words appear everywhere in this repository:
 | [`shared/src/jvmShared/`](../shared/src/jvmShared) | The Netty client and the NewPipe media resolver, for Android and desktop. A media resolver turns a page link, such as a YouTube link, into a video stream. |
 | [`androidApp/`](../androidApp), [`iosApp/`](../iosApp), [`desktopApp/`](../desktopApp), [`webApp/`](../webApp) | The platform app shells. |
 | [`buildSrc/`](../buildSrc) | The release tasks, the dependency report and the quality gates. |
+| [`baselineprofile/`](../baselineprofile) | The baseline profile generator and the startup benchmark for Android. Both run only on request, on a connected device. |
 
 The protocol code is a Kotlin port of the official Syncplay client. `RoomViewmodel` holds one
 room. It owns the managers of that room, such as `PlayerManager`, `ProtocolManager` and
@@ -117,6 +118,34 @@ script fails when a symbol file does not match the library in the APK.
 To test local builds of the `io.github.yuroyami` libraries (such as KiteConfig and KitePlayer),
 add `-PuseMavenLocal=true`. Gradle then takes those libraries from your local Maven repository. A
 release build with this flag fails on purpose, because nobody else could rebuild it.
+
+### Baseline profile
+
+A baseline profile lists the code that Android compiles ahead of time when it installs the app.
+Both release flavors package
+[`baseline-prof.txt`](../androidApp/src/main/generated/baselineProfiles/baseline-prof.txt). A
+build never generates this file, so every machine builds the same APK. The file in the
+repository is a hand-written first profile. It covers the app's own packages on the way from a
+cold start to an open room.
+
+The [`baselineprofile/`](../baselineprofile) module makes a measured profile. It starts the app,
+waits for Home, and opens a room through **Watch alone**, so it needs no server. It needs a
+physical device with Android 13 or later, with English as the device language. It installs its
+own copy of the app, with `.benchmark` at the end of the application ID, and removes that copy
+after the run. The installed app and its data stay as they are.
+
+Make a new profile, then commit the file that it writes:
+
+```bash
+./gradlew :androidApp:generateBaselineProfile
+```
+
+Measure the profile on the same device. The benchmark compares a cold start and the opening of a
+room, each with and without the profile:
+
+```bash
+./gradlew :baselineprofile:connectedFullBenchmarkReleaseAndroidTest
+```
 
 ## Android TV
 

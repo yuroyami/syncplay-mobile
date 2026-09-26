@@ -12,6 +12,8 @@ plugins {
 
     alias(libs.plugins.android.application).apply(false)
     alias(libs.plugins.android.kmp.library).apply(false)
+    alias(libs.plugins.android.test).apply(false)
+    alias(libs.plugins.baselineprofile).apply(false)
 
     alias(libs.plugins.kSerialization).apply(false)
     // Ktorfit generates its API implementations with KSP. Without KSP, there is no createKlipyAPI.
@@ -182,7 +184,7 @@ detekt {
     // Every Kotlin source folder of every module, read from disk, so a new source set is scanned
     // without an edit here.
     source.setFrom(
-        listOf("shared", "androidApp", "desktopApp", "webApp").flatMap { module ->
+        listOf("shared", "androidApp", "desktopApp", "webApp", "baselineprofile").flatMap { module ->
             file("$module/src").listFiles().orEmpty().sortedBy { it.name }
                 .flatMap { set -> listOf(File(set, "kotlin"), File(set, "java")) }
                 .filter { it.isDirectory }

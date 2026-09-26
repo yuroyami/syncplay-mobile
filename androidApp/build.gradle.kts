@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.plugin)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.baselineprofile)
 }
 
 // The exoOnly Gradle property (-PexoOnly=true or gradle.properties) overrides AppConfig.exoOnly.
@@ -89,6 +90,17 @@ android {
                 signingConfig = config
             }
         }
+        /* The baseline profile plugin builds these two for the :baselineprofile module, which
+         * installs them, runs, and uninstalls them. Their own application id keeps the installed
+         * app and its data out of that. The plugin sets the rest of each build type. */
+        create("nonMinifiedRelease") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".benchmark"
+        }
+        create("benchmarkRelease") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".benchmark"
+        }
     }
 
     packaging {
@@ -155,6 +167,14 @@ android {
     }
 }
 
+/* The baseline profile lives in src/main/generated/baselineProfiles, where the generator writes
+ * it. A build never generates it: a profile made again on each machine would differ, and an
+ * outside builder could no longer match the published APK. docs/DEVELOPING.md has the steps. */
+baselineProfile {
+    mergeIntoMain = true
+    automaticGenerationDuringBuild = false
+}
+
 androidComponents {
     // Each APK gets its native library check as part of its assemble task: no player library in
     // exoOnly (buildSrc/ExoOnlyApkGate.kt), and KitePlayer's decoder for every ABI in full
@@ -192,4 +212,5 @@ androidComponents {
 dependencies {
     coreLibraryDesugaring(libs.desugaring)
     implementation(projects.shared)
+    baselineProfile(projects.baselineprofile)
 }
