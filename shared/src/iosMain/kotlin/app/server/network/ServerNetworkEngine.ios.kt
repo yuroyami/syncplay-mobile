@@ -1,6 +1,8 @@
 package app.server.network
 
+import app.server.ByteBudget
 import app.server.ClientConnection
+import app.server.ServerLimits
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.ktor.network.selector.SelectorManager
@@ -11,6 +13,7 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
+import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
@@ -54,6 +57,9 @@ actual class ServerNetworkEngine actual constructor(
     private val clientsLock = SynchronizedObject()
     private val clientJobs = mutableListOf<Job>()
 
+    /** Sockets being served, joined or still in the handshake. See [ServerLimits.MAX_CLIENTS]. */
+    private val liveClients = atomic(0)
+
     var isRunning: Boolean = false
         private set
 
@@ -92,6 +98,11 @@ actual class ServerNetworkEngine actual constructor(
                         continue
                     }
                     consecutiveFailures = 0
+                    if (liveClients.value >= ServerLimits.MAX_CLIENTS) {
+                        loggy("Server: refusing a client, ${ServerLimits.MAX_CLIENTS} clients already connected")
+                        runCatching { clientSocket.close() }
+                        continue
+                    }
                     serve(clientSocket)
                 }
             } finally {
@@ -107,11 +118,22 @@ actual class ServerNetworkEngine actual constructor(
 
         val readChannel = clientSocket.openReadChannel()
         val writeChannel = clientSocket.openWriteChannel(autoFlush = true)
+        liveClients.incrementAndGet()
+        // Unlimited in count, bounded in bytes: a client that stops reading is dropped.
         val outbound = Channel<String>(capacity = Channel.UNLIMITED)
+        val budget = ByteBudget()
 
         val connection = ClientConnection(
             server = server,
-            sendFn = { line -> outbound.trySend(line) },
+            sendFn = { line ->
+                if (budget.take(line.length)) {
+                    outbound.trySend(line)
+                } else {
+                    loggy("Server: dropping $remoteAddress, too much unsent output")
+                    // Cancel, not close: the queued lines are the problem, so they are not sent.
+                    outbound.cancel()
+                }
+            },
             // Close the queue, not the socket: the writer sends what is already queued, so a
             // client learns why it was dropped before the socket closes.
             dropFn = { outbound.close() }
@@ -121,6 +143,7 @@ actual class ServerNetworkEngine actual constructor(
             try {
                 for (line in outbound) {
                     writeChannel.writeStringUtf8(line + "\r\n")
+                    budget.give(line.length)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -144,6 +167,7 @@ actual class ServerNetworkEngine actual constructor(
             } finally {
                 connection.onConnectionLost()
                 outbound.close()
+                liveClients.decrementAndGet()
                 loggy("Server: Client disconnected from $remoteAddress")
             }
         }

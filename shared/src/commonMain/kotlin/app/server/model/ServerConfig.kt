@@ -38,7 +38,10 @@ data class ServerConfig(
     val motd: String = "",
 
     /** Seconds without a State from a client before it is dropped as dead. */
-    val protocolTimeoutSeconds: Double = PROTOCOL_TIMEOUT_SECONDS
+    val protocolTimeoutSeconds: Double = PROTOCOL_TIMEOUT_SECONDS,
+
+    /** Milliseconds a new socket has to send a valid Hello before it is dropped. */
+    val handshakeDeadlineMs: Long = HANDSHAKE_DEADLINE_MS,
 ) {
     /** The MD5-hashed password in hex, or an empty string when no password is set. */
     val hashedPassword: String
@@ -53,6 +56,7 @@ data class ServerConfig(
         const val MAX_ROOM_NAME_LENGTH = 35
         const val MAX_FILENAME_LENGTH = 250
         const val PROTOCOL_TIMEOUT_SECONDS = 12.5
+        const val HANDSHAKE_DEADLINE_MS = 15_000L
         const val SERVER_STATE_INTERVAL_MS = 1000L
 
         fun generateSalt(): String {

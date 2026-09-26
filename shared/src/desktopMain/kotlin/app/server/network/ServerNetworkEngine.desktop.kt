@@ -1,6 +1,8 @@
 package app.server.network
 
+import app.server.ByteBudget
 import app.server.ClientConnection
+import app.server.ServerLimits
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
@@ -46,7 +48,7 @@ actual class ServerNetworkEngine actual constructor(
     private val clientChannels = ConcurrentHashMap<NettyChannel, ClientMailbox>()
 
     /** A client's handler and the ordered queue its lines wait in. */
-    private class ClientMailbox(val connection: ClientConnection, val mailbox: Channel<String>)
+    private class ClientMailbox(val connection: ClientConnection, val mailbox: Channel<String>, val budget: ByteBudget)
 
     var isRunning: Boolean = false
         private set
@@ -78,6 +80,11 @@ actual class ServerNetworkEngine actual constructor(
                     pipeline.addLast("handler", object : SimpleChannelInboundHandler<String>() {
 
                         override fun channelActive(ctx: ChannelHandlerContext) {
+                            if (clientChannels.size >= ServerLimits.MAX_CLIENTS) {
+                                loggy("Server: refusing ${ctx.channel().remoteAddress()}, ${ServerLimits.MAX_CLIENTS} clients already connected")
+                                ctx.close()
+                                return
+                            }
                             val connection = ClientConnection(
                                 server = server,
                                 sendFn = { line ->
@@ -102,11 +109,16 @@ actual class ServerNetworkEngine actual constructor(
                             // was handled. Do not hand each line to a pool: a later line, or the
                             // loss itself, can then overtake the Hello and leave a ghost watcher (a
                             // user who stays in the room list after leaving).
+                            // Unlimited in count, bounded in bytes by the budget in channelRead0.
                             val mailbox = Channel<String>(Channel.UNLIMITED)
-                            clientChannels[ctx.channel()] = ClientMailbox(connection, mailbox)
+                            val budget = ByteBudget()
+                            clientChannels[ctx.channel()] = ClientMailbox(connection, mailbox, budget)
                             scope.launch(Dispatchers.Default) {
                                 try {
-                                    for (line in mailbox) connection.handlePacket(line)
+                                    for (line in mailbox) {
+                                        connection.handlePacket(line)
+                                        budget.give(line.length)
+                                    }
                                 } catch (e: CancellationException) {
                                     throw e
                                 } catch (e: Exception) {
@@ -122,7 +134,16 @@ actual class ServerNetworkEngine actual constructor(
                         }
 
                         override fun channelRead0(ctx: ChannelHandlerContext, msg: String) {
-                            clientChannels[ctx.channel()]?.mailbox?.trySend(msg)
+                            val client = clientChannels[ctx.channel()] ?: return
+                            // A client that sends faster than its lines are handled is dropped
+                            // before its queue can grow without end.
+                            if (!client.budget.take(msg.length)) {
+                                loggy("Server: dropping ${ctx.channel().remoteAddress()}, too much unhandled input")
+                                clientChannels.remove(ctx.channel())?.mailbox?.close()
+                                ctx.close()
+                                return
+                            }
+                            client.mailbox.trySend(msg)
                         }
 
                         override fun channelInactive(ctx: ChannelHandlerContext) {

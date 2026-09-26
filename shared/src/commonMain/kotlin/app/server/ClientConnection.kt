@@ -69,6 +69,15 @@ class ClientConnection(
 
     val isLogged: Boolean get() = logged
 
+    init {
+        server.armHandshakeDeadline(this)
+    }
+
+    /** The handshake deadline has passed. A client that has not sent a valid Hello is dropped. */
+    fun onHandshakeDeadline() {
+        if (!logged) dropWithError("No Hello within the handshake deadline")
+    }
+
     fun getFeatures(): RoomFeatures? = features
     fun getVersion(): String? = version
 

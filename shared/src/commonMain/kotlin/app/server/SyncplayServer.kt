@@ -54,6 +54,18 @@ class SyncplayServer(
     suspend fun <T> onServerThread(block: suspend () -> T): T =
         withContext(serverDispatcher) { block() }
 
+    /**
+     * Drops [connection] if it has not sent a valid Hello within [ServerConfig.handshakeDeadlineMs].
+     * Without it, a socket that never says who it is stays open for as long as the server runs,
+     * because the silence timer starts only once a watcher has joined.
+     */
+    fun armHandshakeDeadline(connection: ClientConnection) {
+        scope.launch {
+            delay(config.handshakeDeadlineMs)
+            onServerThread { connection.onHandshakeDeadline() }
+        }
+    }
+
     private val roomManager: ServerRoomManager =
         if (config.isolateRooms) PublicServerRoomManager() else ServerRoomManager()
 

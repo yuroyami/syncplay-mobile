@@ -16,6 +16,7 @@ import app.server.model.ServerConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -216,6 +217,17 @@ class ServerProtocolFlowTest {
         healthy.receive(helloFor("healthy", "room"))
         assertNotNull(healthy.lastOf<WireMessage.Hello>(), "the server keeps serving other clients")
         assertEquals(false, healthy.dropped)
+    }
+
+    @Test
+    fun `a socket that never says Hello is dropped at the handshake deadline`(): Unit = runBlocking {
+        val server = server(ServerConfig(isolateRooms = false, handshakeDeadlineMs = 200))
+        val silent = TestClient(server)
+        val joined = TestClient(server).apply { receive(helloFor("joined", "room")) }
+        delay(600)
+        assertEquals(true, silent.dropped, "a silent socket is dropped")
+        assertNotNull(silent.lastOf<WireMessage.Error>(), "and told why")
+        assertEquals(false, joined.dropped, "a client that joined in time stays")
     }
 
     @Test
