@@ -17,6 +17,7 @@
         android:appCategory="video"
         android:icon="@mipmap/ic_launcher"
         android:label="${appName}"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -26,7 +27,7 @@
 
         <activity
             android:name="app.SyncplayActivity"
-            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
+            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize|locale|layoutDirection"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
             android:supportsPictureInPicture="true"

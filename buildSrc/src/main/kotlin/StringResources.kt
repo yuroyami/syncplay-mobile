@@ -1,5 +1,6 @@
 import org.gradle.api.GradleException
 import org.w3c.dom.Comment
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.File
@@ -43,7 +44,13 @@ internal object StringResources {
     fun keys(file: File): List<String> =
         read(file).filter { it.kind != ResourceKind.ARRAY }.map { it.name }
 
-    private fun parse(file: File): List<StringEntry> {
+    /** The `android:name` of every `<locale>` in an Android locale configuration file. */
+    fun localeConfigNames(file: File): List<String> {
+        val locales = document(file).getElementsByTagName("locale")
+        return (0 until locales.length).map { (locales.item(it) as Element).getAttribute("android:name") }
+    }
+
+    private fun document(file: File): Document {
         val factory = DocumentBuilderFactory.newInstance().apply {
             // No DTD and no external entities: a resource file never needs either.
             setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
@@ -54,11 +61,15 @@ internal object StringResources {
             isExpandEntityReferences = false
             isIgnoringComments = false
         }
-        val document = try {
+        return try {
             factory.newDocumentBuilder().parse(file)
         } catch (e: Exception) {
             throw GradleException("${file.path} is not valid XML: ${e.message}", e)
         }
+    }
+
+    private fun parse(file: File): List<StringEntry> {
+        val document = document(file)
         val entries = mutableListOf<StringEntry>()
         var comment: String? = null
         val children = document.documentElement.childNodes

@@ -249,6 +249,8 @@ object Preferences {
             }
         )
     }
+    /** The Android per-app language (Android 13 and later) when the app last read or wrote it. See SystemAppLanguage. */
+    val SYSTEM_LANG_SEEN = Pref("pref_lang_system_seen", "")
     val AUDIO_LANG = Pref("pref_audio_preferred_lang", "eng") {
         title = { it.settingAudioDefaultLanguageTitle }
         summary = { it.settingAudioDefaultLanguageSummry }

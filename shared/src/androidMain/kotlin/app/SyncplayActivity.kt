@@ -29,6 +29,7 @@ import app.home.InviteLink
 import app.home.PendingJoin
 import app.home.JoinConfig
 import app.i18n.Localization
+import app.i18n.SystemAppLanguage
 import app.player.Playback
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
@@ -98,9 +99,18 @@ class SyncplayActivity : ComponentActivity() {
         }
 
         /** Connects the shared code to this platform. The callback holds this Activity weakly:
-         * the callback outlives the Activity, which is recreated on a theme, locale or font-size
-         * change. */
+         * the callback outlives the Activity, which is recreated on a theme or font-size change. */
         platformCallback = AndroidPlatformCallback(WeakReference(this))
+
+        /* Android 13 and later list the app in the system's per-app language setting. That
+         * setting and the in-app one stay one value. */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val language = SystemAppLanguage(this).also { systemLanguage = it }
+            lifecycleScope.launch {
+                language.reconcile()
+                language.followInAppChoice()
+            }
+        }
 
         setContent {
             coil3.compose.setSingletonImageLoaderFactory { context ->
@@ -220,19 +230,29 @@ class SyncplayActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context?) {
-        /** Apply the saved language before the base context attaches, so resources load in that
-         * locale. A blank choice means the device's own language, so nothing is forced. */
-        val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)
+        /** Below Android 13, apply the saved language before the base context attaches, so
+         * resources load in that locale. From Android 13, the system applies the per-app language
+         * itself. A blank choice means the device's own language, so nothing is forced. */
+        val lang = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) "" else runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)
         super.attachBaseContext(if (lang.isBlank()) newBase else newBase!!.changeLanguage(lang))
     }
 
+    /** Android 13 and later: the system's per-app language. Null below Android 13. */
+    private var systemLanguage: SystemAppLanguage? = null
 
+    /** A language change arrives here too: the manifest keeps this screen for it, so a room stays open. */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // Reapply a chosen locale after orientation changes; a blank choice follows the device.
-        // TODO: migrate to AppCompatDelegate.setApplicationLocales for per-app language on Android 13+.
+        // The per-app language may have changed in the system settings.
+        systemLanguage?.let { language -> lifecycleScope.launch { language.reconcile() } }
         val lang = DISPLAY_LANG.value()
-        if (lang.isBlank()) return
+        if (lang.isBlank()) {
+            // A blank choice follows the device, whose language may have just changed.
+            Localization.apply("", newConfig.locales[0].toLanguageTag())
+            return
+        }
+        if (systemLanguage != null) return
+        // Below Android 13, reapply the chosen locale, which the new configuration replaced.
         val locale = Locale.Builder().setLanguage(lang).build()
         Locale.setDefault(locale)
         val config = resources.configuration

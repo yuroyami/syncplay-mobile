@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The languages that Android's per-app language setting offers (Android 13 and later).
+     The checkLocaleParity gate fails when this list differs from the language folders in
+     shared/src/commonMain/composeResources. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="ar" />
+    <locale android:name="de" />
+    <locale android:name="en" />
+    <locale android:name="es" />
+    <locale android:name="fr" />
+    <locale android:name="pl" />
+    <locale android:name="ru" />
+    <locale android:name="zh" />
+</locale-config>

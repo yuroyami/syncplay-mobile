@@ -29,11 +29,11 @@ object Localization {
     fun deviceLanguage(): String = Locale.current.toLanguageTag()
 
     /**
-     * Applies a saved language preference. A blank value means "follow the device". The language
-     * setting stores a blank value when nothing is chosen.
+     * Applies a saved language preference. A blank value means "follow the device", whose language
+     * is [device]. The language setting stores a blank value when nothing is chosen.
      */
-    fun apply(saved: String) {
-        lyricist.languageTag = saved.ifBlank { deviceLanguage() }
+    fun apply(saved: String, device: String = deviceLanguage()) {
+        lyricist.languageTag = saved.ifBlank { device }
     }
 }
 

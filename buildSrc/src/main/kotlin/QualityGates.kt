@@ -149,10 +149,12 @@ private fun Project.registerStringResourceGate(): TaskProvider<*> {
  */
 private fun Project.registerLocaleParityGate(): TaskProvider<*> {
     val resourceRoot = file("shared/src/commonMain/composeResources")
+    val localeConfig = file("androidApp/src/main/res/xml/locales_config.xml")
+    val localeConfigPath = localeConfig.relativeTo(rootDir).path
     val strict = providers.gradleProperty("strictLocales").orNull?.toBoolean() ?: false
     return tasks.register("checkLocaleParity") {
         group = GATE_GROUP
-        description = "Reports untranslated keys and fails on keys that exist only in a translation."
+        description = "Reports untranslated keys, fails on keys that exist only in a translation, and fails when Android's language list differs from the shipped languages."
         alwaysRun()
         doLast {
             fun keysIn(dir: String): Set<String> {
@@ -177,6 +179,16 @@ private fun Project.registerLocaleParityGate(): TaskProvider<*> {
                 val percent = if (source.isEmpty()) 0 else (keys.count { it in source } * 100) / source.size
                 logger.lifecycle("  $locale: $percent%, ${missing.size} missing, ${extra.size} not in the source")
                 extra.sorted().forEach { orphans += "$locale: '$it' does not exist in values-en" }
+            }
+
+            // Android's per-app language setting offers only the languages that this file lists.
+            val shipped = (locales + "values-en").map { it.removePrefix("values-") }.toSortedSet()
+            val declared = StringResources.localeConfigNames(localeConfig).toSortedSet()
+            if (declared != shipped) {
+                throw GradleException(
+                    "$localeConfigPath lists ${declared.joinToString()}, but the app ships ${shipped.joinToString()}.\n" +
+                        "Android's per-app language setting offers only the listed languages."
+                )
             }
 
             if (orphans.isNotEmpty()) {
