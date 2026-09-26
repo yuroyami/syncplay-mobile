@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
@@ -34,6 +35,8 @@ import app.player.Playback
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.arePreferencesLoaded
+import app.preferences.flow
+import app.preferences.awaitPreferences
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
@@ -46,6 +49,7 @@ import app.utils.loggy
 import app.utils.maskHiddenSystemBars
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.runtime.setValue
@@ -109,6 +113,13 @@ class SyncplayActivity : ComponentActivity() {
             lifecycleScope.launch {
                 language.reconcile()
                 language.followInAppChoice()
+            }
+        } else {
+            // Below Android 13, a switch back to the device language must undo the locale that
+            // attachBaseContext forced. Otherwise the old language stays until a restart.
+            lifecycleScope.launch {
+                awaitPreferences()
+                DISPLAY_LANG.flow().drop(1).collect { if (it.isBlank()) followDeviceLanguage() }
             }
         }
 
@@ -246,19 +257,28 @@ class SyncplayActivity : ComponentActivity() {
         // The per-app language may have changed in the system settings.
         systemLanguage?.let { language -> lifecycleScope.launch { language.reconcile() } }
         val lang = DISPLAY_LANG.value()
-        if (lang.isBlank()) {
+        when {
             // A blank choice follows the device, whose language may have just changed.
-            Localization.apply("", newConfig.locales[0].toLanguageTag())
-            return
+            lang.isBlank() -> followDeviceLanguage()
+            // From Android 13, the system applies the per-app language itself.
+            systemLanguage != null -> Unit
+            // Below Android 13, reapply the chosen locale, which the new configuration replaced.
+            else -> {
+                val locale = Locale.Builder().setLanguage(lang).build()
+                Locale.setDefault(locale)
+                val config = resources.configuration
+                config.setLocale(locale)
+                @Suppress("DEPRECATION")
+                resources.updateConfiguration(config, resources.displayMetrics)
+            }
         }
-        if (systemLanguage != null) return
-        // Below Android 13, reapply the chosen locale, which the new configuration replaced.
-        val locale = Locale.Builder().setLanguage(lang).build()
-        Locale.setDefault(locale)
-        val config = resources.configuration
-        config.setLocale(locale)
-        @Suppress("DEPRECATION")
-        resources.updateConfiguration(config, resources.displayMetrics)
+    }
+
+    /** Shows the app in the device's language. The system resources always carry the device's own locale. */
+    private fun followDeviceLanguage() {
+        val device = Resources.getSystem().configuration.locales[0]
+        Locale.setDefault(device)
+        Localization.apply("", device.toLanguageTag())
     }
 
     /** Registers the picture-in-picture receiver and reapplies the subtitle size to ExoPlayer. */
