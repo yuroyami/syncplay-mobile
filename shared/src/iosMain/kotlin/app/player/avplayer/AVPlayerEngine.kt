@@ -25,6 +25,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.DrawableResource
 import platform.AVFoundation.AVAsset
+import platform.AVFoundation.AVAudioTimePitchAlgorithmTimeDomain
+import platform.AVFoundation.audioTimePitchAlgorithm
 import platform.AVFoundation.AVLayerVideoGravityResize
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
@@ -432,7 +434,7 @@ object AVPlayerEngine: PlayerEngine {
             // PlayerImpl holds the file's security scope for the whole playback.
             val nsUrl = location.file.nsUrl
             val asset = AVAsset.assetWithURL(nsUrl)
-            avMedia = AVPlayerItem(asset)
+            avMedia = AVPlayerItem(asset).also(::allowAnyRate)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
             attachTimeControlObserver()
             attachEndOfItemObserver()
@@ -442,10 +444,19 @@ object AVPlayerEngine: PlayerEngine {
             detachTimeControlObserver()
             val nsUrl = NSURL.URLWithString(location.url)
                 ?: throw IllegalArgumentException("Not a URL AVPlayer can open: ${location.url}")
-            avMedia = AVPlayerItem(uRL = nsUrl)
+            avMedia = AVPlayerItem(uRL = nsUrl).also(::allowAnyRate)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
             attachTimeControlObserver()
             attachEndOfItemObserver()
+        }
+
+        /**
+         * Lets the item play at any rate. iOS picks a low-quality pitch algorithm by default, and
+         * that one snaps the rate to a few fixed values, so the room's speed corrections (0.95,
+         * and the half-percent nudge) would not take effect.
+         */
+        private fun allowAnyRate(item: AVPlayerItem) {
+            item.audioTimePitchAlgorithm = AVAudioTimePitchAlgorithmTimeDomain
         }
 
         /* No onClosing override. The readiness wait in parseMedia checks isClosing on every turn,

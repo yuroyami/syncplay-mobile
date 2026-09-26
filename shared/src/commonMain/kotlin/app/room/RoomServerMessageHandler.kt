@@ -113,7 +113,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         /* The decision itself is a pure function ([decideSync] in `SyncDecision.kt`). Everything
          * it needs is gathered here, and everything it decides is applied below, in order.
          *
-         * Read, decide and write back are one step under the lock. The sync state is eight fields
+         * Read, decide and write back are one step under the lock. The sync state is ten fields
          * written back as a whole, so a reconnect or a file load between the read and the write
          * would be erased. Nothing in here suspends. */
         var localSeek: LocalSeek? = null
@@ -227,8 +227,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             if (viewmodel.media !== media) return@launch
             // A local command can arrive after the decision but before this Main task, and its
             // seek or pause must win. Speed actions still apply: the decision already changed its
-            // speedChanged flag, so skipping only the player call could leave the rate at 0.95.
-            val changesTransport = action !is SyncAction.SlowDown && action != SyncAction.RestoreSpeed
+            // speedChanged flag or nudge level, so skipping only the player call could leave the
+            // rate at 0.95 or one nudge off.
+            val changesTransport = action !is SyncAction.SlowDown && action != SyncAction.RestoreSpeed && action !is SyncAction.Nudge
             if (changesTransport && !protocol.isLocalStateRevisionCurrent(revision)) return@launch
             when (action) {
                 is SyncAction.FirstSync -> {
@@ -253,6 +254,11 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 SyncAction.RestoreSpeed -> {
                     viewmodel.player.setSpeed(1.0)
                     viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownReverted }
+                }
+                // No notice: the nudge is too small for anyone to notice. The log line is for testers.
+                is SyncAction.Nudge -> {
+                    loggy("Sync: speed nudged to ${action.rate}")
+                    viewmodel.player.setSpeed(action.rate)
                 }
             }
         }

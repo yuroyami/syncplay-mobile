@@ -27,6 +27,10 @@ data class SyncState(
     val lastGlobalUpdate: Instant? = null,
     val behindFirstDetected: Instant? = null,
     val speedChanged: Boolean = false,
+    /** The rate controller's level: 0 is normal speed, -1 a nudge slower, 1 a nudge faster. */
+    val nudgeLevel: Int = 0,
+    /** The rate controller's filtered drift, in seconds. Null until the next steady message. */
+    val smoothedDiff: Double? = null,
 )
 
 /** The four sync preferences, read once so the decision does not touch storage. */
@@ -77,6 +81,9 @@ sealed interface SyncAction {
     data class SomeoneFastForwarded(val by: String, val toSeconds: Double) : SyncAction
     data class SlowDown(val by: String) : SyncAction
     data object RestoreSpeed : SyncAction
+
+    /** The rate controller sets the speed to [rate]. Silent: nobody can hear or see it. */
+    data class Nudge(val rate: Double) : SyncAction
     data class SomeonePlayed(val by: String) : SyncAction
     data class SomeonePaused(val by: String) : SyncAction
 }
@@ -93,6 +100,16 @@ const val FASTFORWARD_RESET_THRESHOLD = 3.0
 const val SLOWDOWN_RATE = 0.95
 const val SLOWDOWN_THRESHOLD = 1.5
 const val SLOWDOWN_RESET_THRESHOLD = 0.1
+
+// The rate controller under the ladder. It has no counterpart in the reference client.
+/** How far a nudge moves the speed from normal: half a percent, which nobody hears or sees. */
+const val NUDGE_RATE = 0.005
+/** The filtered drift, in seconds, at which a nudge starts. */
+const val NUDGE_START = 0.15
+/** The filtered drift, in seconds, under which a nudge stops. */
+const val NUDGE_STOP = 0.03
+/** How much of each new drift reading the filter takes in. */
+const val NUDGE_SMOOTHING = 0.3
 
 /**
  * The inbound length limit on a name, shared with the message handler. Cutting at the
@@ -221,5 +238,47 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
         }
     }
 
+    // The rate controller works only on a message that nothing else acted on.
+    val steady = actions.isEmpty() && ctx.hasMedia && !ctx.isInBackground && !ctx.seekPending && !paused &&
+        doSeek != true && ctx.prefs.slowdown && ctx.supportsSpeedAdjustment && !next.speedChanged
+    val canCatchUp = ctx.prefs.fastForward && (ctx.followerInControlledRoom || ctx.prefs.dontSlowWithMe)
+    next = nudgeRate(next, actions, diff, steady, canCatchUp)
+
     return SyncOutcome(next, actions)
+}
+
+/**
+ * The rate controller under the ladder. It filters the drift, so network jitter alone never moves
+ * the rate, and it works inside the band that the ladder leaves alone. It sets one level of speed,
+ * [NUDGE_RATE] from normal, and it adds an action only when the level changes, so an engine sees
+ * few speed changes. It speeds up only a client that may catch up on its own ([canCatchUp]): in
+ * any other room, the room waits for its slowest member.
+ *
+ * On a message that is not [steady], it starts over at normal speed. A ladder speed change sets
+ * the speed itself; anything else (a seek, a pause, the first sync) leaves the nudge to end here.
+ */
+private fun nudgeRate(
+    state: SyncState,
+    actions: MutableList<SyncAction>,
+    diff: Double,
+    steady: Boolean,
+    canCatchUp: Boolean,
+): SyncState {
+    if (!steady) {
+        val ladderSetsSpeed = actions.any { it is SyncAction.SlowDown || it == SyncAction.RestoreSpeed }
+        if (state.nudgeLevel != 0 && !ladderSetsSpeed) actions += SyncAction.Nudge(1.0)
+        return state.copy(nudgeLevel = 0, smoothedDiff = null)
+    }
+    val smoothed = state.smoothedDiff?.let { it + NUDGE_SMOOTHING * (diff - it) } ?: diff
+    val level = when (state.nudgeLevel) {
+        0 -> when {
+            smoothed > NUDGE_START -> -1
+            smoothed < -NUDGE_START && canCatchUp -> 1
+            else -> 0
+        }
+        -1 -> if (smoothed < NUDGE_STOP) 0 else -1
+        else -> if (smoothed > -NUDGE_STOP || !canCatchUp) 0 else 1
+    }
+    if (level != state.nudgeLevel) actions += SyncAction.Nudge(1.0 + level * NUDGE_RATE)
+    return state.copy(nudgeLevel = level, smoothedDiff = smoothed)
 }

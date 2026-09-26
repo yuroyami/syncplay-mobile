@@ -132,6 +132,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     /** Tracks whether playback speed has been adjusted for desync correction. */
     var speedChanged = false
 
+    /** The rate controller's level and filtered drift, carried from one `State` to the next. */
+    private var nudgeLevel = 0
+    private var smoothedDiff: Double? = null
+
     /**
      * When this client first fell behind the room. Null when it is not behind. After a
      * fast-forward it is set in the future, as a cooldown.
@@ -153,6 +157,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             lastGlobalUpdate = lastGlobalUpdate,
             behindFirstDetected = behindFirstDetected,
             speedChanged = speedChanged,
+            nudgeLevel = nudgeLevel,
+            smoothedDiff = smoothedDiff,
         )
         set(value) {
             serverIgnFly = value.serverIgnFly
@@ -163,12 +169,14 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             lastGlobalUpdate = value.lastGlobalUpdate
             behindFirstDetected = value.behindFirstDetected
             speedChanged = value.speedChanged
+            nudgeLevel = value.nudgeLevel
+            smoothedDiff = value.smoothedDiff
         }
 
     /**
      * Held across a read-modify-write of the sync anchor.
      *
-     * The anchor is eight fields projected into one [SyncState] and written back whole, so a
+     * The anchor is ten fields projected into one [SyncState] and written back whole, so a
      * concurrent write to any one of them between the read and the write is lost. The window is
      * short, but the writers are a reconnect, a file load and the outbound State builder, all of
      * which run on their own threads. Nothing inside the lock suspends: the decision is a pure
@@ -504,6 +512,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         serverIgnFly = 0
         clientIgnFly = 0
         speedChanged = false
+        nudgeLevel = 0
+        smoothedDiff = null
         behindFirstDetected = null
         isRoomChanging = false
         awaitingRoomResyncDeadline = null
