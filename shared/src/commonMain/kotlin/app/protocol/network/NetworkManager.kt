@@ -543,6 +543,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             // real chat line off the front of a full queue.
             this !is WireMessage.ListRequest
 
+    /** How long one socket write may take before it counts as timed out. A test transport shortens it. */
+    protected open val writeTimeout: Duration get() = WRITE_TIMEOUT
+
     /** Write timeouts since the last write that landed. Reset by a success and by a new socket. */
     private val consecutiveWriteTimeouts = atomic(0)
 
@@ -555,15 +558,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      *
      * Two of the three outcomes end the attempt rather than repeat it. A retry only makes sense
      * when the transport told us the bytes did not go out. A timeout cannot say that, so the line
-     * is not written again: it is queued (if queueable), and only [WRITE_TIMEOUTS_BEFORE_LOSS]
-     * timeouts in a row count as a lost socket.
+     * is neither written again nor queued for the next reconnect: it reaches the server at most
+     * once. Only [WRITE_TIMEOUTS_BEFORE_LOSS] timeouts in a row count as a lost socket.
      */
     private suspend fun transmitPacket(json: String, queueable: Boolean) {
         val finalOut = json + "\r\n"
         var attempt = 0
         while (true) {
             try {
-                withTimeout(WRITE_TIMEOUT) {
+                withTimeout(writeTimeout) {
                     if (KiteBuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
@@ -574,18 +577,18 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 if (queueable) viewmodel.session.queueOutbound(json)
                 return
             } catch (e: TimeoutCancellationException) {
-                /* Not retried, deliberately. A timeout says the wait was abandoned, not that the
-                 * bytes were never sent: the write is already queued in the transport and may well
-                 * land. Sending the same line again duplicates a chat message or a playlist edit
-                 * on the server. On the Ktor path, a half-written line followed by a whole one
-                 * arrives as a single frame, which nothing can parse.
+                /* Not retried and not queued for the next reconnect, deliberately. A timeout says the
+                 * wait was abandoned, not that the bytes were never sent: the write is already
+                 * queued in the transport and may well land. Sending the same line again, now or
+                 * after a reconnect, duplicates a chat message or a playlist edit on the server. On
+                 * the Ktor path, a half-written line followed by a whole one arrives as a single
+                 * frame, which nothing can parse.
                  *
                  * It is not treated as a dead socket either. One stall is a congested link or a
                  * radio waking up, and the channel watchdog already declares a truly silent
                  * server dead after fifteen seconds. Only a run of timeouts says the socket is
                  * gone. */
-                loggy("Write timed out after ${WRITE_TIMEOUT.inWholeSeconds}s: ${e.message}")
-                if (queueable) viewmodel.session.queueOutbound(json)
+                loggy("Write timed out after ${writeTimeout.inWholeMilliseconds}ms: ${e.message}")
                 if (consecutiveWriteTimeouts.incrementAndGet() >= WRITE_TIMEOUTS_BEFORE_LOSS) {
                     loggy("$WRITE_TIMEOUTS_BEFORE_LOSS writes in a row timed out; treating the socket as gone.")
                     consecutiveWriteTimeouts.value = 0

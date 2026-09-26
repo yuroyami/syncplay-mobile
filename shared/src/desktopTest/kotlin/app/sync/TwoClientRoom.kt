@@ -193,6 +193,11 @@ internal open class LoopbackTransport(viewmodel: RoomViewmodel, private val serv
     /** Hands a line from the server to the client. A test link can hold it back first. */
     protected open fun deliver(line: String) = handlePacket(line)
 
+    /** Closes the current link from the server's side, as a dropped network does. */
+    fun sever() {
+        connection?.drop()
+    }
+
     /** The server dropped this link, the way a socket closes from the other side. */
     private fun lost(link: ClientConnection) {
         if (connection !== link) return
