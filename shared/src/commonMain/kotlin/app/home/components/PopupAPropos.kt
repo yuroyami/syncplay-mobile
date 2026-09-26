@@ -45,6 +45,12 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import app.uicomponents.controls.ListRow
+import syncplaymobile.shared.generated.resources.Res
+import kotlinx.coroutines.withContext
+import app.utils.ioDispatcher
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.getValue
 
 object PopupAPropos {
 
@@ -197,6 +203,16 @@ object PopupAPropos {
     private fun LicencesModal(open: MutableState<Boolean>) {
         val p = palette
         val uriHandler = LocalUriHandler.current
+        // Read once, when the modal first opens: the list is a resource file of about 300 KB.
+        val rows by produceState<List<LicenceRow>?>(initialValue = null, open.value) {
+            if (open.value && value == null) {
+                value = withContext(ioDispatcher) {
+                    val json = Res.readBytes("files/aboutlibraries.json").decodeToString()
+                    licenceRows(json, platform, KiteBuildConfig.EXOPLAYER_ONLY)
+                }
+            }
+        }
+        var expanded by remember { mutableStateOf<LicenceRow?>(null) }
         Modal(
             open = open.value,
             onDismiss = { open.value = false },
@@ -209,10 +225,37 @@ object PopupAPropos {
                 color = p.inkDim,
                 modifier = Modifier.fillMaxWidth().padding(bottom = Space.gap),
             )
-            attributions.forEach { item ->
-                ListRow(onClick = { uriHandler.openUri(item.url) }, horizontalPadding = Space.gapTight) {
-                    Text(item.name, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
-                    Text(item.licence, style = Type.value, color = p.inkDim, maxLines = 1)
+            rows.orEmpty().forEach { row ->
+                ListRow(
+                    onClick = {
+                        // A service has no licence text, only its own terms on its site.
+                        if (row.text == null) row.url?.let(uriHandler::openUri)
+                        else expanded = if (expanded == row) null else row
+                    },
+                    horizontalPadding = Space.gapTight,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(row.name, style = Type.label, color = p.ink)
+                        row.version?.let { Text(it, style = Type.note, color = p.inkDim, maxLines = 1) }
+                    }
+                    Text(
+                        row.licence,
+                        style = Type.value,
+                        color = p.inkDim,
+                        maxLines = 2,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.weight(0.8f),
+                    )
+                }
+                if (expanded == row) {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = Space.gapTight, vertical = Space.gapTight)) {
+                        row.url?.let { url ->
+                            ListRow(onClick = { uriHandler.openUri(url) }, horizontalPadding = 0.dp) {
+                                Text(url, style = Type.note, color = p.accent, maxLines = 1)
+                            }
+                        }
+                        Text(row.text.orEmpty(), style = Type.note, color = p.inkDim)
+                    }
                 }
             }
         }

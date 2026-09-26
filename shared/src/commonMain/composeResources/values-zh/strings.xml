@@ -343,7 +343,7 @@
     <string name="about_blurb">和朋友一起同步观看任何内容，无论他们身在何处。Synkplay 让所有人的播放精确对齐：你这边暂停，那边也暂停。</string>
     <string name="about_independent">Syncplay 协议的独立客户端，感谢让它保持开放的维护者们。</string>
     <string name="about_licences_button">开源许可</string>
-    <string name="about_licences_note">本应用是 AGPL 3.0 下的自由软件。构成它的各个部分各有自己的许可。</string>
+    <string name="about_licences_note">本应用是 AGPL 3.0 下的自由软件。构成它的各个部分各有自己的许可。点按某一项即可阅读其许可。</string>
     <string name="about_licences_title">技术构成</string>
     <string name="about_privacy_button">隐私政策</string>
     <string name="about_report_button">报告问题</string>

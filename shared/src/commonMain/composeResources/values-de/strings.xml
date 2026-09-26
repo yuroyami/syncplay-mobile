@@ -351,7 +351,7 @@
     <string name="about_blurb">Schaut alles synchron mit Freunden, egal wo sie sind. Synkplay hält die Wiedergabe bei allen auf die Sekunde gleich: Pause hier ist Pause dort.</string>
     <string name="about_independent">Ein unabhängiger Client für das Syncplay-Protokoll, mit Dank an die Maintainer, die es offen gemacht haben.</string>
     <string name="about_licences_button">Open-Source-Lizenzen</string>
-    <string name="about_licences_note">Diese App ist freie Software unter der AGPL 3.0. Die Bausteine darin haben ihre eigenen Lizenzen.</string>
+    <string name="about_licences_note">Diese App ist freie Software unter der AGPL 3.0. Die Bausteine darin haben ihre eigenen Lizenzen. Tippe auf einen Eintrag, um seine Lizenz zu lesen.</string>
     <string name="about_licences_title">Gebaut mit</string>
     <string name="about_privacy_button">Datenschutz</string>
     <string name="about_report_button">Fehler melden</string>

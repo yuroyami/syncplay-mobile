@@ -370,7 +370,7 @@
     <string name="about_blurb">Regardez ce que vous voulez en synchro avec vos amis, où qu'ils soient. Synkplay garde la lecture de chacun alignée à la seconde : une pause ici est une pause là-bas.</string>
     <string name="about_independent">Un client indépendant du protocole Syncplay, avec des remerciements aux mainteneurs qui l'ont ouvert.</string>
     <string name="about_licences_button">Licences open source</string>
-    <string name="about_licences_note">Cette application est un logiciel libre sous AGPL 3.0. Les briques qui la composent ont leurs propres licences.</string>
+    <string name="about_licences_note">Cette application est un logiciel libre sous AGPL 3.0. Les briques qui la composent ont leurs propres licences. Touchez une entrée pour lire sa licence.</string>
     <string name="about_licences_title">Construit avec</string>
     <string name="about_privacy_button">Confidentialité</string>
     <string name="about_report_button">Signaler un bug</string>

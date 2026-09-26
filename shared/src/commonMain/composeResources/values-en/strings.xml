@@ -743,7 +743,7 @@
     <string name="room_brightness_label">Brightness</string>
     <string name="about_licences_button">Open source licences</string>
     <string name="about_licences_title">Built with</string>
-    <string name="about_licences_note">This app is free software under the AGPL 3.0. The pieces it is built from carry their own licences.</string>
+    <string name="about_licences_note">This app is free software under the AGPL 3.0. The pieces it is built from carry their own licences. Tap an entry to read its licence.</string>
     <string name="about_update_button">Check for updates</string>
     <string name="about_update_checking">Checking…</string>
     <string name="about_update_current">You are on the newest release</string>

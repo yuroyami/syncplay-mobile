@@ -58,5 +58,5 @@ compose.desktop {
 }
 
 /* The app image needs no separate native player files. The desktop build runs one engine,
- * KitePlayer, and its decoder ships inside the KiteCodec jar, so there is no appResourcesRootDir
+ * KitePlayer, and its decoder ships inside the KiteFFmpeg jar, so there is no appResourcesRootDir
  * to set. */

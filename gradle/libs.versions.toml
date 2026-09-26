@@ -57,6 +57,7 @@ newpipeExtractor = "v0.26.5"
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
 kiteplayer = "0.0.27"
+aboutlibraries = "15.2.0"
 # libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
 # from Central. settings.gradle.kts limits that repository to the libmpvkt modules.
 libmpvkt = "0.2.0"
@@ -142,6 +143,7 @@ netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
 netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }
 libmpvkt = { module = "io.github.yuroyami:libmpvkt", version.ref = "libmpvkt" }
 libmpvkt-view = { module = "io.github.yuroyami:libmpvkt-view", version.ref = "libmpvkt" }
@@ -188,3 +190,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }

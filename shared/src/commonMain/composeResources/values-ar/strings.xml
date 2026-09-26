@@ -353,7 +353,7 @@
     <string name="about_blurb">شاهد أي شيء متزامنًا مع أصدقائك أينما كانوا. يبقي Synkplay تشغيل الجميع متطابقًا إلى اللحظة، فإيقاف هنا هو إيقاف هناك.</string>
     <string name="about_independent">عميل مستقل لبروتوكول Syncplay، مع الشكر للقائمين عليه لأنهم جعلوه مفتوحًا.</string>
     <string name="about_licences_button">تراخيص المصادر المفتوحة</string>
-    <string name="about_licences_note">هذا التطبيق برمجية حرة تحت رخصة AGPL 3.0. والأجزاء المبني منها تحمل تراخيصها الخاصة.</string>
+    <string name="about_licences_note">هذا التطبيق برمجية حرة تحت رخصة AGPL 3.0. والأجزاء المبني منها تحمل تراخيصها الخاصة. اضغط على عنصر لقراءة رخصته.</string>
     <string name="about_licences_title">مبني بـ</string>
     <string name="about_privacy_button">سياسة الخصوصية</string>
     <string name="about_report_button">أبلغ عن مشكلة</string>

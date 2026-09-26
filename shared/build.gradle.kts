@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.ktorfit)
     // Coverage comes from the desktop test run. The root build configures the report.
     alias(libs.plugins.kover)
+    alias(libs.plugins.aboutlibraries)
 }
 
 // KiteConfig exposes only the major SDK level, so set the minor level here to keep AGP on the
@@ -197,6 +198,9 @@ kotlin {
 
             /* JSON serialization for the Syncplay protocol */
             implementation(libs.kotlinx.serialization.json)
+
+            /* Reads the licence list that the AboutLibraries plugin writes (see aboutLibraries below) */
+            implementation(libs.aboutlibraries.core)
 
             /* A multiplatform version of Android's Uri class */
             implementation(libs.uriKmp)
@@ -417,3 +421,33 @@ tasks.register("propagateSSOT") {
     description = "Runs both source propagators: the launcher's brand colours and the default-strings fallback."
     dependsOn("syncTrinityColors", "syncDefaultStrings")
 }
+
+/*
+ * The licences screen in About lists every library of the running build. AboutLibraries reads the
+ * resolved dependencies and writes them, with the texts in config/aboutlibraries/licenses/, into a
+ * committed resource file before any task reads the resources. It runs offline, so the file never
+ * depends on the network and a rebuild from the same sources writes the same file.
+ */
+aboutLibraries {
+    offlineMode = true
+    collect {
+        configPath = file("config/aboutlibraries")
+        includeTargets = true
+    }
+    export {
+        outputFile = file("src/commonMain/composeResources/files/aboutlibraries.json")
+        excludeFields.addAll("developers", "funding", "organization", "description", "scm", "tag")
+        prettyPrint = true
+    }
+    library {
+        duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
+        duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
+        mergePlatformArtifacts = true
+    }
+}
+
+// Every task that reads the Compose resources runs after the licence list is written.
+tasks.matching { task ->
+    listOf("prepareComposeResourcesTaskFor", "convertXmlValueResourcesFor", "copyNonXmlValueResourcesFor", "generateResourceAccessorsFor")
+        .any { task.name.startsWith(it) }
+}.configureEach { dependsOn("exportLibraryDefinitions") }

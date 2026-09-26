@@ -226,6 +226,27 @@ To check that the Kotlin code compiles for iOS:
 This check does not compile the Swift shell or its bridges. A change to a Kotlin type that Swift
 uses also needs a full Xcode build of the workspace.
 
+### Privacy manifest
+
+`iosApp/iosApp/PrivacyInfo.xcprivacy` declares the APIs on Apple's required-reason list that the
+final app calls, and the data that the app collects. The API list comes from the built bundle,
+because dependencies call these APIs too. Read it from a simulator build:
+
+```bash
+nm -u Synkplay.app/Synkplay.debug.dylib Synkplay.app/Frameworks/*.framework/* | grep -E '_(f?stat|lstat|fstatat|f?statv?fs|getattrlist|mach_absolute_time)$'
+```
+
+| Category | Who calls it | Reason |
+|---|---|---|
+| File timestamp | the app, the Kotlin framework, VLCKit (`stat`, `fstat`, `lstat`, `fstatat`) | `C617.1` files in the app container, `3B52.1` files that the user picked |
+| System boot time | the Kotlin framework (`mach_absolute_time`) | `35F9.1` time between events in the app |
+| Disk space | VLCKit (`fstatfs`) | `E174.1` space checks before a file is written |
+| User defaults | VLCKit (`NSUserDefaults`) | `CA92.1` data of the app itself |
+
+SwiftNIO ships its own manifests. The collected data matches the App Store privacy answers, see
+[`STORE_DECLARATIONS.md`](../STORE_DECLARATIONS.md). Check the table again after you add or
+upgrade a dependency.
+
 ## Desktop
 
 Run the desktop app:
@@ -316,20 +337,24 @@ the engine once. The room settings configure that engine, and they do not switch
 | Web, browser video | Yes (the only engine) | Nothing plays yet. See [Web](#web). | No | No |
 
 On Android, picture-in-picture belongs to the app window, so it works with every engine. On
-Android, KitePlayer needs a 64-bit device, because its decoder library exists only for arm64-v8a
-and x86_64.
+Android, KitePlayer runs on arm64-v8a, armeabi-v7a and x86_64 devices. It has no decoder for
+32-bit x86, so it is not offered there.
 
 What plays depends on the file and on the device. When you change an engine adapter, check its
 lifecycle, its subtitle selection and its playback on a real device.
 
-The app is under the [AGPL-3.0 licence](../LICENSE). Its components keep their own licences. The
-[in-app attribution list](../shared/src/commonMain/kotlin/app/home/components/Attributions.kt)
-lists Media3 as Apache 2.0, mpv as GPL 2.0 or later, VLCKit and libVLC as LGPL 2.1 or later, and
-KitePlayer and KiteFFmpeg as Apache 2.0. Each bundled FFmpeg build has its own licence:
+The app is under the [AGPL-3.0 licence](../LICENSE). Its components keep their own licences.
+The licences screen in About lists them for the running build, each with its version and its full
+licence text:
 
-- the FFmpeg in the ExoPlayer audio extension: see [`shared/libs/README.md`](../shared/libs/README.md)
-- the FFmpeg in mpv: see the [libmpvKt releases](https://github.com/yuroyami/libmpvKt/releases)
-- the FFmpeg in KitePlayer: see [KiteFFmpeg](https://github.com/yuroyami/KiteFFmpeg)
+- The Gradle dependencies come from the AboutLibraries plugin. It writes
+  `shared/src/commonMain/composeResources/files/aboutlibraries.json` before the resources are read,
+  offline, with the texts in `shared/config/aboutlibraries/licenses/`. A new dependency appears on
+  the screen with no edit. Commit the rewritten file with the dependency change.
+- Native code inside a library, the iOS packages, the original Syncplay and the two services are
+  hand-written in
+  [`Attributions.kt`](../shared/src/commonMain/kotlin/app/home/components/Attributions.kt). Each
+  bundled FFmpeg build has its own licence, see [`shared/libs/README.md`](../shared/libs/README.md).
 
 Do not infer the licence of a bundled decoder from the licence of its Kotlin wrapper.
 

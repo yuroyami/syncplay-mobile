@@ -97,7 +97,18 @@ Check the file:
 shasum -a 256 shared/libs/libffmpeg_media3exo_1.8.0.aar
 ```
 
-**Other FFmpeg builds.** The full Android APK carries three separate FFmpeg builds: this one, the
-one in [libmpvKt](https://github.com/yuroyami/libmpvKt) for mpv, and the one in
-[KiteFFmpeg](https://github.com/yuroyami/KiteFFmpeg) for KitePlayer. The exoOnly APK carries only
-this one. Each build has its own licence. See the project page of each build for its licence.
+**Other FFmpeg builds.** The app ships up to three FFmpeg builds, and each keeps its own licence:
+
+| FFmpeg build | Which builds carry it | Licence of that FFmpeg | Source code |
+|---|---|---|---|
+| This extension | Both Android APKs | LGPL 2.1 or later | The FFmpeg 6.0 release, unmodified |
+| [libmpvKt](https://github.com/yuroyami/libmpvKt), for mpv (the `libmpvkt` version in the catalog) | The full Android APK | GPL 3.0 or later: libmpvKt configures FFmpeg with `--enable-gpl --enable-version3` | Attached to each libmpvKt release |
+| [KiteFFmpeg](https://github.com/yuroyami/KiteFFmpeg), for KitePlayer (the version that the `kiteplayer` version pulls in) | The full Android APK, iOS and desktop | LGPL 2.1 or later | Attached to each KiteFFmpeg release |
+
+So the FFmpeg code in the full APK is under the GPL 3.0 or later, and the FFmpeg code in the
+exoOnly APK is under the LGPL 2.1 or later. iOS also carries the FFmpeg inside VLCKit. Whether
+that build enables GPL parts is not established.
+
+The licences screen in About shows the entries of the running build. The hand-written part of that
+list, which covers native code such as these builds, is in
+`shared/src/commonMain/kotlin/app/home/components/Attributions.kt`.

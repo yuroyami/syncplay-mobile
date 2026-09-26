@@ -364,7 +364,7 @@
     <string name="about_blurb">Oglądaj cokolwiek zsynchronizowany ze znajomymi, gdziekolwiek są. Synkplay trzyma odtwarzanie u wszystkich co do sekundy: pauza tutaj to pauza tam.</string>
     <string name="about_independent">Niezależny klient protokołu Syncplay, z podziękowaniami dla opiekunów, którzy go otworzyli.</string>
     <string name="about_licences_button">Licencje open source</string>
-    <string name="about_licences_note">Ta aplikacja to wolne oprogramowanie na licencji AGPL 3.0. Elementy, z których powstała, mają własne licencje.</string>
+    <string name="about_licences_note">Ta aplikacja to wolne oprogramowanie na licencji AGPL 3.0. Elementy, z których powstała, mają własne licencje. Dotknij pozycji, aby przeczytać jej licencję.</string>
     <string name="about_licences_title">Zbudowane z</string>
     <string name="about_privacy_button">Polityka prywatności</string>
     <string name="about_report_button">Zgłoś błąd</string>

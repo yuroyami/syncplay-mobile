@@ -355,7 +355,7 @@
     <string name="about_blurb">Смотрите что угодно вместе с друзьями, где бы они ни были. Synkplay держит воспроизведение у всех секунда в секунду: пауза здесь это пауза там.</string>
     <string name="about_independent">Независимый клиент протокола Syncplay. Спасибо тем, кто сделал его открытым.</string>
     <string name="about_licences_button">Лицензии открытого кода</string>
-    <string name="about_licences_note">Это приложение свободное, под лицензией AGPL 3.0. У его составных частей свои лицензии.</string>
+    <string name="about_licences_note">Это приложение свободное, под лицензией AGPL 3.0. У его составных частей свои лицензии. Нажмите на пункт, чтобы прочитать его лицензию.</string>
     <string name="about_licences_title">Собрано из</string>
     <string name="about_privacy_button">Политика конфиденциальности</string>
     <string name="about_report_button">Сообщить об ошибке</string>

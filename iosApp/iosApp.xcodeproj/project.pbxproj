@@ -31,6 +31,7 @@
 		04EE38EC2BC00C5100E830A3 /* NIOExtras in Frameworks */ = {isa = PBXBuildFile; productRef = 04EE38EB2BC00C5100E830A3 /* NIOExtras */; };
 		04FEEA3A2BBD821400E9AC8F /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 04FEEA392BBD821400E9AC8F /* NIOTransportServices */; };
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
+		00AB36FFA94C13CE2D01DAC6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		4FD3AE45A5F9405184490A5A /* YouTubeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58170E465ECA4DCB82958108 /* YouTubeKit */; };
@@ -65,6 +66,7 @@
 		68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouTubeKitBridge.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Synkplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Synkplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D3A569DEDB2095539D3C35C7 /* Pods-iosApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosApp.debug.xcconfig"; path = "Target Support Files/Pods-iosApp/Pods-iosApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iosApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -159,6 +161,7 @@
 				68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF8C242A565B00829871 /* Info.plist */,
+				36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */,
 				0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */,
@@ -268,6 +271,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00AB36FFA94C13CE2D01DAC6 /* PrivacyInfo.xcprivacy in Resources */,
 				04E674932AB8AF3D00404C63 /* Launch Screen.storyboard in Resources */,
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
