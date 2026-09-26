@@ -16,13 +16,15 @@ import java.io.File
  * directory was remembered, so this code takes no per-file permissions (it cannot for tree
  * children).
  */
-actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
+actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>? {
     val out = LinkedHashMap<String, ByteArray>()
     val identifier = this.path
 
     if (identifier.startsWith("content://", ignoreCase = true)) {
         val context = contextObtainer.invoke()
-        val root = DocumentFile.fromTreeUri(context, identifier.toUri()) ?: return out
+        val root = DocumentFile.fromTreeUri(context, identifier.toUri()) ?: return null
+        // canRead is false once the tree permission is revoked, and isDirectory once the folder is gone.
+        if (!root.canRead() || !root.isDirectory) return null
 
         fun walk(doc: DocumentFile) {
             for (child in doc.listFiles()) {
@@ -39,7 +41,7 @@ actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
         walk(root)
     } else {
         val root = File(identifier)
-        if (!root.isDirectory) return out
+        if (!root.isDirectory || !root.canRead()) return null
 
         fun walk(dir: File) {
             val files = dir.listFiles() ?: return

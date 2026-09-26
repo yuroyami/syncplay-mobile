@@ -86,6 +86,9 @@
     <string name="room_shared_playlist">Общий список воспроизведения</string>
     <string name="room_shared_playlist_no_directories">Вы не указали папки воспроизведения. Добавьте папки с медиа в настройках.</string>
     <string name="room_shared_playlist_not_found">Не удалось найти файл %1$s в папках воспроизведения!</string>
+    <string name="room_shared_playlist_missing">Нет на этом устройстве</string>
+    <string name="room_shared_playlist_missing_title">Файл не найден</string>
+    <string name="room_shared_playlist_find_file">Найти файл</string>
     <string name="room_shared_playlist_button_add_file">Добавить файл(ы) в конец списка воспроизведения</string>
     <string name="room_shared_playlist_button_add_folder">Добавить папку в список воспроизведения (и в папки с медиа)</string>
     <string name="room_shared_playlist_button_add_url">Добавить URL(ы) в конец списка воспроизведения</string>
@@ -391,6 +394,15 @@
     <string name="media_folders">Папки с медиа</string>
     <string name="media_folders_brief">%1$s ищет в этих папках файл, названный в общем плейлисте. Небольшие папки быстрее.</string>
     <string name="media_folders_empty">Папок пока нет.</string>
+    <string name="media_folder_counting">Подсчёт файлов…</string>
+    <string name="media_folder_lost">Не удаётся открыть эту папку. Её переместили, или у приложения больше нет к ней доступа.</string>
+    <string name="media_folder_grant">Дать доступ</string>
+    <string name="media_folder_files_zero">%1$d медиафайлов</string>
+    <string name="media_folder_files_one">%1$d медиафайл</string>
+    <string name="media_folder_files_two">%1$d медиафайла</string>
+    <string name="media_folder_files_few">%1$d медиафайла</string>
+    <string name="media_folder_files_many">%1$d медиафайлов</string>
+    <string name="media_folder_files_other">%1$d медиафайлов</string>
     <string name="modal_dismiss">Закрыть</string>
     <string name="engine_desc_exoplayer">Плеер Media3 от Google, часть Android. Видео декодирует железо устройства. В комплекте маленький FFmpeg только для звука, чтобы играть любые аудиофайлы.</string>
     <string name="engine_desc_mpv">libmpv (движок настольного mpv) на полном движке FFmpeg с dav1d и libass. Использует аппаратный декодер устройства, когда может, и программный, когда должен. Выбор для аниме, MKV-рипов и, скорее всего, всего остального.</string>
@@ -584,6 +596,7 @@
     <string name="server_host_ios_paused">Раздача приостанавливается, пока приложение в фоне.</string>
     <string name="server_host_log_errors_only">Только ошибки</string>
     <string name="server_host_on_network">В этой сети</string>
+    <string name="server_host_no_address">Сетевой адрес не найден. Подключитесь к Wi-Fi или другой сети и снова запустите сервер.</string>
     <string name="server_host_over_internet">Через интернет</string>
     <string name="server_host_password_detail">Хранится как введено, как и пароль для входа.</string>
     <string name="server_host_port_taken">Порт %1$d занят</string>

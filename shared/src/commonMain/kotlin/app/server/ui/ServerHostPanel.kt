@@ -135,6 +135,10 @@ private fun AddressBlock(localIp: String?, publicIp: String?, publicLoading: Boo
     val p = palette
     Column(Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.gap)) {
         if (localIp != null) AddressRow("$localIp:$port", strings.serverHostOnNetwork)
+        // With no address at all, the host still needs to know why there is nothing to share.
+        if (localIp == null && publicIp == null && !publicLoading) {
+            Text(strings.serverHostNoAddress, style = Type.note, color = p.warn)
+        }
         when {
             publicLoading -> {
                 Text(strings.serverHostOverInternet, style = Type.note, color = p.inkDim, modifier = Modifier.padding(top = Space.gap))

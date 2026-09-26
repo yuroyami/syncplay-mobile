@@ -26,12 +26,16 @@ import platform.Foundation.NSURLNameKey
  * without the directory scope, so the player can keep a file open for a whole playback.
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
+actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>? {
     val out = LinkedHashMap<String, ByteArray>()
     val dirUrl = this.nsUrl
 
     val started = dirUrl.startAccessingSecurityScopedResource()
     try {
+        // A folder inside the app's own container needs no scope, so a failed start alone
+        // proves nothing. A folder that cannot be read means it is gone or access is lost.
+        val path = dirUrl.path ?: return null
+        if (!NSFileManager.defaultManager.isReadableFileAtPath(path)) return null
         val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
             url = dirUrl,
             includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
@@ -39,9 +43,9 @@ actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
         ) { erroringUrl, error ->
             loggy("indexMediaTree: skipping ${erroringUrl?.path} — ${error?.localizedDescription}")
             true // keep enumerating past unreadable entries
-        }
+        } ?: return null
 
-        var obj = enumerator?.nextObject() as? NSURL
+        var obj = enumerator.nextObject() as? NSURL
         while (obj != null) {
             val current = obj
             if (!current.isDirectoryResource()) {
@@ -54,7 +58,7 @@ actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
                         .onFailure { loggy("indexMediaTree: bookmark failed for $childName — ${it.message}") }
                 }
             }
-            obj = enumerator?.nextObject() as? NSURL
+            obj = enumerator.nextObject() as? NSURL
         }
     } finally {
         if (started) dirUrl.stopAccessingSecurityScopedResource()

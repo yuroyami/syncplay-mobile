@@ -95,6 +95,9 @@
     <string name="room_shared_playlist">Liste de lecture partagée</string>
     <string name="room_shared_playlist_no_directories">Aucun répertoire multimédia n'a été défini. Ajoutez vos dossiers multimédias dans les Réglages.</string>
     <string name="room_shared_playlist_not_found">Impossible de trouver le fichier %1$s dans les répertoires multimédias pour le changement de liste de lecture !</string>
+    <string name="room_shared_playlist_missing">Absent de cet appareil</string>
+    <string name="room_shared_playlist_missing_title">Fichier introuvable</string>
+    <string name="room_shared_playlist_find_file">Trouver le fichier</string>
     <string name="room_shared_playlist_button_add_file">Ajouter fichier(s) en bas de la liste</string>
     <string name="room_shared_playlist_button_add_folder">Ajouter dossier à la liste (et aux répertoires média)</string>
     <string name="room_shared_playlist_button_add_url">Ajouter URL(s) en bas de la liste</string>
@@ -406,6 +409,15 @@
     <string name="media_folders">Dossiers multimédias</string>
     <string name="media_folders_brief">%1$s cherche dans ces dossiers le fichier nommé par une playlist partagée. Les petits dossiers sont plus rapides.</string>
     <string name="media_folders_empty">Aucun dossier pour l'instant.</string>
+    <string name="media_folder_counting">Comptage des fichiers…</string>
+    <string name="media_folder_lost">Impossible d'ouvrir ce dossier. Il a été déplacé, ou l'app n'y a plus accès.</string>
+    <string name="media_folder_grant">Autoriser l'accès</string>
+    <string name="media_folder_files_zero">%1$d fichier multimédia</string>
+    <string name="media_folder_files_one">%1$d fichier multimédia</string>
+    <string name="media_folder_files_two">%1$d fichiers multimédias</string>
+    <string name="media_folder_files_few">%1$d fichiers multimédias</string>
+    <string name="media_folder_files_many">%1$d fichiers multimédias</string>
+    <string name="media_folder_files_other">%1$d fichiers multimédias</string>
     <string name="modal_dismiss">Fermer</string>
     <string name="engine_desc_exoplayer">Le lecteur Media3 de Google, intégré à Android. La vidéo est décodée par le matériel de l'appareil. Livré avec un petit FFmpeg audio seulement, pour lire tous les types de fichiers audio.</string>
     <string name="engine_desc_mpv">libmpv (le moteur de mpv sur ordinateur), propulsé par le moteur FFmpeg complet avec dav1d et libass. Utilise le décodeur matériel de l'appareil quand il le peut, le logiciel sinon. Le choix pour les animés, les MKV et sans doute tout le reste.</string>
@@ -599,6 +611,7 @@
     <string name="server_host_ios_paused">L'hébergement se met en pause quand l'application est en arrière-plan.</string>
     <string name="server_host_log_errors_only">Erreurs seulement</string>
     <string name="server_host_on_network">Sur ce réseau</string>
+    <string name="server_host_no_address">Aucune adresse réseau trouvée. Connectez-vous au Wi-Fi ou à un autre réseau, puis redémarrez le serveur.</string>
     <string name="server_host_over_internet">Par internet</string>
     <string name="server_host_password_detail">Enregistré tel quel, comme le mot de passe de connexion.</string>
     <string name="server_host_port_taken">Le port %1$d est occupé</string>

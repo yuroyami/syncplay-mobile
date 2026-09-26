@@ -96,3 +96,10 @@ fun AppStrings.serverNotificationText(port: Int, clients: Int): String = plural(
     zero = serverNotificationTextZero, one = serverNotificationTextOne, two = serverNotificationTextTwo,
     few = serverNotificationTextFew, many = serverNotificationTextMany, other = serverNotificationTextOther,
 )(port, clients)
+
+/** "12 media files", on a row of the media folders list. */
+fun AppStrings.mediaFolderFiles(count: Int): String = plural(
+    count,
+    zero = mediaFolderFilesZero, one = mediaFolderFilesOne, two = mediaFolderFilesTwo,
+    few = mediaFolderFilesFew, many = mediaFolderFilesMany, other = mediaFolderFilesOther,
+)(count)

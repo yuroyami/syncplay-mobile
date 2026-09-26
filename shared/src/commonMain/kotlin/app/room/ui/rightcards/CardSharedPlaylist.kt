@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,28 +30,37 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
 import app.i18n.Localization
 import app.i18n.strings
+import app.preferences.Preferences
 import app.preferences.settings.AskModal
+import app.preferences.watchPref
+import app.room.sharedplaylist.MediaAccessRegistry
 import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
@@ -87,6 +97,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLaunche
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.delete
 import syncplaymobile.shared.generated.resources.done
@@ -144,6 +155,15 @@ object CardSharedPlaylist {
 
         val items = viewmodel.session.sharedPlaylist
         val current by remember { viewmodel.session.spIndex }
+
+        // The entries this device cannot find, checked again when the list, the media folders or
+        // the known files change. Links are never marked.
+        val entries = items.toList()
+        val folders by Preferences.MEDIA_DIRECTORIES.watchPref()
+        val filesVersion by playlist.localFilesVersion.collectAsState()
+        val missing by produceState(emptySet<String>(), entries, folders, filesVersion) {
+            value = withContext(ioDispatcher) { MediaAccessRegistry.missingFiles(entries) }
+        }
 
         fun toggle(g: PlaylistGroup) { group = if (group == g) null else g }
 
@@ -255,7 +275,12 @@ object CardSharedPlaylist {
                                 Spacer(Modifier.size(Space.glyph))
                             }
                             RowGap()
-                            Text(entry, style = Type.note, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            val absent = entry in missing
+                            MiddleCutText(entry, Type.note, if (absent) p.inkDim else p.ink, Modifier.weight(1f))
+                            if (absent) {
+                                RowGap()
+                                Icon(Icons.Filled.SearchOff, contentDescription = strings.roomSharedPlaylistMissing, tint = p.warn, modifier = Modifier.size(Space.glyph))
+                            }
                         }
                     }
                 }
@@ -291,6 +316,21 @@ object CardSharedPlaylist {
     }
 
     /** A header key. It uses the accent color while its strip is open. */
+    /** One line of [text], cut in the middle when it is too long, so an episode number and extension stay. */
+    @Composable
+    private fun MiddleCutText(text: String, style: TextStyle, color: Color, modifier: Modifier) {
+        val measurer = rememberTextMeasurer()
+        BoxWithConstraints(modifier) {
+            val width = constraints.maxWidth
+            val shown = remember(text, width, style, measurer) {
+                abbreviateRosterFileName(text) { candidate ->
+                    measurer.measure(candidate, style, softWrap = false, maxLines = 1).size.width <= width
+                }
+            }
+            Text(shown, style = style, color = color, maxLines = 1, softWrap = false, modifier = Modifier.semantics { contentDescription = text })
+        }
+    }
+
     @Composable
     private fun HeaderKey(icon: ImageVector, name: String, open: Boolean, onClick: () -> Unit) {
         GlyphButton(icon, name = name, target = Space.row, tint = if (open) palette.accent else palette.ink, onClick = onClick)

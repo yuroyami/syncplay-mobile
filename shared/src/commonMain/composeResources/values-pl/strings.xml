@@ -95,6 +95,9 @@
     <string name="room_shared_playlist">Wspólna lista odtwarzania</string>
     <string name="room_shared_playlist_no_directories">Nie ustawiono katalogów mediów. Dodaj foldery z mediami w ustawieniach.</string>
     <string name="room_shared_playlist_not_found">Nie znaleziono pliku %1$s w katalogach mediów, aby przełączyć listę odtwarzania!</string>
+    <string name="room_shared_playlist_missing">Brak na tym urządzeniu</string>
+    <string name="room_shared_playlist_missing_title">Nie znaleziono pliku</string>
+    <string name="room_shared_playlist_find_file">Znajdź plik</string>
     <string name="room_shared_playlist_button_add_file">Dodaj plik(i) na koniec listy</string>
     <string name="room_shared_playlist_button_add_folder">Dodaj folder do listy odtwarzania (i katalogów mediów)</string>
     <string name="room_shared_playlist_button_add_url">Dodaj URL(e) na koniec listy</string>
@@ -400,6 +403,15 @@
     <string name="media_folders">Foldery multimediów</string>
     <string name="media_folders_brief">%1$s szuka w tych folderach pliku, który wskazuje wspólna lista. Małe foldery są szybsze.</string>
     <string name="media_folders_empty">Brak folderów.</string>
+    <string name="media_folder_counting">Liczenie plików…</string>
+    <string name="media_folder_lost">Nie można otworzyć tego folderu. Został przeniesiony albo aplikacja straciła do niego dostęp.</string>
+    <string name="media_folder_grant">Przyznaj dostęp</string>
+    <string name="media_folder_files_zero">%1$d plików multimedialnych</string>
+    <string name="media_folder_files_one">%1$d plik multimedialny</string>
+    <string name="media_folder_files_two">%1$d pliki multimedialne</string>
+    <string name="media_folder_files_few">%1$d pliki multimedialne</string>
+    <string name="media_folder_files_many">%1$d plików multimedialnych</string>
+    <string name="media_folder_files_other">%1$d plików multimedialnych</string>
     <string name="modal_dismiss">Zamknij</string>
     <string name="engine_desc_exoplayer">Odtwarzacz Media3 od Google, część Androida. Wideo dekoduje sprzęt urządzenia. Ma mały FFmpeg tylko do audio, by odtwarzać wszystkie rodzaje plików dźwiękowych.</string>
     <string name="engine_desc_mpv">libmpv (silnik desktopowego mpv) napędzany pełnym FFmpeg z dav1d i libass. Używa sprzętowego dekodera urządzenia, gdy może, a programowego, gdy musi. Wybór do anime, ripów MKV i pewnie wszystkiego innego.</string>
@@ -593,6 +605,7 @@
     <string name="server_host_ios_paused">Hostowanie zatrzymuje się, gdy aplikacja jest w tle.</string>
     <string name="server_host_log_errors_only">Tylko błędy</string>
     <string name="server_host_on_network">W tej sieci</string>
+    <string name="server_host_no_address">Nie znaleziono adresu sieciowego. Połącz się z Wi-Fi lub inną siecią, a potem uruchom serwer ponownie.</string>
     <string name="server_host_over_internet">Przez internet</string>
     <string name="server_host_password_detail">Zapisywane tak, jak wpisane, tak samo jak hasło dołączania.</string>
     <string name="server_host_port_taken">Port %1$d jest zajęty</string>

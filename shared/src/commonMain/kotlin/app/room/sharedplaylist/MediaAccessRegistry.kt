@@ -123,19 +123,69 @@ object MediaAccessRegistry {
         directFile(filename)?.let { return it }
 
         for (dirId in Preferences.MEDIA_DIRECTORIES.value()) {
-            val dir = resolveDirectory(dirId) ?: continue
-            val index = runCatching { dir.indexMediaTree() }
-                .onFailure { loggy("MediaAccessRegistry: indexing $dirId failed — ${it.message}") }
-                .getOrDefault(emptyMap())
-            if (index.isNotEmpty()) rememberFileBookmarks(index)
+            if (indexFolder(dirId).isNullOrEmpty()) continue
             directFile(filename)?.let { return it }
         }
         return null
     }
 
+    /**
+     * The entries of [names] that this device cannot find, for the marks on the playlist rows.
+     * Links are never missing. It walks the media folders once, and only when a name is not
+     * known yet.
+     */
+    suspend fun missingFiles(names: Collection<String>): Set<String> {
+        var missing = unresolved(names.filterNot { it.contains("://") }.toSet())
+        for (dirId in Preferences.MEDIA_DIRECTORIES.value()) {
+            if (missing.isEmpty()) break
+            if (indexFolder(dirId).isNullOrEmpty()) continue
+            missing = unresolved(missing)
+        }
+        return missing
+    }
+
+    /** The entries of [names] with no saved handle to a file that still exists. One read of the store. */
+    @OptIn(ExperimentalEncodingApi::class)
+    private suspend fun unresolved(names: Set<String>): Set<String> {
+        if (names.isEmpty()) return names
+        val saved = decode(datastore.data.first()[FILE_BOOKMARKS])
+        return names.filterTo(LinkedHashSet()) { name ->
+            val bytes = saved[name]?.let { runCatching { Base64.decode(it) }.getOrNull() }
+            bytes == null || openExisting(bytes) == null
+        }
+    }
+
+    /** What the media folders list shows for one remembered folder. */
+    sealed interface FolderState {
+        data object Checking : FolderState
+
+        /** The folder is gone, or the app lost access to it. */
+        data object Lost : FolderState
+
+        data class Open(val mediaFiles: Int) : FolderState
+    }
+
+    /** Opens the remembered folder [dirId] and counts its media files. The walk also saves their handles. */
+    suspend fun folderState(dirId: String): FolderState =
+        indexFolder(dirId)?.let { FolderState.Open(it.size) } ?: FolderState.Lost
+
+    /** Walks [dirId] and saves a handle for each media file. Null when the folder cannot be opened. */
+    private suspend fun indexFolder(dirId: String): Map<String, ByteArray>? {
+        val dir = resolveDirectory(dirId)
+        val index = dir?.let { runCatching { it.indexMediaTree() }.onFailure { e -> loggy("MediaAccessRegistry: indexing $dirId failed: ${e.message}") }.getOrNull() }
+        if (index == null) {
+            loggy("MediaAccessRegistry: cannot open the media folder $dirId")
+            return null
+        }
+        if (index.isNotEmpty()) rememberFileBookmarks(index)
+        return index
+    }
+
     /** Resolves the stored bookmark for [filename] and confirms the target still exists. */
-    private suspend fun directFile(filename: String): PlatformFile? {
-        val bytes = readBookmark(FILE_BOOKMARKS, filename) ?: return null
+    private suspend fun directFile(filename: String): PlatformFile? =
+        readBookmark(FILE_BOOKMARKS, filename)?.let { openExisting(it) }
+
+    private suspend fun openExisting(bytes: ByteArray): PlatformFile? {
         val file = runCatching { platformFileFromBookmark(bytes) }.getOrNull() ?: return null
         // stillExists() can throw on a stale or revoked handle. When the check itself fails,
         // still try the file. A definite `false` means not found.

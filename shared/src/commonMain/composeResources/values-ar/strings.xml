@@ -95,6 +95,9 @@
     <string name="room_shared_playlist">قائمة التشغيل المشتركة</string>
     <string name="room_shared_playlist_no_directories">لم تُحدَّد أي مجلدات وسائط. أضف مجلدات الوسائط في الإعدادات.</string>
     <string name="room_shared_playlist_not_found">تعذّر العثور على الملف %1$s في مجلدات الوسائط للتبديل في قائمة التشغيل!</string>
+    <string name="room_shared_playlist_missing">غير موجود على هذا الجهاز</string>
+    <string name="room_shared_playlist_missing_title">لم يُعثر على الملف</string>
+    <string name="room_shared_playlist_find_file">ابحث عن الملف</string>
     <string name="room_shared_playlist_button_add_file">إضافة ملف (ملفات) إلى أسفل قائمة التشغيل</string>
     <string name="room_shared_playlist_button_add_folder">إضافة مجلد إلى قائمة التشغيل (ومجلدات الوسائط)</string>
     <string name="room_shared_playlist_button_add_url">إضافة رابط (روابط) إلى أسفل قائمة التشغيل</string>
@@ -389,6 +392,15 @@
     <string name="media_folders">مجلدات الوسائط</string>
     <string name="media_folders_brief">يبحث %1$s في هذه المجلدات عن ملف تسمّيه قائمة تشغيل مشتركة. المجلدات الصغيرة أسرع.</string>
     <string name="media_folders_empty">لا مجلدات بعد.</string>
+    <string name="media_folder_counting">جارٍ عدّ الملفات…</string>
+    <string name="media_folder_lost">تعذّر فتح هذا المجلد. ربما نُقل، أو فقد التطبيق إذن الوصول إليه.</string>
+    <string name="media_folder_grant">منح الإذن</string>
+    <string name="media_folder_files_zero">%1$d ملف</string>
+    <string name="media_folder_files_one">%1$d ملف</string>
+    <string name="media_folder_files_two">%1$d ملفان</string>
+    <string name="media_folder_files_few">%1$d ملفات</string>
+    <string name="media_folder_files_many">%1$d ملفًا</string>
+    <string name="media_folder_files_other">%1$d ملف</string>
     <string name="modal_dismiss">إغلاق</string>
     <string name="engine_desc_exoplayer">مشغّل Media3 من Google، جزء من Android. يفكّ ترميز الفيديو على عتاد الجهاز. يأتي مع FFmpeg صغير للصوت فقط ليشغّل كل أنواع ملفات الصوت.</string>
     <string name="engine_desc_mpv">libmpv (محرّك mpv على الحاسوب) مدفوع بمحرّك FFmpeg الكامل مع dav1d وlibass. يستخدم فكّ ترميز عتاد الجهاز حين يستطيع والبرمجي حين يضطر. الخيار للأنمي وملفات MKV وربما كل شيء آخر.</string>
@@ -582,6 +594,7 @@
     <string name="server_host_ios_paused">تتوقف الاستضافة مؤقتًا عندما يكون التطبيق في الخلفية.</string>
     <string name="server_host_log_errors_only">الأخطاء فقط</string>
     <string name="server_host_on_network">على هذه الشبكة</string>
+    <string name="server_host_no_address">لم يُعثر على عنوان شبكة. اتصل بشبكة Wi-Fi أو بشبكة أخرى، ثم ابدأ الخادم من جديد.</string>
     <string name="server_host_over_internet">عبر الإنترنت</string>
     <string name="server_host_password_detail">يُخزَّن كما كُتب، مثل كلمة مرور الانضمام.</string>
     <string name="server_host_port_taken">المنفذ %1$d مشغول</string>

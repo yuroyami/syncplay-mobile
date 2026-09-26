@@ -100,6 +100,13 @@ import app.uicomponents.MediaDropOverlay
 import app.uicomponents.MediaDropTarget
 import app.uicomponents.mediaDropTarget
 import app.utils.timestampFromMillis
+import app.preferences.Preferences
+import app.preferences.value
+import app.uicomponents.PopupMediaDirs.MediaDirsPopup
+import app.utils.ioDispatcher
+import app.utils.mediaFileKitType
+import androidx.compose.runtime.setValue
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 
 /**
  * The main focus target for D-pad and TV input: the play button, or the add button before a file
@@ -231,6 +238,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         LeaveRoomAsk(viewmodel)
         ManagedRoomModal()
         UntrustedUrlAsk(viewmodel)
+        MissingFileAsk(viewmodel)
         ResumeAsk(viewmodel)
         PlaylistRestoreAsk(viewmodel)
 
@@ -274,6 +282,59 @@ private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
     ) {
         Text(
             text = strings.roomUntrustedAskBody(asked.domain),
+            style = Type.note,
+            color = palette.inkDim,
+        )
+    }
+}
+
+/**
+ * Offers a way forward when the picked playlist entry is not on this device: pick the file by
+ * hand, or set the media folders. After the folders change, the entry is tried again.
+ */
+@Composable
+private fun MissingFileAsk(viewmodel: RoomViewmodel) {
+    val playlist = viewmodel.playlistManager
+    val missing by playlist.missingFile.collectAsState()
+    val foldersOpen = remember { mutableStateOf(false) }
+    val picker = rememberFilePickerLauncher(type = mediaFileKitType) { file ->
+        file ?: return@rememberFilePickerLauncher
+        viewmodel.viewModelScope.launch(ioDispatcher) { playlist.locateMissingFile(file) }
+    }
+    // The folders when the list opened, so closing it retries only after a change.
+    var foldersAtOpen by remember { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(foldersOpen.value) {
+        if (foldersOpen.value) {
+            foldersAtOpen = Preferences.MEDIA_DIRECTORIES.value()
+        } else {
+            val before = foldersAtOpen ?: return@LaunchedEffect
+            foldersAtOpen = null
+            if (Preferences.MEDIA_DIRECTORIES.value() != before) {
+                viewmodel.viewModelScope.launch(ioDispatcher) { playlist.retrySelectedEntry() }
+            }
+        }
+    }
+    MediaDirsPopup(foldersOpen)
+
+    val asked = missing ?: return
+    Modal(
+        open = true,
+        onDismiss = { playlist.dismissMissingFile() },
+        title = strings.roomSharedPlaylistMissingTitle,
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(
+                text = strings.roomSharedPlaylistButtonSetMediaDirectories,
+                onClick = { playlist.dismissMissingFile(); foldersOpen.value = true },
+            )
+            PrimaryAction(
+                text = strings.roomSharedPlaylistFindFile,
+                onClick = { playlist.dismissMissingFile(); picker.launch() },
+            )
+        },
+    ) {
+        Text(
+            text = if (asked.noFolders) strings.roomSharedPlaylistNoDirectories else strings.roomSharedPlaylistNotFound(asked.name),
             style = Type.note,
             color = palette.inkDim,
         )

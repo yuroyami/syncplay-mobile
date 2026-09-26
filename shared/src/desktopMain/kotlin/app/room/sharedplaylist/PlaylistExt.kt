@@ -10,10 +10,10 @@ import java.io.File
  * plain filesystem recursion, with no SAF (Android's Storage Access Framework) and no security
  * scopes. Each media file is stored as the bytes of its absolute path, which reopen it directly.
  */
-actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
+actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>? {
     val out = LinkedHashMap<String, ByteArray>()
     val root = File(this.path)
-    if (!root.isDirectory) return out
+    if (!root.isDirectory || !root.canRead()) return null
 
     fun walk(dir: File) {
         val files = dir.listFiles() ?: return

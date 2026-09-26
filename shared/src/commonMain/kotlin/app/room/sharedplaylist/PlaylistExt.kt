@@ -14,6 +14,7 @@ import io.github.vinceglb.filekit.PlatformFile
  *    taken when the directory was remembered, allows the reads.
  *
  * Implementations open and close every security scope and permission themselves, and must not
- * leave a scope open on return. Returns an empty map when the directory cannot be accessed.
+ * leave a scope open on return. Returns null when the app cannot open the directory: it is gone,
+ * or the app lost access to it. An empty map means the directory holds no media files.
  */
-expect suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>
+expect suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>?

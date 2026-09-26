@@ -117,6 +117,40 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         pendingUntrusted.value = null
     }
 
+    /** A picked entry that this device cannot find. [noFolders] is true when no media folder is set. */
+    data class MissingFile(val name: String, val noFolders: Boolean)
+
+    /** Set while the room offers to find a missing file or to set the media folders. */
+    val missingFile: StateFlow<MissingFile?>
+        field = MutableStateFlow(null)
+
+    fun dismissMissingFile() {
+        missingFile.value = null
+    }
+
+    /**
+     * Grows each time this device learns where more files are, so the playlist rows check again
+     * which entries are missing.
+     */
+    val localFilesVersion: StateFlow<Int>
+        field = MutableStateFlow(0)
+
+    /** Plays [file], picked by hand for a missing entry, and remembers it for next time. */
+    suspend fun locateMissingFile(file: PlatformFile) {
+        missingFile.value = null
+        MediaAccessRegistry.rememberFiles(listOf(file))
+        localFilesVersion.value++
+        lastLoadedSource = file.name
+        viewmodel.player.injectVideoFile(file)
+    }
+
+    /** Tries the selected entry again when this device does not play it, after the media folders changed. */
+    suspend fun retrySelectedEntry() {
+        localFilesVersion.value++
+        val entry = selectedEntry ?: return
+        if (!isPlayingSelectedEntry) retrieveFile(entry)
+    }
+
     /** The server said it has no shared playlists, so nothing about one is sent to it. */
     private val playlistsRefused: Boolean
         get() = !session.roomFeatures.supportsSharedPlaylists
@@ -321,6 +355,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (rejectsOversizedPlaylist(session.sharedPlaylist + toAdd.map { it.name })) return
 
         MediaAccessRegistry.rememberFiles(toAdd)
+        localFilesVersion.value++
         for (file in toAdd) session.sharedPlaylist.add(file.name)
 
         viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
@@ -347,7 +382,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (playlistsRefused) return
         MediaAccessRegistry.rememberDirectory(dir)
 
-        val index = dir.indexMediaTree()
+        val index = dir.indexMediaTree().orEmpty()
         if (index.isEmpty()) {
             viewmodel.dispatcher.broadcastMessage(
                 message = { Localization.strings.roomSharedPlaylistFolderEmpty },
@@ -357,6 +392,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
 
         MediaAccessRegistry.rememberFileBookmarks(index)
+        localFilesVersion.value++
 
         val names = index.keys.sorted()
         val playlistWasEmpty = session.spIndex.intValue == -1
@@ -507,12 +543,14 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         // Nothing resolved. Show no warning when the requested file is already the one playing.
         if (viewmodel.media?.fileName == fileName) return
 
-        val message: suspend () -> String = if (Preferences.MEDIA_DIRECTORIES.value().isEmpty()) {
+        val noFolders = Preferences.MEDIA_DIRECTORIES.value().isEmpty()
+        val message: suspend () -> String = if (noFolders) {
             { Localization.strings.roomSharedPlaylistNoDirectories }
         } else {
             { Localization.strings.roomSharedPlaylistNotFound(fileName) }
         }
-        viewmodel.dispatchWarning(message)
+        // The room asks how to find the file, with the same text. The chat line keeps a record.
+        missingFile.value = MissingFile(fileName, noFolders)
         viewmodel.dispatcher.broadcastMessage(message = message, isChat = false)
     }
 

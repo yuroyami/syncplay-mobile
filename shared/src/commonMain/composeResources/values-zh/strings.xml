@@ -86,6 +86,9 @@
     <string name="room_shared_playlist">共享播放列表</string>
     <string name="room_shared_playlist_no_directories">没有设置媒体目录。请在设置中添加媒体文件夹。</string>
     <string name="room_shared_playlist_not_found">切换播放内容时，在媒体目录中找不到%1$s！</string>
+    <string name="room_shared_playlist_missing">此设备上没有</string>
+    <string name="room_shared_playlist_missing_title">未找到文件</string>
+    <string name="room_shared_playlist_find_file">查找文件</string>
     <string name="room_shared_playlist_button_add_file">添加文件到播放列表底部</string>
     <string name="room_shared_playlist_button_add_folder">将文件夹添加到播放列表（和媒体目录）</string>
     <string name="room_shared_playlist_button_add_url">将URL添加到播放列表底部</string>
@@ -379,6 +382,15 @@
     <string name="media_folders">媒体文件夹</string>
     <string name="media_folders_brief">%1$s 会在这些文件夹里查找共享播放列表提到的文件。文件夹越小越快。</string>
     <string name="media_folders_empty">还没有文件夹。</string>
+    <string name="media_folder_counting">正在统计文件…</string>
+    <string name="media_folder_lost">无法打开此文件夹。它已被移动，或应用已失去访问权限。</string>
+    <string name="media_folder_grant">授予访问权限</string>
+    <string name="media_folder_files_zero">%1$d 个媒体文件</string>
+    <string name="media_folder_files_one">%1$d 个媒体文件</string>
+    <string name="media_folder_files_two">%1$d 个媒体文件</string>
+    <string name="media_folder_files_few">%1$d 个媒体文件</string>
+    <string name="media_folder_files_many">%1$d 个媒体文件</string>
+    <string name="media_folder_files_other">%1$d 个媒体文件</string>
     <string name="modal_dismiss">关闭</string>
     <string name="engine_desc_exoplayer">Google 的 Media3 播放器，Android 自带。视频由设备硬件解码。附带一个小巧的纯音频 FFmpeg，能播放各种音频文件。</string>
     <string name="engine_desc_mpv">libmpv（桌面版 mpv 的引擎），由完整的 FFmpeg 驱动，带 dav1d 和 libass。能用设备硬件解码时就用，否则软件解码。看动画、MKV 的首选，其他大概也都能放。</string>
@@ -572,6 +584,7 @@
     <string name="server_host_ios_paused">应用退到后台时，服务器会暂停。</string>
     <string name="server_host_log_errors_only">仅错误</string>
     <string name="server_host_on_network">本网络内</string>
+    <string name="server_host_no_address">未找到网络地址。请连接 Wi-Fi 或其他网络，然后重新启动服务器。</string>
     <string name="server_host_over_internet">通过互联网</string>
     <string name="server_host_password_detail">按原样保存，和加入房间的密码一样。</string>
     <string name="server_host_port_taken">端口 %1$d 已被占用</string>

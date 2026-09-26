@@ -86,6 +86,9 @@
     <string name="room_shared_playlist">Lista de reproducción compartida</string>
     <string name="room_shared_playlist_no_directories">No se han establecido directorios de medios. Añade tus carpetas de medios en Ajustes.</string>
     <string name="room_shared_playlist_not_found">¡No se encontró el archivo %1$s en el directorio de medios para intercambiar en la lista de reproducción!</string>
+    <string name="room_shared_playlist_missing">No está en este dispositivo</string>
+    <string name="room_shared_playlist_missing_title">Archivo no encontrado</string>
+    <string name="room_shared_playlist_find_file">Buscar el archivo</string>
     <string name="room_shared_playlist_button_add_file">Añadir archivo(s) al final de la lista de reproducción</string>
     <string name="room_shared_playlist_button_add_folder">Añadir carpeta a la lista de reproducción (y directorios de medios)</string>
     <string name="room_shared_playlist_button_add_url">Añadir URL(s) al final de la lista de reproducción</string>
@@ -391,6 +394,15 @@
     <string name="media_folders">Carpetas de medios</string>
     <string name="media_folders_brief">%1$s busca en estas carpetas el archivo que nombre una lista compartida. Las carpetas pequeñas son más rápidas.</string>
     <string name="media_folders_empty">Aún no hay carpetas.</string>
+    <string name="media_folder_counting">Contando archivos…</string>
+    <string name="media_folder_lost">No se puede abrir esta carpeta. Se movió o la app perdió el acceso a ella.</string>
+    <string name="media_folder_grant">Dar acceso</string>
+    <string name="media_folder_files_zero">%1$d archivos multimedia</string>
+    <string name="media_folder_files_one">%1$d archivo multimedia</string>
+    <string name="media_folder_files_two">%1$d archivos multimedia</string>
+    <string name="media_folder_files_few">%1$d archivos multimedia</string>
+    <string name="media_folder_files_many">%1$d archivos multimedia</string>
+    <string name="media_folder_files_other">%1$d archivos multimedia</string>
     <string name="modal_dismiss">Cerrar</string>
     <string name="engine_desc_exoplayer">El reproductor Media3 de Google, parte de Android. El vídeo lo decodifica el hardware del dispositivo. Incluye un pequeño FFmpeg solo de audio para reproducir todo tipo de archivos de audio.</string>
     <string name="engine_desc_mpv">libmpv (el motor del mpv de escritorio), impulsado por el motor FFmpeg completo con dav1d y libass. Usa el decodificador por hardware del dispositivo cuando puede y software cuando debe. La elección para anime, rips MKV y probablemente todo lo demás.</string>
@@ -584,6 +596,7 @@
     <string name="server_host_ios_paused">El alojamiento se pausa mientras la app está en segundo plano.</string>
     <string name="server_host_log_errors_only">Solo errores</string>
     <string name="server_host_on_network">En esta red</string>
+    <string name="server_host_no_address">No se encontró ninguna dirección de red. Conéctate a una red wifi u otra red y vuelve a iniciar el servidor.</string>
     <string name="server_host_over_internet">Por internet</string>
     <string name="server_host_password_detail">Se guarda tal cual, igual que la contraseña de entrada.</string>
     <string name="server_host_port_taken">El puerto %1$d está ocupado</string>

@@ -162,6 +162,9 @@
     <string name="room_shared_playlist_no_directories">No media directories have been set. Add your media folders in Settings.</string>
     <!-- %1$s is a file name. -->
     <string name="room_shared_playlist_not_found">Could not find file %1$s in media directories for playlist switch!</string>
+    <string name="room_shared_playlist_missing">Not found on this device</string>
+    <string name="room_shared_playlist_missing_title">File not found</string>
+    <string name="room_shared_playlist_find_file">Find the file</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
     <string name="room_shared_playlist_button_add_url">Add URL(s) to bottom of playlist</string>
@@ -691,8 +694,24 @@
     <!-- %1$s is the app name, Synkplay. -->
     <string name="media_folders_brief">%1$s looks in these folders for a file a shared playlist names. Small folders are faster.</string>
     <string name="media_folders_empty">No folders yet.</string>
+    <string name="media_folder_counting">Counting files…</string>
+    <string name="media_folder_lost">Cannot open this folder. It was moved, or the app lost access to it.</string>
+    <string name="media_folder_grant">Grant access</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_zero">%1$d media files</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_one">%1$d media file</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_two">%1$d media files</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_few">%1$d media files</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_many">%1$d media files</string>
+    <!-- %1$d is the number of media files found in one media folder. -->
+    <string name="media_folder_files_other">%1$d media files</string>
     <!-- Server host (design overhaul) -->
     <string name="server_host_on_network">On this network</string>
+    <string name="server_host_no_address">No network address found. Connect to Wi-Fi or another network, then start the server again.</string>
     <string name="server_host_over_internet">Over the internet</string>
     <string name="server_host_copy">Copy</string>
     <string name="server_host_share">Share</string>
