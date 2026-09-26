@@ -84,7 +84,9 @@ The floor is a ratchet. Raise it when you add tests. Never lower it to make a bu
 For an Android release:
 
 - Add a store note under `fastlane/metadata/android/en-US/changelogs/`, named by the version code.
-  The note has at most 500 characters, or `checkStoreMetadata` fails.
+  Write it by hand as a summary of the version's `CHANGELOG.md` section. It has 40 to 500
+  characters and is not a placeholder such as "Maintenance update.", or `checkStoreMetadata`
+  fails.
 - The version code is `1`, then the major version in three digits, the minor version in three, the
   patch in two and the rebuild number in one. So 0.25.0 with rebuild 1 is `1000025001`.
 
@@ -155,7 +157,7 @@ confirm that the gate fails on it.
 | `checkDeadResources` | Nothing. It only warns about strings and drawables that nothing references |
 | `checkSettingsReachable` | A preference that declares a title, a summary and an icon, but that no settings or engine code names |
 | `checkDestroyContract` | An engine `destroy()` that does not set `isInitialized = false` before it cancels `playerSupervisorJob` |
-| `checkStoreMetadata` | A store short description over 80 characters, a full description over 4000, or a release note that is missing or over 500 characters |
+| `checkStoreMetadata` | A store short description over 80 characters, a full description over 4000, a Play release note that is missing, over 500 characters or a placeholder, or a version with no section in `CHANGELOG.md` |
 
 Other checks:
 

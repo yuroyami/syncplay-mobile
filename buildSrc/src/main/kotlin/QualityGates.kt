@@ -28,7 +28,7 @@ private fun org.gradle.api.Task.alwaysRun() {
  * Registers every gate and a `qualityGates` task that runs them all, and makes `:shared:check`
  * depend on the gates. The root build script calls it, so the tasks belong to the root project.
  */
-fun Project.registerQualityGates(androidVersionCode: String) {
+fun Project.registerQualityGates(androidVersionCode: String, versionName: String) {
     val gates = listOf(
         registerProtocolThrowsGate(),
         registerStringResourceGate(),
@@ -37,7 +37,7 @@ fun Project.registerQualityGates(androidVersionCode: String) {
         registerDeadResourceGate(),
         registerSettingsReachabilityGate(),
         registerDestroyContractGate(),
-        registerStoreMetadataGate(androidVersionCode),
+        registerStoreMetadataGate(androidVersionCode, versionName),
     )
     tasks.register("qualityGates") {
         group = GATE_GROUP
@@ -447,11 +447,14 @@ private fun Project.registerDestroyContractGate(): TaskProvider<*> {
  * The stores enforce hard length limits on store text at upload, not at build time. So a text
  * that is too long fails only when a release is already half-published.
  *
- * The gate also checks that a changelog exists for the version being built. The release workflow
+ * The gate also checks the release notes of the version being built. The Play note is a summary
+ * written by hand, so it must exist, fit the Play limit and not be a placeholder such as
+ * "Maintenance update.". CHANGELOG.md must have a section for the version. The release workflow
  * runs the gates before any build, so a version without release notes does not get released.
  */
-private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider<*> {
+private fun Project.registerStoreMetadataGate(versionCode: String, versionName: String): TaskProvider<*> {
     val metadata = file("fastlane/metadata/android/en-US")
+    val changelogMd = file("CHANGELOG.md")
     return tasks.register("checkStoreMetadata") {
         group = GATE_GROUP
         description = "Fails if Play store copy is over the limit or the version has no changelog."
@@ -474,8 +477,14 @@ private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider
             if (!changelog.isFile) {
                 problems += "changelogs/$versionCode.txt is missing; this version has no release notes"
             } else {
-                val n = changelog.readText().trim().length
-                if (n > 500) problems += "changelogs/$versionCode.txt is $n characters; Play allows 500"
+                val text = changelog.readText().trim()
+                if (text.length > 500) problems += "changelogs/$versionCode.txt is ${text.length} characters; Play allows 500"
+                if (text.length < MIN_PLAY_NOTE || PLACEHOLDER_NOTE.matches(text)) {
+                    problems += "changelogs/$versionCode.txt is a placeholder (\"$text\"); summarize this version's CHANGELOG.md section"
+                }
+            }
+            if (!changelogMd.isFile || changelogMd.readLines().none { it.trim() == "## $versionName" }) {
+                problems += "CHANGELOG.md has no \"## $versionName\" section"
             }
 
             if (problems.isNotEmpty()) {
@@ -488,6 +497,14 @@ private fun Project.registerStoreMetadataGate(versionCode: String): TaskProvider
         }
     }
 }
+
+/** A Play note shorter than this says nothing about the release. */
+private const val MIN_PLAY_NOTE = 40
+
+/** Generic lines that stand in for release notes. */
+private val PLACEHOLDER_NOTE = Regex(
+    """(?i)(maintenance update|bug fixes( and (performance )?improvements)?|minor (fixes|improvements)|various fixes|improvements|todo|tbd|placeholder)\.?""",
+)
 
 private fun List<File>.kotlinFiles(): List<File> =
     flatMap { if (it.isDirectory) it.walkTopDown().toList() else listOf(it) }

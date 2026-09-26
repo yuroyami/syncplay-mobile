@@ -404,9 +404,12 @@ To make a release:
    ./gradlew printReleaseIdentity
    ```
 
-3. Add the release notes to [`CHANGELOG.md`](../CHANGELOG.md).
-4. Add a Play summary of 500 characters or fewer to
-   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+3. Add the release notes to [`CHANGELOG.md`](../CHANGELOG.md), under a `## <version>` heading.
+4. Write a Play summary of that section, by hand, to
+   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`. Put the most important
+   changes first. `checkStoreMetadata` fails when the summary is missing, longer than 500
+   characters, shorter than 40, or a placeholder such as "Maintenance update.", and when
+   `CHANGELOG.md` has no section for the version.
 5. Write the version into the Xcode project, then review the change:
 
    ```bash

@@ -235,7 +235,7 @@ kover {
 }
 
 // Build-time gates live in buildSrc/src/main/kotlin/QualityGates.kt.
-registerQualityGates(kiteConfig.versionCode.get().toString())
+registerQualityGates(kiteConfig.versionCode.get().toString(), kiteConfig.version.get())
 
 /**
  * Prints the release identity for tools outside Gradle, such as the release workflow.
