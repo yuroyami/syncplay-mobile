@@ -671,6 +671,13 @@ internal class KiteImpl(
     @UiThread
     override fun currentPositionMs(): Long = kite?.position()?.inWholeMilliseconds ?: 0L
 
+    /** The playhead plus what KitePlayer has read ahead of it, or null before it has read anything. */
+    override fun bufferedPositionMs(): Long? {
+        val progress = kite?.progress?.value ?: return null
+        if (!progress.bufferedAhead.isPositive()) return null
+        return (progress.position + progress.bufferedAhead).inWholeMilliseconds
+    }
+
     override suspend fun switchAspectRatio(): String {
         val player = kite ?: return ""
         val next = when (player.state.value.videoScale) {

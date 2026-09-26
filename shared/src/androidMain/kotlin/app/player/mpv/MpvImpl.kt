@@ -93,6 +93,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     @Volatile
     private var mpvPos = 0L
 
+    /** Where mpv's demuxer cache ends, in playback time, or null before it reports one. */
+    @Volatile
+    private var mpvCacheEndMs: Long? = null
+
     /** The last `seekable` mpv reported. A core that has not reported yet counts as seekable. */
     @Volatile
     private var mpvSeekable = true
@@ -343,6 +347,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     /** The last `time-pos` mpv reported. [seekTo] stores its target, so a seek shows at once. */
     override fun currentPositionMs(): Long = if (isInitialized) mpvPos else 0L
 
+    override fun bufferedPositionMs(): Long? = if (isInitialized) mpvCacheEndMs else null
+
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return ""
         return withContext(coreCalls) {
@@ -494,6 +500,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         coreJob = null
         old?.let { playerScopeIO.launch(coreCalls) { runCatching { it[MpvProperties.Pause] = true } } }
         mpvPos = 0L
+        mpvCacheEndMs = null
         mpvSeekable = true
     }
 
@@ -520,6 +527,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             }
         }
         scope.follow(mpv, mpv.observe(MpvProperties.TimePos)) { if (it != null) mpvPos = (it * 1000).toLong() }
+        scope.follow(mpv, mpv.observe(MpvProperties.DemuxerCacheTime)) { mpvCacheEndMs = it?.let { seconds -> (seconds * 1000).toLong() } }
         // Callers read the next two on the UI thread, so they are observed here instead of
         // queried. See [coreCalls].
         scope.follow(mpv, mpv.observe(MpvProperties.Seekable)) { if (it != null) mpvSeekable = it }

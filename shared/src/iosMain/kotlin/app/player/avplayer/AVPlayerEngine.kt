@@ -61,6 +61,12 @@ import platform.AVFoundation.volume
 import platform.CoreGraphics.CGRect
 import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
+import platform.Foundation.NSValue
+import kotlinx.cinterop.readValue
+import kotlinx.cinterop.useContents
+import platform.CoreMedia.CMTimeRangeGetEnd
+import platform.AVFoundation.CMTimeRangeValue
+import platform.AVFoundation.loadedTimeRanges
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSError
 import platform.Foundation.NSKeyValueObservingOptionNew
@@ -529,6 +535,26 @@ object AVPlayerEngine: PlayerEngine {
             if (!isInitialized) return 0L
 
             return avPlayer?.currentTime()?.toMillis() ?: 0L
+        }
+
+        /** The end of the loaded time range that holds the playhead, or null when none does. */
+        @OptIn(ExperimentalForeignApi::class)
+        override fun bufferedPositionMs(): Long? {
+            if (!isInitialized) return null
+            val item = avPlayer?.currentItem ?: return null
+            val now = CMTimeGetSeconds(item.currentTime())
+            if (!now.isFinite()) return null
+            var end: Double? = null
+            for (value in item.loadedTimeRanges) {
+                val range = (value as? NSValue)?.CMTimeRangeValue ?: continue
+                val start = CMTimeGetSeconds(range.useContents { start.readValue() })
+                val rangeEnd = CMTimeGetSeconds(CMTimeRangeGetEnd(range))
+                // A seek lands a moment before its range starts loading, so allow half a second.
+                if (start.isFinite() && rangeEnd.isFinite() && now >= start - 0.5 && now <= rangeEnd) {
+                    end = maxOf(end ?: rangeEnd, rangeEnd)
+                }
+            }
+            return end?.let { (it * 1000.0).roundToLong() }
         }
 
         /**
