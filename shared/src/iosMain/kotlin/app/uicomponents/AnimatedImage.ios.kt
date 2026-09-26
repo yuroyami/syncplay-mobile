@@ -11,12 +11,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import app.utils.httpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import app.utils.loggy
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -47,8 +46,21 @@ import platform.ImageIO.kCGImagePropertyGIFDelayTime
 import platform.ImageIO.kCGImagePropertyGIFDictionary
 import platform.ImageIO.kCGImagePropertyGIFUnclampedDelayTime
 import platform.ImageIO.kCGImagePropertyPNGDictionary
+import platform.ImageIO.kCGImagePropertyPixelHeight
+import platform.ImageIO.kCGImagePropertyPixelWidth
 import kotlinx.cinterop.useContents
+import platform.CoreGraphics.CGBitmapContextCreate
+import platform.CoreGraphics.CGBitmapContextCreateImage
+import platform.CoreGraphics.CGColorSpaceCreateDeviceRGB
+import platform.CoreGraphics.CGColorSpaceRelease
+import platform.CoreGraphics.CGContextDrawImage
+import platform.CoreGraphics.CGContextRelease
+import platform.CoreGraphics.CGContextSetInterpolationQuality
+import platform.CoreGraphics.CGImageAlphaInfo
+import platform.CoreGraphics.CGImageRef
 import platform.CoreGraphics.CGImageRelease
+import platform.CoreGraphics.CGRectMake
+import platform.CoreGraphics.kCGInterpolationHigh
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageView
 import platform.UIKit.UIViewContentMode
@@ -158,16 +170,21 @@ actual fun AnimatedImage(
 }
 
 /**
- * Downloads image bytes with the shared Ktor client and decodes them as an animated image. The
+ * Downloads image bytes with the shared Ktor client and decodes them as an animated image, within
+ * the limits of [AnimatedImageBudget]: a byte cap on the download and a few loads at a time. The
  * decode runs on `Dispatchers.Default`, because [decodeAnimatedImage] extracts the CGImageSource
  * frames one by one, synchronously. On the LaunchedEffect's own dispatcher (the Compose main
  * thread), a 24-tile grid would block the UI thread for hundreds of ms per tile.
  * CancellationException is rethrown, so a closed or recomposed panel can cancel the running
  * download. A plain `catch (e: Exception)` would swallow the cancellation too.
  */
-private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
-    return try {
-        val bytes: ByteArray = httpClient.get(url).body()
+private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? = AnimatedImageBudget.loads.withPermit {
+    try {
+        val bytes = httpClient.downloadAtMost(url, AnimatedImageBudget.MAX_DOWNLOAD_BYTES)
+        if (bytes == null) {
+            loggy("AnimatedImage: no image, the download failed or passed its byte cap url=$url")
+            return@withPermit null
+        }
         val image = withContext(Dispatchers.Default) { decodeAnimatedImage(bytes) }
         if (image == null) {
             /* A decode failure with non-empty bytes usually means a truncated body. The most
@@ -194,6 +211,10 @@ private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
  * other formats use the 100 ms default), so the animation runs at about the right speed. UIImage
  * spreads the total duration evenly across the frames, which is close enough for content with
  * mostly even timing.
+ *
+ * The size in the header decides the decode size before any frame is decoded (see
+ * [AnimatedImageBudget.decodeSize]). An image over a limit returns null. Each frame is decoded
+ * at full size, one at a time, and drawn down to the decode size.
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
@@ -208,14 +229,31 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
         if (source == null) return@usePinned null
 
         val frameCount = CGImageSourceGetCount(source).toInt()
+        val source0 = sourceSize(source)
+        val size = source0?.let { (width, height) -> AnimatedImageBudget.decodeSize(width, height, frameCount.coerceAtLeast(1)) }
+        if (size == null) {
+            CFRelease(source)
+            loggy("AnimatedImage: refused, over the size limits: ${source0?.first}x${source0?.second}, $frameCount frames")
+            return@usePinned null
+        }
+        val scaled = size.width < source0.first || size.height < source0.second
+
+        /* A Create call returns an owned reference. UIImage keeps its own, so release this one,
+         * or every decoded image leaks one CGImage for the life of the process. */
+        fun frameAt(index: Int): UIImage? {
+            val cgImage = CGImageSourceCreateImageAtIndex(source, index.toULong(), null) ?: return null
+            val drawn = if (scaled) cgImage.scaledTo(size.width, size.height) else null
+            val image = UIImage.imageWithCGImage(drawn ?: cgImage)
+            drawn?.let(::CGImageRelease)
+            CGImageRelease(cgImage)
+            return image
+        }
 
         if (frameCount <= 1) {
             /* Static image: a single frame */
-            val cgImage = CGImageSourceCreateImageAtIndex(source, 0u, null)
+            val image = frameAt(0)
             CFRelease(source)
-            // A Create call returns an owned reference. UIImage keeps its own, so release this
-            // one, or every decoded image leaks one CGImage for the life of the process.
-            return@usePinned cgImage?.let { UIImage.imageWithCGImage(it).also { _ -> CGImageRelease(it) } }
+            return@usePinned image
         }
 
         /* Animated image: extract every frame, and add up the frame delays for the duration. */
@@ -223,9 +261,7 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
         var totalDuration = 0.0
 
         for (i in 0 until frameCount) {
-            val cgImage = CGImageSourceCreateImageAtIndex(source, i.toULong(), null) ?: continue
-            frames.add(UIImage.imageWithCGImage(cgImage))
-            CGImageRelease(cgImage)
+            frames.add(frameAt(i) ?: continue)
             totalDuration += readFrameDelaySeconds(source, i.toULong())
         }
         CFRelease(source)
@@ -241,6 +277,35 @@ private fun decodeAnimatedImage(bytes: ByteArray): UIImage? {
 
         UIImage.animatedImageWithImages(frames, totalDuration)
     }
+}
+
+/** The pixel size in the header of the first frame, or null when the header has none. */
+@OptIn(ExperimentalForeignApi::class)
+private fun sourceSize(source: CGImageSourceRef): Pair<Int, Int>? {
+    val props = CGImageSourceCopyPropertiesAtIndex(source, 0u, null) ?: return null
+    try {
+        val width = props.doubleValue(kCGImagePropertyPixelWidth) ?: return null
+        val height = props.doubleValue(kCGImagePropertyPixelHeight) ?: return null
+        return width.toInt() to height.toInt()
+    } finally {
+        CFRelease(props)
+    }
+}
+
+/** A copy of this image drawn at [width] by [height] pixels, or null when Core Graphics cannot make one. */
+@OptIn(ExperimentalForeignApi::class)
+private fun CGImageRef.scaledTo(width: Int, height: Int): CGImageRef? {
+    val colorSpace = CGColorSpaceCreateDeviceRGB()
+    val context = CGBitmapContextCreate(
+        null, width.toULong(), height.toULong(), 8u, 0u, colorSpace, CGImageAlphaInfo.kCGImageAlphaPremultipliedLast.value,
+    )
+    CGColorSpaceRelease(colorSpace)
+    if (context == null) return null
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh)
+    CGContextDrawImage(context, CGRectMake(0.0, 0.0, width.toDouble(), height.toDouble()), this)
+    val scaled = CGBitmapContextCreateImage(context)
+    CGContextRelease(context)
+    return scaled
 }
 
 /* The GIF, APNG and WebP convention: a delay under about 20 ms counts as 100 ms. */

@@ -14,25 +14,29 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import app.utils.httpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
+import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Codec
 import org.jetbrains.skia.Data
+import org.jetbrains.skia.FilterMipmap
+import org.jetbrains.skia.FilterMode
+import org.jetbrains.skia.ImageInfo
+import org.jetbrains.skia.MipmapMode
+import org.jetbrains.skia.Rect
 import org.jetbrains.skia.Image as SkiaImage
 
 /**
  * Desktop animated image. Coil has no JVM GIF decoder (coil-gif is Android-only), so Skia's Codec
  * decodes GIFs directly. Every frame is rendered ahead, in order: a delta frame draws on top of
- * the previous frame through priorFrame. Playback then cycles the frames, each for its own
- * duration. This mirrors the iOS actual, including the 64-entry LRU cache that keeps scrolling in
- * the KLIPY GIF panel smooth.
+ * the previous frame through priorFrame. Each frame is then scaled down to the tile size that
+ * [AnimatedImageBudget] sets. Playback cycles the frames, each for its own duration. This mirrors
+ * the iOS actual, including the LRU cache that keeps scrolling in the KLIPY GIF panel smooth.
  */
 @Composable
 actual fun AnimatedImage(
@@ -82,44 +86,64 @@ actual fun AnimatedImage(
     )
 }
 
-private class DecodedFrame(val bitmap: ImageBitmap, val durationMs: Long)
+internal class DecodedFrame(val bitmap: ImageBitmap, val durationMs: Long)
 
-private class DecodedAnimation(val frames: List<DecodedFrame>)
+internal class DecodedAnimation(val frames: List<DecodedFrame>) {
+    /** The memory of the decoded frames, at four bytes a pixel. */
+    val bytes: Long = frames.sumOf { it.bitmap.width.toLong() * it.bitmap.height * 4 }
+}
 
-private object AnimatedImageCache {
+internal object AnimatedImageCache {
 
     private const val MAX_ENTRIES = 64
+    private const val MAX_BYTES = 48L * 1024 * 1024
 
-    private val mutex = Mutex()
-    private val cache = object : LinkedHashMap<String, DecodedAnimation>(16, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, DecodedAnimation>?) =
-            size > MAX_ENTRIES
-    }
+    private val cache = LinkedHashMap<String, DecodedAnimation>(16, 0.75f, true)
 
     fun peek(url: String): DecodedAnimation? = synchronized(cache) { cache[url] }
 
-    suspend fun load(url: String): DecodedAnimation? = withContext(Dispatchers.IO) {
-        synchronized(cache) { cache[url] }?.let { return@withContext it }
-
-        // No de-duplication of loads in progress, on purpose: the KLIPY grid loads distinct URLs.
-        runCatching {
-            val bytes: ByteArray = httpClient.get(url).body()
-            val decoded = decode(bytes)
-            mutex.withLock { synchronized(cache) { cache[url] = decoded } }
-            decoded
-        }.getOrNull()
+    private fun store(url: String, decoded: DecodedAnimation) = synchronized(cache) {
+        cache[url] = decoded
+        // Two bounds: a count for the panel's grid, and bytes so a few long GIFs cannot fill memory.
+        var bytes = cache.values.sumOf { it.bytes }
+        val oldestFirst = cache.keys.iterator()
+        while ((cache.size > MAX_ENTRIES || bytes > MAX_BYTES) && cache.size > 1) {
+            val oldest = oldestFirst.next()
+            bytes -= cache.getValue(oldest).bytes
+            oldestFirst.remove()
+        }
     }
 
-    private fun decode(bytes: ByteArray): DecodedAnimation {
+    suspend fun load(url: String): DecodedAnimation? {
+        peek(url)?.let { return it }
+        // No de-duplication of loads in progress, on purpose: the KLIPY grid loads distinct URLs.
+        return AnimatedImageBudget.loads.withPermit {
+            withContext(Dispatchers.IO) {
+                try {
+                    val bytes = httpClient.downloadAtMost(url, AnimatedImageBudget.MAX_DOWNLOAD_BYTES) ?: return@withContext null
+                    decode(bytes)?.also { store(url, it) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        }
+    }
+
+    /** Decodes every frame at the size that [AnimatedImageBudget.decodeSize] allows, or returns null over a limit. */
+    fun decode(bytes: ByteArray): DecodedAnimation? {
         val codec = Codec.makeFromData(Data.makeFromBytes(bytes))
         codec.use { c ->
             val info = c.imageInfo
+            val size = AnimatedImageBudget.decodeSize(info.width, info.height, c.frameCount.coerceAtLeast(1)) ?: return null
+            // One full-size frame at a time, which MAX_SOURCE_PIXELS bounds.
             val work = Bitmap().apply { allocPixels(info) }
             val frames = ArrayList<DecodedFrame>(c.frameCount)
 
             if (c.frameCount <= 1) {
                 c.readPixels(work, 0)
-                frames.add(DecodedFrame(SkiaImage.makeFromBitmap(work).toComposeImageBitmap(), Long.MAX_VALUE))
+                frames.add(DecodedFrame(work.toFrameImage(size.width, size.height), Long.MAX_VALUE))
             } else {
                 val frameInfos = c.framesInfo
                 for (i in 0 until c.frameCount) {
@@ -129,13 +153,34 @@ private object AnimatedImageCache {
                     val duration = frameInfos.getOrNull(i)?.duration?.takeIf { it > 0 } ?: 100
                     frames.add(
                         DecodedFrame(
-                            bitmap = SkiaImage.makeFromBitmap(work).toComposeImageBitmap(),
+                            bitmap = work.toFrameImage(size.width, size.height),
                             durationMs = duration.coerceAtLeast(20).toLong(),
                         )
                     )
                 }
             }
+            work.close()
             return DecodedAnimation(frames)
         }
+    }
+
+    /** A copy of the frame in [this], scaled to [width] by [height] when that is smaller. */
+    private fun Bitmap.toFrameImage(width: Int, height: Int): ImageBitmap {
+        if (width == this.width && height == this.height) return SkiaImage.makeFromBitmap(this).toComposeImageBitmap()
+        val scaled = Bitmap().apply { check(allocPixels(ImageInfo.makeN32Premul(width, height))) { "No memory for a $width x $height frame" } }
+        SkiaImage.makeFromBitmap(this).use { full ->
+            Canvas(scaled).use { canvas ->
+                canvas.drawImageRect(
+                    full,
+                    Rect.makeWH(this.width.toFloat(), this.height.toFloat()),
+                    Rect.makeWH(width.toFloat(), height.toFloat()),
+                    FilterMipmap(FilterMode.LINEAR, MipmapMode.NONE),
+                    null,
+                    true,
+                )
+            }
+        }
+        scaled.setImmutable()
+        return scaled.use { SkiaImage.makeFromBitmap(it).toComposeImageBitmap() }
     }
 }
