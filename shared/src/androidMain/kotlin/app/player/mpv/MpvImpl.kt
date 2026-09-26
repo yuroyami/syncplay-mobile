@@ -446,6 +446,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mpv[MpvProperties.Pause] = true
         // Raise the volume cap for gain: mpv caps volume at 130 by default.
         mpv[MpvProperties.VolumeMax] = gainMax.toDouble()
+        // Each file starts on a new core at mpv's default of 100. The level the user chose, boost
+        // included, comes back here, after the cap that lets it go past 100.
+        mpv[MpvProperties.Volume] = mpvVolume.toDouble()
         watch(mpv)
     }
 

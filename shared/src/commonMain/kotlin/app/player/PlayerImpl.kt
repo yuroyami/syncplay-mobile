@@ -721,7 +721,4 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             playerTrackerJob
         }
     }
-
-
-    open suspend fun reloadVideo() {}
 }

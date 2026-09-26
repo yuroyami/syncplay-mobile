@@ -408,10 +408,22 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .build()
         externalSubMediaId = viewmodel.media?.location?.commonUri
 
-        withContext(Dispatchers.Main.immediate) {
-            // Exo can only attach an external subtitle by reloading the media item.
-            reloadVideo()
-        }
+        withContext(Dispatchers.Main.immediate) { attachExternalSub() }
+    }
+
+    /**
+     * Exo can attach an external subtitle only by replacing the media item. It is the same file,
+     * so the item comes back at the current position with the same play state, and none of the
+     * steps of a new file run: no announcement, no resync, no reset of the tracks.
+     */
+    private fun attachExternalSub() {
+        val player = exoplayer ?: return
+        val current = player.currentMediaItem ?: return
+        val mediaId = viewmodel.media?.location?.commonUri ?: return
+        val playWhenReady = player.playWhenReady
+        player.setMediaItem(current.buildUpon().withExternalSub(mediaId).build(), player.currentPosition)
+        player.playWhenReady = playWhenReady
+        player.prepare()
     }
 
     /** The subtitle for [mediaId], or nothing when the file changed since it was chosen. */
@@ -461,14 +473,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         exoplayer?.prepare()
         exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
         super.parseMedia(media)
-    }
-
-    override suspend fun reloadVideo() {
-        val mediaLoc = viewmodel.media?.location ?: return
-        when (mediaLoc) {
-            is MediaFileLocation.Local -> injectVideoFile(mediaLoc.file)
-            is MediaFileLocation.Remote -> injectVideoURL(mediaLoc.url)
-        }
     }
 
     override suspend fun pause() {
