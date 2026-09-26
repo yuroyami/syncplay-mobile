@@ -7,10 +7,10 @@ import androidx.media3.session.MediaSessionService
 import app.utils.loggy
 
 /**
- * Puts the room on the lock screen and answers the headset button.
+ * Puts the room on the lock screen and tells Android that something is playing (issue #125).
  *
- * As a MediaSessionService, it lets the system draw the playback controls, makes media buttons
- * work and tells Android that something is playing (issue #125).
+ * The session offers no controls (see [RoomMediaSessionPlayer]), so the lock screen, the
+ * notification and a headset button show the room and never change it.
  *
  * The room creates the session and hands it over through [RoomMediaSessionHolder], because the
  * player behind the session is whichever engine the room built.

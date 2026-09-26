@@ -394,15 +394,18 @@ class SyncplayActivity : ComponentActivity() {
     /**
      * Handles D-pad and media keys for Android TV and Google TV.
      *
-     * In a room, media keys always control playback. When a video is loaded, the HUD is hidden
-     * and the screen is not locked, the D-pad controls playback (left and right seek, center
-     * plays or pauses) and shows the HUD. Other key events go to Compose for focus navigation.
+     * In a room on a television, the remote's media keys control playback. On a phone or a tablet
+     * the same keys come from a headset, and a headset must never change the room, so they do
+     * nothing. When a video is loaded, the HUD is hidden and the screen is not locked, the D-pad
+     * controls playback (left and right seek, center plays or pauses) and shows the HUD. Other
+     * key events go to Compose for focus navigation.
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val vm = roomViewmodel
 
-        // Media keys: always handled in a room.
         if (vm != null) {
+            // A headset sends these keys too. Only a television remote may use them.
+            if (!isTelevision() && keyCode in HEADSET_KEYS) return true
             when (keyCode) {
                 KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                     if (vm.playerManager.hasVideo.value) {
@@ -541,3 +544,16 @@ class SyncplayActivity : ComponentActivity() {
     }
 
 }
+
+/** The media keys that a headset can send. Outside a television they reach nothing in a room. */
+private val HEADSET_KEYS = setOf(
+    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+    KeyEvent.KEYCODE_MEDIA_PLAY,
+    KeyEvent.KEYCODE_MEDIA_PAUSE,
+    KeyEvent.KEYCODE_MEDIA_STOP,
+    KeyEvent.KEYCODE_MEDIA_NEXT,
+    KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+    KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+    KeyEvent.KEYCODE_MEDIA_REWIND,
+    KeyEvent.KEYCODE_HEADSETHOOK,
+)

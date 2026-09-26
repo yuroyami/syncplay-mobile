@@ -72,8 +72,16 @@ import kotlinx.cinterop.useContents
 import platform.CoreMedia.CMTimeRangeGetEnd
 import platform.AVFoundation.CMTimeRangeValue
 import platform.AVFoundation.loadedTimeRanges
+import platform.AVFoundation.duration
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSError
+import platform.darwin.NSObjectProtocol
+import platform.Foundation.NSNumber
+import platform.Foundation.NSNotification
+import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
+import platform.AVFAudio.AVAudioSessionInterruptionTypeEnded
+import platform.AVFAudio.AVAudioSessionInterruptionTypeBegan
+import platform.AVFAudio.AVAudioSessionInterruptionNotification
 import platform.Foundation.NSKeyValueObservingOptionNew
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
@@ -123,6 +131,14 @@ object AVPlayerEngine: PlayerEngine {
         /** The speed to use. [play] applies it, so a speed change never starts a paused player. */
         private var desiredRate: Float = 1f
 
+        /** What the room last asked of the player: true after [play], false after [pause]. */
+        private var roomWantsPlaying = false
+
+        /** True while a call or another app holds the audio session, see [onInterruption]. */
+        private var interrupted = false
+
+        private var interruptionObserver: NSObjectProtocol? = null
+
         private var avContainer: UIView? = null
 
         private var avMedia: AVPlayerItem? = null
@@ -146,7 +162,39 @@ object AVPlayerEngine: PlayerEngine {
          */
         override fun initialize() {
             configurePlaybackAudioSession()
+            interruptionObserver = NSNotificationCenter.defaultCenter.addObserverForName(
+                name = AVAudioSessionInterruptionNotification,
+                `object` = null,
+                queue = NSOperationQueue.mainQueue,
+            ) { note -> onInterruption(note) }
             startTrackingProgress()
+        }
+
+        /**
+         * A call or another app took the audio session, and AVPlayer paused. The pause stays on
+         * this device. When the session comes back, the player follows the room again.
+         */
+        private fun onInterruption(note: NSNotification?) {
+            if (!isInitialized) return
+            val type = (note?.userInfo?.get(AVAudioSessionInterruptionTypeKey) as? NSNumber)?.unsignedLongValue ?: return
+            when (type) {
+                AVAudioSessionInterruptionTypeBegan -> interrupted = true
+                AVAudioSessionInterruptionTypeEnded -> {
+                    interrupted = false
+                    if (roomWantsPlaying) {
+                        viewmodel.protocol.noteExpectedPlaybackState(paused = false)
+                        avPlayer?.rate = desiredRate
+                    }
+                }
+            }
+        }
+
+        /** True when the current item has played to its end, where a pause is the normal stop. */
+        @OptIn(ExperimentalForeignApi::class)
+        private fun atEndOfItem(): Boolean {
+            val item = avPlayer?.currentItem ?: return false
+            val duration = CMTimeGetSeconds(item.duration)
+            return duration.isFinite() && CMTimeGetSeconds(item.currentTime()) >= duration - 0.5
         }
 
         /**
@@ -203,11 +251,10 @@ object AVPlayerEngine: PlayerEngine {
          * Registers [observer] on the current [avPlayer] for `timeControlStatus` KVO events.
          * [observerAttached] prevents a double registration.
          *
-         * This matters on iPad, where play and pause can come from system controls
-         * (Picture-in-Picture, Control Center, lock screen, an external keyboard's space bar,
-         * AirPlay). The progress tracker does not update [app.player.PlayerManager.isNowPlaying],
-         * so without the observer the play button shows a stale state and the other users in the
-         * room (the group of people watching together) never hear about the pause.
+         * The observer keeps [app.player.PlayerManager.isNowPlaying] and the buffering indicator
+         * in step with AVPlayer, and reports a failure. A change that the room did not ask for,
+         * such as a pause after headphones went away, is undone instead: system controls never
+         * change the room (the group of people watching together).
          */
         private fun attachTimeControlObserver() {
             if (observerAttached) return
@@ -280,6 +327,21 @@ object AVPlayerEngine: PlayerEngine {
                         val waiting = status == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
                         viewmodel.playerManager.isBuffering.value = waiting
 
+                        // A system control changed playback: headphones that went away, the lock
+                        // screen, a headset button. The room never follows it. The player goes back
+                        // to what the room asked for, and the room hears nothing.
+                        val failed = avPlayer?.error != null || avMedia?.error != null
+                        if (!waiting && !failed && !interrupted && isPlaying != roomWantsPlaying && !atEndOfItem()) {
+                            if (roomWantsPlaying) avPlayer?.rate = desiredRate else avPlayer?.pause()
+                            return
+                        }
+                        // During a call the pause stays on this device, like a failure below.
+                        if (interrupted && !isPlaying && !waiting) {
+                            viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+                            viewmodel.playerManager.isNowPlaying.value = false
+                            return
+                        }
+
                         // A failed player or item pauses by itself. That pause stays local and is
                         // not sent to the room.
                         val failure = avPlayer?.error ?: avMedia?.error
@@ -329,6 +391,8 @@ object AVPlayerEngine: PlayerEngine {
             // The AVPlayer is not a notification observer. The only NSNotificationCenter
             // registration this engine holds is the end-of-item one, removed above.
             detachTimeControlObserver()
+            interruptionObserver?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
+            interruptionObserver = null
             pipController?.let { controller ->
                 if (controller.pictureInPictureActive) controller.stopPictureInPicture()
                 controller.delegate = null
@@ -565,11 +629,13 @@ object AVPlayerEngine: PlayerEngine {
 
         override suspend fun pause() {
             if (!isInitialized) return
+            roomWantsPlaying = false
             avPlayer?.pause()
         }
 
         override suspend fun play() {
             if (!isInitialized) return
+            roomWantsPlaying = true
             // A positive rate is how AVPlayer plays, so this also applies the desired speed.
             avPlayer?.rate = desiredRate
         }
