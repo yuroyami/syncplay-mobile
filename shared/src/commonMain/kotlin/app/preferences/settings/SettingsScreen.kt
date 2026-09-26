@@ -35,6 +35,7 @@ import app.uicomponents.controls.Field
 import app.uicomponents.controls.SearchGlyph
 import app.uicomponents.controls.VerticalRule
 import app.uicomponents.frames.ScreenFrame
+import app.uicomponents.frames.ScrollbarHost
 
 /**
  * The settings destination. Compact and medium widths: the category list, then a category.
@@ -77,51 +78,58 @@ fun SettingsScreenUI(categoryKey: String?) {
                  * enters the settings at their top, and Left comes back to the open category. */
                 val paneFocus = remember { FocusRequester() }
                 val categoryFocus = remember { FocusRequester() }
+                val listScroll = rememberScrollState()
+                /* Each scroll host takes the size, and the focus rules stay on the scrolling column
+                 * inside it, so a remote moves between the panes as before. */
                 Row(Modifier.fillMaxSize()) {
-                    Column(
-                        Modifier
-                            .width(280.dp)
-                            .fillMaxHeight()
-                            .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Right) paneFocus.requestFocus(FocusDirection.Down) } }
-                            .focusGroup()
-                            .verticalScroll(rememberScrollState()),
-                    ) {
-                        SearchField(query) { query = it }
-                        if (query.isNotBlank()) {
-                            SettingsSearchResults(hits) { hit -> open = hit.category; highlight = hit.entry.pref.key; query = "" }
-                        } else {
-                            SettingsCategoryList(categories, selectedKey = current?.key, selectedFocus = categoryFocus) { open = it; highlight = null }
+                    ScrollbarHost(listScroll, Modifier.width(280.dp).fillMaxHeight()) {
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Right) paneFocus.requestFocus(FocusDirection.Down) } }
+                                .focusGroup()
+                                .verticalScroll(listScroll),
+                        ) {
+                            SearchField(query) { query = it }
+                            if (query.isNotBlank()) {
+                                SettingsSearchResults(hits) { hit -> open = hit.category; highlight = hit.entry.pref.key; query = "" }
+                            } else {
+                                SettingsCategoryList(categories, selectedKey = current?.key, selectedFocus = categoryFocus) { open = it; highlight = null }
+                            }
                         }
                     }
                     VerticalRule()
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .focusRequester(paneFocus)
-                            .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Left) categoryFocus.requestFocus() } }
-                            .focusGroup()
-                            .verticalScroll(scroll),
-                    ) {
-                        Box(Modifier.widthIn(max = density.contentMaxWidth)) {
-                            if (current != null) SettingsCategoryBody(current, highlightKey = highlight)
+                    ScrollbarHost(scroll, Modifier.weight(1f).fillMaxHeight()) {
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .focusRequester(paneFocus)
+                                .focusProperties { onExit = { if (requestedFocusDirection == FocusDirection.Left) categoryFocus.requestFocus() } }
+                                .focusGroup()
+                                .verticalScroll(scroll),
+                        ) {
+                            Box(Modifier.widthIn(max = density.contentMaxWidth)) {
+                                if (current != null) SettingsCategoryBody(current, highlightKey = highlight)
+                            }
                         }
                     }
                 }
             } else {
-                Column(Modifier.fillMaxSize().verticalScroll(scroll), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.fillMaxWidth().widthIn(max = density.contentMaxWidth)) {
-                        if (current == null) {
-                            Column {
-                                SearchField(query) { query = it }
-                                if (query.isNotBlank()) {
-                                    SettingsSearchResults(hits) { hit -> open = hit.category; highlight = hit.entry.pref.key; query = "" }
-                                } else {
-                                    SettingsCategoryList(categories) { open = it; highlight = null }
+                ScrollbarHost(scroll, Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize().verticalScroll(scroll), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.fillMaxWidth().widthIn(max = density.contentMaxWidth)) {
+                            if (current == null) {
+                                Column {
+                                    SearchField(query) { query = it }
+                                    if (query.isNotBlank()) {
+                                        SettingsSearchResults(hits) { hit -> open = hit.category; highlight = hit.entry.pref.key; query = "" }
+                                    } else {
+                                        SettingsCategoryList(categories) { open = it; highlight = null }
+                                    }
                                 }
+                            } else {
+                                SettingsCategoryBody(current, highlightKey = highlight)
                             }
-                        } else {
-                            SettingsCategoryBody(current, highlightKey = highlight)
                         }
                     }
                 }

@@ -65,7 +65,11 @@ fun PanelFrame(
         }
         Rule()
         if (scrollable) {
-            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), content = content)
+            val scroll = rememberScrollState()
+            // Full width, so the bar sits on the panel's edge and not at the end of the widest row.
+            ScrollbarHost(scroll, Modifier.weight(1f, fill = false).fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().verticalScroll(scroll), content = content)
+            }
         } else {
             Column(Modifier.weight(1f, fill = false), content = content)
         }

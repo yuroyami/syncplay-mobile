@@ -50,6 +50,7 @@ import app.uicomponents.frames.NoticeHost
 import app.uicomponents.frames.NoticeQueue
 import app.uicomponents.frames.NoticeSeverity
 import app.uicomponents.frames.ScreenFrame
+import app.uicomponents.frames.ScrollbarHost
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
 import syncplaymobile.shared.generated.resources.save
@@ -127,55 +128,58 @@ private fun Controls(
     modifier: Modifier = Modifier,
 ) {
     val p = palette
-    Column(modifier.verticalScroll(rememberScrollState()).imePadding()) {
-        Box(Modifier.padding(horizontal = Space.gutter, vertical = Space.gap)) {
-            Field(
-                value = theme.name,
-                onValueChange = { onTheme(theme.copy(name = it)) },
-                placeholder = strings.themeCustomizeName,
-                name = strings.themeCustomizeName,
-            )
-        }
-
-        GroupHeading(strings.themeCustomizePaletteStyle)
-        ColorRow(strings.themeCustomizePrimaryColor, Color(theme.primaryColor), onColor = { onTheme(theme.copy(primaryColor = it.toArgb())) })
-        ColorRow(strings.themeCustomizeSecondaryColor, theme.secondaryColor?.let(::Color), onColor = { onTheme(theme.copy(secondaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(secondaryColor = null)) })
-        ColorRow(strings.themeCustomizeTertiaryColor, theme.tertiaryColor?.let(::Color), onColor = { onTheme(theme.copy(tertiaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(tertiaryColor = null)) })
-        ColorRow(strings.themeCustomizeNeutralColor, theme.neutralColor?.let(::Color), onColor = { onTheme(theme.copy(neutralColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralColor = null)) })
-        ColorRow(strings.themeCustomizeNeutralVariantColor, theme.neutralVariantColor?.let(::Color), onColor = { onTheme(theme.copy(neutralVariantColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralVariantColor = null)) })
-
-        ListRow {
-            RowLabel(strings.themeCustomizePaletteStyle)
-            val styles = PaletteStyle.entries
-            Stepper(options = styles.map { it.name }, index = styles.indexOf(theme.style).coerceAtLeast(0), onIndex = { onTheme(theme.copy(style = styles[it])) }, wrap = true)
-        }
-        ListRow {
-            RowLabel(strings.themeCustomizeDark)
-            Rocker(on = theme.isDark, onChange = { onTheme(theme.copy(isDark = it)) }, name = strings.themeCustomizeDark)
-        }
-        ListRow(enabled = theme.isDark) {
-            RowLabel(strings.themeCustomizeIsAmoled)
-            Rocker(on = theme.isAMOLED, onChange = { onTheme(theme.copy(isAMOLED = it)) }, enabled = theme.isDark, name = strings.themeCustomizeIsAmoled)
-        }
-        // Contrast starts from the theme's stored value, never from zero.
-        Column(Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(strings.themeCustomizeContrast, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
-                Text(((theme.contrast * 10).roundToInt() / 10.0).toString(), style = Type.value, color = p.inkDim)
+    val scroll = rememberScrollState()
+    ScrollbarHost(scroll, modifier) {
+        Column(Modifier.fillMaxSize().verticalScroll(scroll).imePadding()) {
+            Box(Modifier.padding(horizontal = Space.gutter, vertical = Space.gap)) {
+                Field(
+                    value = theme.name,
+                    onValueChange = { onTheme(theme.copy(name = it)) },
+                    placeholder = strings.themeCustomizeName,
+                    name = strings.themeCustomizeName,
+                )
             }
-            ScrubTrack(
-                value = ((theme.contrast + 1.0) / 2.0).toFloat().coerceIn(0f, 1f),
-                onValueChange = { onTheme(theme.copy(contrast = (it * 2.0 - 1.0))) },
-                name = strings.themeCustomizeContrast,
-            )
-        }
 
-        Column(Modifier.padding(Space.gutter), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
-            // Disabled while a save runs, so a second tap cannot write the theme twice.
-            PrimaryAction(strings.save, onClick = { onSave(false) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
-            if (editing) SecondaryAction(strings.themeSaveAsNew, onClick = { onSave(true) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
+            GroupHeading(strings.themeCustomizePaletteStyle)
+            ColorRow(strings.themeCustomizePrimaryColor, Color(theme.primaryColor), onColor = { onTheme(theme.copy(primaryColor = it.toArgb())) })
+            ColorRow(strings.themeCustomizeSecondaryColor, theme.secondaryColor?.let(::Color), onColor = { onTheme(theme.copy(secondaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(secondaryColor = null)) })
+            ColorRow(strings.themeCustomizeTertiaryColor, theme.tertiaryColor?.let(::Color), onColor = { onTheme(theme.copy(tertiaryColor = it.toArgb())) }, onReset = { onTheme(theme.copy(tertiaryColor = null)) })
+            ColorRow(strings.themeCustomizeNeutralColor, theme.neutralColor?.let(::Color), onColor = { onTheme(theme.copy(neutralColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralColor = null)) })
+            ColorRow(strings.themeCustomizeNeutralVariantColor, theme.neutralVariantColor?.let(::Color), onColor = { onTheme(theme.copy(neutralVariantColor = it.toArgb())) }, onReset = { onTheme(theme.copy(neutralVariantColor = null)) })
+
+            ListRow {
+                RowLabel(strings.themeCustomizePaletteStyle)
+                val styles = PaletteStyle.entries
+                Stepper(options = styles.map { it.name }, index = styles.indexOf(theme.style).coerceAtLeast(0), onIndex = { onTheme(theme.copy(style = styles[it])) }, wrap = true)
+            }
+            ListRow {
+                RowLabel(strings.themeCustomizeDark)
+                Rocker(on = theme.isDark, onChange = { onTheme(theme.copy(isDark = it)) }, name = strings.themeCustomizeDark)
+            }
+            ListRow(enabled = theme.isDark) {
+                RowLabel(strings.themeCustomizeIsAmoled)
+                Rocker(on = theme.isAMOLED, onChange = { onTheme(theme.copy(isAMOLED = it)) }, enabled = theme.isDark, name = strings.themeCustomizeIsAmoled)
+            }
+            // Contrast starts from the theme's stored value, never from zero.
+            Column(Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(strings.themeCustomizeContrast, style = Type.label, color = p.ink, modifier = Modifier.weight(1f))
+                    Text(((theme.contrast * 10).roundToInt() / 10.0).toString(), style = Type.value, color = p.inkDim)
+                }
+                ScrubTrack(
+                    value = ((theme.contrast + 1.0) / 2.0).toFloat().coerceIn(0f, 1f),
+                    onValueChange = { onTheme(theme.copy(contrast = (it * 2.0 - 1.0))) },
+                    name = strings.themeCustomizeContrast,
+                )
+            }
+
+            Column(Modifier.padding(Space.gutter), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
+                // Disabled while a save runs, so a second tap cannot write the theme twice.
+                PrimaryAction(strings.save, onClick = { onSave(false) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
+                if (editing) SecondaryAction(strings.themeSaveAsNew, onClick = { onSave(true) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
+            }
+            Spacer(Modifier.height(Space.gutter))
         }
-        Spacer(Modifier.height(Space.gutter))
     }
 }
 

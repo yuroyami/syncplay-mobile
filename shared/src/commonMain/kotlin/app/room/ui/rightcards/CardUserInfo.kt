@@ -71,6 +71,7 @@ import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelFrame
+import app.uicomponents.frames.ScrollbarHost
 import app.utils.FileComparison
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
@@ -131,32 +132,35 @@ internal fun UserRosterPanel(
         scrollable = false,
         actions = { RosterViewSwitcher(compact, onCompactChange) },
     ) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            if (users.size <= 1) {
-                Text(strings.roomAlone, color = palette.inkDim,
-                    modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight))
-            }
-            users.forEach { user ->
-                key(user.name) {
-                    val isSelf = user.name == me
-                    val selected = selectedUser == user.name
-                    RosterUserRow(
-                        user = user, isSelf = isSelf, myFile = myFile, compact = compact,
-                        expanded = selected,
-                        onClick = if (compact || !isSelf) ({ selectedUser = if (selected) null else user.name }) else null,
-                    )
-                    if (selected && !isSelf) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth().padding(start = Space.gutter, end = Space.gutter, bottom = Space.gapTight),
-                            horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
-                        ) {
-                            SecondaryAction(if (user.name in mutedUsers) strings.roomUserUnmute else strings.roomUserMute, { onToggleMute(user.name) })
-                            if (onSetReady != null) {
-                                SecondaryAction(if (user.readiness) strings.roomUserSetNotReady else strings.roomUserSetReady, { onSetReady(user) })
+        val scroll = rememberScrollState()
+        ScrollbarHost(scroll, Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
+                if (users.size <= 1) {
+                    Text(strings.roomAlone, color = palette.inkDim,
+                        modifier = Modifier.padding(horizontal = Space.gutter, vertical = Space.gapTight))
+                }
+                users.forEach { user ->
+                    key(user.name) {
+                        val isSelf = user.name == me
+                        val selected = selectedUser == user.name
+                        RosterUserRow(
+                            user = user, isSelf = isSelf, myFile = myFile, compact = compact,
+                            expanded = selected,
+                            onClick = if (compact || !isSelf) ({ selectedUser = if (selected) null else user.name }) else null,
+                        )
+                        if (selected && !isSelf) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth().padding(start = Space.gutter, end = Space.gutter, bottom = Space.gapTight),
+                                horizontalArrangement = Arrangement.spacedBy(Space.gapTight),
+                            ) {
+                                SecondaryAction(if (user.name in mutedUsers) strings.roomUserUnmute else strings.roomUserMute, { onToggleMute(user.name) })
+                                if (onSetReady != null) {
+                                    SecondaryAction(if (user.readiness) strings.roomUserSetNotReady else strings.roomUserSetReady, { onSetReady(user) })
+                                }
                             }
                         }
+                        Rule(Modifier.padding(horizontal = Space.gutter))
                     }
-                    Rule(Modifier.padding(horizontal = Space.gutter))
                 }
             }
         }

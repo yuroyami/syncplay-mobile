@@ -69,6 +69,7 @@ import app.uicomponents.controls.Stepper
 import app.uicomponents.controls.Tag
 import app.uicomponents.controls.Text
 import app.uicomponents.frames.PanelSurface
+import app.uicomponents.frames.ScrollbarHost
 import app.utils.ccExs
 import app.utils.ioDispatcher
 import app.utils.localizedLanguageName
@@ -184,28 +185,30 @@ internal fun TrackControls(
         Rule()
         val shown = tracks.filter { it.type == selectedType }
         val listState = key(selectedType) { rememberLazyListState() }
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
-            // The visualizer rows scroll with the list. A panel on a phone is short, and as a fixed
-            // header, these rows would push the pattern stepper and the tracks out of the panel.
-            if (selectedType == TrackType.VIDEO && supportsVisualization) item {
-                Column { VisualizerRows(tracks, visualization, onVisualization, visualizer) }
-            }
-            if (selectedType == TrackType.SUBTITLE || selectedType == TrackType.VIDEO && supportsVideo) item {
-                ListRow(onClick = { onChoose(null, selectedType) }, enabled = enabled,
-                    selected = shown.none { it.selected }, minHeight = Space.row, horizontalPadding = Space.gap) {
-                    Icon(Icons.Filled.Block, null, modifier = Modifier.size(20.dp))
-                    RowGap(Space.gap)
-                    Text(if (selectedType == TrackType.VIDEO) strings.roomVideoOff else strings.roomSubTrackDisable,
-                        style = Type.value, modifier = Modifier.weight(1f))
-                    if (shown.none { it.selected }) Icon(CheckGlyph, null, tint = palette.accent, modifier = Modifier.size(16.dp))
+        ScrollbarHost(listState, Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(Modifier.fillMaxSize(), state = listState) {
+                // The visualizer rows scroll with the list. A panel on a phone is short, and as a fixed
+                // header, these rows would push the pattern stepper and the tracks out of the panel.
+                if (selectedType == TrackType.VIDEO && supportsVisualization) item {
+                    Column { VisualizerRows(tracks, visualization, onVisualization, visualizer) }
                 }
-            }
-            if (shown.isEmpty()) item {
-                Text(strings.roomTracksNone, style = Type.note, color = palette.inkDim,
-                    modifier = Modifier.padding(Space.gap))
-            }
-            itemsIndexed(shown) { _, track ->
-                TrackRow(track, enabled) { onChoose(track, selectedType) }
+                if (selectedType == TrackType.SUBTITLE || selectedType == TrackType.VIDEO && supportsVideo) item {
+                    ListRow(onClick = { onChoose(null, selectedType) }, enabled = enabled,
+                        selected = shown.none { it.selected }, minHeight = Space.row, horizontalPadding = Space.gap) {
+                        Icon(Icons.Filled.Block, null, modifier = Modifier.size(20.dp))
+                        RowGap(Space.gap)
+                        Text(if (selectedType == TrackType.VIDEO) strings.roomVideoOff else strings.roomSubTrackDisable,
+                            style = Type.value, modifier = Modifier.weight(1f))
+                        if (shown.none { it.selected }) Icon(CheckGlyph, null, tint = palette.accent, modifier = Modifier.size(16.dp))
+                    }
+                }
+                if (shown.isEmpty()) item {
+                    Text(strings.roomTracksNone, style = Type.note, color = palette.inkDim,
+                        modifier = Modifier.padding(Space.gap))
+                }
+                itemsIndexed(shown) { _, track ->
+                    TrackRow(track, enabled) { onChoose(track, selectedType) }
+                }
             }
         }
     }

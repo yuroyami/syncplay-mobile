@@ -74,6 +74,7 @@ import app.uicomponents.controls.Text
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
 import app.uicomponents.frames.PanelFrame
+import app.uicomponents.frames.ScrollbarHost
 import app.utils.appName
 import app.utils.getText
 import app.utils.ioDispatcher
@@ -220,40 +221,42 @@ object CardSharedPlaylist {
             val lifted = drag.rows
             // While a row is lifted, the panel draws its own copy of the list, in the dragged order.
             val rows = lifted ?: items.mapIndexed { index, entry -> index to entry }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth().pointerInput(drag) {
-                    detectDragGesturesAfterLongPress(
-                        onDragStart = { at -> if (drag.start(at, items.toList())) Feedback.tick() },
-                        onDrag = { change, amount ->
-                            change.consume()
-                            drag.drag(amount.y)
-                        },
-                        onDragEnd = { drag.end(items.toList())?.let { (from, to) -> playlist.moveItem(from, to) } },
-                        onDragCancel = { drag.end(emptyList()) },
-                    )
-                },
-            ) {
-                // A playlist may hold the same filename twice, so the position is part of the key.
-                itemsIndexed(rows, key = { _, (source, entry) -> "$source:$entry" }) { index, (source, entry) ->
-                    val held = lifted != null && index == drag.draggedAt
-                    ListRow(
-                        onClick = { itemActions = source },
-                        selected = source == current,
-                        modifier = when {
-                            held -> Modifier.zIndex(1f).graphicsLayer { translationY = drag.draggedOffset }
-                                .background(p.panel).background(p.accent.copy(alpha = 0.10f))
-                            lifted != null -> Modifier.animateItem()
-                            else -> Modifier
-                        },
-                    ) {
-                        if (source == current) {
-                            Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
-                        } else {
-                            Spacer(Modifier.size(Space.glyph))
+            ScrollbarHost(listState, Modifier.weight(1f).fillMaxWidth()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().pointerInput(drag) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { at -> if (drag.start(at, items.toList())) Feedback.tick() },
+                            onDrag = { change, amount ->
+                                change.consume()
+                                drag.drag(amount.y)
+                            },
+                            onDragEnd = { drag.end(items.toList())?.let { (from, to) -> playlist.moveItem(from, to) } },
+                            onDragCancel = { drag.end(emptyList()) },
+                        )
+                    },
+                ) {
+                    // A playlist may hold the same filename twice, so the position is part of the key.
+                    itemsIndexed(rows, key = { _, (source, entry) -> "$source:$entry" }) { index, (source, entry) ->
+                        val held = lifted != null && index == drag.draggedAt
+                        ListRow(
+                            onClick = { itemActions = source },
+                            selected = source == current,
+                            modifier = when {
+                                held -> Modifier.zIndex(1f).graphicsLayer { translationY = drag.draggedOffset }
+                                    .background(p.panel).background(p.accent.copy(alpha = 0.10f))
+                                lifted != null -> Modifier.animateItem()
+                                else -> Modifier
+                            },
+                        ) {
+                            if (source == current) {
+                                Icon(PlayGlyph, contentDescription = null, tint = p.ok, modifier = Modifier.size(Space.glyph))
+                            } else {
+                                Spacer(Modifier.size(Space.glyph))
+                            }
+                            RowGap()
+                            Text(entry, style = Type.note, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         }
-                        RowGap()
-                        Text(entry, style = Type.note, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     }
                 }
             }

@@ -118,6 +118,7 @@ import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.frames.NoticeSeverity
+import app.uicomponents.frames.ScrollbarHost
 import app.utils.ExitRoomMode
 import app.utils.Platform
 import app.utils.availablePlatformPlayerEngines
@@ -569,30 +570,33 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 /* imePadding before verticalScroll: the keyboard shortens the scroll container,
                  * not the form, and the container keeps the focused field in view. The form
                  * scrolls as one piece, so two columns always scroll together. */
-                Column(
-                    modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).then(clearFocus),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    FormLayout(
-                        modifier = Modifier
-                            .widthIn(max = if (split) FORM_MAX_WIDTH * 2 + Space.gutter else FORM_MAX_WIDTH)
-                            .fillMaxWidth()
-                            .heightIn(min = viewport)
-                            .padding(
-                                start = Space.gutter,
-                                end = Space.gutter,
-                                top = if (evenGutter) Space.gutter else metrics.top,
-                                bottom = if (evenGutter) Space.gutter else metrics.bottom,
-                            ),
-                        arrangement = arrangement,
-                        leftBlocks = 2,
-                        minGap = blockGap,
-                        maxGap = MAX_BLOCK_GAP,
+                val formScroll = rememberScrollState()
+                ScrollbarHost(formScroll, Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(formScroll).then(clearFocus),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        identityBlock(pairIdentity)
-                        serverBlock()
-                        engineBlock(compactPicker)
-                        joinBlock()
+                        FormLayout(
+                            modifier = Modifier
+                                .widthIn(max = if (split) FORM_MAX_WIDTH * 2 + Space.gutter else FORM_MAX_WIDTH)
+                                .fillMaxWidth()
+                                .heightIn(min = viewport)
+                                .padding(
+                                    start = Space.gutter,
+                                    end = Space.gutter,
+                                    top = if (evenGutter) Space.gutter else metrics.top,
+                                    bottom = if (evenGutter) Space.gutter else metrics.bottom,
+                                ),
+                            arrangement = arrangement,
+                            leftBlocks = 2,
+                            minGap = blockGap,
+                            maxGap = MAX_BLOCK_GAP,
+                        ) {
+                            identityBlock(pairIdentity)
+                            serverBlock()
+                            engineBlock(compactPicker)
+                            joinBlock()
+                        }
                     }
                 }
             }

@@ -249,12 +249,15 @@ internal fun ModalFrame(
                     Rule()
                 }
                 val scroll = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .weight(1f, fill = size == ModalSize.Full)
-                        .verticalScroll(scroll)
-                        .then(if (inset) Modifier.padding(horizontal = Space.gutter, vertical = Space.gap) else Modifier.padding(vertical = Space.gapTight)),
-                ) { CompositionLocalProvider(LocalModalFieldEntry provides fieldEntry) { body() } }
+                // The host spans the modal, so the bar sits on its edge. A full modal's body still fills it.
+                ScrollbarHost(scroll, Modifier.weight(1f, fill = size == ModalSize.Full).fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .then(if (size == ModalSize.Full) Modifier.fillMaxHeight() else Modifier)
+                            .verticalScroll(scroll)
+                            .then(if (inset) Modifier.padding(horizontal = Space.gutter, vertical = Space.gap) else Modifier.padding(vertical = Space.gapTight)),
+                    ) { CompositionLocalProvider(LocalModalFieldEntry provides fieldEntry) { body() } }
+                }
                 if (actions != null) {
                     Rule()
                     /* Actions wrap to a second line when they do not fit on one. Without the wrap,

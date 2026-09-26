@@ -86,6 +86,7 @@ import app.uicomponents.controls.SecondaryAction
 import app.uicomponents.controls.SendGlyph
 import app.uicomponents.frames.Modal
 import app.uicomponents.frames.ModalSize
+import app.uicomponents.frames.ScrollbarHost
 import app.uicomponents.surface
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -298,53 +299,56 @@ fun GifPanel(
                     color = p.inkDim,
                     modifier = Modifier.align(Alignment.Center),
                 )
-                else -> LazyVerticalGrid(
-                    state = gridState,
-                    columns = GridCells.Fixed(CHAT_MEDIA_COLUMNS),
-                    contentPadding = PaddingValues(CHAT_MEDIA_GAP),
-                    horizontalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
-                    verticalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
-                ) {
-                    items(results, key = { it.id }) { media ->
-                        /* Fixed width and height on the tile: an empty UIImageView reports zero
-                         * size, and Compose never measures UIKit interop again after the image
-                         * loads. Alpha is a parameter for the same interop reason, and it follows
-                         * the HUD only. At alpha 0 Android composes no image at all, so an alpha
-                         * gated on "loaded" would never start the load, and the shimmer would
-                         * stay. The shimmer sits over the image until the image loads or fails:
-                         * on iOS the image is a native view that clears its own area of the
-                         * Compose canvas, so a shimmer under it would never show. */
-                        var loading by remember(media.id) { mutableStateOf(true) }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(Radius.tightShape)
-                                /* The name goes on the tile, not on the image inside it. On iOS
-                                 * the image is a native view that the Compose accessibility
-                                 * bridge cannot reach, so the grid would read as unlabeled
-                                 * buttons. */
-                                .semantics(mergeDescendants = true) {
-                                    contentDescription = media.title.ifBlank { untitledGif }
-                                    role = Role.Button
-                                }
-                                .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
-                        ) {
-                            AnimatedImage(
-                                url = media.previewUrl,
-                                contentDescription = media.title.ifBlank { null },
-                                contentScale = ContentScale.Crop,
-                                alpha = if (isHUDVisible) 1f else 0f,
-                                onLoaded = { loading = false },
-                                onFailed = { loading = false },
-                                modifier = Modifier.matchParentSize(),
-                            )
-                            if (loading && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
+                else -> ScrollbarHost(gridState, Modifier.fillMaxSize()) {
+                    LazyVerticalGrid(
+                        state = gridState,
+                        modifier = Modifier.fillMaxSize(),
+                        columns = GridCells.Fixed(CHAT_MEDIA_COLUMNS),
+                        contentPadding = PaddingValues(CHAT_MEDIA_GAP),
+                        horizontalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
+                        verticalArrangement = Arrangement.spacedBy(CHAT_MEDIA_GAP),
+                    ) {
+                        items(results, key = { it.id }) { media ->
+                            /* Fixed width and height on the tile: an empty UIImageView reports zero
+                             * size, and Compose never measures UIKit interop again after the image
+                             * loads. Alpha is a parameter for the same interop reason, and it follows
+                             * the HUD only. At alpha 0 Android composes no image at all, so an alpha
+                             * gated on "loaded" would never start the load, and the shimmer would
+                             * stay. The shimmer sits over the image until the image loads or fails:
+                             * on iOS the image is a native view that clears its own area of the
+                             * Compose canvas, so a shimmer under it would never show. */
+                            var loading by remember(media.id) { mutableStateOf(true) }
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(Radius.tightShape)
+                                    /* The name goes on the tile, not on the image inside it. On iOS
+                                     * the image is a native view that the Compose accessibility
+                                     * bridge cannot reach, so the grid would read as unlabeled
+                                     * buttons. */
+                                    .semantics(mergeDescendants = true) {
+                                        contentDescription = media.title.ifBlank { untitledGif }
+                                        role = Role.Button
+                                    }
+                                    .combinedClickable(onClick = { send(media) }, onLongClick = { longPressed = media }),
+                            ) {
+                                AnimatedImage(
+                                    url = media.previewUrl,
+                                    contentDescription = media.title.ifBlank { null },
+                                    contentScale = ContentScale.Crop,
+                                    alpha = if (isHUDVisible) 1f else 0f,
+                                    onLoaded = { loading = false },
+                                    onFailed = { loading = false },
+                                    modifier = Modifier.matchParentSize(),
+                                )
+                                if (loading && isHUDVisible) Box(Modifier.matchParentSize().shimmer())
+                            }
                         }
-                    }
-                    if (isLoadingMore) {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            ProgressBar(null, Modifier.fillMaxWidth().padding(Space.gapTight))
+                        if (isLoadingMore) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                ProgressBar(null, Modifier.fillMaxWidth().padding(Space.gapTight))
+                            }
                         }
                     }
                 }
