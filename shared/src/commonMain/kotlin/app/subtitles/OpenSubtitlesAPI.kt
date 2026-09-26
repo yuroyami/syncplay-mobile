@@ -30,11 +30,14 @@ interface OpenSubtitlesAPI {
      */
     @GET("subtitles")
     suspend fun search(
+        @Query("episode_number") episodeNumber: Int? = null,
         @Query("languages") languages: String? = null,
+        @Query("moviehash") moviehash: String? = null,
         @Query("order_by") orderBy: String = "download_count",
         @Query("order_direction") orderDirection: String = "desc",
         @Query("page") page: Int = 1,
-        @Query("query") query: String
+        @Query("query") query: String,
+        @Query("season_number") seasonNumber: Int? = null,
     ): OpenSubtitlesSearchResponse
 
     /**
@@ -76,6 +79,8 @@ data class OpenSubtitlesAttributes(
     val release: String = "",
     @SerialName("download_count") val downloadCount: Int = 0,
     @SerialName("hearing_impaired") val hearingImpaired: Boolean = false,
+    /** True when the result was made for a file with the hash that the search sent. */
+    @SerialName("moviehash_match") val moviehashMatch: Boolean = false,
     @SerialName("from_trusted") val fromTrusted: Boolean = false,
     @SerialName("ai_translated") val aiTranslated: Boolean = false,
     @SerialName("machine_translated") val machineTranslated: Boolean = false,

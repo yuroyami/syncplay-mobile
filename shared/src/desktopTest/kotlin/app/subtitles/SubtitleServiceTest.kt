@@ -36,6 +36,7 @@ class SubtitleServiceTest {
     private val seen = CopyOnWriteArrayList<Seen>()
     private var downloadStatus = 200
     private var downloadName = "Big.Buck.Bunny.2008.1080p.srt"
+    private var searchReply = SEARCH_RESPONSE
 
     private val base get() = "http://127.0.0.1:${server.address.port}"
 
@@ -65,7 +66,7 @@ class SubtitleServiceTest {
             body = exchange.requestBody.readBytes().decodeToString(),
         )
         val (status, reply) = when (uri.path) {
-            "/api/v1/subtitles" -> 200 to SEARCH_RESPONSE
+            "/api/v1/subtitles" -> 200 to searchReply
             "/api/v1/download" -> downloadStatus to if (downloadStatus == 200) downloadResponse() else QUOTA_RESPONSE
             "/files/sub.srt" -> 200 to SUBTITLE_TEXT
             else -> 404 to "{}"
@@ -95,6 +96,22 @@ class SubtitleServiceTest {
         assertEquals("en,fr", request.param("languages"))
         assertEquals("big buck bunny", request.param("query"))
         assertIs<SubtitleSearchOutcome.Results>(outcome)
+    }
+
+    @Test
+    fun `an episode search sends the numbers and the hash in sorted order, and the hash match comes first`(): Unit = runBlocking {
+        searchReply = HASH_RESPONSE
+        val outcome = service().search("The Show", "en", Episode(season = 2, episode = 11), "60a0df1f5fa2cd40")
+        val request = seen.single()
+        assertEquals(
+            listOf("episode_number", "languages", "moviehash", "order_by", "order_direction", "page", "query", "season_number"),
+            request.names,
+        )
+        assertEquals("11", request.param("episode_number"))
+        assertEquals("2", request.param("season_number"))
+        assertEquals("60a0df1f5fa2cd40", request.param("moviehash"))
+        assertEquals("the show", request.param("query"))
+        assertEquals(listOf(2002, 2001), assertIs<SubtitleSearchOutcome.Results>(outcome).items.map { it.fileId })
     }
 
     @Test
@@ -185,6 +202,18 @@ private val SEARCH_RESPONSE = """
       "id": "7654322", "type": "subtitle",
       "attributes": {"subtitle_id": "7654322", "language": "fr", "download_count": 3, "release": "no file attached", "files": []}
     }
+  ]
+}
+""".trimIndent()
+
+private val HASH_RESPONSE = """
+{
+  "total_pages": 1, "total_count": 2, "per_page": 60, "page": 1,
+  "data": [
+    {"id": "1", "type": "subtitle", "attributes": {"language": "en", "download_count": 900, "release": "The.Show.S02E11.720p",
+      "files": [{"file_id": 2001, "file_name": "a.srt"}]}},
+    {"id": "2", "type": "subtitle", "attributes": {"language": "en", "download_count": 12, "release": "The.Show.S02E11.1080p", "moviehash_match": true,
+      "files": [{"file_id": 2002, "file_name": "b.srt"}]}}
   ]
 }
 """.trimIndent()

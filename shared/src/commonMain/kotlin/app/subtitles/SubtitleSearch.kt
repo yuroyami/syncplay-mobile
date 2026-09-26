@@ -48,7 +48,8 @@ object SubtitleSearch {
     }
 
     /** See [SubtitleService.search]. */
-    suspend fun search(query: String, language: String = "en"): SubtitleSearchOutcome = service.search(query, language)
+    suspend fun search(query: String, language: String = "en", episode: Episode? = null, moviehash: String? = null): SubtitleSearchOutcome =
+        service.search(query, language, episode, moviehash)
 
     /** See [SubtitleService.download]. */
     suspend fun download(fileId: Int): SubtitleDownloadResult = service.download(fileId)
@@ -95,9 +96,10 @@ internal class SubtitleService(baseUrl: String, transport: HttpClient, private v
     /**
      * Searches for subtitles by query, most downloaded first. [language] is one or more
      * comma-separated ISO 639-1 codes. The value "all" (or a blank value) drops the language
-     * filter, so every language comes back.
+     * filter, so every language comes back. [episode] narrows the search to one episode, and
+     * [moviehash] (see [openSubtitlesHash]) puts the results made for this exact file first.
      */
-    suspend fun search(query: String, language: String = "en"): SubtitleSearchOutcome {
+    suspend fun search(query: String, language: String = "en", episode: Episode? = null, moviehash: String? = null): SubtitleSearchOutcome {
         return try {
             // The API docs want the languages lower-case, comma-separated and sorted. "all" (or an
             // empty value) becomes null, which omits the filter, so the API returns every language.
@@ -109,10 +111,17 @@ internal class SubtitleService(baseUrl: String, transport: HttpClient, private v
                 .ifEmpty { null }
 
             LogRedactor.register(LogRedactor.Kind.Search, query)
-            val response = api.search(query = query.trim().lowercase(), languages = languages)
+            val response = api.search(
+                episodeNumber = episode?.episode,
+                languages = languages,
+                moviehash = moviehash,
+                query = query.trim().lowercase(),
+                seasonNumber = episode?.season,
+            )
             loggy("SubtitleSearch: ${response.totalCount} results for '$query' [${languages ?: "all"}]")
 
-            response.data.map { item ->
+            // A hash match was made for this exact file, so it goes first.
+            response.data.sortedByDescending { it.attributes.moviehashMatch }.map { item ->
                 SubtitleResult(
                     fileId = item.attributes.files.firstOrNull()?.fileId ?: 0,
                     filename = item.attributes.files.firstOrNull()?.fileName ?: "",

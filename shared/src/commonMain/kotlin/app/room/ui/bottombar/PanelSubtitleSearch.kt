@@ -38,6 +38,10 @@ import app.preferences.watchPref
 import app.subtitles.SubtitleDownloadResult
 import app.subtitles.SubtitleResult
 import app.subtitles.SubtitleSearch
+import app.player.models.MediaFileLocation
+import app.subtitles.readEnds
+import app.subtitles.openSubtitlesHash
+import app.subtitles.searchTermsFor
 import app.subtitles.SubtitleSearchOutcome
 import app.subtitles.subtitleSearchLanguageCodes
 import app.theme.Space
@@ -73,7 +77,12 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    val initialQuery = remember { viewmodel.media?.fileName?.let { SubtitleSearch.cleanMediaName(it) } ?: "" }
+    // The search starts from the file that plays: its show title and episode, and for a local file
+    // its hash. They go with the query only while the query is still the one made from the file.
+    val media = remember { viewmodel.media }
+    val fileTerms = remember { media?.fileName?.let { searchTermsFor(it) } }
+    val initialQuery = fileTerms?.query ?: ""
+    var fileHash by remember { mutableStateOf<String?>(null) }
     var query by remember { mutableStateOf(initialQuery) }
     var results by remember { mutableStateOf<List<SubtitleResult>>(emptyList()) }
     var searching by remember { mutableStateOf(false) }
@@ -105,7 +114,12 @@ fun SubtitleSearchModal(open: Boolean, onDismiss: () -> Unit) {
         searchJob?.cancel()
         searchJob = scope.launch(ioDispatcher) {
             searching = true
-            when (val outcome = SubtitleSearch.search(query, languageCode)) {
+            val fromFile = query == initialQuery
+            if (fromFile && fileHash == null) {
+                fileHash = (media?.location as? MediaFileLocation.Local)?.file?.readEnds()?.let { openSubtitlesHash(it) }
+            }
+            val episode = if (fromFile) fileTerms?.episode else null
+            when (val outcome = SubtitleSearch.search(query, languageCode, episode, if (fromFile) fileHash else null)) {
                 is SubtitleSearchOutcome.Results -> { results = outcome.items; error = null }
                 is SubtitleSearchOutcome.Failed -> { results = emptyList(); error = outcome.reason }
             }

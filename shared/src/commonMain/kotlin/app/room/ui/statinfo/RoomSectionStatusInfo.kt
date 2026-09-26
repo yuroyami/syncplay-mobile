@@ -37,8 +37,9 @@ import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
 import app.protocol.sync.AutoplayState
+import app.subtitles.episodeOf
 
-private val EPISODE = Regex("(?:s|season)(\\d{1,2})(?:e|episode)(\\d{1,2})")
+
 
 /**
  * The status line of the room (the group of people watching together): a 6dp connection square,
@@ -98,8 +99,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     }
     val media by viewmodel.playerManager.media.collectAsState()
     val episode = remember(media?.fileName) {
-        media?.fileName?.lowercase()?.let { EPISODE.find(it) }?.let { m ->
-            "S" + m.groupValues[1].padStart(2, '0') + "E" + m.groupValues[2].padStart(2, '0')
+        media?.fileName?.let { episodeOf(it) }?.let { e ->
+            "S" + e.season.toString().padStart(2, '0') + "E" + e.episode.toString().padStart(2, '0')
         }
     }
 
