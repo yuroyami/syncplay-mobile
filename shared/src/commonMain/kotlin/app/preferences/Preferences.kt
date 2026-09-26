@@ -137,6 +137,10 @@ object Preferences {
 
     /** The recent joins as JSON, newest first, with no password. See RecentJoins. */
     val RECENT_JOINS = Pref<String?>("misc_recent_joins", null)
+
+    /** Where the GIF panel was left: its type (GIF or STICKER) and its source (TRENDING, RECENTS or FAVORITES). */
+    val GIF_PANEL_TYPE = Pref("misc_gif_panel_type", "GIF")
+    val GIF_PANEL_SOURCE = Pref("misc_gif_panel_source", "TRENDING")
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
 

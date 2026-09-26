@@ -1,5 +1,9 @@
 package app.room.ui.chat
 
+import app.preferences.Preferences.GIF_PANEL_SOURCE
+import app.preferences.Preferences.GIF_PANEL_TYPE
+import app.preferences.set
+import app.preferences.value
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -201,8 +205,9 @@ fun GifPanel(
     val p = palette
     // Read once, outside the grid: a tile with no title still needs a name to be spoken.
     val untitledGif = strings.roomGifUntitled
-    var selectedType by remember { mutableStateOf(KlipyMediaType.GIF) }
-    var selectedSource by remember { mutableStateOf(GifSource.TRENDING) }
+    // The panel opens where it was left, across openings and restarts.
+    var selectedType by remember { mutableStateOf(KlipyMediaType.entries.firstOrNull { it.name == GIF_PANEL_TYPE.value() } ?: KlipyMediaType.GIF) }
+    var selectedSource by remember { mutableStateOf(GifSource.entries.firstOrNull { it.name == GIF_PANEL_SOURCE.value() } ?: GifSource.TRENDING) }
     val results = remember { mutableStateListOf<KlipyMedia>() }
     var isLoading by remember { mutableStateOf(true) }
     var failed by remember { mutableStateOf(false) }
@@ -275,9 +280,15 @@ fun GifPanel(
     Column(modifier.surface(Tier.Panel, Radius.panelShape)) {
         GifDrawerHeader(
             type = selectedType,
-            onType = { selectedType = it },
+            onType = {
+                selectedType = it
+                scope.launch { GIF_PANEL_TYPE.set(it.name) }
+            },
             source = selectedSource,
-            onSource = { selectedSource = it },
+            onSource = {
+                selectedSource = it
+                scope.launch { GIF_PANEL_SOURCE.set(it.name) }
+            },
         )
         Rule()
 
