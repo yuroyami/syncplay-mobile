@@ -23,6 +23,7 @@ import io.netty.handler.codec.string.StringEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
@@ -107,6 +108,13 @@ actual class ServerNetworkEngine actual constructor(
                             scope.launch(Dispatchers.Default) {
                                 try {
                                     for (line in mailbox) connection.handlePacket(line)
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    // handlePacket catches a handler's failure itself. This covers the
+                                    // server thread going away under it: close the socket, keep the host.
+                                    loggy("Server: client ${ctx.channel().remoteAddress()} failed: $e")
+                                    ctx.channel().close()
                                 } finally {
                                     connection.onConnectionLost()
                                 }

@@ -196,6 +196,28 @@ class ServerProtocolFlowTest {
         assertEquals(emptyList(), member.sent, "and reach nobody in the room: $line")
     }
 
+    /**
+     * A failure inside a handler, other than a malformed line, must end only the connection that
+     * caused it. Here the socket write of the Hello reply throws, as a closed socket can.
+     */
+    @Test
+    fun `an unexpected failure in a handler drops only its own client`(): Unit = runBlocking {
+        val server = server()
+        var dropped = false
+        val broken = ClientConnection(
+            server = server,
+            sendFn = { throw IllegalStateException("socket write failed") },
+            dropFn = { dropped = true },
+        )
+        broken.handlePacket(helloFor("broken", "room").toJson())
+        assertEquals(true, dropped, "the failing client is dropped")
+
+        val healthy = TestClient(server)
+        healthy.receive(helloFor("healthy", "room"))
+        assertNotNull(healthy.lastOf<WireMessage.Hello>(), "the server keeps serving other clients")
+        assertEquals(false, healthy.dropped)
+    }
+
     @Test
     fun `State before Hello is rejected`(): Unit = runBlocking {
         assertRefusedBeforeHello("""{"State": {"playstate": {"position": 42.0, "paused": false, "doSeek": true}, "ping": {"latencyCalculation": 1.0, "clientRtt": 0.0}}}""")

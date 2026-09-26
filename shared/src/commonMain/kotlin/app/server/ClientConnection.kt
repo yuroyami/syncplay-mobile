@@ -26,6 +26,7 @@ import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
 import app.utils.SyncClock
 import app.utils.loggy
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 
 /**
@@ -77,7 +78,7 @@ class ClientConnection(
      * add a `"type"` discriminator, which the protocol does not allow.
      */
     private fun sendTyped(message: WireMessage) {
-        sendFn(message.toJson())
+        write(message.toJson())
     }
 
     /**
@@ -86,7 +87,27 @@ class ClientConnection(
      * instead of running the serializer once per recipient.
      */
     fun sendEncoded(json: String) {
-        sendFn(json)
+        write(json)
+    }
+
+    /** Set when a write to this socket failed. Later writes are skipped, not retried. */
+    private var writeFailed = false
+
+    /**
+     * Writes one line. A failed write drops this connection alone: a broadcast or another client's
+     * handler that reaches this socket must not fail with it.
+     */
+    private fun write(line: String) {
+        if (writeFailed) return
+        try {
+            sendFn(line)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            writeFailed = true
+            loggy("Server: write to a client failed, dropping it — $e")
+            drop()
+        }
     }
 
     /**
@@ -137,8 +158,23 @@ class ClientConnection(
                 // A bounded excerpt: an unauthenticated peer must not write 64 KiB frames into the log.
                 loggy("Server: failed to decode line '${jsonString.take(LOGGED_LINE_MAX)}' — ${e.message?.take(LOGGED_LINE_MAX)}")
                 dropWithError("Failed to parse message")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Any other failure is this line's alone: drop its sender, keep the server running.
+                loggy("Server: handler failed on '${jsonString.take(LOGGED_LINE_MAX)}' — $e")
+                dropAfterFailure()
             }
         }
+    }
+
+    /** [dropWithError] for a line that broke a handler. The error line may fail too, and the drop must not. */
+    private fun dropAfterFailure() {
+        if (dropped) return
+        dropped = true
+        logged = false
+        runCatching { sendTyped(WireMessage.error("Internal server error")) }
+        dropFn()
     }
 
     // -----------------------------------------------------------

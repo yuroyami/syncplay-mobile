@@ -17,6 +17,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.atomicfu.atomic
 import kotlin.concurrent.Volatile
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -35,7 +36,13 @@ enum class ServerStatus {
  */
 object ServerHostSession {
 
-    private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+    /**
+     * The handler is the last guard: a failure in the server's work is logged, never handed to the
+     * thread's default handler, which ends the app in an Android release build.
+     */
+    private val scope = CoroutineScope(
+        SupervisorJob() + ioDispatcher + CoroutineExceptionHandler { _, e -> loggy("Server: unexpected failure: $e") },
+    )
     private const val LOG_CAP = 500
 
     val serverStatus = MutableStateFlow(ServerStatus.Stopped)
