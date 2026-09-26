@@ -526,9 +526,9 @@ internal class KiteImpl(
         } catch (refused: Exception) {
             // The engine refuses with a typed exception (an unseekable source, a backend without
             // a subtitle decoder, an id the media does not have). A silent failure reads as
-            // "nothing happens", so the error goes to the OSD (the on-screen message).
+            // "nothing happens", so a warning shows. The engine's own reason goes to the log.
             loggy("KitePlayer: selectTrack($kind) refused: ${refused.message}")
-            viewmodel.dispatchOSD { refused.message ?: "Track change refused" }
+            viewmodel.dispatchWarning { Localization.strings.roomTrackChangeRefused }
         }
     }
 

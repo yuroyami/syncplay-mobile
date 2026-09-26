@@ -63,6 +63,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     val encrypted = MutableStateFlow(false)
 
+    /** The TLS version that the last upgrade agreed on, such as "TLSv1.3", when the transport can tell. */
+    @Volatile
+    var tlsVersion: String? = null
+
     enum class NetworkEngine {
         KTOR,     // cross-platform, no TLS
         NETTY,    // Android and desktop, TLS

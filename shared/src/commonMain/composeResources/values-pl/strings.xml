@@ -39,7 +39,7 @@
     <string name="connect_username_empty_error">Nazwa użytkownika nie może być pusta</string>
     <string name="connect_roomname_empty_error">Nazwa pokoju nie może być pusta</string>
     <string name="connect_address_empty_error">Adres serwera nie może być pusty</string>
-    <string name="connect_port_empty_error">Wprowadź port!</string>
+    <string name="connect_port_empty_error">Port nie może być pusty</string>
     <string name="connect_port_range_error">Port musi mieścić się w zakresie od 1 do 65535.</string>
 
     <string name="home_ip_address">Adres IP</string>
@@ -57,44 +57,44 @@
     <string name="room_seeked">%1$s przeskoczył z %2$s na %3$s</string>
     <string name="room_rewinded">Przewinięto z powodu różnicy czasu z %1$s</string>
     <string name="room_fastforwarded">Przewinięto do przodu z powodu różnicy czasu z %1$s</string>
-    <string name="room_guy_left">%1$s opuścił pokój.</string>
-    <string name="room_guy_joined">%1$s dołączył do pokoju.</string>
+    <string name="room_guy_left">%1$s wyszedł</string>
+    <string name="room_guy_joined">%1$s dołączył do pokoju: '%2$s'</string>
     <string name="room_isplayingfile">%1$s odtwarza '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">Dołączyłeś do pokoju: %1$s</string>
-    <string name="room_file_mismatch_warning_core">Twój plik różni się od pliku %1$s w następujący sposób:</string>
+    <string name="room_you_joined_room">%1$s dołączył do pokoju: '%2$s'</string>
+    <string name="room_file_mismatch_warning_core">Twój plik różni się pod następującymi względami: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s zaktualizował listę odtwarzania</string>
-    <string name="room_shared_playlist_changed">%1$s zmienił aktualny wybór listy odtwarzania</string>
+    <string name="room_shared_playlist_changed">%1$s zmienił wybór na liście odtwarzania</string>
     <string name="room_custom_skip_button">Pomiń %1$s</string>
     <string name="media_directories_setting_summary">Foldery przeszukiwane w poszukiwaniu plików z listy.</string>
 
-    <string name="room_on_newcontrolledroom">Utworzono zarządzany pokój '%1$s' z hasłem '%2$s'. Jest w schowku, więc zapisz to w bezpiecznym miejscu.\n\nW zarządzanym pokoju wszyscy podążają za operatorami. Tylko oni mogą pauzować, wznawiać, przewijać i zmieniać listę.\n\nZwykli widzowie dołączają samą nazwą pokoju. Operatorzy dołączają przez '%3$s', żeby zostać rozpoznani przy wejściu.</string>
+    <string name="room_on_newcontrolledroom">Utworzono zarządzany pokój '%1$s' z hasłem '%2$s'. Zapisz te informacje na przyszłość!\n\nW zarządzanych pokojach wszyscy są zsynchronizowani z operatorem lub operatorami pokoju, którzy jako jedyni mogą pauzować, wznawiać, przewijać i zmieniać listę odtwarzania.\n\nPoproś zwykłych widzów, aby dołączyli do pokoju '%3$s', a operatorzy mogą dołączyć do pokoju '%4$s', aby automatycznie się uwierzytelnić. Nazwa dla operatorów jest w schowku.</string>
     <string name="room_on_controller_auth_success">%1$s uwierzytelniony jako operator pokoju</string>
     <string name="room_on_controller_auth_failed">%1$s nie udało się potwierdzić jako operator pokoju</string>
 
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">Nieprawidłowy plik napisów. Obsługiwane formaty: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
-    <string name="room_sub_error_load_vid_first">Najpierw wczytaj wideo</string>
+    <string name="room_selected_sub_error">Nie udało się wczytać tego pliku napisów. Spróbuj innego pliku, na przykład SRT, ASS lub VTT.</string>
+    <string name="room_sub_error_load_vid_first">Najpierw otwórz wideo, a potem dodaj plik napisów.</string>
     <string name="room_ready">Gotowy</string>
     <string name="room_not_ready">Nie gotowy</string>
     <string name="room_ping_disconnected">Rozłączono</string>
-    <string name="room_connected_to_server">Pomyślnie połączono z serwerem.</string>
-    <string name="room_connection_failed">Połączenie nie powiodło się.</string>
-    <string name="room_attempting_reconnection">Utracono połączenie z serwerem.</string>
+    <string name="room_connected_to_server">Pomyślnie połączono z serwerem</string>
+    <string name="room_connection_failed">Połączenie z serwerem nie powiodło się</string>
+    <string name="room_attempting_reconnection">Utracono połączenie z serwerem, próba ponownego połączenia</string>
     <string name="room_attempting_tls">Próba bezpiecznego połączenia</string>
-    <string name="room_tls_supported">Bezpieczne połączenie ustanowione (TLS)</string>
-    <string name="room_tls_not_supported">Serwer nie obsługuje TLS</string>
-    <string name="room_scaling_fit_screen">Tryb skalowania: DOPASUJ DO EKRANU</string>
-    <string name="room_scaling_fixed_width">Tryb skalowania: STAŁA SZEROKOŚĆ</string>
-    <string name="room_scaling_fixed_height">Tryb skalowania: STAŁA WYSOKOŚĆ</string>
-    <string name="room_scaling_fill_screen">Tryb skalowania: WYPEŁNIJ EKRAN</string>
-    <string name="room_scaling_zoom">Tryb skalowania: Powiększenie</string>
+    <string name="room_tls_supported">Bezpieczne połączenie ustanowione (%1$s)</string>
+    <string name="room_tls_not_supported">Ten serwer nie obsługuje TLS</string>
+    <string name="room_scaling_fit_screen">Tryb skalowania: dopasuj do ekranu</string>
+    <string name="room_scaling_fixed_width">Tryb skalowania: stała szerokość</string>
+    <string name="room_scaling_fixed_height">Tryb skalowania: stała wysokość</string>
+    <string name="room_scaling_fill_screen">Tryb skalowania: wypełnij ekran</string>
+    <string name="room_scaling_zoom">Tryb skalowania: powiększenie</string>
     <string name="room_sub_track_disable">Wyłącz napisy</string>
-    <string name="room_file_mismatch_warning_name">Nazwa.</string>
-    <string name="room_file_mismatch_warning_duration">Czas trwania.</string>
-    <string name="room_file_mismatch_warning_size">Rozmiar.</string>
+    <string name="room_file_mismatch_warning_name">nazwa</string>
+    <string name="room_file_mismatch_warning_duration">czas trwania</string>
+    <string name="room_file_mismatch_warning_size">rozmiar</string>
     <string name="room_shared_playlist">Wspólna lista odtwarzania</string>
-    <string name="room_shared_playlist_no_directories">Nie określono żadnych katalogów mediów dla wspólnych list odtwarzania. Ręcznie dodaj pliki.</string>
-    <string name="room_shared_playlist_not_found">%1$s nie mógł znaleźć pliku aktualnie odtwarzanego ze wspólnej listy odtwarzania w twoich katalogach mediów.</string>
+    <string name="room_shared_playlist_no_directories">Nie ustawiono katalogów mediów. Dodaj foldery z mediami w ustawieniach.</string>
+    <string name="room_shared_playlist_not_found">Nie znaleziono pliku %1$s w katalogach mediów, aby przełączyć listę odtwarzania!</string>
     <string name="room_shared_playlist_button_add_file">Dodaj plik(i) na koniec listy</string>
     <string name="room_shared_playlist_button_add_folder">Dodaj folder do listy odtwarzania (i katalogów mediów)</string>
     <string name="room_shared_playlist_button_add_url">Dodaj URL(e) na koniec listy</string>
@@ -105,7 +105,7 @@
     <string name="room_shared_playlist_button_playlist_export">Zapisz listę odtwarzania do pliku</string>
     <string name="room_shared_playlist_button_set_media_directories">Ustaw katalogi mediów</string>
     <string name="room_shared_playlist_clear_playlist">Wyczyść listę odtwarzania</string>
-    <string name="room_shared_playlist_playlist_is_empty">Wspólna lista odtwarzania jest pusta. Nie ma czego zapisywać.</string>
+    <string name="room_shared_playlist_playlist_is_empty">Wspólna lista odtwarzania jest pusta, więc nie ma czego zapisać.</string>
     <string name="room_shared_playlist_add_url">Dodaj URL do wspólnej listy odtwarzania</string>
     <string name="room_shared_playlist_add_url_subtext">Ta linia zostanie dodana jako wpis do wspólnej listy odtwarzania.\n%1$s Android obsługuje na razie tylko bezpośrednie linki.</string>
     <string name="room_button_desc_audio_tracks">Ścieżki dźwiękowe</string>
@@ -168,7 +168,7 @@
     <string name="setting_unpause_action_if_others_ready">Wznów jeśli inni są gotowi</string>
     <string name="setting_unpause_action_if_min_users_ready">Wznów jeśli inni gotowi + min. użytkowników</string>
     <string name="setting_unpause_action_always">Zawsze wznawiaj</string>
-    <string name="room_set_as_ready">Oznaczono jako gotowy do wznowienia</string>
+    <string name="room_set_as_ready">Jesteś teraz gotowy - wznów ponownie, aby odtworzyć</string>
     <string name="setting_tls_title">Użyj bezpiecznego połączenia (TLS)</string>
     <string name="setting_tls_summary">Szyfrowane, jeśli serwer to obsługuje.</string>
     <string name="setting_resetdefault_title">Przywróć ustawienia domyślne</string>
@@ -307,7 +307,7 @@
     <string name="room_gif_no_results">Brak wyników</string>
 
     <!-- Room Misc -->
-    <string name="room_untrusted_domain_warning">Zablokowano URL z niezaufanej domeny: %1$s. Dodaj ją do Zaufanych domen w ustawieniach, aby zezwolić.</string>
+    <string name="room_untrusted_domain_warning">Nie udało się automatycznie wczytać %1$s, ponieważ nie pochodzi z zaufanej domeny. Możesz go odtworzyć z okna pytania albo dodać jego domenę do Zaufanych domen w ustawieniach.</string>
 
     <!-- Settings: Logs & Trusted Domains -->
     <string name="setting_clear_logs_title">Wyczyść dzienniki</string>
@@ -439,7 +439,7 @@
     <string name="room_chat_input">Wiadomość</string>
     <string name="room_chat_new_messages">Nowe wiadomości</string>
     <string name="room_chat_show_image">Pokaż obraz z %1$s</string>
-    <string name="room_chat_too_long">Wiadomość za długa: %1$d z %2$d znaków.</string>
+    <string name="room_chat_too_long">Ta wiadomość ma %1$d znaków, a limit to %2$d. Skróć ją, aby wysłać.</string>
     <string name="room_command_bad_argument">/%1$s wymaga %2$s.</string>
     <string name="room_command_help">Polecenia: %1$s</string>
     <string name="room_command_needs_media">Najpierw otwórz plik.</string>
@@ -462,8 +462,8 @@
     <string name="room_gif_open">GIF-y i naklejki</string>
     <string name="room_gif_retry">Ponów</string>
     <string name="room_gif_tab_favorites">Ulubione</string>
-    <string name="room_guy_joined_other_room">%1$s dołączył do pokoju %2$s</string>
-    <string name="room_guy_left_other_room">%1$s opuścił pokój %2$s</string>
+    <string name="room_guy_joined_other_room">%1$s dołączył do pokoju: '%2$s'</string>
+    <string name="room_guy_left_other_room">%1$s wyszedł</string>
     <string name="room_hud_auto_hide_summary">Ukrywa sterowanie pokojem po tylu sekundach bez interakcji, gdy leci wideo. Pauza lub ładowanie zatrzymuje odliczanie. 0 zostawia sterowanie widoczne. Otwarte panele i niewysłane wiadomości też je utrzymują.</string>
     <string name="room_hud_auto_hide_title">Automatyczne ukrywanie sterowania</string>
     <string name="room_jump_back">%1$d sekund wstecz</string>
@@ -483,15 +483,15 @@
     <string name="room_locked_surface">Zablokowany ekran. Aktywuj, aby pokazać przycisk odblokowania.</string>
     <string name="room_controls_hidden">Elementy sterujące ukryte. Aktywuj, aby je pokazać.</string>
     <string name="room_managed_room">Zarządzany pokój</string>
-    <string name="room_msg_resolve_failed">Nie udało się rozwiązać linku. Spróbuję jako bezpośredni strumień.</string>
-    <string name="room_msg_resolved_url">Rozwiązano: %1$s</string>
-    <string name="room_msg_resolving_url">Rozwiązywanie adresu strumienia…</string>
+    <string name="room_msg_resolve_failed">Nie znaleziono wideo w tym linku. Próba odtworzenia linku bez zmian.</string>
+    <string name="room_msg_resolved_url">Znaleziono wideo: %1$s</string>
+    <string name="room_msg_resolving_url">Szukanie wideo w tym linku…</string>
     <string name="room_no_player_engine">Na tym urządzeniu nie ma dostępnego silnika wideo.</string>
     <string name="room_not_ready_set_by">%1$s został oznaczony jako niegotowy przez %2$s</string>
     <string name="room_pause">Pauza</string>
     <string name="room_play">Odtwórz</string>
     <string name="room_buffering">Buforowanie</string>
-    <string name="room_playback_error">Błąd odtwarzania: %1$s</string>
+    <string name="room_playback_error">Błąd odtwarzacza: "%1$s"</string>
     <string name="room_rail_more">Więcej</string>
     <string name="room_ready_set_by">%1$s został oznaczony jako gotowy przez %2$s</string>
     <string name="room_reconnect_now">Spróbuj teraz ponownie</string>
@@ -519,8 +519,8 @@
     <string name="room_shared_playlist_clear_question">Wyczyścić całą wspólną listę dla wszystkich w pokoju?</string>
     <string name="room_shared_playlist_empty">Lista jest pusta.</string>
     <string name="room_shared_playlist_export_failed">Nie udało się zapisać listy.</string>
-    <string name="room_shared_playlist_exported">Lista zapisana.</string>
-    <string name="room_shared_playlist_limit">Osiągnięto limit wspólnej listy (%1$d pozycji / %2$d znaków)</string>
+    <string name="room_shared_playlist_exported">Lista zapisana jako %1$s</string>
+    <string name="room_shared_playlist_limit">Wspólna lista mieści najwyżej %1$d pozycji i %2$d znaków. Najpierw usuń kilka.</string>
     <string name="room_shared_playlist_more">Więcej</string>
     <string name="room_shared_playlist_undo">Cofnij ostatnią zmianę listy</string>
     <string name="room_shared_playlist_move_up">Przenieś wyżej</string>
@@ -529,8 +529,8 @@
     <string name="room_shared_playlist_restore_body">Połączenie zostało przerwane, a pokój wrócił z pustą listą odtwarzania.</string>
     <string name="room_shared_playlist_restore">Przywróć</string>
     <string name="room_shared_playlist_urls">Adresy URL, po jednym w wierszu</string>
-    <string name="room_slowdown_notification">Zwalniam, żeby dogonić %1$s</string>
-    <string name="room_slowdown_reverted">Powrót do normalnej prędkości</string>
+    <string name="room_slowdown_notification">Zwalnianie z powodu różnicy czasu z %1$s</string>
+    <string name="room_slowdown_reverted">Przywracanie normalnej prędkości</string>
     <string name="room_starting_in">Start za %1$d</string>
     <string name="room_sub_search_download_from_web">Szukaj w sieci</string>
     <string name="room_sub_search_downloads">pobrań</string>
@@ -542,8 +542,8 @@
     <string name="room_subs_downloaded_remaining">Napisy wczytane. Zostało dziś %1$d pobrań napisów (wyszukiwanie bez limitu).</string>
     <string name="room_subs_quota_reached">Osiągnięto dzienny limit pobrań napisów. Reset za %1$s.</string>
     <string name="room_subtitle_track_selected">Napisy: %1$s</string>
-    <string name="room_tls_handshake_failed">Szyfrowane połączenie nie powiodło się: %1$s. Przy serwerze z samopodpisanym certyfikatem wyłącz bezpieczne połączenie w ustawieniach.</string>
-    <string name="room_tls_required_downgrade">Ten serwer nie oferuje szyfrowania. Połączenie odrzucone, bo szyfrowanie jest wymagane w ustawieniach.</string>
+    <string name="room_tls_handshake_failed">Bezpieczne połączenie nie powiodło się: %1$s. Przy serwerze z samopodpisanym certyfikatem wyłącz bezpieczne połączenie w ustawieniach.</string>
+    <string name="room_tls_required_downgrade">Ten serwer nie obsługuje TLS. Wyłącz „Wymagaj szyfrowania” w ustawieniach, aby dołączyć.</string>
     <string name="room_track_trait_accessibility">Dostępność</string>
     <string name="room_track_trait_forced">Wymuszone</string>
     <string name="room_tracks">Dźwięk i napisy</string>
@@ -752,6 +752,12 @@
     <string name="media_drop_not_media">Nie można odtworzyć tego typu pliku.</string>
     <string name="media_drop_folder">Nie można odtworzyć folderu. Upuść jeden plik wideo.</string>
     <string name="media_drop_unsupported">Tutaj można upuścić tylko plik wideo lub link.</string>
+    <string name="room_file_mismatch_warning_room">Różnice w plikach: %1$s</string>
+    <string name="room_shared_playlist_folder_empty">W tym folderze nie znaleziono plików multimedialnych.</string>
+    <string name="room_track_change_refused">Nie można wybrać tej ścieżki.</string>
+    <string name="room_command_arg_room">nazwy pokoju</string>
+    <string name="room_command_arg_operator">hasła w formacie AB-123-456</string>
+    <string name="room_command_arg_seek">czasu w formacie 1:23:45 lub +30</string>
     <string-array name="tips">
         <item>Aby wspólne listy odtwarzania działały, %1$s musi wiedzieć, gdzie przechowywane są twoje pliki multimedialne. Dodaj swoje foldery z mediami w 'Ustawienia > Ogólne > Katalogi mediów dla wspólnej listy odtwarzania'.</item>
         <item>Chcesz używać odtwarzacza wideo solo? Wybierz odtwarzacz, stuknij w logo %1$s powyżej, a następnie wybierz 'Tryb offline'.</item>

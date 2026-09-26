@@ -110,7 +110,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
         if (joiner.isNotSelf()) hapticIf(HAPTIC_ON_JOINED)
-        val osdMessage: suspend () -> String = { Localization.strings.roomGuyJoined(joiner.isolated()) }
+        val osdMessage: suspend () -> String = { Localization.strings.roomGuyJoined(joiner.isolated(), session.currentRoom.isolated()) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(joiner))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = joiner, getter = osdMessage)
     }
@@ -120,8 +120,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyJoinedOtherRoom(joiner.isolated(), room.isolated()) }
     }
 
-    fun onSomeoneLeftOtherRoom(leaver: String, room: String) {
-        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyLeftOtherRoom(leaver.isolated(), room.isolated()) }
+    // Syncplay's line names no room: a person who leaves the server has left every room.
+    fun onSomeoneLeftOtherRoom(leaver: String) {
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyLeftOtherRoom(leaver.isolated()) }
     }
 
     fun onSomeoneLeft(leaver: String) {
@@ -216,7 +217,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = person, getter = osdMessage)
 
         if (person.isNotSelf()) {
-            viewmodel.checkFileMismatches()
+            viewmodel.checkFileMismatches(changedUser = person)
         }
     }
 
@@ -266,7 +267,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         network.sendAsync(WireMessage.readiness(isReady = initialReady, manuallyInitiated = false))
 
         dispatcher.broadcastMessage(message = { Localization.strings.roomConnectedToServer }, isChat = false)
-        dispatcher.broadcastMessage(message = { Localization.strings.roomYouJoinedRoom(session.currentRoom) }, isChat = false)
+        dispatcher.broadcastMessage(
+            message = { Localization.strings.roomYouJoinedRoom(session.currentUsername.isolated(), session.currentRoom.isolated()) },
+            isChat = false,
+        )
 
         viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
@@ -351,13 +355,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("Handshake: TLS answer ($supported) after ${network.sinceHandshakeStart()}")
 
         if (supported) {
-            dispatcher.broadcastMessage(message = { Localization.strings.roomTlsSupported }, isChat = false)
             network.tls = TlsState.TLS_YES
+            network.tlsVersion = null
             try {
                 network.upgradeTls()
                 // Only now is the socket really encrypted; the room's lock icon reads this.
                 network.encrypted.value = true
                 loggy("Handshake: TLS established after ${network.sinceHandshakeStart()}")
+                // After the handshake, as Syncplay does. A transport that cannot name the version says TLS.
+                val version = network.tlsVersion ?: "TLS"
+                dispatcher.broadcastMessage(message = { Localization.strings.roomTlsSupported(version) }, isChat = false)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -400,7 +407,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         runCatching { platformCallback.copyText(operatorJoin) }
 
         dispatcher.broadcastMessage(
-            message = { Localization.strings.roomOnNewcontrolledroom(data.roomName, data.password, operatorJoin) },
+            message = { Localization.strings.roomOnNewcontrolledroom(data.roomName, data.password, data.roomName, operatorJoin) },
             isChat = false
         )
     }
@@ -418,6 +425,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (user.isSelf()) session.lastControlPasswordAttempt = ""
 
         network.sendAsync(WireMessage.listRequest())
+
+        // As in Syncplay, only the person who tried hears that the password was refused.
+        if (!data.success && user.isNotSelf()) return
 
         val osdMessage: suspend () -> String = {
             (when (data.success) {

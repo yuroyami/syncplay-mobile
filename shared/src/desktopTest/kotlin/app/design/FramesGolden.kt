@@ -64,11 +64,11 @@ class FramesGolden {
             Column(Modifier.padding(Space.gutter)) {
                 Notice("Alice paused", NoticeSeverity.Info)
                 Box(Modifier.height(Space.gapTight))
-                Notice("Bob joined the other room", NoticeSeverity.Quiet)
+                Notice("Bob has joined the room: 'lobby'", NoticeSeverity.Quiet)
                 Box(Modifier.height(Space.gapTight))
-                Notice("Slowing down to match Carol", NoticeSeverity.Sync)
+                Notice("Slowing down due to time difference with Carol", NoticeSeverity.Sync)
                 Box(Modifier.height(Space.gapTight))
-                Notice("Your file is different from Alice's", NoticeSeverity.Warn)
+                Notice("Your file differs in the following way(s): name, duration", NoticeSeverity.Warn)
                 Box(Modifier.height(Space.gapTight))
                 Notice("Saved", NoticeSeverity.Info, overVideo = false)
             }

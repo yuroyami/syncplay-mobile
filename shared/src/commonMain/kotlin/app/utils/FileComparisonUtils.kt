@@ -125,4 +125,30 @@ object FileComparison {
 
     /** Python's `constants.DIFFERENT_DURATION_THRESHOLD`. */
     private const val DIFFERENT_DURATION_THRESHOLD = 2.5
+
+    /** One way in which two copies of a file differ, in the order Syncplay lists them. */
+    enum class Difference { Name, Size, Duration }
+
+    /**
+     * How two files differ, in Syncplay's order: name, size, duration. Python's
+     * `getFileDifferencesForUser`, with the comparators above. An unknown duration counts as 0.
+     */
+    fun differences(
+        name1: String?, size1: String?, duration1: Double?,
+        name2: String?, size2: String?, duration2: Double?,
+    ): List<Difference> = buildList {
+        if (!sameFilename(name1, name2)) add(Difference.Name)
+        if (!sameFilesize(size1, size2)) add(Difference.Size)
+        if (!sameFileduration(duration1 ?: 0.0, duration2 ?: 0.0)) add(Difference.Duration)
+    }
+
+    /**
+     * The differences to warn about across several comparisons, in Syncplay's order. A comparison
+     * that differs in name, size and duration at once is left out: that is another file, not
+     * another copy of the same file.
+     */
+    fun warnedDifferences(comparisons: List<List<Difference>>): List<Difference> {
+        val copies = comparisons.filter { it.isNotEmpty() && it.size < Difference.entries.size }
+        return Difference.entries.filter { kind -> copies.any { kind in it } }
+    }
 }

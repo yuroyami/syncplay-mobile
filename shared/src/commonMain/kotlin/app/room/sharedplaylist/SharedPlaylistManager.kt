@@ -12,7 +12,6 @@ import app.protocol.wire.StateData
 import app.room.RoomViewmodel
 import app.utils.PLAYLIST_MAX_CHARACTERS
 import app.utils.PLAYLIST_MAX_ITEMS
-import app.utils.appName
 import app.utils.ioDispatcher
 import app.utils.playlistIsValid
 import app.utils.generateTimestampMillis
@@ -351,7 +350,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val index = dir.indexMediaTree()
         if (index.isEmpty()) {
             viewmodel.dispatcher.broadcastMessage(
-                message = { Localization.strings.roomSharedPlaylistNotFound(appName) },
+                message = { Localization.strings.roomSharedPlaylistFolderEmpty },
                 isChat = false
             )
             return
@@ -487,7 +486,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 // Ask instead of refusing. The user decides, and the safe default stays: nothing
                 // plays until the user says so.
                 pendingUntrusted.value = UntrustedUrl(fileName, domain)
-                val warning = Localization.strings.roomUntrustedDomainWarning(domain)
+                val warning = Localization.strings.roomUntrustedDomainWarning(fileName)
                 viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
                 return
             }
@@ -511,7 +510,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val message: suspend () -> String = if (Preferences.MEDIA_DIRECTORIES.value().isEmpty()) {
             { Localization.strings.roomSharedPlaylistNoDirectories }
         } else {
-            { Localization.strings.roomSharedPlaylistNotFound(appName) }
+            { Localization.strings.roomSharedPlaylistNotFound(fileName) }
         }
         viewmodel.dispatchWarning(message)
         viewmodel.dispatcher.broadcastMessage(message = message, isChat = false)
@@ -523,7 +522,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         if (snapshot.isEmpty()) return
         viewmodel.viewModelScope.launch(ioDispatcher) {
             val saved = runCatching { destination.writeTextCompat(snapshot.joinToString("\n")) }.isSuccess
-            if (saved) viewmodel.dispatchOSD { Localization.strings.roomSharedPlaylistExported }
+            if (saved) viewmodel.dispatchOSD { Localization.strings.roomSharedPlaylistExported(destination.name) }
             else viewmodel.dispatchWarning { Localization.strings.roomSharedPlaylistExportFailed }
         }
     }

@@ -46,7 +46,7 @@ class SlashCommandsTest {
 
     @Test
     fun a_room_with_no_name_says_what_it_wanted() {
-        assertEquals(SlashCommand.BadArgument("room", "a room name"), parseSlashCommand("/room"))
+        assertEquals(SlashCommand.BadArgument("room", CommandArgument.RoomName), parseSlashCommand("/room"))
     }
 
     @Test
@@ -65,7 +65,7 @@ class SlashCommandsTest {
 
     @Test
     fun a_seek_that_is_not_a_time_says_so_rather_than_throwing() {
-        val expected = SlashCommand.BadArgument("seek", "a time like 1:23:45, or +30")
+        val expected = SlashCommand.BadArgument("seek", CommandArgument.SeekTime)
         assertEquals(expected, parseSlashCommand("/seek"))
         assertEquals(expected, parseSlashCommand("/seek soon"))
         assertEquals(expected, parseSlashCommand("/seek 1:2:3:4"))
@@ -77,7 +77,7 @@ class SlashCommandsTest {
     fun an_operator_password_must_have_the_shape_the_server_issues() {
         assertEquals(SlashCommand.Identify("AB-123-456"), parseSlashCommand("/op ab-123-456"))
         assertEquals(
-            SlashCommand.BadArgument("op", "a password shaped like AB-123-456"),
+            SlashCommand.BadArgument("op", CommandArgument.OperatorPassword),
             parseSlashCommand("/op hunter2"),
         )
     }

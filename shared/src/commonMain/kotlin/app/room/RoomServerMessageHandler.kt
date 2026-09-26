@@ -385,7 +385,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                         changed = true
                         callback.onSomeoneLeft(userName)
                     } else if (eventRoom != null && !inOurRoom) {
-                        callback.onSomeoneLeftOtherRoom(userName, eventRoom)
+                        callback.onSomeoneLeftOtherRoom(userName)
                     }
                 }
                 event.joined != null && inOurRoom -> {

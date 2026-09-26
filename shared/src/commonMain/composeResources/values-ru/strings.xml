@@ -30,10 +30,10 @@
     <string name="connect_choose_video_engine">Видеодвижок</string>
     <string name="connect_button_join">Присоединиться к комнате</string>
     <string name="connect_button_saveshortcut">Сохранить как ярлык</string>
-    <string name="connect_username_empty_error">Имя пользователя не должно быть пустым</string>
-    <string name="connect_roomname_empty_error">Название комнаты не должно быть пустым</string>
-    <string name="connect_address_empty_error">Адрес сервера не должен быть пустым</string>
-    <string name="connect_port_empty_error">Введите порт!</string>
+    <string name="connect_username_empty_error">Поле 'Имя пользователя' не может быть пустым</string>
+    <string name="connect_roomname_empty_error">Поле 'Название комнаты' не может быть пустым</string>
+    <string name="connect_address_empty_error">Адрес сервера не может быть пустым</string>
+    <string name="connect_port_empty_error">Поле 'Порт' не может быть пустым</string>
     <string name="connect_port_range_error">Порт должен быть от 1 до 65535.</string>
     <string name="home_ip_address">IP-адрес</string>
     <string name="home_port">Порт</string>
@@ -49,43 +49,43 @@
     <string name="room_seeked">%1$s перешел с %2$s на %3$s</string>
     <string name="room_rewinded">Перемотано из-за разницы во времени с %1$s</string>
     <string name="room_fastforwarded">Перемотано вперёд из-за разницы во времени с %1$s</string>
-    <string name="room_guy_left">%1$s покинул комнату.</string>
-    <string name="room_guy_joined">%1$s присоединился к комнате.</string>
+    <string name="room_guy_left">%1$s покинул комнату</string>
+    <string name="room_guy_joined">%1$s зашел в комнату: '%2$s'</string>
     <string name="room_isplayingfile">%1$s воспроизводит '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">Вы присоединились к комнате: %1$s</string>
-    <string name="room_file_mismatch_warning_core">Ваш файл отличается от файла %1$s следующим образом:</string>
+    <string name="room_you_joined_room">%1$s зашел в комнату: '%2$s'</string>
+    <string name="room_file_mismatch_warning_core">Ваш файл отличается: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s обновил список воспроизведения</string>
-    <string name="room_shared_playlist_changed">%1$s изменил выделение в текущем списке воспроизведения</string>
+    <string name="room_shared_playlist_changed">%1$s изменил выбор в списке воспроизведения</string>
     <string name="room_custom_skip_button">Пропустить %1$s</string>
     <string name="media_directories_setting_summary">Папки, в которых ищутся файлы плейлиста.</string>
-    <string name="room_on_newcontrolledroom">Создана управляемая комната '%1$s' с паролем '%2$s'. Всё скопировано в буфер обмена, сохраните это в надёжном месте.\n\nВ управляемой комнате все следуют за операторами. Только они могут ставить на паузу, снимать с паузы, перематывать и менять плейлист.\n\nОбычные зрители заходят по одному названию комнаты. Операторы заходят через '%3$s', чтобы их узнали на входе.</string>
+    <string name="room_on_newcontrolledroom">Создана управляемая комната '%1$s' с паролем '%2$s'. Сохраните эти данные!\n\nВ управляемых комнатах всех синхронизируют с оператором (-ами) комнаты, только у которых есть права ставить и снимать с паузы, перематывать и изменять список воспроизведения.\n\nПопросите обычных зрителей подключиться к комнате '%3$s', а операторы могут подключиться к комнате '%4$s', чтобы автоматически авторизироваться. Название для операторов скопировано в буфер обмена.</string>
     <string name="room_on_controller_auth_success">%1$s аутентифицирован как оператор комнаты</string>
     <string name="room_on_controller_auth_failed">%1$s не удалось идентифицировать как оператора комнаты</string>
 
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">Неверный файл субтитров. Поддерживаемые форматы: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
-    <string name="room_sub_error_load_vid_first">Сначала загрузите видео</string>
+    <string name="room_selected_sub_error">Не удалось загрузить этот файл субтитров. Попробуйте другой файл, например SRT, ASS или VTT.</string>
+    <string name="room_sub_error_load_vid_first">Сначала откройте видео, затем добавьте файл субтитров.</string>
     <string name="room_ready">Готов</string>
     <string name="room_not_ready">Не готов</string>
     <string name="room_ping_disconnected">Отключено</string>
-    <string name="room_connected_to_server">Успешно подключено к серверу.</string>
-    <string name="room_connection_failed">Не удалось подключиться.</string>
-    <string name="room_attempting_reconnection">Потеряно соединение с сервером.</string>
+    <string name="room_connected_to_server">Соединение с сервером установлено</string>
+    <string name="room_connection_failed">Не удалось подключиться к серверу</string>
+    <string name="room_attempting_reconnection">Соединение с сервером потеряно, переподключение</string>
     <string name="room_attempting_tls">Попытка установить защищенное соединение</string>
-    <string name="room_tls_supported">Установлено защищенное соединение (TLS)</string>
+    <string name="room_tls_supported">Безопасное соединение установлено (%1$s)</string>
     <string name="room_tls_not_supported">Сервер не поддерживает TLS</string>
-    <string name="room_scaling_fit_screen">Режим изменения размера: ПОДГОН К ЭКРАНУ</string>
-    <string name="room_scaling_fixed_width">Режим изменения размера: ФИКСИРОВАННАЯ ШИРИНА</string>
-    <string name="room_scaling_fixed_height">Режим изменения размера: ФИКСИРОВАННАЯ ВЫСОТА</string>
-    <string name="room_scaling_fill_screen">Режим изменения размера: ЗАПОЛНЕНИЕ ЭКРАНА</string>
-    <string name="room_scaling_zoom">Режим изменения размера: Масштабирование</string>
+    <string name="room_scaling_fit_screen">Режим изменения размера: подгон к экрану</string>
+    <string name="room_scaling_fixed_width">Режим изменения размера: фиксированная ширина</string>
+    <string name="room_scaling_fixed_height">Режим изменения размера: фиксированная высота</string>
+    <string name="room_scaling_fill_screen">Режим изменения размера: заполнение экрана</string>
+    <string name="room_scaling_zoom">Режим изменения размера: масштабирование</string>
     <string name="room_sub_track_disable">Отключить субтитры</string>
-    <string name="room_file_mismatch_warning_name">Имя.</string>
-    <string name="room_file_mismatch_warning_duration">Длительность.</string>
-    <string name="room_file_mismatch_warning_size">Размер.</string>
+    <string name="room_file_mismatch_warning_name">имя</string>
+    <string name="room_file_mismatch_warning_duration">длительность</string>
+    <string name="room_file_mismatch_warning_size">размер</string>
     <string name="room_shared_playlist">Общий список воспроизведения</string>
-    <string name="room_shared_playlist_no_directories">Вы не указали папки с медиа файлами для общих списков воспроизведения. Добавьте файлы вручную.</string>
-    <string name="room_shared_playlist_not_found">%1$s не может найти текущий воспроизводимый файл из общего списка воспроизведения в ваших папках с медиа.</string>
+    <string name="room_shared_playlist_no_directories">Вы не указали папки воспроизведения. Добавьте папки с медиа в настройках.</string>
+    <string name="room_shared_playlist_not_found">Не удалось найти файл %1$s в папках воспроизведения!</string>
     <string name="room_shared_playlist_button_add_file">Добавить файл(ы) в конец списка воспроизведения</string>
     <string name="room_shared_playlist_button_add_folder">Добавить папку в список воспроизведения (и в папки с медиа)</string>
     <string name="room_shared_playlist_button_add_url">Добавить URL(ы) в конец списка воспроизведения</string>
@@ -96,7 +96,7 @@
     <string name="room_shared_playlist_button_playlist_export">Сохранить список воспроизведения в файл</string>
     <string name="room_shared_playlist_button_set_media_directories">Задать папки с медиа</string>
     <string name="room_shared_playlist_clear_playlist">Очистить список воспроизведения</string>
-    <string name="room_shared_playlist_playlist_is_empty">Общий список воспроизведения пуст. Нечего сохранять.</string>
+    <string name="room_shared_playlist_playlist_is_empty">Общий список воспроизведения пуст, сохранять нечего.</string>
     <string name="room_shared_playlist_add_url">Добавить URL в общий список воспроизведения</string>
     <string name="room_shared_playlist_add_url_subtext">Эта строка будет добавлена как запись в общий список воспроизведения.\n%1$s Android пока поддерживает только прямые ссылки.</string>
     <string name="room_button_desc_audio_tracks">Звуковые дорожки</string>
@@ -157,7 +157,7 @@
     <string name="setting_unpause_action_if_others_ready">Возобновить, если другие готовы</string>
     <string name="setting_unpause_action_if_min_users_ready">Возобновить, если другие готовы + мин. пользователей</string>
     <string name="setting_unpause_action_always">Всегда возобновлять</string>
-    <string name="room_set_as_ready">Отмечен как готовый к воспроизведению</string>
+    <string name="room_set_as_ready">Вы помечены как готовый - нажмите ещё раз, чтобы продолжить воспроизведение</string>
     <string name="setting_tls_title">Использовать защищенное соединение (TLS)</string>
     <string name="setting_tls_summary">Шифруется, если сервер это поддерживает.</string>
     <string name="setting_resetdefault_title">Сбросить настройки по умолчанию</string>
@@ -296,7 +296,7 @@
     <string name="room_gif_no_results">Ничего не найдено</string>
 
     <!-- Room Misc -->
-    <string name="room_untrusted_domain_warning">Заблокирована ссылка с недоверенного домена: %1$s. Добавьте его в доверенные домены в настройках.</string>
+    <string name="room_untrusted_domain_warning">Не удалось автоматически переключиться на %1$s, потому что ссылка не соответствует доверенным сайтам. Её можно включить в появившемся окне или добавить её домен в доверенные домены в настройках.</string>
 
     <!-- Settings: Logs and Trusted Domains -->
     <string name="setting_clear_logs_title">Очистить логи</string>
@@ -428,7 +428,7 @@
     <string name="room_chat_input">Сообщение</string>
     <string name="room_chat_new_messages">Новые сообщения</string>
     <string name="room_chat_show_image">Показать изображение с %1$s</string>
-    <string name="room_chat_too_long">Сообщение слишком длинное: %1$d из %2$d символов.</string>
+    <string name="room_chat_too_long">В этом сообщении %1$d символов, а лимит %2$d. Сократите его, чтобы отправить.</string>
     <string name="room_command_bad_argument">/%1$s требует %2$s.</string>
     <string name="room_command_help">Команды: %1$s</string>
     <string name="room_command_needs_media">Сначала откройте файл.</string>
@@ -451,8 +451,8 @@
     <string name="room_gif_open">GIF и стикеры</string>
     <string name="room_gif_retry">Повторить</string>
     <string name="room_gif_tab_favorites">Избранное</string>
-    <string name="room_guy_joined_other_room">%1$s зашёл в комнату %2$s</string>
-    <string name="room_guy_left_other_room">%1$s вышел из комнаты %2$s</string>
+    <string name="room_guy_joined_other_room">%1$s зашел в комнату: '%2$s'</string>
+    <string name="room_guy_left_other_room">%1$s покинул комнату</string>
     <string name="room_hud_auto_hide_summary">Скрывает управление комнатой через столько секунд без действий, пока идёт видео. Пауза или буферизация останавливает отсчёт. 0 оставляет управление на экране. Открытые панели и недописанные сообщения тоже держат его.</string>
     <string name="room_hud_auto_hide_title">Автоскрытие управления</string>
     <string name="room_jump_back">Назад на %1$d секунд</string>
@@ -472,15 +472,15 @@
     <string name="room_locked_surface">Заблокированный экран. Активируйте, чтобы показать кнопку разблокировки.</string>
     <string name="room_controls_hidden">Элементы управления скрыты. Активируйте, чтобы показать их.</string>
     <string name="room_managed_room">Управляемая комната</string>
-    <string name="room_msg_resolve_failed">Не удалось разобрать ссылку. Пробуем как прямой поток.</string>
-    <string name="room_msg_resolved_url">Разобрано: %1$s</string>
-    <string name="room_msg_resolving_url">Разбираем адрес потока…</string>
+    <string name="room_msg_resolve_failed">Не удалось найти видео по этой ссылке. Пробуем воспроизвести ссылку как есть.</string>
+    <string name="room_msg_resolved_url">Видео найдено: %1$s</string>
+    <string name="room_msg_resolving_url">Ищем видео по этой ссылке…</string>
     <string name="room_no_player_engine">На этом устройстве нет доступного видеодвижка.</string>
     <string name="room_not_ready_set_by">%1$s отмечен как не готовый пользователем %2$s</string>
     <string name="room_pause">Пауза</string>
     <string name="room_play">Воспроизвести</string>
     <string name="room_buffering">Буферизация</string>
-    <string name="room_playback_error">Ошибка воспроизведения: %1$s</string>
+    <string name="room_playback_error">Ошибка проигрывателя: "%1$s"</string>
     <string name="room_rail_more">Ещё</string>
     <string name="room_ready_set_by">%1$s отмечен как готовый пользователем %2$s</string>
     <string name="room_reconnect_now">Попробовать сейчас</string>
@@ -508,8 +508,8 @@
     <string name="room_shared_playlist_clear_question">Очистить весь общий плейлист для всех в комнате?</string>
     <string name="room_shared_playlist_empty">Плейлист пуст.</string>
     <string name="room_shared_playlist_export_failed">Не удалось сохранить плейлист.</string>
-    <string name="room_shared_playlist_exported">Плейлист сохранён.</string>
-    <string name="room_shared_playlist_limit">Достигнут предел общего плейлиста (%1$d элементов / %2$d символов)</string>
+    <string name="room_shared_playlist_exported">Плейлист сохранён как %1$s</string>
+    <string name="room_shared_playlist_limit">Общий плейлист вмещает не больше %1$d элементов и %2$d символов. Сначала удалите несколько.</string>
     <string name="room_shared_playlist_more">Ещё</string>
     <string name="room_shared_playlist_undo">Отменить последнее изменение плейлиста</string>
     <string name="room_shared_playlist_move_up">Переместить выше</string>
@@ -518,8 +518,8 @@
     <string name="room_shared_playlist_restore_body">Соединение прервалось, и комната вернулась с пустым плейлистом.</string>
     <string name="room_shared_playlist_restore">Восстановить</string>
     <string name="room_shared_playlist_urls">Ссылки, по одной в строке</string>
-    <string name="room_slowdown_notification">Замедляемся, чтобы догнать %1$s</string>
-    <string name="room_slowdown_reverted">Обычная скорость</string>
+    <string name="room_slowdown_notification">Воспроизведение замедлено из-за разницы во времени с %1$s</string>
+    <string name="room_slowdown_reverted">Возвращаемся к нормальной скорости воспроизведения</string>
     <string name="room_starting_in">Старт через %1$d</string>
     <string name="room_sub_search_download_from_web">Искать в сети</string>
     <string name="room_sub_search_downloads">загрузок</string>
@@ -531,8 +531,8 @@
     <string name="room_subs_downloaded_remaining">Субтитры загружены. Сегодня осталось %1$d загрузок субтитров (поиск без ограничений).</string>
     <string name="room_subs_quota_reached">Достигнут дневной предел загрузок субтитров. Сброс через %1$s.</string>
     <string name="room_subtitle_track_selected">Субтитры: %1$s</string>
-    <string name="room_tls_handshake_failed">Шифрованное соединение не удалось: %1$s. Если у сервера самоподписанный сертификат, отключите защищённое соединение в настройках.</string>
-    <string name="room_tls_required_downgrade">Этот сервер не предлагает шифрование. Соединение отклонено, потому что шифрование обязательно в настройках.</string>
+    <string name="room_tls_handshake_failed">Не удалось установить безопасное соединение: %1$s. Если у сервера самоподписанный сертификат, отключите защищённое соединение в настройках.</string>
+    <string name="room_tls_required_downgrade">Сервер не поддерживает TLS. Отключите «Требовать шифрование» в настройках, чтобы подключиться.</string>
     <string name="room_track_trait_accessibility">Доступность</string>
     <string name="room_track_trait_forced">Форсированные</string>
     <string name="room_tracks">Звук и субтитры</string>
@@ -741,6 +741,12 @@
     <string name="media_drop_not_media">Этот тип файла нельзя воспроизвести.</string>
     <string name="media_drop_folder">Папку нельзя воспроизвести. Перетащите один видеофайл.</string>
     <string name="media_drop_unsupported">Сюда можно перетащить только видеофайл или ссылку.</string>
+    <string name="room_file_mismatch_warning_room">Несовпадения файла: %1$s</string>
+    <string name="room_shared_playlist_folder_empty">В этой папке не найдено медиафайлов.</string>
+    <string name="room_track_change_refused">Эту дорожку нельзя выбрать.</string>
+    <string name="room_command_arg_room">названия комнаты</string>
+    <string name="room_command_arg_operator">пароля вида AB-123-456</string>
+    <string name="room_command_arg_seek">времени вида 1:23:45 или +30</string>
     <string-array name="tips">
         <item>Для работы общих списков воспроизведения %1$s необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
         <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип %1$s выше, затем выберите 'Автономный режим'.</item>

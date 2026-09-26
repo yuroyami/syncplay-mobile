@@ -36,10 +36,10 @@
     <string name="connect_choose_video_engine">Moteur vidéo</string>
     <string name="connect_button_join">Rejoindre la salle</string>
     <string name="connect_button_saveshortcut">Enregistrer comme raccourci</string>
-    <string name="connect_username_empty_error">Le nom d'utilisateur ne doit pas être vide</string>
-    <string name="connect_roomname_empty_error">Le nom de la salle ne doit pas être vide</string>
-    <string name="connect_address_empty_error">L'adresse du serveur ne doit pas être vide</string>
-    <string name="connect_port_empty_error">Entrez un port !</string>
+    <string name="connect_username_empty_error">Le nom d'utilisateur ne peut pas être vide</string>
+    <string name="connect_roomname_empty_error">Le nom de la salle ne peut pas être vide</string>
+    <string name="connect_address_empty_error">L'adresse du serveur ne peut pas être vide</string>
+    <string name="connect_port_empty_error">Le port ne peut pas être vide</string>
     <string name="connect_port_range_error">Le port doit être compris entre 1 et 65535.</string>
 
     <string name="home_ip_address">Adresse IP</string>
@@ -55,46 +55,46 @@
     <string name="room_guy_played">%1$s a relancé la lecture</string>
     <string name="room_guy_paused">%1$s a mis en pause à %2$s</string>
     <string name="room_seeked">%1$s a sauté de %2$s à %3$s</string>
-    <string name="room_rewinded">Rembobinage dû à un décalage avec %1$s</string>
+    <string name="room_rewinded">Retour en arrière en raison du décalage de temps avec %1$s</string>
     <string name="room_fastforwarded">Avance rapide due à un décalage avec %1$s</string>
-    <string name="room_guy_left">%1$s a quitté la salle.</string>
-    <string name="room_guy_joined">%1$s a rejoint la salle.</string>
+    <string name="room_guy_left">%1$s est parti</string>
+    <string name="room_guy_joined">%1$s a rejoint la salle : '%2$s'</string>
     <string name="room_isplayingfile">%1$s lit '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">Vous avez rejoint la salle : %1$s</string>
-    <string name="room_file_mismatch_warning_core">Votre fichier diffère de celui de %1$s dans les aspects suivants :</string>
+    <string name="room_you_joined_room">%1$s a rejoint la salle : '%2$s'</string>
+    <string name="room_file_mismatch_warning_core">Votre fichier diffère de la (des) manière(s) suivante(s) : %1$s</string>
     <string name="room_shared_playlist_updated">%1$s a mis à jour la playlist</string>
-    <string name="room_shared_playlist_changed">%1$s a changé la sélection actuelle de la playlist</string>
+    <string name="room_shared_playlist_changed">%1$s a modifié la sélection de la liste de lecture</string>
     <string name="room_custom_skip_button">Passer %1$s</string>
     <string name="media_directories_setting_summary">Dossiers où chercher les fichiers de la playlist.</string>
 
-    <string name="room_on_newcontrolledroom">Salle gérée '%1$s' créée avec le mot de passe '%2$s'. Le tout est dans le presse-papiers, gardez-le en lieu sûr.\n\nDans une salle gérée, tout le monde suit les opérateurs. Eux seuls peuvent mettre en pause, reprendre, se déplacer et changer la playlist.\n\nLes spectateurs rejoignent avec le nom de la salle seul. Les opérateurs rejoignent avec '%3$s' pour être reconnus à l'entrée.</string>
+    <string name="room_on_newcontrolledroom">Salle gérée « %1$s » créée avec le mot de passe « %2$s ». Veuillez conserver ces informations pour référence future !\n\nDans les salles gérées, tout le monde est synchronisé avec le ou les opérateurs de la salle, qui sont les seuls à pouvoir mettre en pause, reprendre, se déplacer dans la lecture et modifier la liste de lecture.\n\nDemandez aux spectateurs habituels de rejoindre la salle '%3$s', mais les opérateurs peuvent rejoindre la salle '%4$s' pour s'authentifier automatiquement. Le nom pour les opérateurs est dans votre presse-papiers.</string>
     <string name="room_on_controller_auth_success">%1$s a été authentifié en tant qu'opérateur</string>
     <string name="room_on_controller_auth_failed">%1$s n'a pas pu être authentifié en tant qu'opérateur</string>
 
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">Fichier de sous-titres invalide. Les formats pris en charge sont : 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
-    <string name="room_sub_error_load_vid_first">Chargez une vidéo d'abord</string>
+    <string name="room_selected_sub_error">Ce fichier de sous-titres n'a pas pu être chargé. Essayez un autre fichier, par exemple SRT, ASS ou VTT.</string>
+    <string name="room_sub_error_load_vid_first">Ouvrez d'abord une vidéo, puis ajoutez le fichier de sous-titres.</string>
     <string name="room_ready">Prêt</string>
     <string name="room_not_ready">Pas prêt</string>
     <string name="room_ping_disconnected">Déconnecté</string>
-    <string name="room_connected_to_server">Connecté au serveur avec succès.</string>
-    <string name="room_connection_failed">Échec de la connexion.</string>
-    <string name="room_attempting_reconnection">Connexion au serveur perdue.</string>
+    <string name="room_connected_to_server">Connexion réussie au serveur</string>
+    <string name="room_connection_failed">Échec de la connexion avec le serveur</string>
+    <string name="room_attempting_reconnection">Connexion avec le serveur perdue, tentative de reconnexion</string>
     <string name="room_attempting_tls">Tentative de connexion sécurisée</string>
-    <string name="room_tls_supported">Connexion sécurisée établie (TLS)</string>
-    <string name="room_tls_not_supported">Le serveur ne prend pas en charge TLS</string>
-    <string name="room_scaling_fit_screen">Mode de redimensionnement : AJUSTER À L’ÉCRAN</string>
-    <string name="room_scaling_fixed_width">Mode de redimensionnement : LARGEUR FIXE</string>
-    <string name="room_scaling_fixed_height">Mode de redimensionnement : HAUTEUR FIXE</string>
-    <string name="room_scaling_fill_screen">Mode de redimensionnement : REMPLIR L’ÉCRAN</string>
-    <string name="room_scaling_zoom">Mode de redimensionnement : Zoom</string>
+    <string name="room_tls_supported">Connexion sécurisée établie (%1$s)</string>
+    <string name="room_tls_not_supported">Ce serveur ne prend pas en charge TLS</string>
+    <string name="room_scaling_fit_screen">Mode de redimensionnement : ajuster à l’écran</string>
+    <string name="room_scaling_fixed_width">Mode de redimensionnement : largeur fixe</string>
+    <string name="room_scaling_fixed_height">Mode de redimensionnement : hauteur fixe</string>
+    <string name="room_scaling_fill_screen">Mode de redimensionnement : remplir l’écran</string>
+    <string name="room_scaling_zoom">Mode de redimensionnement : zoom</string>
     <string name="room_sub_track_disable">Désactiver les sous-titres</string>
-    <string name="room_file_mismatch_warning_name">Nom.</string>
-    <string name="room_file_mismatch_warning_duration">Durée.</string>
-    <string name="room_file_mismatch_warning_size">Taille.</string>
+    <string name="room_file_mismatch_warning_name">nom</string>
+    <string name="room_file_mismatch_warning_duration">durée</string>
+    <string name="room_file_mismatch_warning_size">taille</string>
     <string name="room_shared_playlist">Liste de lecture partagée</string>
-    <string name="room_shared_playlist_no_directories">Aucun répertoire média spécifié pour les listes de lecture partagées. Ajoutez manuellement les fichiers.</string>
-    <string name="room_shared_playlist_not_found">%1$s n'a pas trouvé le fichier en cours de lecture dans vos répertoires média.</string>
+    <string name="room_shared_playlist_no_directories">Aucun répertoire multimédia n'a été défini. Ajoutez vos dossiers multimédias dans les Réglages.</string>
+    <string name="room_shared_playlist_not_found">Impossible de trouver le fichier %1$s dans les répertoires multimédias pour le changement de liste de lecture !</string>
     <string name="room_shared_playlist_button_add_file">Ajouter fichier(s) en bas de la liste</string>
     <string name="room_shared_playlist_button_add_folder">Ajouter dossier à la liste (et aux répertoires média)</string>
     <string name="room_shared_playlist_button_add_url">Ajouter URL(s) en bas de la liste</string>
@@ -105,7 +105,7 @@
     <string name="room_shared_playlist_button_playlist_export">Sauvegarder la liste dans un fichier</string>
     <string name="room_shared_playlist_button_set_media_directories">Définir les répertoires média</string>
     <string name="room_shared_playlist_clear_playlist">Vider la liste</string>
-    <string name="room_shared_playlist_playlist_is_empty">La liste partagée est vide. Rien à sauvegarder.</string>
+    <string name="room_shared_playlist_playlist_is_empty">La liste partagée est vide, il n'y a donc rien à enregistrer.</string>
     <string name="room_shared_playlist_add_url">Ajouter une URL à la liste partagée</string>
     <string name="room_shared_playlist_add_url_subtext">Cette ligne sera ajoutée comme entrée dans la liste.\n%1$s Android ne prend en charge que les liens directs pour le moment.</string>
     <string name="room_button_desc_audio_tracks">Pistes audio</string>
@@ -166,7 +166,7 @@
     <string name="setting_unpause_action_if_others_ready">Reprendre si les autres sont prêts</string>
     <string name="setting_unpause_action_if_min_users_ready">Reprendre si autres prêts + min. utilisateurs</string>
     <string name="setting_unpause_action_always">Toujours reprendre</string>
-    <string name="room_set_as_ready">Marqué comme prêt pour reprendre</string>
+    <string name="room_set_as_ready">Vous êtes maintenant défini comme prêt - relancez la lecture pour reprendre</string>
     <string name="setting_tls_title">Connexion sécurisée (TLS)</string>
     <string name="setting_tls_summary">Chiffré si le serveur le prend en charge.</string>
     <string name="setting_resetdefault_title">Réinitialiser les paramètres</string>
@@ -305,7 +305,7 @@
     <string name="room_gif_no_results">Aucun résultat trouvé</string>
 
     <!-- Room overflow and misc -->
-    <string name="room_untrusted_domain_warning">URL bloquée provenant d'un domaine non fiable : %1$s. Ajoutez-le aux Domaines de confiance dans les paramètres pour l'autoriser.</string>
+    <string name="room_untrusted_domain_warning">Impossible de charger automatiquement %1$s, car il ne se trouve pas sur un domaine approuvé. Vous pouvez le lire depuis la fenêtre de confirmation, ou ajouter son domaine aux Domaines de confiance dans les Réglages.</string>
 
     <!-- Settings: logs and trusted domains -->
     <string name="setting_clear_logs_title">Effacer les journaux</string>
@@ -443,8 +443,8 @@
     <string name="room_chat_input">Message</string>
     <string name="room_chat_new_messages">Nouveaux messages</string>
     <string name="room_chat_show_image">Afficher l'image de %1$s</string>
-    <string name="room_chat_too_long">Message trop long : %1$d sur %2$d caractères.</string>
-    <string name="room_command_bad_argument">/%1$s a besoin de %2$s.</string>
+    <string name="room_chat_too_long">Ce message compte %1$d caractères, et la limite est de %2$d. Raccourcissez-le pour l'envoyer.</string>
+    <string name="room_command_bad_argument">/%1$s attend %2$s.</string>
     <string name="room_command_help">Commandes : %1$s</string>
     <string name="room_command_needs_media">Ouvrez d'abord un fichier.</string>
     <string name="room_command_unknown">/%1$s n'existe pas. Tapez /help pour la liste.</string>
@@ -466,8 +466,8 @@
     <string name="room_gif_open">GIF et stickers</string>
     <string name="room_gif_retry">Réessayer</string>
     <string name="room_gif_tab_favorites">Favoris</string>
-    <string name="room_guy_joined_other_room">%1$s a rejoint la salle %2$s</string>
-    <string name="room_guy_left_other_room">%1$s a quitté la salle %2$s</string>
+    <string name="room_guy_joined_other_room">%1$s a rejoint la salle : '%2$s'</string>
+    <string name="room_guy_left_other_room">%1$s est parti</string>
     <string name="room_hud_auto_hide_summary">Masque les commandes de la salle après ce nombre de secondes sans interaction pendant la lecture. Une pause ou un chargement arrête le minuteur. 0 les garde visibles. Un panneau ouvert ou un message non envoyé les garde aussi visibles.</string>
     <string name="room_hud_auto_hide_title">Masquer les commandes automatiquement</string>
     <string name="room_jump_back">%1$d secondes en arrière</string>
@@ -487,15 +487,15 @@
     <string name="room_locked_surface">Écran verrouillé. Activez pour afficher la touche de déverrouillage.</string>
     <string name="room_controls_hidden">Commandes masquées. Activez pour les afficher.</string>
     <string name="room_managed_room">Salle gérée</string>
-    <string name="room_msg_resolve_failed">Lien non résolu. Il sera essayé comme flux direct.</string>
-    <string name="room_msg_resolved_url">Résolu : %1$s</string>
-    <string name="room_msg_resolving_url">Résolution de l'URL du flux…</string>
+    <string name="room_msg_resolve_failed">Aucune vidéo trouvée dans ce lien. Tentative de lecture du lien tel quel.</string>
+    <string name="room_msg_resolved_url">Vidéo trouvée : %1$s</string>
+    <string name="room_msg_resolving_url">Recherche de la vidéo dans ce lien…</string>
     <string name="room_no_player_engine">Aucun moteur vidéo n'est disponible sur cet appareil.</string>
     <string name="room_not_ready_set_by">%1$s a été marqué comme pas prêt par %2$s</string>
     <string name="room_pause">Pause</string>
     <string name="room_play">Lecture</string>
     <string name="room_buffering">Mise en mémoire tampon</string>
-    <string name="room_playback_error">Erreur de lecture : %1$s</string>
+    <string name="room_playback_error">Erreur du lecteur multimédia : « %1$s »</string>
     <string name="room_rail_more">Plus</string>
     <string name="room_ready_set_by">%1$s a été marqué comme prêt par %2$s</string>
     <string name="room_reconnect_now">Réessayer maintenant</string>
@@ -523,8 +523,8 @@
     <string name="room_shared_playlist_clear_question">Vider toute la playlist partagée pour tout le monde dans la salle ?</string>
     <string name="room_shared_playlist_empty">La playlist est vide.</string>
     <string name="room_shared_playlist_export_failed">Impossible d'enregistrer la playlist.</string>
-    <string name="room_shared_playlist_exported">Playlist enregistrée.</string>
-    <string name="room_shared_playlist_limit">Limite de la playlist partagée atteinte (%1$d éléments / %2$d caractères)</string>
+    <string name="room_shared_playlist_exported">Playlist enregistrée sous %1$s</string>
+    <string name="room_shared_playlist_limit">La playlist partagée contient au plus %1$d éléments et %2$d caractères. Retirez-en d'abord quelques-uns.</string>
     <string name="room_shared_playlist_more">Plus</string>
     <string name="room_shared_playlist_undo">Annuler le dernier changement de playlist</string>
     <string name="room_shared_playlist_move_up">Monter</string>
@@ -533,7 +533,7 @@
     <string name="room_shared_playlist_restore_body">La connexion a été coupée et la salle est revenue avec une liste de lecture vide.</string>
     <string name="room_shared_playlist_restore">Restaurer</string>
     <string name="room_shared_playlist_urls">URL, une par ligne</string>
-    <string name="room_slowdown_notification">Ralentissement pour rester avec %1$s</string>
+    <string name="room_slowdown_notification">Ralentissement dû au décalage de temps avec %1$s</string>
     <string name="room_slowdown_reverted">Retour à la vitesse normale</string>
     <string name="room_starting_in">Démarrage dans %1$d</string>
     <string name="room_sub_search_download_from_web">Chercher en ligne</string>
@@ -546,8 +546,8 @@
     <string name="room_subs_downloaded_remaining">Sous-titre chargé. Il vous reste %1$d téléchargements aujourd'hui (la recherche est illimitée).</string>
     <string name="room_subs_quota_reached">Limite quotidienne de téléchargement de sous-titres atteinte. Réinitialisation dans %1$s.</string>
     <string name="room_subtitle_track_selected">Sous-titres : %1$s</string>
-    <string name="room_tls_handshake_failed">Échec de la connexion chiffrée : %1$s. Pour un serveur à certificat auto-signé, désactivez la connexion sécurisée dans les Réglages.</string>
-    <string name="room_tls_required_downgrade">Ce serveur ne propose pas de chiffrement. Connexion refusée car le chiffrement est exigé dans les Réglages.</string>
+    <string name="room_tls_handshake_failed">Échec de la connexion sécurisée : %1$s. Pour un serveur à certificat auto-signé, désactivez la connexion sécurisée dans les Réglages.</string>
+    <string name="room_tls_required_downgrade">Ce serveur ne prend pas en charge TLS. Désactivez « Exiger le chiffrement » dans les Réglages pour le rejoindre.</string>
     <string name="room_track_trait_accessibility">Accessibilité</string>
     <string name="room_track_trait_forced">Forcé</string>
     <string name="room_tracks">Audio et sous-titres</string>
@@ -756,6 +756,12 @@
     <string name="media_drop_not_media">Ce type de fichier ne peut pas être lu.</string>
     <string name="media_drop_folder">Un dossier ne peut pas être lu. Déposez un fichier vidéo.</string>
     <string name="media_drop_unsupported">Seul un fichier vidéo ou un lien peut être déposé ici.</string>
+    <string name="room_file_mismatch_warning_room">Différences de fichier : %1$s</string>
+    <string name="room_shared_playlist_folder_empty">Aucun fichier multimédia n'a été trouvé dans ce dossier.</string>
+    <string name="room_track_change_refused">Cette piste ne peut pas être sélectionnée.</string>
+    <string name="room_command_arg_room">un nom de salle</string>
+    <string name="room_command_arg_operator">un mot de passe au format AB-123-456</string>
+    <string name="room_command_arg_seek">un temps comme 1:23:45 ou +30</string>
     <string-array name="tips">
         <item>Pour que les playlists partagées fonctionnent, %1$s doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
         <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo %1$s, puis choisissez 'Mode hors ligne'.</item>

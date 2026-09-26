@@ -239,42 +239,43 @@ class RoomViewmodel(
     }
 
     /**
-     * Checks for file mismatches between the local media and other users' files.
+     * Warns when your file differs from someone else's, in Syncplay's words. [changedUser] has just
+     * loaded a file, so the line compares your file with that person's. Null means that you loaded
+     * a file, and one line then sums up how your file differs across the room. A file that differs
+     * in name, size and duration at once is another file, not another copy, so it gets no line.
      */
-    fun checkFileMismatches() {
+    fun checkFileMismatches(changedUser: String? = null) {
         if (isSoloMode) return
         if (!Preferences.FILE_MISMATCH_WARNING.value()) return
 
         viewModelScope.launch {
             val localMedia = media ?: return@launch
-
-            for (user in session.userList.value) {
-                if (user.name == session.currentUsername) continue
-                val theirFile = user.file ?: continue
-
-                // Map each mismatch to its warning, with the comparators of Python's utils.py
-                // (sameFilename, sameFileduration, sameFilesize): case-insensitive names, a
-                // raw-to-hashed comparison for peers in privacy mode, the **Hidden filename** and
-                // size 0 placeholders that match anything, and a 2.5 s duration tolerance.
-                val mismatches = listOf(
-                    !FileComparison.sameFilename(localMedia.fileName, theirFile.fileName) to Localization.strings.roomFileMismatchWarningName,
-                    !FileComparison.sameFileduration(localMedia.fileDuration ?: 0.0, theirFile.fileDuration ?: 0.0) to Localization.strings.roomFileMismatchWarningDuration,
-                    !FileComparison.sameFilesize(localMedia.fileSize, theirFile.fileSize) to Localization.strings.roomFileMismatchWarningSize
-                )
-
-                // No warning when all three differ.
-                val matchingMismatches = mismatches.filter { it.first }
-                if (matchingMismatches.isEmpty() || matchingMismatches.size == 3) continue
-
-                val warning = buildString {
-                    append(Localization.strings.roomFileMismatchWarningCore(user.name))
-                    mismatches.filter { it.first }
-                        .forEach { append(it.second) }
+            val comparisons = session.userList.value
+                .filter { it.name != session.currentUsername && (changedUser == null || it.name == changedUser) }
+                .mapNotNull { user -> user.file }
+                .map { theirs ->
+                    FileComparison.differences(
+                        localMedia.fileName, localMedia.fileSize, localMedia.fileDuration,
+                        theirs.fileName, theirs.fileSize, theirs.fileDuration,
+                    )
                 }
+            val kinds = FileComparison.warnedDifferences(comparisons)
+            if (kinds.isEmpty()) return@launch
 
-                dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
-                dispatchOSD(OSDCategory.WARNING) { warning }
+            // Syncplay's separator: "name, size, duration".
+            val warning: suspend () -> String = {
+                val strings = Localization.strings
+                val list = kinds.joinToString(", ") { kind ->
+                    when (kind) {
+                        FileComparison.Difference.Name -> strings.roomFileMismatchWarningName
+                        FileComparison.Difference.Size -> strings.roomFileMismatchWarningSize
+                        FileComparison.Difference.Duration -> strings.roomFileMismatchWarningDuration
+                    }
+                }
+                if (changedUser != null) strings.roomFileMismatchWarningCore(list) else strings.roomFileMismatchWarningRoom(list)
             }
+            dispatcher.broadcastMessage(message = warning, isChat = false, isError = true)
+            dispatchOSD(OSDCategory.WARNING, getter = warning)
         }
     }
 

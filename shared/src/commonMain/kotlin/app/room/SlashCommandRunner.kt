@@ -24,7 +24,13 @@ suspend fun RoomViewmodel.runSlashCommand(command: SlashCommand): Boolean {
         }
 
         is SlashCommand.BadArgument -> reply(isError = true) {
-            Localization.strings.roomCommandBadArgument(command.name, command.expected)
+            val strings = Localization.strings
+            val expected = when (command.expected) {
+                CommandArgument.RoomName -> strings.roomCommandArgRoom
+                CommandArgument.OperatorPassword -> strings.roomCommandArgOperator
+                CommandArgument.SeekTime -> strings.roomCommandArgSeek
+            }
+            strings.roomCommandBadArgument(command.name, expected)
         }
 
         SlashCommand.Help -> reply {

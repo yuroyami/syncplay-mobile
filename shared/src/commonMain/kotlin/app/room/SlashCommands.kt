@@ -41,9 +41,12 @@ sealed interface SlashCommand {
     /** `/help`: print the list of commands. */
     data object Help : SlashCommand
 
-    /** The command word was right but what followed it was not. */
-    data class BadArgument(val name: String, val expected: String) : SlashCommand
+    /** The command word was right but what followed it was not. [expected] says what should follow. */
+    data class BadArgument(val name: String, val expected: CommandArgument) : SlashCommand
 }
+
+/** What a command expects after its word. The reply names it in the display language. */
+enum class CommandArgument { RoomName, OperatorPassword, SeekTime }
 
 /** Every command word, for the help text. A new command must be listed here too. */
 val SLASH_COMMANDS: List<String> =
@@ -71,11 +74,11 @@ fun parseSlashCommand(input: String): SlashCommand {
         "users", "list" -> SlashCommand.ListUsers
         "help", "commands" -> SlashCommand.Help
         "room" ->
-            if (argument.isEmpty()) SlashCommand.BadArgument("room", "a room name")
+            if (argument.isEmpty()) SlashCommand.BadArgument("room", CommandArgument.RoomName)
             else SlashCommand.JoinRoom(argument)
         "op", "operator" ->
             if (OPERATOR_PASSWORD.matches(argument.uppercase())) SlashCommand.Identify(argument.uppercase())
-            else SlashCommand.BadArgument("op", "a password shaped like AB-123-456")
+            else SlashCommand.BadArgument("op", CommandArgument.OperatorPassword)
         "seek" -> parseSeek(argument)
         else -> SlashCommand.Unknown(name)
     }
@@ -88,14 +91,14 @@ private val OPERATOR_PASSWORD = Regex("""[A-Z]{2}-\d{3}-\d{3}""")
  * that amount instead of jumping to it.
  */
 private fun parseSeek(argument: String): SlashCommand {
-    if (argument.isEmpty()) return SlashCommand.BadArgument("seek", "a time like 1:23:45, or +30")
+    if (argument.isEmpty()) return SlashCommand.BadArgument("seek", CommandArgument.SeekTime)
     val relative = argument.startsWith("+") || argument.startsWith("-")
     val negative = argument.startsWith("-")
     val digits = argument.removePrefix("+").removePrefix("-")
 
     val parts = digits.split(":")
     if (parts.size > 3 || parts.any { it.isEmpty() || !it.all(Char::isDigit) }) {
-        return SlashCommand.BadArgument("seek", "a time like 1:23:45, or +30")
+        return SlashCommand.BadArgument("seek", CommandArgument.SeekTime)
     }
     val seconds = parts.fold(0L) { acc, part -> acc * 60 + part.toLong() }
     val millis = seconds * 1000

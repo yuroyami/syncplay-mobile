@@ -34,7 +34,7 @@ class EventTextTest {
 
     @Test
     fun aNameIsFoundWhereverTheTranslationPutsIt() {
-        val line = eventText("Rewound to catch up with " + "Dana".isolated(), mapOf("Dana" to false), self, friend)
+        val line = eventText("Rewound due to time difference with " + "Dana".isolated(), mapOf("Dana" to false), self, friend)
         assertEquals(listOf("Dana" to friend), line.colouredRuns())
     }
 

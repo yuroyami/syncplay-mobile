@@ -101,4 +101,30 @@ class FileComparisonTest {
         assertFalse(playlistIsValid(listOf("x".repeat(10001))))
         assertTrue(playlistIsValid(listOf("x".repeat(10000))))
     }
+
+    // Python's getFileDifferencesForUser lists name, size and duration, in that order.
+    @Test
+    fun `differences come in syncplay's order`() {
+        val all = FileComparison.differences("a.mkv", "100", 60.0, "b.mkv", "200", 90.0)
+        assertEquals(listOf(FileComparison.Difference.Name, FileComparison.Difference.Size, FileComparison.Difference.Duration), all)
+        assertEquals(emptyList(), FileComparison.differences("A.mkv", "100", 60.0, "a.mkv", "100", 61.4))
+        assertEquals(listOf(FileComparison.Difference.Duration), FileComparison.differences("a.mkv", "100", 60.0, "a.mkv", "100", 63.0))
+    }
+
+    @Test
+    fun `a hidden name and an unknown size match anything`() {
+        assertEquals(emptyList(), FileComparison.differences("a.mkv", "0", 60.0, FileComparison.PRIVACY_HIDDENFILENAME, "", 60.0))
+    }
+
+    @Test
+    fun `a file that differs in every way gets no warning`() {
+        val name = listOf(FileComparison.Difference.Name)
+        val sizeAndDuration = listOf(FileComparison.Difference.Size, FileComparison.Difference.Duration)
+        val everything = FileComparison.Difference.entries.toList()
+        assertEquals(emptyList(), FileComparison.warnedDifferences(listOf(everything)))
+        assertEquals(emptyList(), FileComparison.warnedDifferences(listOf(emptyList())))
+        // Across a room, the list joins every copy's differences, still in Syncplay's order.
+        assertEquals(everything, FileComparison.warnedDifferences(listOf(sizeAndDuration, everything, name)))
+        assertEquals(name, FileComparison.warnedDifferences(listOf(name, everything)))
+    }
 }

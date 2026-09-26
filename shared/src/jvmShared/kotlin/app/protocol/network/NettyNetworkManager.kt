@@ -246,8 +246,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             }
             pipeline.addFirst(handler)
             handler.handshakeFuture().addListener { future ->
-                if (future.isSuccess) cont.resume(Unit)
-                else cont.resumeWithException(future.cause() ?: Exception("TLS handshake failed"))
+                if (future.isSuccess) {
+                    tlsVersion = runCatching { handler.engine().session.protocol }.getOrNull()
+                    cont.resume(Unit)
+                } else {
+                    cont.resumeWithException(future.cause() ?: Exception("TLS handshake failed"))
+                }
             }
         } catch (e: Throwable) {
             cont.resumeWithException(e)

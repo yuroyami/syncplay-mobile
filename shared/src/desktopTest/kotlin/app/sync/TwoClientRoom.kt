@@ -49,7 +49,10 @@ import kotlin.time.Duration.Companion.milliseconds
  * line straight to a [ClientConnection] of the in-process [SyncplayServer], and [ClockPlayer] is
  * an engine whose playhead is a clock. Time is real, so a test waits in hundreds of milliseconds.
  */
-internal class TwoClientRoom : AutoCloseable {
+internal class TwoClientRoom(
+    /** The link from each client to the server. A test can pass one that behaves like another server. */
+    private val transport: (RoomViewmodel, SyncplayServer) -> NetworkManager = ::LoopbackTransport,
+) : AutoCloseable {
 
     private val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val server = SyncplayServer(ServerConfig(isolateRooms = false), serverScope)
@@ -80,7 +83,7 @@ internal class TwoClientRoom : AutoCloseable {
             joinConfig = config,
             backStack = mutableStateListOf(Screen.Home, destination),
             engineOverride = ClockEngine,
-            transportOverride = { LoopbackTransport(it, server) },
+            transportOverride = { transport(it, server) },
         )
         stores += ViewModelStore().also { it.put("room-$name", viewmodel) }
         return Client(name, viewmodel)
@@ -156,7 +159,7 @@ internal class TwoClientRoom : AutoCloseable {
 }
 
 /** An in-memory socket: each line goes straight to a [ClientConnection] of [server], and back. */
-internal class LoopbackTransport(viewmodel: RoomViewmodel, private val server: SyncplayServer) : NetworkManager(viewmodel) {
+internal open class LoopbackTransport(viewmodel: RoomViewmodel, private val server: SyncplayServer) : NetworkManager(viewmodel) {
     override val engine = NetworkEngine.KTOR
 
     @Volatile

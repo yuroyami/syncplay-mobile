@@ -658,7 +658,7 @@ class HomeFocusTest {
         const val PORT = "Port"
         const val PASSWORD = "Password (if any)"
         const val JOIN = "Join room"
-        const val USERNAME_EMPTY = "Username shouldn't be empty"
+        const val USERNAME_EMPTY = "Username can't be empty"
         const val MARK = "X"
 
         /** A whole phone window and its keyboard, for the tests that use a keyboard inset. */

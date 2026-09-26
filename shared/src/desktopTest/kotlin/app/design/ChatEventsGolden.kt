@@ -21,7 +21,7 @@ class ChatEventsGolden {
         content = SELF.isolated() + " was set as ready by " + PEER.isolated(),
         people = mapOf(SELF to true, PEER to false),
     )
-    private val connected = Message(content = "Connected to the server")
+    private val connected = Message(content = "Successfully connected to server")
     private val refused = Message(
         content = PEER.isolated() + " failed to identify as a room operator",
         isError = true,
