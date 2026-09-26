@@ -1018,12 +1018,17 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
+                // The row opens this again on every tap, so every way out of it closes it.
+                val open = this
                 val scope = rememberCoroutineScope { ioDispatcher }
                 var result by remember { mutableStateOf<String?>(null) }
                 val done = strings.settingsExportDone
                 val failed = strings.settingsFileError
                 val saver = rememberFileSaver { file ->
-                    if (file == null) return@rememberFileSaver
+                    if (file == null) {
+                        open.value = false
+                        return@rememberFileSaver
+                    }
                     scope.launch {
                         // Writing a file can fail for many reasons, and silence looks
                         // exactly like success.
@@ -1034,7 +1039,10 @@ object Preferences {
                 LaunchedEffect(null) {
                     saver.launch(suggestedName = "${appName}Settings", extension = "json")
                 }
-                OutcomeModal(result) { result = null }
+                OutcomeModal(result) {
+                    result = null
+                    open.value = false
+                }
             }
         )
     }
@@ -1050,11 +1058,15 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
+                val open = this
                 val scope = rememberCoroutineScope { ioDispatcher }
                 var result by remember { mutableStateOf<String?>(null) }
                 val s = strings
                 val picker = rememberFilePickerLauncher(type = FileKitType.File(listOf("json"))) { file ->
-                    if (file == null) return@rememberFilePickerLauncher
+                    if (file == null) {
+                        open.value = false
+                        return@rememberFilePickerLauncher
+                    }
                     scope.launch {
                         val raw = runCatching { file.readString() }.getOrNull()
                         if (raw == null) {
@@ -1078,7 +1090,10 @@ object Preferences {
                     }
                 }
                 LaunchedEffect(null) { picker.launch() }
-                OutcomeModal(result) { result = null }
+                OutcomeModal(result) {
+                    result = null
+                    open.value = false
+                }
             }
         )
     }
@@ -1102,11 +1117,17 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
+                val open = this
                 val scope = rememberCoroutineScope { ioDispatcher }
 
+                // The row stays open until the write ends: closing it cancels its scope.
                 val logSaver = rememberFileSaver { file ->
                     scope.launch {
-                        file?.writeFilesCompat(logFilesForExport())
+                        try {
+                            file?.writeFilesCompat(logFilesForExport())
+                        } finally {
+                            open.value = false
+                        }
                     }
                 }
 
@@ -1150,9 +1171,13 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
+                val open = this
                 val scope = rememberCoroutineScope { ioDispatcher }
                 val picker = rememberFilePickerLauncher(type = FileKitType.File()) { file ->
-                    if (file == null) return@rememberFilePickerLauncher
+                    if (file == null) {
+                        open.value = false
+                        return@rememberFilePickerLauncher
+                    }
                     scope.launch {
                         runCatching {
                             val bytes = file.readBytes()
@@ -1166,6 +1191,7 @@ object Preferences {
                         }.onFailure {
                             loggy("mpv.conf import failed: ${it.message}")
                         }
+                        open.value = false
                     }
                 }
                 LaunchedEffect(null) { picker.launch() }
@@ -1185,9 +1211,13 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
+                val open = this
                 val scope = rememberCoroutineScope { ioDispatcher }
                 val saver = rememberFileSaver { file ->
-                    if (file == null) return@rememberFileSaver
+                    if (file == null) {
+                        open.value = false
+                        return@rememberFileSaver
+                    }
                     scope.launch {
                         runCatching {
                             val src = getMpvConfFilePath()
@@ -1201,6 +1231,7 @@ object Preferences {
                         }.onFailure {
                             loggy("mpv.conf export failed: ${it.message}")
                         }
+                        open.value = false
                     }
                 }
                 LaunchedEffect(null) {
