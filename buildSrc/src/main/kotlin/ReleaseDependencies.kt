@@ -71,5 +71,7 @@ fun Project.registerDependencyTableTask(): TaskProvider<*> = tasks.register("pri
     group = "syncplay"
     description = "Prints the dependency table for the GitHub release notes as Markdown."
     outputs.upToDateWhen { false }
-    doLast { println(releaseDependencyTable(ToolVersions(projectDir))) }
+    // A plain File, not the project: the configuration cache cannot keep a project reference.
+    val root = projectDir
+    doLast { println(releaseDependencyTable(ToolVersions(root))) }
 }
