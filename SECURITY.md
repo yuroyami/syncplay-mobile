@@ -62,32 +62,28 @@ inside the app. If you forward a port, anyone on the internet can reach it.
 - The hosted server can ask for a server password, and it drops a client that sends a wrong one.
 - The hosted server does not run a command that arrives before the handshake, and it drops that
   client.
+- The hosted server admits at most 32 connections. It closes a connection that has not finished
+  the handshake after 15 seconds, and it drops a client that holds more than 256 KB of data that
+  is not handled or not sent yet.
 
 ## Known limits, stated plainly
 
 These limits are real and open.
 
-- **A hosted server has no encryption.** It refuses every encryption request, so a room that you
-  host runs in plain text. The server password crosses as a digest. Usernames, filenames, chat and
-  the operator password of a controlled room (a room that only its operators can control) cross in
-  plain text.
-  Tracked in #ISSUE(built-in-server-has-no-tls).
+- **A hosted server encrypts only when you turn it on.** With **Encrypt connections** off, which is
+  the default, a room that you host runs in plain text. The server password crosses as a digest.
+  Usernames, filenames, chat and the operator password of a controlled room (a room that only its
+  operators can control) cross in plain text. With it on (Android and desktop), the server uses a
+  certificate that it makes itself. The app trusts that certificate by its fingerprint on first
+  use, and Syncplay for PC refuses it.
 - **A hosted server cannot remove or block a person.** Anyone who reaches the port can join. A
-  server password, when you set one, is the only check, and there is no pairing step.
-  Tracked in #ISSUE(server-has-no-operator-controls).
-- **A hosted server has no connection limits.** A connection that never finishes the handshake
-  stays open, and nothing caps the number of clients.
-  Tracked in #ISSUE(hosted-server-has-no-admission-limits).
+  server password, when you set one, is the only check, and there is no pairing step. Syncplay for
+  PC has no such control either.
 - **Saved passwords are stored as plain text.** When the app remembers your join details, it keeps
   the server password and a controlled room's operator password in ordinary preferences. A
   home-screen shortcut carries the server password as well, and on iOS also the operator password.
   The hosted server's password is an ordinary preference too. Anything that can read the app's data
-  can read them.
-  Tracked in #ISSUE(passwords-stored-in-plain-preferences).
-- **Exported logs are only partly redacted.** The export masks the two API keys. It keeps room
-  names, usernames, filenames and server addresses. It also covers up to seven days of logs, not
-  only the current session.
-  Tracked in #ISSUE(exported-logs-are-not-redacted).
+  can read them. The list of recent rooms keeps no password.
 
 ## API keys in this repository
 
@@ -96,8 +92,8 @@ Both API keys in this repository are public, so reporting either key adds nothin
 - The KLIPY key is public on purpose. It ships inside every app and travels in the address of every
   KLIPY request, so a device cannot keep it secret. Outside builders need it to rebuild the
   ExoPlayer-only APK.
-- The OpenSubtitles key is in the git history, and published builds still use it. Moving it out of
-  the repository is tracked in #ISSUE(opensubtitles-key-committed).
+- The OpenSubtitles key is public for the same reason: it ships inside every app, and it is in the
+  git history.
 
 ## Rules a change must keep
 

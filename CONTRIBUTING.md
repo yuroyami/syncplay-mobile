@@ -615,8 +615,8 @@ A change that contradicts one of these is wrong, however good the reasoning. If 
 should change, open an issue and say why. Do not just do it.
 
 1. **Password fields show the password in plain text, on purpose.** No masking. This is a
-   usability ruling, not a defect. Password storage in plain preferences is a separate problem,
-   tracked in #ISSUE(passwords-stored-in-plain-preferences).
+   usability ruling, not a defect. The passwords are also stored in plain preferences, which
+   SECURITY.md lists as a known limit.
 2. **Do not rewrite the protocol, the sync algorithm, the server or the serialization.** Make
    small, targeted fixes only.
 3. **This app owns its player.** The reference client drives an external player over an
