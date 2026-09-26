@@ -4,6 +4,7 @@ import android.net.TrafficStats
 import app.server.ByteBudget
 import app.server.ClientConnection
 import app.server.ServerLimits
+import app.server.tls.ServerTls
 import app.server.SyncplayServer
 import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
@@ -104,7 +105,11 @@ actual class ServerNetworkEngine actual constructor(
                                 },
                                 dropFn = {
                                     ctx.channel().close()
-                                }
+                                },
+                                // TLS only when the host turned it on. Syncplay for PC refuses the host's certificate.
+                                upgradeFn = if (server.config.offerTls) {
+                                    { line -> ServerTls.upgrade(ctx.channel(), line + "\r\n") }
+                                } else null,
                             )
                             // One mailbox and one consumer per socket: lines are handled in arrival
                             // order, and the connection is reported lost only after its last line

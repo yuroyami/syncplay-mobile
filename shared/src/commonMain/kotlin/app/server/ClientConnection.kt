@@ -42,7 +42,12 @@ import kotlinx.serialization.SerializationException
 class ClientConnection(
     val server: SyncplayServer,
     private val sendFn: (String) -> Unit,
-    private val dropFn: () -> Unit
+    private val dropFn: () -> Unit,
+    /**
+     * Sends the given line in plain text, then switches the socket to TLS. Null for an engine
+     * that cannot switch a socket in the middle of a connection.
+     */
+    private val upgradeFn: ((String) -> Unit)? = null,
 ) : WireMessageHandler {
 
     var watcher: ServerWatcher? = null
@@ -289,10 +294,19 @@ class ClientConnection(
         server.sendChat(watcher ?: return, message.message)
     }
 
+    /** Answers a client's TLS request. Yes needs the host to have turned it on, and an engine that can switch. */
     override suspend fun onTLS(message: WireMessage.TLS) {
-        // The built-in server has no TLS certificate support, so it always answers "false".
-        sendTyped(WireMessage.tlsResponse(false))
+        val upgrade = upgradeFn
+        if (server.config.offerTls && upgrade != null && watcher == null && !tlsStarted) {
+            tlsStarted = true
+            upgrade(WireMessage.tlsResponse(true).toJson())
+        } else {
+            sendTyped(WireMessage.tlsResponse(false))
+        }
     }
+
+    /** Set once the socket switched to TLS: a second request must not switch it again. */
+    private var tlsStarted = false
 
     override suspend fun onError(message: WireMessage.Error) {
         dropWithError(message.data.message ?: "Unknown error")

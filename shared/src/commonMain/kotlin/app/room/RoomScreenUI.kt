@@ -100,6 +100,8 @@ import app.uicomponents.MediaDropOverlay
 import app.uicomponents.MediaDropTarget
 import app.uicomponents.mediaDropTarget
 import app.utils.timestampFromMillis
+import androidx.compose.ui.text.font.FontFamily
+import app.protocol.network.CertificatePins
 import app.preferences.Preferences
 import app.preferences.value
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
@@ -238,6 +240,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         LeaveRoomAsk(viewmodel)
         ManagedRoomModal()
         UntrustedUrlAsk(viewmodel)
+        CertificateAsk(viewmodel)
         MissingFileAsk(viewmodel)
         ResumeAsk(viewmodel)
         PlaylistRestoreAsk(viewmodel)
@@ -284,6 +287,58 @@ private fun UntrustedUrlAsk(viewmodel: RoomViewmodel) {
             text = strings.roomUntrustedAskBody(asked.domain),
             style = Type.note,
             color = palette.inkDim,
+        )
+    }
+}
+
+/**
+ * Asks whether to trust a server certificate that no authority signed, such as the one of a room
+ * hosted in the app. The person compares the fingerprint with the host's hosting panel. A changed
+ * certificate for a server that was trusted before gets a warning instead. Nothing connects until
+ * the person answers.
+ */
+@Composable
+internal fun CertificateAsk(viewmodel: RoomViewmodel) {
+    val network = viewmodel.networkManager
+    val asked by network.untrustedCertificate.collectAsState()
+    val certificate = asked ?: return
+    val changed = certificate.pinned != null
+    Modal(
+        open = true,
+        onDismiss = {},
+        dismissable = false,
+        title = if (changed) strings.roomTlsChangedTitle else strings.roomTlsTrustTitle,
+        size = ModalSize.Ask,
+        actions = {
+            SecondaryAction(
+                text = strings.roomOverflowLeaveRoom,
+                onClick = {
+                    network.untrustedCertificate.value = null
+                    viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.goHome() }
+                },
+            )
+            PrimaryAction(
+                text = strings.roomTlsTrust,
+                onClick = {
+                    network.untrustedCertificate.value = null
+                    viewmodel.viewModelScope.launch {
+                        CertificatePins.pin(certificate.host, certificate.port, certificate.fingerprint)
+                        network.reconnectNow()
+                    }
+                },
+            )
+        },
+    ) {
+        Text(
+            text = if (changed) strings.roomTlsChangedBody(certificate.host) else strings.roomTlsTrustBody(certificate.host),
+            style = Type.note,
+            color = if (changed) palette.warn else palette.inkDim,
+        )
+        Text(
+            text = CertificatePins.fingerprintLines(certificate.fingerprint),
+            style = Type.value.copy(fontFamily = FontFamily.Monospace),
+            color = palette.ink,
+            modifier = Modifier.padding(top = Space.gap),
         )
     }
 }

@@ -56,6 +56,9 @@ object ServerHostSession {
     val publicIpAddress = mutableStateOf<String?>(null)
     val publicIpLoading = mutableStateOf(false)
 
+    /** The certificate fingerprint while the running server offers TLS, for the hosting panel. */
+    val tlsFingerprint = mutableStateOf<String?>(null)
+
     /** Log lines for the screen, capped at [LOG_CAP], oldest dropped first. */
     val serverLogs = mutableStateListOf<ServerLogEntry>()
 
@@ -104,6 +107,7 @@ object ServerHostSession {
             disableChat = Preferences.SERVER_DISABLE_CHAT.value(),
             salt = salt,
             motd = Preferences.SERVER_MOTD.value(),
+            offerTls = serverTlsSupported && Preferences.SERVER_TLS.value(),
         )
 
         serverStatus.value = ServerStatus.Starting
@@ -114,7 +118,15 @@ object ServerHostSession {
             var newServer: SyncplayServer? = null
             var newEngine: ServerNetworkEngine? = null
             try {
-                newServer = SyncplayServer(config, scope)
+                // The certificate is made on the first start with TLS. Without one, the server
+                // runs without TLS rather than failing each client that asks for it.
+                val fingerprint = if (config.offerTls) {
+                    runCatching { hostTlsFingerprint() }
+                        .onFailure { loggy("Server: no TLS certificate, running without TLS: ${it.message}") }
+                        .getOrNull()
+                } else null
+                tlsFingerprint.value = fingerprint
+                newServer = SyncplayServer(if (fingerprint == null) config.copy(offerTls = false) else config, scope)
                 server = newServer
 
                 collectorsJob = launch {
@@ -195,6 +207,7 @@ object ServerHostSession {
                 deviceIpAddress.value = null
                 publicIpAddress.value = null
                 publicIpLoading.value = false
+                tlsFingerprint.value = null
                 platformCallback.serverServiceStop()
                 addLog(ServerLogEvent.Stopped)
             } catch (e: Exception) {

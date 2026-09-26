@@ -250,7 +250,11 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                     tlsVersion = runCatching { handler.engine().session.protocol }.getOrNull()
                     cont.resume(Unit)
                 } else {
-                    cont.resumeWithException(future.cause() ?: Exception("TLS handshake failed"))
+                    val cause = future.cause()
+                    // A certificate that nothing trusts yet: the room asks the person about it.
+                    generateSequence(cause) { it.cause }.filterIsInstance<UntrustedCertificateException>().firstOrNull()
+                        ?.let { reportUntrustedCertificate(it.fingerprint) }
+                    cont.resumeWithException(cause ?: Exception("TLS handshake failed"))
                 }
             }
         } catch (e: Throwable) {
@@ -274,7 +278,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
         fun sharedClientSslContext(): SslContext =
             clientSslContext ?: synchronized(sslContextLock) {
-                clientSslContext ?: SslContextBuilder.forClient().startTls(false).build()
+                clientSslContext ?: SslContextBuilder.forClient()
+                    .trustManager(PinningTrustManager.create())
+                    .startTls(false)
+                    .build()
                     .also { clientSslContext = it }
             }
 

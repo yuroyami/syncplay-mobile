@@ -373,6 +373,9 @@ object Preferences {
         icon = Icons.Filled.Key
     }
     /** With this on, a server that cannot encrypt is refused instead of joined in plain text. */
+    /** Server certificates trusted by their fingerprint, as JSON. See CertificatePins. */
+    val TLS_PINS = Pref("pref_tls_pins", "")
+
     val TLS_REQUIRED = Pref("pref_tls_required", false) {
         title = { it.settingTlsRequiredTitle }
         summary = { it.settingTlsRequiredSummary }
@@ -578,6 +581,12 @@ object Preferences {
     val SERVER_DISABLE_READY = Pref("pref_server_disable_ready", false) {
         title = { it.serverHostDisableReady }
         icon = Icons.Filled.Pin
+    }
+    /** Off by default: Syncplay for PC refuses the host's own certificate, so PC users could not join. */
+    val SERVER_TLS = Pref("pref_server_tls", false) {
+        title = { it.serverHostTls }
+        summary = { it.serverHostTlsSummary }
+        icon = Icons.Filled.Lock
     }
 
     /** ------------ Chat Properties -------------*/

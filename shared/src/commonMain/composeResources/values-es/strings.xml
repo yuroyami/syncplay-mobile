@@ -89,6 +89,11 @@
     <string name="room_shared_playlist_missing">No está en este dispositivo</string>
     <string name="room_shared_playlist_missing_title">Archivo no encontrado</string>
     <string name="room_shared_playlist_find_file">Buscar el archivo</string>
+    <string name="room_tls_trust_title">¿Confiar en este servidor?</string>
+    <string name="room_tls_trust_body">%1$s usa su propio certificado. Compara esta huella con la del panel de alojamiento del anfitrión y confía en ella solo si coinciden.</string>
+    <string name="room_tls_changed_title">El certificado cambió</string>
+    <string name="room_tls_changed_body">%1$s muestra un certificado distinto del anterior. Alguien podría estar interceptando la conexión. Confía en él solo si el anfitrión confirma esta nueva huella.</string>
+    <string name="room_tls_trust">Confiar y unirse</string>
     <string name="room_shared_playlist_button_add_file">Añadir archivo(s) al final de la lista de reproducción</string>
     <string name="room_shared_playlist_button_add_folder">Añadir carpeta a la lista de reproducción (y directorios de medios)</string>
     <string name="room_shared_playlist_button_add_url">Añadir URL(s) al final de la lista de reproducción</string>
@@ -543,7 +548,7 @@
     <string name="room_subs_downloaded_remaining">Subtítulo cargado. Te quedan %1$d descargas de subtítulos hoy (buscar es ilimitado).</string>
     <string name="room_subs_quota_reached">Has llegado al límite diario de descargas de subtítulos. Se reinicia en %1$s.</string>
     <string name="room_subtitle_track_selected">Subtítulos: %1$s</string>
-    <string name="room_tls_handshake_failed">Falló la conexión segura: %1$s. Si el servidor usa un certificado autofirmado, desactiva la conexión segura en Ajustes.</string>
+    <string name="room_tls_handshake_failed">Falló la conexión segura: %1$s.</string>
     <string name="room_tls_required_downgrade">Este servidor no soporta TLS. Desactiva «Exigir cifrado» en Ajustes para entrar.</string>
     <string name="room_track_trait_accessibility">Accesibilidad</string>
     <string name="room_track_trait_forced">Forzado</string>
@@ -597,6 +602,10 @@
     <string name="server_host_log_errors_only">Solo errores</string>
     <string name="server_host_on_network">En esta red</string>
     <string name="server_host_no_address">No se encontró ninguna dirección de red. Conéctate a una red wifi u otra red y vuelve a iniciar el servidor.</string>
+    <string name="server_host_tls">Cifrar las conexiones</string>
+    <string name="server_host_tls_summary">Mientras esté activado, solo pueden unirse quienes usan esta app. Syncplay para PC rechaza el certificado propio del servidor.</string>
+    <string name="server_host_tls_fingerprint">Huella del certificado</string>
+    <string name="server_host_tls_fingerprint_hint">Quienes se unen ven esta huella una vez. Pídeles que se unan solo si coincide.</string>
     <string name="server_host_over_internet">Por internet</string>
     <string name="server_host_password_detail">Se guarda tal cual, igual que la contraseña de entrada.</string>
     <string name="server_host_port_taken">El puerto %1$d está ocupado</string>

@@ -37,6 +37,12 @@ data class ServerConfig(
     /** Message of the day shown to connecting clients. */
     val motd: String = "",
 
+    /**
+     * Whether a client that asks for TLS gets it, with the host's own certificate. Off by default:
+     * Syncplay for PC refuses a certificate that no authority signed, so a PC user could not join.
+     */
+    val offerTls: Boolean = false,
+
     /** Seconds without a State from a client before it is dropped as dead. */
     val protocolTimeoutSeconds: Double = PROTOCOL_TIMEOUT_SECONDS,
 

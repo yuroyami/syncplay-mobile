@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import NIO
 import NIOFoundationCompat
@@ -85,7 +86,9 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
      right after this returns, so the channel must be fully encrypted by then. The certificate is
      checked against the host name the user typed (`session.tlsPeerHost`), which is also sent as
      SNI. It is not checked against the official server's name or the IP that the socket dialled.
-     A failure throws, and the caller reports it.
+     A certificate that the system refuses still passes when the person trusted its fingerprint for
+     this address. Otherwise the fingerprint goes to the room, which asks the person about it. A
+     failure throws, and the caller reports it.
      */
     override func upgradeTls() async throws {
         // Without a channel there is nothing to upgrade, so throw. A plain return reads as a
@@ -96,7 +99,22 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         let configuration = TLSConfiguration.makeClientConfiguration()
         let sslContext = try NIOSSLContext(configuration: configuration)
         let peerHost = self.viewmodel.session.tlsPeerHost
-        let tlsHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: peerHost)
+        let pinned = self.pinnedCertificateFingerprint()
+        let tlsHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: peerHost) { [weak self] certificates, promise in
+            guard let leaf = certificates.first, let der = try? leaf.toDERBytes() else {
+                promise.succeed(.failed)
+                return
+            }
+            let fingerprint = SwiftNioNetworkManager.fingerprint(of: der)
+            SwiftNioNetworkManager.systemTrusts(certificates, host: peerHost) { trusted in
+                if trusted || fingerprint == pinned {
+                    promise.succeed(.certificateVerified)
+                } else {
+                    self?.reportUntrustedCertificate(fingerprint: fingerprint)
+                    promise.succeed(.failed)
+                }
+            }
+        }
 
         let handshakePromise = channel.eventLoop.makePromise(of: Void.self)
         let trackingHandler = TLSHandshakeTrackingHandler(promise: handshakePromise)
@@ -110,6 +128,33 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         let deadline = channel.eventLoop.scheduleTask(in: .seconds(15)) { trackingHandler.timedOut() }
         defer { deadline.cancel() }
         try await handshakePromise.futureResult.get()
+    }
+
+
+    /// The SHA-256 of a certificate's DER bytes, as colon-separated pairs of uppercase hex. It must
+    /// match `CertificatePins.fingerprintOf` in the shared code, which the pins are compared with.
+    private static func fingerprint(of der: [UInt8]) -> String {
+        SHA256.hash(data: der).map { String(format: "%02X", $0) }.joined(separator: ":")
+    }
+
+    /// The system's own trust decision for `certificates`, with the host name check for `host`. A
+    /// custom check replaces the TLS library's default one, so this does the default one's work.
+    private static func systemTrusts(_ certificates: [NIOSSLCertificate], host: String, completion: @escaping (Bool) -> Void) {
+        let chain = certificates.compactMap { certificate -> SecCertificate? in
+            guard let der = try? certificate.toDERBytes() else { return nil }
+            return SecCertificateCreateWithData(nil, Data(der) as CFData)
+        }
+        var trust: SecTrust?
+        guard !chain.isEmpty,
+              SecTrustCreateWithCertificates(chain as CFArray, SecPolicyCreateSSL(true, host as CFString), &trust) == errSecSuccess,
+              let trust else {
+            completion(false)
+            return
+        }
+        // The evaluation can fetch intermediate certificates, so it runs off the event loop.
+        DispatchQueue.global(qos: .userInitiated).async {
+            completion(SecTrustEvaluateWithError(trust, nil))
+        }
     }
 
 

@@ -165,6 +165,13 @@
     <string name="room_shared_playlist_missing">Not found on this device</string>
     <string name="room_shared_playlist_missing_title">File not found</string>
     <string name="room_shared_playlist_find_file">Find the file</string>
+    <string name="room_tls_trust_title">Trust this server?</string>
+    <!-- %1$s is the server address, such as 192.168.1.20. -->
+    <string name="room_tls_trust_body">%1$s uses its own certificate. Compare this fingerprint with the one in the host's hosting panel, and trust it only if they match.</string>
+    <string name="room_tls_changed_title">The certificate changed</string>
+    <!-- %1$s is the server address, such as 192.168.1.20. -->
+    <string name="room_tls_changed_body">%1$s shows a different certificate than before. Someone may be intercepting the connection. Trust it only if the host confirms this new fingerprint.</string>
+    <string name="room_tls_trust">Trust and join</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
     <string name="room_shared_playlist_button_add_url">Add URL(s) to bottom of playlist</string>
@@ -199,7 +206,7 @@
     <string name="room_slowdown_notification">Slowing down due to time difference with %1$s</string>
     <string name="room_slowdown_reverted">Reverting speed back to normal</string>
     <!-- %1$s is the reason, in English. -->
-    <string name="room_tls_handshake_failed">Secure connection failed: %1$s. For a server with a self-signed certificate, turn off Secure connection in Settings.</string>
+    <string name="room_tls_handshake_failed">Secure connection failed: %1$s.</string>
     <string name="room_tls_required_downgrade">This server does not support TLS. Turn off Require encryption in Settings to join.</string>
     <!-- %1$s is a user name, %2$s is a room name. -->
     <string name="room_guy_joined_other_room">%1$s has joined the room: '%2$s'</string>
@@ -712,6 +719,10 @@
     <!-- Server host (design overhaul) -->
     <string name="server_host_on_network">On this network</string>
     <string name="server_host_no_address">No network address found. Connect to Wi-Fi or another network, then start the server again.</string>
+    <string name="server_host_tls">Encrypt connections</string>
+    <string name="server_host_tls_summary">While this is on, only people who use this app can join. Syncplay for PC refuses the server's own certificate.</string>
+    <string name="server_host_tls_fingerprint">Certificate fingerprint</string>
+    <string name="server_host_tls_fingerprint_hint">People who join see this fingerprint once. Ask them to join only if it matches.</string>
     <string name="server_host_over_internet">Over the internet</string>
     <string name="server_host_copy">Copy</string>
     <string name="server_host_share">Share</string>

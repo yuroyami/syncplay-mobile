@@ -98,6 +98,11 @@
     <string name="room_shared_playlist_missing">Brak na tym urządzeniu</string>
     <string name="room_shared_playlist_missing_title">Nie znaleziono pliku</string>
     <string name="room_shared_playlist_find_file">Znajdź plik</string>
+    <string name="room_tls_trust_title">Zaufać temu serwerowi?</string>
+    <string name="room_tls_trust_body">%1$s używa własnego certyfikatu. Porównaj ten odcisk z tym w panelu hostowania gospodarza i zaufaj mu tylko, jeśli się zgadzają.</string>
+    <string name="room_tls_changed_title">Certyfikat się zmienił</string>
+    <string name="room_tls_changed_body">%1$s pokazuje inny certyfikat niż wcześniej. Ktoś może przechwytywać połączenie. Zaufaj mu tylko, jeśli gospodarz potwierdzi ten nowy odcisk.</string>
+    <string name="room_tls_trust">Zaufaj i dołącz</string>
     <string name="room_shared_playlist_button_add_file">Dodaj plik(i) na koniec listy</string>
     <string name="room_shared_playlist_button_add_folder">Dodaj folder do listy odtwarzania (i katalogów mediów)</string>
     <string name="room_shared_playlist_button_add_url">Dodaj URL(e) na koniec listy</string>
@@ -552,7 +557,7 @@
     <string name="room_subs_downloaded_remaining">Napisy wczytane. Zostało dziś %1$d pobrań napisów (wyszukiwanie bez limitu).</string>
     <string name="room_subs_quota_reached">Osiągnięto dzienny limit pobrań napisów. Reset za %1$s.</string>
     <string name="room_subtitle_track_selected">Napisy: %1$s</string>
-    <string name="room_tls_handshake_failed">Bezpieczne połączenie nie powiodło się: %1$s. Przy serwerze z samopodpisanym certyfikatem wyłącz bezpieczne połączenie w ustawieniach.</string>
+    <string name="room_tls_handshake_failed">Bezpieczne połączenie nie powiodło się: %1$s.</string>
     <string name="room_tls_required_downgrade">Ten serwer nie obsługuje TLS. Wyłącz „Wymagaj szyfrowania” w ustawieniach, aby dołączyć.</string>
     <string name="room_track_trait_accessibility">Dostępność</string>
     <string name="room_track_trait_forced">Wymuszone</string>
@@ -606,6 +611,10 @@
     <string name="server_host_log_errors_only">Tylko błędy</string>
     <string name="server_host_on_network">W tej sieci</string>
     <string name="server_host_no_address">Nie znaleziono adresu sieciowego. Połącz się z Wi-Fi lub inną siecią, a potem uruchom serwer ponownie.</string>
+    <string name="server_host_tls">Szyfruj połączenia</string>
+    <string name="server_host_tls_summary">Gdy to jest włączone, dołączyć mogą tylko osoby korzystające z tej aplikacji. Syncplay na PC odrzuca własny certyfikat serwera.</string>
+    <string name="server_host_tls_fingerprint">Odcisk certyfikatu</string>
+    <string name="server_host_tls_fingerprint_hint">Osoby dołączające zobaczą ten odcisk raz. Poproś je, aby dołączyły tylko wtedy, gdy się zgadza.</string>
     <string name="server_host_over_internet">Przez internet</string>
     <string name="server_host_password_detail">Zapisywane tak, jak wpisane, tak samo jak hasło dołączania.</string>
     <string name="server_host_port_taken">Port %1$d jest zajęty</string>

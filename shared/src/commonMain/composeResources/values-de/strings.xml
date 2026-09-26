@@ -98,6 +98,11 @@
     <string name="room_shared_playlist_missing">Nicht auf diesem Gerät</string>
     <string name="room_shared_playlist_missing_title">Datei nicht gefunden</string>
     <string name="room_shared_playlist_find_file">Datei suchen</string>
+    <string name="room_tls_trust_title">Diesem Server vertrauen?</string>
+    <string name="room_tls_trust_body">%1$s verwendet ein eigenes Zertifikat. Vergleiche diesen Fingerabdruck mit dem im Hosting-Bereich des Hosts, und vertraue ihm nur, wenn beide übereinstimmen.</string>
+    <string name="room_tls_changed_title">Das Zertifikat hat sich geändert</string>
+    <string name="room_tls_changed_body">%1$s zeigt ein anderes Zertifikat als zuvor. Jemand könnte die Verbindung abfangen. Vertraue ihm nur, wenn der Host diesen neuen Fingerabdruck bestätigt.</string>
+    <string name="room_tls_trust">Vertrauen und beitreten</string>
     <string name="room_shared_playlist_button_add_file">Datei(en) unten in Playlist hinzufügen</string>
     <string name="room_shared_playlist_button_add_folder">Ordner zur Playlist hinzufügen (und zu Medienverzeichnissen)</string>
     <string name="room_shared_playlist_button_add_url">URL(s) unten in Playlist hinzufügen</string>
@@ -539,7 +544,7 @@
     <string name="room_subs_downloaded_remaining">Untertitel geladen. Heute noch %1$d Untertitel-Downloads übrig (Suchen ist unbegrenzt).</string>
     <string name="room_subs_quota_reached">Tageslimit für Untertitel-Downloads erreicht. Zurückgesetzt in %1$s.</string>
     <string name="room_subtitle_track_selected">Untertitel: %1$s</string>
-    <string name="room_tls_handshake_failed">Sichere Verbindung fehlgeschlagen: %1$s. Bei einem Server mit selbstsigniertem Zertifikat die sichere Verbindung in den Einstellungen ausschalten.</string>
+    <string name="room_tls_handshake_failed">Sichere Verbindung fehlgeschlagen: %1$s.</string>
     <string name="room_tls_required_downgrade">Dieser Server unterstützt kein TLS. Schalte „Verschlüsselung verlangen“ in den Einstellungen aus, um beizutreten.</string>
     <string name="room_track_trait_accessibility">Barrierefreiheit</string>
     <string name="room_track_trait_forced">Erzwungen</string>
@@ -593,6 +598,10 @@
     <string name="server_host_log_errors_only">Nur Fehler</string>
     <string name="server_host_on_network">In diesem Netzwerk</string>
     <string name="server_host_no_address">Keine Netzwerkadresse gefunden. Verbinde dich mit einem WLAN oder einem anderen Netzwerk und starte den Server dann neu.</string>
+    <string name="server_host_tls">Verbindungen verschlüsseln</string>
+    <string name="server_host_tls_summary">Solange dies an ist, können nur Personen mit dieser App beitreten. Syncplay für PC lehnt das eigene Zertifikat des Servers ab.</string>
+    <string name="server_host_tls_fingerprint">Zertifikat-Fingerabdruck</string>
+    <string name="server_host_tls_fingerprint_hint">Wer beitritt, sieht diesen Fingerabdruck einmal. Bitte die Leute, nur beizutreten, wenn er übereinstimmt.</string>
     <string name="server_host_over_internet">Über das Internet</string>
     <string name="server_host_password_detail">Wird gespeichert wie eingegeben, genau wie das Beitrittspasswort.</string>
     <string name="server_host_port_taken">Port %1$d ist belegt</string>

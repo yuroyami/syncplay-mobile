@@ -308,6 +308,8 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun onConnectionFailed() {
         loggy("SYNCPLAY Protocol: Connection failed :/")
+        // The room is asking whether to trust the server's certificate. A retry would only ask again.
+        if (network.untrustedCertificate.value != null) return
 
         hapticIf(HAPTIC_ON_CONNECTION)
         protocol.stopChannelHealthMonitoring()
@@ -323,6 +325,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
+        if (network.untrustedCertificate.value != null) return
 
         hapticIf(HAPTIC_ON_CONNECTION)
         protocol.stopChannelHealthMonitoring()
@@ -374,6 +377,13 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 // until the handshake deadline. Treat the socket as dead and let the retry loop
                 // take over (it re-arms TLS_ASK itself).
                 network.encrypted.value = false
+                // A certificate that nothing trusts yet is a question for the person, not a
+                // failure: the room shows its fingerprint, and nothing retries meanwhile.
+                if (network.untrustedCertificate.value != null) {
+                    loggy("TLS upgrade stopped at a certificate that is not trusted yet")
+                    network.abortConnection()
+                    return
+                }
                 loggy("TLS upgrade failed: ${e.stackTraceToString()}")
                 val reason = e.message ?: e::class.simpleName ?: ""
                 val failure: suspend () -> String = { Localization.strings.roomTlsHandshakeFailed(reason) }

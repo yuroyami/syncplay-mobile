@@ -226,6 +226,26 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /** Drops the connection for good: no reconnect loop. For a refused plain-text downgrade. */
+    /**
+     * A server certificate that the last TLS upgrade refused because nothing trusts it yet. The
+     * room asks the person about it, and no retry runs until they answer. See [CertificatePins].
+     */
+    val untrustedCertificate = MutableStateFlow<UntrustedCertificate?>(null)
+
+    /**
+     * A transport calls this when the server showed a certificate that neither the system nor a
+     * pin trusts, before it fails the upgrade. [fingerprint] is the certificate's SHA-256.
+     */
+    fun reportUntrustedCertificate(fingerprint: String) {
+        val host = viewmodel.session.tlsPeerHost
+        val port = viewmodel.session.serverPort
+        untrustedCertificate.value = UntrustedCertificate(host, port, fingerprint, CertificatePins.pinnedFor(host, port))
+    }
+
+    /** The fingerprint that the person trusted for the current server, for a transport's own check. */
+    fun pinnedCertificateFingerprint(): String? =
+        CertificatePins.pinnedFor(viewmodel.session.tlsPeerHost, viewmodel.session.serverPort)
+
     fun abortConnection() {
         reconnectionJob?.cancel()
         reconnectionJob = null

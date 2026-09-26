@@ -89,6 +89,11 @@
     <string name="room_shared_playlist_missing">此设备上没有</string>
     <string name="room_shared_playlist_missing_title">未找到文件</string>
     <string name="room_shared_playlist_find_file">查找文件</string>
+    <string name="room_tls_trust_title">信任此服务器？</string>
+    <string name="room_tls_trust_body">%1$s 使用自己的证书。请将此指纹与主持人托管面板中的指纹对比，只有一致时才信任。</string>
+    <string name="room_tls_changed_title">证书已更改</string>
+    <string name="room_tls_changed_body">%1$s 显示的证书与之前不同。可能有人正在拦截连接。只有在主持人确认此新指纹后才信任。</string>
+    <string name="room_tls_trust">信任并加入</string>
     <string name="room_shared_playlist_button_add_file">添加文件到播放列表底部</string>
     <string name="room_shared_playlist_button_add_folder">将文件夹添加到播放列表（和媒体目录）</string>
     <string name="room_shared_playlist_button_add_url">将URL添加到播放列表底部</string>
@@ -531,7 +536,7 @@
     <string name="room_subs_downloaded_remaining">字幕已加载。今天还剩 %1$d 次字幕下载（搜索不限次数）。</string>
     <string name="room_subs_quota_reached">已达到今日字幕下载上限。%1$s 后重置。</string>
     <string name="room_subtitle_track_selected">字幕：%1$s</string>
-    <string name="room_tls_handshake_failed">安全连接建立失败：%1$s。如果服务器用的是自签名证书，请在设置里关闭安全连接。</string>
+    <string name="room_tls_handshake_failed">安全连接建立失败：%1$s。</string>
     <string name="room_tls_required_downgrade">服务器不支持TLS加密安全连接。请在设置中关闭“必须加密”后再加入。</string>
     <string name="room_track_trait_accessibility">无障碍</string>
     <string name="room_track_trait_forced">强制</string>
@@ -585,6 +590,10 @@
     <string name="server_host_log_errors_only">仅错误</string>
     <string name="server_host_on_network">本网络内</string>
     <string name="server_host_no_address">未找到网络地址。请连接 Wi-Fi 或其他网络，然后重新启动服务器。</string>
+    <string name="server_host_tls">加密连接</string>
+    <string name="server_host_tls_summary">开启后，只有使用本应用的人才能加入。电脑版 Syncplay 不接受该服务器自己的证书。</string>
+    <string name="server_host_tls_fingerprint">证书指纹</string>
+    <string name="server_host_tls_fingerprint_hint">加入的人会看到一次此指纹。请他们仅在指纹一致时加入。</string>
     <string name="server_host_over_internet">通过互联网</string>
     <string name="server_host_password_detail">按原样保存，和加入房间的密码一样。</string>
     <string name="server_host_port_taken">端口 %1$d 已被占用</string>

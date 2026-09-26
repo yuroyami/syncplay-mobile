@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.LocalRoomViewmodel
+import app.room.CertificateAsk
+import app.protocol.network.UntrustedCertificate
+import app.server.tls.HostCertificate
 import app.i18n.strings
 import app.klipy.KlipyMedia
 import app.player.models.Chapter
@@ -239,6 +243,35 @@ class SurfaceGoldens {
             RoomRig.render("chapters-empty", 360, heightDp = 400, fontScale = scale, solo = false, withVideo = true) {
                 ChaptersModal(open = true, onDismiss = {})
             }.assertAllTextFits()
+        }
+    }
+
+    @Test
+    fun certificatePromptAndHostFingerprintFit() {
+        val fingerprint = HostCertificate.create().fingerprint
+        for (scale in scales) {
+            for ((name, pinned) in listOf("new" to null, "changed" to "AA:BB")) {
+                val ask = RoomRig.render("tls-ask-$name", 360, heightDp = 700, fontScale = scale, solo = false, setup = { room ->
+                    room.networkManager.untrustedCertificate.value = UntrustedCertificate("192.168.1.20", 8999, fingerprint, pinned)
+                }) { CertificateAsk(LocalRoomViewmodel.current) }
+                ask.assertAllTextFits()
+                assertTrue(ask.texts().any { it.startsWith(fingerprint.take(23)) }, "The prompt must show the fingerprint")
+            }
+        }
+        val session = ServerHostSession
+        try {
+            session.serverStatus.value = ServerStatus.Running
+            session.deviceIpAddress.value = "192.168.1.20"
+            session.tlsFingerprint.value = fingerprint
+            for (scale in scales) {
+                val panel = DesignHarness.render("host-tls", 360, heightDp = 1600, fontScale = scale) { ServerHostPanel() }
+                panel.assertAllTextFits()
+                assertTrue(panel.texts().contains("Certificate fingerprint"))
+            }
+        } finally {
+            session.serverStatus.value = ServerStatus.Stopped
+            session.deviceIpAddress.value = null
+            session.tlsFingerprint.value = null
         }
     }
 

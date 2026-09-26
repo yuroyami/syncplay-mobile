@@ -98,6 +98,11 @@
     <string name="room_shared_playlist_missing">Absent de cet appareil</string>
     <string name="room_shared_playlist_missing_title">Fichier introuvable</string>
     <string name="room_shared_playlist_find_file">Trouver le fichier</string>
+    <string name="room_tls_trust_title">Faire confiance à ce serveur ?</string>
+    <string name="room_tls_trust_body">%1$s utilise son propre certificat. Comparez cette empreinte avec celle du panneau d'hébergement de l'hôte, et faites-lui confiance seulement si elles correspondent.</string>
+    <string name="room_tls_changed_title">Le certificat a changé</string>
+    <string name="room_tls_changed_body">%1$s présente un certificat différent de la dernière fois. Quelqu'un intercepte peut-être la connexion. Faites-lui confiance seulement si l'hôte confirme cette nouvelle empreinte.</string>
+    <string name="room_tls_trust">Faire confiance et rejoindre</string>
     <string name="room_shared_playlist_button_add_file">Ajouter fichier(s) en bas de la liste</string>
     <string name="room_shared_playlist_button_add_folder">Ajouter dossier à la liste (et aux répertoires média)</string>
     <string name="room_shared_playlist_button_add_url">Ajouter URL(s) en bas de la liste</string>
@@ -558,7 +563,7 @@
     <string name="room_subs_downloaded_remaining">Sous-titre chargé. Il vous reste %1$d téléchargements aujourd'hui (la recherche est illimitée).</string>
     <string name="room_subs_quota_reached">Limite quotidienne de téléchargement de sous-titres atteinte. Réinitialisation dans %1$s.</string>
     <string name="room_subtitle_track_selected">Sous-titres : %1$s</string>
-    <string name="room_tls_handshake_failed">Échec de la connexion sécurisée : %1$s. Pour un serveur à certificat auto-signé, désactivez la connexion sécurisée dans les Réglages.</string>
+    <string name="room_tls_handshake_failed">Échec de la connexion sécurisée : %1$s.</string>
     <string name="room_tls_required_downgrade">Ce serveur ne prend pas en charge TLS. Désactivez « Exiger le chiffrement » dans les Réglages pour le rejoindre.</string>
     <string name="room_track_trait_accessibility">Accessibilité</string>
     <string name="room_track_trait_forced">Forcé</string>
@@ -612,6 +617,10 @@
     <string name="server_host_log_errors_only">Erreurs seulement</string>
     <string name="server_host_on_network">Sur ce réseau</string>
     <string name="server_host_no_address">Aucune adresse réseau trouvée. Connectez-vous au Wi-Fi ou à un autre réseau, puis redémarrez le serveur.</string>
+    <string name="server_host_tls">Chiffrer les connexions</string>
+    <string name="server_host_tls_summary">Tant que c'est activé, seules les personnes qui utilisent cette app peuvent rejoindre. Syncplay pour PC refuse le certificat propre du serveur.</string>
+    <string name="server_host_tls_fingerprint">Empreinte du certificat</string>
+    <string name="server_host_tls_fingerprint_hint">Les personnes qui rejoignent voient cette empreinte une fois. Demandez-leur de rejoindre seulement si elle correspond.</string>
     <string name="server_host_over_internet">Par internet</string>
     <string name="server_host_password_detail">Enregistré tel quel, comme le mot de passe de connexion.</string>
     <string name="server_host_port_taken">Le port %1$d est occupé</string>

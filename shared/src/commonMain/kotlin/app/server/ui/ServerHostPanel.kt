@@ -32,6 +32,10 @@ import app.i18n.serverHostClients
 import app.i18n.strings
 import app.preferences.Preferences.SERVER_DISABLE_CHAT
 import app.preferences.Preferences.SERVER_DISABLE_READY
+import androidx.compose.ui.text.font.FontFamily
+import app.protocol.network.CertificatePins
+import app.server.serverTlsSupported
+import app.preferences.Preferences.SERVER_TLS
 import app.preferences.Preferences.SERVER_ISOLATE_ROOMS
 import app.preferences.Preferences.SERVER_MOTD
 import app.preferences.Preferences.SERVER_PASSWORD
@@ -95,6 +99,7 @@ fun ServerHostPanel(modifier: Modifier = Modifier) {
                 publicLoading = ServerHostSession.publicIpLoading.value,
                 port = port,
             )
+            ServerHostSession.tlsFingerprint.value?.let { FingerprintBlock(it) }
         }
         StatusRow(status, clients, detail)
         if (platform == Platform.IOS && running) {
@@ -120,6 +125,7 @@ fun ServerHostPanel(modifier: Modifier = Modifier) {
         SERVER_ISOLATE_ROOMS.enabledWhen { editable }.Render()
         SERVER_DISABLE_CHAT.enabledWhen { editable }.Render()
         SERVER_DISABLE_READY.enabledWhen { editable }.Render()
+        if (serverTlsSupported) SERVER_TLS.enabledWhen { editable }.Render()
         if (logs.isNotEmpty()) {
             Row(Modifier.fillMaxWidth().padding(end = Space.gutter), verticalAlignment = Alignment.Bottom) {
                 GroupHeading(strings.serverHostServerLog, Modifier.weight(1f))
@@ -156,6 +162,22 @@ private fun AddressBlock(localIp: String?, publicIp: String?, publicLoading: Boo
                 )
             }
         }
+    }
+}
+
+/** The certificate fingerprint of an encrypting server, for the host to read out to the people who join. */
+@Composable
+private fun FingerprintBlock(fingerprint: String) {
+    val p = palette
+    Column(Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = Space.gapTight)) {
+        Text(strings.serverHostTlsFingerprint, style = Type.note, color = p.inkDim)
+        Text(
+            text = CertificatePins.fingerprintLines(fingerprint),
+            style = Type.value.copy(fontFamily = FontFamily.Monospace),
+            color = p.ink,
+            modifier = Modifier.padding(vertical = Space.gapTight),
+        )
+        Text(strings.serverHostTlsFingerprintHint, style = Type.note, color = p.inkFaint)
     }
 }
 

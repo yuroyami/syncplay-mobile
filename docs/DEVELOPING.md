@@ -27,7 +27,19 @@ room. It owns the managers of that room, such as `PlayerManager`, `ProtocolManag
 
 Netty carries the client connection on Android and desktop. SwiftNIO carries it on iOS. Both can
 upgrade the connection to TLS when the server offers it. The shared Ktor transport is a fallback
-without TLS. The built-in server does not offer TLS.
+without TLS.
+
+A certificate that the system does not trust is not a plain failure. The app shows its SHA-256
+fingerprint, and the person can trust that fingerprint for that server address. `CertificatePins`
+keeps the answer, and a later, different certificate for the same address gets a warning. The
+check is `PinningTrustManager` on Android and desktop, and the custom verification in
+`SwiftNioNetworkManager.swift` on iOS. Nothing trusts a certificate that no one has seen.
+
+The built-in server offers TLS only when the host turns on **Encrypt connections**, which is off
+by default, because Syncplay for PC refuses the host's own certificate. The server then makes an
+EC certificate once (`HostCertificate`), keeps it in the app's storage, and shows its fingerprint
+in the hosting panel. Only the Netty server engines on Android and desktop can switch a socket to
+TLS in the middle of a connection, so an iOS host does not offer the switch.
 
 Read [`CONTRIBUTING.md`](../CONTRIBUTING.md) before you change anything. It has the ground rules,
 the gate commands, the source-set rules and the known traps. Open work is in the issue tracker.

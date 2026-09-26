@@ -98,6 +98,11 @@
     <string name="room_shared_playlist_missing">غير موجود على هذا الجهاز</string>
     <string name="room_shared_playlist_missing_title">لم يُعثر على الملف</string>
     <string name="room_shared_playlist_find_file">ابحث عن الملف</string>
+    <string name="room_tls_trust_title">هل تثق بهذا الخادم؟</string>
+    <string name="room_tls_trust_body">يستخدم %1$s شهادة خاصة به. قارن هذه البصمة بالتي تظهر في لوحة الاستضافة لدى المضيف، ولا تثق بها إلا إذا تطابقتا.</string>
+    <string name="room_tls_changed_title">تغيّرت الشهادة</string>
+    <string name="room_tls_changed_body">يعرض %1$s شهادة مختلفة عن السابق. قد يكون هناك من يعترض الاتصال. لا تثق بها إلا إذا أكّد المضيف هذه البصمة الجديدة.</string>
+    <string name="room_tls_trust">ثق وانضم</string>
     <string name="room_shared_playlist_button_add_file">إضافة ملف (ملفات) إلى أسفل قائمة التشغيل</string>
     <string name="room_shared_playlist_button_add_folder">إضافة مجلد إلى قائمة التشغيل (ومجلدات الوسائط)</string>
     <string name="room_shared_playlist_button_add_url">إضافة رابط (روابط) إلى أسفل قائمة التشغيل</string>
@@ -541,7 +546,7 @@
     <string name="room_subs_downloaded_remaining">حُمِّلت الترجمة. بقي لك %1$d تنزيلًا للترجمات اليوم (البحث بلا حدود).</string>
     <string name="room_subs_quota_reached">بلغت الحد اليومي لتنزيل الترجمات. يُعاد ضبطه بعد %1$s.</string>
     <string name="room_subtitle_track_selected">الترجمة: %1$s</string>
-    <string name="room_tls_handshake_failed">فشل الاتصال الآمن: %1$s. إن كان الخادم يستخدم شهادة موقّعة ذاتيًا، فأوقف الاتصال الآمن من الإعدادات.</string>
+    <string name="room_tls_handshake_failed">فشل الاتصال الآمن: %1$s.</string>
     <string name="room_tls_required_downgrade">هذا الخادم لا يدعم TLS. أوقف «اشترط التشفير» في الإعدادات للانضمام.</string>
     <string name="room_track_trait_accessibility">إتاحة</string>
     <string name="room_track_trait_forced">إجباري</string>
@@ -595,6 +600,10 @@
     <string name="server_host_log_errors_only">الأخطاء فقط</string>
     <string name="server_host_on_network">على هذه الشبكة</string>
     <string name="server_host_no_address">لم يُعثر على عنوان شبكة. اتصل بشبكة Wi-Fi أو بشبكة أخرى، ثم ابدأ الخادم من جديد.</string>
+    <string name="server_host_tls">تشفير الاتصالات</string>
+    <string name="server_host_tls_summary">عند التفعيل، يستطيع الانضمام فقط من يستخدم هذا التطبيق. يرفض Syncplay للحاسوب الشهادة الخاصة بهذا الخادم.</string>
+    <string name="server_host_tls_fingerprint">بصمة الشهادة</string>
+    <string name="server_host_tls_fingerprint_hint">يرى من ينضم هذه البصمة مرة واحدة. اطلب منهم الانضمام فقط إذا كانت مطابقة.</string>
     <string name="server_host_over_internet">عبر الإنترنت</string>
     <string name="server_host_password_detail">يُخزَّن كما كُتب، مثل كلمة مرور الانضمام.</string>
     <string name="server_host_port_taken">المنفذ %1$d مشغول</string>
