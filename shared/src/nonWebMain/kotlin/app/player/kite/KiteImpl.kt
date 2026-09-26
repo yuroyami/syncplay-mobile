@@ -181,9 +181,23 @@ internal class KiteImpl(
     /** A pitch-preserving tempo stage from 0.25x to 4x. */
     override val supportsSpeedAdjustment: Boolean = true
 
-    /** Android hosts PiP (picture-in-picture) generically; iOS has no KitePlayer PiP controller. */
+    /** Android hosts PiP (picture-in-picture) for the whole screen; iOS uses [pictureInPicture]. */
     override val supportsPictureInPicture: Boolean
         get() = KitePlayerPlatform.supportsPictureInPicture
+
+    /** The small window on iOS, which needs a video layer of its own. Null on the other platforms. */
+    private val pictureInPicture: KitePictureInPicture? by lazy {
+        kitePictureInPicture { active -> viewmodel.uiState.hasEnteredPipMode.value = active }
+    }
+
+    /** Opens the small window where the engine hosts it itself (iOS). */
+    fun enterPictureInPicture() {
+        if (viewmodel.media != null) pictureInPicture?.start()
+    }
+
+    fun exitPictureInPicture() {
+        pictureInPicture?.stop()
+    }
 
     /** Fit, Fill and Stretch, cycled in [switchAspectRatio]; every renderer follows the mode. */
     override val canChangeAspectRatio: Boolean = true
@@ -323,6 +337,7 @@ internal class KiteImpl(
         isInitialized = false
         playerSupervisorJob.cancel()
         presentedPlayer.cancel()
+        withContext(Dispatchers.Main.immediate + NonCancellable) { pictureInPicture?.close() }
         durationWatcher?.cancel()
         durationWatcher = null
         statsWatcher?.cancel()
@@ -724,18 +739,26 @@ internal class KiteImpl(
             KiteRenderPath.NativeView
         }
         val audioVizEnabled by AUDIO_VISUALIZATION.watchPref()
+        val pip = pictureInPicture
+        val pipDrawing by (pip?.drawing ?: noPictureInPicture).collectAsState()
         Box(modifier) {
-            // Keep output attached across music/video changes and while the visualizer is disabled.
-            KitePlayerVideo(
-                player = composedKite,
-                modifier = Modifier.fillMaxSize(),
-                path = path,
-                onRendererAttached = { presented ->
-                    if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
-                        onPlayerReady()
-                    }
-                },
-            )
+            val drawing = composedKite
+            if (pip != null && pipDrawing && drawing != null) {
+                // The small window takes its picture from a layer of its own, for as long as it shows.
+                pip.Surface(drawing, Modifier.fillMaxSize())
+            } else {
+                // Keep output attached across music/video changes and while the visualizer is disabled.
+                KitePlayerVideo(
+                    player = composedKite,
+                    modifier = Modifier.fillMaxSize(),
+                    path = path,
+                    onRendererAttached = { presented ->
+                        if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
+                            onPlayerReady()
+                        }
+                    },
+                )
+            }
             composedKite?.let { player ->
                 val videoDisabled by remember(player) {
                     player.state.map { it.tracks.video.isNotEmpty() && it.tracks.selectedVideo == null }
@@ -793,6 +816,9 @@ internal class KiteImpl(
     }
 
     private companion object {
+        /** The window state of a platform with no small window of its own. */
+        val noPictureInPicture = MutableStateFlow(false)
+
         /** How long a load waits for the renderer before it fails, instead of holding the mutex. */
         const val RENDERER_ATTACH_TIMEOUT_MS = 15_000L
 

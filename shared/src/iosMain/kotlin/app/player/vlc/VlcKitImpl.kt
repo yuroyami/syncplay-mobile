@@ -109,6 +109,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val announcesFileLoadViaEvent: Boolean = true
 
     private val seekGuard = VlcSeekGuard()
+    private val bufferingRelease = VlcBufferingRelease()
     private val seekRequests = VlcSeekRequests(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
     private val seekStartup = VlcSeekStartup(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
     internal val hasPendingSeek: Boolean get() = seekRequests.hasPending
@@ -802,7 +803,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         // Submit pending seeks from this tracker, never from a synchronous clock getter.
         if (submitPendingSeek(player)) return
         // Sample non-seekable media too. Seeking and a working clock are separate things.
-        readPositionSample()?.let(playerManager::samplePosition)
+        readPositionSample()?.let { position ->
+            playerManager.samplePosition(position)
+            // VLCKit can stay in Buffering after playback resumed, see VlcBufferingRelease.
+            if (bufferingRelease.onSample(playerManager.isBuffering.value, position)) playerManager.isBuffering.value = false
+        }
     }
 
     /**

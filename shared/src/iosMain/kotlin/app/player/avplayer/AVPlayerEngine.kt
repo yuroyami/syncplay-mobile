@@ -22,6 +22,11 @@ import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
+import app.utils.loggy
+import kotlinx.coroutines.launch
+import platform.AVKit.AVPictureInPictureControllerDelegateProtocol
+import platform.AVKit.AVPictureInPictureController
+import app.player.configurePlaybackAudioSession
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.DrawableResource
 import platform.AVFoundation.AVAsset
@@ -97,6 +102,9 @@ import kotlin.time.Duration.Companion.seconds
  * formats that Apple supports (mainly MP4 and HLS/m3u8), and it cannot load external subtitles.
  * The narrow format support is why it is not the default engine.
  */
+/** How long a tap on the window action waits for the controller to be possible. */
+private val PIP_READY_TIMEOUT = 2.seconds
+
 object AVPlayerEngine: PlayerEngine {
     override val isAvailable: Boolean = true
     override val isDefault: Boolean = false
@@ -137,7 +145,58 @@ object AVPlayerEngine: PlayerEngine {
          * and [injectVideoURLImpl] create the player, then call [attachTimeControlObserver].
          */
         override fun initialize() {
+            configurePlaybackAudioSession()
             startTrackingProgress()
+        }
+
+        /**
+         * The picture-in-picture controller of [avPlayerLayer]. It is built once, with the layer,
+         * because it reports itself possible only a moment after the layer shows video. Its
+         * delegate keeps the room's flag in step, so leaving the app does not pause the window.
+         */
+        private var pipController: AVPictureInPictureController? = null
+
+        /** Held here: the controller holds its delegate weakly. */
+        private val pipDelegate = PipDelegate()
+
+        private fun preparePictureInPicture(layer: AVPlayerLayer) {
+            if (!AVPictureInPictureController.isPictureInPictureSupported()) return
+            pipController?.delegate = null
+            pipController = AVPictureInPictureController(layer).also { it.delegate = pipDelegate }
+        }
+
+        /** Opens the small window. The controller can need a moment before it is possible. */
+        fun enterPictureInPicture() {
+            val controller = pipController ?: return
+            if (viewmodel.media == null) return
+            playerScopeMain.launch {
+                withTimeoutOrNull(PIP_READY_TIMEOUT) { while (!controller.pictureInPicturePossible) delay(100) }
+                if (controller.pictureInPicturePossible) controller.startPictureInPicture()
+                else loggy("AVPlayer picture-in-picture is not possible right now")
+            }
+        }
+
+        fun exitPictureInPicture() {
+            pipController?.stopPictureInPicture()
+        }
+
+        /** Reports the small window to the room, so the room does not pause when the app leaves the screen. */
+        inner class PipDelegate : NSObject(), AVPictureInPictureControllerDelegateProtocol {
+            override fun pictureInPictureControllerDidStartPictureInPicture(pictureInPictureController: AVPictureInPictureController) {
+                viewmodel.uiState.hasEnteredPipMode.value = true
+            }
+
+            override fun pictureInPictureControllerDidStopPictureInPicture(pictureInPictureController: AVPictureInPictureController) {
+                viewmodel.uiState.hasEnteredPipMode.value = false
+            }
+
+            override fun pictureInPictureController(
+                pictureInPictureController: AVPictureInPictureController,
+                failedToStartPictureInPictureWithError: NSError,
+            ) {
+                loggy("AVPlayer picture-in-picture failed: ${failedToStartPictureInPictureWithError.localizedDescription}")
+                viewmodel.uiState.hasEnteredPipMode.value = false
+            }
         }
 
         /**
@@ -270,6 +329,11 @@ object AVPlayerEngine: PlayerEngine {
             // The AVPlayer is not a notification observer. The only NSNotificationCenter
             // registration this engine holds is the end-of-item one, removed above.
             detachTimeControlObserver()
+            pipController?.let { controller ->
+                if (controller.pictureInPictureActive) controller.stopPictureInPicture()
+                controller.delegate = null
+            }
+            pipController = null
             avPlayer?.pause()
             avPlayerLayer?.player = null
             avPlayerLayer?.removeFromSuperlayer()
@@ -300,6 +364,7 @@ object AVPlayerEngine: PlayerEngine {
                         container.layer.addSublayer(layer)
                         avPlayerLayer = layer
                         avContainer = container
+                        preparePictureInPicture(layer)
                         initialize()
                         isInitialized = true
                         onPlayerReady()

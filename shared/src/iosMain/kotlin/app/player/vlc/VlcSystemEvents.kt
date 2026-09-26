@@ -1,19 +1,18 @@
 package app.player.vlc
 
+import app.player.configurePlaybackAudioSession
 import app.utils.loggy
 import cocoapods.VLCKit.VLCMedia
 import cocoapods.VLCKit.VLCMediaPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import platform.AVFAudio.AVAudioSession
-import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.AVAudioSessionInterruptionNotification
 import platform.AVFAudio.AVAudioSessionInterruptionOptionKey
 import platform.AVFAudio.AVAudioSessionInterruptionOptionShouldResume
 import platform.AVFAudio.AVAudioSessionInterruptionTypeBegan
 import platform.AVFAudio.AVAudioSessionInterruptionTypeEnded
 import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
-import platform.AVFAudio.AVAudioSessionModeMoviePlayback
 import platform.AVFAudio.AVAudioSessionRouteChangeNotification
 import platform.AVFAudio.setActive
 import platform.Foundation.NSNotificationCenter
@@ -37,18 +36,8 @@ import platform.UIKit.UIApplicationDidBecomeActiveNotification
  * and handle interruption and route notifications. This early setup uses the same category and
  * mode, for video playback and PiP.
  */
-internal fun VlcKitImpl.configureAudioSession() {
-    try {
-        val session = AVAudioSession.sharedInstance()
-        // Positional arguments on purpose. Kotlin/Native's Objective-C interop exposes several
-        // `setCategory:*:` and `setActive:*:` overloads with the same base name, so named
-        // arguments can fail to resolve. Positional ones pick the shortest matching overload.
-        session.setCategory(AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, 0uL, null)
-        session.setActive(true, null)
-    } catch (e: Exception) {
-        loggy("AVAudioSession configure failed: ${e.message}")
-    }
-}
+@Suppress("UnusedReceiverParameter")
+internal fun VlcKitImpl.configureAudioSession() = configurePlaybackAudioSession()
 
 /**
  * Registers NSNotificationCenter observers that recover audio after system interruptions (Siri,

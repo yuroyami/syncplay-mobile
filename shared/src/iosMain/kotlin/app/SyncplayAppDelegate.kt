@@ -6,7 +6,6 @@ import app.home.InviteLink
 import app.home.JoinConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
-import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDelegateProtocol
@@ -24,12 +23,6 @@ import platform.darwin.NSObject
 val delegato = AppleDelegate().also {
     UIApplication.sharedApplication.delegate = it
 }
-
-/**
- * The PiP controller of the AVPlayer engine (the video player built on Apple's AVFoundation).
- * [ApplePlatformCallback.onPictureInPicture] sets it.
- */
-var pipcontroller: AVPictureInPictureController? = null
 
 /**
  * UIApplicationDelegate for what the Compose layer cannot handle: the orientation mask, Quick

@@ -6,6 +6,7 @@ import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.player.avplayer.AVPlayerEngine
 import app.player.vlc.VlcKitImpl
+import app.player.kite.KiteImpl
 import platform.AVKit.AVPictureInPictureController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationShortcutIcon.Companion.iconWithType
@@ -55,21 +56,12 @@ object ApplePlatformCallback : PlatformCallback {
 
         when (val player = roomViewmodel?.player) {
             is AVPlayerEngine.AVPlayerImpl -> {
-                if (enable) {
-                    player.avPlayerLayer?.let { layer ->
-                        // The controller must be built for the current AVPlayerLayer, so
-                        // a new one is made on every enable. [pipcontroller] holds it, so
-                        // the disable branch stops the same session.
-                        pipcontroller = AVPictureInPictureController(layer)
-                        if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
-                            pipcontroller?.startPictureInPicture()
-                        }
-                    }
-                } else {
-                    pipcontroller?.stopPictureInPicture()
-                }
+                if (enable) player.enterPictureInPicture() else player.exitPictureInPicture()
             }
             is VlcKitImpl -> {
+                if (enable) player.enterPictureInPicture() else player.exitPictureInPicture()
+            }
+            is KiteImpl -> {
                 if (enable) player.enterPictureInPicture() else player.exitPictureInPicture()
             }
             else -> {
