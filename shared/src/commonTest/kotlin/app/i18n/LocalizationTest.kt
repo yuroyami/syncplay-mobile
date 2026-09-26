@@ -88,6 +88,22 @@ class LocalizationTest {
     }
 
     @Test
+    fun `a device language we do not ship counts with the English rule`() {
+        // Japanese has one form for every number, and Ukrainian picks "one" for 21.
+        Localization.apply("ja-JP")
+        assertEquals("1 user", Localization.strings.roomUserCount(1))
+        Localization.apply("uk-UA")
+        assertEquals("21 users", Localization.strings.roomUserCount(21))
+    }
+
+    @Test
+    fun `a shipped language keeps its own rule under a region tag`() {
+        assertEquals(Locales.Ru, shownLanguage("ru-RU"))
+        assertEquals(Locales.En, shownLanguage("ja"))
+        assertEquals(Locales.Fr, shownLanguage("fr_CA"))
+    }
+
+    @Test
     fun `the room count reads correctly at both ends`() {
         Localization.apply("en")
         assertEquals("1 user", Localization.strings.roomUserCount(1))

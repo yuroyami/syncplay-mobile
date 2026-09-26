@@ -49,11 +49,25 @@ fun pluralForm(language: String, count: Int): PluralForm {
     }
 }
 
-/** Picks one of the six forms for [count], by the rule for the current Lyricist language tag. */
+/**
+ * The language whose strings are on screen for [tag], found the way Lyricist finds them: the whole
+ * tag, then the part before the region, then English. A device language that the app does not
+ * ship shows English strings, so it must count with the English rule too.
+ */
+internal fun shownLanguage(tag: String): String {
+    val base = tag.split('-', '_').first()
+    return when {
+        tag in appStrings -> tag
+        base in appStrings -> base
+        else -> Locales.En
+    }
+}
+
+/** Picks one of the six forms for [count], by the rule of the language on screen. */
 internal fun <T> plural(
     count: Int,
     zero: T, one: T, two: T, few: T, many: T, other: T,
-): T = when (pluralForm(Localization.lyricist.languageTag, count)) {
+): T = when (pluralForm(shownLanguage(Localization.lyricist.languageTag), count)) {
     PluralForm.Zero -> zero
     PluralForm.One -> one
     PluralForm.Two -> two
