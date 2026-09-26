@@ -31,6 +31,7 @@ import androidx.media3.ui.PlayerView
 import app.R
 import app.i18n.Localization
 import app.player.PlayerImpl
+import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.PlayerOptions
@@ -65,7 +66,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     // The track selector applies the preferred languages (see the options), so the shared pass does not.
     override val appliesPreferredLanguagesItself: Boolean = true
-    override val supportsChapters: Boolean = false
+    // Media3 reads the chapters of Matroska and MP4 files into the track formats.
+    override val supportsChapters: Boolean = true
 
     override val trackerJobInterval: Duration = 500.milliseconds
 
@@ -352,7 +354,20 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             cleared.setTrackTypeDisabled(exoType, false).addOverride(override).build()
     }
 
-    override suspend fun analyzeChapters(mediafile: MediaFile) {}
+    override suspend fun analyzeChapters(mediafile: MediaFile) {
+        if (!isInitialized) return
+        val formats = withContext(Dispatchers.Main.immediate) {
+            exoplayer?.currentTracks?.groups?.flatMap { group -> (0 until group.length).map(group::getTrackFormat) }
+        } ?: return
+        mediafile.chapters.clear()
+        mediafile.chapters.addAll(chaptersOf(formats))
+    }
+
+    override suspend fun jumpToChapter(chapter: Chapter) {
+        // The base class tells the room about the seek. This moves the local player.
+        super.jumpToChapter(chapter)
+        withContext(Dispatchers.Main.immediate) { seekTo(chapter.timeOffsetMillis) }
+    }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
