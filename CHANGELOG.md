@@ -2,6 +2,33 @@
 
 Written for people who use the app. The full engineering history is in the commit log.
 
+## 0.26.0
+
+- iOS: picture-in-picture now works with AVPlayer and KitePlayer.
+- A hosted room can now encrypt its connections. Turn on Encrypt connections when you host. When a server's certificate is not trusted by the system, the app shows its fingerprint and lets you decide.
+- Small drifts between watchers are now corrected with a speed change of half a percent, which nobody notices, instead of a jump.
+- Headset buttons, the lock screen and the notification no longer pause or seek the whole room by accident. On a TV, the remote's media keys still control the room.
+- When a connection fails, the app now says why.
+- Home keeps your five recent rooms under the join key.
+- KitePlayer is now on 0.2.0. Its audio visualizer studies a linked song in seconds and remembers it, and switching between the visualizer and the video no longer cuts the sound.
+- The audio visualizer now asks once before it first turns on, because it can flash. Reduce motion also calms it, with no flashes at all. Two patterns that flashed too often on a busy beat were fixed.
+- ExoPlayer now shows chapters from MKV and MP4 files, and each chapter shows a still frame.
+- The seek bar shows what is buffered with mpv, KitePlayer and AVPlayer.
+- An audio or subtitle track that you pick now carries to the next file, by its language.
+- Subtitle searches now send the episode and the file's hash, for better matches.
+- Media folders show when the app lost access to them. A playlist file that none of your folders holds is marked, and you can point the app to it.
+- The hosted server now limits connections and drops a client that floods it.
+- A chat line or a playlist change can no longer reach the server twice after a reconnect.
+- Joining from a link, a shortcut or a Quick Action now works at any time.
+- Screen readers: the room controls stay on screen while a screen reader runs.
+- Android: you can pick the app's language in the system's per-app language setting.
+- Android: a baseline profile makes the app start faster.
+- About now lists the open source licences, and its panel is liquid glass.
+- iOS VLC: updated to VLCKit 4.0.0a24.
+- The log now hides identifying details and limits its size.
+- Notices now fade in and out.
+- Small fixes for Android TV focus, the picture-in-picture offer, mpv volume and ExoPlayer subtitles.
+
 ## 0.25.0
 
 - Audio files can now be played. (#168, requested by @gili-gili)

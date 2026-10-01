@@ -1,0 +1,11 @@
+Hosted rooms can now encrypt their connections.
+
+Small drifts are now corrected smoothly, and headset buttons no longer pause the whole room.
+
+Home keeps your recent rooms, and the app says why a connection failed.
+
+The audio visualizer warns about flashing light and follows Reduce motion.
+
+Pick the app's language in Android's per-app language setting.
+
+Also chapters for ExoPlayer, buffering on the seek bar, and many fixes.
