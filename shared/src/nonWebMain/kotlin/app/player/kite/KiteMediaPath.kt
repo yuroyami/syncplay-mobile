@@ -1,6 +1,7 @@
 package app.player.kite
 
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.yuroyami.kiteplayer.MediaIoFactory
 
 /**
  * Something that KitePlayer's FFmpeg backend can open, together with the native resource that
@@ -18,6 +19,9 @@ internal class KiteMediaPath(
     val openOptions: Map<String, String> = emptyMap(),
 
     private val releaseAction: () -> Unit = {},
+
+    /** Reads the bytes through app code, for `MediaItem(io = ...)`. [uri] is then a label only. */
+    val io: MediaIoFactory? = null,
 ) {
     private var released = false
 

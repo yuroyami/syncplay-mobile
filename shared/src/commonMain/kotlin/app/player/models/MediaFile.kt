@@ -43,8 +43,8 @@ data class MediaFile(
            }
         }
 
-        suspend fun String.mediaFromUrl(): MediaFile {
-            val loc = MediaFileLocation.Remote(this)
+        suspend fun String.mediaFromUrl(pageUrl: String? = null): MediaFile {
+            val loc = MediaFileLocation.Remote(this, pageUrl)
             return withContext(ioDispatcher) {
                 MediaFile().apply {
                     location = loc

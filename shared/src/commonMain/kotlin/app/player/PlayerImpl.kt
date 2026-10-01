@@ -363,7 +363,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         toMedia = { input ->
             val resolved = maybeResolve(input)
             val finalUrl = resolved?.directUrl ?: input
-            finalUrl.mediaFromUrl().also { media ->
+            finalUrl.mediaFromUrl(pageUrl = input.takeIf { resolved != null }).also { media ->
                 resolved?.title?.takeIf { it.isNotBlank() }?.let { media.fileName = it }
                 resolved?.durationSec?.let { media.fileDuration = it }
             }
