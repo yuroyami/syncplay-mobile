@@ -23,6 +23,15 @@
       "category": "entertainment",
       "versions": [
         {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.26.0/synkplay-0.26.0-ios.ipa",
+          "size": 94047950,
+          "version": "0.26.0",
+          "buildVersion": "1000026001",
+          "date": "2026-10-01T01:08:16+00:00",
+          "localizedDescription": "\n- iOS: picture-in-picture now works with AVPlayer and KitePlayer.\n- A hosted room can now encrypt its connections. Turn on Encrypt connections when you host. When a server's certificate is not trusted by the system, the app shows its fingerprint and lets you decide.\n- Small drifts between watchers are now corrected with a speed change of half a percent, which nobody notices, instead of a jump.\n- Headset buttons, the lock screen and the notification no longer pause or seek the whole room by accident. On a TV, the remote's media keys still control the room.\n- When a connection fails, the app now says why.\n- Home keeps your five recent rooms under the join key.\n- KitePlayer is now on 0.2.0. Its audio visualizer studies a linked song in seconds and remembers it, and switching between the visualizer and the video no longer cuts the sound.\n- The audio visualizer now asks once before it first turns on, because it can flash. Reduce motion also calms it, with no flashes at all. Two patterns that flashed too often on a busy beat were fixed.\n- ExoPlayer now shows chapters from MKV and MP4 files, and each chapter shows a still frame.\n- The seek bar shows what is buffered with mpv, KitePlayer and AVPlayer.\n- An audio or subtitle track that you pick now carries to the next file, by its language.\n- Subtitle searches now send the episode and the file's hash, for better matches.\n- Media folders show when the app lost access to them. A playlist file that none of your folders holds is marked, and you can point the app to it.\n- The hosted server now limits connections and drops a client that floods it.\n- A chat line or a playlist change can no longer reach the server twice after a reconnect.\n- Joining from a link, a shortcut or a Quick Action now works at any time.\n- Screen readers: the room controls stay on screen while a screen reader runs.\n- Android: you can pick the app's language in the system's per-app language setting.\n- Android: a baseline profile makes the app start faster.\n- About now lists the open source licences, and its panel is liquid glass.\n- iOS VLC: updated to VLCKit 4.0.0a24.\n- The log now hides identifying details and limits its size.\n- Notices now fade in and out.\n- Small fixes for Android TV focus, the picture-in-picture offer, mpv volume and ExoPlayer subtitles.",
+          "minOSVersion": "15.0"
+        },
+        {
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.25.0/synkplay-0.25.0-ios.ipa",
           "size": 89425662,
           "version": "0.25.0",
