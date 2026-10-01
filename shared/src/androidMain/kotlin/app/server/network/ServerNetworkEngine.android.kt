@@ -186,7 +186,9 @@ actual class ServerNetworkEngine actual constructor(
     actual fun stop() {
         isRunning = false
 
-        for ((channel, client) in clientChannels.toMap()) {
+        // The map's own iterator, not toMap(): toMap() reads the size first, and a client that
+        // leaves in between made it throw, which skipped the rest of this stop.
+        for ((channel, client) in clientChannels) {
             client.mailbox.close()
             channel.close()
         }
