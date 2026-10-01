@@ -452,10 +452,10 @@ Frames and the room controls:
   state of the seek bar live inside them. Only picture-in-picture and the lock mode remove them.
 - A tap on the room background with the keyboard open only clears focus. Without the keyboard, and
   once the player is ready, the tap hides the room controls.
-- A key on the direction pad shows hidden room controls again when a video is loaded and the screen
-  is not locked. Centre and Enter also play or pause, Left and Right also seek, and Up and Down only
-  show the controls (`SyncplayActivity.onKeyDown`). This works on any Android device. On a
-  television, it is the only way back to the controls.
+- Hidden room controls must not own remote focus. The video layer takes it and handles wake keys
+  (`HiddenControlsAccessTest`), because Compose can consume keys before `Activity.onKeyDown`.
+- A direction-pad key shows hidden room controls when a video is loaded and the screen is not
+  locked. Centre and Enter also play or pause, Left and Right seek, and Up and Down only show them.
 - Room gestures ignore drags that start inside the system gesture, cutout and waterfall insets. The
   top and bottom guards are at least 8 percent of the height.
 - Anything that a long-lived pointer coroutine reads goes through `rememberUpdatedState`. The
