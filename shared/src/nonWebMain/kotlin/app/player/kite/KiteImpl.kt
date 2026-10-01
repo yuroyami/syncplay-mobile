@@ -58,6 +58,8 @@ import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
 import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
 import app.room.OSDCategory
 import app.room.RoomViewmodel
+import app.room.ui.misc.AfterVisualizerNotice
+import app.room.ui.misc.rememberVisualizerCalm
 import app.uicomponents.glassEnabled
 import app.utils.getCacheDirectoryPath
 import app.utils.getFileName
@@ -86,8 +88,10 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -95,6 +99,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The KitePlayer engine (one of the video players the app can drive), written once for Android,
@@ -135,6 +140,19 @@ internal class KiteImpl(
     /** Set by the video composable while the visualizer state exists, cleared when it goes. */
     private val visualizerFlow = MutableStateFlow<VisualizerControls?>(null)
     override val visualizer: StateFlow<VisualizerControls?> get() = visualizerFlow
+
+    /**
+     * Whether the picture shows. "Video off" and the visualizer switch hide it without changing
+     * the engine's track (see [videoPickOf]), and a new file shows it again, as a new file used to
+     * come with its video track selected.
+     */
+    private val pictureShown = MutableStateFlow(true)
+
+    /**
+     * True while KitePlayer's video decoding is parked (see [shouldParkVideo]). Read and written on
+     * the main thread only, where the parking effect in [VideoPlayer] also runs.
+     */
+    private var videoParked = false
 
     private var kite: KitePlayer?
         get() = kiteFlow.value
@@ -452,7 +470,8 @@ internal class KiteImpl(
                 name = info.title ?: info.codec,
                 type = TrackType.VIDEO,
                 index = position,
-                selected = info.id == tracks.selectedVideo,
+                // A hidden picture reads as "Video off", although the engine keeps the track.
+                selected = info.id == tracks.selectedVideo && pictureShown.value,
                 trackId = info.id,
                 codec = info.codec,
                 videoDescription = info.videoSize?.let { "${it.width} × ${it.height}" },
@@ -511,8 +530,20 @@ internal class KiteImpl(
         // A null track means "none", which the engine expresses as a null id. A track that is not
         // a KiteTrack cannot be resolved to a stream, so it is treated the same way instead of
         // being guessed at.
+        val requested = (track as? KiteTrack)?.trackId
+        if (kind == TrackKind.Video) {
+            val player = kite ?: return
+            // On the main thread, like the parking effect in VideoPlayer, so the two never interleave.
+            val pick = withContext(Dispatchers.Main.immediate) {
+                videoPickOf(requested, player.state.value.tracks.selectedVideo).also { pick ->
+                    if (pick == VideoPick.Hide) pictureShown.value = false else showPicture(player)
+                }
+            }
+            loggy("KitePlayer: video pick $pick (${track?.name ?: "none"})")
+            if (pick != VideoPick.Switch) return
+        }
         try {
-            val change = kite?.selectTrack(kind, (track as? KiteTrack)?.trackId)
+            val change = kite?.selectTrack(kind, requested)
             loggy("KitePlayer: selectTrack($kind, ${track?.name ?: "none"}) -> $change")
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -522,6 +553,22 @@ internal class KiteImpl(
             // "nothing happens", so a warning shows. The engine's own reason goes to the log.
             loggy("KitePlayer: selectTrack($kind) refused: ${refused.message}")
             viewmodel.dispatchWarning { Localization.strings.roomTrackChangeRefused }
+        }
+    }
+
+    /** Shows the picture, and wakes video decoding first when it was parked. Main thread only. */
+    private fun showPicture(player: KitePlayer) {
+        pictureShown.value = true
+        if (!videoParked) return
+        videoParked = false
+        try {
+            player.setVideoEnabled(true)
+            // Playing, KitePlayer seeks to where it is, so the picture returns on the right frame.
+            // Paused, it only waits for the next keyframe, and the frame from before the park stays.
+            val state = player.state.value
+            if (!state.status.isActive && state.seekable) player.seekLater(player.position(), SeekMode.Precise)
+        } catch (_: IllegalStateException) {
+            // A closed player refuses every command, and it has no picture left to show.
         }
     }
 
@@ -603,7 +650,7 @@ internal class KiteImpl(
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
         val player = awaitPresentedPlayer()
-        openAndKeep(player, kiteMediaPathOf(location.url))
+        openAndKeep(player, youTubeMediaPath(location.url, location.pageUrl) ?: kiteMediaPathOf(location.url))
     }
 
     /**
@@ -630,13 +677,20 @@ internal class KiteImpl(
             // or every file switch broadcasts a pause to the whole room. The room's real state
             // comes back with the first sync after the new file announces itself.
             viewmodel.protocol.noteExpectedPlaybackState(paused = true)
+            // A new file shows its picture. The main thread keeps this apart from the parking effect.
+            withContext(Dispatchers.Main.immediate) {
+                pictureShown.value = true
+                videoParked = false
+            }
             withContext(Dispatchers.IO) {
                 // KitePlayer's open() is strict: it is legal only from Idle, Ended and Failed, and
                 // a second file loaded while the first is Paused throws. stop() is legal from every
                 // state (a no-op when there is nothing to stop). So calling stop() first, always,
                 // is how the caller says "replace whatever is playing".
                 player.stop()
-                player.open(MediaItem(uri = path.uri, openOptions = path.openOptions))
+                // No file opens parked. After the stop no session is open, so this costs no seek.
+                player.setVideoEnabled(true)
+                player.open(MediaItem(uri = path.uri, openOptions = path.openOptions, io = path.io))
             }
             loggy("KitePlayer: opened, status=${player.state.value.status} duration=${player.state.value.duration}")
         } catch (e: Exception) {
@@ -761,44 +815,67 @@ internal class KiteImpl(
             }
             composedKite?.let { player ->
                 val videoDisabled by remember(player) {
-                    player.state.map { it.tracks.video.isNotEmpty() && it.tracks.selectedVideo == null }
-                        .distinctUntilChanged()
+                    combine(player.state, pictureShown) { snapshot, shown ->
+                        snapshot.tracks.video.isNotEmpty() && (snapshot.tracks.selectedVideo == null || !shown)
+                    }.distinctUntilChanged()
                 }.collectAsState(initial = false)
-                // A retained renderer frame must not remain visible after the video track is disabled.
+                // A retained renderer frame must not stay visible once the picture is hidden or the
+                // video track is disabled.
                 if (videoDisabled) Box(Modifier.fillMaxSize().background(Color.Black))
-            }
-            if (audioVizEnabled) composedKite?.let { player ->
                 val showVisualization by remember(player) {
-                    player.state.map { snapshot ->
+                    combine(player.state, pictureShown) { snapshot, shown ->
                         shouldShowAudioVisualization(
                             enabled = true,
                             audioSelected = snapshot.tracks.selectedAudio != null,
-                            videoSelected = snapshot.tracks.video.any { !it.isCoverArt && it.id == snapshot.tracks.selectedVideo },
+                            videoSelected = shown && snapshot.tracks.video.any { !it.isCoverArt && it.id == snapshot.tracks.selectedVideo },
                         )
                     }.distinctUntilChanged()
                 }.collectAsState(initial = false)
-                // Listen before media opens, so short clips keep their first audio buffers.
-                // Turning the preference off detaches the audio tap as well as removing the
-                // drawing. The default scan policy reads plain file paths only. Nearly everything
-                // here is a URI (a picked file, a link, a YouTube stream), so the scan is opened to
-                // any source, and its maps stay in the cache directory across runs.
-                val viz = rememberAudioVizState(player, songScan = SONG_SCAN, songMapStore = songMapStore)
-                val scope = rememberCoroutineScope()
-                LaunchedEffect(viz) {
-                    // Zero waits for a musical boundary however long that takes, and a lot of
-                    // music has none for minutes. KitePlayer's sample uses the same number.
-                    viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
-                    // Every display frame on a 120 Hz phone costs battery for no visible gain.
-                    viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
-                    viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
+                val hasVideo by remember(player) {
+                    player.state.map { snapshot -> snapshot.tracks.video.any { !it.isCoverArt } }.distinctUntilChanged()
+                }.collectAsState(initial = false)
+                val shown by pictureShown.collectAsState()
+                val visualizerDrawing = audioVizEnabled && showVisualization
+                LaunchedEffect(player, hasVideo, shown, visualizerDrawing) {
+                    if (!shouldParkVideo(hasVideo, shown, visualizerDrawing)) return@LaunchedEffect
+                    // The visualizer switch hides the picture before its setting is stored, and a
+                    // quick switch back should not pay for a wake. The wait covers both.
+                    delay(VIDEO_PARK_DELAY)
+                    if (pictureShown.value || videoParked) return@LaunchedEffect
+                    try {
+                        player.setVideoEnabled(false)
+                        videoParked = true
+                    } catch (_: IllegalStateException) {
+                        // A closed player refuses every command, and it decodes nothing anyway.
+                    }
                 }
-                DisposableEffect(viz) {
-                    val controls = KiteVisualizerControls(viz, scope)
-                    visualizerFlow.value = controls
-                    onDispose { visualizerFlow.compareAndSet(controls, null) }
-                }
-                if (showVisualization) {
-                    KiteAudioViz(viz, Modifier.fillMaxSize())
+                if (audioVizEnabled) {
+                    // Listen before media opens, so short clips keep their first audio buffers.
+                    // Turning the preference off detaches the audio tap as well as removing the
+                    // drawing. The default scan policy reads plain file paths only. Nearly
+                    // everything here is a URI (a picked file, a link, a YouTube stream), so the
+                    // scan is opened to any source, and its maps stay in the cache directory.
+                    val viz = rememberAudioVizState(player, songScan = SONG_SCAN, songMapStore = songMapStore)
+                    val scope = rememberCoroutineScope()
+                    LaunchedEffect(viz) {
+                        // Zero waits for a musical boundary however long that takes, and a lot of
+                        // music has none for minutes. KitePlayer's sample uses the same number.
+                        viz.director.maximumHoldSeconds = DIRECTOR_MAX_HOLD_SECONDS
+                        // Every display frame on a 120 Hz phone costs battery for no visible gain.
+                        viz.framesPerSecond = VISUALIZER_FRAMES_PER_SECOND
+                        viz.directed = KITE_AUDIO_VIZ_DIRECTOR.value()
+                    }
+                    // Reduce motion, the app's or the platform's, takes the visualizer's flashes away.
+                    val calm = rememberVisualizerCalm()
+                    LaunchedEffect(viz, calm) { viz.reducedMotion = calm }
+                    DisposableEffect(viz) {
+                        val controls = KiteVisualizerControls(viz, scope)
+                        visualizerFlow.value = controls
+                        onDispose { visualizerFlow.compareAndSet(controls, null) }
+                    }
+                    if (showVisualization) {
+                        AfterVisualizerNotice { KiteAudioViz(viz, Modifier.fillMaxSize()) }
+                    }
                 }
             }
         }
@@ -828,13 +905,37 @@ internal class KiteImpl(
         /** The visualizer redraws at most this often, whatever the display's rate. */
         const val VISUALIZER_FRAMES_PER_SECOND = 60
 
+        /** How long a hidden picture waits, with nothing drawn in its place, before decoding parks. */
+        val VIDEO_PARK_DELAY = 2.seconds
+
         /** Every source the player can open may be scanned a second time for its song map. */
         val SONG_SCAN = SongScanPolicy(localFiles = true, network = true, customReaders = true)
 
         /** Finished song maps, kept between runs; a map is about ten kilobytes. */
         val songMapStore: SongMapStore by lazy {
-            getCacheDirectoryPath("songmaps")?.let { SongMapStore.inDirectory(it) } ?: SongMapStore.None
+            LoggedSongMapStore(getCacheDirectoryPath("songmaps")?.let { SongMapStore.inDirectory(it) } ?: SongMapStore.None)
         }
+    }
+}
+
+/**
+ * Logs each use of the kept song maps. A song map is what the visualizer learns from a second,
+ * silent read of the whole song: a loudness reference and where the sections and drops are. The
+ * visualizer shows nothing while it studies a song, so this log says when a study began and ended.
+ */
+private class LoggedSongMapStore(private val kept: SongMapStore) : SongMapStore {
+    override suspend fun read(key: String): ByteArray? = kept.read(key).also { bytes ->
+        loggy(if (bytes != null) "Visualizer: using the kept study of this song" else "Visualizer: studying this song")
+    }
+
+    override suspend fun write(key: String, bytes: ByteArray) {
+        loggy("Visualizer: song study finished")
+        kept.write(key, bytes)
+    }
+
+    override suspend fun remove(key: String) {
+        loggy("Visualizer: song study dropped, because the live sound did not match it")
+        kept.remove(key)
     }
 }
 

@@ -765,6 +765,11 @@
     <string name="room_visualizer_director">Режиссёр</string>
     <string name="room_visualizer_director_summary">Меняет узор вместе с музыкой</string>
     <string name="room_visualizer_pattern">Узор</string>
+    <string name="uisetting_kite_audio_viz_title">Визуализатор звука</string>
+    <string name="uisetting_kite_audio_viz_summary">Показывает анимацию во время воспроизведения звука, когда видеодорожка не выбрана.</string>
+    <string name="room_visualizer_notice_title">Осторожно: мерцающий свет</string>
+    <string name="room_visualizer_notice_text">Визуализатор звука показывает быстрые смены света и движущиеся узоры. Они могут вызвать приступы у людей с фотосенситивной эпилепсией. Если вы или кто-то, кто смотрит вместе с вами, чувствительны к мерцающему свету, сначала включите «Меньше движения» в настройках или не используйте визуализатор.</string>
+    <string name="room_visualizer_notice_turn_on">Включить</string>
     <string name="room_drop_play_file">Отпустите, чтобы воспроизвести %1$s</string>
     <string name="room_drop_play_link">Отпустите, чтобы воспроизвести эту ссылку</string>
     <string name="home_drop_watch_alone_file">Отпустите, чтобы смотреть %1$s в одиночку</string>

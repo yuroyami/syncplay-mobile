@@ -16,6 +16,15 @@ sealed interface PrefExtraConfig {
     ) : PrefExtraConfig
 
     /**
+     * A Boolean pref that opens [ask] instead of turning on, while [asks] answers true. [ask] turns
+     * the pref on itself when the user agrees. Turning the pref off never asks.
+     */
+    data class AskBeforeOn(
+        val asks: () -> Boolean,
+        val ask: @Composable (open: MutableState<Boolean>) -> Unit,
+    ) : PrefExtraConfig
+
+    /**
      * A numeric range. [unit] is shown after the value ("10 s"). [onValueChanged] reaches a live
      * subsystem: it fires on release, and at most once every 60 ms while dragging.
      */

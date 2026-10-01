@@ -785,6 +785,11 @@ object Preferences {
         icon = Icons.Filled.MusicNote
     }
     /**
+     * Whether the flashing light notice of the audio visualizer was accepted. Until it is, the
+     * visualizer asks before it turns on and does not draw. It has no settings row.
+     */
+    val AUDIO_VIZ_NOTICE_SEEN = Pref("pref_audio_viz_notice_seen", false)
+    /**
      * Whether the visualizer's director (its automatic drawing picker) changes the drawing with
      * the music. The tracks card sets it.
      */

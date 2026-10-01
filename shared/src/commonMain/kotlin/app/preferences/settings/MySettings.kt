@@ -83,6 +83,7 @@ import app.preferences.Preferences.TLS_ENABLE
 import app.preferences.Preferences.TLS_REQUIRED
 import app.preferences.Preferences.TRUSTED_DOMAINS
 import app.preferences.Preferences.UNPAUSE_ACTION
+import app.room.ui.misc.VisualizerNoticeControl
 
 val GLOBAL_GENERAL = SettingCategory(
     key = "general",
@@ -289,7 +290,8 @@ fun roomSettings(engine: SettingCategory?, supportsAudioVisualization: Boolean =
     if (engine == null && !supportsAudioVisualization) return SETTINGS_ROOM
     val player = SettingCategory(INROOM_PLAYER_SETTINGS.key, INROOM_PLAYER_SETTINGS.title, INROOM_PLAYER_SETTINGS.icon) {
         INROOM_PLAYER_SETTINGS.groups.forEach { include(it) }
-        if (supportsAudioVisualization) +AUDIO_VISUALIZATION
+        // The visualizer can flash, so its row asks once before it first turns on.
+        if (supportsAudioVisualization) +AUDIO_VISUALIZATION.withControl(VisualizerNoticeControl)
         if (engine != null) include(SettingGroup(engine.title, engine.entries))
     }
     return SETTINGS_ROOM.map { if (it === INROOM_PLAYER_SETTINGS) player else it }

@@ -50,6 +50,8 @@ import app.preferences.Preferences.SHOW_SETTING_DESCRIPTIONS
 import app.preferences.set
 import app.preferences.watchPref
 import app.room.ui.bottombar.SubtitleSearchModal
+import app.room.ui.misc.VisualizerNotice
+import app.room.ui.misc.visualizerNoticeNeeded
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
@@ -85,6 +87,7 @@ object CardTracks {
         val scope = rememberCoroutineScope()
         val media by viewmodel.playerManager.media.collectAsState()
         var showSearch by remember { mutableStateOf(false) }
+        val visualizerNotice = remember { mutableStateOf(false) }
         var selecting by remember { mutableStateOf(false) }
         val visualization by AUDIO_VISUALIZATION.watchPref()
         val visualizer by viewmodel.player.visualizer.collectAsState()
@@ -117,6 +120,11 @@ object CardTracks {
                 } finally { selecting = false }
             }
         }
+        // The visualizer draws in place of the picture, so turning it on turns the video off.
+        // Turning it off leaves the video off. A video track from the list brings the video back.
+        fun hideVideo() {
+            if (media?.tracks?.any { it.type == TrackType.VIDEO && it.selected } == true) choose(null, TrackType.VIDEO)
+        }
         PanelSurface(Modifier.fillMaxSize(), shape) {
             TrackControls(
                 tracks = media?.tracks?.toList().orEmpty(),
@@ -125,11 +133,13 @@ object CardTracks {
                 visualization = visualization,
                 visualizer = visualizer,
                 onVisualization = { on ->
-                    scope.launch { AUDIO_VISUALIZATION.set(on) }
-                    // The visualizer draws in place of the picture, so turning it on turns the
-                    // video off. Turning it off leaves the video off. A video track from the list
-                    // brings the video back.
-                    if (on && media?.tracks?.any { it.type == TrackType.VIDEO && it.selected } == true) choose(null, TrackType.VIDEO)
+                    // The visualizer can flash, so it asks once before it first turns on.
+                    if (on && visualizerNoticeNeeded()) {
+                        visualizerNotice.value = true
+                    } else {
+                        scope.launch { AUDIO_VISUALIZATION.set(on) }
+                        if (on) hideVideo()
+                    }
                 },
                 enabled = !selecting,
                 onChoose = ::choose,
@@ -143,6 +153,7 @@ object CardTracks {
             )
         }
         SubtitleSearchModal(open = showSearch, onDismiss = { showSearch = false })
+        VisualizerNotice(visualizerNotice, onTurnOn = ::hideVideo)
     }
 }
 

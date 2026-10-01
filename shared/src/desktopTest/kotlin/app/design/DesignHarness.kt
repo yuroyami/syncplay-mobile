@@ -112,6 +112,18 @@ object DesignHarness {
         return here + node.children.flatMap(::unnamedControls)
     }
 
+    /** The first node at or under [node] that reads [text] and can be pressed. */
+    private fun pressable(node: SemanticsNode, text: String): SemanticsNode? {
+        val reads = node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == text } == true
+        if (reads && node.config.getOrNull(SemanticsActions.OnClick) != null) return node
+        return node.children.firstNotNullOfOrNull { pressable(it, text) }
+    }
+
+    /** Whether [node] or anything under it reads [text]. */
+    private fun readsText(node: SemanticsNode, text: String): Boolean =
+        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == text } == true ||
+            node.children.any { readsText(it, text) }
+
     private fun textLayouts(node: SemanticsNode): List<TextLayoutResult> {
         val layouts = mutableListOf<TextLayoutResult>()
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
@@ -237,6 +249,24 @@ object DesignHarness {
             if (!taken) androidFocusDirection(key)?.let { direction -> onUiThread { focusManager?.moveFocus(direction) } }
             frames(3)
             onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp, codePoint = codePoint)) }
+            frames(5)
+        }
+
+        /** Whether anything in the scene reads [text], a dialog included. */
+        fun shows(text: String): Boolean = onUiThread {
+            scene.semanticsOwners.any { readsText(it.unmergedRootSemanticsNode, text) }
+        }
+
+        /**
+         * Presses the control that reads [text], a dialog's included, through its click action. The
+         * arrow keys of [press] move focus in the main window only, so this reaches a dialog's keys.
+         */
+        fun click(text: String) {
+            val pressed = onUiThread {
+                val node = scene.semanticsOwners.firstNotNullOfOrNull { pressable(it.rootSemanticsNode, text) }
+                node?.config?.getOrNull(SemanticsActions.OnClick)?.action?.invoke() == true
+            }
+            assertTrue(pressed, "nothing that reads \"$text\" can be pressed")
             frames(5)
         }
 

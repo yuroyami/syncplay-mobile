@@ -765,6 +765,11 @@
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Cambia el patrón con la música</string>
     <string name="room_visualizer_pattern">Patrón</string>
+    <string name="uisetting_kite_audio_viz_title">Visualizador de audio</string>
+    <string name="uisetting_kite_audio_viz_summary">Muestra imágenes animadas mientras suena el audio y no hay ninguna pista de vídeo seleccionada.</string>
+    <string name="room_visualizer_notice_title">Aviso de luces parpadeantes</string>
+    <string name="room_visualizer_notice_text">El visualizador de audio muestra cambios rápidos de luz y patrones en movimiento. Pueden provocar crisis en personas con epilepsia fotosensible. Si tú o alguien que mira contigo es sensible a las luces parpadeantes, activa primero «Reducir movimiento» en Ajustes o no uses el visualizador.</string>
+    <string name="room_visualizer_notice_turn_on">Activar</string>
     <string name="room_drop_play_file">Suelta para reproducir %1$s</string>
     <string name="room_drop_play_link">Suelta para reproducir este enlace</string>
     <string name="home_drop_watch_alone_file">Suelta para ver %1$s a solas</string>

@@ -145,9 +145,13 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
             value is Boolean || extra is PrefExtraConfig.BooleanCallback -> {
                 val on = value as? Boolean ?: false
                 val flip: (Boolean) -> Unit = { next ->
-                    scope.launch {
-                        pref.setAny(next)
-                        (extra as? PrefExtraConfig.BooleanCallback)?.onBooleanChanged?.invoke(next)
+                    if (next && extra is PrefExtraConfig.AskBeforeOn && extra.asks()) {
+                        editorOpen.value = true
+                    } else {
+                        scope.launch {
+                            pref.setAny(next)
+                            (extra as? PrefExtraConfig.BooleanCallback)?.onBooleanChanged?.invoke(next)
+                        }
                     }
                 }
                 ListRow(onClick = { flip(!on) }, onLongClick = ::toggleExplain, enabled = enabled, selected = highlighted) {
@@ -160,6 +164,7 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
                     // as two switches.
                     Rocker(on = on, onChange = flip, enabled = enabled, modifier = Modifier.clearAndSetSemantics { })
                 }
+                if (extra is PrefExtraConfig.AskBeforeOn && editorOpen.value) extra.ask(editorOpen)
             }
 
             extra is PrefExtraConfig.MultiChoice -> {

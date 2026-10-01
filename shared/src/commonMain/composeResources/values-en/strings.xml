@@ -922,6 +922,9 @@
     <string name="room_visualizer_director">Director</string>
     <string name="room_visualizer_director_summary">Changes the pattern with the music</string>
     <string name="room_visualizer_pattern">Pattern</string>
+    <string name="room_visualizer_notice_title">Flashing light warning</string>
+    <string name="room_visualizer_notice_text">The audio visualizer shows fast changes of light and moving patterns. These can cause seizures in people with photosensitive epilepsy. If you or someone watching with you is sensitive to flashing light, turn on Reduce motion in Settings first, or do not use the visualizer.</string>
+    <string name="room_visualizer_notice_turn_on">Turn on</string>
     <!-- %1$s is a file name. -->
     <string name="room_drop_play_file">Drop to play %1$s</string>
     <string name="room_drop_play_link">Drop to play this link</string>

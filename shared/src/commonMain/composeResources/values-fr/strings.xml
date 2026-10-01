@@ -780,6 +780,11 @@
     <string name="room_visualizer_director">Réalisateur</string>
     <string name="room_visualizer_director_summary">Change de motif avec la musique</string>
     <string name="room_visualizer_pattern">Motif</string>
+    <string name="uisetting_kite_audio_viz_title">Visualiseur audio</string>
+    <string name="uisetting_kite_audio_viz_summary">Affiche des visuels animés pendant la lecture audio, quand aucune piste vidéo n'est sélectionnée.</string>
+    <string name="room_visualizer_notice_title">Lumières clignotantes</string>
+    <string name="room_visualizer_notice_text">Le visualiseur audio affiche des changements rapides de lumière et des motifs en mouvement. Ils peuvent provoquer des crises chez les personnes atteintes d'épilepsie photosensible. Si vous ou une personne qui regarde avec vous êtes sensibles aux lumières clignotantes, activez d'abord « Réduire les animations » dans les Réglages, ou n'utilisez pas le visualiseur.</string>
+    <string name="room_visualizer_notice_turn_on">Activer</string>
     <string name="room_drop_play_file">Déposez pour lire %1$s</string>
     <string name="room_drop_play_link">Déposez pour lire ce lien</string>
     <string name="home_drop_watch_alone_file">Déposez pour regarder %1$s seul</string>

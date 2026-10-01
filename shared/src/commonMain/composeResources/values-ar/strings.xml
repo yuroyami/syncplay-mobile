@@ -763,6 +763,11 @@
     <string name="room_visualizer_director">المخرج</string>
     <string name="room_visualizer_director_summary">يغيّر النمط مع الموسيقى</string>
     <string name="room_visualizer_pattern">النمط</string>
+    <string name="uisetting_kite_audio_viz_title">مُصوِّر الصوت</string>
+    <string name="uisetting_kite_audio_viz_summary">يعرض رسومًا متحركة أثناء تشغيل الصوت عند عدم اختيار مسار فيديو.</string>
+    <string name="room_visualizer_notice_title">تحذير من الضوء الوامض</string>
+    <string name="room_visualizer_notice_text">يعرض مُصوِّر الصوت تغيّرات سريعة في الضوء وأنماطًا متحركة. قد تسبب هذه نوبات لدى المصابين بالصرع الحساس للضوء. إذا كنت أنت أو أحد من يشاهد معك حساسًا للضوء الوامض، فشغّل «تقليل الحركة» في الإعدادات أولًا، أو لا تستخدم المُصوِّر.</string>
+    <string name="room_visualizer_notice_turn_on">تشغيل</string>
     <string name="room_drop_play_file">أفلِت لتشغيل %1$s</string>
     <string name="room_drop_play_link">أفلِت لتشغيل هذا الرابط</string>
     <string name="home_drop_watch_alone_file">أفلِت لمشاهدة %1$s بمفردك</string>

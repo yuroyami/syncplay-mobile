@@ -774,6 +774,11 @@
     <string name="room_visualizer_director">Reżyser</string>
     <string name="room_visualizer_director_summary">Zmienia wzór wraz z muzyką</string>
     <string name="room_visualizer_pattern">Wzór</string>
+    <string name="uisetting_kite_audio_viz_title">Wizualizator dźwięku</string>
+    <string name="uisetting_kite_audio_viz_summary">Pokazuje animowane obrazy podczas odtwarzania dźwięku, gdy nie wybrano ścieżki wideo.</string>
+    <string name="room_visualizer_notice_title">Uwaga na migające światło</string>
+    <string name="room_visualizer_notice_text">Wizualizator dźwięku pokazuje szybkie zmiany światła i ruchome wzory. Mogą one wywołać napady u osób z padaczką fotogenną. Jeśli ty lub ktoś, kto ogląda razem z tobą, jest wrażliwy na migające światło, najpierw włącz „Ogranicz ruch” w Ustawieniach albo nie używaj wizualizatora.</string>
+    <string name="room_visualizer_notice_turn_on">Włącz</string>
     <string name="room_drop_play_file">Upuść, aby odtworzyć %1$s</string>
     <string name="room_drop_play_link">Upuść, aby odtworzyć ten link</string>
     <string name="home_drop_watch_alone_file">Upuść, aby obejrzeć %1$s w pojedynkę</string>

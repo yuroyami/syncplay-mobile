@@ -324,11 +324,12 @@ protocol) mark a play state change that the other side has not confirmed yet.
 
 ### VLCKit on iOS
 
-VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a19.
+VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a24.
 
 - Keep these VLCKit protections. Each one defends against the asynchronous behaviour of VLCKit 4:
   - the post-seek guard (`seekGuard`)
   - the first-frame priming flag (`primingFirstFrame`)
+  - the replay of a play that a held-back pause overrode (`VlcDeferredPlay`)
   - the 250 ms debounce on the Paused state
   - the deferred startup seek (`VlcSeekRequests`)
   - the drawable barrier (see below)
@@ -338,8 +339,19 @@ VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a19.
   wrapper owns it (71e1ee6a).
 - The native VLC clock returns 0 once its input stops. `VlcClock.h` reports that as unavailable,
   so the end-of-file check keeps the last real position (71e1ee6a).
-- `VlcClock.h` and the VLC seek code assume the millisecond time API of VLCKit 4.0.0a19. Newer VLC
-  versions change the native time unit, so recheck both on any upgrade (71e1ee6a).
+- Since libVLC 4.0.0a20, the native time and length are in microseconds. `VlcClock.h` returns them
+  as they are, and `vlcMillisFromMicros` rounds them to milliseconds. VLCKit's own time API
+  (`setTime:`, `VLCTime`, chapter offsets) still uses milliseconds. Recheck both units on any
+  upgrade.
+- Since libVLC 4.0.0a20, a pause that arrives while the input buffers waits until the buffering
+  ends. This applies to `:start-paused` on new media and to a pause right after a seek. Until the
+  pause happens, the input reports Playing and ignores a play. `primingFirstFrame` hides that
+  Playing state at the start, and `VlcDeferredPlay` plays again when the late pause arrives.
+- Since libVLC 4.0.0a20, buffering is not a player state. `mediaPlayerBufferingChanged` reports it
+  from 0 to 1, and sends exactly 1 when the buffer is full. The first open sends no 0, so the
+  Opening state starts the waiting indicator.
+- Since libVLC 4.0.0a23, libVLC repaints the video when the app returns to the foreground. The
+  engine repaints the video itself only after picture-in-picture closes.
 - Keep `VLCEventsLegacyConfiguration`. Without it, VLCKit 4 runs callbacks on libVLC threads, some
   of them under its timer lock, where a native getter can re-enter libVLC (#156).
 - Legacy delivery queues only the state value, and the wrapper's `state` is a cache. Check the
@@ -590,6 +602,17 @@ string through them.
   controls.
 - KitePlayer fetches network media through its own `kiteplayer-network` module, which uses Ktor
   (OkHttp on Android and desktop, Darwin on iOS).
+- A YouTube file stream opens through `youTubeMediaPath` (`KiteStreamReader.kt`). It wraps
+  KitePlayer's own reader in `ReadThroughMediaIo`, under the label `youtube:<video id>/<format>`.
+  - The label keeps the visualizer's study of a song across plays. YouTube gives the stream a new
+    address on every resolve, and the study is keyed by the item's address.
+  - The read-through serves a short forward skip from the open stream. Without it, a scan of the
+    audio opens a new request for every video chunk that it skips.
+- The audio visualizer can flash, so keep both of its guards (`VisualizerSafety.kt`):
+  - It asks once before it first turns on, and it draws nothing before that answer. Every switch
+    that turns it on goes through `VisualizerNotice`, and the drawing sits in `AfterVisualizerNotice`.
+  - It follows Reduce motion, the app's switch or the platform setting, through
+    `AudioVizState.reducedMotion`. That takes its flashes away.
 - On Android, KitePlayer opens a picked file by its real path when it can, and otherwise through
   the `fd:` protocol. Never reopen a descriptor through `/proc/self/fd`, because real devices refuse
   it.
