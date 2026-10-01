@@ -1,7 +1,6 @@
 package app.player.vlc
 
 import app.player.Playback
-import cocoapods.VLCKit.SyncplayVlcCurrentTimeMs
 import cocoapods.VLCKit.VLCDrawableProtocol
 import cocoapods.VLCKit.VLCPictureInPictureDrawableProtocol
 import cocoapods.VLCKit.VLCPictureInPictureMediaControllingProtocol
@@ -209,7 +208,7 @@ internal class VlcDrawable(
                         // near the target by chance, and that is not completion. A timeout only
                         // releases PiP's callback. It does not cancel the room's deferred seek.
                         if (impl.hasPendingSeek) null
-                        else SyncplayVlcCurrentTimeMs(player).takeIf { it >= 0L }
+                        else player.nativeTimeMs().takeIf { it >= 0L }
                     }
                 )
             } finally {

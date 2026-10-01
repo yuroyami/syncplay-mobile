@@ -1,7 +1,7 @@
 PODS:
   - shared (1.0.4):
-    - VLCKit (= 4.0.0a19)
-  - VLCKit (4.0.0a19)
+    - VLCKit (= 4.0.0a24)
+  - VLCKit (4.0.0a24)
 
 DEPENDENCIES:
   - shared (from `../shared`)
@@ -15,8 +15,8 @@ EXTERNAL SOURCES:
     :path: "../shared"
 
 SPEC CHECKSUMS:
-  shared: 6930fc0f3bb97385f71219bc28b021430ba5c858
-  VLCKit: 436927d83225116c5d786c0c6fc70b84a6fce28b
+  shared: 40a11b652b388dc4982af933765f4f81c192d9a5
+  VLCKit: c6a641a5f215403ae26d37680b963fbe76d66c65
 
 PODFILE CHECKSUM: 3b1ed110cc1ea5bda613d860b286cc86a9f80876
 

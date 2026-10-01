@@ -19,11 +19,12 @@ import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSOrderedSame
-import platform.UIKit.UIApplicationDidBecomeActiveNotification
 
 /**
  * Keeps iOS audio and the VLC render surface working across system events: interruptions (Siri,
- * a call, an alarm), route changes (headphones in and out) and the return to the foreground.
+ * a call, an alarm), route changes (headphones in and out) and the end of picture-in-picture.
+ * The return to the foreground needs no step here: since 4.0.0a23, libVLC flushes its failed
+ * video layer when the app becomes active, and a paused player repaints its frame every 80 ms.
  *
  * These recovery requests share one cancellable job (`recoveryJob`), so a delayed native command
  * cannot override a later playback command or act on replaced media.
@@ -42,8 +43,7 @@ internal fun VlcKitImpl.configureAudioSession() = configurePlaybackAudioSession(
 /**
  * Registers NSNotificationCenter observers that recover audio after system interruptions (Siri,
  * a FaceTime call, an alarm, any other app that takes the AVAudioSession) and route changes
- * (headphones in or out, AirPods reconnecting). It also registers the foreground observer that
- * repaints the video.
+ * (headphones in or out, AirPods reconnecting).
  *
  * When an interruption ends, the session is activated again. If the system allows a resume and
  * no newer command arrived, a player that still reports playing gets a short pause and play.
@@ -144,24 +144,12 @@ internal fun VlcKitImpl.registerAudioSessionObservers() {
             AVAudioSession.sharedInstance().setActive(true, error = null)
         } catch (_: Exception) { }
     }
-
-    // The video can show blank frames after the app returns to the foreground. The workaround,
-    // found by testing: set the drawable again and briefly play a paused player. Setting the
-    // drawable alone changes the native output setup, but does not promise a new render view.
-    didBecomeActiveObserver = center.addObserverForName(
-        name = UIApplicationDidBecomeActiveNotification,
-        `object` = null,
-        queue = queue
-    ) { _ ->
-        if (!isInitialized) return@addObserverForName
-        requestDrawableRecovery()
-    }
 }
 
 /**
- * Runs the repaint workaround for the foreground and PiP on the main thread. It sets the drawable
- * again. A paused player then plays briefly to produce frames, and pauses again if the media and
- * the playback command are still current. A request while a recovery job runs is dropped, because
+ * Runs the repaint workaround after PiP closes, on the main thread. It sets the drawable again.
+ * A paused player then plays briefly to produce frames, and pauses again if the media and the
+ * playback command are still current. A request while a recovery job runs is dropped, because
  * the running job covers it.
  */
 internal fun VlcKitImpl.requestDrawableRecovery() {
@@ -243,8 +231,6 @@ internal fun VlcKitImpl.removeAudioSessionObservers() {
     val center = NSNotificationCenter.defaultCenter
     interruptionObserver?.let { center.removeObserver(it) }
     routeChangeObserver?.let { center.removeObserver(it) }
-    didBecomeActiveObserver?.let { center.removeObserver(it) }
     interruptionObserver = null
     routeChangeObserver = null
-    didBecomeActiveObserver = null
 }

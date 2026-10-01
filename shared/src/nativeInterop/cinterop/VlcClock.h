@@ -25,14 +25,14 @@ static inline SyncplayVlcInputState SyncplayVlcReadInputState(VLCMediaPlayer *pl
     return SyncplayVlcInputStateInactive;
 }
 
-static inline int64_t SyncplayVlcNativeLengthMs(VLCMediaPlayer *player) {
+/**
+ * The native media length in microseconds, or -1 without media. libVLC returns 0, not the -1 that
+ * its header promises, while no input is open. Convert with vlcMillisFromMicros.
+ */
+static inline int64_t SyncplayVlcLengthUs(VLCMediaPlayer *player) {
     if (player == nil || player.media == nil) return -1;
     libvlc_media_player_t *nativePlayer = (libvlc_media_player_t *)player.libVLCMediaPlayer;
     return nativePlayer == NULL ? -1 : libvlc_media_player_get_length(nativePlayer);
-}
-
-static inline int64_t SyncplayVlcCurrentLengthMs(VLCMediaPlayer *player) {
-    return SyncplayVlcNativeLengthMs(player);
 }
 
 static inline int SyncplayVlcCurrentState(VLCMediaPlayer *player) {
@@ -45,18 +45,22 @@ static inline int SyncplayVlcCurrentState(VLCMediaPlayer *player) {
 static inline bool SyncplayVlcStateMatches(VLCMediaPlayer *player, VLCMediaPlayerState eventState) {
     int state = SyncplayVlcCurrentState(player);
     switch (eventState) {
+        case VLCMediaPlayerStateNothingSpecial: return state == libvlc_NothingSpecial;
+        case VLCMediaPlayerStateOpening: return state == libvlc_Opening;
         case VLCMediaPlayerStatePlaying: return state == libvlc_Playing;
         case VLCMediaPlayerStatePaused: return state == libvlc_Paused;
         case VLCMediaPlayerStateStopped: return state == libvlc_Stopped;
         case VLCMediaPlayerStateStopping: return state == libvlc_Stopping;
         case VLCMediaPlayerStateError: return state == libvlc_Error;
-        case VLCMediaPlayerStateOpening: return state == libvlc_Opening;
-        case VLCMediaPlayerStateBuffering: return state == libvlc_Buffering;
     }
     return false;
 }
 
-/** Compare native descriptors; VLCKit may replace its Objective-C wrapper for the same media. */
+/**
+ * Compares native descriptors, because VLCKit may replace its Objective-C wrapper for the same
+ * media. libVLC returns the media of the input that is open, so after a media change this stays
+ * false until the old input has stopped. The call holds a reference, released here.
+ */
 static inline bool SyncplayVlcHasCurrentMedia(VLCMediaPlayer *player, VLCMedia *media) {
     if (player == nil || media == nil) return false;
     libvlc_media_player_t *nativePlayer = (libvlc_media_player_t *)player.libVLCMediaPlayer;
@@ -68,22 +72,20 @@ static inline bool SyncplayVlcHasCurrentMedia(VLCMediaPlayer *player, VLCMedia *
 }
 
 /**
- * VLCKit 4.0.0a19's `time` property reads its notification/interpolation cache. That cache
- * can stop updating while playback continues. Read the native player instead, on the main
- * thread and outside libVLC callbacks. The handle is borrowed through VLCKit's bridging header,
- * and the wrapper owns it, so never release it.
- *
- * Version-sensitive: this bundled libVLC API returns milliseconds. Newer VLC versions use
- * microseconds, so recheck the headers and this bridge when upgrading VLCKit.
+ * The native playback time in microseconds, or -1 when there is no running input. VLCKit's
+ * `time` property reads a notification and interpolation cache, which can stop updating while
+ * playback continues. So read the native player instead, on the main thread and outside libVLC
+ * callbacks. The handle is borrowed through VLCKit's bridging header, and the wrapper owns it, so
+ * never release it. Convert with vlcMillisFromMicros.
  */
-static inline int64_t SyncplayVlcCurrentTimeMs(VLCMediaPlayer *player) {
+static inline int64_t SyncplayVlcTimeUs(VLCMediaPlayer *player) {
     if (player == nil || player.media == nil) return -1;
     libvlc_media_player_t *nativePlayer = (libvlc_media_player_t *)player.libVLCMediaPlayer;
     if (nativePlayer == NULL) return -1;
     int64_t time = libvlc_media_player_get_time(nativePlayer);
-    // This build returns zero after its native input is gone. Read the native state after
-    // the clock, so a stop that races this read cannot publish a false rewind. VLCKit's
-    // cached state can still say Playing until its main-thread event arrives.
+    // libVLC returns zero after its native input is gone. Read the native state after the clock,
+    // so a stop that races this read cannot publish a false rewind. VLCKit's cached state can
+    // still say Playing until its main-thread event arrives.
     switch (libvlc_media_player_get_state(nativePlayer)) {
         case libvlc_NothingSpecial:
         case libvlc_Stopped:

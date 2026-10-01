@@ -24,19 +24,18 @@ import app.protocol.ProtocolManager
 import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.utils.loggy
-import cocoapods.VLCKit.SyncplayVlcCurrentTimeMs
-import cocoapods.VLCKit.SyncplayVlcCurrentLengthMs
 import cocoapods.VLCKit.SyncplayVlcHasCurrentMedia
 import cocoapods.VLCKit.SyncplayVlcInputState
-import cocoapods.VLCKit.SyncplayVlcNativeLengthMs
+import cocoapods.VLCKit.SyncplayVlcLengthUs
 import cocoapods.VLCKit.SyncplayVlcReadInputState
 import cocoapods.VLCKit.SyncplayVlcStateMatches
+import cocoapods.VLCKit.SyncplayVlcTimeUs
 import cocoapods.VLCKit.VLCEventsLegacyConfiguration
 import cocoapods.VLCKit.VLCLibrary
 import cocoapods.VLCKit.VLCMedia
-import cocoapods.VLCKit.VLCMediaParseLocal
 import cocoapods.VLCKit.VLCMediaPlaybackSlaveTypeSubtitle
 import cocoapods.VLCKit.VLCMediaPlayer
+import cocoapods.VLCKit.VLCMediaPlayerCapabilitiesChangedNotification
 import cocoapods.VLCKit.VLCMediaPlayerChapterDescription
 import cocoapods.VLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.VLCKit.VLCMediaPlayerState
@@ -59,10 +58,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSOrderedSame
 import platform.Foundation.NSURL
-import platform.UIKit.UIApplicationDidBecomeActiveNotification
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
@@ -109,7 +109,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val announcesFileLoadViaEvent: Boolean = true
 
     private val seekGuard = VlcSeekGuard()
-    private val bufferingRelease = VlcBufferingRelease()
+    private val deferredPlay = VlcDeferredPlay()
     private val seekRequests = VlcSeekRequests(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
     private val seekStartup = VlcSeekStartup(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
     internal val hasPendingSeek: Boolean get() = seekRequests.hasPending
@@ -160,13 +160,14 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     /**
      * True while media opens with ":start-paused", or while a paused surface is briefly
-     * repainted. During that open, VLCKit can report [VLCMediaPlayerStatePlaying] for a moment
-     * before it settles on Paused. Setting [PlayerManager.isNowPlaying] to true then would make
-     * [ProtocolManager]'s channel-health collector send a false "unpaused" to the room and put
-     * everyone out of sync. While this flag is set, the delegate ignores that Playing state.
-     * The flag clears when the player settles in Paused, Stopped or Error, or when a deliberate
-     * play() arrives. A deliberate pause keeps it set until the Paused event confirms the pause.
-     * Only the main thread touches this flag and the seek guard.
+     * repainted. During that open, libVLC reports [VLCMediaPlayerStatePlaying] until its first
+     * buffering ends, which can take seconds on a network stream, and only then pauses. Setting
+     * [PlayerManager.isNowPlaying] to true then would make [ProtocolManager]'s channel-health
+     * collector send a false "unpaused" to the room and put everyone out of sync. While this flag
+     * is set, the delegate ignores that Playing state. The flag clears when the player settles in
+     * Paused, Stopped or Error, or when a deliberate play() arrives. A deliberate pause keeps it
+     * set until the Paused event confirms the pause. Only the main thread touches this flag and
+     * the seek guard.
      */
     internal var primingFirstFrame = false
 
@@ -174,14 +175,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     internal var interruptionObserver: NSObjectProtocol? = null
     internal var routeChangeObserver: NSObjectProtocol? = null
 
-    /**
-     * Observer for [UIApplicationDidBecomeActiveNotification]. After the app was in the
-     * background (this includes locking and unlocking the screen with a video open), VLCKit 4's
-     * render layer in the drawable's containerView can be stale. Back in the foreground it then
-     * shows a blank (white or black) frame instead of the video. [requestDrawableRecovery] does
-     * the recovery, including the forced frame that a paused player needs.
-     */
-    internal var didBecomeActiveObserver: NSObjectProtocol? = null
+    /** Observer token for the player's capability changes. See [initialize]. */
+    private var capabilitiesObserver: NSObjectProtocol? = null
 
     /**
      * Tears down the media player, media object, VLC library, observers and PiP controller.
@@ -201,6 +196,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             resetSeekState()
             try {
                 removeAudioSessionObservers()
+                removeCapabilitiesObserver()
 
                 // Clear the PiP state-change handler before stopping PiP. VLCKit can call the
                 // "PiP stopped" handler synchronously during the stop, and its recovery code
@@ -304,11 +300,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 // [VLCMediaPlayer.currentSubTitleFontScale] (see [changeSubtitleSize]) that
                 // multiplies libvlc's own default base size. A fixed pixel size here would be
                 // multiplied by that scale too, which makes the subtitles too large.
+                // No "--adaptive-logic": libVLC's default logic is the empty value, and
+                // "default" only logged an unknown-value error before falling back to it.
                 val baseArgs = listOf(
                     // No "-vv": libvlc's verbose logging writes lines for every frame, which is
                     // too much for release builds. The user's custom flags can add it back.
                     "--network-caching=2000",
-                    "--adaptive-logic=default",
                     "--http-reconnect",
                 )
                 // By default, VLCKit 4 delivers event callbacks (state, length, track and media
@@ -339,10 +336,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                         // When PiP stops (the user closes the PiP window, or the app calls
                         // stopPictureInPicture), VLCKit does not always give the render surface
                         // back to the drawable's containerView. The app then shows an empty
-                        // white frame instead of the video. Rebinding the drawable is the same
-                        // recovery that the DidBecomeActive observer uses after the background.
-                        // It runs here too, because closing PiP does not always send
-                        // DidBecomeActive (the user may have stayed in the app, with PiP on top).
+                        // white frame instead of the video. Testing found that rebinding the
+                        // drawable, and a short play for a paused player, repaints it.
                         if (!isStarted) {
                             playerScopeMain.launch { requestDrawableRecovery() }
                         }
@@ -403,10 +398,28 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         configureAudioSession()
         registerAudioSessionObservers()
 
+        // A startup seek waits until the input can seek. This event is the first sign of that, so
+        // the seek goes out at once instead of at the next tracker poll. The live native state
+        // decides, so a late event from replaced media does no harm.
+        removeCapabilitiesObserver()
+        capabilitiesObserver = NSNotificationCenter.defaultCenter.addObserverForName(
+            name = VLCMediaPlayerCapabilitiesChangedNotification,
+            `object` = vlcPlayer,
+            queue = NSOperationQueue.mainQueue
+        ) { _ ->
+            val player = vlcPlayer
+            if (isInitialized && player != null && player.media != null && hasPendingSeek) submitPendingSeek(player)
+        }
+
         isInitialized = true
 
         startTrackingProgress()
      }
+
+    private fun removeCapabilitiesObserver() {
+        capabilitiesObserver?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
+        capabilitiesObserver = null
+    }
 
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
@@ -524,7 +537,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 ?: return@withContext
             val nativeOffset = description.timeOffset.value()?.longValue ?: return@withContext
             if (nativeOffset < 0L) return@withContext
-            val target = normalizeVlcSeekTarget(nativeOffset, SyncplayVlcNativeLengthMs(player))
+            val target = normalizeVlcSeekTarget(nativeOffset, player.nativeLengthMs())
             // Announce only after the checks above. A stale or invalid chapter must not announce
             // a room seek that VLC ignores.
             super.jumpToChapter(chapter.copy(timeOffsetMillis = target))
@@ -578,15 +591,14 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         resetSeekState(startingNewMedia = true)
         // PlayerImpl holds the file's security scope for the whole playback.
         val nsUrl = location.file.nsUrl
+        // No parse: the player reports the length as soon as the input opens.
         vlcMedia = VLCMedia(uRL = nsUrl)
-        // VLCKit 4 has no synchronousParse(), so start an asynchronous local parse. parseMedia()
-        // reads the length once, and mediaPlayerLengthChanged delivers the final value.
-        vlcMedia?.parseWithOptions(VLCMediaParseLocal.toInt())
         // Show the first frame as soon as the file is injected, not a black surface. VLCKit
         // only starts its video output (and decodes a frame) once playback starts, and the load
-        // flow never plays on its own. ":start-paused" makes libvlc open the input, decode and
-        // show the first frame, then pause itself. The first frame is then visible while the
-        // room is still paused, and the later play() and seekTo() from sync resume from there.
+        // flow never plays on its own. ":start-paused" makes libVLC open the input, buffer, show
+        // the first frame, then pause itself. The first frame is then visible while the room is
+        // still paused, and the later play() and seekTo() from sync resume from there. libVLC
+        // pauses only once the first buffering ends, so a play before that needs [deferredPlay].
         vlcMedia?.addOption(":start-paused")
         // setMedia runs at once, but earlier play and pause calls are queued. The public
         // drawable setter drains that queue before the media changes. Otherwise an old play
@@ -610,8 +622,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 || url.contains("/manifest", ignoreCase = true)
 
         if (isAdaptiveStream) {
-            // URLs get no explicit parse: HLS and DASH manifests can stall a parse for a long
-            // time, so VLC parses during playback. Adaptive streams also get these network options.
+            // HLS and DASH get these network and clock options.
             vlcMedia?.addOption(":network-caching=3000")
             vlcMedia?.addOption(":clock-jitter=0")
             vlcMedia?.addOption(":clock-synchro=0")
@@ -629,7 +640,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override suspend fun parseMedia(media: MediaFile) {
         // A best-effort first read. The final duration arrives through mediaPlayerLengthChanged,
         // which also announces the file to the room, so this read needs no retry.
-        val lengthMs = vlcMedia?.length?.value()?.longValue ?: 0L
+        val lengthMs = vlcPlayer?.nativeLengthMs() ?: 0L
         super.parseMedia(media)
         // If the length was already final at parse time, LengthChanged may not fire again, so
         // announce now. The same path offers saved progress when watching alone.
@@ -645,16 +656,15 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     /** The input opened: announce it once, with its length when VLCKit knows one. */
     private fun announceOpenedInput(player: VLCMediaPlayer) {
         if (viewmodel.media == null) return
-        onEngineFileReady(SyncplayVlcCurrentLengthMs(player))
+        onEngineFileReady(player.nativeLengthMs())
     }
 
     /**
      * Pauses playback on the main thread.
      *
      * VLCKit queues both pause and play on its serial command queue. Pause sets the paused state
-     * and does not toggle it, so a repeated pause is harmless. Keep the null-media guards: in the
-     * VLCKit release in use, the cookie-jar patch dereferences the current media descriptor in
-     * native play before it checks it.
+     * and does not toggle it, so a repeated pause is harmless. Without media, pause and play
+     * return at once and leave the priming and recovery state as it is.
      */
     override suspend fun pause() {
         if (!isInitialized) return
@@ -671,10 +681,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
     }
 
-    /**
-     * Starts or resumes playback on the main thread. See [pause] for why the null-media guard
-     * stays.
-     */
+    /** Starts or resumes playback on the main thread. See [pause] for the null-media guard. */
     override suspend fun play() {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
@@ -688,6 +695,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // as a false backward jump.
             primingFirstFrame = false
             player.play()
+            // A pause that libVLC still holds back lands after this play and wins. See
+            // [VlcDeferredPlay].
+            deferredPlay.arm(commandRevision)
             // The repaint may already have started native playback while its Playing event was
             // hidden. A play on a playing player sends no second event, so correct that case now.
             if (player.isPlaying()) playerManager.isNowPlaying.value = true
@@ -771,8 +781,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             SyncplayVlcInputState.SyncplayVlcInputStateFailed -> VlcSeekInputState.FAILED
             else -> VlcSeekInputState.INACTIVE
         }
-        val nativeLength = SyncplayVlcNativeLengthMs(player)
-        val readiness = seekStartup.readiness(inputState, nativeLength, SyncplayVlcCurrentTimeMs(player), clockNowMs())
+        val nativeLength = player.nativeLengthMs()
+        val readiness = seekStartup.readiness(inputState, nativeLength, player.nativeTimeMs(), clockNowMs())
         return readiness to nativeLength
     }
 
@@ -785,7 +795,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         val player = vlcPlayer ?: return null
         if (player.media == null) return null
         if (hasPendingSeek) return null
-        val nativeMs = SyncplayVlcCurrentTimeMs(player)
+        val nativeMs = player.nativeTimeMs()
         // A negative native time means no input or a terminal state. Return null then, so the
         // last good sample stays for end-of-file handling. A pending seek target must not turn
         // this missing clock into a fresh progress sample.
@@ -803,11 +813,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         // Submit pending seeks from this tracker, never from a synchronous clock getter.
         if (submitPendingSeek(player)) return
         // Sample non-seekable media too. Seeking and a working clock are separate things.
-        readPositionSample()?.let { position ->
-            playerManager.samplePosition(position)
-            // VLCKit can stay in Buffering after playback resumed, see VlcBufferingRelease.
-            if (bufferingRelease.onSample(playerManager.isBuffering.value, position)) playerManager.isBuffering.value = false
-        }
+        readPositionSample()?.let { playerManager.samplePosition(it) }
     }
 
     /**
@@ -871,7 +877,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     /********** VLC-Specific Helper Methods **********/
 
-    /** Wraps this millisecond timestamp in a [VLCTime]. */
+    /** Wraps this millisecond timestamp in a [VLCTime]. VLCKit's time API stays in milliseconds. */
     private fun Long.toVLCTime(): VLCTime {
         return VLCTime(number = NSNumber(long = this))
     }
@@ -879,11 +885,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     /**
      * Receives VLCMediaPlayer events.
      *
-     * State and length events arrive through the legacy configuration: asynchronously on the main
-     * thread, outside the native callback lock stack. This is required, because the default
-     * synchronous delivery can re-enter libVLC while it holds its timer lock. Time notifications
-     * do not publish room progress on purpose; [updatePlaybackProgress] reads the native clock on
-     * the main thread instead.
+     * State, buffering and length events arrive through the legacy configuration: asynchronously
+     * on the main thread, outside the native callback lock stack. This is required, because the
+     * default synchronous delivery can re-enter libVLC while it holds its timer lock. Time
+     * notifications do not publish room progress on purpose; [updatePlaybackProgress] reads the
+     * native clock on the main thread instead.
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
@@ -909,16 +915,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // file's end.
             if (newState == VLCMediaPlayerState.VLCMediaPlayerStateStopped && isAwaitingNativeSeekInput) return
             // isBuffering is display only, and kept apart from isNowPlaying on purpose: the room
-            // shows a waiting indicator while VLCKit opens or refills, and still counts that
-            // state as playing.
-            playerManager.isBuffering.value =
-                newState == VLCMediaPlayerState.VLCMediaPlayerStateBuffering ||
-                    newState == VLCMediaPlayerState.VLCMediaPlayerStateOpening
+            // shows a waiting indicator while VLC opens or refills, and still counts that as
+            // playing. Opening sets it, [mediaPlayerBufferingChanged] clears it once the buffer is
+            // full, and Stopped or Error clear it too.
+            when (newState) {
+                VLCMediaPlayerState.VLCMediaPlayerStateOpening -> playerManager.isBuffering.value = true
+                VLCMediaPlayerState.VLCMediaPlayerStateStopped,
+                VLCMediaPlayerState.VLCMediaPlayerStateError -> playerManager.isBuffering.value = false
+                else -> Unit
+            }
 
             // isNowPlaying follows Playing and Paused, and turns false on Stopped and Error.
-            // Opening, Buffering and Stopping leave it alone. Setting it to false during
-            // Buffering would flip the room's play and pause button to "play" at every short
-            // network stall, and back to "pause" a moment later.
+            // Opening and Stopping leave it alone.
             when (newState) {
                 VLCMediaPlayerState.VLCMediaPlayerStatePlaying -> {
                     // Ignore the short Playing sent while new media opens with ":start-paused"
@@ -936,19 +944,25 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
                     primingFirstFrame = false
                     announceOpenedInput(player)
-                    // Debounce (see [pauseDebounceJob]): count a Paused only if the player is
-                    // still paused a moment later. A deliberate command or a media change also
-                    // cancels this delayed check.
                     pauseDebounceJob?.cancel()
-                    val revision = commandRevision
-                    val player = vlcPlayer
-                    val media = player?.media
-                    pauseDebounceJob = playerScopeMain.launch(Dispatchers.Main.immediate) {
-                        delay(250)
-                        if (isInitialized && commandRevision == revision && vlcPlayer === player &&
-                            media != null && player?.media?.compare(media) == NSOrderedSame &&
-                            SyncplayVlcStateMatches(player, VLCMediaPlayerState.VLCMediaPlayerStatePaused)) {
-                            playerManager.isNowPlaying.value = false
+                    if (deferredPlay.takeOnPaused(commandRevision)) {
+                        // A pause that libVLC held back during buffering landed after the newest
+                        // command, a play that libVLC ignored (see [VlcDeferredPlay]). Play again.
+                        // The room already counts this client as playing, so skip the debounce.
+                        player.play()
+                    } else {
+                        // Debounce (see [pauseDebounceJob]): count a Paused only if the player is
+                        // still paused a moment later. A deliberate command or a media change also
+                        // cancels this delayed check.
+                        val revision = commandRevision
+                        val media = player.media
+                        pauseDebounceJob = playerScopeMain.launch(Dispatchers.Main.immediate) {
+                            delay(250)
+                            if (isInitialized && commandRevision == revision && vlcPlayer === player &&
+                                media != null && player.media?.compare(media) == NSOrderedSame &&
+                                SyncplayVlcStateMatches(player, VLCMediaPlayerState.VLCMediaPlayerStatePaused)) {
+                                playerManager.isNowPlaying.value = false
+                            }
                         }
                     }
                 }
@@ -989,7 +1003,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     }
                     onEngineLoadFailed()
                 }
-                else -> { /* Opening, Buffering, Stopping: leave isNowPlaying alone */ }
+                else -> { /* Opening, Stopping: leave isNowPlaying alone */ }
             }
 
             // Schedule the PiP refresh after this state update. The legacy event delivery
@@ -1008,9 +1022,24 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             val player = vlcPlayer ?: return
             val media = vlcMedia ?: return
             if (!SyncplayVlcHasCurrentMedia(player, media)) return
-            val nativeLength = SyncplayVlcCurrentLengthMs(player)
+            val nativeLength = player.nativeLengthMs()
             viewmodel.media?.let { publishDuration(it, nativeLength) }
             playerScopeMain.launch { vlcDrawable?.pipController?.invalidatePlaybackState() }
+        }
+
+        /**
+         * Buffering progress, from 0 to 1. libVLC sends 0 when a seek or a reset empties its
+         * buffers, fractions while they fill, and exactly 1 once they are full, also while paused.
+         * The first open sends no 0 (the Opening state covers it), and a stall in the middle of
+         * playback sends nothing. The legacy configuration queues only the number, so check the
+         * media as the other events do.
+         */
+        override fun mediaPlayerBufferingChanged(progress: Float) {
+            if (!isInitialized) return
+            val player = vlcPlayer ?: return
+            val media = vlcMedia ?: return
+            if (!SyncplayVlcHasCurrentMedia(player, media)) return
+            playerManager.isBuffering.value = progress < 1f
         }
     }
 
@@ -1031,3 +1060,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         vlcPlayer?.audio?.volume = percent.coerceIn(100, MAX_VLC_VOLUME)
     }
 }
+
+/** The native playback time in milliseconds, or -1 when no input runs. See `VlcClock.h`. */
+internal fun VLCMediaPlayer.nativeTimeMs(): Long = vlcMillisFromMicros(SyncplayVlcTimeUs(this))
+
+/** The native media length in milliseconds: 0 while unknown, -1 without media. See `VlcClock.h`. */
+internal fun VLCMediaPlayer.nativeLengthMs(): Long = vlcMillisFromMicros(SyncplayVlcLengthUs(this))

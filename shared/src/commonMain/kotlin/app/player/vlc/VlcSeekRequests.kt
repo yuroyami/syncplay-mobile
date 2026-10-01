@@ -1,9 +1,9 @@
 package app.player.vlc
 
 /**
- * Clamps a seek target between 0 and the media length, when the length is known. The bundled C
- * API converts milliseconds to signed microsecond ticks, so the target also stays at or below
- * `Long.MAX_VALUE / 1000`.
+ * Clamps a seek target between 0 and the media length, when the length is known. VLCKit's
+ * `setTime:` multiplies the milliseconds by 1000 into a signed 64-bit microsecond value, so the
+ * target also stays at or below `Long.MAX_VALUE / 1000`.
  */
 internal fun normalizeVlcSeekTarget(targetMs: Long, nativeLengthMs: Long): Long {
     val maxNativeMs = Long.MAX_VALUE / 1_000L
