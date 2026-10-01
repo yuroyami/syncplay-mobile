@@ -14,3 +14,6 @@ actual fun DialogBackdropBlur() = Unit
  * panels over video use a plain tint.
  */
 actual fun videoSurfaceSupportsGlass(): Boolean = false
+
+/** Always true: Skia runs the liquid glass shaders in the page's canvas. */
+actual fun liquidGlassSupported(): Boolean = true

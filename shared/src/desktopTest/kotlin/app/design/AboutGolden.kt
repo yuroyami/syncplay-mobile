@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import app.home.components.PopupAPropos
 import app.home.components.UpdateCheck
+import app.uicomponents.GlassKind
 import app.uicomponents.LocalWidthClass
 import app.uicomponents.WidthClass
 import app.uicomponents.frames.ModalFrame
@@ -19,7 +20,7 @@ class AboutGolden {
 
     @Composable
     private fun About(result: UpdateCheck.Result? = null) {
-        ModalFrame(ModalSize.Panel, null, true, {}, actions = null) {
+        ModalFrame(ModalSize.Panel, null, true, {}, actions = null, glass = GlassKind.Liquid) {
             PopupAPropos.AboutBody(
                 updateResult = result,
                 updateChecking = false,

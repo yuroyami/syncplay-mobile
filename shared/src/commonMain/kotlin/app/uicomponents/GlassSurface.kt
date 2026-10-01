@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -31,12 +33,18 @@ import app.preferences.watchPref
 import app.theme.Radius
 import app.theme.Tier
 import app.theme.palette
+import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazePerformanceMode
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.glass.GlassOptics
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.OpticalSizeValue
+import dev.chrisbanes.haze.glass.RefractionProfile
+import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -114,6 +122,20 @@ val LocalInDialogWindow = staticCompositionLocalOf { false }
 /** Which sides of a panel draw the rim. */
 enum class GlassEdge { All, BottomOnly, None }
 
+/**
+ * Which glass a panel is made of. Frosted glass blurs the backdrop. Liquid glass blurs it too, and
+ * its edges bend the backdrop like the rim of a lens and catch the light. Only the About popup
+ * uses liquid glass.
+ */
+enum class GlassKind { Frosted, Liquid }
+
+/**
+ * Whether this platform can draw liquid glass. Android needs runtime shaders, which arrived in
+ * Android 13. Without them Haze draws liquid glass as a flat tint with no blur, so the panel stays
+ * frosted there.
+ */
+expect fun liquidGlassSupported(): Boolean
+
 /** The dim under a modal: light when glass sets the panel apart, heavier when only the dim does. */
 val glassScrim: Color
     @Composable
@@ -123,12 +145,15 @@ val glassScrim: Color
  * Draws one of the surface tiers ([Tier]). The caller says what kind of surface a thing is, and
  * the material, the rim and the fallback follow from the tier and from whether the surface sits in
  * a dialog window. The shape comes from the caller, to match where the surface is docked, never
- * from a shape scale.
+ * from a shape scale. [glass] picks the panel tier's glass.
  */
 @Composable
-fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge = GlassEdge.All): Modifier = when (tier) {
+fun Modifier.surface(tier: Tier, shape: Shape = RectangleShape, rim: GlassEdge = GlassEdge.All, glass: GlassKind = GlassKind.Frosted): Modifier = when (tier) {
     Tier.Flat -> clip(shape).background(palette.ground)
-    Tier.Panel -> panelGlass(shape, heavy = LocalInDialogWindow.current, rim = rim)
+    Tier.Panel -> when (glass) {
+        GlassKind.Frosted -> panelGlass(shape, heavy = LocalInDialogWindow.current, rim = rim)
+        GlassKind.Liquid -> liquidGlass(shape, heavy = LocalInDialogWindow.current, rim = rim)
+    }
     Tier.Chrome -> chromeSurface(shape)
     Tier.Scrim -> background(glassScrim)
 }
@@ -177,17 +202,7 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
     val enabled = glassEnabled()
     val tint = if (heavy) 0.38f else 0.26f
     val opaqueTint = if (heavy) 0.80f else 0.65f
-
-    // Demand counts only when glass is on and the surface is visible, so the disabled path never
-    // starts a capture and a hidden HUD stops paying for one.
-    val demand = LocalGlassDemand.current
-    val suspended = LocalGlassSuspended.current
-    if (enabled && !suspended) {
-        DisposableEffect(demand) {
-            demand.acquire()
-            onDispose { demand.release() }
-        }
-    }
+    HoldGlassDemand(enabled)
 
     /* Which way the glass shades. A dark theme needs a dark inner wash and a lit rim. A light theme
      * needs the opposite: a fixed white-on-black pair makes a light panel (Daylight, for example)
@@ -235,6 +250,86 @@ private fun Modifier.panelGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): M
                 GlassEdge.None -> Modifier
             }
         )
+}
+
+/**
+ * The panel tier in liquid glass: Haze's glass material, which blurs the backdrop, bends it with a
+ * lens along the edges and lights the rim from the top left. Text stays readable the way it does
+ * on the frosted panel: a wash toward black on a dark theme (toward white on a light one), then the
+ * palette's panel colour. Both are lighter than on the frosted panel, so the lit rim still shows.
+ * The glass lights its own edge, so no rim or sheen goes over it.
+ *
+ * Where liquid glass cannot draw, this is the frosted panel: with glass off, with no backdrop,
+ * with a shape that is not a rounded rectangle, and where [liquidGlassSupported] is false.
+ */
+@OptIn(ExperimentalHazeApi::class)
+@Composable
+private fun Modifier.liquidGlass(shape: Shape, heavy: Boolean, rim: GlassEdge): Modifier {
+    val hazeState = LocalHazeState.current
+    val rounded = shape as? RoundedCornerShape
+    if (!glassEnabled() || hazeState == null || rounded == null || !liquidGlassSupported()) {
+        return panelGlass(shape, heavy, rim)
+    }
+    HoldGlassDemand(enabled = true)
+    val container = palette.panel
+    val ground = palette.ground
+    val isDark = palette.isDark
+    val tint = if (heavy) 0.30f else 0.22f
+    val style = remember(rounded, container, ground, tint, isDark) {
+        GlassStyle.regular then GlassStyle {
+            shape(rounded)
+            /* The app paints its ground outside the backdrop capture, so the capture is clear
+             * wherever a screen draws nothing. The glass keeps that clearness, and the screen
+             * would show through sharp, so the ground goes behind the capture. Unlike the
+             * frosted panel, liquid glass never sits over video that the capture misses. */
+            backgroundColor(ground)
+            optics(LIQUID_OPTICS)
+            lightPosition(Alignment.TopStart)
+            specularIntensity(0.9f)
+            ambientResponse(0.45f)
+            // The regular glass pushes the backdrop halfway to white, which suits dark text only.
+            whitePoint(if (isDark) -LIQUID_WASH else LIQUID_WASH)
+            tint(container.copy(alpha = tint))
+        }
+    }
+    // The same capture scale as the frosted panel. A panel this large diffuses the backdrop
+    // completely, so a sharper capture would show nothing more.
+    return this
+        .clip(shape)
+        .hazeGlass(input = HazeInput.Sources(hazeState), style = style, performanceMode = HazePerformanceMode.Performance)
+}
+
+/**
+ * The optics of liquid glass: the backdrop fully diffused, as on Haze's regular glass, with the
+ * wide lens of its clear glass along the edges. The lens is what reads as liquid.
+ */
+@OptIn(ExperimentalHazeApi::class)
+private val LIQUID_OPTICS = GlassOptics(
+    refractionStrength = 0.85f,
+    refractionHeightFraction = 0.35f,
+    refractionDisplacement = 56.dp,
+    refractionProfile = RefractionProfile.Edge(28.dp),
+    depth = OpticalSizeValue.Fixed(1f),
+    blurRadius = OpticalSizeValue.Fixed(24.dp),
+)
+
+/** How far liquid glass washes the backdrop toward black, or white on a light theme. */
+private const val LIQUID_WASH = 0.25f
+
+/**
+ * Keeps the backdrop capture running while this glass surface shows. Demand counts only when
+ * glass is on and the surface is visible, so the disabled path never starts a capture and a
+ * hidden HUD stops paying for one.
+ */
+@Composable
+private fun HoldGlassDemand(enabled: Boolean) {
+    val demand = LocalGlassDemand.current
+    if (enabled && !LocalGlassSuspended.current) {
+        DisposableEffect(demand) {
+            demand.acquire()
+            onDispose { demand.release() }
+        }
+    }
 }
 
 /** The rim over video and on dark panels: lit along the top edge, nearly gone at the bottom. */

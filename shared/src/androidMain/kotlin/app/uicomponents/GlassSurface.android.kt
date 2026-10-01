@@ -31,6 +31,9 @@ actual fun videoSurfaceSupportsGlass(): Boolean {
     return true
 }
 
+/** Liquid glass needs RuntimeShader, which Android has from 13 (API 33). */
+actual fun liquidGlassSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
 @Composable
 actual fun DialogBackdropBlur() {
     val view = LocalView.current

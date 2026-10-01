@@ -12,3 +12,6 @@ actual fun DialogBackdropBlur() = Unit
  * so the answer changes nothing here.
  */
 actual fun videoSurfaceSupportsGlass(): Boolean = true
+
+/** Always true: Skia runs the liquid glass shaders on every Apple device this app supports. */
+actual fun liquidGlassSupported(): Boolean = true

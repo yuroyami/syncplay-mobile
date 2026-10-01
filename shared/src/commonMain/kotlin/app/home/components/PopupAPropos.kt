@@ -32,6 +32,7 @@ import app.theme.Space
 import app.theme.Radius
 import app.theme.Type
 import app.theme.palette
+import app.uicomponents.GlassKind
 import app.uicomponents.LocalWidthClass
 import app.uicomponents.SynkplayLogo
 import app.uicomponents.WidthClass
@@ -68,6 +69,8 @@ object PopupAPropos {
             open = visibilityState.value,
             onDismiss = { visibilityState.value = false },
             size = ModalSize.Panel,
+            // The one popup in liquid glass. Everything else, the licences included, stays frosted.
+            glass = GlassKind.Liquid,
         ) {
             AboutBody(
                 updateResult = updateCheck.result,

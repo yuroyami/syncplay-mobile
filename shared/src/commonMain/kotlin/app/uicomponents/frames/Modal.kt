@@ -76,6 +76,7 @@ import app.theme.LocalSurfacePalette
 import app.uicomponents.controls.LocalFocusRing
 import app.theme.palette
 import app.uicomponents.DialogBackdropBlur
+import app.uicomponents.GlassKind
 import app.uicomponents.LocalInDialogWindow
 import app.uicomponents.LocalIsTelevision
 import app.uicomponents.isTvActivationKey
@@ -103,8 +104,9 @@ internal val LocalModalActionEntry = staticCompositionLocalOf<FocusRequester?> {
 
 /**
  * The one modal frame. It owns the dialog window, the scrim, the enter animation, focus, Escape
- * and Back, and dismissal. Callers supply a title, a body and actions. It requests the Android
- * window blur from inside the dialog window, the only place where that request works.
+ * and Back, and dismissal. Callers supply a title, a body and actions, and may pick the panel's
+ * [glass]. It requests the Android window blur from inside the dialog window, the only place
+ * where that request works.
  */
 @Composable
 fun Modal(
@@ -115,6 +117,7 @@ fun Modal(
     dismissable: Boolean = true,
     inset: Boolean = true,
     initialFocus: FocusRequester? = null,
+    glass: GlassKind = GlassKind.Frosted,
     actions: (@Composable RowScope.() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -136,7 +139,7 @@ fun Modal(
             LocalPalette provides LocalSurfacePalette.current,
             LocalFocusRing provides null,
         ) {
-            ModalFrame(size, title, dismissable, onDismiss, actions, inset, initialFocus, body)
+            ModalFrame(size, title, dismissable, onDismiss, actions, inset, initialFocus, glass, body)
         }
     }
 }
@@ -151,6 +154,7 @@ internal fun ModalFrame(
     actions: (@Composable RowScope.() -> Unit)?,
     inset: Boolean = true,
     initialFocus: FocusRequester? = null,
+    glass: GlassKind = GlassKind.Frosted,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
@@ -232,7 +236,7 @@ internal fun ModalFrame(
                             else -> Modifier.fillMaxWidth(0.92f).fillMaxHeight(0.88f)
                         }
                     )
-                    .surface(Tier.Panel, shape)
+                    .surface(Tier.Panel, shape, glass = glass)
                     .onFocusChanged { contentFocused = it.hasFocus }
                     // Swallows the tap so it never reaches the scrim, with no semantics node of its own.
                     .pointerInput(Unit) { detectTapGestures { } },
