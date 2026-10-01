@@ -19,12 +19,14 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
     val updateCheck = UpdateCheckController(viewModelScope)
 
     /**
-     * Saves [joinConfig] when the remember setting is on, then opens the room. A null [joinConfig]
+     * Opens the room, then saves [joinConfig] when the remember setting is on. A null [joinConfig]
      * opens solo mode (offline playback). [startMedia] opens in the room once its engine is ready.
+     * The room goes on the back stack first, so the home screen already knows it is leaving when
+     * the saved join reaches its recent rooms.
      */
     suspend fun joinRoom(joinConfig: JoinConfig?, startMedia: DroppedMedia? = null) {
-        withContext(ioDispatcher) { joinConfig?.save() }
         withContext(Dispatchers.Main) { backStack.add(Screen.Room(joinConfig, startMedia)) }
+        withContext(ioDispatcher) { joinConfig?.save() }
     }
 
     val notices = NoticeQueue()

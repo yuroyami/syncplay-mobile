@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
+import app.Screen
 import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
 import app.home.components.RecentRooms
@@ -312,7 +313,11 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 // The recent rooms show while the remember setting is on, which is also when joins are kept.
                 val rememberInfo by REMEMBER_INFO.watchPref()
                 val recentJson by Preferences.RECENT_JOINS.watchPref()
-                val recents = remember(recentJson) { RecentJoins.decode(recentJson) }
+                // A join saves its room while this screen still fades out under the room. The list
+                // keeps what it showed until this screen is on top again, so it never pops up then.
+                val onTop = viewmodel.backStack.lastOrNull() is Screen.Home
+                var recents by remember { mutableStateOf(RecentJoins.decode(recentJson)) }
+                LaunchedEffect(recentJson, onTop) { if (onTop) recents = RecentJoins.decode(recentJson) }
                 // A recent room whose server has a password fills the form, and then the password
                 // field takes focus. The field exists only after the Custom fields compose.
                 var askPassword by remember { mutableStateOf(0) }
