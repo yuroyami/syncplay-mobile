@@ -217,9 +217,10 @@ kotlin {
             /* Screen navigation with Navigation 3 */
             implementation(libs.bundles.navigation3)
 
-            /* Haze: backdrop blur for the glass popups and for the controls over the video. Haze
-             * samples only pixels that Compose draws. So it blurs the whole UI, but it blurs video
-             * only on KitePlayer's Compose-canvas path (see GlassSurface.kt). */
+            /* Haze: backdrop blur for the glass popups and for the controls over the video, and
+             * liquid glass (a blur whose edges bend the backdrop) for the About popup. Haze samples
+             * only pixels that Compose draws. So it blurs the whole UI, but it blurs video only on
+             * KitePlayer's Compose-canvas path (see GlassSurface.kt). */
             implementation(libs.bundles.haze)
 
             /* MaterialKolor generates Material3 themes from seed colors */
@@ -261,6 +262,9 @@ kotlin {
              * The decoder is FFmpeg through JNI and cinterop, so there is no web build. */
             implementation(libs.kiteplayer.compose)
             implementation(libs.kiteplayer.audioviz)
+            /* KitePlayer's HTTP reader, which the YouTube item wraps (see KiteStreamReader.kt). The
+             * player already brings it; naming it here makes the direct use visible. */
+            implementation(libs.kiteplayer.network)
         }
 
         getByName("wasmJsMain").dependencies {
@@ -285,7 +289,7 @@ kotlin {
 
             /* Network and TLS */
             implementation(libs.netty.handler)
-            implementation(libs.netty.codec)
+            implementation(libs.netty.codec.base)
             implementation(libs.netty.transport)
             implementation(libs.conscrypt) // TLS 1.3, also on older Android versions
 
@@ -320,7 +324,7 @@ kotlin {
                 /* Network and TLS: the same Netty engine as Android (pure JVM). TLS comes from the
                  * JDK, so desktop needs no Conscrypt. */
                 implementation(libs.netty.handler)
-                implementation(libs.netty.codec)
+                implementation(libs.netty.codec.base)
                 implementation(libs.netty.transport)
 
 

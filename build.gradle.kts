@@ -1,3 +1,6 @@
+@file:OptIn(DiscouragedKiteApi::class)
+
+import io.github.yuroyami.kiteconfig.DiscouragedKiteApi
 import io.github.yuroyami.kiteconfig.kiteConfig
 plugins {
     alias(libs.plugins.kiteconfig)
@@ -62,7 +65,10 @@ if (providers.gradleProperty("useMavenLocal").orNull.toBoolean()) {
 kiteConfig {
     appName = "Synkplay"
     appId = "com.yuroyami.syncplay"
-    version = "0.25.0"
+    version = "0.26.0"
+    // KiteConfig 2.1.0 turns its Android wiring off above AGP 9.3. The app builds on 9.4, so the
+    // guard is overridden until a KiteConfig release supports it.
+    ignoreVersionGuards = true
     // A Gradle sync updates the Xcode project before Xcode opens it. A build applies only the
     // changes for its own platform.
     autoApply = true
@@ -109,6 +115,9 @@ kiteConfig {
     logo {
         foreground = file("shared/src/commonMain/composeResources/drawable/synkplay_fg.png")
         background = image(file("shared/src/commonMain/composeResources/drawable/synkplay_bg.png"))
+        // The mark fills 80% of each side of the icon. Android keeps its own smaller ratio above,
+        // because its launcher masks cut off the outer part of the canvas.
+        foregroundScale = 0.8
     }
 
     optIns {

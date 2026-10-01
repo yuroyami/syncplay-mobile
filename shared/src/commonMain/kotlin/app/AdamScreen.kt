@@ -12,7 +12,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavMetadataKey
+import androidx.navigation3.runtime.contains
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.metadata
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.i18n.Localization
@@ -182,7 +187,7 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                         TvSafeArea { HomeScreenUI(viewmodel) }
                     }
 
-                    entry<Screen.Room> { room ->
+                    roomEntry { room ->
                         val viewmodel = viewModel(
                             key = "room_viewmodel",
                             modelClass = RoomViewmodel::class,
@@ -229,10 +234,23 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
  * With reduced motion, every transition is instant.
  */
 private fun AnimatedContentTransitionScope<Scene<Screen>>.pageTransition(pop: Boolean, slidePx: Int): ContentTransform {
-    val toRoom = targetState.entries.lastOrNull()?.contentKey is Screen.Room
-    val fromRoom = initialState.entries.lastOrNull()?.contentKey is Screen.Room
+    val toRoom = targetState.entries.lastOrNull()?.isRoom == true
+    val fromRoom = initialState.entries.lastOrNull()?.isRoom == true
     if (Motion.reduced || toRoom || fromRoom) return fadeIn(Motion.move()) togetherWith fadeOut(Motion.move())
     val direction = if (pop) -1 else 1
     return (fadeIn(Motion.move()) + slideInHorizontally(Motion.move()) { direction * slidePx }) togetherWith
         (fadeOut(Motion.move()) + slideOutHorizontally(Motion.move()) { -direction * slidePx })
 }
+
+/**
+ * Marks the room's entry. [NavEntry.contentKey] is a string, not the [Screen], so the page
+ * transition reads this mark. It is a data object: navigation3 stores it under its toString().
+ */
+private data object RoomEntryMark : NavMetadataKey<Boolean>
+
+/** Registers the room screen and marks its entry with [RoomEntryMark]. */
+internal fun EntryProviderScope<Screen>.roomEntry(content: @Composable (Screen.Room) -> Unit) =
+    entry<Screen.Room>(metadata = metadata { put(RoomEntryMark, true) }, content = content)
+
+/** True when this back stack entry shows the room. */
+internal val NavEntry<*>.isRoom: Boolean get() = metadata.contains(RoomEntryMark)

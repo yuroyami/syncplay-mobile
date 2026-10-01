@@ -26,8 +26,7 @@ android {
     // and :shared, so the repo's lint.xml suppression reaches the :shared code it was written for.
     lint {
         checkDependencies = true
-        xmlReport = true
-        htmlReport = true
+        // AGP 9.4 always writes the XML and HTML reports, so they need no switch here.
         abortOnError = false
     }
 

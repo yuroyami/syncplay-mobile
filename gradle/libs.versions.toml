@@ -1,11 +1,11 @@
 [versions] #####################################################
 #KMM-Plugins
 kotlin = "2.4.20"
-ksp = "2.3.11"
-agp = "9.3.2"
-kiteconfig = "2.0.1"
+ksp = "2.3.12"
+agp = "9.4.1"
+kiteconfig = "2.1.0"
 compose-multiplatform = "1.12.1"
-kSerialization = "1.11.0"
+kSerialization = "1.12.0-RC"
 detekt = "1.23.8"
 kover = "0.9.9"
 ktorfit = "2.7.5"
@@ -17,25 +17,25 @@ lyricist = "1.9.0"
 compose-multiplatform-icons = "1.7.3"
 compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
-navigation3Runtime = "1.1.7"
-navigation3Ui = "1.1.2"
+navigation3Runtime = "1.2.0-beta01"
+navigation3Ui = "1.2.0-beta01"
 # Backdrop blur. Haze publishes every target that this project declares. It has no iosX64,
 # which this project does not declare either.
 haze = "2.0.0"
-kermit = "2.1.0"
+kermit = "2.2.0"
 krypto = "0.8.0"
 datastore = "1.3.0-alpha11"
-filekit = "0.15.0"
+filekit = "0.16.0"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
 materialkolor = "5.0.1"
-ktor = "3.5.2"
+ktor = "3.6.0"
 koroutines = "1.11.0"
 datetime = "0.8.0"
 atomicfu = "0.33.0"
 # DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
 kotlinxBrowser = "0.5.0"
-coil = "3.6.2"
+coil = "3.6.3"
 # Skiko: Compose 1.12.1 ships with 0.150.1, and Coil 3.6.2 declares 0.150.1 too.
 # The version is forced to Compose's, so a bump of either library cannot change
 # Skiko silently. On an upgrade of compose-multiplatform, set this to the Skiko
@@ -44,13 +44,13 @@ skiko = "0.150.1"
 
 #Android
 coreSplashscreen = "1.2.0"
-activityCompose = "1.13.0"
+activityCompose = "1.14.0-alpha03"
 documentfile = "1.1.0"
 appcompat = "1.8.0"
-coreKtx = "1.19.0"
+coreKtx = "1.19.1"
 desugaring = "2.1.5"
-media3 = "1.11.0"
-netty = "4.1.131.Final" # 4.2.x and later need Android API 26 or higher
+media3 = "1.11.1"
+netty = "4.2.18.Final" # 4.2.x and later need Android API 26 or higher
 conscrypt = "2.7.0"
 newpipeExtractor = "v0.26.5"
 # The baseline profile generator and the startup benchmark (the :baselineprofile module). Both
@@ -61,14 +61,14 @@ androidxTestJunit = "1.3.0"
 
 # Resolved from Maven Central. -PuseMavenLocal=true overrides it while a new version is
 # published locally but not yet served by Central.
-kiteplayer = "0.0.27"
+kiteplayer = "0.2.0"
 aboutlibraries = "15.2.0"
 # libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
 # from Central. settings.gradle.kts limits that repository to the libmpvkt modules.
 libmpvkt = "0.3.0"
 
 #iOS (VLCKit pod)
-libvlc-ios = "4.0.0a19"
+libvlc-ios = "4.0.0a24"
 
 #Desktop
 
@@ -99,6 +99,7 @@ kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker"
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
+haze-glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "haze" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
@@ -144,12 +145,15 @@ m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 # family (about forty jars) for the seventeen classes that the code needs: a bootstrap, a channel,
 # the codec pair and the TLS context builder.
 netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
-netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
+# Netty 4.2 turned netty-codec into a bundle that also pulls compression, protobuf and
+# marshalling codecs. The string and delimiter codecs live in netty-codec-base.
+netty-codec-base = { module = "io.netty:netty-codec-base", version.ref = "netty" }
 netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }
+kiteplayer-network = { module = "io.github.yuroyami:kiteplayer-network", version.ref = "kiteplayer" }
 libmpvkt = { module = "io.github.yuroyami:libmpvkt", version.ref = "libmpvkt" }
 libmpvkt-view = { module = "io.github.yuroyami:libmpvkt-view", version.ref = "libmpvkt" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
@@ -172,7 +176,7 @@ media3 = [
     "m3-ui", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common", "m3-session"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
-haze = ["haze", "haze-blur"]
+haze = ["haze", "haze-blur", "haze-glass"]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]

@@ -490,7 +490,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1000025001;
+				CURRENT_PROJECT_VERSION = 1000026001;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
@@ -502,7 +502,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.25.0;
+				MARKETING_VERSION = 0.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
 				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -519,7 +519,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1000025001;
+				CURRENT_PROJECT_VERSION = 1000026001;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
@@ -531,7 +531,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.25.0;
+				MARKETING_VERSION = 0.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
 				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";

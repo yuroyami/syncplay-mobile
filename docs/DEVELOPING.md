@@ -286,7 +286,7 @@ nm -u Synkplay.app/Synkplay.debug.dylib Synkplay.app/Frameworks/*.framework/* | 
 | Category | Who calls it | Reason |
 |---|---|---|
 | File timestamp | the app, the Kotlin framework, VLCKit (`stat`, `fstat`, `lstat`, `fstatat`) | `C617.1` files in the app container, `3B52.1` files that the user picked |
-| System boot time | the Kotlin framework (`mach_absolute_time`) | `35F9.1` time between events in the app |
+| System boot time | the Kotlin framework, VLCKit (`mach_absolute_time`) | `35F9.1` time between events in the app |
 | Disk space | VLCKit (`fstatfs`) | `E174.1` space checks before a file is written |
 | User defaults | VLCKit (`NSUserDefaults`) | `CA92.1` data of the app itself |
 
