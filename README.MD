@@ -1,34 +1,17 @@
 <p align="center">
-  <img src="art/synkplay_app_badge_512.png" width="180" height="180" alt="Synkplay logo on its original white-grey background with rounded app badge corners">
+  <img src="art/synkplay_app_badge_512.png" width="180" height="180" alt="Synkplay logo">
 </p>
 
 <p align="center">
-  <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner: your video, everyone in sync, on a big screen and two phones. Available on Android and iOS through Google Play and the App Store. Compatible with original official Syncplay for PC: syncplay.pl and github.com/Syncplay/syncplay.">
+  <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner: one video in sync on a big screen and two phones">
 </p>
 
-<p align="center">
-  <b>Android · iOS · Web</b>
-</p>
+Synkplay is an unofficial [Syncplay](https://syncplay.pl/) client for Android, iPhone, iPad and Android TV. It keeps a video in step for everyone in a room, which means that when one person pauses, plays or skips, the others do too. It speaks the same protocol as the official Syncplay client, which lets friends on a computer join the same room.
 
-<p align="center">
-  <a href="#download">Download</a> &nbsp;·&nbsp;
-  <a href="#start-a-room">Start a room</a> &nbsp;·&nbsp;
-  <a href="#screenshots">Screenshots</a> &nbsp;·&nbsp;
-  <a href="#help">Help</a> &nbsp;·&nbsp;
-  <a href="docs/DEVELOPING.md">Build</a>
-</p>
-
-Synkplay is an independent [Syncplay](https://syncplay.pl/) client for phones, tablets and Android TV.
-A browser version is in development, and it cannot join a room yet.
-When one person in the room pauses, plays or skips, the same thing happens for everyone else.
-Synkplay speaks the same protocol as the original Syncplay, so friends on a computer can join the same room.
-
-> [!NOTE]
-> Each person opens the same video from their own file or link. Synkplay only keeps playback in step. It never sends your video or your screen to anyone.
+Everyone plays their own copy of the video (from a file or a link) because Synkplay never sends your video or your screen to anyone. It only keeps the playback in step.
 
 ## Download
 
-<!-- Rows have the same purpose on both platforms: store, direct file, other source. -->
 <table align="center">
   <tr>
     <th align="center">Android</th>
@@ -37,137 +20,94 @@ Synkplay speaks the same protocol as the original Syncplay, so friends on a comp
   <tr>
     <td align="center">
       <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay">
-        <img src="art/badges/google-play.png" width="140" height="42" alt="Install from Google Play">
-      </a><br><sub>Store install</sub>
+        <img src="art/badges/google-play.png" width="140" height="42" alt="Get it on Google Play">
+      </a>
     </td>
     <td align="center">
       <a href="https://apps.apple.com/app/id6760187432">
-        <img src="art/badges/app-store.png" width="140" height="42" alt="Install from the App Store">
-      </a><br><sub>Store install</sub>
+        <img src="art/badges/app-store.png" width="140" height="42" alt="Download on the App Store">
+      </a>
     </td>
   </tr>
   <tr>
     <td align="center">
       <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest">
-        <img src="art/badges/get-it-on-github.png" width="140" height="42" alt="Get the Android APK from GitHub Releases">
-      </a><br><sub>Full Android APK</sub>
+        <img src="art/badges/get-it-on-github.png" width="140" height="42" alt="Get the APK on GitHub">
+      </a><br><sub>Full APK</sub>
     </td>
     <td align="center">
       <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest">
-        <img src="art/badges/Download_Blue.png" width="140" height="42" alt="Get the IPA from GitHub Releases for sideloading">
+        <img src="art/badges/Download_Blue.png" width="140" height="42" alt="Download the IPA">
       </a><br><sub>IPA for sideloading</sub>
     </td>
   </tr>
   <tr>
     <td align="center">
       <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
-        <img src="art/badges/IzzyOnDroid.png" width="140" height="42" alt="Get the ExoPlayer-only Android app from IzzyOnDroid">
+        <img src="art/badges/IzzyOnDroid.png" width="140" height="42" alt="Get it on IzzyOnDroid">
       </a><br><sub>ExoPlayer only</sub>
     </td>
     <td align="center">
       <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json">
-        <img src="art/badges/AltSource_Blue.png" width="140" height="42" alt="Add the Synkplay source to AltStore">
-      </a><br><sub>Add to AltStore</sub>
+        <img src="art/badges/AltSource_Blue.png" width="140" height="42" alt="Add to AltStore">
+      </a><br><sub>AltStore source</sub>
     </td>
   </tr>
 </table>
 
-Android needs version 8.0 or newer. iPhone and iPad need iOS 15.0 or newer.
-The stores review each build first, so a store update can arrive later than the GitHub release.
+Synkplay needs Android 8.0 or newer, or iOS 15.0 or newer. The stores review every build before they publish it, which is why a store update can arrive later than the GitHub release.
 
-The browser version is not ready yet. On a computer, install the [official Syncplay client](https://syncplay.pl/download/) and join the same room.
+Synkplay has no computer version yet, since its browser version is still early and cannot join a room. On a computer, use the [official Syncplay client](https://syncplay.pl/download/) instead.
 
 <details>
-<summary><b>Which download should I choose?</b></summary>
+<summary><b>Which download should I pick?</b></summary>
 
-- **Android:** Google Play is the simplest option. The full APK on GitHub is the same app, with mpv, ExoPlayer and KitePlayer, and it runs on every supported CPU. KitePlayer needs a 64-bit device.
-- **IzzyOnDroid:** a smaller build with ExoPlayer only. It installs next to the full app as a separate app, with its own settings.
-- **iPhone and iPad:** the App Store. To sideload instead, [set up AltStore Classic](https://faq.altstore.io/), then use **Add to AltStore** above.
+- **Google Play** is the easiest way on Android. The APK on GitHub is the same app, with all three video players (mpv, ExoPlayer and KitePlayer).
+- **IzzyOnDroid** has a smaller build with ExoPlayer only. Android treats it as a separate app instead of an update to the full one, which means the two can sit side by side with their own settings.
+- **On iPhone and iPad**, use the App Store. To sideload instead, [set up AltStore Classic](https://faq.altstore.io/) and tap **Add to AltStore** above.
 
 </details>
 
 ## Start a room
 
-1. Everyone joins the same room: the same server, the same port and the same room name. The official Syncplay server (syncplay.pl) is the default.
+1. Everyone joins the same room, which means the same server, port and room name. The official Syncplay server (syncplay.pl) is filled in for you.
 2. Everyone opens the same video, from a file on their device or from a link.
-3. Press play when everyone shows as **Ready**. Synkplay marks you as ready when you join. A setting turns this off.
+3. Press play once everyone shows as **Ready**. Synkplay marks you as ready when you join (you can turn that off in the settings).
 
-To invite people, use **Share the room** inside the room. The link opens a web page that offers to open Synkplay or to install it.
-To join from a link, paste it into the room field on Home. Synkplay then fills in the server, the port, the room name and the password.
-When the server has a password, the link contains it, so share the link only with the people you want in the room.
+To invite friends, tap **Share the room** inside the room and send them the link. It opens a web page that can open Synkplay or install it, and pasting it into the room field on Home fills in the server, the port, the room name and the password. Since the link carries the room password, send it only to the people you want in the room.
 
-To watch by yourself, tap the logo on Home and pick **Watch alone**. It needs no server, and it offers to continue where you stopped.
+To watch something by yourself, tap the logo on Home and pick **Watch alone**, which needs no server.
 
-## What you can do
+## What else it does
 
-- Play, pause and seek together.
-- Chat with text, emoji and GIFs while you watch.
-- Share a playlist that moves on to the next file by itself.
-- Set your own time offset when your copy has a longer intro.
-- Load subtitle files, or search OpenSubtitles from the room, on engines that support subtitle files.
-- Host a room on your own device: pick **Host mine** on Home.
-- Use the whole app with a remote on Android TV.
+The room has a chat with emoji and GIFs, along with a shared playlist that plays the next file by itself. You can load subtitle files or search OpenSubtitles from the room, set your own time offset when your copy has a longer intro, or host a room on your own device with **Host mine** on Home.
 
-<details>
-<summary><b>Also in there</b></summary>
-
-- Themes, gesture controls and a reduced-motion option.
-- Undo for the shared playlist.
-- Preferred audio and subtitle languages.
-- Picture-in-Picture on Android, and on iOS with AVPlayer or VLCKit.
-- Managed rooms, on servers that support them. In a managed room, only the room operators control playback and the playlist.
-- A choice to share your file name and file size as they are, hashed, or not at all.
-- Encrypted connections, when the server supports them.
-
-</details>
+Picture-in-picture works on Android, and on iOS with VLCKit or AVPlayer. On servers that support them you can also use managed rooms (where only the room operators control playback) and encrypted connections. You decide whether the room sees your file name and size as they are, hashed, or not at all. On Android TV the whole app works with the remote.
 
 ## Screenshots
 
 <p align="center">
-  <a href="art/screenshots/android-portrait.png"><img src="art/screenshots/android-portrait.webp" width="180" alt="Android home in portrait: room details, server and video engine choices"></a>
+  <a href="art/screenshots/android-portrait.png"><img src="art/screenshots/android-portrait.webp" width="180" alt="Home on Android in portrait"></a>
   &nbsp;&nbsp;
-  <a href="art/screenshots/android-landscape.png"><img src="art/screenshots/android-landscape.webp" width="500" alt="Android room in landscape: video, playback controls, chat and user info"></a>
+  <a href="art/screenshots/android-landscape.png"><img src="art/screenshots/android-landscape.webp" width="500" alt="A room on Android in landscape, with the video, the controls and the chat"></a>
 </p>
-
-<p align="center"><sub>Android home (portrait) · Android room (landscape) · Click a screenshot to open it full size.</sub></p>
 
 ## Help
 
 <details>
-<summary><b>Can my friends use Syncplay on PC?</b></summary>
+<summary><b>A video or subtitle does not play right</b></summary>
 
-Yes. They join the same server, port and room, and open the same video. Synkplay and the official Syncplay client work together in one room.
+Leave the room, pick another video player on Home (Synkplay calls them engines) and join again. Home shows what each engine supports, and the [engine table](docs/DEVELOPING.md#engine-capabilities) compares them all.
 
-</details>
-
-<details>
-<summary><b>A video or subtitle does not play right.</b></summary>
-
-Leave the room, pick a different engine on Home, and join again. An engine is one of the video players that Synkplay can use.
-The default engine is **mpv** in the full Android app, **ExoPlayer** in the IzzyOnDroid app and **VLCKit** on iOS.
-KitePlayer is still experimental. AVPlayer cannot load subtitle files.
-Home shows what each engine supports. [Compare the engines](docs/DEVELOPING.md#engine-capabilities).
+The default engine is mpv in the full Android app, ExoPlayer in the IzzyOnDroid app and VLCKit on iOS. KitePlayer is still experimental, and AVPlayer cannot load subtitle files.
 
 </details>
 
-<details>
-<summary><b>Why do I have two Android apps?</b></summary>
-
-The IzzyOnDroid app and the full app (GitHub or Google Play) use different app IDs, so Android treats them as two apps.
-One does not update the other, and each keeps its own settings.
-
-</details>
-
-For anything else: [Report a bug](https://github.com/yuroyami/syncplay-mobile/issues/new?template=bug_report.yml) · [Ask a question](https://github.com/yuroyami/syncplay-mobile/discussions) · [Request a feature](https://github.com/yuroyami/syncplay-mobile/issues/new?template=feature_request.yml)
+For anything else you can [report a bug](https://github.com/yuroyami/syncplay-mobile/issues/new?template=bug_report.yml), [ask a question](https://github.com/yuroyami/syncplay-mobile/discussions) or [request a feature](https://github.com/yuroyami/syncplay-mobile/issues/new?template=feature_request.yml).
 
 ## Contributing
 
-Translations are the easiest way to help. Bug reports with steps to reproduce, and tested patches, are welcome too.
-
-**[Translate on Weblate](https://hosted.weblate.org/engage/syncplay-mobile/)** &nbsp;·&nbsp;
-**[Build & test](docs/DEVELOPING.md)** &nbsp;·&nbsp;
-**[Verify a release](docs/DEVELOPING.md#reproducing-a-published-apk)** &nbsp;·&nbsp;
-**[Support development](https://ko-fi.com/sidenaakram)**
+Translations help the most, and you can add one on [Weblate](https://hosted.weblate.org/engage/syncplay-mobile/). Bug reports with steps to reproduce are welcome too, as are tested patches. [DEVELOPING.md](docs/DEVELOPING.md) explains how to build and test the app, and how to [check that a published APK matches the source](docs/DEVELOPING.md#reproducing-a-published-apk). If you want to support development, there is a [Ko-fi page](https://ko-fi.com/sidenaakram).
 
 <details>
 <summary><b>Credits</b></summary>
@@ -181,11 +121,6 @@ Translations are the easiest way to help. Bug reports with steps to reproduce, a
 
 </details>
 
----
+## License
 
-<p align="center">
-  Built by <a href="https://github.com/yuroyami">yuroyami</a> with Kotlin &amp; Compose Multiplatform.<br>
-  <a href="CHANGELOG.md">Release notes</a> &nbsp;·&nbsp;
-  <a href="PRIVACY_POLICY.md">Privacy</a> &nbsp;·&nbsp;
-  <a href="LICENSE">AGPL-3.0 license</a>
-</p>
+Synkplay is free software under the [AGPL-3.0 license](LICENSE). The [release notes](CHANGELOG.md) list what changed in each version, and the [privacy policy](PRIVACY_POLICY.md) covers what happens to your data.
