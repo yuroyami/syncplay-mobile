@@ -6,9 +6,9 @@
   <img src="art/readme-feature.webp?v=2f0963b4833e" width="960" alt="Synkplay banner: one video in sync on a big screen and two phones">
 </p>
 
-Synkplay is an unofficial [Syncplay](https://syncplay.pl/) client for Android, iPhone, iPad and Android TV. It keeps a video in step for everyone in a room, which means that when one person pauses, plays or skips, the others do too. It speaks the same protocol as the official Syncplay client, which lets friends on a computer join the same room.
+Synkplay is an unofficial [Syncplay](https://syncplay.pl/) client for Android, iPhone, iPad and Android TV. It keeps a video in sync for everyone in a room, which means that when one person pauses, plays or skips, the others do too. It speaks the same protocol as the official Syncplay client, which lets friends on a computer join the same room.
 
-Everyone plays their own copy of the video (from a file or a link) because Synkplay never sends your video or your screen to anyone. It only keeps the playback in step.
+Everyone plays their own copy of the video (from a file or a link) because Synkplay never sends your video or your screen to anyone. It only keeps the playback in sync.
 
 ## Download
 
