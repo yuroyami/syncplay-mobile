@@ -436,7 +436,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         val current = player.currentMediaItem ?: return
         val mediaId = viewmodel.media?.location?.commonUri ?: return
         val playWhenReady = player.playWhenReady
-        player.setMediaItem(current.buildUpon().withExternalSub(mediaId).build(), player.currentPosition)
+        setMediaItem(current.buildUpon().withExternalSub(mediaId).build(), player.currentPosition)
         player.playWhenReady = playWhenReady
         player.prepare()
     }
@@ -462,6 +462,23 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             else -> ""
         }
 
+    private fun setMediaItem(item: MediaItem, positionMs: Long? = null) {
+        val player = exoplayer ?: return
+        val uri = item.localConfiguration?.uri
+        if (uri != null && ExoMediaCache.supports(uri)) {
+            val source = runCatching {
+                ExoMediaCache.mediaSourceFactory(contextObtainer()).createMediaSource(item)
+            }.getOrNull()
+            if (source != null) {
+                if (positionMs == null) player.setMediaSource(source)
+                else player.setMediaSource(source, positionMs)
+                return
+            }
+        }
+        if (positionMs == null) player.setMediaItem(item)
+        else player.setMediaItem(item, positionMs)
+    }
+
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         if (!isInitialized) return
 
@@ -471,7 +488,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .withExternalSub(location.commonUri)
             .build()
 
-        exoplayer?.setMediaItem(vid)
+        setMediaItem(vid)
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
@@ -481,7 +498,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .withExternalSub(location.commonUri)
             .build()
 
-        exoplayer?.setMediaItem(vid)
+        setMediaItem(vid)
     }
 
     override suspend fun parseMedia(media: MediaFile) {
