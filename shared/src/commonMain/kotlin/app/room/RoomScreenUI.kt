@@ -482,13 +482,13 @@ private fun RoomHud(
     val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
     val isHUDVisible by ui.visibleHUD.collectAsState()
     val focusManager = LocalFocusManager.current
+    val hiddenHudFocus = remember { FocusRequester() }
     /* A television counts as keyboard input from the first frame. Compose only switches the input
      * mode to keyboard after the first key press, and the HUD can appear before that. */
     val isKeyboardMode = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
 
-    /* Under keyboard or D-pad input, focus moves to the main control when the HUD shows. On touch
-     * that would be jarring and could raise the soft keyboard. Focus is cleared on hide, so the
-     * hidden controls (still composed) keep no focus. */
+    // Keyboard focus belongs to the main control while visible, and to the video layer while
+    // hidden. Touch only clears focus, so it never raises the keyboard or selects a control.
     LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode, playerIsReady) {
         if (isHUDVisible) {
             if (isKeyboardMode && playerIsReady) {
@@ -497,6 +497,9 @@ private fun RoomHud(
             }
         } else {
             focusManager.clearFocus(force = true)
+            if (isKeyboardMode && hasVideo && playerIsReady) {
+                runCatching { hiddenHudFocus.requestFocus() }
+            }
         }
     }
 
@@ -568,7 +571,7 @@ private fun RoomHud(
     /* The gesture layer sits above the HUD. While the HUD is hidden, the gesture layer takes the
      * touches that would otherwise reach the hidden controls. While the HUD is visible, the
      * gesture layer attaches no pointer input. */
-    if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+    if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize(), hiddenHudFocus = hiddenHudFocus)
     // Above both: the notch strip beside an open keyboard. A stray thumb there closes the keyboard.
     KeyboardNotchShield(keyboardOpen = isKeyboardOpen)
 }
