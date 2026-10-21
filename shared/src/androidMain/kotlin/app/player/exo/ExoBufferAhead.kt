@@ -9,10 +9,6 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import java.io.IOException
@@ -21,7 +17,6 @@ import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 
 private const val RANGE_CHUNK_BYTES = 8L * 1024L * 1024L
-internal const val RANGE_WORKERS = 4
 private val CONTENT_RANGE = Regex("bytes (\\d+)-(\\d+)/(\\d+)")
 
 private data class ResponseRange(val start: Long, val end: Long, val total: Long)
@@ -106,26 +101,21 @@ internal class ExoBufferAhead(
         cancelled.set(true)
     }
 
-    suspend fun cache(ranges: List<CacheRange>, workers: Int = RANGE_WORKERS) = coroutineScope {
+    suspend fun cache(ranges: List<CacheRange>) {
         val http = DefaultHttpDataSource.Factory()
         val rangeFactory = ExoMediaCache.cacheDataSourceFactory(context)
             .setUpstreamDataSourceFactory(DataSource.Factory {
                 ValidatingRangeDataSource(http.createDataSource(), contentLength)
             })
 
-        (0 until min(workers, ranges.size)).map { worker ->
-            async(Dispatchers.IO) {
-                for (index in worker until ranges.size step workers) {
-                    coroutineContext.ensureActive()
-                    if (cancelled.get()) break
-                    val range = ranges[index]
-                    val spec = DataSpec.Builder().setUri(uri)
-                        .setPosition(range.start).setLength(range.length)
-                        .setFlags(DataSpec.FLAG_ALLOW_CACHE_FRAGMENTATION).build()
-                    read(rangeFactory.createDataSourceForDownloading(), spec)
-                }
-            }
-        }.awaitAll()
+        for (range in ranges) {
+            coroutineContext.ensureActive()
+            if (cancelled.get()) break
+            val spec = DataSpec.Builder().setUri(uri)
+                .setPosition(range.start).setLength(range.length)
+                .setFlags(DataSpec.FLAG_ALLOW_CACHE_FRAGMENTATION).build()
+            read(rangeFactory.createDataSourceForDownloading(), spec)
+        }
     }
 
     suspend fun cacheSequentially(start: Long, limit: () -> Long, onPosition: (Long) -> Unit) {

@@ -57,7 +57,7 @@ class ExoRollingCacheTest {
     }
 
     @Test
-    fun overlappingMetadataAndMediaRequestsAreMergedBeforeParallelWrites() {
+    fun overlappingMetadataAndMediaRequestsAreMergedBeforeDownloading() {
         val ranges = rollingCacheRanges(CacheRange(0, 20_000_000), 10_000_000, 21_000_000).sortedBy { it.start }
         assertEquals(0, ranges.first().start)
         assertEquals(21_000_000, ranges.sumOf { it.length })
