@@ -520,6 +520,8 @@ Television:
   keyboard floats over the app and reports no height.
 - The render harness can press keys. `TvFieldEscapeTest`, `TvModalFocusTest` and `TvControlsTest`
   use it, so most focus rules are tested without an emulator.
+- Use the same dp sizes on a television as on a phone. Android TV already draws a 1080p screen at
+  960 by 540 dp, so `Tokens.kt` has no television branch. Do not add television scaling.
 
 ### Strings and resources
 
@@ -706,6 +708,9 @@ Do not "fix" these. Each one was checked, and each one is deliberate.
 - A defect or a missing capability goes in an issue. Say what you see, what you expected, and how
   to reproduce it without naming a file that only you have.
 - A security problem goes to [SECURITY.md](SECURITY.md), not to a public issue.
+- A check that needs real hardware is an issue with the `plan:device-checks` label. Run it on a
+  physical device, and on Android with a release build, because only a release build goes through
+  the shrinker. Write the result in the issue, also when the run finds nothing.
 - A commit that closes an issue says `Fixes #n`.
 - Commit messages are plain sentences. Do not add an AI co-author trailer.
 - When a commit carries over a contributor's mechanism, for example from their pull request,
