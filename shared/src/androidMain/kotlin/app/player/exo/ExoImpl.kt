@@ -49,6 +49,8 @@ import app.utils.playableUri
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
@@ -61,6 +63,15 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     var exoplayer: ExoPlayer? = null
     private lateinit var exoView: PlayerView
+    private var rollingCacheJob: Job? = null
+    @Volatile private var rollingCacheSession: ExoRollingCache? = null
+
+    private fun cancelRollingCache() {
+        rollingCacheSession?.cancel()
+        rollingCacheSession = null
+        rollingCacheJob?.cancel()
+        rollingCacheJob = null
+    }
 
     override val supportsVideoTrackSelection = true
 
@@ -193,6 +204,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             }
 
             override fun onPlayerError(error: PlaybackException) {
+                cancelRollingCache()
                 loggy("Player error: ${error.errorCodeName} ${error.message ?: ""}")
                 val reason = error.errorCodeName
                 viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomPlaybackError(reason) }
@@ -210,6 +222,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        cancelRollingCache()
         // Reset the guard and cancel the 500 ms position tracker before releasing the player.
         // Exo polls a nullable instance, so it does not crash like mpv's global handle. But a live
         // tracker keeps polling a released player and keeps the captured RoomViewmodel in memory.
@@ -436,7 +449,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         val current = player.currentMediaItem ?: return
         val mediaId = viewmodel.media?.location?.commonUri ?: return
         val playWhenReady = player.playWhenReady
-        player.setMediaItem(current.buildUpon().withExternalSub(mediaId).build(), player.currentPosition)
+        setMediaItem(current.buildUpon().withExternalSub(mediaId).build(), player.currentPosition)
         player.playWhenReady = playWhenReady
         player.prepare()
     }
@@ -462,6 +475,43 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             else -> ""
         }
 
+    private fun setMediaItem(item: MediaItem, positionMs: Long? = null) {
+        val player = exoplayer ?: return
+        cancelRollingCache()
+        val uri = item.localConfiguration?.uri
+        if (uri != null && ExoMediaCache.supports(uri)) {
+            val session = ExoRollingCache(contextObtainer(), uri)
+            val source = runCatching {
+                ExoMediaCache.mediaSourceFactory(contextObtainer(), session::onSeekMap)
+                    .createMediaSource(item.buildUpon().setCustomCacheKey(session.cacheKey).build())
+            }.getOrNull()
+            if (source != null) {
+                if (positionMs == null) player.setMediaSource(source)
+                else player.setMediaSource(source, positionMs)
+                rollingCacheSession = session
+                rollingCacheJob = playerScopeIO.launch {
+                    try {
+                        session.run {
+                            withContext(Dispatchers.Main.immediate) {
+                                if (rollingCacheSession === session) player.currentPosition else null
+                            }
+                        }
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        loggy("Rolling cache unavailable: ${error.message}")
+                    } finally {
+                        session.cancel()
+                        if (rollingCacheSession === session) rollingCacheSession = null
+                    }
+                }
+                return
+            }
+        }
+        if (positionMs == null) player.setMediaItem(item)
+        else player.setMediaItem(item, positionMs)
+    }
+
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         if (!isInitialized) return
 
@@ -471,7 +521,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .withExternalSub(location.commonUri)
             .build()
 
-        exoplayer?.setMediaItem(vid)
+        setMediaItem(vid)
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
@@ -481,7 +531,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .withExternalSub(location.commonUri)
             .build()
 
-        exoplayer?.setMediaItem(vid)
+        setMediaItem(vid)
     }
 
     override suspend fun parseMedia(media: MediaFile) {
