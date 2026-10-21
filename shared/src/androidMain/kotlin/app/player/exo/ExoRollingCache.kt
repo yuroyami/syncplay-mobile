@@ -123,6 +123,8 @@ internal fun rollingCacheRanges(window: CacheRange, playhead: Long, contentLengt
 
 @OptIn(UnstableApi::class)
 internal class ExoRollingCache(private val context: Context, private val uri: Uri) {
+    // A URL can be overwritten even when its length is unchanged. Never read a previous load's bytes.
+    val cacheKey: String = java.util.UUID.randomUUID().toString()
     private val stopped = AtomicBoolean(false)
     @Volatile private var index: RollingCacheIndex? = null
     @Volatile private var batch: ExoBufferAhead? = null
@@ -140,7 +142,7 @@ internal class ExoRollingCache(private val context: Context, private val uri: Ur
         coroutineContext.ensureActive()
         if (stopped.get()) return@coroutineScope
         val cache = ExoMediaCache.cache(context)
-        val key = uri.toString()
+        val key = cacheKey
         cache.keys.filter { it != key }.forEach(cache::removeResource)
         val media = probeHttpMedia(uri) ?: return@coroutineScope
         val contentLength = media.length
@@ -196,7 +198,7 @@ internal class ExoRollingCache(private val context: Context, private val uri: Ur
                                 .filterNot { cache.isCached(key, it.start, it.length) }
                         } else emptyList()
                         if (!useRanges || ranges.isNotEmpty()) {
-                            val writer = ExoBufferAhead(context, uri, contentLength)
+                            val writer = ExoBufferAhead(context, uri, contentLength, key)
                             batch = writer
                             fillPosition = position
                             sequentialPosition.set(start)

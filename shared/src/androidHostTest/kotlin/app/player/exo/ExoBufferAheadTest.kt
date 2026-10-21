@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -71,6 +72,42 @@ class ExoBufferAheadTest {
         reader.cancelAndJoin()
         advanceTimeBy(1_000)
         assertEquals(0, reads)
+    }
+
+    @Test
+    fun aWindowSmallerThanACacheFragmentIsCommittedBeforeWaitingAndCanResume() = runTest {
+        val bytes = ByteArray(2 * 1024 * 1024) { it.toByte() }
+        val input = ByteArrayInputStream(bytes)
+        val pending = ByteArrayOutputStream()
+        val committed = ByteArrayOutputStream()
+        var limit = 624_640L // Five minutes of a 16-kbit/s stream, below the 1-MiB fragment size.
+        val reader = launch {
+            readCacheStream(0, { buffer, length ->
+                input.read(buffer, 0, length).also { if (it > 0) pending.write(buffer, 0, it) }
+            }, { limit }, onPause = {
+                pending.writeTo(committed)
+                pending.reset()
+            })
+        }
+        runCurrent()
+        assertContentEquals(bytes.copyOf(limit.toInt()), committed.toByteArray())
+        assertEquals(bytes.size - limit.toInt(), input.available())
+
+        limit += 100_000
+        advanceTimeBy(250)
+        runCurrent()
+        assertContentEquals(bytes.copyOf(limit.toInt()), committed.toByteArray())
+        assertEquals(bytes.size - limit.toInt(), input.available())
+        reader.cancelAndJoin()
+    }
+
+    @Test
+    fun explicitRangesReplaceAnyOldRangeAndPreserveOtherHeaders() {
+        assertEquals(mapOf("Authorization" to "Bearer token", "Range" to "bytes=4000000000-4000000007"),
+            rangeRequestHeaders(mapOf("Authorization" to "Bearer token", "range" to "bytes=0-0"),
+                4_000_000_000, 8))
+        assertFailsWith<IllegalArgumentException> { rangeRequestHeaders(emptyMap(), 0, -1) }
+        assertFailsWith<IllegalArgumentException> { rangeRequestHeaders(emptyMap(), Long.MAX_VALUE, 8) }
     }
 
     @Test

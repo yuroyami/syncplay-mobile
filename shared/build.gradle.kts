@@ -59,6 +59,14 @@ kotlin {
 
         // Runs commonTest against the Android actuals on the host JVM.
         withHostTest { }
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
+        packaging.resources {
+            pickFirsts += listOf("META-INF/INDEX.LIST", "META-INF/versions/9/previous-compilation-data.bin",
+                "META-INF/io.netty.versions.properties")
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 
     // Desktop (JVM) target for Windows, macOS and Linux through Compose for Desktop.
@@ -348,6 +356,12 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             // Virtual time, so sync tests advance the clock instead of sleeping.
             implementation(libs.kotlin.coroutines.test)
+        }
+
+        getByName("androidDeviceTest").dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.androidx.test.junit)
+            implementation(libs.androidx.test.runner)
         }
 
         val desktopTest by getting {

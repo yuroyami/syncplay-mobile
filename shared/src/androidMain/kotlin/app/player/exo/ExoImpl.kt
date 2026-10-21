@@ -482,7 +482,8 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         if (uri != null && ExoMediaCache.supports(uri)) {
             val session = ExoRollingCache(contextObtainer(), uri)
             val source = runCatching {
-                ExoMediaCache.mediaSourceFactory(contextObtainer(), session::onSeekMap).createMediaSource(item)
+                ExoMediaCache.mediaSourceFactory(contextObtainer(), session::onSeekMap)
+                    .createMediaSource(item.buildUpon().setCustomCacheKey(session.cacheKey).build())
             }.getOrNull()
             if (source != null) {
                 if (positionMs == null) player.setMediaSource(source)
