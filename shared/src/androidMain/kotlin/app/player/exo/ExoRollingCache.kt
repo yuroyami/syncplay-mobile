@@ -17,6 +17,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
@@ -89,6 +90,12 @@ internal fun keepCacheSpan(start: Long, length: Long, window: CacheRange, conten
     overlaps(start, length, window) || start < METADATA_BYTES ||
         start + length > (contentLength - METADATA_BYTES).coerceAtLeast(0)
 
+internal fun sequentialCacheHasGap(playhead: Long, reader: Long, cachedAhead: Long): Boolean =
+    playhead < reader && (cachedAhead <= 0 || reader - playhead - cachedAhead > ExoMediaCache.FRAGMENT_BYTES)
+
+internal fun sequentialRetentionWindow(window: CacheRange, reader: Long): CacheRange =
+    CacheRange(window.start, max(window.start + window.length, reader) - window.start)
+
 internal fun rollingCacheRanges(window: CacheRange, playhead: Long, contentLength: Long): List<CacheRange> {
     val regions = listOf(
         CacheRange(0, min(METADATA_BYTES, contentLength)),
@@ -136,7 +143,8 @@ internal class ExoRollingCache(private val context: Context, private val uri: Ur
         val cache = ExoMediaCache.cache(context)
         val key = uri.toString()
         cache.keys.filter { it != key }.forEach(cache::removeResource)
-        val contentLength = probeRangeLength(uri) ?: return@coroutineScope
+        val media = probeHttpMedia(uri) ?: return@coroutineScope
+        val contentLength = media.length
         coroutineContext.ensureActive()
         if (stopped.get()) return@coroutineScope
         cache.applyContentMetadataMutations(key, ContentMetadataMutations().also {
@@ -146,36 +154,68 @@ internal class ExoRollingCache(private val context: Context, private val uri: Ur
         var fillPosition = 0L
         var previousPosition: Long? = null
         val retryAfter = AtomicLong(0)
+        // Zero means a single sequential response; positive values are range workers.
+        val parallelism = AtomicInteger(if (media.supportsRanges) RANGE_WORKERS else 0)
+        val sequentialPosition = AtomicLong(0)
+        val sequentialLimit = AtomicLong(0)
+        val sequentialEnded = AtomicBoolean(false)
         try {
             while (isActive && !stopped.get()) {
                 val position = positionMs() ?: break
                 val currentIndex = index
                 val window = currentIndex?.range(position, contentLength, ExoMediaCache.WINDOW_LIMIT_BYTES)
+                val playhead = currentIndex?.position(position)
                 val jumped = previousPosition?.let { abs(position - it) > 5_000 } == true
                 previousPosition = position
-                if (filling != null && (filling.isCompleted || jumped || abs(position - fillPosition) >= 30_000)) {
+                val workers = parallelism.get()
+                val reader = sequentialPosition.get()
+                val missingBehindReader = workers == 0 && jumped && playhead != null && playhead < reader &&
+                    sequentialCacheHasGap(playhead, reader, cache.getCachedLength(key, playhead, reader - playhead))
+                if (missingBehindReader) sequentialEnded.set(false)
+                if (filling != null && (
+                        (filling.isCompleted && (workers > 0 || !sequentialEnded.get())) ||
+                        (workers > 0 && (jumped || abs(position - fillPosition) >= 30_000)) ||
+                        missingBehindReader
+                    )) {
                     batch?.cancel()
                     filling.cancelAndJoin()
                     filling = null
                     batch = null
                 }
                 if (window != null) {
+                    val start = currentIndex.position(position)
+                    sequentialLimit.set(if (window.start + window.length >= contentLength) Long.MAX_VALUE
+                        else window.start + window.length)
+                    // A sequential response cannot revisit discarded bytes without reconnecting.
+                    val retained = if (workers == 0) sequentialRetentionWindow(window, reader) else window
                     cache.getCachedSpans(key).filterNot {
-                        keepCacheSpan(it.position, it.length, window, contentLength)
+                        keepCacheSpan(it.position, it.length, retained, contentLength)
                     }.forEach(cache::removeSpan)
-                    if (filling == null && SystemClock.elapsedRealtime() >= retryAfter.get()) {
-                        val ranges = rollingCacheRanges(window, currentIndex.position(position), contentLength)
-                            .filterNot { cache.isCached(key, it.start, it.length) }
-                        if (ranges.isNotEmpty()) {
-                            val writer = ExoBufferAhead(context, uri, ranges, contentLength)
+                    if (filling == null && SystemClock.elapsedRealtime() >= retryAfter.get() &&
+                        (workers > 0 || !sequentialEnded.get())) {
+                        val ranges = if (workers > 0) {
+                            rollingCacheRanges(window, start, contentLength)
+                                .filterNot { cache.isCached(key, it.start, it.length) }
+                        } else emptyList()
+                        if (workers == 0 || ranges.isNotEmpty()) {
+                            val writer = ExoBufferAhead(context, uri, contentLength)
                             batch = writer
                             fillPosition = position
+                            sequentialPosition.set(start)
                             filling = launch {
                                 try {
-                                    writer.cache()
+                                    if (workers > 0) {
+                                        writer.cache(ranges, workers)
+                                    } else {
+                                        writer.cacheSequentially(start, sequentialLimit::get,
+                                            sequentialPosition::set)
+                                        sequentialEnded.set(true)
+                                    }
                                 } catch (error: CancellationException) {
                                     throw error
                                 } catch (error: Exception) {
+                                    if (error is RangeNotSupportedException) parallelism.set(0)
+                                    else if (workers > 1) parallelism.set(1)
                                     retryAfter.set(SystemClock.elapsedRealtime() + 10_000)
                                     loggy("Rolling cache stopped filling: ${error.message}")
                                 }

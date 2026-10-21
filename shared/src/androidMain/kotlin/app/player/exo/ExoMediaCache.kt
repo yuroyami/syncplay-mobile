@@ -26,6 +26,7 @@ import java.io.File
 internal object ExoMediaCache {
     private const val MAX_BYTES = 2L * 1024L * 1024L * 1024L
     const val WINDOW_LIMIT_BYTES = MAX_BYTES - 16L * 1024L * 1024L
+    const val FRAGMENT_BYTES = 1024L * 1024L
     private var instance: SimpleCache? = null
 
     @Synchronized
@@ -45,7 +46,7 @@ internal object ExoMediaCache {
             .setCache(cache(context))
             .setUpstreamDataSourceFactory(http)
             .setCacheWriteDataSinkFactory(
-                CacheDataSink.Factory().setCache(cache(context)).setFragmentSize(1024L * 1024L),
+                CacheDataSink.Factory().setCache(cache(context)).setFragmentSize(FRAGMENT_BYTES),
             )
     }
 

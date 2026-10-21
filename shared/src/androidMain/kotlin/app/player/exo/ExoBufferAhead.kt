@@ -3,25 +3,25 @@ package app.player.exo
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
-import androidx.media3.datasource.cache.CacheWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 
 private const val RANGE_CHUNK_BYTES = 8L * 1024L * 1024L
-private const val RANGE_WORKERS = 4
+internal const val RANGE_WORKERS = 4
 private val CONTENT_RANGE = Regex("bytes (\\d+)-(\\d+)/(\\d+)")
 
 private data class ResponseRange(val start: Long, val end: Long, val total: Long)
@@ -59,64 +59,98 @@ internal fun matchesContentRange(header: String?, start: Long, length: Long): Bo
     return range.start == start && range.end == start + length - 1
 }
 
+internal data class HttpMediaInfo(val length: Long, val supportsRanges: Boolean)
+
+internal class RangeNotSupportedException : IOException("Server no longer supports byte ranges")
+
+internal fun httpMediaInfo(code: Int, contentRange: String?, contentLength: String?): HttpMediaInfo? =
+    when (code) {
+        206 -> contentRangeTotal(contentRange)?.let { HttpMediaInfo(it, true) }
+        200 -> contentLength?.toLongOrNull()?.takeIf { it > 0 }?.let { HttpMediaInfo(it, false) }
+        else -> null
+    }
+
+/** Waiting here keeps the current response open rather than reconnecting at every window update. */
+internal suspend fun readCacheStream(
+    start: Long,
+    read: (ByteArray, Int) -> Int,
+    limit: () -> Long = { Long.MAX_VALUE },
+    onPosition: (Long) -> Unit = {},
+) {
+    val buffer = ByteArray(64 * 1024)
+    var position = start
+    while (true) {
+        coroutineContext.ensureActive()
+        val remaining = limit() - position
+        if (remaining <= 0) {
+            delay(250)
+            continue
+        }
+        val count = read(buffer, min(buffer.size.toLong(), remaining).toInt())
+        if (count == C.RESULT_END_OF_INPUT) return
+        if (count <= 0) throw IOException("Media source made no progress")
+        position += count
+        onPosition(position)
+    }
+}
+
 @OptIn(UnstableApi::class)
 internal class ExoBufferAhead(
     private val context: Context,
     private val uri: Uri,
-    private val ranges: List<CacheRange>,
     private val contentLength: Long,
 ) {
     private val cancelled = AtomicBoolean(false)
-    private val writers = mutableSetOf<CacheWriter>()
 
     fun cancel() {
         cancelled.set(true)
-        cancelWriters()
     }
 
-    suspend fun cache() = coroutineScope {
-        val failure = AtomicReference<IOException?>(null)
+    suspend fun cache(ranges: List<CacheRange>, workers: Int = RANGE_WORKERS) = coroutineScope {
         val http = DefaultHttpDataSource.Factory()
         val rangeFactory = ExoMediaCache.cacheDataSourceFactory(context)
             .setUpstreamDataSourceFactory(DataSource.Factory {
                 ValidatingRangeDataSource(http.createDataSource(), contentLength)
             })
 
-        (0 until min(RANGE_WORKERS, ranges.size)).map { worker ->
+        (0 until min(workers, ranges.size)).map { worker ->
             async(Dispatchers.IO) {
-                for (index in worker until ranges.size step RANGE_WORKERS) {
+                for (index in worker until ranges.size step workers) {
                     coroutineContext.ensureActive()
-                    if (cancelled.get() || failure.get() != null) break
+                    if (cancelled.get()) break
                     val range = ranges[index]
                     val spec = DataSpec.Builder().setUri(uri)
                         .setPosition(range.start).setLength(range.length)
                         .setFlags(DataSpec.FLAG_ALLOW_CACHE_FRAGMENTATION).build()
-                    try {
-                        write(CacheWriter(rangeFactory.createDataSourceForDownloading(), spec, null, null))
-                    } catch (error: IOException) {
-                        if (!cancelled.get() && failure.compareAndSet(null, error)) cancelWriters()
-                        break
-                    }
+                    read(rangeFactory.createDataSourceForDownloading(), spec)
                 }
             }
         }.awaitAll()
-        if (!cancelled.get()) failure.get()?.let { throw it }
     }
 
-    private fun write(writer: CacheWriter) {
-        synchronized(writers) {
-            if (cancelled.get()) return
-            writers += writer
-        }
+    suspend fun cacheSequentially(start: Long, limit: () -> Long, onPosition: (Long) -> Unit) {
+        val spec = DataSpec.Builder().setUri(uri).setPosition(start)
+            .setFlags(DataSpec.FLAG_ALLOW_CACHE_FRAGMENTATION).build()
+        read(ExoMediaCache.cacheDataSourceFactory(context).createDataSourceForDownloading(), spec,
+            limit, onPosition)
+    }
+
+    private suspend fun read(
+        source: DataSource,
+        spec: DataSpec,
+        limit: () -> Long = { Long.MAX_VALUE },
+        onPosition: (Long) -> Unit = {},
+    ) {
         try {
-            writer.cache()
+            coroutineContext.ensureActive()
+            if (cancelled.get()) return
+            source.open(spec)
+            readCacheStream(spec.position, { buffer, length ->
+                if (cancelled.get()) C.RESULT_END_OF_INPUT else source.read(buffer, 0, length)
+            }, limit, onPosition)
         } finally {
-            synchronized(writers) { writers -= writer }
+            source.close()
         }
-    }
-
-    private fun cancelWriters() {
-        synchronized(writers) { writers.forEach(CacheWriter::cancel) }
     }
 }
 
@@ -132,7 +166,9 @@ private class ValidatingRangeDataSource(
             !matchesContentRange(header, dataSpec.position, dataSpec.length) ||
             parseContentRange(header)?.total != contentLength
         ) {
+            val responseCode = source.responseCode
             source.close()
+            if (responseCode == 200) throw RangeNotSupportedException()
             throw IOException("Server did not honor the requested media byte range")
         }
         return length
@@ -140,15 +176,15 @@ private class ValidatingRangeDataSource(
 }
 
 @OptIn(UnstableApi::class)
-internal fun probeRangeLength(uri: Uri): Long? {
+internal fun probeHttpMedia(uri: Uri): HttpMediaInfo? {
     val source = DefaultHttpDataSource.Factory()
         .setConnectTimeoutMs(5_000)
         .setReadTimeoutMs(5_000)
         .createDataSource()
     return try {
         source.open(DataSpec.Builder().setUri(uri).setLength(1).build())
-        if (source.responseCode != 206) null
-        else contentRangeTotal(source.responseHeaders["Content-Range"]?.firstOrNull())
+        httpMediaInfo(source.responseCode, source.responseHeaders["Content-Range"]?.firstOrNull(),
+            source.responseHeaders["Content-Length"]?.firstOrNull())
     } catch (_: IOException) {
         null
     } finally {

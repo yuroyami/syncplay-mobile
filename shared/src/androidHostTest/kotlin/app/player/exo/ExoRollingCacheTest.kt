@@ -68,4 +68,18 @@ class ExoRollingCacheTest {
     fun anUnseekableStreamDoesNotGetAnInventedByteWindow() {
         assertNull(RollingCacheIndex.from(SeekMap.Unseekable(1_200_000_000)))
     }
+
+    @Test
+    fun aSequentialResponseKeepsItsAlreadyDownloadedAheadBytesAfterABackwardSeek() {
+        val movedBack = CacheRange(10_000_000, 30_000_000)
+        val retained = sequentialRetentionWindow(movedBack, 60_000_000)
+        assertEquals(CacheRange(10_000_000, 50_000_000), retained)
+        assertTrue(keepCacheSpan(50_000_000, 1_000_000, retained, 100_000_000))
+        assertFalse(keepCacheSpan(5_000_000, 1_000_000, retained, 100_000_000))
+
+        // The writer's current partial fragment is not visible in SimpleCache yet.
+        assertFalse(sequentialCacheHasGap(20_000_000, 60_000_000, 39_500_000))
+        assertTrue(sequentialCacheHasGap(20_000_000, 60_000_000, 5_000_000))
+        assertTrue(sequentialCacheHasGap(20_000_000, 60_000_000, -1))
+    }
 }
