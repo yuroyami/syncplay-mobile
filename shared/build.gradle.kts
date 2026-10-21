@@ -256,8 +256,8 @@ kotlin {
              * browser's, so this stays out of commonMain. */
             implementation(libs.bundles.ktor)
 
-            /* KitePlayerVideo, which picks the renderer at runtime. This one dependency
-             * re-exports both renderers plus KitePlayer's default assembly, facade and core API.
+            /* KitePlayerVideo, which picks the renderer at runtime. This one dependency ships
+             * both renderers and re-exports KitePlayer's default assembly, facade and core API.
              * The renderer toggle in the room passes its choice through the `path` parameter.
              * The decoder is FFmpeg through JNI and cinterop, so there is no web build. */
             implementation(libs.kiteplayer.compose)

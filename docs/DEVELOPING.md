@@ -534,20 +534,15 @@ need no keystore, so contributors can build them without the signing credentials
 
 ### App Store encryption answer
 
-`ITSAppUsesNonExemptEncryption` in `iosApp/iosApp/Info.plist` is true. The `infoPlist` block of
+`ITSAppUsesNonExemptEncryption` in `iosApp/iosApp/Info.plist` is false. The `infoPlist` block of
 the root `kiteConfig` sets it, and `kiteApplyIos` writes it.
 
-- The app bundles its own TLS: SwiftNIO SSL (BoringSSL) encrypts the Syncplay connection. That is
-  an industry-standard algorithm that Apple's operating system does not provide.
-- For that case, Apple asks for a French encryption declaration, and only for the App Store in
-  France. It asks for no US document. The app is on the App Store in France.
-- So this encryption is not exempt from documentation, and the key must be true. Sources:
-  [Complying with encryption export regulations](https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations)
+- With the key set to true, App Store Connect refuses an upload until it has approved export
+  compliance documentation for the app.
+- That documentation then gives a code, which goes into `Info.plist` as
+  `ITSEncryptionExportComplianceCode`. KiteConfig does not write that key.
+- Sources: [Complying with encryption export regulations](https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations)
   and [Export compliance documentation for encryption](https://developer.apple.com/help/app-store-connect/reference/app-information/export-compliance-documentation-for-encryption/).
-- Upload the French declaration in App Store Connect. Apple then gives a code. Add it to
-  `Info.plist` as `ITSEncryptionExportComplianceCode`, by hand, because KiteConfig does not write
-  that key. Until the code is there, App Store Connect asks the encryption questions for each
-  uploaded build.
 
 ### Reproducing a published APK
 

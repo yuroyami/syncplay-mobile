@@ -22,12 +22,10 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalPlatformWindowInsets
 import androidx.compose.ui.platform.PlatformInsets
 import androidx.compose.ui.platform.PlatformWindowInsets
-import androidx.compose.ui.platform.PlatformWindowInsetsProviderNode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -356,7 +354,7 @@ class HomeFocusTest {
                         ) {
                             val focusManager = LocalFocusManager.current
                             SideEffect { focusManagerHolder[0] = focusManager }
-                            Box(Modifier.size(windowSize.value).then(WindowInsetsElement(insets))) {
+                            Box(Modifier.size(windowSize.value)) {
                                 screen(viewmodel)
                             }
                         }
@@ -410,25 +408,13 @@ class HomeFocusTest {
         override fun requestInputMode(inputMode: InputMode): Boolean = false
     }
 
-    /** A window whose only inset is a soft keyboard. The harness has no insets of its own. */
+    /**
+     * A window whose only inset is a soft keyboard. The harness has no insets of its own. Since
+     * Compose 1.13 the `WindowInsets` getters and the padding modifiers such as `imePadding` all
+     * read `LocalPlatformWindowInsets`, so providing it is enough.
+     */
     private class KeyboardInsets(heightPx: () -> Int) : PlatformWindowInsets {
         override val ime: PlatformInsets = PlatformInsets(getBottom = heightPx)
-    }
-
-    /**
-     * Insets reach Compose in two ways: the `WindowInsets` getters read a composition local, and
-     * the padding modifiers such as `imePadding` read a node in the layout tree. A platform window
-     * feeds both, so the harness must too. This class is the node.
-     */
-    private class WindowInsetsNode(var insets: PlatformWindowInsets) : PlatformWindowInsetsProviderNode() {
-        override fun calculatePlatformInsets(ancestorWindowInsets: PlatformWindowInsets): PlatformWindowInsets = insets
-    }
-
-    private data class WindowInsetsElement(val insets: PlatformWindowInsets) : ModifierNodeElement<WindowInsetsNode>() {
-        override fun create() = WindowInsetsNode(insets)
-        override fun update(node: WindowInsetsNode) {
-            node.insets = insets
-        }
     }
 
     /** The live form, found and driven through its unmerged semantics tree. */

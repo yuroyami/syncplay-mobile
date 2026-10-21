@@ -9,9 +9,10 @@ import app.player.stillPositionMs
 import app.utils.availablePlatformPlayerEngines
 import app.utils.ioDispatcher
 import app.utils.loggy
-import io.github.yuroyami.kiteplayer.KitePlayerPlatform
+import io.github.yuroyami.kiteplayer.KitePlayer
 import io.github.yuroyami.kiteplayer.MediaItem
 import io.github.yuroyami.kiteplayer.ffmpeg.Thumbnails
+import io.github.yuroyami.kiteplayer.isAvailable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,7 +39,7 @@ internal object KiteChapterStills : ChapterStills {
 
     override suspend fun still(media: MediaFile, chapter: Chapter, chapterEndMs: Long?): ImageBitmap? {
         val location = media.location ?: return null
-        if (!KitePlayerPlatform.isAvailable) return null
+        if (!KitePlayer.isAvailable) return null
         val positionMs = stillPositionMs(chapter.timeOffsetMillis, chapterEndMs)
         return lock.withLock {
             if (keptFor !== location || kept.size >= MAX_KEPT) {

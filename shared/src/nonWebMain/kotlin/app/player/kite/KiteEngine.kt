@@ -3,7 +3,8 @@ package app.player.kite
 import app.player.PlayerEngine
 import app.player.PlayerImpl
 import app.room.RoomViewmodel
-import io.github.yuroyami.kiteplayer.KitePlayerPlatform
+import io.github.yuroyami.kiteplayer.KitePlayer
+import io.github.yuroyami.kiteplayer.isAvailable
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.kiteplayer
@@ -51,7 +52,7 @@ internal class KiteEngine(
      * that cannot load. Always true on iOS, which has no exoOnly flavor.
      */
     override val isAvailable: Boolean
-        get() = KitePlayerPlatform.isAvailable
+        get() = KitePlayer.isAvailable
 
     override val isExperimental: Boolean = true
     override val img: DrawableResource = Res.drawable.kiteplayer

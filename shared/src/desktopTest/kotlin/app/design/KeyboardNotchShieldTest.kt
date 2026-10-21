@@ -14,12 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalPlatformWindowInsets
 import androidx.compose.ui.platform.PlatformInsets
 import androidx.compose.ui.platform.PlatformWindowInsets
-import androidx.compose.ui.platform.PlatformWindowInsetsProviderNode
 import androidx.compose.ui.unit.Density
 import app.room.ui.misc.KeyboardNotchShield
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +30,8 @@ import kotlin.test.assertEquals
  * With the keyboard open, the shield must consume a tap on the notch columns and nothing else.
  * With the keyboard closed, the strip must take taps again.
  *
- * The window is 800 by 600 pixels. Insets reach Compose in two ways, a composition local and a
- * layout node, and the test feeds both, as in [HomeFocusTest].
+ * The window is 800 by 600 pixels. The insets reach Compose through `LocalPlatformWindowInsets`,
+ * as in [HomeFocusTest].
  */
 @OptIn(InternalComposeUiApi::class)
 class KeyboardNotchShieldTest {
@@ -132,7 +130,6 @@ class KeyboardNotchShieldTest {
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .then(WindowInsetsElement(insets))
                             .pointerInput(Unit) { detectTapGestures { room?.let { it.taps++ } } },
                     ) {
                         // The same read the room makes: the keyboard is open while its inset is.
@@ -148,17 +145,6 @@ class KeyboardNotchShieldTest {
             block(stand)
         } finally {
             DesignHarness.onUiThread { scene.close() }
-        }
-    }
-
-    private class WindowInsetsNode(var insets: PlatformWindowInsets) : PlatformWindowInsetsProviderNode() {
-        override fun calculatePlatformInsets(ancestorWindowInsets: PlatformWindowInsets): PlatformWindowInsets = insets
-    }
-
-    private data class WindowInsetsElement(val insets: PlatformWindowInsets) : ModifierNodeElement<WindowInsetsNode>() {
-        override fun create() = WindowInsetsNode(insets)
-        override fun update(node: WindowInsetsNode) {
-            node.insets = insets
         }
     }
 }

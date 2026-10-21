@@ -69,7 +69,6 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readBytes
 import io.github.yuroyami.kiteplayer.HwdecPolicy
 import io.github.yuroyami.kiteplayer.KitePlayer
-import io.github.yuroyami.kiteplayer.KitePlayerPlatform
 import io.github.yuroyami.kiteplayer.MediaItem
 import io.github.yuroyami.kiteplayer.PlaybackError
 import io.github.yuroyami.kiteplayer.PlaybackStatus
@@ -82,6 +81,7 @@ import io.github.yuroyami.kiteplayer.TrackInfo
 import io.github.yuroyami.kiteplayer.TrackKind
 import io.github.yuroyami.kiteplayer.VideoAdjustments
 import io.github.yuroyami.kiteplayer.VideoScale
+import io.github.yuroyami.kiteplayer.supportsPictureInPicture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -114,7 +114,7 @@ import kotlin.time.Duration.Companion.seconds
  * The suspend contract fits without a blocking bridge. Everything Syncplay declares as suspend
  * (open, destroy, track selection) is suspend in KitePlayer too. The two members that Syncplay
  * needs synchronously, [currentPositionMs] and [seekTo], map onto KitePlayer's non-suspending
- * `position()` and `seekLater()`. No `runBlocking` is needed here.
+ * `position()` and `requestSeek()`. No `runBlocking` is needed here.
  */
 internal class KiteImpl(
     viewmodel: RoomViewmodel,
@@ -201,7 +201,7 @@ internal class KiteImpl(
 
     /** Android hosts PiP (picture-in-picture) for the whole screen; iOS uses [pictureInPicture]. */
     override val supportsPictureInPicture: Boolean
-        get() = KitePlayerPlatform.supportsPictureInPicture
+        get() = KitePlayer.supportsPictureInPicture
 
     /** The small window on iOS, which needs a video layer of its own. Null on the other platforms. */
     private val pictureInPicture: KitePictureInPicture? by lazy {
@@ -234,9 +234,9 @@ internal class KiteImpl(
                 delay = KITE_SUBTITLE_DELAY_MS.value().milliseconds,
             ),
         )
-        val player = requireNotNull(KitePlayerPlatform.createOrNull(config)) {
-            "KitePlayer is unavailable: ${KitePlayerPlatform.availability}"
-        }
+        // Throws PlaybackException when this build has no default stack. KiteEngine.isAvailable
+        // hides the engine in that case, so this never runs there.
+        val player = KitePlayer(config)
         player.setAudioDelay(KITE_AUDIO_DELAY_MS.value().milliseconds)
         player.setPreservePitch(KITE_PRESERVE_PITCH.value())
         player.setSubtitlePosition(subtitlePositionFromPref(KITE_SUBTITLE_POS.value()))
@@ -566,7 +566,7 @@ internal class KiteImpl(
             // Playing, KitePlayer seeks to where it is, so the picture returns on the right frame.
             // Paused, it only waits for the next keyframe, and the frame from before the park stays.
             val state = player.state.value
-            if (!state.status.isActive && state.seekable) player.seekLater(player.position(), SeekMode.Precise)
+            if (!state.status.isActive && state.seekable) player.requestSeek(player.position(), SeekMode.Precise)
         } catch (_: IllegalStateException) {
             // A closed player refuses every command, and it has no picture left to show.
         }
@@ -728,13 +728,13 @@ internal class KiteImpl(
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        // seekLater is KitePlayer's non-suspending seek: it hands the request to the engine's seek
+        // requestSeek is KitePlayer's non-suspending seek: it hands the request to the engine's seek
         // machine and returns, which fits this UiThread member. Precise lands on the exact frame
         // in one step. Do not use the two-phase KeyframeThenRefine: the engine seeks almost at
         // once, so the keyframe and the exact frame arrive a moment apart and the picture flashes
         // twice for every seek. With either mode, KitePlayer's position() reports the target
-        // until the seek lands. seekLater throws on a negative position.
-        kite?.seekLater(toPositionMs.coerceAtLeast(0L).milliseconds, SeekMode.Precise)
+        // until the seek lands. requestSeek throws on a negative position.
+        kite?.requestSeek(toPositionMs.coerceAtLeast(0L).milliseconds, SeekMode.Precise)
     }
 
     @UiThread
