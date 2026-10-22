@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The shared module reads these resources by name (app.utils.appResource), not through an R
+     class. Resource shrinking cannot see such a lookup, so this file keeps them. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_launcher_foreground,@drawable/ic_pause,@drawable/ic_play,@layout/exoview,@layout/exoview_surface" />

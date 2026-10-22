@@ -20,7 +20,7 @@ from fontTools.varLib.instancer import instantiateVariableFont
 
 
 HERE = Path(__file__).resolve().parent
-FONT = HERE.parents[1] / "shared/src/commonMain/composeResources/font/Lexend_variable.ttf"
+FONT = HERE.parents[1] / "shared/composeResources/font/Lexend_variable.ttf"
 SVG_NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG_NS)
 ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")

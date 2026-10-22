@@ -1,0 +1,22 @@
+product: wasm-js/app
+
+description: The Synkplay web app (Kotlin/Wasm). The code and the UI are in the shared module.
+
+apply:
+  - ../common.module-template.yaml
+
+dependencies:
+  # First on purpose: the link then takes the DOM classes from kotlinx-browser, which has the
+  # overloads that Compose calls, not from kotlin-dom-api-compat.
+  - $libs.kotlinx.browser
+  - //shared
+  # The shared module does not export the types of its public API, so this module declares them.
+  - $compose.runtime
+  - $compose.ui
+  - $libs.compose.viewmodel
+  - $libs.kotlin.coroutines.core
+
+settings:
+  compose:
+    enabled: true
+    version: 1.13.0-alpha02

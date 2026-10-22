@@ -10,7 +10,7 @@ transparent, so the badge works on light and dark backgrounds.
 
 The foreground comes directly from [synkplay_logo.svg](synkplay_logo.svg), with its original
 paths, gradient stops, highlights and cutouts. The background is the app's own
-[synkplay_bg.png](../shared/src/commonMain/composeResources/drawable/synkplay_bg.png), resized and
+[synkplay_bg.png](../shared/composeResources/drawable/synkplay_bg.png), resized and
 clipped to the rounded outline, with no change of color. The badge uses only these existing
 assets. It contains no pixels from an AI image generator.
 

@@ -1,0 +1,647 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00AB36FFA94C13CE2D01DAC6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */; };
+		02FB671D91E24A7CB7E7A012 /* YouTubeKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */; };
+		0404ED202BB9374F00FCDAB5 /* NIO in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED1F2BB9374F00FCDAB5 /* NIO */; };
+		0404ED222BB9374F00FCDAB5 /* NIOConcurrencyHelpers in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED212BB9374F00FCDAB5 /* NIOConcurrencyHelpers */; };
+		0404ED242BB9374F00FCDAB5 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED232BB9374F00FCDAB5 /* NIOCore */; };
+		0404ED262BB9374F00FCDAB5 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED252BB9374F00FCDAB5 /* NIOEmbedded */; };
+		0404ED282BB9374F00FCDAB5 /* NIOFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED272BB9374F00FCDAB5 /* NIOFoundationCompat */; };
+		0404ED2A2BB9375000FCDAB5 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED292BB9375000FCDAB5 /* NIOPosix */; };
+		0404ED2C2BB9375000FCDAB5 /* NIOTLS in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED2B2BB9375000FCDAB5 /* NIOTLS */; };
+		0404ED2E2BB9375000FCDAB5 /* NIOTestUtils in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED2D2BB9375000FCDAB5 /* NIOTestUtils */; };
+		0404ED302BB9375000FCDAB5 /* _NIOConcurrency in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED2F2BB9375000FCDAB5 /* _NIOConcurrency */; };
+		0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED312BB9375000FCDAB5 /* _NIOFileSystem */; };
+		0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */; };
+		0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */; };
+		0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED382BB96D4C00FCDAB5 /* NIOSSL */; };
+		045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */; };
+		04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80012B9704B9002E2EDE /* AudioToolbox.framework */; };
+		04BF80042B9704C1002E2EDE /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80032B9704C1002E2EDE /* AVFoundation.framework */; };
+		04BF80122B9704FA002E2EDE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80112B9704FA002E2EDE /* Foundation.framework */; };
+		04BF80242B97056B002E2EDE /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80232B97056B002E2EDE /* UIKit.framework */; };
+		04E674932AB8AF3D00404C63 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 04E674922AB8AF3D00404C63 /* Launch Screen.storyboard */; };
+		04EE38EC2BC00C5100E830A3 /* NIOExtras in Frameworks */ = {isa = PBXBuildFile; productRef = 04EE38EB2BC00C5100E830A3 /* NIOExtras */; };
+		04FEEA3A2BBD821400E9AC8F /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 04FEEA392BBD821400E9AC8F /* NIOTransportServices */; };
+		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
+		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
+		4FD3AE45A5F9405184490A5A /* YouTubeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58170E465ECA4DCB82958108 /* YouTubeKit */; };
+		D5678880AB67AF8510BFF507 /* NioConnectionHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */; };
+		5A1C0B0D2F00000000000003 /* VLCKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A1C0B0D2F00000000000002 /* VLCKit.xcframework */; };
+		5A1C0B0D2F00000000000004 /* VLCKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5A1C0B0D2F00000000000002 /* VLCKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5A1C0B0D2F00000000000005 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				5A1C0B0D2F00000000000004 /* VLCKit.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNioNetworkManager.swift; sourceTree = "<group>"; };
+		045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncplayScreen.swift; sourceTree = "<group>"; };
+		04BF80012B9704B9002E2EDE /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		04BF80032B9704C1002E2EDE /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		04BF80052B9704C9002E2EDE /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		04BF80072B9704D3002E2EDE /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		04BF80092B9704DA002E2EDE /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		04BF800B2B9704E3002E2EDE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		04BF800D2B9704EB002E2EDE /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		04BF800F2B9704F1002E2EDE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		04BF80112B9704FA002E2EDE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		04BF80132B970509002E2EDE /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
+		04BF80152B970518002E2EDE /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		04BF80172B97052A002E2EDE /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
+		04BF80192B97053E002E2EDE /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
+		04BF801B2B97054D002E2EDE /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
+		04BF801D2B970556002E2EDE /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		04BF801F2B97055D002E2EDE /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		04BF80212B970564002E2EDE /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
+		04BF80232B97056B002E2EDE /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		04E674922AB8AF3D00404C63 /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
+		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
+		36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouTubeKitBridge.swift; sourceTree = "<group>"; };
+		7555FF7B242A565900829871 /* Synkplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Synkplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NioConnectionHandlers.swift; sourceTree = "<group>"; };
+		5A1C0B0D2F00000000000002 /* VLCKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = VLCKit.xcframework; path = ../build/vlckit/VLCKit.xcframework; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AF7767E45ABA9495FE76EAA2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04BF80242B97056B002E2EDE /* UIKit.framework in Frameworks */,
+				5A1C0B0D2F00000000000003 /* VLCKit.xcframework in Frameworks */,
+				0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */,
+				0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */,
+				0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */,
+				0404ED2A2BB9375000FCDAB5 /* NIOPosix in Frameworks */,
+				04EE38EC2BC00C5100E830A3 /* NIOExtras in Frameworks */,
+				04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */,
+				0404ED262BB9374F00FCDAB5 /* NIOEmbedded in Frameworks */,
+				4FD3AE45A5F9405184490A5A /* YouTubeKit in Frameworks */,
+				0404ED202BB9374F00FCDAB5 /* NIO in Frameworks */,
+				0404ED222BB9374F00FCDAB5 /* NIOConcurrencyHelpers in Frameworks */,
+				0404ED282BB9374F00FCDAB5 /* NIOFoundationCompat in Frameworks */,
+				0404ED2E2BB9375000FCDAB5 /* NIOTestUtils in Frameworks */,
+				04BF80122B9704FA002E2EDE /* Foundation.framework in Frameworks */,
+				0404ED242BB9374F00FCDAB5 /* NIOCore in Frameworks */,
+				04BF80042B9704C1002E2EDE /* AVFoundation.framework in Frameworks */,
+				04FEEA3A2BBD821400E9AC8F /* NIOTransportServices in Frameworks */,
+				0404ED2C2BB9375000FCDAB5 /* NIOTLS in Frameworks */,
+				0404ED302BB9375000FCDAB5 /* _NIOConcurrency in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		058557D7273AAEEB004C7B11 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		4E806E9D922773020ACB06DA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				04BF80232B97056B002E2EDE /* UIKit.framework */,
+				04BF80212B970564002E2EDE /* VideoToolbox.framework */,
+				04BF801F2B97055D002E2EDE /* Security.framework */,
+				04BF801D2B970556002E2EDE /* QuartzCore.framework */,
+				04BF801B2B97054D002E2EDE /* OpenGLES.framework */,
+				04BF80192B97053E002E2EDE /* libxml2.tbd */,
+				04BF80172B97052A002E2EDE /* libiconv.tbd */,
+				04BF80152B970518002E2EDE /* libc++.tbd */,
+				04BF80132B970509002E2EDE /* libbz2.tbd */,
+				04BF80112B9704FA002E2EDE /* Foundation.framework */,
+				04BF800F2B9704F1002E2EDE /* CoreVideo.framework */,
+				04BF800D2B9704EB002E2EDE /* CoreText.framework */,
+				04BF800B2B9704E3002E2EDE /* CoreMedia.framework */,
+				04BF80092B9704DA002E2EDE /* CoreGraphics.framework */,
+				04BF80072B9704D3002E2EDE /* CoreFoundation.framework */,
+				04BF80052B9704C9002E2EDE /* CFNetwork.framework */,
+				04BF80032B9704C1002E2EDE /* AVFoundation.framework */,
+				04BF80012B9704B9002E2EDE /* AudioToolbox.framework */,
+				5A1C0B0D2F00000000000002 /* VLCKit.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7555FF72242A565900829871 = {
+			isa = PBXGroup;
+			children = (
+				04E674922AB8AF3D00404C63 /* Launch Screen.storyboard */,
+				7555FF7D242A565900829871 /* iosApp */,
+				7555FF7C242A565900829871 /* Products */,
+				4E806E9D922773020ACB06DA /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		7555FF7C242A565900829871 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7555FF7B242A565900829871 /* Synkplay.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7555FF7D242A565900829871 /* iosApp */ = {
+			isa = PBXGroup;
+			children = (
+				68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */,
+				058557BA273AAA24004C7B11 /* Assets.xcassets */,
+				7555FF8C242A565B00829871 /* Info.plist */,
+				36FF5B1CCB6D50E91B971174 /* PrivacyInfo.xcprivacy */,
+				2152FB032600AC8F00CF470E /* iOSApp.swift */,
+				045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */,
+				0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */,
+				F23F22FEB281DEAE8C6D1E53 /* NioConnectionHandlers.swift */,
+				058557D7273AAEEB004C7B11 /* Preview Content */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7555FF7A242A565900829871 /* iosApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */;
+			buildPhases = (
+				5A1C0B0D2F00000000000001 /* Build Kotlin */,
+				7555FF77242A565900829871 /* Sources */,
+				7555FF79242A565900829871 /* Resources */,
+				AF7767E45ABA9495FE76EAA2 /* Frameworks */,
+				5A1C0B0D2F00000000000005 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iosApp;
+			packageProductDependencies = (
+				0404ED1F2BB9374F00FCDAB5 /* NIO */,
+				0404ED212BB9374F00FCDAB5 /* NIOConcurrencyHelpers */,
+				0404ED232BB9374F00FCDAB5 /* NIOCore */,
+				0404ED252BB9374F00FCDAB5 /* NIOEmbedded */,
+				0404ED272BB9374F00FCDAB5 /* NIOFoundationCompat */,
+				0404ED292BB9375000FCDAB5 /* NIOPosix */,
+				0404ED2B2BB9375000FCDAB5 /* NIOTLS */,
+				0404ED2D2BB9375000FCDAB5 /* NIOTestUtils */,
+				0404ED2F2BB9375000FCDAB5 /* _NIOConcurrency */,
+				0404ED312BB9375000FCDAB5 /* _NIOFileSystem */,
+				0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */,
+				0404ED382BB96D4C00FCDAB5 /* NIOSSL */,
+				04FEEA392BBD821400E9AC8F /* NIOTransportServices */,
+				04EE38EB2BC00C5100E830A3 /* NIOExtras */,
+				58170E465ECA4DCB82958108 /* YouTubeKit */,
+			);
+			productName = iosApp;
+			productReference = 7555FF7B242A565900829871 /* Synkplay.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7555FF73242A565900829871 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1130;
+				LastUpgradeCheck = 1130;
+				ORGANIZATIONNAME = yuroyami;
+				TargetAttributes = {
+					7555FF7A242A565900829871 = {
+						CreatedOnToolsVersion = 11.3.1;
+					};
+				};
+			};
+			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				ar,
+				de,
+				en,
+				es,
+				fr,
+				pl,
+				ru,
+				zh,
+			);
+			mainGroup = 7555FF72242A565900829871;
+			packageReferences = (
+				0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */,
+				0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
+				04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
+				04EE38EA2BC00C5100E830A3 /* XCRemoteSwiftPackageReference "swift-nio-extras" */,
+				CFFEC47450D849B6945A6C7A /* XCRemoteSwiftPackageReference "YouTubeKit" */,
+			);
+			productRefGroup = 7555FF7C242A565900829871 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7555FF7A242A565900829871 /* iosApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7555FF79242A565900829871 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00AB36FFA94C13CE2D01DAC6 /* PrivacyInfo.xcprivacy in Resources */,
+				04E674932AB8AF3D00404C63 /* Launch Screen.storyboard in Resources */,
+				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
+				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5A1C0B0D2F00000000000001 /* Build Kotlin */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Kotlin";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# !KOTLIN INTEGRATION STEP!\n# This script is managed by the Kotlin Toolchain, do not edit manually!\n\"${KOTLIN_CLI_WRAPPER_PATH}\" tool xcode-integration\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7555FF77242A565900829871 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				02FB671D91E24A7CB7E7A012 /* YouTubeKitBridge.swift in Sources */,
+				045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */,
+				0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */,
+				D5678880AB67AF8510BFF507 /* NioConnectionHandlers.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7555FFA3242A565B00829871 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7555FFA4242A565B00829871 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		7555FFA6242A565B00829871 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1000026001;
+				DEVELOPMENT_ASSET_PATHS = "\"src/Preview Content\"";
+				DEVELOPMENT_TEAM = B5573QN48P;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = src/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				KOTLIN_CLI_WRAPPER_PATH = "$(SRCROOT)/../kotlin";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
+				PRODUCT_NAME = "Synkplay";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7555FFA7242A565B00829871 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1000026001;
+				DEVELOPMENT_ASSET_PATHS = "\"src/Preview Content\"";
+				DEVELOPMENT_TEAM = B5573QN48P;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = src/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				KOTLIN_CLI_WRAPPER_PATH = "$(SRCROOT)/../kotlin";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
+				PRODUCT_NAME = "Synkplay";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7555FFA3242A565B00829871 /* Debug */,
+				7555FFA4242A565B00829871 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7555FFA6242A565B00829871 /* Debug */,
+				7555FFA7242A565B00829871 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.104.0;
+			};
+		};
+		0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssl";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.37.5;
+			};
+		};
+		04EE38EA2BC00C5100E830A3 /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-extras.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.35.1;
+			};
+		};
+		04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-transport-services";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.28.0;
+			};
+		};
+		CFFEC47450D849B6945A6C7A /* XCRemoteSwiftPackageReference "YouTubeKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/alexeichhorn/YouTubeKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0404ED1F2BB9374F00FCDAB5 /* NIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIO;
+		};
+		0404ED212BB9374F00FCDAB5 /* NIOConcurrencyHelpers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOConcurrencyHelpers;
+		};
+		0404ED232BB9374F00FCDAB5 /* NIOCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOCore;
+		};
+		0404ED252BB9374F00FCDAB5 /* NIOEmbedded */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOEmbedded;
+		};
+		0404ED272BB9374F00FCDAB5 /* NIOFoundationCompat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOFoundationCompat;
+		};
+		0404ED292BB9375000FCDAB5 /* NIOPosix */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOPosix;
+		};
+		0404ED2B2BB9375000FCDAB5 /* NIOTLS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOTLS;
+		};
+		0404ED2D2BB9375000FCDAB5 /* NIOTestUtils */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOTestUtils;
+		};
+		0404ED2F2BB9375000FCDAB5 /* _NIOConcurrency */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = _NIOConcurrency;
+		};
+		0404ED312BB9375000FCDAB5 /* _NIOFileSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = _NIOFileSystem;
+		};
+		0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = _NIOFileSystemFoundationCompat;
+		};
+		0404ED382BB96D4C00FCDAB5 /* NIOSSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSL;
+		};
+		04EE38EB2BC00C5100E830A3 /* NIOExtras */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04EE38EA2BC00C5100E830A3 /* XCRemoteSwiftPackageReference "swift-nio-extras" */;
+			productName = NIOExtras;
+		};
+		04FEEA392BBD821400E9AC8F /* NIOTransportServices */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
+			productName = NIOTransportServices;
+		};
+		58170E465ECA4DCB82958108 /* YouTubeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CFFEC47450D849B6945A6C7A /* XCRemoteSwiftPackageReference "YouTubeKit" */;
+			productName = YouTubeKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7555FF73242A565900829871 /* Project object */;
+}

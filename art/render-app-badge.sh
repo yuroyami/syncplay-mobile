@@ -14,7 +14,7 @@ rsvg-convert --width 1254 --height 1254 \
   --output "$badge_tmp/logo.png" "$art_dir/synkplay_logo.svg"
 
 # Use the actual white-grey app background; only resize and round its outline.
-magick "$art_dir/../shared/src/commonMain/composeResources/drawable/synkplay_bg.png" \
+magick "$art_dir/../shared/composeResources/drawable/synkplay_bg.png" \
   -filter Lanczos -resize 832x832 "$badge_tmp/background.png"
 magick -size 1024x1024 xc:none "$badge_tmp/background.png" \
   -gravity northwest -geometry +96+88 -compose Over -composite \

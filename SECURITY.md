@@ -132,10 +132,10 @@ If you contribute, these rules are not optional.
   file.
 - **Keep the app free of analytics, crash reporting and advertising components.** The privacy
   policy states this, and the store declarations depend on it.
-- **Signing secrets never enter the repository.** They load from `local.properties`, and a release
-  build without a keystore fails on purpose. One way past that exists for people who verify a
-  published APK: `-PunsignedRelease=true` builds without signing and writes an APK whose name
-  carries `unsigned`.
+- **Signing secrets never enter the repository.** They load from `keystore.properties` at the
+  repository root, and a release build without that file fails on purpose. One way past that
+  exists for people who verify a published APK: `SYNKPLAY_UNSIGNED_RELEASE=true` builds without
+  signing and writes an APK whose name carries `unsigned`.
 
 ## Supported versions
 

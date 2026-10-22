@@ -1,0 +1,41 @@
+product: jvm/app
+
+description: The Synkplay desktop app for macOS, Windows and Linux. The code and the UI are in the shared module.
+
+apply:
+  - ../common.module-template.yaml
+
+dependencies:
+  - //shared
+  # The Skia binary of this OS
+  - $compose.desktop.currentOs
+  # Registers Dispatchers.Main on the AWT event thread.
+  - $libs.kotlin.coroutines.swing
+  # The shared module does not export the ViewModel supertypes of its public API, so this module
+  # adds the artifact that declares them.
+  - $libs.compose.viewmodel
+
+settings:
+  jvm:
+    mainClass: app.desktop.MainKt
+  compose:
+    enabled: true
+    version: 1.13.0-alpha02
+
+plugins:
+  desktop-package:
+    enabled: true
+    packageName: Synkplay
+    # Written by `./kotlin do syncAppVersion` from the app version in shared/module.yaml.
+    packageVersion: "0.26.0"
+    description: Synchronized media playback with Syncplay
+    vendor: yuroyami
+    macBundleId: com.yuroyami.syncplay.desktop
+    windowsMenuGroup: Synkplay
+    # A fixed GUID, so an MSI upgrade replaces the previous install instead of adding a second one.
+    windowsUpgradeUuid: 9E2B62D1-5C3A-4A8F-9C41-3B7E2B0C11D7
+    windowsPerUserInstall: true
+    # The installer icons come from the app logo. The mark fills 80% of each side.
+    logoForeground: ../shared/composeResources/drawable/synkplay_fg.png
+    logoBackground: ../shared/composeResources/drawable/synkplay_bg.png
+    logoPercent: 80

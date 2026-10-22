@@ -30,8 +30,10 @@ The soft radial light is centered at `(440, 527)` with a radius of `602`.
 
 Trinity is the name of three brand colors. They are the logo stops that cover most of the visible
 logo. The app themes and the launcher vector take three seed colors, not the five-stop field, so
-they use these three. The values live in
-[`buildSrc/src/main/kotlin/AppConfig.kt`](../buildSrc/src/main/kotlin/AppConfig.kt).
+they use these three. The values live in `trinityColors` of the `app-config` plugin in
+[`shared/module.yaml`](../shared/module.yaml). The `app-config` plugin is a local build plugin in
+[`build-plugins/app-config`](../build-plugins/app-config). It holds the app name, the version and
+the generated constants.
 
 | Seed | Color | Logo stop |
 |---|:---:|---|
@@ -43,38 +45,40 @@ The `#793695` stop at 0% is not a seed. The in-app logo computes that stop from 
 seeds: it mixes them and darkens the mix in the Oklab color space. With the Trinity seeds, the
 result is `#793695`.
 
-From `AppConfig`, the three values go two ways:
+From `trinityColors`, the three values go two ways:
 
-- The root `build.gradle.kts` turns them into `KiteBuildConfig.TRINITY_COLOR_1`, `_2` and `_3`.
+- The build turns them into `KiteBuildConfig.TRINITY_COLOR_1`, `_2` and `_3`.
   These become `Theming.NeoSP1`, `NeoSP2` and `NeoSP3` in the app. They seed the built-in themes
   `TRINITY` (shown as "Violet") and `DAYLIGHT`. A theme without its own seed colors falls back to
   them.
-- The `syncTrinityColors` task writes them into the three gradient stops of
-  `shared/src/androidMain/res/drawable/ic_launcher_foreground.xml`. The small icon of the server
-  notification and the Android TV banner use that vector.
+- The `syncTrinityColors` command writes them into the three gradient stops of
+  `androidApp/res/drawable/ic_launcher_foreground.xml`. The small icon of the server notification
+  and the Android TV banner use that vector.
 
-The task does not run by itself. After you change a Trinity color in `AppConfig.kt`, run it:
+The command does not run by itself. After you change a Trinity color in `shared/module.yaml`, run
+it:
 
 ```bash
-./gradlew :shared:syncTrinityColors
+./kotlin do syncTrinityColors
 ```
 
 Never edit the gradient stops of the launcher vector by hand.
 
 ## Source and generated assets
 
-KiteConfig is a Gradle plugin. Its block in the root `build.gradle.kts` holds the app name, the
-app ID, the version and the two logo images of the app icons.
+The `app-config` plugin block in `shared/module.yaml` names the two logo images of the app icons
+(`logoForeground` and `logoBackground`).
 
 - `art/synkplay_logo.svg` is the canonical vector artwork.
-- `shared/src/commonMain/kotlin/app/uicomponents/SynkplayLogo.kt` draws the same shape in code, so
-  that the logo takes the colors of the active theme.
-- `shared/src/commonMain/composeResources/drawable/synkplay_fg.png` is the transparent
-  1024 × 1024 foreground of the app icons.
-- `shared/src/commonMain/composeResources/drawable/synkplay_bg.png` is the opaque background plate
-  of the app icons. It is neutral gray, so a palette change does not affect it.
-- KiteConfig generates and owns the Android launcher resources and
-  `iosApp/iosApp/Assets.xcassets/AppIcon.appiconset`.
+- `shared/src/app/uicomponents/SynkplayLogo.kt` draws the same shape in code, so that the logo
+  takes the colors of the active theme.
+- `shared/composeResources/drawable/synkplay_fg.png` is the transparent 1024 × 1024 foreground of
+  the app icons.
+- `shared/composeResources/drawable/synkplay_bg.png` is the opaque background plate of the app
+  icons. It is neutral gray, so a palette change does not affect it.
+- The `syncAppIcons` command draws the PNG launcher icons in `androidApp/res/mipmap-*` and
+  `iosApp/src/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png` from these two images. The
+  installer icons of the desktop app come from the same two images at package time.
 
 Run the commands below from the repository root.
 
@@ -82,12 +86,12 @@ Render the foreground from the SVG:
 
 ```bash
 rsvg-convert --width 1024 --height 1024 \
-  --output shared/src/commonMain/composeResources/drawable/synkplay_fg.png \
+  --output shared/composeResources/drawable/synkplay_fg.png \
   art/synkplay_logo.svg
 ```
 
-Regenerate the platform icons:
+Draw the platform icons again, then commit the changed files:
 
 ```bash
-./gradlew kiteApply
+./kotlin do syncAppIcons
 ```

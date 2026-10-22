@@ -1,0 +1,38 @@
+tasks:
+  unpackNativeLibraries:
+    action: !io.github.yuroyami.synkplay.buildplugins.androidrelease.unpackNativeLibraries
+      aar: ${pluginSettings.nativeLibraryAar}
+      # The Android build packages jniLibs/ of the module directory.
+      jniLibsDir: ${module.rootDir}/jniLibs
+
+  # The toolchain does not rebuild the APK when only jniLibs/, res/, assets/, the manifest or the
+  # R8 rules change. This stamp goes into the app's jar, so a change in those files makes the APK
+  # build run again.
+  stamp:
+    action: !io.github.yuroyami.synkplay.buildplugins.androidrelease.stampAndroidInputs
+      inputs:
+        - ${tasks.unpackNativeLibraries.action.jniLibsDir}
+        - ${module.rootDir}/res
+        - ${module.rootDir}/assets
+        - ${module.rootDir}/src/AndroidManifest.xml
+        - ${module.rootDir}/src/main/baselineProfiles
+        - ${module.rootDir}/proguard-rules.pro
+      outputDir: ${taskOutputDir}/resources
+
+  # Runs before every compilation of the app. It checks only when the run builds a release: the
+  # signing material is in place, and no module uses the local Maven repository.
+  guardReleaseSigning:
+    action: !io.github.yuroyami.synkplay.buildplugins.androidrelease.guardReleaseSigning
+      moduleName: ${module.name}
+      moduleDir: ${module.rootDir}
+      signingEnabled: ${module.settings.android.signing.enabled}
+      propertiesFile: ${module.settings.android.signing.propertiesFile}
+      projectDir: ${project.rootDir}
+      outputDir: ${taskOutputDir}/sources
+
+generated:
+  resources:
+    - directory: ${tasks.stamp.action.outputDir}
+  # Always empty. It ties the signing guard to the compilation of the app.
+  sources:
+    - directory: ${tasks.guardReleaseSigning.action.outputDir}

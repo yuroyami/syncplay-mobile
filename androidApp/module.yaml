@@ -1,0 +1,55 @@
+product: android/app
+
+description: The Synkplay Android app. The code and the UI are in the shared module.
+
+apply:
+  - ../common.module-template.yaml
+
+dependencies:
+  - //shared
+
+settings:
+  compose:
+    enabled: true
+    version: 1.13.0-alpha02
+  android:
+    namespace: androidApp
+    # Google Play cannot change the application ID after the first upload. The exoOnly build
+    # (scripts/android_release.py --exo-only) uses com.reddnek.syncplay instead.
+    applicationId: com.yuroyami.syncplay
+    compileSdk:
+      apiLevel: 37
+      minorApiLevel: 2
+    minSdk: 26
+    targetSdk: 37
+    # Pinned for reproducible builds (issue #105).
+    buildToolsVersion: 37.0.0
+    # Written by `./kotlin do syncAppVersion` from the app version in shared/module.yaml.
+    versionName: "0.26.0"
+    versionCode: 1000026001
+    # The release build reads storeFile, storePassword, keyAlias and keyPassword from
+    # keystore.properties at the project root. storeFile is relative to this folder, for example
+    # ../keystore/syncplaykey.jks. Never commit either file.
+    signing:
+      enabled: true
+      propertiesFile: ../keystore.properties
+    resourcePackaging:
+      excludes:
+        - /META-INF/{AL2.0,LGPL2.1}
+        - META-INF/license/**
+        - META-INF/native-image/**
+        # Service loader files from transitive dependencies (Rhino's JSR-223 entry, BlockHound's
+        # JVM agent hook). Neither can run on Android, and dropping them removes R8 warnings.
+        - META-INF/services/javax.script.ScriptEngineFactory
+        - META-INF/services/reactor.blockhound.integration.BlockHoundIntegration
+      pickFirsts:
+        - META-INF/INDEX.LIST
+        - META-INF/versions/9/previous-compilation-data.bin
+        - META-INF/io.netty.versions.properties
+
+plugins:
+  android-release:
+    enabled: true
+    # The Media3 FFmpeg extension (shared/libs/README.md). Its Java classes are in
+    # shared/src@android/androidx, and this AAR gives the native decoder.
+    nativeLibraryAar: ../shared/libs/libffmpeg_media3exo_1.8.0.aar

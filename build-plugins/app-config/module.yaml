@@ -1,0 +1,12 @@
+product: jvm/amper-plugin
+
+description: >-
+  Holds the app identity of Synkplay. It writes KiteBuildConfig, keeps the version in the Android,
+  desktop and Xcode files in step, checks the store texts, and prints the release identity and the
+  dependency table for the release workflow.
+
+apply:
+  - ../../common.module-template.yaml
+
+pluginInfo:
+  settingsClass: io.github.yuroyami.synkplay.buildplugins.appconfig.AppConfigSettings

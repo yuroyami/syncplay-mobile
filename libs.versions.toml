@@ -1,0 +1,145 @@
+[versions] #####################################################
+# The Kotlin compiler version is settings.kotlin.version in common.module-template.yaml. This key
+# keeps kotlin-reflect of the tool modules on the same version.
+kotlin = "2.4.21"
+compose-multiplatform = "1.13.0-alpha02"
+kSerialization = "1.12.0"
+ktorfit = "2.7.5"
+# Runtime language switching. The XML processor reads values-*/strings.xml, so the resource
+# files stay the source of truth and translators keep using Weblate.
+# build-plugins/common-ksp/plugin.yaml runs the processors of ktorfit and lyricist. Their versions
+# there must equal these two; the plugin fails otherwise.
+lyricist = "1.9.0"
+
+#KMM-Libs
+compose-multiplatform-icons = "1.7.3"
+compose-material3 = "1.13.0-alpha02"
+lifecycleViewmodelCompose = "2.11.0"
+navigation3Runtime = "1.2.0"
+navigation3Ui = "1.2.0-rc01"
+# Backdrop blur. Haze publishes every target that this project declares. It has no iosX64,
+# which this project does not declare either.
+haze = "2.0.1"
+kermit = "2.2.0"
+krypto = "0.8.0"
+datastore = "1.3.0"
+filekit = "0.16.0"
+kolorpicker = "2.1.0"
+uriKmp = "0.0.21"
+materialkolor = "5.0.1"
+ktor = "3.6.0"
+koroutines = "1.11.0"
+datetime = "0.8.0"
+atomicfu = "0.33.0"
+# DOM bindings for Kotlin/Wasm. Kotlin/JS gets these from the stdlib; Wasm does not.
+kotlinxBrowser = "0.5.0"
+coil = "3.6.3"
+
+#Android
+coreSplashscreen = "1.2.0"
+activityCompose = "1.14.0-alpha03"
+documentfile = "1.1.0"
+appcompat = "1.8.0"
+coreKtx = "1.19.1"
+media3 = "1.12.0-alpha01"
+netty = "4.2.19.Final" # 4.2.x and later need Android API 26 or higher
+conscrypt = "2.8.0"
+newpipeExtractor = "v0.26.5"
+# The nullness annotations of the vendored Media3 FFmpeg extension sources. Compile only.
+checkerQual = "4.3.1"
+
+# Resolved from Maven Central.
+kiteplayer = "0.3.0"
+aboutlibraries = "15.3.0"
+# libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
+# from Central. shared/module.yaml adds that repository.
+libmpvkt = "0.3.0"
+
+# Android Lint (tools/android-lint) follows the newest stable Android Gradle Plugin (9.4.1).
+androidLint = "32.4.1"
+
+[libraries] #######################################################################################
+#KMM
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-multiplatform-icons" }
+# The @Preview annotation for the control previews (app.uicomponents.previews).
+compose-components-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose-multiplatform" }
+kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "koroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kSerialization" }
+logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+compose-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelCompose" }
+navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
+navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3Ui" }
+ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
+ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
+krypto-digest = { module = "org.kotlincrypto.core:digest", version.ref = "krypto" }
+krypto-md = { module = "org.kotlincrypto.hash:md", version.ref = "krypto" }
+krypto-sha1 = { module = "org.kotlincrypto.hash:sha1", version.ref = "krypto" }
+krypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "krypto" }
+datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
+filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
+kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
+uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-blur = { module = "dev.chrisbanes.haze:haze-blur", version.ref = "haze" }
+haze-glass = { module = "dev.chrisbanes.haze:haze-glass", version.ref = "haze" }
+materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+# Browser HTTP engine. One artifact serves both Kotlin/JS and Kotlin/Wasm.
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
+ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
+lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" }
+
+#Android
+kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
+kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "koroutines" }
+kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "koroutines" }
+jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+jetpack-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
+jetpack-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+jetpack-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+m3-exo = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+m3-exo-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3" }
+m3-exo-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
+m3-exo-rtsp = { module = "androidx.media3:media3-exoplayer-rtsp", version.ref = "media3" }
+m3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
+m3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+m3-extractor = { module = "androidx.media3:media3-extractor", version.ref = "media3" }
+m3-decoder = { module = "androidx.media3:media3-decoder", version.ref = "media3" }
+m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "media3" }
+# The lock screen, the notification transport and headset buttons, for every engine.
+m3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
+m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
+# Only the Netty modules that the client and the built-in server use. netty-all pulls the whole
+# family (about forty jars) for the seventeen classes that the code needs: a bootstrap, a channel,
+# the codec pair and the TLS context builder.
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
+# Netty 4.2 turned netty-codec into a bundle that also pulls compression, protobuf and
+# marshalling codecs. The string and delimiter codecs live in netty-codec-base.
+netty-codec-base = { module = "io.netty:netty-codec-base", version.ref = "netty" }
+netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
+conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
+checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checkerQual" }
+kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
+kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }
+kiteplayer-network = { module = "io.github.yuroyami:kiteplayer-network", version.ref = "kiteplayer" }
+libmpvkt = { module = "io.github.yuroyami:libmpvkt", version.ref = "libmpvkt" }
+libmpvkt-view = { module = "io.github.yuroyami:libmpvkt-view", version.ref = "libmpvkt" }
+newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
+
+# Android Lint (tools/android-lint)
+android-lint = { module = "com.android.tools.lint:lint", version.ref = "androidLint" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }

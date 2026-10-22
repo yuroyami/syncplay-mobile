@@ -1,0 +1,21 @@
+modules:
+  - androidApp
+  - build-plugins/android-release
+  - build-plugins/app-config
+  - build-plugins/common-ksp
+  - build-plugins/desktop-package
+  - build-plugins/quality-gates
+  - build-plugins/vlckit
+  - desktopApp
+  - iosApp
+  - shared
+  - tools/android-lint
+  - webApp
+
+plugins:
+  - //build-plugins/android-release
+  - //build-plugins/app-config
+  - //build-plugins/common-ksp
+  - //build-plugins/desktop-package
+  - //build-plugins/quality-gates
+  - //build-plugins/vlckit

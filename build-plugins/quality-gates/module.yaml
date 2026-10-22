@@ -1,0 +1,12 @@
+product: jvm/amper-plugin
+
+description: >-
+  The quality gates of Synkplay: file scans for rules that the code relies on (protocol throws,
+  string resources, locale parity, placeholders, dead resources, settings reachability, the
+  engine destroy contract, blocking reads), and detekt.
+
+apply:
+  - ../../common.module-template.yaml
+
+pluginInfo:
+  settingsClass: io.github.yuroyami.synkplay.buildplugins.qualitygates.QualityGatesSettings

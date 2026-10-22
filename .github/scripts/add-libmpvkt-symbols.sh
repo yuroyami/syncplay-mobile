@@ -5,16 +5,17 @@
 #
 # libmpvKt ships these libraries stripped, so the build has no symbols to extract from them. Each
 # libmpvKt release attaches the unstripped copies, one zip per ABI. This script downloads the zips
-# for the libmpvKt version in gradle/libs.versions.toml and checks each one against its .sha256
+# for the libmpvKt version in libs.versions.toml and checks each one against its .sha256
 # file. A symbol file must have the same build id as the library in the APK, or the script fails.
 # A symbol file for a library that the APK does not contain (a libmpvKt module that this app does
 # not use) is skipped.
 # The script then adds the file to <native-debug-symbols.zip> as <abi>/<library>.dbg, the name
-# that the build gives its own symbol files. With these files, a crash report from mpv shows
-# function names.
+# that scripts/android_release.py gives the other symbol files. With these files, a crash report
+# from mpv shows function names.
 #
-# Run it from the repository root. It reads the NDK version from gradle.properties and the SDK
-# folder from ANDROID_HOME or local.properties. The NDK's llvm-readelf reads the build ids.
+# Run it from the repository root. It reads the SDK folder from ANDROID_HOME or local.properties
+# (only its sdk.dir line). The llvm-readelf of the newest installed NDK reads the build ids. Set
+# ANDROID_NDK_VERSION to use another NDK.
 set -euo pipefail
 
 if [ $# -ne 2 ]; then
@@ -24,14 +25,16 @@ fi
 apk=$(cd "$(dirname "$1")" && pwd)/$(basename "$1")
 symbols=$(cd "$(dirname "$2")" && pwd)/$(basename "$2")
 
-version=$(sed -n 's/^libmpvkt = "\(.*\)"$/\1/p' gradle/libs.versions.toml)
-[ -n "$version" ] || { echo "::error::gradle/libs.versions.toml has no libmpvkt version" >&2; exit 1; }
+version=$(sed -n 's/^libmpvkt = "\(.*\)"$/\1/p' libs.versions.toml)
+[ -n "$version" ] || { echo "::error::libs.versions.toml has no libmpvkt version" >&2; exit 1; }
 base="https://github.com/yuroyami/libmpvKt/releases/download/v$version"
 
-ndk_version=$(sed -n 's/^android\.ndkVersion=//p' gradle.properties)
 sdk=${ANDROID_HOME:-$(sed -n 's/^sdk\.dir=//p' local.properties 2>/dev/null || true)}
+# The newest NDK folder whose name is a version number.
+newest_ndk() { find "$sdk/ndk" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed 's|.*/||' | grep -E '^[0-9.]+$' | sort -V | tail -n 1; }
+ndk_version=${ANDROID_NDK_VERSION:-$(newest_ndk || true)}
 readelf=$(ls "$sdk/ndk/$ndk_version/toolchains/llvm/prebuilt/"*/bin/llvm-readelf 2>/dev/null | head -n 1 || true)
-[ -x "$readelf" ] || { echo "::error::no llvm-readelf in NDK $ndk_version under '$sdk'" >&2; exit 1; }
+[ -x "$readelf" ] || { echo "::error::no llvm-readelf in NDK '$ndk_version' under '$sdk'" >&2; exit 1; }
 
 # Prints the GNU build id of an ELF file, or nothing when it has none or is not an ELF file.
 build_id() { { "$readelf" -n "$1" 2>/dev/null || true; } | sed -n 's/.*Build ID: *\([0-9a-fA-F]*\).*/\1/p' | head -n 1; }
@@ -39,7 +42,8 @@ build_id() { { "$readelf" -n "$1" 2>/dev/null || true; } | sed -n 's/.*Build ID:
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 mkdir "$work/merged"
-unzip -q "$symbols" -d "$work/merged"
+# A build without native debug info has no symbols file yet. The script then starts a new one.
+[ ! -f "$symbols" ] || unzip -q "$symbols" -d "$work/merged"
 
 abis=$(unzip -Z1 "$apk" 'lib/*/libmpv.so' 2>/dev/null | cut -d/ -f2 || true)
 [ -n "$abis" ] || { echo "::error::$(basename "$apk") has no libmpv.so" >&2; exit 1; }

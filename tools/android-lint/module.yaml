@@ -1,0 +1,16 @@
+# Runs Android Lint on the Android app and on the Android code of the shared module. The toolchain
+# has no lint task. Build the debug app first, then run:
+# ./kotlin run -m android-lint
+product: jvm/app
+
+apply:
+  - ../../common.module-template.yaml
+
+dependencies:
+  - $libs.android.lint
+  # Lint brings kotlin-reflect 2.2, which fails on the Kotlin 2.4 standard library. This one has the stdlib version.
+  - $libs.kotlin.reflect
+
+settings:
+  jvm:
+    mainClass: AndroidLintKt

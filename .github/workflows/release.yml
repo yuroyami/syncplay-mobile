@@ -32,8 +32,7 @@ env:
   # ships a current Homebrew and a recent formula snapshot.
   HOMEBREW_NO_AUTO_UPDATE: 1
   HOMEBREW_NO_INSTALL_CLEANUP: 1
-  # The Gradle daemon only adds overhead in CI steps that run Gradle once.
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=4"
+  KOTLIN_CLI_NO_WELCOME_BANNER: 1
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
@@ -43,54 +42,68 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+      # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          path: ~/.cache/JetBrains/Kotlin
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-${{ runner.os }}-
 
-      # `packages` is spelled out because this pinned version asks for `tools` by default. The SDK
-      # repository does not serve that package, so sdkmanager would fail the job. Keep the pin:
-      # the rule at the top of this file forbids a moving tag.
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
-        with:
-          packages: platform-tools
-
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
-
-      # The gates read sources and metadata. They do not need the full flavor, and exoOnly
-      # configures the Android app without the NDK.
+      # The gates read sources and metadata. They build nothing.
       - name: Verify release gates
-        run: ./gradlew qualityGates detekt -PexoOnly=true
+        run: |
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do qualityGates
+          # shellcheck disable=SC1010
+          ./kotlin do detekt
+
+      # The app version is the same on every platform, the Play Store texts fit the limits, and the
+      # default strings are the English strings.
+      - name: Check the app version, the store metadata and the default strings
+        run: ./kotlin check appVersion storeMetadata defaultStrings
 
   # ───────────────────────────────────────────────────────────────────────────
-  # The test suites and the coverage floor. Every build waits on them too, so a failing test
-  # stops the release before anything is built or uploaded. This job runs on a Mac, because the
-  # render harness in the desktop suite measures text, and its limits were set on macOS fonts.
+  # The test suites. Every build waits on them too, so a failing test stops the release before
+  # anything is built or uploaded. This job runs on a Mac, because the render harness in the
+  # desktop suite measures text, and its limits were set on macOS fonts.
   # ───────────────────────────────────────────────────────────────────────────
   tests:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      # The Android host tests compile against the Android SDK. See the verify job for `packages`.
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      # The Android host tests compile against the Android SDK.
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools
 
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/Library/Caches/JetBrains/Kotlin
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-${{ runner.os }}-
 
-      - name: Run the tests and the coverage check
-        run: ./gradlew :shared:desktopTest :shared:testAndroidHostTest koverVerify -PexoOnly=true
+      # The desktop JVM tests of the shared module, with the line coverage floor of app.protocol and
+      # app.server. scripts/coverage.py runs the tests with the Kover agent and checks the floor.
+      - name: Run the desktop tests and the coverage check
+        run: python3 scripts/coverage.py
+
+      # The Android host tests of the shared module.
+      - name: Run the Android host tests
+        run: ./kotlin test -m shared -p android
+
+      # The licences screen reads a committed file. It must list the libraries that the app ships
+      # now. The check runs on the Mac, because it also reads the dependency graph of the iOS code.
+      - name: Check the licences file
+        run: python3 scripts/licences.py --check
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Android full build (exoOnly=false) → 1 universal APK + 1 AAB
+  # Android full build → 1 universal APK + 1 AAB
   # ───────────────────────────────────────────────────────────────────────────
   build-android-full:
     needs: [verify, tests]
@@ -101,41 +114,43 @@ jobs:
       application_id: ${{ steps.version.outputs.application_id }}
       ios_min_version: ${{ steps.version.outputs.ios_min_version }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools
 
-      # AGP needs the NDK to strip packaged libraries and to extract native symbols. Nothing
-      # native is compiled. The NDK is about 1 GB, and gradle.properties pins its version.
-      # A cache hit skips the install.
+      # Nothing native is compiled, but the build needs the NDK. The toolchain bundles the Android
+      # Gradle plugin 9.3.1, which strips the packaged native libraries with its default NDK,
+      # 28.2.13676358. scripts/android_release.py extracts the native debug symbols with the same
+      # NDK. The NDK is about 1 GB. A cache hit skips the install.
       - name: Cache Android NDK
         id: ndk-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ env.ANDROID_HOME }}/ndk/29.0.14206865
-          key: android-ndk-29.0.14206865-${{ runner.os }}
+          path: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          key: android-ndk-28.2.13676358-${{ runner.os }}
 
       - name: Install NDK
         if: steps.ndk-cache.outputs.cache-hit != 'true'
-        run: sdkmanager "ndk;29.0.14206865"
+        run: sdkmanager "ndk;28.2.13676358"
 
-      # Caches the Gradle dependencies, the Gradle build cache and the wrapper distribution.
-      # It saves the dependency download (about 2 to 3 minutes on a cold start).
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/JetBrains/Kotlin
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-${{ runner.os }}-
 
-      # Ask Gradle for the identity rather than re-deriving it. The version code scheme belongs
-      # to KiteConfig, and a copy of it in bash can drift without anyone noticing.
+      # Ask the build for the identity rather than re-deriving it. The version code scheme belongs
+      # to the app-config build plugin, and a copy of it in bash can drift without anyone noticing.
       - name: Read release identity
         id: version
         run: |
-          ./gradlew -q printReleaseIdentity | tee identity.env
+          # The toolchain puts `[module][task]` before each line that a build plugin prints.
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do printReleaseIdentity | sed -nE 's/^(\[[^]]*\])* *([A-Z_]+=)/\2/p' | tee identity.env
           sed -e 's/^VERSION=/version=/' \
               -e 's/^VERSION_CODE=/version_code=/' \
               -e 's/^APPLICATION_ID=/application_id=/' \
@@ -143,111 +158,147 @@ jobs:
               identity.env >> "$GITHUB_OUTPUT"
 
       - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           mkdir -p keystore
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore/syncplaykey.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > keystore/syncplaykey.jks
 
-      - name: Create local.properties
+      # The toolchain signs the release build with keystore.properties at the project root. The
+      # storeFile path is relative to androidApp/. scripts/android_release.py reads the same file.
+      - name: Create keystore.properties
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          cat > local.properties <<EOP
-          sdk.dir=$ANDROID_HOME
-          keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          EOP
+          {
+            echo "storeFile=../keystore/syncplaykey.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > keystore.properties
 
-      # One Gradle invocation builds both. The full flavor ships one universal APK, and the
-      # AAB lets Play serve each phone only its own libraries.
+      # The script builds the universal APK and the AAB with the toolchain, checks them, and copies
+      # them to AndroidAppOutput/. The AAB lets Play serve each phone only its own libraries. The
+      # script also writes the R8 mapping and the native debug symbols to AndroidAppOutput/symbols/.
       - name: Build APK and AAB
-        run: ./gradlew assembleFullRelease bundleFullRelease
+        run: python3 scripts/android_release.py --full-only
 
       # libmpvKt ships mpv and FFmpeg stripped. This step adds their symbol files from the
       # libmpvKt release to the native debug symbols. The Play upload sends that file.
       - name: Add the mpv symbols to the native debug symbols
         run: >-
           .github/scripts/add-libmpvkt-symbols.sh
-          androidApp/build/outputs/apk/full/release/*.apk
-          androidApp/build/outputs/native-debug-symbols/fullRelease/native-debug-symbols.zip
+          AndroidAppOutput/synkplay-*-full-universal.apk
+          AndroidAppOutput/symbols/native-debug-symbols.zip
 
-      # The release notes carry this table. This job generates it because this job has the
-      # whole build configured, and the release job has no Android SDK.
+      # The release notes carry this table. This job generates it because the release job does not
+      # set up the toolchain.
       - name: Write the dependency table for the release notes
-        run: ./gradlew -q printDependencyTable | grep '^|' | tee dependencies.md
+        run: |
+          # The toolchain puts `[module][task]` before each line that a build plugin prints.
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do printDependencyTable | sed -nE 's/^(\[[^]]*\])* *(\|)/\2/p' | tee dependencies.md
 
       - name: Upload dependency table
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-dependencies
           path: dependencies.md
 
       - name: Upload APK
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-full-apks
-          path: androidApp/build/outputs/apk/full/release/*.apk
+          if-no-files-found: error
+          path: AndroidAppOutput/*.apk
 
       - name: Upload AAB
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-aab
-          path: androidApp/build/outputs/bundle/fullRelease/*.aab
+          if-no-files-found: error
+          path: AndroidAppOutput/*.aab
 
       # Without these files, a crash report from a release build is unreadable. Every build
       # produces them, and the runner discards them unless this step uploads them.
       - name: Upload R8 mapping and native symbols
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-symbols
           if-no-files-found: error
           path: |
-            androidApp/build/outputs/mapping/fullRelease/mapping.txt
-            androidApp/build/outputs/native-debug-symbols/fullRelease/native-debug-symbols.zip
+            AndroidAppOutput/symbols/mapping.txt
+            AndroidAppOutput/symbols/native-debug-symbols.zip
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Android ExoOnly Build (exoOnly=true) → 1 universal APK
+  # Android exoOnly build → 1 universal APK
   # ───────────────────────────────────────────────────────────────────────────
   build-android-exo:
     needs: [verify, tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools
 
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      # The same NDK as the full build. See build-android-full.
+      - name: Cache Android NDK
+        id: ndk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          key: android-ndk-28.2.13676358-${{ runner.os }}
+
+      - name: Install NDK
+        if: steps.ndk-cache.outputs.cache-hit != 'true'
+        run: sdkmanager "ndk;28.2.13676358"
+
+      # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/JetBrains/Kotlin
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-${{ runner.os }}-
 
       - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           mkdir -p keystore
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore/syncplaykey.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > keystore/syncplaykey.jks
 
-      - name: Create local.properties
+      # The toolchain signs the release build with keystore.properties at the project root. The
+      # storeFile path is relative to androidApp/. scripts/android_release.py reads the same file.
+      - name: Create keystore.properties
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          cat > local.properties <<EOP
-          sdk.dir=$ANDROID_HOME
-          keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          EOP
+          {
+            echo "storeFile=../keystore/syncplaykey.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > keystore.properties
 
+      # The script builds the release APK with the exoOnly application ID and
+      # KiteBuildConfig.EXOPLAYER_ONLY set to true. Then it removes the native player libraries,
+      # aligns the APK and signs it again.
       - name: Build APK
-        # -PexoOnly=true selects the exo-only flavor and overrides the gradle.properties default.
-        # The property creates the `exoOnly` flavor, and with it the assembleExoOnlyRelease task.
-        # Editing a constant in the source has no effect, because the Gradle property wins.
-        run: ./gradlew assembleExoOnlyRelease -PexoOnly=true
+        run: python3 scripts/android_release.py --exo-only
 
       - name: Upload APK
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-exo-apk
-          path: androidApp/build/outputs/apk/exoOnly/release/*.apk
+          if-no-files-found: error
+          path: AndroidAppOutput/*.apk
 
   # ───────────────────────────────────────────────────────────────────────────
   # Desktop → one installer per host OS. jpackage can only build for the OS it
@@ -262,35 +313,51 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            task: packageDmg
             artifact: desktop-macos
-            path: desktopApp/build/compose/binaries/main/dmg/*.dmg
+            path: build/desktop/desktopApp/*.dmg
           - os: windows-latest
-            task: packageMsi
             artifact: desktop-windows
-            path: desktopApp/build/compose/binaries/main/msi/*.msi
+            path: build/desktop/desktopApp/*.msi
           - os: ubuntu-latest
-            task: packageDeb
             artifact: desktop-linux
-            path: desktopApp/build/compose/binaries/main/deb/*.deb
+            path: build/desktop/desktopApp/*.deb
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+      # One path per runner OS. The cache action skips the paths that do not exist.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          path: |
+            ~/.cache/JetBrains/Kotlin
+            ~/Library/Caches/JetBrains/Kotlin
+            ~/AppData/Local/JetBrains/Kotlin
+          key: kotlin-toolchain-desktop-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-desktop-${{ runner.os }}-
 
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      # jpackage of JDK 21 builds the MSI with WiX 3. The desktop-package build plugin uses the
+      # WiX copy on the PATH.
+      - name: Install WiX 3 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
+            choco install wixtoolset --no-progress -y
+            $wix = Get-ChildItem "${env:ProgramFiles(x86)}" -Directory -Filter 'WiX Toolset v3*' | Select-Object -First 1
+            "$($wix.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          }
 
       # Nothing native is downloaded for desktop: the only engine is KitePlayer, and its
       # decoder ships inside the KiteFFmpeg jar.
       - name: Build installer
-        run: ./gradlew :desktopApp:${{ matrix.task }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do packageDesktop -m desktopApp
 
       - name: Upload installer
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.artifact }}
           if-no-files-found: error
@@ -306,14 +373,9 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       version_code: ${{ steps.version.outputs.version_code }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
 
@@ -321,79 +383,50 @@ jobs:
       - name: Test the iOS connection handlers
         run: swift test --package-path iosApp/NioHandlerTests
 
-      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
+      - name: Cache the Kotlin Toolchain downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/Library/Caches/JetBrains/Kotlin
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '*.module-template.yaml', 'libs.versions.toml', 'build-plugins/**/plugin.yaml') }}
+          restore-keys: kotlin-toolchain-${{ runner.os }}-
 
-      # Let KiteConfig stamp its resolved iOS version and rebuild counter before Xcode
-      # reads them. The same model supplies the build number for the AltStore feed.
-      - name: Stamp iOS version from SSOT
+      # The Xcode project holds the iOS version and build number. The verify job checked that
+      # they match the app version, and the same values go to the AltStore feed.
+      - name: Read the iOS version
         id: version
         run: |
-          ./gradlew -q kiteApplyIos printReleaseIdentity > identity.env
+          # The toolchain puts `[module][task]` before each line that a build plugin prints.
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do printReleaseIdentity | sed -nE 's/^(\[[^]]*\])* *([A-Z_]+=)/\2/p' > identity.env
           VERSION=$(sed -n 's/^IOS_VERSION=//p' identity.env)
           VERSION_CODE=$(sed -n 's/^IOS_BUILD_NUMBER=//p' identity.env)
           if [ -z "$VERSION" ] || [ -z "$VERSION_CODE" ]; then
-            echo "::error::KiteConfig did not provide the iOS release identity" >&2
+            echo "::error::printReleaseIdentity did not provide the iOS release identity" >&2
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
-          echo "iOS version stamped: $VERSION (build $VERSION_CODE)"
+          echo "iOS version: $VERSION (build $VERSION_CODE)"
 
-      # CocoaPods caches at three levels:
-      # 1. ~/.cocoapods/repos, the trunk spec repo (slow to refresh from CDN)
-      # 2. ~/Library/Caches/CocoaPods, downloaded pod sources
-      # 3. iosApp/Pods, the installed Pods tree, restored as a unit to skip
-      #    framework extraction
-      #
-      # `pod install` always runs (cheap with sources cached), so the generated
-      # files inside Pods/ (xcfilelist inputs and outputs, .xcconfig, manifest,
-      # Pods.xcodeproj) match the CocoaPods and Xcode versions on the runner.
-      # Do not cache `iosApp/Pods` alone and skip `pod install`: the cached tree
-      # carries generated files from an older CocoaPods version, and a newer
-      # Xcode then fails with `Unable to load contents of file list ... .xcfilelist`.
-      - name: Cache CocoaPods spec repo
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cocoapods/repos
-          key: cocoapods-repos-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
-          restore-keys: |
-            cocoapods-repos-${{ runner.os }}-
-
-      - name: Cache CocoaPods downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/Library/Caches/CocoaPods
-          key: cocoapods-downloads-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
-          restore-keys: |
-            cocoapods-downloads-${{ runner.os }}-
-
-      - name: Cache installed Pods
-        id: pods-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: iosApp/Pods
-          key: pods-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
-
-      # KMP needs a dummy framework on disk before CocoaPods can resolve the
-      # `:shared` pod dependency. The step is cheap (about 10 s), so it always
-      # runs instead of depending on the Pods cache.
-      - name: Generate shared framework
-        run: ./gradlew :shared:generateDummyFramework
-
-      # Always run pod install, so the xcfilelist, xcconfig and manifest under
-      # iosApp/Pods/Target Support Files match the runner's CocoaPods version.
-      # With sources cached, this takes about 30 s.
-      # Use --repo-update only when the Pods cache misses: refreshing the spec
-      # repo from the CDN is the slow part, and it is not needed while
-      # Podfile.lock is unchanged.
-      - name: Install CocoaPods dependencies
-        working-directory: ./iosApp
+      # The vlckit build plugin downloads the VLCKit archive once and keeps it in this folder.
+      - name: Read the VLCKit version
+        id: vlckit
         run: |
-          if [ "${{ steps.pods-cache.outputs.cache-hit }}" = "true" ]; then
-            pod install
-          else
-            pod install --repo-update
-          fi
+          echo "version=$(sed -n 's/^ *vlcKitVersion: *//p' shared/module.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the VLCKit download
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/Library/Caches/Synkplay/VLCKit
+          key: vlckit-${{ steps.vlckit.outputs.version }}
+
+      # Xcode links and embeds build/vlckit/VLCKit.xcframework, so it must exist before Xcode
+      # plans the build. The Kotlin build phase of the Xcode project builds the shared code.
+      - name: Prepare VLCKit
+        run: |
+          # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
+          ./kotlin do prepareVlcKit
 
       - name: Setup App Store Connect API key
         env:
@@ -409,8 +442,8 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           xcodebuild \
-            -workspace iosApp/iosApp.xcworkspace \
-            -scheme iosApp \
+            -project iosApp/module.xcodeproj \
+            -scheme app \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/iosApp.xcarchive \
@@ -448,7 +481,7 @@ jobs:
           echo "ipa_size=$(stat -f%z "$RUNNER_TEMP/$IPA_NAME")" >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ios-ipa
           path: ${{ steps.ipa.outputs.ipa_path }}
@@ -463,7 +496,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Download IPA
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ios-ipa
           path: ipa
@@ -494,28 +527,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # The checkout is for the What's New directory Play reads.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Download AAB
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: android-aab
           path: aab
 
       # The AAB carries only the symbols that the build extracted. This file adds mpv's.
       - name: Download native symbols
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: android-symbols
           path: symbols
 
       - name: Upload AAB to Google Play
-        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.yuroyami.syncplay
           releaseFiles: aab/*.aab
-          debugSymbols: symbols/native-debug-symbols/fullRelease/native-debug-symbols.zip
+          debugSymbols: symbols/native-debug-symbols.zip
           # An input, not a fixed track: the README says Play carries the same build as GitHub.
           track: ${{ inputs.play_track }}
           status: completed
@@ -540,12 +573,12 @@ jobs:
       IOS_MIN_VERSION: ${{ needs.build-android-full.outputs.ios_min_version }}
     steps:
       # The whole history, because the notes measure the changelog from the previous tag.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: artifacts
 

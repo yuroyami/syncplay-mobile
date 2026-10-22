@@ -1,0 +1,52 @@
+tasks:
+  syncDefaultStrings:
+    action: !io.github.yuroyami.synkplay.buildplugins.commonksp.syncDefaultStrings
+      english: ${pluginSettings.resources}/values-en/strings.xml
+      untranslatable: ${pluginSettings.resources}/values/strings_untranslatable.xml
+      target: ${pluginSettings.resources}/values/strings.xml
+
+  checkDefaultStrings:
+    action: !io.github.yuroyami.synkplay.buildplugins.commonksp.checkDefaultStrings
+      english: ${pluginSettings.resources}/values-en/strings.xml
+      untranslatable: ${pluginSettings.resources}/values/strings_untranslatable.xml
+      target: ${pluginSettings.resources}/values/strings.xml
+
+  generate:
+    action: !io.github.yuroyami.synkplay.buildplugins.commonksp.generateCommonCode
+      moduleName: ${module.name}
+      sourceRoots: ${pluginSettings.sourceRoots}
+      resources: ${pluginSettings.resources}
+      processorOptions: ${pluginSettings.processorOptions}
+      languageVersion: ${pluginSettings.languageVersion}
+      # KSP2 itself. Keep it on the KSP version that the toolchain uses.
+      kspClasspath:
+        - com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.12
+        - com.google.devtools.ksp:symbol-processing-api:2.3.12
+        - com.google.devtools.ksp:symbol-processing-common-deps:2.3.12
+      # The processors. Their versions must equal the library versions in libs.versions.toml
+      # (versionPins below); the task fails otherwise.
+      processorClasspath:
+        - cafe.adriel.lyricist:lyricist-processor-xml:1.9.0
+        - de.jensklingenberg.ktorfit:ktorfit-ksp:2.7.5
+      libraries: ${module.compileClasspath}
+      catalog: ${project.rootDir}/libs.versions.toml
+      versionPins:
+        lyricist-processor-xml: lyricist
+        ktorfit-ksp: ktorfit
+      outputDir: ${taskOutputDir}/kotlin
+      workDir: ${taskOutputDir}/work
+
+generated:
+  sources:
+    - language: kotlin
+      directory: ${tasks.generate.action.outputDir}
+
+checks:
+  # values/strings.xml is the English file without the untranslatable keys.
+  - name: defaultStrings
+    performedBy: checkDefaultStrings
+
+commands:
+  # Writes values/strings.xml from values-en/strings.xml. Run it after a change to the English strings.
+  - name: syncDefaultStrings
+    performedBy: syncDefaultStrings

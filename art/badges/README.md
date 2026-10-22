@@ -58,7 +58,7 @@ uv run art/badges/generate.py
 ```
 
 - The script pins FontTools through its inline dependency metadata.
-- It reads `shared/src/commonMain/composeResources/font/Lexend_variable.ttf` and turns the text
+- It reads `shared/composeResources/font/Lexend_variable.ttf` and turns the text
   into outlines in each SVG. Then librsvg renders each PNG.
 - The SVGs contain no font dependency, no script, no remote image and no external stylesheet.
 - The rebuild does not contact any brand website.

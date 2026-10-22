@@ -2,6 +2,13 @@
 
 Written for people who use the app. The full engineering history is in the commit log.
 
+## Unreleased
+
+- iOS VLC: updated to VLCKit 4.0.0a25.
+- Android: ExoPlayer is updated to Media3 1.12.0-alpha01.
+- iOS: the connection library is updated to SwiftNIO 2.104.0, and the YouTube link reader to YouTubeKit 0.4.9.
+- The app is now built with the Kotlin Toolchain instead of Gradle. Nothing changes in how the app works.
+
 ## 0.26.0
 
 - iOS: picture-in-picture now works with AVPlayer and KitePlayer.

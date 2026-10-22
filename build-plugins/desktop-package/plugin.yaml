@@ -1,0 +1,15 @@
+tasks:
+  package:
+    action: !io.github.yuroyami.synkplay.buildplugins.desktoppackage.packageDesktop
+      settings: ${pluginSettings}
+      mainClass: ${module.settings.jvm.mainClass}
+      jdkVersion: ${module.settings.jvm.jdk.version}
+      jar: ${module.jar}
+      runtimeClasspath: ${module.runtimeClasspath}
+      workDir: ${taskOutputDir}
+      outputDir: ${project.rootDir}/build/desktop/${module.name}
+
+commands:
+  # Builds the installer of this OS: DMG on macOS, MSI on Windows, DEB on Linux.
+  - name: packageDesktop
+    performedBy: package

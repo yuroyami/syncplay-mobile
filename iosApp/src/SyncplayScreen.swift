@@ -1,0 +1,22 @@
+import SwiftUI
+import UIKit
+import KotlinModules
+
+/// Fullscreen SwiftUI host for the shared Compose UI. It is the app's only screen.
+struct SyncplayScreen: View {
+
+    var body: some View {
+        SyncplayCompose()
+            .ignoresSafeArea(.all)
+    }
+}
+
+/// Bridges the Compose Multiplatform UI (`IOSAppKt.SyncplayController()`) into SwiftUI.
+struct SyncplayCompose: UIViewControllerRepresentable {
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        IOSAppKt.SyncplayController()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}

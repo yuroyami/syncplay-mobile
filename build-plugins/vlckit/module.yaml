@@ -1,0 +1,12 @@
+product: jvm/amper-plugin
+
+description: >-
+  Provides VLCKit, the iOS video engine, without CocoaPods. It downloads the official VLCKit
+  archive once, checks its SHA-256, keeps the iOS slices as an XCFramework in build/vlckit, and
+  writes the cinterop definition for the Kotlin bindings.
+
+apply:
+  - ../../common.module-template.yaml
+
+pluginInfo:
+  settingsClass: io.github.yuroyami.synkplay.buildplugins.vlckit.VlcKitSettings

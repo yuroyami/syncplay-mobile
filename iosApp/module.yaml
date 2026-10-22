@@ -1,0 +1,16 @@
+product: ios/app
+
+description: >-
+  The Synkplay iOS app. module.xcodeproj holds the bundle ID, the team, the version, the Swift
+  packages and the VLCKit framework. The Swift code and Info.plist are in src.
+
+apply:
+  - ../common.module-template.yaml
+
+dependencies:
+  - //shared
+
+settings:
+  compose:
+    enabled: true
+    version: 1.13.0-alpha02

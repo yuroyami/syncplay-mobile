@@ -1,0 +1,12 @@
+product: jvm/amper-plugin
+
+description: >-
+  Runs the KSP code generators of the shared code (Lyricist for the string tables, Ktorfit for the
+  HTTP clients) once on the common sources, so every platform compiles the same generated code.
+  It also writes the default-language string file from the English one.
+
+apply:
+  - ../../common.module-template.yaml
+
+pluginInfo:
+  settingsClass: io.github.yuroyami.synkplay.buildplugins.commonksp.CommonKspSettings

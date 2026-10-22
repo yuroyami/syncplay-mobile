@@ -1,0 +1,28 @@
+tasks:
+  qualityGates:
+    action: !io.github.yuroyami.synkplay.buildplugins.qualitygates.qualityGates
+      projectDir: ${project.rootDir}
+
+  detekt:
+    action: !io.github.yuroyami.synkplay.buildplugins.qualitygates.detekt
+      modules: ${pluginSettings.modules}
+      config: ${pluginSettings.detektConfig}
+      detektClasspath:
+        - dev.detekt:detekt-cli:2.0.0-alpha.6
+      reportDir: ${project.rootDir}/build/reports/detekt
+
+checks:
+  # The file scans: protocol throws, string resources, locale parity, string arguments,
+  # placeholder comments, dead resources (a warning only), settings reachability, the engine
+  # destroy contract and blocking reads.
+  - name: qualityGates
+    performedBy: qualityGates
+  - name: detekt
+    performedBy: detekt
+
+commands:
+  # The same tasks as the checks, without the tests that `./kotlin check` also runs.
+  - name: qualityGates
+    performedBy: qualityGates
+  - name: detekt
+    performedBy: detekt

@@ -11,7 +11,17 @@ decoders.
 for four ABIs (arm64-v8a, armeabi-v7a, x86, x86_64) against FFmpeg 6.0 (libavcodec 60.3.100).
 Media3 does not publish this extension to Maven. It ships the Java side as source code, and you
 build the native part yourself. So the extension is a file in this folder, not a Maven coordinate.
-[`shared/build.gradle.kts`](../build.gradle.kts) adds it by its file name.
+
+The Kotlin Toolchain cannot add a local AAR as a dependency, so the build uses the file in two
+parts:
+
+- The Java classes of the extension are in
+  [`shared/src@android/androidx/media3/decoder/ffmpeg/`](../src@android/androidx/media3/decoder/ffmpeg).
+  They are the Media3 1.8.0 sources of the extension, unchanged.
+- The `android-release` build plugin unpacks the native libraries of the AAR (`jni/<abi>/*.so`)
+  into `androidApp/jniLibs/` before each Android build. `nativeLibraryAar` in
+  [`androidApp/module.yaml`](../../androidApp/module.yaml) names the file. The R8 rules of the AAR
+  are in [`androidApp/proguard-rules.pro`](../../androidApp/proguard-rules.pro).
 
 **Version.** The file name names the Media3 release that the extension was built against: 1.8.0.
 The app uses it with the newer Media3 release in the version catalog. Rebuild the AAR when a
@@ -82,8 +92,13 @@ them in an empty folder, with `ANDROID_NDK_HOME` set to an Android NDK.
    ```
 
 7. Copy the release AAR from the build output of the `lib-decoder-ffmpeg` module into
-   `shared/libs/`. When the file name changes, change it in `shared/build.gradle.kts` too.
-8. Replace the checksum below.
+   `shared/libs/`. When the file name changes, change `nativeLibraryAar` in
+   `androidApp/module.yaml` too.
+8. Copy the Java sources of the extension (`libraries/decoder_ffmpeg/src/main/java/`) of the same
+   Media3 release into `shared/src@android/`. Media3 1.12 and newer has no `NonNullApi`
+   annotation. When the app uses such a release, `package-info.java` must use `@NullMarked` from
+   `org.jspecify.annotations`, as the extension of Media3 1.12 does.
+9. Replace the checksum below.
 
 **Integrity.**
 
@@ -111,4 +126,4 @@ that build enables GPL parts is not established.
 
 The licences screen in About shows the entries of the running build. The hand-written part of that
 list, which covers native code such as these builds, is in
-`shared/src/commonMain/kotlin/app/home/components/Attributions.kt`.
+`shared/src/app/home/components/Attributions.kt`.

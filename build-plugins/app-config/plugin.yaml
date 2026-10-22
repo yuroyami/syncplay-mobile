@@ -1,0 +1,92 @@
+tasks:
+  generateBuildConfig:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.generateBuildConfig
+      appName: ${pluginSettings.appName}
+      version: ${pluginSettings.version}
+      packageName: ${pluginSettings.buildConfigPackage}
+      klipyApiKey: ${pluginSettings.klipyApiKey}
+      openSubtitlesKey: ${pluginSettings.openSubtitlesKey}
+      trinityColors: ${pluginSettings.trinityColors}
+      projectDir: ${project.rootDir}
+      outputDir: ${taskOutputDir}
+
+  checkAppVersion:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.checkAppVersion
+      version: ${pluginSettings.version}
+      rebuild: ${pluginSettings.rebuild}
+      androidModule: ${pluginSettings.androidModule}
+      desktopModule: ${pluginSettings.desktopModule}
+      xcodeProject: ${pluginSettings.xcodeProject}
+
+  syncAppVersion:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.syncAppVersion
+      version: ${pluginSettings.version}
+      rebuild: ${pluginSettings.rebuild}
+      androidModule: ${pluginSettings.androidModule}
+      desktopModule: ${pluginSettings.desktopModule}
+      xcodeProject: ${pluginSettings.xcodeProject}
+
+  checkStoreMetadata:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.checkStoreMetadata
+      version: ${pluginSettings.version}
+      rebuild: ${pluginSettings.rebuild}
+      storeMetadata: ${pluginSettings.storeMetadata}
+      changelog: ${pluginSettings.changelog}
+
+  printReleaseIdentity:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.printReleaseIdentity
+      version: ${pluginSettings.version}
+      rebuild: ${pluginSettings.rebuild}
+      androidModule: ${pluginSettings.androidModule}
+      xcodeProject: ${pluginSettings.xcodeProject}
+
+  syncTrinityColors:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.syncTrinityColors
+      trinityColors: ${pluginSettings.trinityColors}
+      launcherForeground: ${pluginSettings.launcherForeground}
+
+  syncAppIcons:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.syncAppIcons
+      logoForeground: ${pluginSettings.logoForeground}
+      logoBackground: ${pluginSettings.logoBackground}
+      androidLogoPercent: ${pluginSettings.androidLogoPercent}
+      iosLogoPercent: ${pluginSettings.iosLogoPercent}
+      androidResources: ${pluginSettings.androidResources}
+      iosAppIcon: ${pluginSettings.iosAppIcon}
+
+  printDependencyTable:
+    action: !io.github.yuroyami.synkplay.buildplugins.appconfig.printDependencyTable
+      catalog: ${project.rootDir}/libs.versions.toml
+      wrapper: ${project.rootDir}/kotlin
+      swiftPackages: ${project.rootDir}/iosApp/module.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+      vlcKitModule: ${module.rootDir}/module.yaml
+
+generated:
+  sources:
+    - language: kotlin
+      directory: ${tasks.generateBuildConfig.action.outputDir}
+
+checks:
+  # The Android, desktop and Xcode files hold the app version of shared/module.yaml.
+  - name: appVersion
+    performedBy: checkAppVersion
+  # The Play store texts fit the limits, and this version has release notes.
+  - name: storeMetadata
+    performedBy: checkStoreMetadata
+
+commands:
+  # Writes the app version and the build number into the Android, desktop and Xcode files.
+  - name: syncAppVersion
+    performedBy: syncAppVersion
+  # Prints VERSION, VERSION_CODE, IOS_VERSION, IOS_BUILD_NUMBER, APPLICATION_ID and IOS_MIN_VERSION.
+  - name: printReleaseIdentity
+    performedBy: printReleaseIdentity
+  # Writes the brand colors into the gradient of the Android launcher foreground.
+  - name: syncTrinityColors
+    performedBy: syncTrinityColors
+  # Draws the Android launcher icons and the iOS app icon from the logo.
+  - name: syncAppIcons
+    performedBy: syncAppIcons
+  # Prints the dependency table of the GitHub release notes.
+  - name: printDependencyTable
+    performedBy: printDependencyTable

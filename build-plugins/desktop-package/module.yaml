@@ -1,0 +1,12 @@
+product: jvm/amper-plugin
+
+description: >-
+  Builds the native installer of the desktop app with jpackage (DMG on macOS, MSI on Windows, DEB
+  on Linux), like the packageDistributionForCurrentOS task of the Compose Gradle plugin. It also
+  draws the installer icons from the app logo.
+
+apply:
+  - ../../common.module-template.yaml
+
+pluginInfo:
+  settingsClass: io.github.yuroyami.synkplay.buildplugins.desktoppackage.DesktopPackageSettings

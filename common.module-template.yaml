@@ -1,0 +1,17 @@
+# Settings that every module of this project shares.
+
+repositories:
+  # libmpvKt (the mpv video engine for Android) is published to a static Maven repository on
+  # GitHub Pages, not to Maven Central.
+  - id: yuroyami-libmpvkt
+    url: https://yuroyami.github.io/maven
+  # NewPipe Extractor (YouTube stream resolution) is published only on JitPack.
+  - id: jitpack
+    url: https://jitpack.io
+
+settings:
+  kotlin:
+    version: 2.4.21
+  jvm:
+    jdk:
+      version: 21

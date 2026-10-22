@@ -79,7 +79,7 @@ Android TV asks for them. Answer the declaration with this text:
   developer or a partner can read it for longer than it takes to serve the request. The server
   relays the data in real time, and it belongs to whoever runs it, not to the developer.
 - The same three types are in `NSPrivacyCollectedDataTypes` in
-  [`PrivacyInfo.xcprivacy`](iosApp/iosApp/PrivacyInfo.xcprivacy). Keep the two lists the same.
+  [`PrivacyInfo.xcprivacy`](iosApp/src/PrivacyInfo.xcprivacy). Keep the two lists the same.
 - The iOS purpose string for the local network covers a server that you host. The app has no other
   purpose string.
 

@@ -1,0 +1,34 @@
+tasks:
+  prepare:
+    action: !io.github.yuroyami.synkplay.buildplugins.vlckit.prepareVlcKit
+      vlcKitVersion: ${pluginSettings.vlcKitVersion}
+      url: ${pluginSettings.url}
+      sha256: ${pluginSettings.sha256}
+      header: ${pluginSettings.header}
+      # The Xcode project links and embeds the framework from this path.
+      xcframework: ${project.rootDir}/build/vlckit/VLCKit.xcframework
+      defFile: ${taskOutputDir}/VLCKit.def
+      includeDir: ${taskOutputDir}/include
+
+  # Link VLCKit next to the iOS simulator test executables. The module that enables the plugin
+  # runs each task after the link task and before the test task (see shared/module.yaml).
+  iosSimulatorTestDebug:
+    action: !io.github.yuroyami.synkplay.buildplugins.vlckit.linkTestFramework
+      xcframework: ${tasks.prepare.action.xcframework}
+      binaryDir: ${project.rootDir}/build/tasks/_${module.name}_linkIosSimulatorArm64TestDebug
+
+  iosSimulatorTestRelease:
+    action: !io.github.yuroyami.synkplay.buildplugins.vlckit.linkTestFramework
+      xcframework: ${tasks.prepare.action.xcframework}
+      binaryDir: ${project.rootDir}/build/tasks/_${module.name}_linkIosSimulatorArm64TestRelease
+
+generated:
+  cinteropDefinitions:
+    - defFile: ${tasks.prepare.action.defFile}
+      fragment:
+        modifier: "@ios"
+
+commands:
+  # Prepares VLCKit before the first build from Xcode. `./kotlin build` does it on its own.
+  - name: prepareVlcKit
+    performedBy: prepare

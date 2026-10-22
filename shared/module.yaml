@@ -1,0 +1,236 @@
+product:
+  type: kmp/lib
+  platforms: [ android, iosArm64, iosSimulatorArm64, jvm, wasmJs ]
+
+description: >-
+  The shared Synkplay code and Compose UI for Android, iOS, the desktop app and the web app.
+
+apply:
+  - ../common.module-template.yaml
+
+# src holds what all four platforms can run. The browser has no raw TCP socket and no native
+# video decoder, so everything that needs either one lives in src@nonWeb. src@jvmShared holds the
+# code that Android and the desktop JVM share (Netty, NewPipe). Tests follow the same split: a test
+# that blocks a thread cannot run in a browser, so it goes in test@nonWeb.
+aliases:
+  - nonWeb: [ android, iosArm64, iosSimulatorArm64, jvm ]
+  - jvmShared: [ android, jvm ]
+
+dependencies:
+  # Compose: foundation, UI, Material 3, resources, view models and Navigation 3
+  - $compose.foundation
+  - $compose.ui
+  - $compose.components.resources
+  - $libs.compose.material3
+  - $libs.compose.material.icons.extended
+  - $libs.compose.components.ui.tooling.preview
+  - $libs.compose.viewmodel
+  - $libs.navigation3.runtime
+  - $libs.navigation3.ui
+  - $libs.kotlin.coroutines.core
+  - $libs.kotlinx.datetime
+  # Runtime language switching. The common-ksp plugin generates the string tables.
+  - $libs.lyricist
+  - $libs.kotlinx.serialization.json
+  # The licences screen in About reads composeResources/files/aboutlibraries.json.
+  - $libs.aboutlibraries.core
+  - $libs.uriKmp
+  - $libs.datastore
+  # Backdrop blur
+  - $libs.haze
+  - $libs.haze.blur
+  - $libs.haze.glass
+  - $libs.materialKolor
+  - $libs.kolorpicker
+  # Digests for the Syncplay protocol (MD5, SHA-1, SHA-256)
+  - $libs.krypto.digest
+  - $libs.krypto.md
+  - $libs.krypto.sha1
+  - $libs.krypto.sha2
+  - $libs.logging.kermit
+  - $libs.filekit
+  - $libs.atomicfu
+  - $libs.coil.compose
+  - $libs.coil.network.ktor
+  # HTTP: Klipy and OpenSubtitles through Ktorfit. The common-ksp plugin generates the clients.
+  - $libs.ktor.client.core
+  - $libs.ktor.client.content.negotiation
+  - $libs.ktor.serialization.json
+  - $libs.ktor.client.logging
+  - $libs.ktorfit
+
+dependencies@nonWeb:
+  # Raw TCP and TLS sockets for the Syncplay protocol. The browser has neither.
+  - $libs.ktor.network
+  - $libs.ktor.network.tls
+  # KitePlayer, the experimental video engine with KiteFFmpeg inside
+  - $libs.kiteplayer.compose
+  - $libs.kiteplayer.audioviz
+  - $libs.kiteplayer.network
+
+dependencies@wasmJs:
+  # The browser HTTP engine
+  - $libs.ktor.client.js
+  # DOM bindings for Kotlin/Wasm
+  - $libs.kotlinx.browser
+
+dependencies@android:
+  - $libs.coil.gif
+  - $libs.jetpack.activity.compose
+  - $libs.jetpack.appcompat
+  - $libs.jetpack.core
+  - $libs.jetpack.documentfile
+  - $libs.jetpack.splashscreen
+  - $libs.kotlin.coroutines.android
+  # The client and the built-in server on Android
+  - $libs.netty.handler
+  - $libs.netty.codec.base
+  - $libs.netty.transport
+  # TLS 1.3, also on older Android versions
+  - $libs.conscrypt
+  # ExoPlayer (Media3)
+  - $libs.m3.exo
+  - $libs.m3.exo.dash
+  - $libs.m3.exo.hls
+  - $libs.m3.exo.rtsp
+  - $libs.m3.datasource.okhttp
+  - $libs.m3.ui
+  - $libs.m3.extractor
+  - $libs.m3.decoder
+  - $libs.m3.datasource
+  - $libs.m3.common
+  - $libs.m3.session
+  # The nullness annotations of the Media3 FFmpeg extension sources in src@android/androidx.
+  - $libs.checker.qual: compile-only
+  # libmpv: the mpv video engine (full build only, see androidApp/module.yaml)
+  - $libs.libmpvkt
+  - $libs.libmpvkt.view
+  # YouTube stream resolution
+  - $libs.newpipe.extractor
+  - $libs.ktor.client.okhttp
+
+dependencies@ios:
+  - $libs.ktor.client.darwin
+
+dependencies@jvm:
+  - $libs.netty.handler
+  - $libs.netty.codec.base
+  - $libs.netty.transport
+  - $libs.newpipe.extractor
+  - $libs.ktor.client.okhttp
+  - $compose.desktop.common
+  # Registers Dispatchers.Main on the AWT event thread. The code dispatches on Dispatchers.Main,
+  # which has no default on the JVM.
+  - $libs.kotlin.coroutines.swing
+
+test-dependencies:
+  - $libs.kotlin.coroutines.test
+
+test-dependencies@jvm:
+  # The desktop tests render Compose, which needs the Skia binary of this OS.
+  - $compose.desktop.currentOs
+
+settings:
+  # The tests use the JUnit 4 API (org.junit.Assume).
+  junit: junit-4
+  kotlin:
+    freeCompilerArgs: [ -Xexplicit-backing-fields, -Xexpect-actual-classes, -Xcontext-parameters ]
+    optIns:
+      - org.jetbrains.compose.resources.ExperimentalResourceApi
+      - androidx.compose.ui.ExperimentalComposeUiApi
+      - kotlin.RequiresOptIn
+      - kotlin.uuid.ExperimentalUuidApi
+      - kotlin.ExperimentalUnsignedTypes
+      - kotlin.ExperimentalStdlibApi
+      - kotlin.io.encoding.ExperimentalEncodingApi
+      - kotlin.time.ExperimentalTime
+    serialization:
+      enabled: true
+      version: 1.12.0
+  android:
+    namespace: app
+    compileSdk:
+      apiLevel: 37
+      minorApiLevel: 2
+    minSdk: 26
+  compose:
+    enabled: true
+    version: 1.13.0-alpha02
+    resources:
+      # The package of the generated resource accessors (`Res`). The code imports them from it.
+      packageName: syncplaymobile.shared.generated.resources
+
+settings@ios:
+  kotlin:
+    # The interop markers of Kotlin/Native, so the Objective-C and cinterop calls need no @OptIn.
+    optIns:
+      - kotlinx.cinterop.ExperimentalForeignApi
+      - kotlinx.cinterop.BetaInteropApi
+      - kotlin.experimental.ExperimentalObjCName
+      - kotlin.experimental.ExperimentalNativeApi
+
+plugins:
+  app-config:
+    enabled: true
+    appName: Synkplay
+    # The app version for every platform. After a change, run `./kotlin do syncAppVersion`.
+    version: 0.26.0
+    rebuild: 1
+    buildConfigPackage: SyncplayMobile.shared
+    # Public on purpose. The key ships inside every APK and travels in the URL path of every
+    # request, so a device cannot keep it secret. The committed key lets a third party rebuild a
+    # published APK and get the same bytes. Klipy keys are free and unmetered.
+    klipyApiKey: M5BjLZtHJtX8pSM7bkwL9A1uTRIiWPceLRfb7TA7QHM9dDVmIXaQLSXk6UYgmI70
+    # The fallback OpenSubtitles key. SYNKPLAY_OPENSUBTITLES_KEY, or yuroyami.keyOpenSubsApi in
+    # local.properties, replaces it.
+    openSubtitlesKey: iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL
+    # The Trinity: the three brand colors of the logo gradient (stops 25%, 55% and 88%). The
+    # wordmark, the launcher icon and the default theme use them. art/synkplay_logo_palette.md has
+    # the full gradient. After a change, run `./kotlin do syncTrinityColors`.
+    trinityColors: [ "#FF9879EF", "#FFC331D8", "#FFD86B75" ]
+    androidModule: ../androidApp/module.yaml
+    desktopModule: ../desktopApp/module.yaml
+    xcodeProject: ../iosApp/module.xcodeproj/project.pbxproj
+    launcherForeground: ../androidApp/res/drawable/ic_launcher_foreground.xml
+    storeMetadata: ../fastlane/metadata/android/en-US
+    changelog: ../CHANGELOG.md
+    # The app icons. After a change to the logo, run `./kotlin do syncAppIcons`.
+    logoForeground: composeResources/drawable/synkplay_fg.png
+    logoBackground: composeResources/drawable/synkplay_bg.png
+    androidLogoPercent: 50
+    iosLogoPercent: 80
+    androidResources: ../androidApp/res
+    iosAppIcon: ../iosApp/src/Assets.xcassets/AppIcon.appiconset
+  common-ksp:
+    enabled: true
+    # The Ktorfit interfaces (KlipyAPI and OpenSubtitlesAPI) and the types they use.
+    sourceRoots: [ src/app/klipy, src/app/subtitles ]
+    resources: composeResources
+    processorOptions:
+      lyricist.packageName: app.i18n
+      lyricist.xml.moduleName: app
+      lyricist.xml.defaultLanguageTag: en
+  vlckit:
+    enabled: true
+    # VLCKit, the iOS video engine. After a version change, recheck the time units of VlcClock.h
+    # (see CONTRIBUTING.md).
+    vlcKitVersion: 4.0.0a25
+    url: https://download.videolan.org/cocoapods/unstable/VLCKit-4.0-20260929-1631.zip
+    sha256: f37c8dbdd4427d1a3f5d75dc4b8bd1ae863cef4426f9a405a2fd1c5c9012f1fb
+    header: vlckit/VlcClock.h
+  quality-gates:
+    enabled: true
+    modules: [ ., ../androidApp, ../desktopApp, ../webApp ]
+    detektConfig: ../config/detekt/detekt.yml
+
+# The iOS simulator test executable loads VLCKit from Frameworks/ in its own folder. Each link task
+# empties that folder, so the vlckit plugin links VLCKit there after the link and before the test run.
+tasks:
+  iosSimulatorTestDebug@vlckit:
+    dependsOn: [ linkIosSimulatorArm64TestDebug ]
+  testIosSimulatorArm64Debug:
+    dependsOn: [ iosSimulatorTestDebug@vlckit ]
+  iosSimulatorTestRelease@vlckit:
+    dependsOn: [ linkIosSimulatorArm64TestRelease ]
+  testIosSimulatorArm64Release:
+    dependsOn: [ iosSimulatorTestRelease@vlckit ]

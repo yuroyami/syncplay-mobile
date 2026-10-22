@@ -5,7 +5,7 @@ set -euo pipefail
 art_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 label_tmp="$(mktemp -d "${TMPDIR:-/tmp}/synkplay-platforms.XXXXXX")"
 trap 'rm -rf -- "$label_tmp"' EXIT
-font="$art_dir/../shared/src/commonMain/composeResources/font/Lexend_variable.ttf"
+font="$art_dir/../shared/composeResources/font/Lexend_variable.ttf"
 
 # Render SVGs above the final size, preserving their original colors and geometry.
 rsvg-convert --width 160 --output "$label_tmp/android-large.png" "$art_dir/third-party/android/head.svg"

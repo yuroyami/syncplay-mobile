@@ -34,13 +34,13 @@ Words that this guide uses:
   file with none.
 - Write for a reader whose first language is not English and who has five minutes. Use short
   sentences, plain verbs and one idea per sentence.
-- Do not commit secrets. The signing keystore and its passwords load from `local.properties`,
-  which git ignores.
+- Do not commit secrets. The release build reads the signing keystore and its passwords from
+  `keystore.properties` at the repository root, which git ignores.
 - Two API keys are in the repository:
   - The KLIPY key (the animated image search) is committed on purpose, so that outside builds
     match the published ones.
-  - The OpenSubtitles key has a committed fallback. A `yuroyami.keyOpenSubsApi` entry in
-    `local.properties` replaces the fallback.
+  - The OpenSubtitles key has a committed fallback. The `SYNKPLAY_OPENSUBTITLES_KEY` environment
+    variable, or a `yuroyami.keyOpenSubsApi` entry in `local.properties`, replaces the fallback.
 - An Android phone emulator never counts as verification. Test on a real device over `adb`, or
   check the code by reading it and say that this is what you did.
 - For television work, you may use the Android TV emulator. See
@@ -49,34 +49,40 @@ Words that this guide uses:
 
 ## 2. Before you commit
 
+The build uses the Kotlin Toolchain: the `./kotlin` script at the repository root, with
+`project.yaml` and one `module.yaml` per module. On Windows, use `kotlin.bat` in place of
+`./kotlin`. The script downloads the toolchain, the JDK and Kotlin itself on the first run.
+
 Run the gates. They are fast, and they catch things that review does not.
 
 ```bash
-./gradlew :shared:desktopTest qualityGates detekt
+./kotlin test -m shared -p jvm
+./kotlin do qualityGates
+./kotlin do detekt
 ```
 
 If you changed Android or iOS code, also compile that side:
 
 ```bash
-./gradlew :shared:compileAndroidMain :shared:compileKotlinIosSimulatorArm64
+./kotlin build -m shared -p android -p iosSimulatorArm64
 ```
 
-If you changed `commonMain`, also compile the web target:
+If you changed `shared/src`, also compile the web target:
 
 ```bash
-./gradlew :shared:compileKotlinWasmJs
+./kotlin build -m shared -p wasmJs
 ```
 
 A Kotlin compile does not prove that the Swift bridges still work. If you changed anything that
-the iOS app calls across the Kotlin and Swift boundary, build the Xcode workspace against the new
+the iOS app calls across the Kotlin and Swift boundary, build the Xcode project against the new
 framework.
 
-`koverVerify` checks the line coverage floor of the `app.protocol` and `app.server` packages
-(`COVERAGE_FLOOR` in the root `build.gradle.kts`). No pre-commit step and no workflow runs it. Run
-it by hand when you change those packages:
+`scripts/coverage.py` checks the line coverage floor of the `app.protocol` and `app.server`
+packages (`COVERAGE_FLOOR` in the script). It runs the desktop tests with the Kover coverage agent.
+The Release workflow runs it too. Run it when you change those packages:
 
 ```bash
-./gradlew koverVerify
+python3 scripts/coverage.py
 ```
 
 The floor is a ratchet. Raise it when you add tests. Never lower it to make a build pass.
@@ -85,7 +91,7 @@ For an Android release:
 
 - Add a store note under `fastlane/metadata/android/en-US/changelogs/`, named by the version code.
   Write it by hand as a summary of the version's `CHANGELOG.md` section. It has 40 to 500
-  characters and is not a placeholder such as "Maintenance update.", or `checkStoreMetadata`
+  characters and is not a placeholder such as "Maintenance update.", or the `storeMetadata` check
   fails.
 - The version code is `1`, then the major version in three digits, the minor version in three, the
   patch in two and the rebuild number in one. So 0.25.0 with rebuild 1 is `1000025001`.
@@ -95,91 +101,106 @@ For an Android release:
 Run the desktop app:
 
 ```bash
-./gradlew :desktopApp:run
+./kotlin run -m desktopApp
 ```
 
 Print the release identity (versions, build numbers, application id and iOS deployment target):
 
 ```bash
-./gradlew printReleaseIdentity
+./kotlin do printReleaseIdentity
 ```
 
-Preview the identity and asset changes that KiteConfig would make:
+Write the app version and the build numbers into the Android, desktop and Xcode files:
 
 ```bash
-./gradlew kitePlan
+./kotlin do syncAppVersion
 ```
 
-Write the identity and assets into the Xcode project:
+Check that every platform file has the app version, that the store texts fit, and that the
+default strings match the English strings:
 
 ```bash
-./gradlew kiteApplyIos
+./kotlin check appVersion storeMetadata defaultStrings
 ```
 
-Check the resolved cross-platform configuration:
+Build both Android APKs and the bundle into `AndroidAppOutput/`. The script deletes that folder
+first:
 
 ```bash
-./gradlew kiteCheck
+python3 scripts/android_release.py
 ```
 
-Build both Android APKs and the bundle into `AndroidAppOutput/`:
+After a dependency change, write the data file of the licences screen again, and commit it with the
+change. The release workflow fails when the file is out of date:
 
 ```bash
-./gradlew androidReleaseAll
+python3 scripts/licences.py
 ```
 
-To log every protocol line that the app sends and receives, add `-PdebugProtocol=true` to a
-Gradle build.
+To log every protocol line that the app sends and receives, set `SYNKPLAY_DEBUG_PROTOCOL=true`
+for the build.
 
-### KiteConfig
+### The app-config plugin
 
-KiteConfig is the Gradle plugin that applies the app's identity (name, version, application ids)
-and its icons to every platform. The `kiteConfig` block in the root `build.gradle.kts` configures
-it. That block holds the version, the rebuild numbers and the JVM level.
+`app-config` is a local build plugin in `build-plugins/app-config`. Its block in
+`shared/module.yaml` holds the app name, the version, the rebuild number, the two API keys and the
+brand colors. The plugin generates `KiteBuildConfig`, the object of constants that the app reads.
 
-- KiteConfig applies its changes by itself (`autoApply = true`).
-- A Gradle sync in Android Studio or IntelliJ also updates the Xcode project.
-- Opening Xcode alone does not run Gradle. If you have not synced, run `kiteApplyIos` before you
-  build in Xcode.
+- The Android, desktop and Xcode files hold their own copies of the version. They are committed,
+  so Xcode can build without a Kotlin run first.
+- After you change the version or the rebuild number, run `./kotlin do syncAppVersion`. The
+  `appVersion` check fails until you do.
+- `IS_DEBUG` is true for an Xcode Debug build, and for `./kotlin build`, `run`, `test` and `task`
+  without `-v release`. Every other run counts as a release, so a shipped file never gets the
+  debug-only code.
 
 ## 3. What the gates check
 
-`qualityGates` runs the gates in `buildSrc/src/main/kotlin/QualityGates.kt`. Each gate exists
-because the thing it checks went wrong before. If you add a gate, plant a violation first and
-confirm that the gate fails on it.
+`./kotlin do qualityGates` runs the gates in `build-plugins/quality-gates/src/qualityGates.kt`.
+Each gate exists because the thing it checks went wrong before. If you add a gate, plant a
+violation first and confirm that the gate fails on it.
 
-| Task | What it stops |
+| Gate | What it stops |
 |---|---|
 | `checkProtocolThrows` | A call to `error`, `check`, `checkNotNull`, `require` or `requireNotNull` in inbound protocol code or in the hosted server's `ClientConnection.kt` |
 | `checkStringResources` | A duplicate string or plural key in any language |
-| `checkLocaleParity` | A key that exists in a translation but not in English. It only reports missing translations, unless you pass `-PstrictLocales=true` |
+| `checkLocaleParity` | A key that exists in a translation but not in English. It only reports missing translations, unless you set `SYNKPLAY_STRICT_LOCALES=true` |
 | `checkStringArguments` | A translation whose placeholders differ in order or number from English, or an English string that repeats a placeholder |
 | `checkPlaceholderComments` | An English string with a placeholder that has no comment directly above it naming each placeholder |
 | `checkDeadResources` | Nothing. It only warns about strings and drawables that nothing references |
 | `checkSettingsReachable` | A preference that declares a title, a summary and an icon, but that no settings or engine code names |
 | `checkDestroyContract` | An engine `destroy()` that does not set `isInitialized = false` before it cancels `playerSupervisorJob` |
 | `checkBlockingReads` | A `runBlocking` or `readBlockingOrNull` call in app code, other than the startup read of the preference store in `Datastore.kt`, the helper behind it and the iOS crash hook |
-| `checkStoreMetadata` | A store short description over 80 characters, a full description over 4000, a Play release note that is missing, over 500 characters or a placeholder, or a version with no section in `CHANGELOG.md` |
+
+These two checks of the `app-config` plugin run with `./kotlin check`:
+
+| Check | What it stops |
+|---|---|
+| `storeMetadata` | A store short description over 80 characters, a full description over 4000, a Play release note that is missing, over 500 characters or a placeholder, or a version with no section in `CHANGELOG.md` |
+| `appVersion` | An Android, desktop or Xcode file whose version or build number differs from the app version in `shared/module.yaml` |
+
+The `defaultStrings` check of the `common-ksp` plugin fails when `values/strings.xml` is not the
+English file without the untranslatable keys.
 
 Other checks:
 
-- `verifyExoOnlyDebugApk` and `verifyExoOnlyReleaseApk` run with the assemble task of the
-  ExoPlayer-only flavour. That flavour is the Android build with ExoPlayer as its only engine
-  (`-PexoOnly=true`). The task fails when the APK carries a native library whose name starts with
-  a forbidden prefix, such as `libmpv`, `libkitecodec` or `libkiteplayer`
-  (`buildSrc/src/main/kotlin/ExoOnlyApkGate.kt`).
-- `verifyFullDebugDecoders` and `verifyFullReleaseDecoders` run with the assemble task of the full
-  flavour. They fail when the APK has an ABI without the KitePlayer decoder, `libkitecodec_jni.so`
-  (`buildSrc/src/main/kotlin/KiteDecoderApkGate.kt`).
-- The design lint is a test in `shared/src/desktopTest` (`DesignLint.kt`). It fails on:
+- `scripts/android_release.py` checks each release APK. It fails when the ExoPlayer-only APK
+  carries a native library whose name starts with a forbidden prefix, such as `libmpv`,
+  `libkitecodec` or `libkiteplayer`. It also fails when the full APK has an ABI without the
+  KitePlayer decoder, `libkitecodec_jni.so`. The ExoPlayer-only build is the Android build with
+  ExoPlayer as its only engine.
+- The design lint is a test in `shared/test@jvm` (`DesignLint.kt`). It fails on:
   - a Material 3 component import (`ColorScheme` is allowed)
   - an `sp` literal outside `Tokens.kt`
   - `MaterialTheme` or a ripple outside `Tokens.kt` and `SaveableTheme.kt`
   - text under 11sp
   - a `clickable`, `combinedClickable`, `selectable` or `toggleable` without semantics
-- `detekt` runs its default rules, except the `comments` rule set and the rules that
-  `config/detekt/detekt.yml` switches off by name. `maxIssues` is 0, so one finding fails the
-  build.
+- `./kotlin do detekt` runs the default rules of detekt, except the `comments` rule set and the
+  rules that `config/detekt/detekt.yml` switches off by name. Each rule reports with the severity
+  error, so one finding fails the run.
+- `./kotlin run -m android-lint` runs Android Lint on the app with the rules in `lint.xml`. Build
+  the debug app first (`./kotlin build -m androidApp -p android`). The reports go to
+  `build/android-lint/`.
 
 ## 4. How the code is laid out
 
@@ -188,51 +209,52 @@ it.
 
 | Module | What it is |
 |---|---|
-| `shared` | The app: protocol, sync, engines, the hosted server and the whole interface. The Android activity, `SyncplayActivity`, is in `shared/src/androidMain` |
+| `shared` | The app: protocol, sync, engines, the hosted server and the whole interface. The Android activity, `SyncplayActivity`, is in `shared/src@android` |
 | `androidApp` | The Android application: manifest, resources, signing and packaging. It holds no Kotlin code |
 | `desktopApp` | A Compose for Desktop window |
 | `webApp` | A browser entry point |
 | `iosApp` | An Xcode project with Swift bridges |
-| `buildSrc` | Build logic that is more than a declaration: the gates, the ExoPlayer-only APK check and the release tasks |
+| `build-plugins/*` | Local build plugins: the generated constants and the version sync (`app-config`), the KSP run (`common-ksp`), VLCKit (`vlckit`), the gates (`quality-gates`), the Android release checks (`android-release`) and the desktop installers (`desktop-package`) |
+| `tools/android-lint` | A small program that runs Android Lint on the app |
 
-Put new build logic in `buildSrc`, not in a `build.gradle.kts` file.
+Put new build logic in a local build plugin, as a task, a check or a command.
 
-The source sets:
+The source folders of `shared`. A folder named `src@x` holds the code for the platforms in `x`:
 
 ```
-commonMain ─┬─ nonWebMain ─┬─ jvmShared ─┬─ androidMain
-            │              │             └─ desktopMain
-            │              └─ iosMain
-            └─ wasmJsMain
+src ─┬─ src@nonWeb ─┬─ src@jvmShared ─┬─ src@android
+     │              │                 └─ src@jvm (desktop)
+     │              └─ src@ios
+     └─ src@wasmJs
 
-commonTest ─── nonWebTest ─┬─ desktopTest
-                           ├─ iosTest
-                           └─ androidHostTest
+test ─── test@nonWeb ─┬─ test@jvm (desktop)
+                      └─ test@android
 ```
 
-- `commonMain` is the code that every platform runs, and a browser is one of the platforms.
-- `nonWebMain` holds what a browser has no equivalent for: a TCP socket, a native decoder, a real
+- `src` is the code that every platform runs, and a browser is one of the platforms.
+- `src@nonWeb` holds what a browser has no equivalent for: a TCP socket, a native decoder, a real
   file system, a thread that may block.
-- `jvmShared` holds files that Android and desktop share, not copies. The Netty network client and
-  the NewPipe media resolver live there.
-- Before you add code to `nonWebMain`, ask whether it would compile in a browser. If it would, it
-  belongs in `commonMain`.
-- The test source sets follow the same split. A test that blocks a thread goes in `nonWebTest`.
-  `:shared:desktopTest` also runs the common and non-web tests.
-- **Never write `Dispatchers.IO`, `runBlocking` or a direct file system write in `commonMain`.**
-  Each one breaks the web build. Use these instead:
+- `src@jvmShared` holds files that Android and desktop share, not copies. The Netty network client
+  and the NewPipe media resolver live there.
+- The `aliases` block of `shared/module.yaml` defines `nonWeb` and `jvmShared`.
+- Before you add code to `src@nonWeb`, ask whether it would compile in a browser. If it would, it
+  belongs in `src`.
+- The test folders follow the same split. A test that blocks a thread goes in `test@nonWeb`.
+  `./kotlin test -m shared -p jvm` also runs the common and non-web tests.
+- **Never write `Dispatchers.IO`, `runBlocking` or a direct file system write in `src`.** Each one
+  breaks the web build. Use these instead:
   - `app.utils.ioDispatcher`. On the web it is `Dispatchers.Default`.
   - `readBlockingOrNull`. On the web it returns null.
   - `FileKitCompat`. On the web its functions throw `UnsupportedOperationException`.
 
-Two build checks read source sets, and both find them on disk, so a new source set is covered
-with no edit:
+Two build checks read source folders, and both find them on disk, so a new source folder is
+covered with no edit:
 
-- detekt scans every `kotlin` and `java` folder under `src/` of `shared`, `androidApp`,
-  `desktopApp` and `webApp` (the `source` list in the root `build.gradle.kts`). Its test
-  exclusions match any folder whose name ends in `Test`.
-- `checkProtocolThrows` scans `app/protocol` in every main source set of `shared`, including
-  `jvmShared`, and the server's `ClientConnection.kt`.
+- detekt scans every `src`, `src@*`, `test` and `test@*` folder of `shared`, `androidApp`,
+  `desktopApp` and `webApp` (`modules` of the `quality-gates` plugin in `shared/module.yaml`). Its
+  exclusions skip every test folder.
+- `checkProtocolThrows` scans `app/protocol` in every main source folder of `shared`, including
+  `src@jvmShared`, and the server's `ClientConnection.kt`.
 
 ## 5. Traps
 
@@ -324,7 +346,8 @@ protocol) mark a play state change that the other side has not confirmed yet.
 
 ### VLCKit on iOS
 
-VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a24.
+VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a25 (`vlcKitVersion` of the
+`vlckit` plugin in `shared/module.yaml`).
 
 - Keep these VLCKit protections. Each one defends against the asynchronous behaviour of VLCKit 4:
   - the post-seek guard (`seekGuard`)
@@ -416,7 +439,7 @@ the playlist) and `List` (the user list).
 ### Interface
 
 Glass is the frosted, see-through panel style, built with the Haze library. The render harness
-(`DesignHarness` in `shared/src/desktopTest`) draws composables without a window, and it can press
+(`DesignHarness` in `shared/test@jvm`) draws composables without a window, and it can press
 keys.
 
 Glass:
@@ -540,8 +563,9 @@ string through them.
   placeholder, for example `<!-- %1$s is a user name, %2$s is a time, such as 1:23:45. -->`. Say
   where the string appears when its length matters. Weblate shows the comment to translators.
   `checkPlaceholderComments` fails on a string whose comment does not name each placeholder.
-- Edit only `values-en/strings.xml`. The `syncDefaultStrings` task writes `values/strings.xml` from
-  it, without the keys in `values/strings_untranslatable.xml`.
+- Edit only `values-en/strings.xml`. Then run `./kotlin do syncDefaultStrings`. It writes
+  `values/strings.xml` from that file, without the keys in `values/strings_untranslatable.xml`.
+  The `defaultStrings` check fails until you do.
 - Lyricist copies each string into a Kotlin string literal, so a backslash in `strings.xml` is a
   Kotlin escape. Use a valid Kotlin escape such as `\n`, `\t`, `\uXXXX`, `\"` or `\\`. An escape
   that Kotlin does not know stops the build.
@@ -551,48 +575,55 @@ string through them.
 
 ### Build and packaging
 
-- **Never add a generated build-config field called `DEBUG`.** KiteConfig generates a public
+- **Never add a generated build-config field called `DEBUG`.** `KiteBuildConfig` is a public
   object, so each field becomes a property in the exported Objective-C header. Xcode defines
   `DEBUG=1` in Debug builds, so the header stops compiling. The field is `IS_DEBUG`.
 - Only the libmpvkt library ships `libc++_shared.so`. If a second dependency brings its own copy,
   the merge fails. Then find out which copy is newer. Do not add a `pickFirst`, because it can ship
   the older copy.
-- The ExoPlayer-only flavour is not free of native code. It still carries:
+- The ExoPlayer-only build is not free of native code. It still carries:
   - an audio decoder (`libffmpegJNI.so`)
   - a security provider (`libconscrypt_jni.so`)
   - the preference store (`libdatastore_shared_counter.so`)
   - a graphics library (`libandroidx.graphics.path.so`)
-  - KitePlayer's subtitle renderer, libass (`libkiteplayer_libass_jni.so`)
 - The ExoPlayer-only APK keeps the name `syncplay-<version>-exo-only.apk`, because the
   IzzyOnDroid updater finds the file by that name. An unsigned release adds `-unsigned` before
   `.apk`.
-- KiteConfig owns the Android application id. Set the application id of the ExoPlayer-only flavour
-  in the root `kiteConfig` block (`appId`), not in `androidApp/build.gradle.kts`.
-- KiteConfig generates the Android launcher icons from `synkplay_fg.png` and `synkplay_bg.png`,
-  and it tracks each generated file by checksum. It never overwrites an edited file automatically,
-  so a hand edit stops later updates. Change the source artwork, then run `./gradlew kiteApply`.
+- The ExoPlayer-only APK has its own application id, `com.reddnek.syncplay`.
+  `scripts/android_release.py` puts it into `androidApp/module.yaml` for that build only, and puts
+  the full id back afterwards.
+- The PNG launcher icons and the iOS app icon are drawn from `synkplay_fg.png` and
+  `synkplay_bg.png`. Change the source artwork, then run `./kotlin do syncAppIcons`. Do not edit
+  the generated icons by hand.
 - The macOS package turns a `0.x.y` app version into `1.x.y`, because jpackage rejects a version
   that starts with zero. Do not sync the two versions.
-- **Reproducible builds (#105):** never add the foojay toolchain resolver plugin, never pin a JVM
-  vendor, and never run `updateDaemonJvm`.
-- Keep the locale sort task (`LocaleOrder.kt`) after Lyricist. Lyricist writes its language table
-  in the order that it reads the folders, and that order differs between machines.
-- The Ktorfit compiler plugin version follows Kotlin, not the Ktorfit library. After a Kotlin
-  upgrade, check `compilerPluginVersion` in `shared/build.gradle.kts`.
-- Skiko is pinned on purpose (`resolutionStrategy.force`). Upgrade it together with Compose
-  Multiplatform.
-- Maven Local is off unless you pass `-PuseMavenLocal=true`, and then it serves only the
-  `io.github.yuroyami` group. A release build refuses the flag. Do not add a `mavenLocal()` that is
-  always on.
-- `dependenciesInfo` stays off for the APK and the bundle. The dependency block that it adds can be
-  read only by Google, so outside checkers such as IzzyOnDroid cannot verify it.
+- Keep the locale sort in the `common-ksp` plugin (`LocaleOrder.kt`). Lyricist writes its language
+  table in the order that it reads the folders, and that order differs between machines.
+- The `common-ksp` plugin runs the Lyricist and Ktorfit processors on the common code. The
+  processor versions in its `plugin.yaml` must equal the `lyricist` and `ktorfit` versions in
+  `libs.versions.toml`, or the build fails.
+- No repository uses the local Maven repository. To test a local build of a library, add
+  `- mavenLocal` to `repositories` in `common.module-template.yaml`, and never commit it. A release
+  build fails while that entry is there.
+- The Kotlin Toolchain cannot turn off the dependency block in the bundle. Only Google can read
+  that block, and only Google Play gets the bundle. The release APKs carry no dependency block,
+  because `scripts/android_release.py` signs them again with a signature that has none.
+- The toolchain stores the native libraries uncompressed, and it has no setting to change that.
+  `scripts/android_release.py` compresses them in the full universal APK, and sets
+  `android:extractNativeLibs` to true in the compiled manifest of that APK. The ExoPlayer-only APK
+  and the AAB keep them uncompressed. The ExoPlayer-only APK must rebuild byte for byte, and the
+  compressed bytes would depend on the zlib of the machine.
+- Do not set `android:extractNativeLibs` in `AndroidManifest.xml`. The Android Gradle plugin of the
+  toolchain fails the build on it.
 - The ExoPlayer DASH, HLS and RTSP modules have no imports and are not dead code. ExoPlayer loads
   them by reflection.
 - Keep both ExoPlayer layouts, because the surface type of `PlayerView` can only be set in XML.
+  The code finds them by name (`appResource` in `app/utils/AppResources.kt`), and
+  `androidApp/res/raw/keep.xml` keeps them through the resource shrinker.
 - Each platform's engine list needs exactly one default engine. The engine preference picks the
   first default at startup.
-- The desktop test source set needs `compose.desktop.currentOs`, because the render harness loads
-  its Skia library from it.
+- The desktop tests need `$compose.desktop.currentOs` (`test-dependencies@jvm`), because the
+  render harness loads its Skia library from it.
 - The hosting foreground service starts as the last step of a successful start, and it stays
   `START_NOT_STICKY`. So a killed process does not bring back a notification with no server behind
   it.

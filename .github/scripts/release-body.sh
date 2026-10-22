@@ -23,7 +23,7 @@ DEPS=${2:-}
 : "${VERSION:?VERSION is not set}" "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}"
 BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}"
 IOS_MIN=${IOS_MIN_VERSION:-15.0}
-# android.minSdk=26 in gradle.properties.
+# minSdk: 26 in androidApp/module.yaml.
 ANDROID_MIN=${ANDROID_MIN:-8.0}
 FULL_ENGINES=${FULL_ENGINES:-ExoPlayer, mpv and KitePlayer}
 LITE_MISSING=${LITE_MISSING:-mpv or KitePlayer}
