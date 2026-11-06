@@ -20,7 +20,7 @@ settings:
     mainClass: app.desktop.MainKt
   compose:
     enabled: true
-    version: 1.13.0-alpha02
+    version: 1.13.0-beta02
 
 plugins:
   desktop-package:

@@ -155,7 +155,7 @@ settings:
     minSdk: 26
   compose:
     enabled: true
-    version: 1.13.0-alpha02
+    version: 1.13.0-beta02
     resources:
       # The package of the generated resource accessors (`Res`). The code imports them from it.
       packageName: syncplaymobile.shared.generated.resources

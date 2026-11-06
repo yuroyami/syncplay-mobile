@@ -209,7 +209,7 @@ private fun UndoSeekKey(target: Long?, onClick: () -> Unit) {
             Icons.Filled.History,
             contentDescription = null,
             tint = p.ink,
-            modifier = Modifier.size(Space.glyphLarge).offset(y = if (target != null) (-4).dp else 0.dp),
+            modifier = Modifier.size(Space.glyphLarge).offset(y = if (target != null) -4.dp else 0.dp),
         )
         if (target != null) {
             Text(

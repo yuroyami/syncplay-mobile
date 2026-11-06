@@ -20,9 +20,9 @@ tasks:
       languageVersion: ${pluginSettings.languageVersion}
       # KSP2 itself. Keep it on the KSP version that the toolchain uses.
       kspClasspath:
-        - com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.12
-        - com.google.devtools.ksp:symbol-processing-api:2.3.12
-        - com.google.devtools.ksp:symbol-processing-common-deps:2.3.12
+        - com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.13
+        - com.google.devtools.ksp:symbol-processing-api:2.3.13
+        - com.google.devtools.ksp:symbol-processing-common-deps:2.3.13
       # The processors. Their versions must equal the library versions in libs.versions.toml
       # (versionPins below); the task fails otherwise.
       processorClasspath:
