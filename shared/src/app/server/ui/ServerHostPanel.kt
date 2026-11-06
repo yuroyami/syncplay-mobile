@@ -3,10 +3,8 @@ package app.server.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -114,7 +112,7 @@ fun ServerHostPanel(modifier: Modifier = Modifier) {
             if (running) {
                 DestructiveAction(strings.serverHostStop, onClick = { ServerHostSession.stopServer() }, modifier = Modifier.fillMaxWidth())
             } else {
-                PrimaryAction(strings.serverHostStart, onClick = { ServerHostSession.startServer() }, modifier = Modifier.fillMaxWidth(), enabled = !starting)
+                PrimaryAction(strings.serverHostStart, onClick = { ServerHostSession.startServer() }, modifier = Modifier.fillMaxWidth(), waiting = starting)
             }
         }
         val editable = !running && !starting
@@ -257,10 +255,10 @@ private fun LogRow(entry: ServerLogEntry) {
         ServerLogLevel.Info -> p.inkFaint
     }
     Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Space.gutter, vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Space.gutter, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(2.dp).fillMaxHeight().background(stub))
+        Box(Modifier.size(6.dp).background(stub, Radius.tightShape))
         RowGap(Space.gapTight + 2.dp)
         Text(clock(entry.timestamp), style = Type.value, color = p.inkFaint, modifier = Modifier.width(64.dp))
         Text(serverLogText(entry.event), style = Type.note, color = if (entry.level == ServerLogLevel.Error) p.bad else p.ink)

@@ -3,8 +3,6 @@ package app.preferences.settings
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.key
 import app.uicomponents.LocalIsTelevision
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -344,15 +342,12 @@ private fun ActionRow(
     onClick: () -> Unit,
 ) {
     val p = palette
-    ListRow(onClick = onClick, enabled = enabled, selected = highlighted, horizontalPadding = if (destructive) 0.dp else Space.gutter) {
-        if (destructive) {
-            Box(Modifier.width(2.dp).height(Space.row).background(p.bad))
-            Spacer(Modifier.width(Space.gutter - 2.dp))
-        }
+    // A destructive row says so in its label colour only. The start edge belongs to the selected row.
+    ListRow(onClick = onClick, enabled = enabled, selected = highlighted, horizontalPadding = Space.gutter) {
         icon?.invoke()
         RowLabel(title, color = if (destructive) p.bad else p.ink)
         RowGap()
-        Chevron(ChevronDirection.Right, modifier = Modifier.padding(end = if (destructive) Space.gutter else 0.dp))
+        Chevron(ChevronDirection.Right)
     }
 }
 

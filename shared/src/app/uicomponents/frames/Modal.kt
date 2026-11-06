@@ -73,7 +73,6 @@ import app.theme.Tier
 import app.theme.Type
 import app.theme.LocalPalette
 import app.theme.LocalSurfacePalette
-import app.uicomponents.controls.LocalFocusRing
 import app.theme.palette
 import app.uicomponents.DialogBackdropBlur
 import app.uicomponents.GlassKind
@@ -132,12 +131,11 @@ fun Modal(
     ) {
         DialogBackdropBlur()
         /* A dialog is its own surface, so it uses the screen's palette and not the palette of
-         * whatever opened it. A control filled with the brand gradient provides a dark ink and a
-         * white focus ring for its own face, and both would be unreadable here. */
+         * whatever opened it. A block filled with the brand ramp provides the ramp's ink for its
+         * own face, and that ink can be unreadable here. */
         CompositionLocalProvider(
             LocalInDialogWindow provides true,
             LocalPalette provides LocalSurfacePalette.current,
-            LocalFocusRing provides null,
         ) {
             ModalFrame(size, title, dismissable, onDismiss, actions, inset, initialFocus, glass, body)
         }

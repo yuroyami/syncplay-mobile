@@ -36,6 +36,8 @@ import app.i18n.strings
 import androidx.compose.ui.draw.clip
 import app.theme.Radius
 import app.theme.Space
+import app.theme.Type
+import app.theme.palette
 import app.uicomponents.controls.controlStates
 import app.theme.ThemeMenu
 import app.uicomponents.SynkplayLogo
@@ -43,6 +45,7 @@ import app.uicomponents.SyncplayishText
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.SettingsGlyph
+import app.uicomponents.controls.Text
 import app.utils.appName
 
 /**
@@ -76,11 +79,11 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             ) {
                 SynkplayLogo(modifier = Modifier.size(40.dp))
                 Spacer(Modifier.width(Space.gap))
-                // The version sits beside the wordmark in the same brush, on the same baseline.
+                // The version is plain faint text beside the wordmark, on the same baseline.
                 Row {
                     SyncplayishText(string = appName, size = 20f, modifier = Modifier.alignByBaseline())
                     Spacer(Modifier.width(Space.gapTight))
-                    SyncplayishText(string = "v" + KiteBuildConfig.APP_VERSION, size = 11f, modifier = Modifier.alignByBaseline())
+                    Text("v" + KiteBuildConfig.APP_VERSION, style = Type.value, color = palette.inkFaint, maxLines = 1, modifier = Modifier.alignByBaseline())
                 }
             }
             Spacer(Modifier.weight(1f))

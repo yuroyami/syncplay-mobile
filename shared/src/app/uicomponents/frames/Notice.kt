@@ -10,13 +10,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
@@ -33,17 +30,18 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.theme.Motion
+import app.theme.Palette
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+import app.theme.readableOn
 import app.uicomponents.chromeSurface
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -98,9 +96,11 @@ class NoticeQueue(private val max: Int = 3) {
 }
 
 /**
- * One notice: a 2dp stripe coloured by severity, and a line of `note` text. Over video it uses the
- * chrome tier; on a flat screen it is a toast in the panel colours. Screen readers announce it as
- * a live region, assertive for warnings.
+ * One notice: a 6dp status square coloured by severity, and a line of `note` text. The square is
+ * the same mark as the room's status pill: dim ink for news, faint ink for quiet news, the middle
+ * of the brand ramp for sync, and `bad` for a warning. Over video the notice uses the chrome tier;
+ * on a flat screen it is a toast in the panel colours. Screen readers announce it as a live region,
+ * assertive for warnings.
  */
 @Composable
 fun Notice(
@@ -111,17 +111,20 @@ fun Notice(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val p = palette
-    val stub: Brush = when (severity) {
-        NoticeSeverity.Info -> Brush.verticalGradient(listOf(p.accent, p.accent))
-        NoticeSeverity.Quiet -> Brush.verticalGradient(listOf(p.inkFaint, p.inkFaint))
-        NoticeSeverity.Sync -> Brush.verticalGradient(p.brandField)
-        NoticeSeverity.Warn -> Brush.verticalGradient(listOf(p.bad, p.bad))
-    }
     val ink = if (overVideo) Color.White else p.ink
+    val mark: Color = when (severity) {
+        NoticeSeverity.Info -> ink.copy(alpha = 0.62f)
+        NoticeSeverity.Quiet -> ink.copy(alpha = 0.42f)
+        // A light theme's ramp is dark, so over video its middle colour may need lifting to show.
+        NoticeSeverity.Sync -> {
+            val backdrop = if (overVideo) Palette.VideoGround else p.panel
+            remember(p.brandField, backdrop) { readableOn(p.brandField[p.brandField.size / 2], backdrop) }
+        }
+        NoticeSeverity.Warn -> p.bad
+    }
     Row(
         modifier = modifier
             .widthIn(max = Space.noticeWidth)
-            .height(IntrinsicSize.Min)
             .heightIn(min = Space.rowCompact)
             .then(
                 if (overVideo) Modifier.chromeSurface(Radius.panelShape)
@@ -130,12 +133,12 @@ fun Notice(
             .semantics { liveRegion = if (severity == NoticeSeverity.Warn) LiveRegionMode.Assertive else LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(2.dp).fillMaxHeight().background(stub))
+        Box(Modifier.padding(start = Space.gap).size(6.dp).background(mark, Radius.tightShape))
         Text(
             text = text,
             style = Type.note,
             color = ink,
-            modifier = Modifier.weight(1f, fill = false).padding(horizontal = Space.gap, vertical = Space.gapTight + 2.dp),
+            modifier = Modifier.weight(1f, fill = false).padding(start = Space.gapTight + 2.dp, end = Space.gap, top = Space.gapTight + 2.dp, bottom = Space.gapTight + 2.dp),
         )
         if (trailing != null) {
             Box(Modifier.padding(end = Space.gapTight)) { trailing() }

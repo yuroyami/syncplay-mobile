@@ -17,8 +17,8 @@ import app.theme.Theming
  * The app logo, drawn in code so that it takes the colours of the active theme. A static drawable
  * shows only the colours it was exported with. This draws the same shape and highlight, and builds
  * the sail gradient from the theme's three seed colours ([Theming.flexibleGradient]) at
- * composition time. A theme change recolours the logo, the wordmark and every accent in the same
- * frame.
+ * composition time. A theme change recolours the logo and every brand shape in the same frame.
+ * The logo is the one place that draws the raw seeds: the wordmark beside it is ink.
  */
 @Composable
 fun SynkplayLogo(modifier: Modifier) {

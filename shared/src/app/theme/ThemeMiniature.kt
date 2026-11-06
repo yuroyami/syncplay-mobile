@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Brush
 
 /**
  * A small drawing of the app in [theme]: the ground, a side panel, two chat lines and a transport
- * bar whose fill uses the theme's gradient. It has no glass effect and no state, and it resolves
+ * bar. The play key shows the middle of the theme's brand ramp, and the track fill shows all of it. It has no glass effect and no state, and it resolves
  * the color scheme once per theme value. Draw it at 72 x 40dp in a list, or let it fill a pane.
  */
 @Composable
@@ -38,11 +38,11 @@ fun ThemeMiniature(theme: SaveableTheme, modifier: Modifier = Modifier) {
         drawRoundRect(pal.accent, Offset(4 * u, 17 * u), Size(w * 0.12f, 2.5f * u), r)
         drawRoundRect(pal.ink, Offset(4 * u, 22 * u), Size(w * 0.30f, 2.5f * u), r)
 
-        // The transport bar: the play button, the track, its gradient fill and the playhead.
+        // The transport bar: the play key, the track, its ramp fill and the playhead.
         val trackY = h - 8 * u
         val trackX = 12 * u
         val trackW = panelX - trackX - 4 * u
-        drawRoundRect(pal.ink, Offset(4 * u, trackY - 2 * u), Size(5 * u, 5 * u), r)
+        drawRoundRect(pal.brandField[pal.brandField.size / 2], Offset(4 * u, trackY - 2 * u), Size(5 * u, 5 * u), r)
         drawRoundRect(pal.trackOff, Offset(trackX, trackY), Size(trackW, 1.5f * u), r)
         drawRoundRect(Brush.horizontalGradient(pal.brandField, trackX, trackX + trackW), Offset(trackX, trackY), Size(trackW * 0.42f, 1.5f * u), r)
         drawRoundRect(pal.ink, Offset(trackX + trackW * 0.42f - u * 0.5f, trackY - 2.5f * u), Size(u, 6.5f * u), r)

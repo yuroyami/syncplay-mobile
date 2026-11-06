@@ -111,13 +111,16 @@ fun RowGap(width: Dp = Space.gap) {
     Spacer(Modifier.width(width))
 }
 
-/** A group heading in the gutter: `group` type, upper case, in the accent colour. */
+/**
+ * A group heading in the gutter: `group` type, upper case, in dim ink. The accent stays for state
+ * (on, selected, focused), so a heading does not compete with it.
+ */
 @Composable
 fun GroupHeading(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxWidth().heightIn(min = Space.groupHead).padding(horizontal = Space.gutter),
         contentAlignment = Alignment.BottomStart,
     ) {
-        Text(text.uppercase(), style = Type.group, color = palette.accent)
+        Text(text.uppercase(), style = Type.group, color = palette.inkDim)
     }
 }

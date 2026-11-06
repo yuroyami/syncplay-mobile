@@ -7,8 +7,6 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.foundation.focusGroup
-import app.uicomponents.controls.LocalFocusRing
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -25,9 +23,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import app.theme.LocalPalette
 import app.theme.Palette
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.background
+import androidx.compose.ui.draw.drawBehind
+import app.theme.BrandSpan
+import app.theme.brandBrush
 import app.uicomponents.controls.Text
 import app.uicomponents.controls.Rule
 import app.uicomponents.controls.CloseGlyph
@@ -84,8 +83,8 @@ fun RoomMediaAddButton() {
     /* One block is both the key and the card. A single progress value drives the width, the
      * height and the alpha of both contents in the same frame. Both contents are measured up
      * front, so the block knows its target size at once. It grows out of the key's corner in one
-     * straight tween, while the key's label fades and the card's rows come in. The brand gradient
-     * stays on the block at full strength, and the rows use dark ink, like the key's label. */
+     * straight tween, while the key's label fades and the card's rows come in. The brand ramp
+     * stays on the block at full strength, and the rows use the ramp's ink, like the key's label. */
     // A plain standard curve. The emphasized decelerate curve used elsewhere in the app looks
     // like a spring on a block this size.
     val t by animateFloatAsState(if (expanded) 1f else 0f, tween(Motion.moveMs, easing = FastOutSlowInEasing), label = "addMorph")
@@ -119,20 +118,18 @@ fun RoomMediaAddButton() {
         }
         seenExpanded = expanded
     }
+    // The rows on the block take the ramp's ink, and so do their focus rings.
     val onBrand = p.onBrandBlock()
-    // A white focus ring on the block. A gradient ring would vanish into the block, and a ring in
-    // the block's dark ink would barely show.
-    val onBrandRing = remember(p.ink) { SolidColor(p.ink) }
     Layout(
         modifier = Modifier
             .padding(Space.gapTight)
             .clip(Radius.panelShape)
-            .background(Brush.horizontalGradient(p.brandField)),
+            // The key draws the same slice of the ramp over the block, so the two never show a seam.
+            .drawBehind { drawRect(brandBrush(p.brandField, size.width, BrandSpan.toPx())) },
         content = {
             // The key stays composed until the card is fully in, and the card until the key is.
             if (t < 1f || !expanded) {
                 Box(Modifier.layoutId("key").alpha(1f - t)) {
-                    CompositionLocalProvider(LocalFocusRing provides onBrandRing) {
                     AddVideoButton(
                         modifier = Modifier
                             .focusRequester(keyFocus)
@@ -147,12 +144,11 @@ fun RoomMediaAddButton() {
                             }
                         },
                     )
-                    }
                 }
             }
             if (t > 0f || expanded) {
                 Box(Modifier.layoutId("card").alpha(t).width(MorphWidth).focusRequester(cardFocus).focusGroup()) {
-                    CompositionLocalProvider(LocalPalette provides onBrand, LocalFocusRing provides onBrandRing) {
+                    CompositionLocalProvider(LocalPalette provides onBrand) {
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth().height(Space.row).padding(start = Space.gapTight, end = Space.gapTight),
@@ -196,16 +192,17 @@ fun RoomMediaAddButton() {
 }
 
 /**
- * The palette for content on the brand block. The block is painted with the gradient, so the ink
- * is dark, and an accent fill must be dark too, or it would match the block. Labels on a filled
- * control come from [Palette.inkOn], which sees this dark accent and returns a light color.
+ * The palette for content on the brand block. The block is painted with the brand ramp, so the
+ * ink is the ramp's ink ([Palette.brandInk]). An accent fill takes that ink too, or it would match
+ * the block. Labels on a filled control come from [Palette.inkOn], which sees that accent and
+ * returns the opposite ink.
  */
 internal fun Palette.onBrandBlock(): Palette = copy(
-    ink = ground,
-    inkDim = ground.copy(alpha = 0.72f),
-    inkFaint = ground.copy(alpha = 0.45f),
-    rule = ground.copy(alpha = 0.25f),
-    accent = ground,
+    ink = brandInk,
+    inkDim = brandInk.copy(alpha = 0.72f),
+    inkFaint = brandInk.copy(alpha = 0.45f),
+    rule = brandInk.copy(alpha = 0.25f),
+    accent = brandInk,
 )
 
 private val MorphWidth = 340.dp

@@ -146,8 +146,8 @@ object Type {
 /**
  * The semantic palette: the colors that surfaces read, never the Material scheme roles. Over the
  * video, the room screen (where the group watches together) provides [overVideo] instead. That
- * palette fixes the grounds dark and the inks white, and keeps only the theme's accent, gradient
- * and status colors.
+ * palette fixes the grounds dark and the inks white, and keeps only the theme's accent and brand
+ * ramp, both made for the dark ground. The status colors are fixed, so no theme changes them.
  */
 @Immutable
 data class Palette(
@@ -158,7 +158,9 @@ data class Palette(
     val inkFaint: Color,
     val rule: Color,
     val trackOff: Color,
+    /** The theme's primary seed, moved in lightness until it reads at 4.5:1 on [ground]. */
     val accent: Color,
+    /** The brand ramp ([buildBrandRamp]). Draw it with [brandBrush], with [brandInk] on top. */
     val brandField: List<Color>,
     val ok: Color,
     /**
@@ -169,20 +171,35 @@ data class Palette(
      * has a contrast of roughly 1:1 against it. This color stays readable there.
      */
     val okText: Color,
+    /** The warning amber, fixed like [ok] and [bad]. */
     val warn: Color,
     val bad: Color,
     val disabled: Color,
     val isDark: Boolean,
+    /** The brand ramp for dark ink, which [overVideo] uses, because the room is always dark. */
+    val videoField: List<Color> = brandField,
+    /** The theme's primary seed as stored. [overVideo] fits it again, for the dark ground. */
+    val accentSeed: Color = accent,
 ) {
     /**
      * The ink color for text on a filled control, computed from [fill] instead of stored.
      *
      * A stored color goes stale when a palette repurposes [accent]. The add-media button does
-     * that: it paints itself with the brand gradient and turns [accent] into the dark ink that
-     * reads on the gradient. A label that used a stored token would then match its own button.
+     * that: it paints itself with the brand ramp and turns [accent] into [brandInk], the ink that
+     * reads on the ramp. A label that used a stored token would then match its own button.
      * The 0.19 cut is where white and near-black give the same contrast against the fill.
      */
     fun inkOn(fill: Color): Color = if (fill.luminance() > 0.19f) VideoGround else Color.White
+
+    /**
+     * The ink for text and glyphs on the brand ramp: white or [VideoGround], whichever reads
+     * better on the ramp's weakest colour. The ramp gives this ink at least 4.6:1.
+     */
+    val brandInk: Color by lazy {
+        val dark = brandField.minOf { contrastRatio(it, VideoGround) }
+        val light = brandField.minOf { contrastRatio(it, Color.White) }
+        if (dark >= light) VideoGround else Color.White
+    }
 
     fun overVideo(): Palette = copy(
         ground = VideoGround,
@@ -192,6 +209,10 @@ data class Palette(
         inkFaint = Color.White.copy(alpha = 0.42f),
         rule = Color.White.copy(alpha = 0.10f),
         trackOff = Color.White.copy(alpha = 0.12f),
+        accent = readableOn(accentSeed, VideoGround),
+        brandField = videoField,
+        okText = Ok,
+        warn = Warn,
         disabled = Color.White.copy(alpha = 0.38f),
         isDark = true,
     )
@@ -203,15 +224,16 @@ data class Palette(
         /** A dark green for text on a light ground: about 4.6:1 against the Daylight surface. */
         val OkOnLight = Color(0xFF14532D)
         val Bad = Color(0xFFE85455)
+
+        /** The warning amber on a dark ground. A theme seed made warnings coral or charcoal. */
+        val Warn = Color(0xFFE5A13A)
+
+        /** The warning amber for a light ground: about 6:1 against the Daylight surface. */
+        val WarnOnLight = Color(0xFF8A5300)
         val VideoGround = Color(0xFF0E0E12)
         val VideoPanel = Color(0xFF1B1B21)
 
         fun from(scheme: ColorScheme, theme: SaveableTheme): Palette {
-            val seeds = listOf(
-                Color(theme.primaryColor),
-                theme.secondaryColor?.let(::Color) ?: Theming.NeoSP2,
-                theme.tertiaryColor?.let(::Color) ?: Theming.NeoSP3,
-            )
             return Palette(
                 ground = scheme.background,
                 panel = scheme.surfaceContainerHigh,
@@ -220,14 +242,16 @@ data class Palette(
                 inkFaint = scheme.onSurface.copy(alpha = 0.42f),
                 rule = scheme.outlineVariant,
                 trackOff = scheme.onSurface.copy(alpha = 0.12f),
-                accent = seeds[0],
-                brandField = seeds,
+                accent = readableOn(Color(theme.primaryColor), scheme.background),
+                brandField = theme.brandRamp,
                 ok = Ok,
                 okText = if (theme.isDark) Ok else OkOnLight,
-                warn = seeds[2],
+                warn = if (theme.isDark) Warn else WarnOnLight,
                 bad = Bad,
                 disabled = scheme.onSurface.copy(alpha = 0.38f),
                 isDark = theme.isDark,
+                videoField = theme.videoRamp,
+                accentSeed = Color(theme.primaryColor),
             )
         }
     }

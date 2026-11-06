@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,6 +43,7 @@ import app.subtitles.openSubtitlesHash
 import app.subtitles.searchTermsFor
 import app.subtitles.SubtitleSearchOutcome
 import app.subtitles.subtitleSearchLanguageCodes
+import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
@@ -235,8 +235,8 @@ internal fun SubtitleSearchResults(
     val p = palette
     error?.let { message ->
         Row(Modifier.fillMaxWidth().padding(vertical = Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.width(2.dp).height(Space.rowCompact).background(p.bad))
-            Spacer(Modifier.width(Space.gutter - 2.dp))
+            Box(Modifier.padding(start = Space.gutter).size(6.dp).background(p.bad, Radius.tightShape))
+            Spacer(Modifier.width(Space.gapTight + 2.dp))
             Text(message, style = Type.note, color = p.bad, modifier = Modifier.weight(1f).padding(end = Space.gutter))
         }
     }

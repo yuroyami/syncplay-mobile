@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import app.room.ui.misc.walkingBrand
+import app.theme.BrandSpan
 import app.theme.Space
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -22,7 +23,7 @@ class PlayKeyWalkTest {
     private fun frame(phase: Float): ByteArray {
         val name = "play-key-walk-${phase.toString().replace('.', '_')}"
         return DesignHarness.render(name, widthDp = 80, heightDp = 80) {
-            Box(Modifier.size(Space.hero).drawBehind { drawRect(walkingBrand(colors, phase, size.width)) })
+            Box(Modifier.size(Space.hero).drawBehind { drawRect(walkingBrand(colors, phase, size.width, BrandSpan.toPx())) })
         }.file.readBytes()
     }
 

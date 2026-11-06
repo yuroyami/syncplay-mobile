@@ -20,6 +20,10 @@ data class SaveableTheme(
     val isDark: Boolean = true,
     val isAMOLED: Boolean = false,
     val style: PaletteStyle = PaletteStyle.TonalSpot,
+    /**
+     * Nothing reads this. Every brand ramp takes the theme's seeds that sit close in hue
+     * ([buildBrandRamp]). The field stays so that saved themes still decode.
+     */
     val syncplayGradients: Boolean = true
 ) {
     fun asString() = Json.encodeToString(this)
@@ -38,6 +42,21 @@ data class SaveableTheme(
             style = style
         )
     }
+
+    /** The three seeds of the brand ramp. A missing seed falls back to the brand colour. */
+    private val rampSeeds: List<Color> by lazy {
+        listOf(
+            Color(primaryColor),
+            secondaryColor?.let { Color(it) } ?: Theming.NeoSP2,
+            tertiaryColor?.let { Color(it) } ?: Theming.NeoSP3,
+        )
+    }
+
+    /** The brand ramp of this theme on its own ground ([buildBrandRamp]), built once. */
+    val brandRamp: List<Color> by lazy { buildBrandRamp(rampSeeds, lightInk = !isDark) }
+
+    /** The brand ramp for dark ink. The room over the video is always dark, so it uses this ramp. */
+    val videoRamp: List<Color> by lazy { if (isDark) brandRamp else buildBrandRamp(rampSeeds, lightInk = false) }
 
     companion object {
         fun String.toTheme(): SaveableTheme = Json.decodeFromString(this)

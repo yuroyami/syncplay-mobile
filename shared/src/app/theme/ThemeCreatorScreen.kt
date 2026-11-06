@@ -174,8 +174,8 @@ private fun Controls(
             }
 
             Column(Modifier.padding(Space.gutter), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Space.gap)) {
-                // Disabled while a save runs, so a second tap cannot write the theme twice.
-                PrimaryAction(strings.save, onClick = { onSave(false) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
+                // Waiting while a save runs, so a second tap cannot write the theme twice.
+                PrimaryAction(strings.save, onClick = { onSave(false) }, waiting = saving, modifier = Modifier.fillMaxWidth())
                 if (editing) SecondaryAction(strings.themeSaveAsNew, onClick = { onSave(true) }, enabled = !saving, modifier = Modifier.fillMaxWidth())
             }
             Spacer(Modifier.height(Space.gutter))

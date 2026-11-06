@@ -1,5 +1,6 @@
 package app.uicomponents.controls
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,17 +16,16 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -39,45 +39,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.SolidColor
+import app.theme.BrandSpan
+import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
+import app.theme.brandBrush
 import app.theme.palette
 import app.uicomponents.frames.LocalModalActionEntry
 
-/** The primary action: at least 48dp tall, the brand gradient fill, label in the ground colour. */
+/**
+ * The primary action: at least 48dp tall, filled with the brand ramp, with the label in the ramp's
+ * ink. While [waiting] is true (the server is starting, the theme is saving), the key rounds into a
+ * capsule and ignores clicks. It keeps its focus, so a remote does not lose its place.
+ */
 @Composable
 fun PrimaryAction(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    waiting: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val p = palette
     val source = remember { MutableInteractionSource() }
     // Inside a modal this is the confirming action, where a remote lands when there is no field.
     val entry = LocalModalActionEntry.current
+    val wait by animateFloatAsState(if (waiting) 1f else 0f, Motion.move(), label = "waiting")
+    val shape = waitingShape(wait)
+    val live = enabled && !waiting
     Row(
         modifier = modifier
             .then(entry?.let { Modifier.focusRequester(it) } ?: Modifier)
             .heightIn(min = 48.dp)
-            .clip(Radius.controlShape)
-            .background(Brush.horizontalGradient(if (enabled) p.brandField else listOf(p.disabled, p.disabled)))
-            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
-            .hoverable(source, enabled)
-            // A gradient focus ring would vanish into the gradient fill, so this ring is ink.
-            .controlStates(source, Radius.controlShape, enabled = enabled, focusRing = SolidColor(p.ink))
+            .clip(shape)
+            .drawBehind {
+                if (enabled) drawRect(brandBrush(p.brandField, size.width, BrandSpan.toPx())) else drawRect(p.disabled)
+            }
+            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = {
+                if (!waiting) { Feedback.tick(); onClick() }
+            })
+            .hoverable(source, live)
+            .controlStates(source, shape, enabled = enabled, focusRing = p.brandInk, filled = true)
             .pointerHoverIcon(PointerIcon.Hand)
-            .pressFeedback(source, enabled),
+            .pressFeedback(source, live),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             // The label is centred on the whole bar, and the trailing glyph sits over its end.
             ActionLabel(
                 text,
-                color = p.ground,
+                color = if (enabled) p.brandInk else p.ground,
                 modifier = Modifier.padding(horizontal = if (trailing != null) Space.touchMin else Space.gutter),
             )
             if (trailing != null) Box(Modifier.align(Alignment.CenterEnd)) { trailing() }
@@ -103,7 +116,7 @@ fun AccentAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
             .background(if (enabled) p.accent else p.disabled)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
             .hoverable(source, enabled)
-            .controlStates(source, Radius.controlShape, enabled = enabled)
+            .controlStates(source, Radius.controlShape, enabled = enabled, focusRing = p.inkOn(p.accent), filled = true)
             .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled)
             .padding(horizontal = Space.gutter),
@@ -161,31 +174,28 @@ fun SecondaryActionPair(
 }
 
 /**
- * A destructive action: a 2dp stripe in `bad` on the start edge and the label in `bad`. Never a
- * red filled button.
+ * A destructive action: the shape of a secondary action, with the border and the label in `bad`.
+ * Never a red filled button.
  */
 @Composable
 fun DestructiveAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val p = palette
     val source = remember { MutableInteractionSource() }
-    val stub = if (enabled) p.bad else p.disabled
-    // No weighted child here: a weight would stretch this row across the whole action bar.
-    Row(
+    val tone = if (enabled) p.bad else p.disabled
+    Box(
         modifier = modifier
             .heightIn(min = Space.row)
             .clip(Radius.controlShape)
+            .border(Space.hair, tone.copy(alpha = 0.55f), Radius.controlShape)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = { Feedback.tick(); onClick() })
             .hoverable(source, enabled)
             .controlStates(source, Radius.controlShape, enabled = enabled)
             .pointerHoverIcon(PointerIcon.Hand)
             .pressFeedback(source, enabled)
-            .drawBehind { drawRect(stub, size = Size(2.dp.toPx(), size.height)) },
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = Space.gutter),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.padding(start = Space.gutter + 2.dp, end = Space.gutter), contentAlignment = Alignment.Center) {
-            ActionLabel(text, color = stub)
-        }
+        ActionLabel(text, color = tone)
     }
 }
 
