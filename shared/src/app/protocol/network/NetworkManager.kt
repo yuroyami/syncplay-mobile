@@ -390,7 +390,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * with one consumer also makes a handler that suspends mid-message (for example the TLS
      * upgrade) finish the whole message before the next line is read.
      */
-    private val inboundLines = Channel<String>(capacity = Channel.UNLIMITED)
+    private val inboundLines = Channel<Inbound>(capacity = Channel.UNLIMITED)
+
+    /** What the inbound consumer handles, in arrival order: a line, or a socket that closed. */
+    private sealed interface Inbound {
+        class Line(val json: String) : Inbound
+
+        /** The socket of connect number [generation] closed. [report] tells the room about it. */
+        class Closed(val generation: Int, val report: () -> Unit) : Inbound
+    }
 
     /**
      * One outbound packet: its JSON, whether a failed write may be replayed, who is waiting on
@@ -430,9 +438,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     init {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
-            for (line in inboundLines) {
-                inboundBacklog.decrementAndGet()
-                processPacket(line)
+            for (item in inboundLines) {
+                when (item) {
+                    is Inbound.Line -> {
+                        inboundBacklog.decrementAndGet()
+                        processPacket(item.json)
+                    }
+                    // A close of a socket that a newer connect has replaced says nothing about the new one.
+                    is Inbound.Closed -> if (item.generation == generation.value) item.report()
+                }
             }
         }
         viewmodel.viewModelScope.launch(ioDispatcher) {
@@ -457,7 +471,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * (Netty event loop, Ktor reader, SwiftNIO callback), so it must not block.
      */
     fun handlePacket(jsonString: String) {
-        if (inboundLines.trySend(jsonString).isSuccess) {
+        if (inboundLines.trySend(Inbound.Line(jsonString)).isSuccess) {
             // Only when the count crosses the limit, so the drop happens once rather than on
             // every line after it, and the counter stays an honest count of what is pending.
             if (inboundBacklog.incrementAndGet() == MAX_INBOUND_BACKLOG + 1) {
@@ -465,6 +479,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 terminateExistingConnection()
             }
         }
+    }
+
+    /**
+     * Runs [report] after every line that arrived before this call, and only when no newer connect
+     * has started by then. A server that refuses a client sends an Error and then closes the
+     * socket. The Error must reach the room before the closed socket does, or the room retries a
+     * join that the server refused for good.
+     */
+    fun afterPendingLines(report: () -> Unit) {
+        inboundLines.trySend(Inbound.Closed(generation.value, report))
     }
 
     /**

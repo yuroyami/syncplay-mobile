@@ -78,6 +78,7 @@
     <string name="room_status_failure_timeout">Нет ответа</string>
     <string name="room_status_failure_tls">Сбой защищённого соединения</string>
     <string name="room_attempting_reconnection">Соединение с сервером потеряно, переподключение</string>
+    <string name="room_disconnected">Отключено от сервера</string>
     <string name="room_attempting_tls">Попытка установить защищенное соединение</string>
     <string name="room_tls_supported">Безопасное соединение установлено (%1$s)</string>
     <string name="room_tls_not_supported">Сервер не поддерживает TLS</string>

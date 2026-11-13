@@ -63,10 +63,14 @@ internal class TwoClientRoom(
     joinSpacingMs: Long = 0,
     /** Sees each client's lines and decisions, by user name. */
     private val tap: (String) -> SessionTap? = { null },
+    /** The settings of the in-process server. A test can give the server a password. */
+    serverConfig: ServerConfig = ServerConfig(isolateRooms = false),
+    /** The server password that both clients send. */
+    private val serverPassword: String = "",
 ) : AutoCloseable {
 
     private val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val server = SyncplayServer(ServerConfig(isolateRooms = false), serverScope)
+    val server = SyncplayServer(serverConfig, serverScope)
     private val stores = mutableListOf<ViewModelStore>()
     private val callbackField = Class.forName("app.utils.PlatformUtilsKt")
         .getDeclaredField("platformCallback").apply { isAccessible = true }
@@ -92,7 +96,7 @@ internal class TwoClientRoom(
     }
 
     private fun join(name: String): Client {
-        val config = JoinConfig(user = name, room = roomName, ip = host, port = port)
+        val config = JoinConfig(user = name, room = roomName, ip = host, port = port, pw = serverPassword)
         val destination = Screen.Room(config)
         val viewmodel = RoomViewmodel(
             joinConfig = config,

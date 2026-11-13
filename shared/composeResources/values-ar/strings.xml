@@ -87,6 +87,7 @@
     <string name="room_status_failure_timeout">لا استجابة</string>
     <string name="room_status_failure_tls">فشل الاتصال الآمن</string>
     <string name="room_attempting_reconnection">انقطع الاتصال بالخادم، جارٍ محاولة إعادة الاتصال</string>
+    <string name="room_disconnected">تم قطع الاتصال بالخادم</string>
     <string name="room_attempting_tls">محاولة الاتصال الآمن</string>
     <string name="room_tls_supported">تم إنشاء اتصال آمن (%1$s)</string>
     <string name="room_tls_not_supported">هذا الخادم لا يدعم TLS</string>

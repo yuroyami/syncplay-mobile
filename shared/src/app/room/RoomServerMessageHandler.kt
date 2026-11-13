@@ -342,11 +342,19 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     override suspend fun onError(message: WireMessage.Error) {
         val errorText = message.data.message ?: return
         loggy("Server error: $errorText")
+        // While the TLS question is open, an error that names startTLS comes from a server without
+        // TLS support. Syncplay PC then goes on without TLS (handleError in protocols.py).
+        if (errorText.contains("startTLS") && network.tls == TlsState.TLS_ASK) {
+            callback.onReceivedTLS(supported = false)
+            return
+        }
         // Show server errors (for example "Wrong password supplied") in chat and on the OSD, like
         // PC's ui.showErrorMessage. The text is shown as sent, because the server writes it in
         // English.
         dispatcher.broadcastMessage(message = { errorText }, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING) { errorText }
+        // The server closes the socket after an Error, and a retry would be refused again.
+        callback.onServerError()
     }
 
     // -----------------------------------------------------------

@@ -147,6 +147,8 @@
     <string name="room_status_failure_timeout">No answer</string>
     <string name="room_status_failure_tls">Secure connection failed</string>
     <string name="room_attempting_reconnection">Connection with server lost, attempting to reconnect</string>
+    <!-- Shown once after the server refused the connection, for example on a wrong password. The app does not try again. -->
+    <string name="room_disconnected">Disconnected from server</string>
     <string name="room_attempting_tls">Attempting secure connection</string>
     <!-- %1$s is the TLS version, such as TLSv1.3. -->
     <string name="room_tls_supported">Secure connection established (%1$s)</string>

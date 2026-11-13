@@ -308,8 +308,30 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         )
     }
 
-    /** A failure with no known reason, such as a server that closed the socket during the handshake. */
-    fun onConnectionFailed() = onConnectionFailed(null)
+    /**
+     * A socket that closed during the handshake, with no known reason. The lines that arrived
+     * before the close are handled first. When one of them was a server Error, [onServerError] has
+     * ended the attempt for good, and this close reports nothing.
+     */
+    fun onConnectionFailed() = network.afterPendingLines {
+        if (network.state.value == ConnectionState.CONNECTING) onConnectionFailed(null)
+    }
+
+    /**
+     * The server sent an Error, and it closes the socket after it. Examples are a wrong server
+     * password and a malformed Hello. A retry would be refused again, so the retries stop, as in
+     * Syncplay PC (`dropWithError`). The room stays disconnected until the person connects again.
+     */
+    fun onServerError() {
+        loggy("SYNCPLAY Protocol: The server refused the connection. The retries stop.")
+        hapticIf(HAPTIC_ON_CONNECTION)
+        protocol.stopChannelHealthMonitoring()
+        // A countdown outliving the connection would start playback into a room we have left.
+        viewmodel.readiness.stop()
+        viewmodel.playlistManager.noteConnectionLost()
+        network.abortConnection()
+        dispatcher.broadcastMessage(message = { Localization.strings.roomDisconnected }, isChat = false, isError = true)
+    }
 
     /** A failed attempt. [reason] is said in the notice, and the status line keeps it until a connect. */
     fun onConnectionFailed(reason: ConnectionFailure?) {

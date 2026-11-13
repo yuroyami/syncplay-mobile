@@ -87,6 +87,7 @@
     <string name="room_status_failure_timeout">Pas de réponse</string>
     <string name="room_status_failure_tls">Connexion sécurisée échouée</string>
     <string name="room_attempting_reconnection">Connexion avec le serveur perdue, tentative de reconnexion</string>
+    <string name="room_disconnected">Déconnecté du serveur</string>
     <string name="room_attempting_tls">Tentative de connexion sécurisée</string>
     <string name="room_tls_supported">Connexion sécurisée établie (%1$s)</string>
     <string name="room_tls_not_supported">Ce serveur ne prend pas en charge TLS</string>

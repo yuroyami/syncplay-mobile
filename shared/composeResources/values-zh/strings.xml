@@ -78,6 +78,7 @@
     <string name="room_status_failure_timeout">无响应</string>
     <string name="room_status_failure_tls">安全连接失败</string>
     <string name="room_attempting_reconnection">服务器连接中断，正在尝试重连</string>
+    <string name="room_disconnected">已与服务器断开连接</string>
     <string name="room_attempting_tls">正在尝试安全连接</string>
     <string name="room_tls_supported">安全连接已建立（%1$s）</string>
     <string name="room_tls_not_supported">服务器不支持TLS加密安全连接</string>

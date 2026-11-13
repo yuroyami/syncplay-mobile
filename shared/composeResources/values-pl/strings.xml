@@ -87,6 +87,7 @@
     <string name="room_status_failure_timeout">Brak odpowiedzi</string>
     <string name="room_status_failure_tls">Błąd bezpiecznego połączenia</string>
     <string name="room_attempting_reconnection">Utracono połączenie z serwerem, próba ponownego połączenia</string>
+    <string name="room_disconnected">Rozłączono z serwerem</string>
     <string name="room_attempting_tls">Próba bezpiecznego połączenia</string>
     <string name="room_tls_supported">Bezpieczne połączenie ustanowione (%1$s)</string>
     <string name="room_tls_not_supported">Ten serwer nie obsługuje TLS</string>

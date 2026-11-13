@@ -408,6 +408,13 @@ the playlist) and `List` (the user list).
   on purpose, because the official server sends shapes that strict models reject (#152).
 - Catch a TLS handshake failure inside `RoomCallback.onReceivedTLS`. The catch there ends the
   connection and starts a retry.
+- A server `Error` ends the connection for good (`RoomCallback.onServerError`). The server closes
+  the socket after it, and a retry would be refused again. The one exception is an error that
+  names `startTLS` while the TLS question is open. That server has no TLS, so the room goes on
+  without it.
+- A transport reports a socket that closed during the handshake with `callback.onConnectionFailed()`.
+  That call waits for the lines that arrived before the close (`NetworkManager.afterPendingLines`),
+  so a server `Error` reaches the room before the closed socket does.
 - **The inbound consumer, which handles server messages one at a time, must never suspend on the
   main thread.** The state handler starts its work on Main with `launch` and does not wait for it.
   A `withContext(Main)` there can deadlock the whole pipeline at cold start.
