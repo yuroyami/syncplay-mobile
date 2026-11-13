@@ -1,12 +1,8 @@
 product: jvm/amper-plugin
 
 description: >-
-  Prepares the Android app build: it unpacks the FFmpeg decoder library of the Media3 FFmpeg
-  extension into jniLibs, makes a change in jniLibs, res, assets, the manifest or the R8 rules
+  Prepares the Android app build: it makes a change in res, assets, the manifest or the R8 rules
   rebuild the APK, and stops a release build that would be signed with the wrong material.
 
 apply:
   - ../../common.module-template.yaml
-
-pluginInfo:
-  settingsClass: io.github.yuroyami.synkplay.buildplugins.androidrelease.AndroidReleaseSettings

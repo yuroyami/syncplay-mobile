@@ -42,11 +42,12 @@ documentfile = "1.1.0"
 appcompat = "1.8.0"
 coreKtx = "1.19.1"
 media3 = "1.12.0-alpha02"
+# The Media3 FFmpeg extension, as the Jellyfin project builds it (docs/ffmpeg-extension.md). The
+# version is the Media3 release that Jellyfin built it against, plus a Jellyfin build number.
+media3Ffmpeg = "1.9.0+1"
 netty = "4.2.20.Final" # 4.2.x and later need Android API 26 or higher
 conscrypt = "2.9.0"
 newpipeExtractor = "v0.26.5"
-# The nullness annotations of the vendored Media3 FFmpeg extension sources. Compile only.
-checkerQual = "4.4.0"
 
 # Resolved from Maven Central.
 kiteplayer = "0.3.0"
@@ -118,6 +119,7 @@ m3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", ve
 m3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 m3-extractor = { module = "androidx.media3:media3-extractor", version.ref = "media3" }
 m3-decoder = { module = "androidx.media3:media3-decoder", version.ref = "media3" }
+m3-decoder-ffmpeg = { module = "org.jellyfin.media3:media3-ffmpeg-decoder", version.ref = "media3Ffmpeg" }
 m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "media3" }
 # The lock screen, the notification transport and headset buttons, for every engine.
 m3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
@@ -131,7 +133,6 @@ netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
 netty-codec-base = { module = "io.netty:netty-codec-base", version.ref = "netty" }
 netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
-checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checkerQual" }
 kiteplayer-compose = { module = "io.github.yuroyami:kiteplayer-compose", version.ref = "kiteplayer" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 kiteplayer-audioviz = { module = "io.github.yuroyami:kiteplayer-audioviz", version.ref = "kiteplayer" }

@@ -7,14 +7,12 @@ import org.jetbrains.amper.plugins.TaskAction
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.Properties
-import java.util.zip.ZipFile
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.outputStream
 import kotlin.io.path.readBytes
 import kotlin.io.path.reader
 import kotlin.io.path.relativeTo
@@ -31,36 +29,9 @@ private const val UNSIGNED_RELEASE_ENV = "SYNKPLAY_UNSIGNED_RELEASE"
 private val signingKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
 
 /**
- * Copies the `.so` files under `jni/<abi>/` of [aar] into [jniLibsDir]/<abi>. The Media3 FFmpeg extension ships only
- * as an AAR. Its Java classes are in the shared module as sources, and its native decoder comes
- * from here. jniLibs is not in git: this task writes it on every machine.
- */
-@OptIn(ExperimentalPathApi::class)
-@TaskAction
-fun unpackNativeLibraries(
-    @Input aar: Path,
-    @Output jniLibsDir: Path,
-) {
-    jniLibsDir.deleteRecursively()
-    var count = 0
-    ZipFile(aar.toFile()).use { zip ->
-        for (entry in zip.entries()) {
-            if (entry.isDirectory || !entry.name.startsWith("jni/") || !entry.name.endsWith(".so")) continue
-            val target = jniLibsDir.resolve(entry.name.removePrefix("jni/")).normalize()
-            check(target.startsWith(jniLibsDir)) { "${entry.name} points outside $jniLibsDir." }
-            target.parent.createDirectories()
-            zip.getInputStream(entry).use { input -> target.outputStream().use { input.copyTo(it) } }
-            count++
-        }
-    }
-    check(count > 0) { "$aar has no native library." }
-    println("Unpacked $count native libraries from ${aar.fileName}.")
-}
-
-/**
  * Writes one SHA-256 over every file in [inputs] to [STAMP] under [outputDir]. The toolchain
  * repackages the APK only when the app's classpath or its Android settings change. The stamp is a
- * generated resource of the app, so a change in jniLibs, res, assets, the manifest or the R8 rules
+ * generated resource of the app, so a change in res, assets, the manifest or the R8 rules
  * changes the app's jar, and the next Android build uses the new files.
  */
 @OptIn(ExperimentalPathApi::class)

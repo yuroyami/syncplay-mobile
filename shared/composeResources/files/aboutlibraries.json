@@ -2670,7 +2670,7 @@
         },
         {
             "uniqueId": "org.checkerframework:checker-qual",
-            "artifactVersion": "4.4.0",
+            "artifactVersion": "3.43.0",
             "name": "Checker Qual",
             "website": "https://checkerframework.org/",
             "licenses": [
@@ -2687,6 +2687,18 @@
             "website": "https://conscrypt.org/",
             "licenses": [
                 "Apache-2.0"
+            ],
+            "targets": [
+                "android"
+            ]
+        },
+        {
+            "uniqueId": "org.jellyfin.media3:media3-ffmpeg-decoder",
+            "artifactVersion": "1.9.0+1",
+            "name": "Jellyfin AndroidX Media3 libraries - media3-ffmpeg-decoder",
+            "website": "https://github.com/jellyfin/jellyfin-androidx-media",
+            "licenses": [
+                "GPL-3.0-or-later"
             ],
             "targets": [
                 "android"

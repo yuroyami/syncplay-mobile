@@ -1,17 +1,10 @@
 tasks:
-  unpackNativeLibraries:
-    action: !io.github.yuroyami.synkplay.buildplugins.androidrelease.unpackNativeLibraries
-      aar: ${pluginSettings.nativeLibraryAar}
-      # The Android build packages jniLibs/ of the module directory.
-      jniLibsDir: ${module.rootDir}/jniLibs
-
-  # The toolchain does not rebuild the APK when only jniLibs/, res/, assets/, the manifest or the
-  # R8 rules change. This stamp goes into the app's jar, so a change in those files makes the APK
-  # build run again.
+  # The toolchain does not rebuild the APK when only res/, assets/, the manifest or the R8 rules
+  # change. This stamp goes into the app's jar, so a change in those files makes the APK build run
+  # again.
   stamp:
     action: !io.github.yuroyami.synkplay.buildplugins.androidrelease.stampAndroidInputs
       inputs:
-        - ${tasks.unpackNativeLibraries.action.jniLibsDir}
         - ${module.rootDir}/res
         - ${module.rootDir}/assets
         - ${module.rootDir}/src/AndroidManifest.xml

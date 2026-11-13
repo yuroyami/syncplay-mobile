@@ -100,8 +100,8 @@ dependencies@android:
   - $libs.m3.datasource
   - $libs.m3.common
   - $libs.m3.session
-  # The nullness annotations of the Media3 FFmpeg extension sources in src@android/androidx.
-  - $libs.checker.qual: compile-only
+  # The FFmpeg audio decoders of ExoPlayer: the Media3 FFmpeg extension (docs/ffmpeg-extension.md)
+  - $libs.m3.decoder.ffmpeg
   # libmpv: the mpv video engine (full build only, see androidApp/module.yaml)
   - $libs.libmpvkt
   - $libs.libmpvkt.view

@@ -36,9 +36,14 @@ private val kitePlayerNative = listOf(
     Attribution("FriBidi, in KitePlayer", "LGPL 2.1 or later", "https://github.com/fribidi/fribidi", LGPL_21),
 )
 
-/** The Media3 FFmpeg audio extension, in both Android builds (shared/libs/README.md). */
+/** The Media3 FFmpeg audio extension, in both Android builds, as Jellyfin builds it (docs/ffmpeg-extension.md). */
 private val exoPlayerFfmpeg =
-    Attribution("FFmpeg, in the ExoPlayer audio extension", "LGPL 2.1 or later", "https://ffmpeg.org", LGPL_21)
+    Attribution(
+        "FFmpeg, in the ExoPlayer audio extension",
+        "LGPL 2.1 or later",
+        "https://github.com/jellyfin/jellyfin-androidx-media",
+        LGPL_21,
+    )
 
 /** What the libmpvKt AAR carries, from its NOTICE. Together they make the full APK GPL 3.0 or later. */
 private val mpvNative = listOf(

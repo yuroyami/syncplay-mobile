@@ -396,7 +396,7 @@ licence text:
 - Native code inside a library, the iOS packages, the original Syncplay and the two services are
   hand-written in
   [`Attributions.kt`](../shared/src/app/home/components/Attributions.kt). Each
-  bundled FFmpeg build has its own licence, see [`shared/libs/README.md`](../shared/libs/README.md).
+  bundled FFmpeg build has its own licence, see [`docs/ffmpeg-extension.md`](ffmpeg-extension.md).
 
 Do not infer the licence of a bundled decoder from the licence of its Kotlin wrapper.
 

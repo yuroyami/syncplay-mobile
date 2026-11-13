@@ -56,7 +56,9 @@ VLCASTRA/
 # The toolchain packs desktopApp/resources/ into the desktop app, so keep no local copy there.
 desktopApp/resources/
 
-# Android: build-plugins/android-release unpacks the FFmpeg decoder library here on every build.
+# Android: leftover FFmpeg decoder libraries from before the Media3 FFmpeg extension came from
+# Maven. Nothing produces this any more; the entry stays so an old local copy can never be
+# committed. The Android build packages androidApp/jniLibs/ into the APK, so keep no local copy there.
 androidApp/jniLibs/
 
 # Local backups and state files of KiteConfig, a Gradle plugin. No build step writes them. The

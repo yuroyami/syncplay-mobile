@@ -50,6 +50,3 @@ settings:
 plugins:
   android-release:
     enabled: true
-    # The Media3 FFmpeg extension (shared/libs/README.md). Its Java classes are in
-    # shared/src@android/androidx, and this AAR gives the native decoder.
-    nativeLibraryAar: ../shared/libs/libffmpeg_media3exo_1.8.0.aar
