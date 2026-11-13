@@ -367,8 +367,9 @@ internal class ClockPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Clo
     }
 
     override suspend fun selectTrack(track: Track?, type: TrackType) {
-        picks += type to track?.index
+        // Store the choice first. A test that waits on picks must not see a pick before its choice is stored.
         playerManager.currentTrackChoices.remember(type, track)
+        picks += type to track?.index
     }
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
     override suspend fun reapplyTrackChoices() = Unit

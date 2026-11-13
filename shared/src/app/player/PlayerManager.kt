@@ -121,7 +121,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         private var pendingDestroy: Job? = null
 
         /**
-         * Waits for the previous room's engine to finish its teardown, for at most [TEARDOWN_WAIT].
+         * Waits for the previous room's engine to finish its teardown, for at most [teardownWait].
          *
          * The next room builds its engine after this and only then opens its connection. Without
          * the limit, a teardown that hangs would mean a room that never connects, with nothing on
@@ -131,16 +131,19 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         suspend fun awaitPendingDestroy() {
             val pending = pendingDestroy ?: return
             val waited = TimeSource.Monotonic.markNow()
-            val finished = withTimeoutOrNull(TEARDOWN_WAIT) { pending.join() } != null
+            val finished = withTimeoutOrNull(teardownWait) { pending.join() } != null
             if (finished) {
                 loggy("Previous player torn down in ${waited.elapsedNow().inWholeMilliseconds}ms")
             } else {
-                loggy("Previous player still tearing down after ${TEARDOWN_WAIT.inWholeSeconds}s; starting the room anyway")
+                loggy("Previous player still tearing down after ${teardownWait.inWholeSeconds}s; starting the room anyway")
             }
             pendingDestroy = null
         }
 
-        /** How long a new room waits for the last room's engine before it goes ahead. */
-        private val TEARDOWN_WAIT = 6.seconds
+        /**
+         * How long a new room waits for the last room's engine before it goes ahead. A test can
+         * raise it, so that a slow test run never reaches the limit.
+         */
+        internal var teardownWait = 6.seconds
     }
 }

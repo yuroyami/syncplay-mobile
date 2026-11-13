@@ -27,6 +27,7 @@ import app.room.models.MessagePalette
 import app.theme.TRINITY
 import app.utils.platformCallback
 import java.lang.reflect.Proxy
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +40,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 
 /** The room must stay usable while the previous engine (video player) releases its native state. */
 class RoomStartupTest {
@@ -55,6 +57,7 @@ class RoomStartupTest {
         val callbackField = Class.forName("app.utils.PlatformUtilsKt")
             .getDeclaredField("platformCallback").apply { isAccessible = true }
         val previousCallback = callbackField.get(null)
+        val previousWait = PlayerManager.teardownWait
         val oldEngine = HeldDestroy()
         val store = ViewModelStore()
         var scene: ImageComposeScene? = null
@@ -62,6 +65,8 @@ class RoomStartupTest {
 
         try {
             destroyField.set(null, oldEngine)
+            // A slow run can need longer than the app's teardown limit to reach the leave below.
+            PlayerManager.teardownWait = Duration.INFINITE
             platformCallback = inertPlatformCallback()
             val destination = Screen.Room(null)
             val backstack = mutableStateListOf<Screen>(Screen.Home, destination)
@@ -123,6 +128,8 @@ class RoomStartupTest {
             assertEquals(listOf(Screen.Home), backstack.toList())
             assertTrue(scopeJob.isCancelled, "Leaving must cancel the room's pending initialization")
             runBlocking { withTimeout(2_000) { scopeJob.join() } }
+            // The join above misses a start outside the room's scope, but that start still waits for the old engine.
+            assertEquals(0, oldEngine.waiters.get(), "Leaving must stop every start that waits for the old engine")
 
             assertTrue(oldEngine.isActive, "Leaving the new room must not cancel the old engine's cleanup")
             oldEngine.complete()
@@ -143,18 +150,28 @@ class RoomStartupTest {
                     oldEngine.complete()
                     destroyField.set(null, previousDestroy)
                     callbackField.set(null, previousCallback)
+                    PlayerManager.teardownWait = previousWait
                 }
             }
         }
     }
 
-    /** Signals when initialization reaches the real teardown barrier, without any timing guess. */
+    /**
+     * Signals when initialization reaches the real teardown barrier, and counts who still waits
+     * there, without any timing guess.
+     */
     private class HeldDestroy(private val completion: CompletableDeferred<Unit> = CompletableDeferred()) : Job by completion {
         val joinStarted = CompletableDeferred<Unit>()
+        val waiters = AtomicInteger()
 
         override suspend fun join() {
-            joinStarted.complete(Unit)
-            completion.join()
+            waiters.incrementAndGet()
+            try {
+                joinStarted.complete(Unit)
+                completion.join()
+            } finally {
+                waiters.decrementAndGet()
+            }
         }
 
         fun complete() = completion.complete(Unit)
