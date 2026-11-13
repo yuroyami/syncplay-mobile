@@ -11,9 +11,6 @@ dependencies:
   - $compose.desktop.currentOs
   # Registers Dispatchers.Main on the AWT event thread.
   - $libs.kotlin.coroutines.swing
-  # The shared module does not export the ViewModel supertypes of its public API, so this module
-  # adds the artifact that declares them.
-  - $libs.compose.viewmodel
 
 settings:
   jvm:

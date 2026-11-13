@@ -10,11 +10,6 @@ dependencies:
   # overloads that Compose calls, not from kotlin-dom-api-compat.
   - $libs.kotlinx.browser
   - //shared
-  # The shared module does not export the types of its public API, so this module declares them.
-  - $compose.runtime
-  - $compose.ui
-  - $libs.compose.viewmodel
-  - $libs.kotlin.coroutines.core
 
 settings:
   compose:

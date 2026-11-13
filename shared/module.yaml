@@ -17,17 +17,20 @@ aliases:
   - jvmShared: [ android, jvm ]
 
 dependencies:
-  # Compose: foundation, UI, Material 3, resources, view models and Navigation 3
+  # Compose: foundation, UI, Material 3, resources, view models and Navigation 3. The public API of
+  # this module uses types of the Compose runtime and UI, of the view models and of the coroutines,
+  # so this module exports those four to the app modules.
+  - $compose.runtime: exported
   - $compose.foundation
-  - $compose.ui
+  - $compose.ui: exported
   - $compose.components.resources
   - $libs.compose.material3
   - $libs.compose.material.icons.extended
   - $libs.compose.components.ui.tooling.preview
-  - $libs.compose.viewmodel
+  - $libs.compose.viewmodel: exported
   - $libs.navigation3.runtime
   - $libs.navigation3.ui
-  - $libs.kotlin.coroutines.core
+  - $libs.kotlin.coroutines.core: exported
   - $libs.kotlinx.datetime
   # Runtime language switching. The common-ksp plugin generates the string tables.
   - $libs.lyricist
