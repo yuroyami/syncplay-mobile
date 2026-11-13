@@ -3,7 +3,7 @@
 # keeps kotlin-reflect of the tool modules on the same version.
 kotlin = "2.4.21"
 compose-multiplatform = "1.13.0-beta02"
-kSerialization = "1.12.0"
+kSerialization = "1.13.0"
 ktorfit = "2.7.5"
 # Runtime language switching. The XML processor reads values-*/strings.xml, so the resource
 # files stay the source of truth and translators keep using Weblate.
@@ -41,13 +41,13 @@ activityCompose = "1.14.0-alpha03"
 documentfile = "1.1.0"
 appcompat = "1.8.0"
 coreKtx = "1.19.1"
-media3 = "1.12.0-alpha02"
+media3 = "1.12.0-beta01"
 # The Media3 FFmpeg extension, as the Jellyfin project builds it (docs/ffmpeg-extension.md). The
 # version is the Media3 release that Jellyfin built it against, plus a Jellyfin build number.
 media3Ffmpeg = "1.9.0+1"
 netty = "4.2.20.Final" # 4.2.x and later need Android API 26 or higher
 conscrypt = "2.9.0"
-newpipeExtractor = "v0.26.5"
+newpipeExtractor = "v0.27.1"
 
 # Resolved from Maven Central.
 kiteplayer = "0.3.0"

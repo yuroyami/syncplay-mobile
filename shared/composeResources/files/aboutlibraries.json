@@ -896,7 +896,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-common",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 common module",
             "licenses": [
                 "Apache-2.0"
@@ -907,7 +907,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-container",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 Container module",
             "licenses": [
                 "Apache-2.0"
@@ -918,7 +918,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-database",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 database module",
             "licenses": [
                 "Apache-2.0"
@@ -929,7 +929,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-datasource",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 DataSource module",
             "licenses": [
                 "Apache-2.0"
@@ -940,7 +940,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-datasource-okhttp",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 OkHttp DataSource module",
             "licenses": [
                 "Apache-2.0"
@@ -951,7 +951,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-decoder",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 decoder module",
             "licenses": [
                 "Apache-2.0"
@@ -962,7 +962,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-exoplayer",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 ExoPlayer module",
             "licenses": [
                 "Apache-2.0"
@@ -973,7 +973,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-exoplayer-dash",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 ExoPlayer DASH module",
             "licenses": [
                 "Apache-2.0"
@@ -984,7 +984,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-exoplayer-hls",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 ExoPlayer HLS module",
             "licenses": [
                 "Apache-2.0"
@@ -995,7 +995,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-exoplayer-rtsp",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 ExoPlayer RTSP module",
             "licenses": [
                 "Apache-2.0"
@@ -1006,7 +1006,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-extractor",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 Extractor module",
             "licenses": [
                 "Apache-2.0"
@@ -1017,7 +1017,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-session",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 Session module",
             "licenses": [
                 "Apache-2.0"
@@ -1028,7 +1028,7 @@
         },
         {
             "uniqueId": "androidx.media3:media3-ui",
-            "artifactVersion": "1.12.0-alpha02",
+            "artifactVersion": "1.12.0-beta01",
             "name": "Media3 UI module",
             "licenses": [
                 "Apache-2.0"
@@ -1382,7 +1382,7 @@
         },
         {
             "uniqueId": "com.github.TeamNewPipe:NewPipeExtractor",
-            "artifactVersion": "v0.26.5",
+            "artifactVersion": "v0.27.1",
             "name": "NewPipe Extractor",
             "website": "https://github.com/TeamNewPipe/NewPipeExtractor",
             "licenses": [
@@ -1532,7 +1532,7 @@
         },
         {
             "uniqueId": "com.google.protobuf:protobuf-javalite",
-            "artifactVersion": "4.35.1",
+            "artifactVersion": "4.36.2",
             "name": "Protocol Buffers [Lite]",
             "website": "https://developers.google.com/protocol-buffers/protobuf-javalite/",
             "licenses": [
@@ -3474,7 +3474,7 @@
         },
         {
             "uniqueId": "org.jetbrains.kotlinx:kotlinx-serialization-bom",
-            "artifactVersion": "1.12.0",
+            "artifactVersion": "1.13.0",
             "name": "kotlinx-serialization-bom",
             "website": "https://github.com/Kotlin/kotlinx.serialization",
             "licenses": [
@@ -3487,7 +3487,7 @@
         },
         {
             "uniqueId": "org.jetbrains.kotlinx:kotlinx-serialization-core",
-            "artifactVersion": "1.12.0",
+            "artifactVersion": "1.13.0",
             "name": "kotlinx-serialization-core",
             "website": "https://github.com/Kotlin/kotlinx.serialization",
             "licenses": [
@@ -3502,7 +3502,7 @@
         },
         {
             "uniqueId": "org.jetbrains.kotlinx:kotlinx-serialization-json",
-            "artifactVersion": "1.12.0",
+            "artifactVersion": "1.13.0",
             "name": "kotlinx-serialization-json",
             "website": "https://github.com/Kotlin/kotlinx.serialization",
             "licenses": [
@@ -3517,7 +3517,7 @@
         },
         {
             "uniqueId": "org.jetbrains.kotlinx:kotlinx-serialization-json-io",
-            "artifactVersion": "1.12.0",
+            "artifactVersion": "1.13.0",
             "name": "kotlinx-serialization-json-io",
             "website": "https://github.com/Kotlin/kotlinx.serialization",
             "licenses": [
@@ -3532,7 +3532,7 @@
         },
         {
             "uniqueId": "org.jetbrains.kotlinx:kotlinx-serialization-protobuf",
-            "artifactVersion": "1.12.0",
+            "artifactVersion": "1.13.0",
             "name": "kotlinx-serialization-protobuf",
             "website": "https://github.com/Kotlin/kotlinx.serialization",
             "licenses": [
@@ -3595,7 +3595,7 @@
         },
         {
             "uniqueId": "org.jsoup:jsoup",
-            "artifactVersion": "1.22.2",
+            "artifactVersion": "1.24.1",
             "name": "jsoup Java HTML Parser",
             "website": "https://jsoup.org/",
             "licenses": [

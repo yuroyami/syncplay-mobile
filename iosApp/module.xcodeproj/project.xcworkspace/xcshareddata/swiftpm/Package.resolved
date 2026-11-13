@@ -96,8 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "6db9d9abd92ad7399b8a564cafbb87d3507245fa",
-        "version" : "2.104.0"
+        "revision" : "2f58d8ef84438d6517fc78bcea2f8527e3c72936",
+        "version" : "2.105.0"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-extras.git",
       "state" : {
-        "revision" : "41449336c8ecfadac6b4b5be75f9c3c306e61ced",
-        "version" : "1.35.1"
+        "revision" : "8e1249b29f92574e05e0d91637f239e378a9a95b",
+        "version" : "1.35.2"
       }
     },
     {
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-ssl",
       "state" : {
-        "revision" : "322f3c2a4a21df31c84ca416bf65ee5e9059e440",
-        "version" : "2.37.5"
+        "revision" : "15e0b9e495786807272dd4891fa4bac76aa43034",
+        "version" : "2.37.6"
       }
     },
     {
@@ -168,8 +168,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/alexeichhorn/YouTubeKit.git",
       "state" : {
-        "revision" : "e5b7d0396ce12bf3444f0d209e8436c83373b7af",
-        "version" : "0.4.9"
+        "revision" : "89854c93207ad0d2b3d78d6f1aea24595ca66552",
+        "version" : "0.4.10"
       }
     }
   ],

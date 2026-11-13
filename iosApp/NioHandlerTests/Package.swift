@@ -9,7 +9,7 @@ let package = Package(
     name: "NioHandlerTests",
     platforms: [.macOS(.v13)],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", exact: "2.104.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", exact: "2.105.0"),
     ],
     targets: [
         .target(

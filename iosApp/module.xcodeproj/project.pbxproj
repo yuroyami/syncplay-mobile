@@ -528,7 +528,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.104.0;
+				minimumVersion = 2.105.0;
 			};
 		};
 		0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
@@ -536,7 +536,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio-ssl";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.37.5;
+				minimumVersion = 2.37.6;
 			};
 		};
 		04EE38EA2BC00C5100E830A3 /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
@@ -544,7 +544,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio-extras.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.35.1;
+				minimumVersion = 1.35.2;
 			};
 		};
 		04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */ = {
@@ -560,7 +560,7 @@
 			repositoryURL = "https://github.com/alexeichhorn/YouTubeKit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.9;
+				minimumVersion = 0.4.10;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

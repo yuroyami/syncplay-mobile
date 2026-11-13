@@ -23,7 +23,7 @@ The version is the Media3 release that Jellyfin built the extension against, plu
 build number: `1.9.0+1` is Media3 1.9.0, build 1. `media3Ffmpeg` in `libs.versions.toml` sets it.
 
 The app uses the extension with the newer Media3 release in the version catalog. Each Media3
-method and field that the classes of `1.9.0+1` call still exists in Media3 1.12.0-alpha02. The
+method and field that the classes of `1.9.0+1` call still exists in Media3 1.12.0-beta01. The
 classes come compiled, so the build cannot see a method that a later Media3 release removes. The
 app then fails only when it runs. After a Media3 update, look for a newer Jellyfin build. Then play
 a file with a TrueHD audio track in the ExoPlayer engine. Phones rarely have their own TrueHD

@@ -149,7 +149,7 @@ settings:
       - kotlin.time.ExperimentalTime
     serialization:
       enabled: true
-      version: 1.12.0
+      version: 1.13.0
   android:
     namespace: app
     compileSdk:
