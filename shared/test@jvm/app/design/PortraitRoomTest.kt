@@ -616,4 +616,34 @@ class PortraitRoomTest {
             room.uiState.toggleLandscapeHold(true)
         }) { RoomScreenUI(LocalRoomViewmodel.current) }
     }
+
+    /* Notices under the video area. */
+
+    /** The top and bottom of the first node that shows [text], in dp. */
+    private fun RoomRig.Room.spanOf(text: String): ClosedFloatingPointRange<Float> {
+        val node = assertNotNull(
+            allNodes().firstOrNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.any { text in it.text } == true },
+            "\"$text\" is on screen",
+        )
+        return boundsOf(node).let { it.top.dp()..it.bottom.dp() }
+    }
+
+    @Test
+    fun aNoticeUnderTheVideoAreaPushesChatDown() = portrait {
+        viewmodel.session.messageSequence.value = chat()
+        driver.frames(30)
+        val before = spanOf("Mia joined the room").start
+        DesignHarness.onUiThread { viewmodel.notices.post("Sam paused at 08:20", holdMs = 600_000L) }
+        driver.frames(60)
+        val notice = spanOf("Sam paused at 08:20")
+        val pushed = spanOf("Mia joined the room").start
+        assertTrue(notice.start > stageBottomDp, "With the controls up, the notice sits under the video area, at ${notice.start} dp")
+        assertTrue(pushed >= notice.endInclusive, "The first chat line starts under the notice: $pushed dp against ${notice.endInclusive} dp")
+        assertTrue(pushed > before, "The notice pushed chat down from $before dp to $pushed dp")
+        // With the controls hidden, the notice sits in the video area, and chat goes back.
+        ui.visibleHUD.value = false
+        driver.frames(60)
+        assertTrue(spanOf("Sam paused at 08:20").endInclusive <= stageBottomDp, "With the controls hidden, the notice sits in the video area")
+        assertEquals(before, spanOf("Mia joined the room").start, 0.5f, "Chat is back where it was")
+    }
 }

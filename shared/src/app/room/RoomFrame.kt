@@ -23,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -155,13 +157,15 @@ fun Modifier.portraitStage(topInsets: WindowInsets): Modifier =
  * The room in a window taller than wide, top to bottom: the [stage] (see [portraitStage]), the
  * [tabs], the main box ([main]: chat, or one page in place of chat) and the [composer] (the chat
  * input row). With the keyboard open, the tab row folds away, and the composer rides on the
- * keyboard. [lower] goes on everything under the stage.
+ * keyboard. [lower] goes on everything under the stage. [mainTop] moves the main box down by that
+ * many pixels, for the notices that sit over its top edge.
  */
 @Composable
 fun RoomPortraitFrame(
     keyboardOpen: Boolean,
     modifier: Modifier = Modifier,
     lower: Modifier = Modifier,
+    mainTop: () -> Int = { 0 },
     stage: @Composable BoxScope.() -> Unit,
     tabs: @Composable () -> Unit,
     main: @Composable BoxScope.() -> Unit,
@@ -173,8 +177,18 @@ fun RoomPortraitFrame(
         Box(Modifier.portraitStage(roomTopInsets())) { stage() }
         Column(lower.weight(1f).fillMaxWidth().windowInsetsPadding(bottomInsets)) {
             if (!keyboardOpen) tabs()
-            Box(Modifier.weight(1f).fillMaxWidth()) { main() }
+            Box(Modifier.weight(1f).fillMaxWidth().pushedDown(mainTop)) { main() }
             composer?.invoke()
         }
     }
+}
+
+/**
+ * Moves the content down by [top] pixels and makes it that much shorter. [top] is read while
+ * laying out, so a change moves the content and recomposes nothing.
+ */
+private fun Modifier.pushedDown(top: () -> Int): Modifier = layout { measurable, constraints ->
+    val shift = top().coerceIn(0, constraints.maxHeight)
+    val placeable = measurable.measure(constraints.offset(vertical = -shift))
+    layout(placeable.width, placeable.height + shift) { placeable.place(0, shift) }
 }

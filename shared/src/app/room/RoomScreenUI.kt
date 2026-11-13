@@ -4,12 +4,14 @@ import app.room.ui.chat.LocalChatMediaSize
 import app.room.ui.chat.chatMediaCellSize
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
@@ -117,11 +119,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.viewModelScope
 import app.preferences.settings.AskModal
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInWindow
 import kotlin.math.roundToInt
+import kotlin.math.min
 import app.theme.palette
 import app.theme.Type
 import app.uicomponents.controls.Text
@@ -187,6 +192,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val portrait = tall && !isInPipMode
     // The main box under the video shows one page at a time, so the open panels follow that rule.
     SideEffect { viewmodel.uiState.onePage = portrait }
+    // Notices under the stage push the main box down, with a gap above and under them.
+    val noticeInset = remember { NoticeInset(if (portrait && viewmodel.uiState.visibleHUD.value) 1f else 0f) }
+    val noticeGaps = with(LocalDensity.current) { (Space.gapTight * 2).roundToPx() }
+    val mainBoxTop = remember(noticeInset, noticeGaps) { { noticeInset.px(noticeGaps) } }
 
     /* The backdrop for the room's glass (the frosted blur behind panels): only the video layer and
      * the artwork. A glass surface cannot blur a backdrop that contains the surface itself, so
@@ -254,10 +263,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             when {
                 isInPipMode -> Unit // PiP shows the video and nothing else.
                 lockedMode -> RoomUnlockableLayout()
-                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester)
+                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester, mainBoxTop)
             }
 
-            if (!isInPipMode) RoomNotices(viewmodel, soloMode, portrait)
+            if (!isInPipMode) RoomNotices(viewmodel, soloMode, portrait, noticeInset)
 
             MediaDropOverlay(drop) { media ->
                 when (media) {
@@ -506,13 +515,18 @@ private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
  *
  * In portrait, the notices sit at the top center of the stage (the video area) while its controls
  * are hidden. While the controls show, the stage has no free row between the status line and the
- * play key, so the notices glide under the stage. No chat lines fade in, because chat is on screen.
+ * play key, so the notices glide under the stage. There they push the main box down through
+ * [inset], so they cover no chat line. No chat lines fade in, because chat is on screen.
  */
 @Composable
-private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, portrait: Boolean) {
+private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, portrait: Boolean, inset: NoticeInset) {
     val density = LocalDensity.current
     val window = LocalWindowInfo.current.containerSize
     val controlsShown by viewmodel.uiState.visibleHUD.collectAsState()
+    // The push follows the glide of the notices, and it is written outside composition.
+    LaunchedEffect(portrait, controlsShown) {
+        animate(inset.under, if (portrait && controlsShown) 1f else 0f, animationSpec = Motion.move()) { value, _ -> inset.under = value }
+    }
     val keyboardOpen = WindowInsets.ime.getBottom(density) > 0
     val stageHeight = with(density) { window.width.toDp() } * 9f / 16f
     val target = when {
@@ -528,7 +542,8 @@ private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, po
             .fillMaxWidth()
             .windowInsetsPadding(roomTopInsets())
             .padding(top = top)
-            .padding(horizontal = Space.gutter),
+            .padding(horizontal = Space.gutter)
+            .onSizeChanged { inset.height = it.height },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Space.gapTight),
     ) {
@@ -538,9 +553,26 @@ private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, po
 }
 
 /**
+ * How far the notices push the main box of the portrait room down. The values are read while
+ * laying out, so a notice that grows, shrinks or glides recomposes nothing.
+ */
+@Stable
+private class NoticeInset(under: Float) {
+    /** The height of the notices, in pixels. */
+    var height by mutableIntStateOf(0)
+
+    /** 1 while the notices sit under the stage (the video area), 0 while they sit inside it. */
+    var under by mutableFloatStateOf(under)
+
+    /** The height of the notices plus [gaps], which grow in with the first pixels of a notice. */
+    fun px(gaps: Int): Int = ((height + min(height, gaps)) * under).roundToInt()
+}
+
+/**
  * The HUD: every control that fades, on the [RoomFrame] docks, with the gesture layer above. In
  * [portrait], the HUD covers only the stage of [RoomPortraitFrame]. The tab row, the main box and
- * the composer sit under the stage and never fade.
+ * the composer sit under the stage and never fade. [mainBoxTop] moves the main box down for the
+ * notices over its top edge.
  */
 @Composable
 private fun RoomHud(
@@ -551,6 +583,7 @@ private fun RoomHud(
     railHorizontal: Boolean,
     portrait: Boolean,
     initialFocusRequester: FocusRequester,
+    mainBoxTop: () -> Int,
 ) {
     val ui = viewmodel.uiState
     val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
@@ -626,6 +659,7 @@ private fun RoomHud(
         RoomPortraitFrame(
             keyboardOpen = isKeyboardOpen,
             lower = Modifier.onFocusChanged { lowerFocused = it.hasFocus },
+            mainTop = mainBoxTop,
             stage = {
                 Box(Modifier.matchParentSize().onFocusChanged { stageFocused = it.hasFocus }.then(layer)) {
                     if (hasVideo) {

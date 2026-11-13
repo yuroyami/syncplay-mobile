@@ -520,7 +520,8 @@ The portrait room:
   next rotation.
 - Notices sit at the top centre of the stage while its controls are hidden. While the controls
   show, the stage has no free row between the status line and the play key, so the notices sit
-  under the stage.
+  under the stage. There they push the main box down (`NoticeInset`), so a notice covers no chat
+  line and no page header.
 
 Chat:
 
