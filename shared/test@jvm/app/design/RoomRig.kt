@@ -3,8 +3,14 @@ package app.design
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalPlatformWindowInsets
+import androidx.compose.ui.platform.PlatformInsets
+import androidx.compose.ui.platform.PlatformWindowInsets
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -21,6 +27,7 @@ import app.Screen
 import app.home.JoinConfig
 import app.player.PlayerImpl
 import app.player.PlayerManager
+import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
@@ -98,6 +105,10 @@ internal object RoomRig {
      * @param withVideo a loaded file, which the control panel button needs.
      * @param pictureInPicture what the platform says about its picture-in-picture support.
      * @param screenReader whether a screen reader runs.
+     * @param keyboardPx the height of a fake soft keyboard in scene pixels. A test changes it to open
+     * and close the keyboard.
+     * @param canHoldLandscape what the platform says about the landscape hold of the full-screen key.
+     * @param chapters the chapters of the loaded file. A list that is not empty turns on chapter support.
      */
     fun drive(
         solo: Boolean = true,
@@ -107,16 +118,21 @@ internal object RoomRig {
         screenReader: Boolean = false,
         widthDp: Int = 960,
         heightDp: Int = 540,
+        keyboardPx: State<Int>? = null,
+        canHoldLandscape: Boolean = false,
+        chapters: List<Chapter> = emptyList(),
         drive: Room.() -> Unit,
-    ) = inRoom(solo, withVideo, pictureInPicture) { viewmodel, destination ->
+    ) = inRoom(solo, withVideo, pictureInPicture, canHoldLandscape, chapters) { viewmodel, destination ->
         DesignHarness.drive(widthDp = widthDp, heightDp = heightDp, television = television, content = {
-            CompositionLocalProvider(
-                LocalRoomViewmodel provides viewmodel,
-                LocalScreen provides destination,
-                LocalChatPalette provides MessagePalette(),
-                LocalScreenReaderActive provides screenReader,
-            ) {
-                RoomScreenUI(viewmodel)
+            WithKeyboard(keyboardPx) {
+                CompositionLocalProvider(
+                    LocalRoomViewmodel provides viewmodel,
+                    LocalScreen provides destination,
+                    LocalChatPalette provides MessagePalette(),
+                    LocalScreenReaderActive provides screenReader,
+                ) {
+                    RoomScreenUI(viewmodel)
+                }
             }
         }) {
             Room(viewmodel, this).drive()
@@ -135,25 +151,53 @@ internal object RoomRig {
         solo: Boolean = true,
         withVideo: Boolean = false,
         overVideo: Boolean = false,
+        keyboardPx: Int = 0,
+        canHoldLandscape: Boolean = false,
+        chapters: List<Chapter> = emptyList(),
         setup: (RoomViewmodel) -> Unit = {},
         content: @Composable () -> Unit,
-    ): DesignHarness.Result = inRoom(solo, withVideo, pictureInPicture = true) { viewmodel, destination ->
+    ): DesignHarness.Result = inRoom(solo, withVideo, pictureInPicture = true, canHoldLandscape, chapters) { viewmodel, destination ->
         setup(viewmodel)
+        val keyboard = if (keyboardPx > 0) mutableStateOf(keyboardPx) else null
         DesignHarness.render(name, widthDp, heightDp, fontScale, overVideo = overVideo) {
-            CompositionLocalProvider(
-                LocalRoomViewmodel provides viewmodel,
-                LocalRoomUiState provides viewmodel.uiState,
-                LocalScreen provides destination,
-                LocalChatPalette provides MessagePalette(),
-                LocalScreenReaderActive provides false,
-            ) {
-                content()
+            WithKeyboard(keyboard) {
+                CompositionLocalProvider(
+                    LocalRoomViewmodel provides viewmodel,
+                    LocalRoomUiState provides viewmodel.uiState,
+                    LocalScreen provides destination,
+                    LocalChatPalette provides MessagePalette(),
+                    LocalScreenReaderActive provides false,
+                ) {
+                    content()
+                }
             }
         }
     }
 
+    /** Gives [content] a soft keyboard [keyboardPx] tall at the bottom edge, or the real insets for null. */
+    @OptIn(InternalComposeUiApi::class)
+    @Composable
+    private fun WithKeyboard(keyboardPx: State<Int>?, content: @Composable () -> Unit) {
+        if (keyboardPx == null) return content()
+        val insets = object : PlatformWindowInsets {
+            override val ime: PlatformInsets = PlatformInsets(getBottom = { keyboardPx.value })
+        }
+        CompositionLocalProvider(LocalPlatformWindowInsets provides insets, content = content)
+    }
+
+    /** Runs [block] on a room model with a loaded file and no screen, for tests of the room state. */
+    fun <T> model(solo: Boolean = false, block: (RoomViewmodel) -> T): T =
+        inRoom(solo, withVideo = true, pictureInPicture = true, canHoldLandscape = false, chapters = emptyList()) { viewmodel, _ -> block(viewmodel) }
+
     /** Builds a room with no network and an [InertPlayer], runs [block], and closes the room. */
-    private fun <T> inRoom(solo: Boolean, withVideo: Boolean, pictureInPicture: Boolean, block: (RoomViewmodel, Screen.Room) -> T): T {
+    private fun <T> inRoom(
+        solo: Boolean,
+        withVideo: Boolean,
+        pictureInPicture: Boolean,
+        canHoldLandscape: Boolean,
+        chapters: List<Chapter>,
+        block: (RoomViewmodel, Screen.Room) -> T,
+    ): T {
         DesignHarness.initDatastore()
         val destroyField = PlayerManager::class.java.getDeclaredField("pendingDestroy").apply { isAccessible = true }
         val previousDestroy = destroyField.get(null)
@@ -166,7 +210,7 @@ internal object RoomRig {
         var room: RoomViewmodel? = null
         try {
             destroyField.set(null, held)
-            platformCallback = inertPlatform(pictureInPicture)
+            platformCallback = inertPlatform(pictureInPicture, canHoldLandscape)
             val joinConfig = if (solo) null else JoinConfig(user = "tester", room = "rig", ip = "localhost", port = 8999)
             val destination = Screen.Room(joinConfig)
             val backstack = mutableStateListOf<Screen>(Screen.Home, destination)
@@ -175,10 +219,14 @@ internal object RoomRig {
             store.put("rig-room", viewmodel)
             // The start is the only child so far. Nothing else launches until the screen composes.
             viewmodel.viewModelScope.coroutineContext[Job]?.children?.forEach { it.cancel() }
-            viewmodel.playerManager.player = InertPlayer(viewmodel)
+            viewmodel.playerManager.player = InertPlayer(viewmodel, chapters = chapters.isNotEmpty())
             viewmodel.playerManager.isPlayerReady.value = true
             if (withVideo) {
-                viewmodel.playerManager.media.value = MediaFile(location = MediaFileLocation.Remote("https://example.com/clip.mp4"), fileName = "clip.mp4")
+                viewmodel.playerManager.media.value = MediaFile(
+                    location = MediaFileLocation.Remote("https://example.com/clip.mp4"),
+                    fileName = "clip.mp4",
+                    chapters = mutableStateListOf(*chapters.toTypedArray()),
+                )
             }
             return block(viewmodel, destination)
         } finally {
@@ -211,12 +259,13 @@ internal object RoomRig {
     }
 
     /** A platform that does nothing and reports no brightness control. */
-    internal fun inertPlatform(pictureInPicture: Boolean): PlatformCallback = Proxy.newProxyInstance(
+    internal fun inertPlatform(pictureInPicture: Boolean, canHoldLandscape: Boolean = false): PlatformCallback = Proxy.newProxyInstance(
         PlatformCallback::class.java.classLoader,
         arrayOf(PlatformCallback::class.java),
     ) { proxy, method, args ->
         when (method.name) {
             "getSupportsPictureInPicture" -> pictureInPicture
+            "getCanHoldLandscape" -> canHoldLandscape
             "equals" -> proxy === args?.firstOrNull()
             "hashCode" -> System.identityHashCode(proxy)
             "toString" -> "RoomRig platform"
@@ -231,8 +280,8 @@ internal object RoomRig {
 }
 
 /** An engine that plays nothing and answers every question with a neutral value. */
-internal class InertPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, FakeEngine("Inert", Res.drawable.exoplayer)) {
-    override val supportsChapters = false
+internal class InertPlayer(viewmodel: RoomViewmodel, chapters: Boolean = false) : PlayerImpl(viewmodel, FakeEngine("Inert", Res.drawable.exoplayer)) {
+    override val supportsChapters = chapters
     override val trackerJobInterval: Duration = 1.seconds
     override fun initialize() { isInitialized = true }
     override suspend fun destroy() = Unit
@@ -251,7 +300,12 @@ internal class InertPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Fak
     override suspend fun setSpeed(speed: Double) = Unit
     override suspend fun isSeekable() = true
     override fun currentPositionMs() = 0L
-    override suspend fun switchAspectRatio() = ""
+    /** How many times the aspect ratio key or row asked for the next mode. */
+    @Volatile var aspectSwitches = 0
+    override suspend fun switchAspectRatio(): String {
+        aspectSwitches++
+        return ""
+    }
     override suspend fun changeSubtitleSize(newSize: Int) = Unit
     @Composable override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) = Box(modifier)
     override fun getEngineVolume() = 50

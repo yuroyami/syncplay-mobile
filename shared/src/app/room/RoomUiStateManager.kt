@@ -99,6 +99,24 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val chatMediaSizeDp = MutableStateFlow(0f)
 
     /**
+     * True while the full-screen key holds the room in landscape. The hold overrides the rotation
+     * setting, and it ends with the exit key, with Back or with the room.
+     */
+    val landscapeHold = MutableStateFlow(false)
+
+    /**
+     * True in the portrait room, where the main box (the area under the video) shows one page at a
+     * time in place of chat. A page is a side panel, the GIF drawer, the Controls page or the More
+     * page. The portrait layout sets it. On entry, only one open page stays open.
+     */
+    var onePage: Boolean = false
+        set(value) {
+            if (field == value) return
+            field = value
+            if (value) keepOnePage()
+        }
+
+    /**
      * Image URLs that the user tapped to load. Chat does not fetch an image from a peer's host on
      * its own, so a tap is what shows one, for this room session only.
      */
@@ -125,10 +143,63 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     private val toolPanels
         get() = listOf(tabCardTracks, tabCardGestures, tabCardSeekTo, tabCardAddMedia)
 
-    /** Opens one side panel and closes the others. A tool panel also closes the control strip. */
+    /**
+     * Opens one side panel and closes the others. A tool panel also closes the control strip. In
+     * [onePage] mode, a panel closes every other page too.
+     */
     private fun openSide(target: MutableStateFlow<Boolean>, forcedState: Boolean?) {
         panelCoordinator.open(target, forcedState)
         if (target.value && toolPanels.any { it === target }) controlPanel.value = false
+        if (target.value && onePage) closePagesExcept(target)
+    }
+
+    /** The pages of [onePage] mode, in the order that [keepOnePage] keeps them. */
+    private val pages
+        get() = listOf(gifPanelVisible) + sidePanels + listOf(controlPanel, railActionsExpanded)
+
+    /** Whether a page covers chat in [onePage] mode. */
+    val anyPageOpen: Boolean
+        get() = pages.any { it.value }
+
+    private fun closePagesExcept(kept: MutableStateFlow<Boolean>) = pages.forEach { if (it !== kept) it.value = false }
+
+    /**
+     * Keeps one page when the portrait layout starts. The GIF drawer wins, because the composer
+     * holds its search, then a side panel, the Controls page and the More page. The add card of
+     * the landscape room becomes the add media page.
+     */
+    private fun keepOnePage() {
+        if (mediaAddExpanded.value) toggleAddMedia(true)
+        val kept = pages.firstOrNull { it.value } ?: return
+        closePagesExcept(kept)
+    }
+
+    /**
+     * Closes every page, so the main box of the portrait room shows chat. With [keepGifs], the GIF
+     * drawer stays open, because the chat field is then its search.
+     */
+    fun showChat(keepGifs: Boolean = false) {
+        pages.forEach { if (!(keepGifs && it === gifPanelVisible)) it.value = false }
+    }
+
+    /** Opens or closes the GIF drawer. In [onePage] mode, opening it closes the other pages. */
+    fun toggleGifPanel(forcedState: Boolean? = null) {
+        gifPanelVisible.value = forcedState ?: !gifPanelVisible.value
+        if (gifPanelVisible.value && onePage) closePagesExcept(gifPanelVisible)
+    }
+
+    /**
+     * Opens or closes the More page of the portrait room. Its flag also unfolds the room actions of
+     * the rail in landscape.
+     */
+    fun toggleMorePage(forcedState: Boolean? = null) {
+        railActionsExpanded.value = forcedState ?: !railActionsExpanded.value
+        if (railActionsExpanded.value && onePage) closePagesExcept(railActionsExpanded)
+    }
+
+    /** Holds the room in landscape, or ends the hold. */
+    fun toggleLandscapeHold(forcedState: Boolean? = null) {
+        landscapeHold.value = forcedState ?: !landscapeHold.value
     }
 
     private val panelCoordinator by lazy { SidePanelCoordinator(sidePanels) }
@@ -144,24 +215,29 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     fun closeSidePanels() = sidePanels.forEach { it.value = false }
 
     /**
-     * What Back does in the room. It closes the top open layer, and asks to leave only when
-     * nothing is open. On a TV remote, Back is the only way out of a panel.
+     * What Back does in the room. It closes the top open layer, then ends the landscape hold, and
+     * asks to leave only when nothing is left. In [onePage] mode, the open page is the top layer,
+     * so Back shows chat again. On a TV remote, Back is the only way out of a panel.
      */
     fun back() {
         when {
+            onePage && anyPageOpen -> showChat()
             gifPanelVisible.value -> gifPanelVisible.value = false
             anySidePanelOpen -> closeSidePanels()
             controlPanel.value -> toggleControlPanel(false)
             railActionsExpanded.value -> railActionsExpanded.value = false
+            landscapeHold.value -> landscapeHold.value = false
             else -> askLeave.value = true
         }
     }
 
+    /** Opens or closes the control strip, or the Controls page in [onePage] mode. */
     fun toggleControlPanel(forcedState: Boolean? = null) {
         controlPanel.value = forcedState ?: !controlPanel.value
         if (controlPanel.value) {
             collapseMediaAdd(restore = false)
             toolPanels.forEach { it.value = false }
+            if (onePage) closePagesExcept(controlPanel)
         }
     }
 
@@ -232,6 +308,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         scrubbing.value = false
         sidePanels.forEach { it.value = false }
         railActionsExpanded.value = false
+        landscapeHold.value = false
         collapseMediaAdd(restore = false)
         revealedImages.clear()
         mutedUsers.clear()

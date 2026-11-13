@@ -94,7 +94,7 @@ object CardAddMedia {
 
         PanelFrame(
             title = if (linkMode) strings.roomRouteLink else strings.roomButtonDescAdd,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = wrappedPanel(),
             shape = shape,
             centerTitle = true,
             actions = {

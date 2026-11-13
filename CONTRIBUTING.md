@@ -323,6 +323,8 @@ protocol) mark a play state change that the other side has not confirmed yet.
 - Keep the video surface composed once the player is ready. Hide it with an `alpha` modifier placed
   before the `background` modifier. Then the engine is not torn down, and an empty room does not
   paint black.
+- The video layer keeps one place in the composition in both room layouts, and only its bounds
+  change in portrait. A rotation then keeps the engine and its surface (#238).
 - On Android, set the picture-in-picture flag before you ask the system to enter
   picture-in-picture. Then hide the room controls.
 - When the app stops, the player pauses on this device only, unless the app is in
@@ -442,6 +444,10 @@ Glass is the frosted, see-through panel style, built with the Haze library. The 
 (`DesignHarness` in `shared/test@jvm`) draws composables without a window, and it can press
 keys.
 
+The portrait room is the room screen in a window taller than wide, outside picture-in-picture
+(`RoomPortraitFrame`). From top to bottom it has the stage (the 16:9 video area), the tab row, the
+main box (chat, or one page in place of chat) and the composer (the chat input row).
+
 Glass:
 
 - Glass inside a Haze source cannot sample the capture that contains it. So the glass style keeps
@@ -459,6 +465,10 @@ Glass:
   KitePlayer draws on the Compose canvas, so glass can blur their video.
 - Below Android 12 and on low-memory devices, `videoSurfaceSupportsGlass()` is false, so ExoPlayer
   and mpv keep the `SurfaceView`.
+- Pages in the portrait main box have no video under them. They get a null `LocalHazeState`, so
+  glass falls back to the tonal panel and runs no capture (#238).
+- The tonal panel is translucent. So each page in the portrait main box draws the room ground under
+  itself (`PageGround`, or the ground in `PortraitPage`). Without it, chat shows through the page.
 
 Frames and the room controls:
 
@@ -473,16 +483,44 @@ Frames and the room controls:
   the first one attached takes it (533fd252).
 - The room controls fade out and stay composed, because the chat draft, the GIF drawer and the drag
   state of the seek bar live inside them. Only picture-in-picture and the lock mode remove them.
+- In the portrait room, only the stage fades. Chat and the pages sit under it, so only scrubbing,
+  the leave and managed room dialogs and a resting mouse pointer hold its controls up (#238).
 - A tap on the room background with the keyboard open only clears focus. Without the keyboard, and
-  once the player is ready, the tap hides the room controls.
+  once the player is ready, the tap hides the room controls. In the portrait room, only a tap on
+  the stage counts, and the gestures act only there too (#238).
 - A key on the direction pad shows hidden room controls again when a video is loaded and the screen
   is not locked. Centre and Enter also play or pause, Left and Right also seek, and Up and Down only
   show the controls (`SyncplayActivity.onKeyDown`). This works on any Android device. On a
   television, it is the only way back to the controls.
 - Room gestures ignore drags that start inside the system gesture, cutout and waterfall insets. The
-  top and bottom guards are at least 8 percent of the height.
+  top and bottom guards are at least 8 percent of the height. The portrait stage is clear of the top
+  and bottom screen edges, so it keeps only the 8 percent guards (`screenEdges = false`, #238).
 - Anything that a long-lived pointer coroutine reads goes through `rememberUpdatedState`. The
   activity handles its own configuration changes, so a rotation restarts nothing.
+
+The portrait room:
+
+- The portrait layout turns on the one-page mode of `RoomUiStateManager` (`onePage`). In this mode,
+  a page that opens closes every other page: the side panels, the GIF drawer (`gifPanelVisible`),
+  the Controls page (`controlPanel`) and the More page (`railActionsExpanded`) (#239).
+- Open and close a page only through its toggle function, such as `toggleGifPanel` or
+  `toggleMorePage`. A flag that you set directly skips the one-page rule, and two pages can then
+  stack.
+- When the one-page mode starts, one open page stays. The GIF drawer wins, then a side panel, then
+  the Controls page, then the More page. Outside the mode, the landscape rules stay: a panel and the
+  GIF drawer can be open together.
+- In the one-page mode, `back()` shows chat when a page is open. Then Back ends the landscape hold,
+  and only after that does it ask to leave (#244).
+- The landscape hold (`landscapeHold`) is set by the full-screen key, and it lasts for one room.
+  `invalidate()` drops it. While it is on, the room calls `EnterRoomMode(RoomRotation.Landscape)`,
+  whatever the rotation setting says.
+- Show the full-screen key only where `platformCallback.canHoldLandscape` is true. Android 16 and
+  later ignore an orientation request on a screen whose smallest width is 600dp or more, when the
+  app targets API 36 or later, and Synkplay does. iOS 15 applies a new orientation mask only at the
+  next rotation.
+- Notices sit at the top centre of the stage while its controls are hidden. While the controls
+  show, the stage has no free row between the status line and the play key, so the notices sit
+  under the stage.
 
 Chat:
 
@@ -493,9 +531,20 @@ Chat:
   wrapped as a whole, but each name inside them goes through `isolated()`. The name colouring finds
   names by those isolates.
 - Mark chat messages as seen only while the room controls are visible, and keep `seen` a plain
-  field. Otherwise the fading chat shows nothing.
+  field. Otherwise the fading chat shows nothing. In the portrait room, the chat stays on screen, so
+  a line counts as seen while no page covers the chat (#238).
 - Force-clear the chat focus when the room controls hide, or the keyboard stays up behind a field
-  that nobody can see.
+  that nobody can see. In the portrait room, the composer stays on screen. A hide there clears focus
+  only inside the stage, and a show takes focus only when nothing under the stage holds it (#238).
+- Chat in the portrait main box sits on the room ground, not over video (`ChatBox` with
+  `onGround`). Its text is never smaller than `Type.note`, and it has no outline, shadow or
+  background. The chat settings for outline, shadow and background apply to the landscape room only
+  (#242).
+- The portrait composer is `ChatComposer` with `bar`. While the GIF drawer is open, its field is the
+  drawer's search, so a tap on the field closes any other page and keeps the drawer.
+- The "New messages" marker over a portrait page counts only the lines from other people that came
+  after the page opened and are not seen yet. A tap on it closes the page and scrolls chat to the
+  newest line (#239).
 - Chat never strips backslashes. The JSON layer escapes them.
 - The chat message cap is the server's advertised limit, floored at 1, so that a server that
   advertises 0 cannot block every message.
@@ -523,6 +572,9 @@ Media, playlist and settings:
   same room.
 - On Android, `EnterRoomMode` hides the system bars again after every composition, because popups
   bring them back. `ExitRoomMode` is the first call on the home screen.
+- `EnterRoomMode` takes a `RoomRotation`. `FollowDevice` maps to `SCREEN_ORIENTATION_FULL_USER` on
+  Android and to all orientations but upside down on iOS, so the system rotation lock still applies.
+  `Landscape` maps to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` and to the landscape mask (#243).
 - Compose's `TextAutoSize` never shrinks a label that an ellipsis has already cut, because the cut
   text counts as fitting. Give a shrinking label a `FontSizeRange` through the app's `Text` in
   `app.uicomponents.controls`.

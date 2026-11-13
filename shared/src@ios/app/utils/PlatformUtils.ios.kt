@@ -69,7 +69,7 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
-import platform.UIKit.UIInterfaceOrientationMaskPortrait
+import platform.UIKit.UIInterfaceOrientationMaskAllButUpsideDown
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
@@ -208,7 +208,7 @@ actual fun ClipEntry.getText(): String? {
 }
 
 /** The major version of the system this is running on, read once. */
-private val iosMajorVersion: Int by lazy {
+internal val iosMajorVersion: Int by lazy {
     UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0
 }
 
@@ -255,12 +255,16 @@ private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
 }
 
 @Composable
-actual fun EnterRoomMode(portrait: Boolean) {
-    LaunchedEffect(portrait) {
+actual fun EnterRoomMode(rotation: RoomRotation) {
+    LaunchedEffect(rotation) {
         // Set it again on every room entry, even when the app never left the foreground.
         UIApplication.sharedApplication.idleTimerDisabled = true
         applyOrientationMask(
-            if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
+            when (rotation) {
+                // Upside-down portrait is left out, as in most iPhone apps.
+                RoomRotation.FollowDevice -> UIInterfaceOrientationMaskAllButUpsideDown
+                RoomRotation.Landscape -> UIInterfaceOrientationMaskLandscape
+            }
         )
     }
 }

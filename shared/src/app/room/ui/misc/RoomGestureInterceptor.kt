@@ -84,10 +84,12 @@ private class SeekMark(val at: Offset, val forward: Boolean, val id: Int)
  * The layer is always composed, but its pointer handlers attach only while the HUD (the controls
  * over the video) is hidden. While the HUD shows, every touch reaches the controls.
  * Double taps less than 900 ms apart add up to one seek and one announcement. A long press moves
- * a preview of the landing point and seeks once, on release.
+ * a preview of the landing point and seeks once, on release. Without [screenEdges], the layer is
+ * away from the top and bottom edges of the screen (the stage of the portrait room), so only the
+ * fractional guards apply there.
  */
 @Composable
-fun RoomGestureInterceptor(modifier: Modifier) {
+fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
     val viewmodel = LocalRoomViewmodel.current
     val p = palette
     val gesturesEnabled by GESTURES.watchPref()
@@ -108,8 +110,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
      * restart the handlers, because the activity handles configChanges itself. */
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val topGestureGuardPx by rememberUpdatedState(maxOf(WindowInsets.systemGestures.getTop(density), WindowInsets.displayCutout.getTop(density)))
-    val bottomGestureGuardPx by rememberUpdatedState(WindowInsets.systemGestures.getBottom(density))
+    val topGestureGuardPx by rememberUpdatedState(
+        if (screenEdges) maxOf(WindowInsets.systemGestures.getTop(density), WindowInsets.displayCutout.getTop(density)) else 0
+    )
+    val bottomGestureGuardPx by rememberUpdatedState(if (screenEdges) WindowInsets.systemGestures.getBottom(density) else 0)
     val leftGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getLeft(density, layoutDirection))
     val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
     val edgeGuardFraction = 0.08f

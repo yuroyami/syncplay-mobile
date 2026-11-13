@@ -6,6 +6,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.graphics.Shape
+import app.room.RoomViewmodel
+import app.room.ui.tabs.PageRow
+import app.uicomponents.frames.PanelFrame
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
@@ -70,13 +77,17 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 
 /*
- * The control panel: a row of icon buttons. The audio and subtitle panel is in the side dock
- * (CardTracks). The subtitle search and the chapter list have their own files.
+ * The control panel: a row of icon buttons in landscape (the control strip), and a page of rows in
+ * the portrait room (the Controls page). Both run the same actions. The audio and subtitle panel
+ * is in the side dock (CardTracks). The subtitle search and the chapter list have their own files.
  */
 
-/** The button in the bottom bar that opens the control panel. */
+/**
+ * The button that opens the control panel: in the bottom bar, or at the top end of the stage of
+ * the portrait room. [active] tints it while the Controls page is open.
+ */
 @Composable
-fun RoomControlPanelButton(modifier: Modifier) {
+fun RoomControlPanelButton(modifier: Modifier, active: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
@@ -87,45 +98,128 @@ fun RoomControlPanelButton(modifier: Modifier) {
             name = strings.roomControlPanel,
             size = Space.glyphLarge,
             modifier = modifier,
+            tint = if (active) palette.accent else palette.ink,
             focusRequester = cardController.controlsFocus,
             onClick = { cardController.toggleControlPanel() },
         )
     }
 }
 
-@Composable
-fun RoomControlPanelCard(modifier: Modifier) {
-    val scope = rememberCoroutineScope()
-    val viewmodel = LocalRoomViewmodel.current
-    val cardController = LocalRoomUiState.current
+/**
+ * What the keys of the control strip and the rows of the Controls page do. One set of actions
+ * keeps a row doing exactly what its strip key does.
+ */
+private class ControlActions(
+    private val viewmodel: RoomViewmodel,
+    private val scope: CoroutineScope,
+    private val undoNoConfirm: () -> Boolean,
+) {
+    private val ui get() = viewmodel.uiState
 
+    /** The seek that waits for the undo question, or null. */
+    var pendingUndoSeek by mutableStateOf<Pair<Long, Long>?>(null)
 
-    var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
-    val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
+    /** Where an undo returns to: the origin of the last own seek. */
+    val undoTarget: Long? get() = viewmodel.seeks.lastOrNull()?.first
+
+    fun aspectRatio() {
+        scope.launch(ioDispatcher) {
+            val label = viewmodel.player.switchAspectRatio()
+            if (label.isNotBlank()) viewmodel.dispatchOSD { label }
+        }
+    }
+
+    fun seekTo() = ui.toggleSeekTo()
+
+    /* Only the local user's seeks can be undone (see RoomCallback.onSomeoneSeeked). */
+    fun undoSeek() {
+        val last = viewmodel.seeks.lastOrNull()
+        when {
+            last == null -> viewmodel.dispatchWarning { Localization.strings.roomNoRecentSeek }
+            undoNoConfirm() -> undo(last)
+            else -> pendingUndoSeek = last
+        }
+    }
 
     fun undo(seek: Pair<Long, Long>) {
-        cardController.controlPanel.value = false
+        ui.controlPanel.value = false
         viewmodel.dispatcher.undoSeek(seek)
         viewmodel.dispatchOSD { Localization.strings.roomSeekUndone }
     }
 
-    /* A remote cannot find this row on its own. The row sits above the seek bar, and Up from there
-     * lands on the transport keys instead. So the row takes focus when it opens, and gives focus
-     * back to its own button when it closes. */
+    /* The gesture switches are here, not in settings, so they can change during playback. */
+    fun gestures() = ui.toggleGestures()
+
+    fun tracks() {
+        if (ui.tabCardTracks.value) {
+            ui.toggleTracks(false)
+            return
+        }
+        viewmodel.viewModelScope.launch {
+            // The panel never opens without media. The engine needs media to list tracks.
+            viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
+            ui.toggleTracks(true)
+        }
+    }
+}
+
+/** The actions for one strip or page. Its caller also shows [UndoSeekAsk]. */
+@Composable
+private fun rememberControlActions(): ControlActions {
+    val scope = rememberCoroutineScope()
+    val viewmodel = LocalRoomViewmodel.current
+    val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
+    val noConfirm by rememberUpdatedState(undoNoConfirm)
+    return remember(viewmodel, scope) { ControlActions(viewmodel, scope) { noConfirm } }
+}
+
+/** The question before an undo of a seek, while [ControlActions.pendingUndoSeek] holds one. */
+@Composable
+private fun UndoSeekAsk(actions: ControlActions) {
+    val scope = rememberCoroutineScope()
+    UndoSeekModal(
+        seek = actions.pendingUndoSeek,
+        onDismiss = { actions.pendingUndoSeek = null },
+        onUndo = { always ->
+            val seek = actions.pendingUndoSeek ?: return@UndoSeekModal
+            actions.pendingUndoSeek = null
+            if (always) scope.launch { UNDO_SEEK_NO_CONFIRM.set(true) }
+            actions.undo(seek)
+        },
+    )
+}
+
+/**
+ * Under a remote or a keyboard, focus moves to [target] when the control panel opens, and back to
+ * its own button when the panel closes. A remote cannot find the panel on its own.
+ */
+@Composable
+private fun ControlPanelFocus(target: FocusRequester) {
+    val cardController = LocalRoomUiState.current
     val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     val open by cardController.controlPanel.collectAsState()
-    val row = remember { FocusRequester() }
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(open, remoteOrKeyboard) {
         if (!remoteOrKeyboard) return@LaunchedEffect
-        val target = if (open) row else if (wasOpen) cardController.controlsFocus else null
+        val focus = if (open) target else if (wasOpen) cardController.controlsFocus else null
         wasOpen = open
-        if (target == null) return@LaunchedEffect
+        if (focus == null) return@LaunchedEffect
         repeat(8) {
-            if (runCatching { target.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            if (runCatching { focus.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
             delay(50.milliseconds)
         }
     }
+}
+
+@Composable
+fun RoomControlPanelCard(modifier: Modifier) {
+    val viewmodel = LocalRoomViewmodel.current
+    val actions = rememberControlActions()
+
+    /* The row sits above the seek bar, and Up from there lands on the transport keys instead. So
+     * the row takes focus when it opens. */
+    val row = remember { FocusRequester() }
+    ControlPanelFocus(row)
 
     Row(
         modifier = modifier.focusRequester(row).focusGroup(),
@@ -133,57 +227,61 @@ fun RoomControlPanelCard(modifier: Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (viewmodel.player.canChangeAspectRatio) {
-            GlyphButton(Icons.Filled.AspectRatio, name = strings.roomAspectRatio, size = Space.glyphLarge) {
-                scope.launch(ioDispatcher) {
-                    val label = viewmodel.player.switchAspectRatio()
-                    if (label.isNotBlank()) viewmodel.dispatchOSD { label }
-                }
-            }
+            GlyphButton(Icons.Filled.AspectRatio, name = strings.roomAspectRatio, size = Space.glyphLarge, onClick = actions::aspectRatio)
         }
 
-        GlyphButton(Icons.Filled.BrowseGallery, name = strings.roomSeekTo, size = Space.glyphLarge) {
-            cardController.toggleSeekTo()
-        }
+        GlyphButton(Icons.Filled.BrowseGallery, name = strings.roomSeekTo, size = Space.glyphLarge, onClick = actions::seekTo)
 
-        /* Only the local user's seeks can be undone (see RoomCallback.onSomeoneSeeked). The key
-         * shows the position that an undo returns to, so the user sees the target before the tap. */
-        val last = viewmodel.seeks.lastOrNull()
-        UndoSeekKey(target = last?.first) {
-            when {
-                last == null -> viewmodel.dispatchWarning { Localization.strings.roomNoRecentSeek }
-                undoNoConfirm -> undo(last)
-                else -> pendingUndoSeek = last
-            }
-        }
+        // The key shows the position that an undo returns to, so the user sees it before the tap.
+        UndoSeekKey(target = actions.undoTarget, onClick = actions::undoSeek)
 
-        /* The gesture switches are here, not in settings, so they can change during playback. */
-        GlyphButton(Icons.Filled.TouchApp, name = strings.roomGesturesPanelTitle, size = Space.glyphLarge) {
-            cardController.toggleGestures()
-        }
+        GlyphButton(Icons.Filled.TouchApp, name = strings.roomGesturesPanelTitle, size = Space.glyphLarge, onClick = actions::gestures)
 
-        GlyphButton(Icons.Filled.Subtitles, name = strings.roomTracks, size = Space.glyphLarge) {
-            if (cardController.tabCardTracks.value) {
-                cardController.toggleTracks(false)
-                return@GlyphButton
-            }
-            viewmodel.viewModelScope.launch {
-                // The panel never opens without media. The engine needs media to list tracks.
-                viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
-                cardController.toggleTracks(true)
+        GlyphButton(Icons.Filled.Subtitles, name = strings.roomTracks, size = Space.glyphLarge, onClick = actions::tracks)
+    }
+
+    UndoSeekAsk(actions)
+}
+
+/**
+ * The Controls page of the portrait room: the actions of the control strip as 48dp rows with
+ * their names, plus the chapter list when the video has chapters. A page is what the main box
+ * under the video shows in place of chat.
+ */
+@Composable
+fun RoomControlsPage(modifier: Modifier, shape: Shape) {
+    val viewmodel = LocalRoomViewmodel.current
+    val ui = LocalRoomUiState.current
+    val actions = rememberControlActions()
+    val media by viewmodel.playerManager.media.collectAsState()
+    val durationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
+    // The seek bar analyzes the chapters. The list is read again once the duration is known.
+    val chapters = remember(media?.location, durationMs) { media?.chapters?.toList().orEmpty() }
+    var showChapters by remember(media?.location) { mutableStateOf(false) }
+
+    // The host moves focus into the page under a remote or a keyboard, and back to the Controls key.
+    PanelFrame(
+        title = strings.roomControlPanel,
+        modifier = modifier,
+        shape = shape,
+        onClose = { ui.toggleControlPanel(false) },
+    ) {
+        PageRow(Icons.Filled.Subtitles, strings.roomTracks, opens = true, onClick = actions::tracks)
+        PageRow(Icons.Filled.BrowseGallery, strings.roomSeekTo, opens = true, onClick = actions::seekTo)
+        PageRow(Icons.Filled.History, strings.roomUndoSeek, value = actions.undoTarget?.let(::timestampFromMillis), onClick = actions::undoSeek)
+        if (viewmodel.player.canChangeAspectRatio) {
+            // The engine reports only the label of the next mode, so this row shows no value.
+            PageRow(Icons.Filled.AspectRatio, strings.roomAspectRatio, onClick = actions::aspectRatio)
+        }
+        PageRow(Icons.Filled.TouchApp, strings.roomGesturesPanelTitle, opens = true, onClick = actions::gestures)
+        if (viewmodel.player.supportsChapters && chapters.isNotEmpty()) {
+            PageRow(Icons.Filled.FormatListNumbered, strings.roomChapters, value = chapters.size.toString(), opens = true) {
+                showChapters = true
             }
         }
     }
-
-    UndoSeekModal(
-        seek = pendingUndoSeek,
-        onDismiss = { pendingUndoSeek = null },
-        onUndo = { always ->
-            val seek = pendingUndoSeek ?: return@UndoSeekModal
-            pendingUndoSeek = null
-            if (always) scope.launch { UNDO_SEEK_NO_CONFIRM.set(true) }
-            undo(seek)
-        },
-    )
+    UndoSeekAsk(actions)
+    ChaptersModal(open = showChapters, onDismiss = { showChapters = false })
 }
 
 /** The undo icon in a normal 48dp key, with the return time as a small badge under it. */

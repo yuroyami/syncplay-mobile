@@ -54,10 +54,11 @@ import app.uicomponents.controls.touchTarget
 /**
  * The transport keys in the center of the video: the play button exactly in the center, and the
  * jump keys under it. The top padding equals the height of the jump row plus its gap, so the
- * center of the column stays on the play button.
+ * center of the column stays on the play button. With [row], all keys sit in one row for the short
+ * stage of the portrait room: back, play, the custom skip, forward.
  */
 @Composable
-fun RoomTransportKeys(modifier: Modifier = Modifier) {
+fun RoomTransportKeys(modifier: Modifier = Modifier, row: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
     if (!hasVideo) return
@@ -66,22 +67,41 @@ fun RoomTransportKeys(modifier: Modifier = Modifier) {
     val customSkip by CUSTOM_SEEK_FRONT.watchPref()
     val customAmount by CUSTOM_SEEK_AMOUNT.watchPref()
 
-    Column(modifier.padding(top = Space.row + Space.gap), horizontalAlignment = Alignment.CenterHorizontally) {
-        RoomPlayButton(modifier = Modifier)
-        Spacer(Modifier.height(Space.gap))
-        Row(horizontalArrangement = Arrangement.spacedBy(Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
-            JumpKey(Icons.Filled.FastRewind, strings.roomJumpBack(back), "$back s") {
-                viewmodel.dispatcher.seekBckwd()
+    val jumpBack = @Composable {
+        JumpKey(Icons.Filled.FastRewind, strings.roomJumpBack(back), "$back s") {
+            viewmodel.dispatcher.seekBckwd()
+        }
+    }
+    // When the setting is on, the custom skip key sits between the two jump keys. Back then stays
+    // at the start, and forward stays at the end.
+    val custom = @Composable {
+        if (customSkip) {
+            JumpKey(Icons.Filled.Update, strings.roomCustomSkipButton(timestampFromMillis(customAmount * 1000L)), "$customAmount s") {
+                viewmodel.customSkip()
             }
-            // When the setting is on, the custom skip key sits between the two jump keys. Back
-            // then stays at the start, and forward stays at the end.
-            if (customSkip) {
-                JumpKey(Icons.Filled.Update, strings.roomCustomSkipButton(timestampFromMillis(customAmount * 1000L)), "$customAmount s") {
-                    viewmodel.customSkip()
-                }
-            }
-            JumpKey(Icons.Filled.FastForward, strings.roomJumpForward(forward), "$forward s") {
-                viewmodel.dispatcher.seekFrwrd()
+        }
+    }
+    val jumpForward = @Composable {
+        JumpKey(Icons.Filled.FastForward, strings.roomJumpForward(forward), "$forward s") {
+            viewmodel.dispatcher.seekFrwrd()
+        }
+    }
+
+    if (row) {
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(Space.gap), verticalAlignment = Alignment.CenterVertically) {
+            jumpBack()
+            RoomPlayButton(modifier = Modifier)
+            custom()
+            jumpForward()
+        }
+    } else {
+        Column(modifier.padding(top = Space.row + Space.gap), horizontalAlignment = Alignment.CenterHorizontally) {
+            RoomPlayButton(modifier = Modifier)
+            Spacer(Modifier.height(Space.gap))
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.gapTight), verticalAlignment = Alignment.CenterVertically) {
+                jumpBack()
+                custom()
+                jumpForward()
             }
         }
     }

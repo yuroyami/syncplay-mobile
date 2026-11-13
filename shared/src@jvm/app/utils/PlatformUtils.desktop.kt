@@ -105,7 +105,7 @@ actual fun ClipEntry.getText(): String? = runCatching {
 
 /* Desktop windows have no system bars to hide and no orientation to lock. */
 @Composable
-actual fun EnterRoomMode(portrait: Boolean) {
+actual fun EnterRoomMode(rotation: RoomRotation) {
 }
 
 @Composable

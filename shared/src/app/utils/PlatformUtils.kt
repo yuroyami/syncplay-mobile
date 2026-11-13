@@ -84,18 +84,24 @@ expect fun getFileSize(uri: PlatformFile): Long?
 /** Text content of a clipboard entry, or null if it holds no text. */
 expect fun ClipEntry.getText(): String?
 
+/** How the room screen turns. A hold is the room's own request to keep the screen sideways. */
+enum class RoomRotation {
+    /** The room turns with the device, and the system rotation lock applies. */
+    FollowDevice,
+
+    /** The room stays in landscape, either way round. */
+    Landscape,
+}
+
 /**
- * Applies the window policy of the room screen: it hides the system bars (Android) and locks
- * the orientation. Desktop and the web do nothing here.
+ * Applies the window policy of the room screen: it hides the system bars (Android) and sets the
+ * orientation to [rotation]. Desktop and the web do nothing here.
  *
  * It is the only place that changes the orientation inside the room. It runs again whenever
- * [portrait] changes, so a switch between landscape and portrait is one geometry update, not a
- * race between two effects.
- *
- * @param portrait true to lock to portrait, false to lock to landscape
+ * [rotation] changes, so a switch is one geometry update, not a race between two effects.
  */
 @Composable
-expect fun EnterRoomMode(portrait: Boolean)
+expect fun EnterRoomMode(rotation: RoomRotation)
 
 /**
  * Restores the default window policy for the screens outside the room (home, server host, theme

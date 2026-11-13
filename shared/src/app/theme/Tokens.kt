@@ -46,6 +46,8 @@ object Space {
     val glyphLarge = 24.dp
     val hair = 1.dp
     val touchMin = 48.dp
+    /** The height of a field drawn as a well, and of the keys beside it in the portrait composer. */
+    val well = 40.dp
     /** The maximum width of a notice and of the chat over the video, so lines stay short. */
     val noticeWidth = 420.dp
 }

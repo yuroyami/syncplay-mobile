@@ -28,7 +28,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -40,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
@@ -47,7 +51,32 @@ import app.room.ui.bottombar.RoomControlPanelCard
 import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
+import app.theme.palette
 import app.uicomponents.chromeSurface
+
+/**
+ * True for a panel that shows as a page in the main box of the portrait room (the area under the
+ * video, where chat shows when no page is open). A page fills the main box and has a close key.
+ */
+val LocalRoomPage = staticCompositionLocalOf { false }
+
+/** The close action of a panel when it shows as a page, or null in the side dock. */
+@Composable
+internal fun pageClose(close: () -> Unit): (() -> Unit)? = if (LocalRoomPage.current) close else null
+
+/**
+ * Draws the room ground under a page. The main box has no video for glass to blur, so its tonal
+ * panel is translucent, and chat would show through a page without this ground.
+ */
+@Composable
+internal fun PageGround(shape: Shape, content: @Composable () -> Unit) {
+    if (!LocalRoomPage.current) return content()
+    Box(Modifier.background(palette.ground, shape)) { content() }
+}
+
+/** The modifier of a panel that wraps its height in the side dock, and fills a page. */
+@Composable
+internal fun wrappedPanel(): Modifier = if (LocalRoomPage.current) Modifier.fillMaxSize() else Modifier.fillMaxWidth()
 
 /**
  * A plain box, so the AnimatedVisibility calls of the panels resolve to the top-level function,
@@ -74,8 +103,10 @@ private val directionKeys = setOf(
  * The contents of the side dock (the side area of the screen that holds the panels). The dock
  * shows one panel at a time, at a real reading width: 38 percent of the window, kept between
  * 320dp and 420dp. The panel slides in from the right. Compose does not mirror this slide for
- * right-to-left layouts, where the dock is on the left. On a tall window, the panel is a
- * full-width sheet that rises from the bottom. The control strip sits under the panel.
+ * right-to-left layouts, where the dock is on the left. On a [tall] window (the main box of the
+ * portrait room), the panel is a page: a full-width sheet that rises from the bottom and fills
+ * the box. The control strip sits under the panel, and in the portrait room the Controls page
+ * replaces it.
  */
 @Composable
 fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
@@ -162,18 +193,22 @@ fun RoomSidePanels(modifier: Modifier = Modifier, tall: Boolean = false) {
             exit,
         ) {
             if (!viewmodel.isSoloMode) {
-                AnimatedVisibility(stateUserInfo, Modifier.fillMaxHeight(), enter, exit) { CardUserInfo.UserInfoCard(shape) }
-                AnimatedVisibility(statePlaylist && sharedPlaylists, Modifier.fillMaxHeight(), enter, exit) { CardSharedPlaylist.SharedPlaylistCard(shape) }
+                AnimatedVisibility(stateUserInfo, Modifier.fillMaxHeight(), enter, exit) { PageGround(shape) { CardUserInfo.UserInfoCard(shape) } }
+                AnimatedVisibility(statePlaylist && sharedPlaylists, Modifier.fillMaxHeight(), enter, exit) {
+                    PageGround(shape) { CardSharedPlaylist.SharedPlaylistCard(shape) }
+                }
             }
-            AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { CardRoomPrefs.InRoomSettingsCard(shape) }
+            AnimatedVisibility(statePrefs, Modifier.fillMaxHeight(), enter, exit) { PageGround(shape) { CardRoomPrefs.InRoomSettingsCard(shape) } }
             // Of the tool panels below, only the tracks panel fills the dock. The others wrap their
             // content.
-            AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { CardTracks.TracksPanel(shape) }
-            AnimatedVisibility(stateGestures, enter = enter, exit = exit) { CardGestures.GesturesPanel(shape) }
-            AnimatedVisibility(stateSeekTo, enter = enter, exit = exit) { CardSeekTo.SeekToPanel(shape) }
-            AnimatedVisibility(stateAddMedia, enter = enter, exit = exit) { CardAddMedia.AddMediaPanel(shape) }
+            AnimatedVisibility(stateTracks, Modifier.fillMaxHeight(), enter, exit) { PageGround(shape) { CardTracks.TracksPanel(shape) } }
+            // A page fills the main box, so these panels take its height there.
+            val wrapped = if (tall) Modifier.fillMaxHeight() else Modifier
+            AnimatedVisibility(stateGestures, wrapped, enter, exit) { PageGround(shape) { CardGestures.GesturesPanel(shape) } }
+            AnimatedVisibility(stateSeekTo, wrapped, enter, exit) { PageGround(shape) { CardSeekTo.SeekToPanel(shape) } }
+            AnimatedVisibility(stateAddMedia, wrapped, enter, exit) { PageGround(shape) { CardAddMedia.AddMediaPanel(shape) } }
         }
-        AnimatedVisibility(stateControls, enter = expandVertically(Motion.move()), exit = shrinkVertically(Motion.move())) {
+        AnimatedVisibility(stateControls && !tall, enter = expandVertically(Motion.move()), exit = shrinkVertically(Motion.move())) {
             Box(
                 Modifier.padding(top = Space.gapTight)
                     .height(Space.rowTall)

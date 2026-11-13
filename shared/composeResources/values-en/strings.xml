@@ -687,6 +687,11 @@
     <string name="room_gif_retry">Retry</string>
     <string name="room_chat_input">Message</string>
     <string name="room_chat_new_messages">New messages</string>
+    <string name="room_gif_search_gifs">Search GIFs</string>
+    <string name="room_gif_search_stickers">Search stickers</string>
+    <!-- Portrait room: the key that turns the phone to landscape and holds it there. -->
+    <string name="room_full_screen">Full screen</string>
+    <string name="room_full_screen_exit">Exit full screen</string>
     <!-- Media intake (design overhaul) -->
     <string name="room_route_device">From this device</string>
     <string name="room_route_device_note">Pick a video or audio file</string>

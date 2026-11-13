@@ -79,7 +79,7 @@ object CardSeekTo {
 
         PanelFrame(
             title = strings.roomSeekTopositionTitle,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = wrappedPanel(),
             shape = shape,
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = strings.actionClose, onClick = ::close) },

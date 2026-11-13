@@ -3,12 +3,37 @@ package app.room
 import app.room.ui.chat.LocalChatMediaSize
 import app.room.ui.chat.chatMediaCellSize
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.geometry.Size
+import app.LocalRoomViewmodel
+import app.room.ui.bottombar.RoomControlsPage
+import app.room.ui.bottombar.RoomFullScreenKey
+import app.room.ui.chat.PageNewMessages
+import app.room.ui.chat.RoomGifPage
+import app.room.ui.rightcards.LocalRoomPage
+import app.theme.BrandSpan
+import app.theme.brandBrush
+import app.utils.RoomRotation
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +55,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -49,10 +76,15 @@ import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
 import app.preferences.Preferences.ROOM_ALLOW_PORTRAIT
 import app.preferences.flow
 import app.preferences.watchPref
+import app.room.ui.bottombar.AddVideoButton
 import app.room.ui.bottombar.BlackContrastUnderlay
 import app.room.ui.bottombar.TopContrastUnderlay
 import app.room.ui.bottombar.RoomBottomBarSection
+import app.room.ui.bottombar.RoomControlPanelButton
+import app.room.ui.bottombar.RoomSeekbar
 import app.room.ui.chat.FadingMessageLayout
+import app.room.ui.chat.RoomChatInput
+import app.room.ui.chat.RoomChatPane
 import app.room.ui.chat.RoomChatSection
 import app.room.ui.misc.KeyboardNotchShield
 import app.room.ui.misc.RoomBackgroundArtwork
@@ -61,11 +93,14 @@ import app.room.ui.misc.RoomTransportKeys
 import app.room.ui.rightcards.RoomSidePanels
 import app.room.ui.statinfo.RoomStatusInfoSection
 import app.room.ui.tabs.ManagedRoomModal
+import app.room.ui.tabs.RoomMorePage
 import app.room.ui.tabs.RoomRail
+import app.room.ui.tabs.RoomTabRow
 import app.room.ui.tabs.RoomUnlockableLayout
 import app.theme.LocalPalette
 import app.theme.LocalSurfacePalette
 import app.theme.Motion
+import app.theme.Radius
 import app.theme.Space
 import app.uicomponents.GlassDemand
 import app.uicomponents.LocalGlassDemand
@@ -129,9 +164,11 @@ val LocalRoomRailFocus = compositionLocalOf<FocusRequester?> { null }
  */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    // The room stays in landscape unless the user allows portrait. The layout follows the window
-    // shape, so a portrait window gets the tall layout with no extra code.
-    EnterRoomMode(portrait = ROOM_ALLOW_PORTRAIT.watchPref().value)
+    // The room follows the device unless the setting is off or the full-screen key holds it in
+    // landscape. The layout follows the window shape, so a portrait window gets the tall layout.
+    val followDevice by ROOM_ALLOW_PORTRAIT.watchPref()
+    val held by viewmodel.uiState.landscapeHold.collectAsState()
+    EnterRoomMode(if (followDevice && !held) RoomRotation.FollowDevice else RoomRotation.Landscape)
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
@@ -145,6 +182,11 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val tall = window.height > window.width
     // A window under 480dp tall cannot fit the rail as a column together with the bottom bar.
     val railHorizontal = tall || with(LocalDensity.current) { window.height.toDp() } < 480.dp
+    // A window taller than wide gets the portrait layout: the video on top, and chat under it.
+    // Picture-in-picture shows the video alone, whatever the shape of its window.
+    val portrait = tall && !isInPipMode
+    // The main box under the video shows one page at a time, so the open panels follow that rule.
+    SideEffect { viewmodel.uiState.onePage = portrait }
 
     /* The backdrop for the room's glass (the frosted blur behind panels): only the video layer and
      * the artwork. A glass surface cannot blur a backdrop that contains the surface itself, so
@@ -173,9 +215,14 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     ) {
         // A file or link dropped onto the room opens like one picked with the add key (desktop).
         val drop = remember(viewmodel) { MediaDropTarget(viewmodel::onMediaDrop) }
-        Box(Modifier.fillMaxSize().roomPointer(viewmodel.uiState, pointerHidden).mediaDropTarget(drop)) {
-            Box(Modifier.matchParentSize().glassBackdropLayer(roomHazeState)) {
-                if (!hasVideo) RoomBackgroundArtwork()
+        // In portrait, the room's dark ground fills the space under the video.
+        val ground = if (portrait) Modifier.background(videoPalette.ground) else Modifier
+        Box(Modifier.fillMaxSize().then(ground).roomPointer(viewmodel.uiState, pointerHidden).mediaDropTarget(drop)) {
+            /* In portrait, the video layer takes the bounds of the stage. It keeps this place in the
+             * composition in both layouts, so a rotation keeps the engine and its surface. */
+            val videoBounds = if (portrait) Modifier.portraitStage(roomTopInsets()) else Modifier.matchParentSize()
+            Box(videoBounds.glassBackdropLayer(roomHazeState)) {
+                if (!hasVideo) RoomBackgroundArtwork(stage = portrait)
 
                 val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
                 if (playerIsReady) {
@@ -207,27 +254,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             when {
                 isInPipMode -> Unit // PiP shows the video and nothing else.
                 lockedMode -> RoomUnlockableLayout()
-                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, initialFocusRequester)
+                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester)
             }
 
-            if (!isInPipMode) {
-                // Notices and unseen chat lines share one column on the center line, under the
-                // status line (and under the rail row on a tall window). The room's notices come
-                // first and chat lines follow. Both sit above the HUD and outside its alpha, so
-                // they show while the HUD is hidden. The center is where a viewer is looking.
-                Column(
-                    modifier = Modifier.align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .windowInsetsPadding(roomTopInsets())
-                        .padding(top = if (tall) Space.row * 2 + Space.gap * 2 else Space.row + Space.gap)
-                        .padding(horizontal = Space.gutter),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Space.gapTight),
-                ) {
-                    NoticeHost(queue = viewmodel.notices)
-                    if (!soloMode) FadingMessageLayout()
-                }
-            }
+            if (!isInPipMode) RoomNotices(viewmodel, soloMode, portrait)
 
             MediaDropOverlay(drop) { media ->
                 when (media) {
@@ -468,7 +498,50 @@ private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
     )
 }
 
-/** The HUD: every control that fades, on the [RoomFrame] docks, with the gesture layer above. */
+/**
+ * The notices and the unseen chat lines, in one column on the center line, where a viewer is
+ * looking. The notices come first. The column sits above the HUD (the controls over the video)
+ * and outside its fade, so it shows while the HUD is hidden. In landscape it sits under the status
+ * line.
+ *
+ * In portrait, the notices sit at the top center of the stage (the video area) while its controls
+ * are hidden. While the controls show, the stage has no free row between the status line and the
+ * play key, so the notices glide under the stage. No chat lines fade in, because chat is on screen.
+ */
+@Composable
+private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, portrait: Boolean) {
+    val density = LocalDensity.current
+    val window = LocalWindowInfo.current.containerSize
+    val controlsShown by viewmodel.uiState.visibleHUD.collectAsState()
+    val keyboardOpen = WindowInsets.ime.getBottom(density) > 0
+    val stageHeight = with(density) { window.width.toDp() } * 9f / 16f
+    val target = when {
+        !portrait -> Space.row + Space.gap
+        !controlsShown -> Space.gapTight
+        // Under the stage, and under the tab row unless the keyboard folded it away.
+        keyboardOpen -> stageHeight + Space.gapTight
+        else -> stageHeight + PortraitTabRowHeight + Space.gapTight
+    }
+    val top by animateDpAsState(target, Motion.move())
+    Column(
+        modifier = Modifier.align(Alignment.TopCenter)
+            .fillMaxWidth()
+            .windowInsetsPadding(roomTopInsets())
+            .padding(top = top)
+            .padding(horizontal = Space.gutter),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Space.gapTight),
+    ) {
+        NoticeHost(queue = viewmodel.notices)
+        if (!soloMode && !portrait) FadingMessageLayout()
+    }
+}
+
+/**
+ * The HUD: every control that fades, on the [RoomFrame] docks, with the gesture layer above. In
+ * [portrait], the HUD covers only the stage of [RoomPortraitFrame]. The tab row, the main box and
+ * the composer sit under the stage and never fade.
+ */
 @Composable
 private fun RoomHud(
     viewmodel: RoomViewmodel,
@@ -476,6 +549,7 @@ private fun RoomHud(
     hasVideo: Boolean,
     tall: Boolean,
     railHorizontal: Boolean,
+    portrait: Boolean,
     initialFocusRequester: FocusRequester,
 ) {
     val ui = viewmodel.uiState
@@ -488,14 +562,18 @@ private fun RoomHud(
 
     /* Under keyboard or D-pad input, focus moves to the main control when the HUD shows. On touch
      * that would be jarring and could raise the soft keyboard. Focus is cleared on hide, so the
-     * hidden controls (still composed) keep no focus. */
+     * hidden controls (still composed) keep no focus. In portrait, focus can rest under the stage,
+     * in the composer for example. A show then leaves it there, and a hide clears focus only when
+     * it sits inside the HUD. */
+    var stageFocused by remember { mutableStateOf(false) }
+    var lowerFocused by remember { mutableStateOf(false) }
     LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode, playerIsReady) {
         if (isHUDVisible) {
-            if (isKeyboardMode && playerIsReady) {
+            if (isKeyboardMode && playerIsReady && !lowerFocused) {
                 delay(150)
                 runCatching { initialFocusRequester.requestFocus() }
             }
-        } else {
+        } else if (!portrait || stageFocused) {
             focusManager.clearFocus(force = true)
         }
     }
@@ -510,40 +588,63 @@ private fun RoomHud(
      * keyboard. */
     val hudHidden by remember { derivedStateOf { hudAlpha.value == 0f } }
     val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
-    HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo)
+    HudAutoHide(viewmodel, isHUDVisible, isKeyboardOpen, hasVideo, portrait)
+
+    // The faded layer: the whole screen, or only the stage in portrait.
+    val layer = Modifier
+        /* Modifier.alpha, not a graphicsLayer block. A graphicsLayer block would defer the state
+         * read, but it keeps a full-screen offscreen layer under the whole HUD (glass surfaces
+         * included) for the life of the room. alpha() clips to the layer and skips the layer at
+         * 1f, which is the usual state. */
+        .alpha(hudAlpha.value)
+        .then(
+            if (isHUDVisible) Modifier.pointerInput(playerIsReady) {
+                detectTapGestures(onTap = {
+                    // While typing, a stray tap only closes the keyboard. Otherwise the tap hides
+                    // the HUD.
+                    if (isKeyboardOpen) focusManager.clearFocus(force = true)
+                    else if (playerIsReady) ui.visibleHUD.value = false
+                })
+            } else Modifier
+        )
+        .pointerInput(Unit) {
+            // Presses only. Counting moves would restart the idle timer on every pointer event.
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type == PointerEventType.Press) ui.noteHudActivity()
+                }
+            }
+        }
+        .onPreviewKeyEvent { ui.noteHudActivity(); false }
+    val controls = Modifier.holdsHudWhileHovered(ui)
 
     // While the HUD is fully faded out, its glass releases the capture. The capture starts again
     // as soon as the fade-in begins.
     CompositionLocalProvider(LocalGlassSuspended provides hudHidden) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            /* Modifier.alpha, not a graphicsLayer block. A graphicsLayer block would defer the
-             * state read, but it keeps a full-screen offscreen layer under the whole HUD (glass
-             * surfaces included) for the life of the room. alpha() clips to the layer and skips
-             * the layer at 1f, which is the usual state. */
-            .alpha(hudAlpha.value)
-            .then(
-                if (isHUDVisible) Modifier.pointerInput(playerIsReady) {
-                    detectTapGestures(onTap = {
-                        // While typing, a stray tap only closes the keyboard. Otherwise the tap
-                        // hides the HUD.
-                        if (isKeyboardOpen) focusManager.clearFocus(force = true)
-                        else if (playerIsReady) ui.visibleHUD.value = false
-                    })
-                } else Modifier
-            )
-            .pointerInput(Unit) {
-                // Presses only. Counting moves would restart the idle timer on every pointer event.
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Press) ui.noteHudActivity()
+    if (portrait) {
+        RoomPortraitFrame(
+            keyboardOpen = isKeyboardOpen,
+            lower = Modifier.onFocusChanged { lowerFocused = it.hasFocus },
+            stage = {
+                Box(Modifier.matchParentSize().onFocusChanged { stageFocused = it.hasFocus }.then(layer)) {
+                    if (hasVideo) {
+                        BlackContrastUnderlay()
+                        TopContrastUnderlay()
                     }
+                    PortraitStageControls(soloMode, playerIsReady, hasVideo, initialFocusRequester, controls)
                 }
-            }
-            .onPreviewKeyEvent { ui.noteHudActivity(); false },
-    ) {
+                // While the controls are hidden, a thin line along the bottom edge shows the position.
+                if (hasVideo) StageProgressLine(Modifier.align(Alignment.BottomCenter)) { 1f - hudAlpha.value }
+                // The gesture layer covers the stage only, so the chat under it keeps its touches.
+                if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.matchParentSize(), screenEdges = false)
+            },
+            tabs = { RoomTabRow() },
+            main = { PortraitMainBox(viewmodel, soloMode, playerIsReady) },
+            composer = if (soloMode) null else ({ RoomChatInput(Modifier.fillMaxWidth()) }),
+        )
+    } else {
+    Box(modifier = Modifier.fillMaxSize().then(layer)) {
         if (hasVideo) {
             BlackContrastUnderlay()
             TopContrastUnderlay()
@@ -551,7 +652,7 @@ private fun RoomHud(
         RoomFrame(
             tall = tall,
             railHorizontal = railHorizontal,
-            controls = Modifier.holdsHudWhileHovered(ui),
+            controls = controls,
             status = if (soloMode || !playerIsReady) null else ({ RoomStatusInfoSection() }),
             rail = { RoomRail(horizontal = railHorizontal) },
             chat = if (soloMode) null else ({ RoomChatSection(modifier = Modifier.fillMaxSize()) }),
@@ -564,23 +665,199 @@ private fun RoomHud(
         )
     }
     }
+    }
 
     /* The gesture layer sits above the HUD. While the HUD is hidden, the gesture layer takes the
      * touches that would otherwise reach the hidden controls. While the HUD is visible, the
      * gesture layer attaches no pointer input. */
-    if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+    if (!portrait && playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
     // Above both: the notch strip beside an open keyboard. A stray thumb there closes the keyboard.
     KeyboardNotchShield(keyboardOpen = isKeyboardOpen)
 }
 
 /**
- * Runs [autoHideHud] for the room. The idle timer runs only while video plays. Open panels, menus
- * and dialogs, the keyboard, scrubbing, an unsent message and a mouse pointer that rests on a
- * control hold the HUD open. After each release or playback restart, the timer starts again from
- * the full delay. It also decides when the room hides the mouse pointer.
+ * The HUD over the stage of the portrait room: the status line at the top start, the Controls key
+ * at the top end, the play and jump keys in one row in the middle, and the seek bar at the bottom,
+ * with the full-screen key at its end. Before a file loads, the add key takes the place of the seek
+ * bar, under the logo.
  */
 @Composable
-private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardOpen: Boolean, hasVideo: Boolean) {
+private fun BoxScope.PortraitStageControls(
+    soloMode: Boolean,
+    playerIsReady: Boolean,
+    hasVideo: Boolean,
+    initialFocusRequester: FocusRequester,
+    controls: Modifier,
+) {
+    val ui = LocalRoomUiState.current
+    val controlsPage by ui.controlPanel.collectAsState()
+    if (!soloMode && playerIsReady) {
+        Box(
+            Modifier.align(Alignment.TopStart).focusGroup()
+                // The end padding keeps the status line clear of the Controls key.
+                .padding(start = Space.gapTight, top = Space.gapTight, end = Space.touchMin + Space.gap)
+                .then(controls),
+        ) { RoomStatusInfoSection() }
+    }
+    if (playerIsReady) {
+        Box(Modifier.align(Alignment.TopEnd).focusGroup().then(controls)) { RoomControlPanelButton(Modifier, active = controlsPage) }
+    }
+    when {
+        !playerIsReady -> Box(Modifier.align(Alignment.Center).focusGroup().then(controls)) { ProgressBar(progress = null) }
+        hasVideo -> {
+            Box(Modifier.align(Alignment.Center).focusGroup().then(controls)) { RoomTransportKeys(row = true) }
+            Row(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().focusGroup().then(controls).padding(horizontal = Space.gapTight),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RoomSeekbar(modifier = Modifier.weight(1f))
+                if (platformCallback.canHoldLandscape) RoomFullScreenKey()
+            }
+        }
+        // Before a file loads, the add key is the main control. It sits low in the stage, under the
+        // logo, and opens the add media page.
+        else -> Box(Modifier.align(Alignment.BottomCenter).padding(bottom = Space.gap).focusGroup().then(controls)) {
+            AddVideoButton(
+                modifier = Modifier.focusRequester(ui.mediaKeyFocus).focusRequester(initialFocusRequester),
+                expanded = true,
+                onClick = { ui.toggleAddMedia(true) },
+            )
+        }
+    }
+}
+
+/**
+ * The 2dp position line along the bottom edge of the stage, shown while the room controls are
+ * hidden. The played part takes the brand ramp, and the rest is white at 12 percent. It has no
+ * touch target and no semantics. The position is read while drawing, so a position update redraws
+ * the line and recomposes nothing. [alpha] is read while drawing too.
+ */
+@Composable
+private fun StageProgressLine(modifier: Modifier, alpha: () -> Float) {
+    val viewmodel = LocalRoomViewmodel.current
+    val p = palette
+    val manager = viewmodel.playerManager
+    val hudVisible by viewmodel.uiState.visibleHUD.collectAsState()
+    // Collected only while the controls are hidden, as the seek bar collects only while they show.
+    val position = remember { mutableLongStateOf(manager.timeCurrentMillis.value) }
+    LaunchedEffect(hudVisible) {
+        if (!hudVisible) manager.timeCurrentMillis.collect { position.longValue = it }
+    }
+    val duration = manager.timeFullMillis.collectAsState()
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(StageLineHeight)
+            .drawBehind {
+                val shown = alpha()
+                if (shown <= 0f) return@drawBehind
+                drawRect(Color.White, alpha = shown * TRACK_ALPHA)
+                val total = duration.value
+                val played = if (total > 0L) (position.longValue.toFloat() / total).coerceIn(0f, 1f) else 0f
+                if (played > 0f) {
+                    drawRect(brandBrush(p.brandField, size.width, BrandSpan.toPx()), size = Size(size.width * played, size.height), alpha = shown)
+                }
+            },
+    )
+}
+
+/** The height of the position line of the stage. */
+private val StageLineHeight = 2.dp
+
+/** The unplayed part of the position line: white at 12 percent. */
+private const val TRACK_ALPHA = 0.12f
+
+/**
+ * The main box of the portrait room, under the tab row: chat, or one page in place of chat. A page
+ * is one of the room's panels, the GIF drawer, the Controls page or the More page. The message list
+ * stays composed under a page. Glass has no video to sample here, so the pages use the plain tonal
+ * panel and keep no capture running.
+ */
+@Composable
+private fun BoxScope.PortraitMainBox(viewmodel: RoomViewmodel, soloMode: Boolean, playerIsReady: Boolean) {
+    val ui = viewmodel.uiState
+    val chatSupported by viewmodel.protocol.supportsChat.collectAsState()
+    val more by ui.railActionsExpanded.collectAsState()
+    val controls by ui.controlPanel.collectAsState()
+    val gifs by ui.gifPanelVisible.collectAsState()
+    val panels = listOf(
+        ui.tabCardUserInfo, ui.tabCardSharedPlaylist, ui.tabCardRoomPreferences, ui.tabCardTracks,
+        ui.tabCardGestures, ui.tabCardSeekTo, ui.tabCardAddMedia,
+    ).map { it.collectAsState().value }
+    val chat = !soloMode && chatSupported
+    val pageOpen = more || (chat && gifs) || (playerIsReady && (controls || panels.any { it }))
+    val sheet = RoundedCornerShape(topStart = Radius.panel, topEnd = Radius.panel)
+    // Each step scrolls the chat to its newest line, after the marker over a page is tapped.
+    var newestRequests by remember { mutableIntStateOf(0) }
+    CompositionLocalProvider(LocalHazeState provides null, LocalGlassSuspended provides true, LocalRoomPage provides true) {
+        // Chat lines count as seen only while no page covers them.
+        if (chat) RoomChatPane(showing = !pageOpen, newestRequests = newestRequests, modifier = Modifier.fillMaxSize())
+        else RoomBackgroundArtwork()
+        if (playerIsReady) RoomSidePanels(Modifier.fillMaxSize(), tall = true)
+        PortraitPage(open = playerIsReady && controls, sheet, returnFocus = ui.controlsFocus) { page ->
+            RoomControlsPage(page, sheet)
+        }
+        PortraitPage(open = more, sheet, returnFocus = LocalRoomRailFocus.current) { page -> RoomMorePage(page, sheet) }
+        if (chat) PortraitPage(open = gifs, sheet, returnFocus = ui.chatFocus) { page -> RoomGifPage(page, sheet) }
+        if (chat) {
+            PageNewMessages(pageOpen) {
+                ui.showChat()
+                newestRequests++
+            }
+        }
+    }
+}
+
+/**
+ * One page of the main box that is not a side panel. It slides up as the panels do, on the room
+ * ground in its [shape], so chat does not show through its tonal panel. Under a remote or a
+ * keyboard, focus enters the page when it opens, and goes back to [returnFocus] when the page
+ * closes with focus inside it.
+ */
+@Composable
+private fun PortraitPage(open: Boolean, shape: Shape, returnFocus: FocusRequester?, content: @Composable (Modifier) -> Unit) {
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    val pageFocus = remember { FocusRequester() }
+    var hasFocus by remember { mutableStateOf(false) }
+    var wasOpen by remember { mutableStateOf(open) }
+    LaunchedEffect(open) {
+        val target = when {
+            !remoteOrKeyboard || open == wasOpen -> null
+            open -> pageFocus
+            hasFocus -> returnFocus
+            else -> null
+        }
+        wasOpen = open
+        if (target == null) return@LaunchedEffect
+        // The page slides in over a few frames, so the target may not exist at the first try.
+        repeat(PAGE_FOCUS_TRIES) {
+            if (runCatching { target.requestFocus(if (open) FocusDirection.Enter else FocusDirection.Exit) }.getOrDefault(false)) return@LaunchedEffect
+            delay(60)
+        }
+    }
+    AnimatedVisibility(
+        visible = open,
+        modifier = Modifier.fillMaxSize(),
+        enter = slideInVertically(Motion.move()) { it },
+        exit = slideOutVertically(Motion.move()) { it },
+    ) {
+        content(Modifier.fillMaxSize().background(palette.ground, shape).focusRequester(pageFocus).onFocusChanged { hasFocus = it.hasFocus }.focusGroup())
+    }
+}
+
+/** How many times, 60 ms apart, focus tries to move into a page or back out of it. */
+private const val PAGE_FOCUS_TRIES = 8
+
+/**
+ * Runs [autoHideHud] for the room. The idle timer runs only while video plays. Open panels, menus
+ * and dialogs, the keyboard, scrubbing, an unsent message and a mouse pointer that rests on a
+ * control hold the HUD open. In [portrait], chat and the pages sit under the stage, so only
+ * scrubbing, the dialogs and a resting mouse pointer hold it. After each release or playback
+ * restart, the timer starts again from the full delay. It also decides when the room hides the
+ * mouse pointer.
+ */
+@Composable
+private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardOpen: Boolean, hasVideo: Boolean, portrait: Boolean) {
     val idleSeconds by HUD_AUTO_HIDE_SECONDS.watchPref()
     val ui = viewmodel.uiState
     val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
@@ -601,8 +878,9 @@ private fun HudAutoHide(viewmodel: RoomViewmodel, hudVisible: Boolean, keyboardO
     val askLeave by ui.askLeave.collectAsState()
     val managedRoom by ui.managedRoom.collectAsState()
     val hovered by ui.hoveredControls.collectAsState()
-    val held = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs || scrubbing ||
-        keyboardOpen || draft.isNotBlank() || railMenu || askLeave || managedRoom || hovered > 0
+    val pagesAndChat = userInfo || playlist || prefs || tracks || gestures || seekTo || addMedia || controls || gifs ||
+        keyboardOpen || draft.isNotBlank() || railMenu
+    val held = (!portrait && pagesAndChat) || scrubbing || askLeave || managedRoom || hovered > 0
 
     val screenReader = LocalScreenReaderActive.current
 

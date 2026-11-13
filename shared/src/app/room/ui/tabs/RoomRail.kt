@@ -12,13 +12,18 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
@@ -40,30 +45,41 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.i18n.strings
+import app.room.PortraitTabRowHeight
+import app.room.ui.bottombar.RoomReadyButton
 import app.theme.Motion
 import app.theme.Radius
 import app.theme.Space
+import app.theme.Type
 import app.theme.palette
 import app.uicomponents.LocalIsTelevision
 import app.uicomponents.chromeSurface
+import app.uicomponents.controls.Chevron
+import app.uicomponents.controls.ChevronDirection
 import app.uicomponents.controls.Feedback
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.MoreGlyph
+import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Rule
+import app.uicomponents.controls.Text
 import app.uicomponents.controls.VerticalRule
+import app.uicomponents.frames.PanelFrame
 import app.uicomponents.controls.controlStates
 import app.uicomponents.controls.pressFeedback
 import app.home.InviteLink
@@ -103,6 +119,134 @@ private class RailClicks(ui: RoomUiStateManager, viewmodel: RoomViewmodel) {
     val managed = { ui.managedRoom.value = true }
     val leave = { ui.askLeave.value = true }
     val more = { ui.railActionsExpanded.value = true }
+
+    // The tab row of the portrait room: the add media tab, and the More tab that opens and closes its page.
+    val addMedia = { ui.toggleAddMedia() }
+    val morePage = { ui.toggleMorePage() }
+}
+
+/**
+ * The tab row of the portrait room, under the video: the Ready toggle, then one tab for each page.
+ * The tabs open the people list, the shared playlist, the add media panel, the in-room preferences
+ * and the More page. They show under the same conditions as the rail cells, and they take the
+ * look of a rail cell.
+ */
+@Composable
+fun RoomTabRow(modifier: Modifier = Modifier) {
+    val viewmodel = LocalRoomViewmodel.current
+    val ui = LocalRoomUiState.current
+    val solo = viewmodel.isSoloMode
+    val p = palette
+    val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+    val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
+    val stateUserInfo by ui.tabCardUserInfo.collectAsState()
+    val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
+    val stateAddMedia by ui.tabCardAddMedia.collectAsState()
+    val statePrefs by ui.tabCardRoomPreferences.collectAsState()
+    val more by ui.railActionsExpanded.collectAsState()
+
+    val clicks = remember(ui, viewmodel) { RailClicks(ui, viewmodel) }
+    val tabs = buildList {
+        if (!solo) add(RailCell(Icons.Filled.Groups, strings.roomCardTitleUserInfo, stateUserInfo, clicks.people))
+        if (!solo && playerIsReady && sharedPlaylists) {
+            add(RailCell(Icons.AutoMirrored.Filled.PlaylistPlay, strings.roomSharedPlaylist, statePlaylist, clicks.playlist))
+        }
+        if (playerIsReady) {
+            add(RailCell(Icons.Filled.AddToQueue, strings.roomButtonDescAdd, stateAddMedia, clicks.addMedia))
+            add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs, clicks.prefs))
+        }
+        add(RailCell(MoreGlyph, strings.roomRailMore, more, clicks.morePage))
+    }
+    // A closing panel gives focus back to the tab whose page was open last, as on the rail.
+    val railFocus = LocalRoomRailFocus.current
+    val openTab = tabs.firstOrNull { it.active }?.name
+    var lastOpenTab by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(openTab) { if (openTab != null) lastOpenTab = openTab }
+    val focusTab = tabs.indexOfFirst { it.name == (openTab ?: lastOpenTab) }.coerceAtLeast(0)
+
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(PortraitTabRowHeight)
+            .drawBehind { drawRect(p.rule, Offset(0f, size.height - Space.hair.toPx()), Size(size.width, Space.hair.toPx())) }
+            .padding(horizontal = Space.gapTight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (hasVideo && !solo) {
+            RoomReadyButton()
+            VerticalRule(Modifier.size(Space.hair, Space.glyphLarge))
+        }
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            tabs.forEachIndexed { index, cell -> RailCell(cell, horizontal = true, focusRequester = railFocus.takeIf { index == focusTab }) }
+        }
+    }
+}
+
+/**
+ * The More page of the portrait room: one row for each room action that the rail keeps behind its
+ * More cell, plus the screen lock, under the same conditions as on the rail. A row closes the page,
+ * then runs its action. A page is what the main box under the video shows in place of chat.
+ */
+@Composable
+fun RoomMorePage(modifier: Modifier, shape: Shape) {
+    val viewmodel = LocalRoomViewmodel.current
+    val ui = LocalRoomUiState.current
+    val solo = viewmodel.isSoloMode
+    val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
+    val managedRooms by viewmodel.protocol.supportsManagedRooms.collectAsState()
+
+    val clicks = remember(ui, viewmodel) { RailClicks(ui, viewmodel) }
+    val rows = buildList {
+        add(RailCell(Icons.Filled.Lock, strings.roomLock, onClick = clicks.lock))
+        if (playerIsReady && viewmodel.player.supportsPictureInPicture && platformCallback.supportsPictureInPicture) {
+            add(RailCell(Icons.Filled.PictureInPicture, strings.roomOverflowPip, onClick = clicks.pip))
+        }
+        if (!solo) add(RailCell(Icons.Filled.Share, strings.roomShareInvite, onClick = clicks.share))
+        if (!solo && managedRooms) add(RailCell(Icons.Filled.SupervisedUserCircle, strings.roomManagedRoom, onClick = clicks.managed))
+        add(RailCell(Icons.AutoMirrored.Filled.Logout, strings.roomOverflowLeaveRoom, onClick = clicks.leave))
+    }
+    PanelFrame(title = strings.roomRailMore, modifier = modifier, shape = shape, onClose = { ui.toggleMorePage(false) }) {
+        rows.forEach { row ->
+            PageRow(row.icon, row.name) {
+                ui.toggleMorePage(false)
+                row.onClick()
+            }
+        }
+    }
+}
+
+/**
+ * One 48dp row of a page in the portrait room: a glyph, the name, an optional [value] at the end,
+ * and a chevron when the row [opens] another page or a dialog.
+ */
+@Composable
+internal fun PageRow(icon: ImageVector, name: String, value: String? = null, opens: Boolean = false, onClick: () -> Unit) {
+    val p = palette
+    val source = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(Space.touchMin)
+            .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
+            .hoverable(source)
+            .controlStates(source, RectangleShape)
+            .pressFeedback(source)
+            .padding(horizontal = Space.gutter),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = p.ink, modifier = Modifier.size(Space.glyph))
+        RowGap(Space.gap)
+        Text(name, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (value != null) {
+            RowGap(Space.gap)
+            Text(value, style = Type.value, color = p.inkDim, maxLines = 1)
+        }
+        if (opens) {
+            RowGap(Space.gapTight)
+            Chevron(ChevronDirection.Right)
+        }
+    }
 }
 
 /**

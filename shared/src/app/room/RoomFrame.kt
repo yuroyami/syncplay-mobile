@@ -3,7 +3,10 @@ package app.room
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -134,6 +137,44 @@ fun RoomFrame(
         }
         if (center != null) {
             Box(Modifier.align(Alignment.Center).focusGroup().then(controls)) { center() }
+        }
+    }
+}
+
+/** The height of the tab row under the stage of the portrait room. */
+val PortraitTabRowHeight = Space.touchMin
+
+/**
+ * The bounds of the stage, the video area of the room in a window taller than wide: the full width
+ * in 16:9, under [topInsets]. The video layer and the controls over it both take these bounds.
+ */
+fun Modifier.portraitStage(topInsets: WindowInsets): Modifier =
+    fillMaxWidth().windowInsetsPadding(topInsets).aspectRatio(16f / 9f)
+
+/**
+ * The room in a window taller than wide, top to bottom: the [stage] (see [portraitStage]), the
+ * [tabs], the main box ([main]: chat, or one page in place of chat) and the [composer] (the chat
+ * input row). With the keyboard open, the tab row folds away, and the composer rides on the
+ * keyboard. [lower] goes on everything under the stage.
+ */
+@Composable
+fun RoomPortraitFrame(
+    keyboardOpen: Boolean,
+    modifier: Modifier = Modifier,
+    lower: Modifier = Modifier,
+    stage: @Composable BoxScope.() -> Unit,
+    tabs: @Composable () -> Unit,
+    main: @Composable BoxScope.() -> Unit,
+    composer: (@Composable () -> Unit)? = null,
+) {
+    // Above the keyboard while it is open, and above the bottom gesture area otherwise.
+    val bottomInsets = WindowInsets.ime.union(WindowInsets.safeGestures).only(WindowInsetsSides.Bottom)
+    Column(modifier.fillMaxSize()) {
+        Box(Modifier.portraitStage(roomTopInsets())) { stage() }
+        Column(lower.weight(1f).fillMaxWidth().windowInsetsPadding(bottomInsets)) {
+            if (!keyboardOpen) tabs()
+            Box(Modifier.weight(1f).fillMaxWidth()) { main() }
+            composer?.invoke()
         }
     }
 }

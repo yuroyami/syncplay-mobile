@@ -144,8 +144,11 @@ object Preferences {
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
 
-    /** Whether the room follows the device's rotation instead of being held in landscape. */
-    val ROOM_ALLOW_PORTRAIT = Pref("pref_room_allow_portrait", false) {
+    /**
+     * Whether the room follows the device's rotation, so a phone held upright shows the portrait
+     * room. Off holds the room in landscape. The system rotation lock still applies.
+     */
+    val ROOM_ALLOW_PORTRAIT = Pref("pref_room_allow_portrait", true) {
         title = { it.settingRoomPortraitTitle }
         summary = { it.settingRoomPortraitSummary }
         icon = Icons.Filled.ScreenRotation

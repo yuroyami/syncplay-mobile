@@ -471,6 +471,8 @@
     <string name="room_file_has">Файл есть</string>
     <string name="room_file_none">Нет файла</string>
     <string name="room_file_same">Тот же файл</string>
+    <string name="room_full_screen">Во весь экран</string>
+    <string name="room_full_screen_exit">Выйти из полноэкранного режима</string>
     <string name="room_gestures_panel_title">Жесты</string>
     <string name="room_gif_action_favorite">В избранное</string>
     <string name="room_gif_action_send">Отправить</string>
@@ -478,6 +480,8 @@
     <string name="room_gif_failed">Не удалось загрузить. Проверьте соединение.</string>
     <string name="room_gif_open">GIF и стикеры</string>
     <string name="room_gif_retry">Повторить</string>
+    <string name="room_gif_search_gifs">Поиск GIF</string>
+    <string name="room_gif_search_stickers">Поиск стикеров</string>
     <string name="room_gif_tab_favorites">Избранное</string>
     <string name="room_guy_joined_other_room">%1$s зашел в комнату: '%2$s'</string>
     <string name="room_guy_left_other_room">%1$s покинул комнату</string>

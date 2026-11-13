@@ -103,6 +103,7 @@ object CardUserInfo {
                 vm.networkManager.sendAsync(WireMessage.readiness(!user.readiness, manuallyInitiated = true, username = user.name))
             } else null,
             shape = shape,
+            onClose = pageClose { ui.toggleUserInfo(false) },
         )
     }
 }
@@ -123,6 +124,7 @@ internal fun UserRosterPanel(
     onToggleMute: (String) -> Unit = {},
     onSetReady: ((User) -> Unit)? = null,
     shape: Shape = Radius.panelShape,
+    onClose: (() -> Unit)? = null,
 ) {
     var selectedUser by remember(compact) { mutableStateOf<String?>(null) }
     PanelFrame(
@@ -130,6 +132,7 @@ internal fun UserRosterPanel(
         modifier = Modifier.fillMaxSize(),
         shape = shape,
         scrollable = false,
+        onClose = onClose,
         actions = { RosterViewSwitcher(compact, onCompactChange) },
     ) {
         val scroll = rememberScrollState()

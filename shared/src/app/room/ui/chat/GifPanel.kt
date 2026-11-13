@@ -33,6 +33,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.HeartBroken
 import app.i18n.strings
+import app.uicomponents.controls.CloseGlyph
+import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Icon
 import app.uicomponents.controls.Text
 import androidx.compose.runtime.Composable
@@ -68,6 +70,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -160,6 +163,7 @@ internal fun GifDrawerHeader(
     onType: (KlipyMediaType) -> Unit,
     source: GifSource,
     onSource: (GifSource) -> Unit,
+    onClose: (() -> Unit)? = null,
 ) {
     val sources = GifSource.entries
     BoxWithConstraints(Modifier.fillMaxWidth().padding(Space.gapTight)) {
@@ -184,6 +188,7 @@ internal fun GifDrawerHeader(
                 modifier = Modifier.weight(1f),
                 autoSize = true,
             )
+            if (onClose != null) GlyphButton(CloseGlyph, name = strings.actionClose, onClick = onClose)
         }
     }
 }
@@ -201,6 +206,8 @@ fun GifPanel(
     onGifSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     isHUDVisible: Boolean = true,
+    shape: Shape = Radius.panelShape,
+    onClose: (() -> Unit)? = null,
 ) {
     val p = palette
     // Read once, outside the grid: a tile with no title still needs a name to be spoken.
@@ -277,7 +284,7 @@ fun GifPanel(
         if (media.slug.isNotBlank()) scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
     }
 
-    Column(modifier.surface(Tier.Panel, Radius.panelShape)) {
+    Column(modifier.surface(Tier.Panel, shape)) {
         GifDrawerHeader(
             type = selectedType,
             onType = {
@@ -289,6 +296,7 @@ fun GifPanel(
                 selectedSource = it
                 scope.launch { GIF_PANEL_SOURCE.set(it.name) }
             },
+            onClose = onClose,
         )
         Rule()
 

@@ -480,6 +480,8 @@
     <string name="room_file_has">Ma plik</string>
     <string name="room_file_none">Brak pliku</string>
     <string name="room_file_same">Ten sam plik</string>
+    <string name="room_full_screen">Pełny ekran</string>
+    <string name="room_full_screen_exit">Zamknij pełny ekran</string>
     <string name="room_gestures_panel_title">Gesty</string>
     <string name="room_gif_action_favorite">Ulubione</string>
     <string name="room_gif_action_send">Wyślij</string>
@@ -487,6 +489,8 @@
     <string name="room_gif_failed">Nie udało się wczytać. Sprawdź połączenie.</string>
     <string name="room_gif_open">GIF-y i naklejki</string>
     <string name="room_gif_retry">Ponów</string>
+    <string name="room_gif_search_gifs">Szukaj GIF-ów</string>
+    <string name="room_gif_search_stickers">Szukaj naklejek</string>
     <string name="room_gif_tab_favorites">Ulubione</string>
     <string name="room_guy_joined_other_room">%1$s dołączył do pokoju: '%2$s'</string>
     <string name="room_guy_left_other_room">%1$s wyszedł</string>

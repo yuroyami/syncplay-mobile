@@ -23,9 +23,9 @@ val delegato = AppleDelegate().also {
 class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
     /**
-     * The allowed orientations, which iOS reads through [application]. Starts as portrait.
-     * `EnterRoomMode` sets portrait or landscape in a room (a group of people watching together),
-     * and `ExitRoomMode` allows all.
+     * The allowed orientations, which iOS reads through [application]. Starts as portrait. In a
+     * room (a group of people watching together), `EnterRoomMode` follows the device or holds
+     * landscape, and `ExitRoomMode` allows all.
      */
     var myOrientationMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
 

@@ -4,6 +4,7 @@ import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import app.home.HomeViewmodel
 import app.home.JoinConfig
+import app.utils.iosMajorVersion
 import app.player.avplayer.AVPlayerEngine
 import app.player.vlc.VlcKitImpl
 import app.player.kite.KiteImpl
@@ -50,6 +51,11 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override val supportsPictureInPicture: Boolean
         get() = AVPictureInPictureController.isPictureInPictureSupported()
+
+    /* Info.plist sets UIRequiresFullScreen, so an iPad respects the orientation mask too. Before
+     * iOS 16, a new mask applies only at the next turn of the device (see applyOrientationMask),
+     * so the key would do nothing at once there. */
+    override val canHoldLandscape: Boolean get() = iosMajorVersion >= 16
 
     override fun onPictureInPicture(enable: Boolean) {
         if (!AVPictureInPictureController.isPictureInPictureSupported()) return

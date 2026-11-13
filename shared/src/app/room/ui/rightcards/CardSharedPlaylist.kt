@@ -173,6 +173,7 @@ object CardSharedPlaylist {
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             scrollable = false,
+            onClose = pageClose { viewmodel.uiState.toggleSharedPlaylist(false) },
             actions = {
                 HeaderKey(AddGlyph, strings.roomSharedPlaylistAdd, group == PlaylistGroup.Add) { toggle(PlaylistGroup.Add) }
                 HeaderKey(Icons.Filled.Shuffle, strings.roomSharedPlaylistButtonShuffle, group == PlaylistGroup.Shuffle) { toggle(PlaylistGroup.Shuffle) }

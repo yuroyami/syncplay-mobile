@@ -41,7 +41,7 @@ object CardGestures {
         val viewmodel = LocalRoomViewmodel.current
         PanelFrame(
             title = strings.roomGesturesPanelTitle,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = wrappedPanel(),
             shape = shape,
             centerTitle = true,
             actions = { GlyphButton(CloseGlyph, name = strings.actionClose) { ui.toggleGestures(false) } },

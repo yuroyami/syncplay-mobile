@@ -55,6 +55,7 @@ object CardRoomPrefs {
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             scrollable = pages.lastOrNull()?.scrollable != false,
+            onClose = pageClose { viewmodel.uiState.toggleRoomPreferences(false) },
             actions = {
                 if (open != null || pages.isNotEmpty()) {
                     GlyphButton(BackGlyph, name = strings.actionBack) {

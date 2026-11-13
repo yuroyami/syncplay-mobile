@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -46,15 +50,22 @@ import app.uicomponents.frames.LocalModalFieldEntry
 import app.uicomponents.softKeyboardVisible
 import app.uicomponents.tvTextFieldNavigation
 import app.theme.Motion
+import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
 import app.theme.palette
+
+/** The white fill of a [Field] drawn as a well, and of the keys beside it. */
+internal const val WELL_FILL = 0.05f
 
 /**
  * The app's text field: a single thin underline, with no box, that thickens to 2dp and takes the
  * accent on focus. It has an optional leading icon, and an optional trailing clear button on its
  * own target that keyboard focus traversal skips. It is a controlled field ([value] in,
  * [onValueChange] out), so a host that re-keys its state never leaves a stale callback behind.
+ *
+ * A [well] is a 40dp box with a faint fill and a hairline rim in place of the underline. Its 2dp
+ * accent edge shows at the bottom only while it has focus.
  */
 @Composable
 fun Field(
@@ -73,6 +84,7 @@ fun Field(
     singleLine: Boolean = true,
     textStyle: TextStyle = Type.label,
     name: String? = null,
+    well: Boolean = false,
 ) {
     val p = palette
     val television = LocalIsTelevision.current
@@ -118,7 +130,13 @@ fun Field(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = Space.row)
+            .then(
+                if (well) Modifier.height(Space.well)
+                    .clip(Radius.panelShape)
+                    .background(p.ink.copy(alpha = WELL_FILL))
+                    .border(Space.hair, p.rule, Radius.panelShape)
+                else Modifier.heightIn(min = Space.row)
+            )
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             // Inside a modal, the first field is where a remote lands.
             .then(modalEntry?.let { Modifier.focusRequester(it) } ?: Modifier)
@@ -137,6 +155,8 @@ fun Field(
             )
             .semantics { if (name != null) contentDescription = name }
             .drawBehind {
+                // A well draws no line at rest, only its accent edge while it has focus.
+                if (well && !focused) return@drawBehind
                 val w = lineWidth.toPx()
                 drawRect(lineColor, Offset(0f, size.height - w), Size(size.width, w))
             },
@@ -153,7 +173,8 @@ fun Field(
         }),
         decorationBox = { inner ->
             Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = Space.row),
+                modifier = Modifier.fillMaxWidth()
+                    .then(if (well) Modifier.height(Space.well).padding(start = Space.gap, end = Space.gapTight) else Modifier.heightIn(min = Space.row)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (leading != null) {
@@ -178,6 +199,7 @@ fun Field(
                         name = strings.actionClear,
                         onClick = { onValueChange("") },
                         tint = p.inkDim,
+                        target = if (well) Space.well else Space.touchMin,
                         // Never a focus stop: keyboard traversal goes from field to field.
                         modifier = Modifier.focusProperties { canFocus = false },
                     )

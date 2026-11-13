@@ -25,13 +25,17 @@ import app.theme.Space
 import app.theme.Tier
 import app.theme.Type
 import app.theme.palette
+import app.i18n.strings
 import app.uicomponents.GlassEdge
+import app.uicomponents.controls.CloseGlyph
+import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.Rule
 import app.uicomponents.surface
 
 /**
  * The frame of a room panel: a 42dp header with the title and icon actions, a thin line, and a
  * body. No inner cards. The caller passes the shape, which depends on where the panel is docked.
+ * With [onClose], a close key follows the actions.
  */
 @Composable
 fun PanelFrame(
@@ -41,6 +45,7 @@ fun PanelFrame(
     rim: GlassEdge = GlassEdge.All,
     scrollable: Boolean = true,
     centerTitle: Boolean = false,
+    onClose: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -62,6 +67,7 @@ fun PanelFrame(
                 modifier = Modifier.weight(1f),
             )
             actions()
+            if (onClose != null) GlyphButton(CloseGlyph, name = strings.actionClose, onClick = onClose)
         }
         Rule()
         if (scrollable) {

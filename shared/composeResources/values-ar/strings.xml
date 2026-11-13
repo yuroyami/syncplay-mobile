@@ -469,6 +469,8 @@
     <string name="room_file_has">لديه ملف</string>
     <string name="room_file_none">لا ملف</string>
     <string name="room_file_same">الملف نفسه</string>
+    <string name="room_full_screen">ملء الشاشة</string>
+    <string name="room_full_screen_exit">الخروج من ملء الشاشة</string>
     <string name="room_gestures_panel_title">الإيماءات</string>
     <string name="room_gif_action_favorite">أضف للمفضلة</string>
     <string name="room_gif_action_send">إرسال</string>
@@ -476,6 +478,8 @@
     <string name="room_gif_failed">تعذّر التحميل. تحقق من الاتصال.</string>
     <string name="room_gif_open">صور GIF وملصقات</string>
     <string name="room_gif_retry">أعد المحاولة</string>
+    <string name="room_gif_search_gifs">ابحث عن صور GIF</string>
+    <string name="room_gif_search_stickers">ابحث عن ملصقات</string>
     <string name="room_gif_tab_favorites">المفضلة</string>
     <string name="room_guy_joined_other_room">انضم %1$s إلى الغرفة: '%2$s'</string>
     <string name="room_guy_left_other_room">غادر %1$s</string>

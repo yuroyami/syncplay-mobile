@@ -1,6 +1,32 @@
 package app.room.ui.chat
 
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import app.klipy.KlipyMediaType
+import app.preferences.Preferences.GIF_PANEL_TYPE
+import app.theme.BrandSpan
+import app.theme.brandBrush
+import app.uicomponents.controls.Feedback
+import app.uicomponents.controls.SearchGlyph
+import app.uicomponents.controls.WELL_FILL
+import app.uicomponents.controls.controlStates
+import app.uicomponents.controls.pressFeedback
+import app.uicomponents.controls.touchTarget
 import androidx.compose.ui.platform.LocalDensity
 
 import androidx.compose.foundation.background
@@ -115,11 +141,7 @@ fun RoomChatSection(modifier: Modifier) {
             if (gifPanelVisible) {
                 GifPanel(
                     query = msg,
-                    onGifSelected = { gifUrl ->
-                        viewmodel.dispatcher.sendMessage(gifUrl)
-                        viewmodel.uiState.msg.value = ""
-                        viewmodel.uiState.gifPanelVisible.value = false
-                    },
+                    onGifSelected = viewmodel::sendChatMedia,
                     modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp)
                         .onSizeChanged { size ->
                             viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
@@ -141,9 +163,86 @@ fun RoomChatSection(modifier: Modifier) {
 }
 
 /**
+ * The chat in the main box of the portrait room (the area under the video). The message list stays
+ * composed under a page, so its scroll position survives. A page is a panel that the main box
+ * shows in place of chat. [showing] is false while a page covers the list, and its lines count as
+ * seen only while it shows. Each step of [newestRequests] scrolls the list to the newest line.
+ */
+@Composable
+fun RoomChatPane(showing: Boolean, newestRequests: Int, modifier: Modifier) {
+    val viewmodel = LocalRoomViewmodel.current
+    val density = LocalDensity.current
+    val measured = modifier.padding(horizontal = 8.dp).onSizeChanged { size ->
+        viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
+    }
+    ChatBox(viewmodel = viewmodel, modifier = measured, isHUDVisible = showing, onGround = true, newestRequests = newestRequests)
+}
+
+/** The GIF drawer as a page of the portrait room, with a close key. The composer gives it its search text. */
+@Composable
+fun RoomGifPage(modifier: Modifier, shape: Shape) {
+    val viewmodel = LocalRoomViewmodel.current
+    val msg by viewmodel.uiState.msg.collectAsState()
+    GifPanel(
+        query = msg,
+        onGifSelected = viewmodel::sendChatMedia,
+        modifier = modifier,
+        shape = shape,
+        onClose = { viewmodel.uiState.toggleGifPanel(false) },
+    )
+}
+
+/**
+ * The "New messages" marker at the bottom of the main box of the portrait room, while a page
+ * covers chat and a line from someone else arrived after the page opened. Own lines and lines of a
+ * muted person do not count.
+ */
+@Composable
+fun BoxScope.PageNewMessages(pageOpen: Boolean, onClick: () -> Unit) {
+    val viewmodel = LocalRoomViewmodel.current
+    val messages by viewmodel.session.messageSequence.collectAsState()
+    val muted = viewmodel.uiState.mutedUsers
+    // The newest line when the page opened. Only the lines after it count.
+    val since = remember(pageOpen) { messages.lastOrNull()?.id ?: 0L }
+    if (!pageOpen) return
+    val unseen = messages.count { line ->
+        line.id > since && line.sender != null && !line.isMainUser && !line.seen && line.sender !in muted
+    }
+    if (unseen > 0) NewMessagesMarker(Modifier.align(Alignment.BottomCenter).padding(bottom = Space.gap), onClick)
+}
+
+/**
+ * The composer of the portrait room, at the bottom of the screen. It stays on screen while the
+ * room controls hide, so it keeps its focus and the keyboard. A tap on its field brings chat back
+ * in place of a page, and keeps the GIF drawer, whose search the field then holds.
+ */
+@Composable
+fun RoomChatInput(modifier: Modifier) {
+    val viewmodel = LocalRoomViewmodel.current
+    val isChatSupported by viewmodel.protocol.supportsChat.collectAsState()
+    val gifPanelVisible by viewmodel.uiState.gifPanelVisible.collectAsState()
+    if (!isChatSupported) return
+    ChatComposer(
+        viewmodel = viewmodel,
+        modifier = modifier,
+        gifPanelVisible = gifPanelVisible,
+        isHUDVisible = true,
+        bar = true,
+    )
+}
+
+/** Sends a GIF or a sticker from the drawer, then empties the search and closes the drawer. */
+private fun RoomViewmodel.sendChatMedia(url: String) {
+    dispatcher.sendMessage(url)
+    uiState.msg.value = ""
+    uiState.gifPanelVisible.value = false
+}
+
+/**
  * The composer: a GIF button, the hairline text field, and a send button that turns to the accent
  * color once there is text. The keyboard's send action follows its setting, and it is off while
  * the GIF drawer is open, because the text is then a search query. A blank send changes nothing.
+ * With [bar], it is the composer of the portrait room: see [ComposerBar].
  */
 @Composable
 fun ChatComposer(
@@ -151,6 +250,7 @@ fun ChatComposer(
     modifier: Modifier = Modifier,
     gifPanelVisible: Boolean,
     isHUDVisible: Boolean,
+    bar: Boolean = false,
 ) {
     val p = palette
     val focusManager = LocalFocusManager.current
@@ -190,12 +290,17 @@ fun ChatComposer(
         viewmodel.uiState.gifPanelVisible.value = false
     }
 
+    if (bar) {
+        ComposerBar(viewmodel, modifier, gifPanelVisible, keyboardSends, onSend = ::send)
+        return
+    }
+
     Row(modifier.heightIn(min = Space.row), verticalAlignment = Alignment.CenterVertically) {
         GlyphButton(
             icon = Icons.Outlined.GifBox,
             name = strings.roomGifOpen,
             tint = if (gifPanelVisible) p.accent else p.inkDim,
-        ) { viewmodel.uiState.gifPanelVisible.value = !gifPanelVisible }
+        ) { viewmodel.uiState.toggleGifPanel() }
         Field(
             value = msg,
             onValueChange = { viewmodel.uiState.msg.value = it },
@@ -223,9 +328,111 @@ fun ChatComposer(
     }
 }
 
-/** The message list. It opens at its last line and animates only when it grows. */
+/**
+ * The composer of the portrait room: a 54dp bar on the panel colour with a hairline on its top
+ * edge. It holds the GIF key, the field drawn as a well, and a send key that fills with the brand
+ * ramp once there is text. While the GIF drawer is open, the field is its search.
+ */
 @Composable
-fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean) {
+private fun ComposerBar(
+    viewmodel: RoomViewmodel,
+    modifier: Modifier,
+    gifPanelVisible: Boolean,
+    keyboardSends: Boolean,
+    onSend: () -> Unit,
+) {
+    val p = palette
+    val ui = viewmodel.uiState
+    val focusManager = LocalFocusManager.current
+    val msg by ui.msg.collectAsState()
+    val gifType by GIF_PANEL_TYPE.watchPref()
+    val canSend = msg.isNotBlank() && !gifPanelVisible
+    val keyboardInput = LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(Space.bar)
+            .background(p.panel)
+            .drawBehind { drawRect(p.rule, Offset.Zero, Size(size.width, Space.hair.toPx())) }
+            .padding(horizontal = Space.gapTight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlyphButton(
+            icon = Icons.Outlined.GifBox,
+            name = strings.roomGifOpen,
+            tint = if (gifPanelVisible) p.accent else p.inkDim,
+        ) { ui.toggleGifPanel() }
+        val search = if (gifType == KlipyMediaType.STICKER.name) strings.roomGifSearchStickers else strings.roomGifSearchGifs
+        Field(
+            value = msg,
+            onValueChange = { ui.msg.value = it },
+            modifier = Modifier
+                .weight(1f)
+                // A press on the field brings chat back in place of a page. It only watches, so the
+                // field still gets the press.
+                .pointerInput(ui) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        ui.showChat(keepGifs = true)
+                    }
+                }
+                .onFocusChanged { if (it.isFocused && keyboardInput) ui.showChat(keepGifs = true) },
+            placeholder = if (gifPanelVisible) search else strings.roomChatInput,
+            leading = if (gifPanelVisible) SearchGlyph else null,
+            imeAction = if (keyboardSends) ImeAction.Send else ImeAction.Done,
+            onImeAction = {
+                focusManager.clearFocus()
+                if (keyboardSends) onSend()
+            },
+            textStyle = Type.note,
+            focusRequester = ui.chatFocus,
+            name = strings.roomChatInput,
+            well = true,
+        )
+        RowGap(Space.gapTight)
+        SendKey(filled = canSend) {
+            if (gifPanelVisible) return@SendKey
+            focusManager.clearFocus()
+            onSend()
+        }
+    }
+}
+
+/** The send key of the portrait composer: a 40dp square, faint while empty, on the brand ramp once there is text. */
+@Composable
+private fun SendKey(filled: Boolean, onClick: () -> Unit) {
+    val p = palette
+    val name = strings.roomSend
+    val source = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            // The press area is 48dp, around the 40dp key.
+            .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
+            .hoverable(source)
+            .semantics { contentDescription = name }
+            .touchTarget()
+            .size(Space.well)
+            .clip(Radius.panelShape)
+            .drawBehind {
+                if (filled) drawRect(brandBrush(p.brandField, size.width, BrandSpan.toPx()))
+                else drawRect(p.ink.copy(alpha = WELL_FILL))
+            }
+            .controlStates(source, Radius.panelShape)
+            .pressFeedback(source),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(SendGlyph, contentDescription = null, tint = if (filled) p.brandInk else p.inkFaint, modifier = Modifier.size(Space.glyph))
+    }
+}
+
+/**
+ * The message list. It opens at its last line and animates only when it grows. [onGround] is chat
+ * on the dark ground of the portrait room, not over video: its text keeps at least the size of a
+ * notice, with no outline, shadow or background. Each step of [newestRequests] scrolls to the newest
+ * line.
+ */
+@Composable
+fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean, onGround: Boolean = false, newestRequests: Int = 0) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val allMessages by viewmodel.session.messageSequence.collectAsState()
     val muted = viewmodel.uiState.mutedUsers
@@ -238,9 +445,15 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
-    val style = MessageStyle(fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, chatPalette.includeTimestamp)
+    val noticeSize = Type.note.fontSize.value.toInt()
+    val style = if (onGround) {
+        MessageStyle(maxOf(fontSize, noticeSize), outline = null, shadow = false, showTime = chatPalette.includeTimestamp)
+    } else {
+        MessageStyle(fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, chatPalette.includeTimestamp)
+    }
+    val backdrop = if (hasVideo && !onGround) Color(50, 50, 50, bgOpacity) else Color.Transparent
 
-    Box(modifier.background(if (hasVideo) Color(50, 50, 50, bgOpacity) else Color.Transparent, Radius.panelShape)) {
+    Box(modifier.background(backdrop, Radius.panelShape)) {
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))
         val scope = rememberCoroutineScope()
         /* The list follows the newest line until the reader scrolls it out of view. Only a scroll
@@ -267,6 +480,13 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
         LaunchedEffect(messages.lastOrNull()?.id) {
             if (messages.isEmpty()) return@LaunchedEffect
             if (following) toNewest() else unseen++
+        }
+        // A request from outside the list, such as the marker over a page of the portrait room.
+        LaunchedEffect(newestRequests) {
+            if (newestRequests == 0) return@LaunchedEffect
+            following = true
+            unseen = 0
+            toNewest()
         }
 
         Selectable {

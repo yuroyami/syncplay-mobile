@@ -155,7 +155,7 @@ actual fun ClipEntry.getText(): String? {
 }
 
 @Composable
-actual fun EnterRoomMode(portrait: Boolean) {
+actual fun EnterRoomMode(rotation: RoomRotation) {
     val view = LocalView.current
 
     // SideEffect runs after every composition, so it hides the bars again after a popup or menu
@@ -170,12 +170,13 @@ actual fun EnterRoomMode(portrait: Boolean) {
 
     val activity = LocalActivity.current as? ComponentActivity
 
-    LaunchedEffect(portrait) {
+    LaunchedEffect(rotation) {
         activity?.hideSystemUI()
-        activity?.requestedOrientation = if (portrait)
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-        else
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        // FULL_USER follows the sensor and respects the rotation lock, as outside the room.
+        activity?.requestedOrientation = when (rotation) {
+            RoomRotation.FollowDevice -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+            RoomRotation.Landscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
     }
 }
 

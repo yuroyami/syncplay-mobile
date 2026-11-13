@@ -86,6 +86,12 @@ interface PlatformCallback {
     val supportsPictureInPicture: Boolean get() = true
 
     /**
+     * Whether the app can turn the screen itself, so the room offers its full-screen key: Android
+     * phones and tablets, and iPhone and iPad. A television, a desktop window and a browser cannot.
+     */
+    val canHoldLandscape: Boolean get() = false
+
+    /**
      * Enters or leaves Picture-in-Picture mode.
      *
      * @param enable True to enter Picture-in-Picture mode, false to leave it

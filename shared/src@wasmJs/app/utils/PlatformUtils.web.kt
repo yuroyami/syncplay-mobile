@@ -137,7 +137,7 @@ actual fun ClipEntry.getText(): String? = null
  * the room's own fullscreen control, not in an effect that runs on entry and fails.
  */
 @Composable
-actual fun EnterRoomMode(portrait: Boolean) = Unit
+actual fun EnterRoomMode(rotation: RoomRotation) = Unit
 
 @Composable
 actual fun ExitRoomMode() = Unit

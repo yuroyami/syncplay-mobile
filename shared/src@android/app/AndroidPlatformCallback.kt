@@ -26,6 +26,7 @@ import app.server.SyncplayServerService
 import app.home.JoinConfig
 import app.utils.appName
 import app.utils.contextObtainer
+import app.utils.isTelevision
 import app.utils.loggy
 import java.lang.ref.WeakReference
 
@@ -54,6 +55,13 @@ internal class AndroidPlatformCallback(
     override val supportsPictureInPicture: Boolean by lazy {
         appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
     }
+
+    /* A television cannot turn. From Android 16, the system ignores the orientation request of an
+     * app on a screen at least 600dp wide on its short side, so the key would do nothing there.
+     * Read on each call, because a foldable changes that width. */
+    override val canHoldLandscape: Boolean
+        get() = !isTelevision() &&
+            (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA || appContext.resources.configuration.smallestScreenWidthDp < 600)
 
     @OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
