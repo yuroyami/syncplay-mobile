@@ -438,6 +438,15 @@
     <string name="engine_can_all_media">MKV, AV1, FLAC и, скорее всего, все остальные форматы.</string>
     <string name="engine_can_interpolation">Есть интерполяция кадров.</string>
     <string name="engine_can_visualizer">Аудиовизуализатор для музыки.</string>
+    <string name="room_track_tab_audio">Звук</string>
+    <string name="room_track_tab_subtitles">Субтитры</string>
+    <string name="room_track_tab_video">Видео</string>
+    <string name="room_video_off">Отключить видео</string>
+    <string name="room_track_unknown_language">Язык не указан</string>
+    <string name="room_track_import">Импорт</string>
+    <string name="room_track_search">Поиск</string>
+    <string name="room_seek_go">Перейти</string>
+    <string name="room_seek_show_button">Показывать в плеере</string>
     <string name="room_alone">Кроме вас пока никого нет.</string>
     <string name="room_aspect_fill">Формат: заполнить (обрезка)</string>
     <string name="room_aspect_fit">Формат: вписать</string>

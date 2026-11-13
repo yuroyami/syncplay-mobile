@@ -436,6 +436,15 @@
     <string name="engine_can_all_media">MKV وAV1 وFLAC وربما كل الصيغ الأخرى.</string>
     <string name="engine_can_interpolation">فيه استيفاء لمعدل الإطارات.</string>
     <string name="engine_can_visualizer">مُصوّر صوتي للموسيقى.</string>
+    <string name="room_track_tab_audio">الصوت</string>
+    <string name="room_track_tab_subtitles">الترجمات</string>
+    <string name="room_track_tab_video">الفيديو</string>
+    <string name="room_video_off">تعطيل الفيديو</string>
+    <string name="room_track_unknown_language">لغة غير محددة</string>
+    <string name="room_track_import">استيراد</string>
+    <string name="room_track_search">بحث</string>
+    <string name="room_seek_go">انتقل</string>
+    <string name="room_seek_show_button">إظهار في المشغّل</string>
     <string name="room_alone">لا أحد آخر هنا بعد.</string>
     <string name="room_aspect_fill">النسبة: ملء (قص)</string>
     <string name="room_aspect_fit">النسبة: احتواء</string>

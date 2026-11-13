@@ -438,6 +438,15 @@
     <string name="engine_can_all_media">MKV, AV1, FLAC y probablemente todos los demás formatos.</string>
     <string name="engine_can_interpolation">Tiene interpolación de fotogramas.</string>
     <string name="engine_can_visualizer">Visualizador de audio para música.</string>
+    <string name="room_track_tab_audio">Audio</string>
+    <string name="room_track_tab_subtitles">Subtítulos</string>
+    <string name="room_track_tab_video">Vídeo</string>
+    <string name="room_video_off">Desactivar vídeo</string>
+    <string name="room_track_unknown_language">Idioma no especificado</string>
+    <string name="room_track_import">Importar</string>
+    <string name="room_track_search">Buscar</string>
+    <string name="room_seek_go">Ir</string>
+    <string name="room_seek_show_button">Mostrar en el reproductor</string>
     <string name="room_alone">Todavía no hay nadie más.</string>
     <string name="room_aspect_fill">Aspecto: llenar (recorta)</string>
     <string name="room_aspect_fit">Aspecto: ajustar</string>

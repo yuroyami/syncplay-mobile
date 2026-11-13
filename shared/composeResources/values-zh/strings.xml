@@ -426,6 +426,15 @@
     <string name="engine_can_all_media">MKV、AV1、FLAC，其他格式大概也都能放。</string>
     <string name="engine_can_interpolation">有帧率插值。</string>
     <string name="engine_can_visualizer">音乐的音频可视化。</string>
+    <string name="room_track_tab_audio">音频</string>
+    <string name="room_track_tab_subtitles">字幕</string>
+    <string name="room_track_tab_video">视频</string>
+    <string name="room_video_off">禁用视频</string>
+    <string name="room_track_unknown_language">未指定语言</string>
+    <string name="room_track_import">导入</string>
+    <string name="room_track_search">搜索</string>
+    <string name="room_seek_go">跳转</string>
+    <string name="room_seek_show_button">在播放器中显示</string>
     <string name="room_alone">目前还没有其他人。</string>
     <string name="room_aspect_fill">画面比例：填充（裁切）</string>
     <string name="room_aspect_fit">画面比例：适应</string>
