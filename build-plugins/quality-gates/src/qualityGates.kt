@@ -81,9 +81,9 @@ fun qualityGates(
 }
 
 /**
- * Inbound protocol code must throw SerializationException and nothing else. That is the only type
- * that the catch which skips a malformed line covers. An `error()`, `check()` or `require()` there
- * turns one malformed line into a dropped connection.
+ * Inbound protocol code must throw SerializationException and nothing else. Both sides catch every
+ * exception, but only that type reads as a malformed line. An `error()`, `check()` or `require()`
+ * there makes the server answer "Internal server error" and log a broken handler instead.
  */
 private fun checkProtocolThrows(layout: Layout) {
     // The protocol folder of every main source folder, so a transport in a new folder is checked too.

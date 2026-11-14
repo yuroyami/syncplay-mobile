@@ -61,7 +61,10 @@ object SubtitleSearch {
  */
 internal class SubtitleService(baseUrl: String, transport: HttpClient, private val cacheDir: () -> String?) {
 
-    /** The consumer key, from local.properties (`yuroyami.keyOpenSubsApi`). */
+    /**
+     * The consumer key: `SYNKPLAY_OPENSUBTITLES_KEY` or `yuroyami.keyOpenSubsApi` in local.properties
+     * when set, else the committed key from `shared/module.yaml`.
+     */
     private val apiKey = KiteBuildConfig.OPENSUBTITLES_API_KEY
 
     private val client = transport.config {

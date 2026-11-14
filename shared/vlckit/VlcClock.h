@@ -57,8 +57,8 @@ static inline bool SyncplayVlcStateMatches(VLCMediaPlayer *player, VLCMediaPlaye
 }
 
 /**
- * Compares native descriptors, because VLCKit may replace its Objective-C wrapper for the same
- * media. libVLC returns the media of the input that is open, so after a media change this stays
+ * Compares native descriptors, because VLCKit 4.0.0a19 replaced its Objective-C wrapper for the
+ * same media (newer versions reuse it). libVLC returns the media of the input that is open, so after a media change this stays
  * false until the old input has stopped. The call holds a reference, released here.
  */
 static inline bool SyncplayVlcHasCurrentMedia(VLCMediaPlayer *player, VLCMedia *media) {

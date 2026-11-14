@@ -220,7 +220,7 @@ private data class EngineStory(val description: String, val rows: List<Pair<Stri
  * file needs. mpv, KitePlayer and VLCKit carry the full FFmpeg with dav1d and libass, so they
  * share one list of abilities. ExoPlayer and AVPlayer decode video on the device's own hardware
  * and draw ASS subtitles as plain text. Picture-in-picture is the one ability that depends on the
- * platform and not the engine: KitePlayer has it on Android only.
+ * platform and not the engine: KitePlayer has it on Android and iOS, not on desktop.
  */
 private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
     val yes = Can.Yes
@@ -248,7 +248,7 @@ private fun storyOf(engine: PlayerEngine, s: AppStrings): EngineStory? {
         "mpv" -> EngineStory(s.engineDescMpv, ffmpeg + (s.engineCanPip to yes) + (s.engineCanInterpolation to yes))
         "kiteplayer" -> EngineStory(
             s.engineDescKiteplayer,
-            ffmpeg + (s.engineCanPip to if (platform == Platform.Android) yes else no) + (s.engineCanVisualizer to yes),
+            ffmpeg + (s.engineCanPip to if (platform == Platform.Android || platform == Platform.IOS) yes else no) + (s.engineCanVisualizer to yes),
         )
         "avplayer" -> EngineStory(
             s.engineDescAvplayer,

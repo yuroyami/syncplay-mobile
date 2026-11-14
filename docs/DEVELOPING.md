@@ -338,7 +338,7 @@ Compile the shared code for the browser without the app:
 ```
 
 Two gaps block a usable web client. Both are tracked:
-#ISSUE(web-client-has-no-server-to-reach) and #ISSUE(web-client-has-no-video).
+[#218](https://github.com/yuroyami/syncplay-mobile/issues/218) and [#217](https://github.com/yuroyami/syncplay-mobile/issues/217).
 
 - **No server to reach.** A browser tab cannot open a TCP socket, and the Syncplay protocol runs
   over TCP. `WebSocketNetworkManager` sends the same JSON lines, each one ending in CRLF, over a
@@ -372,7 +372,7 @@ the engine once. The room settings configure that engine, and they do not switch
 | Android, KitePlayer | No (experimental) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | Yes |
 | iOS, VLCKit | Yes | Broad format support. Embedded and external subtitles. | Yes | Yes |
 | iOS, AVPlayer | No | The formats that iOS supports. Embedded text tracks. No external subtitle files. | No | Yes |
-| iOS, KitePlayer | No (experimental) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | No |
+| iOS, KitePlayer | No (experimental) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | Yes |
 | Desktop, KitePlayer | Yes (the only engine) | FFmpeg playback. Embedded and external subtitles, with styled ASS. | Yes | No |
 | Web, browser video | Yes (the only engine) | Nothing plays yet. See [Web](#web). | No | No |
 

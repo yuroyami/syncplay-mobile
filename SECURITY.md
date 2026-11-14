@@ -115,9 +115,10 @@ If you contribute, these rules are not optional.
 - **The hosted server does not run a command that arrives before the handshake**, and it drops
   that client. The reference server still runs the command, so this is stricter on purpose. Keep it
   when you add a message type.
-- **Malformed input throws `SerializationException` and nothing else.** The hosted server catches
-  only that type, and then it drops the client. The client catches every exception and skips the
-  line.
+- **Malformed input throws `SerializationException` and nothing else.** The hosted server drops
+  the client on any exception. A `SerializationException` gets the error "Failed to parse message",
+  and any other exception gets "Internal server error", which marks a bug in the server. The client
+  catches every exception and skips the line.
 - **Keep the password handling on the wire as the reference defines it.** The client sends a
   digest of the server password, and the server compares it with its own digest. A change to one
   side alone breaks compatibility with other clients and servers.

@@ -25,8 +25,8 @@ import syncplaymobile.shared.generated.resources.kiteplayer
  * toggle switches between them while media plays.
  *
  * KitePlayer is experimental: it has no stable release and no full qualification on physical
- * hardware. Its subtitle support covers SubRip and WebVTT, embedded or loaded as external files
- * during playback; styled ASS subtitles are listed as tracks but not drawn. It supports speed
+ * hardware. Its subtitles cover SubRip, WebVTT and styled ASS (drawn through libass), embedded
+ * or loaded as external files during playback. It supports speed
  * (0.25x to 4x, pitch preserved), chapters, aspect modes, and subtitle and audio delays at
  * runtime.
  */

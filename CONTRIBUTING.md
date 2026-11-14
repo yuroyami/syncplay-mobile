@@ -164,7 +164,7 @@ violation first and confirm that the gate fails on it.
 |---|---|
 | `checkProtocolThrows` | A call to `error`, `check`, `checkNotNull`, `require` or `requireNotNull` in inbound protocol code or in the hosted server's `ClientConnection.kt` |
 | `checkStringResources` | A duplicate string or plural key in any language |
-| `checkLocaleParity` | A key that exists in a translation but not in English. It only reports missing translations, unless you set `SYNKPLAY_STRICT_LOCALES=true` |
+| `checkLocaleParity` | A key that exists in a translation but not in English, or a `locales_config.xml` whose languages differ from the language folders. It only reports missing translations, unless you set `SYNKPLAY_STRICT_LOCALES=true` |
 | `checkStringArguments` | A translation whose placeholders differ in order or number from English, or an English string that repeats a placeholder |
 | `checkPlaceholderComments` | An English string with a placeholder that has no comment directly above it naming each placeholder |
 | `checkDeadResources` | Nothing. It only warns about strings and drawables that nothing references |
@@ -382,7 +382,8 @@ VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a25 (`vlcKitV
 - Legacy delivery queues only the state value, and the wrapper's `state` is a cache. Check the
   live native state with `SyncplayVlcStateMatches` before you act on an event (71e1ee6a).
 - Compare VLCKit media with `compare()` or with the native descriptor, never by reference or URL.
-  MediaChanged swaps the wrapper for the same file (71e1ee6a).
+  On 4.0.0a19, MediaChanged swapped the wrapper for the same file (71e1ee6a). Newer versions reuse
+  the wrapper, but a reference compare still proves nothing about the native media.
 - The drawable barrier, `player.drawable = player.drawable` before `setMedia`, is not a no-op. The
   synchronous setter drains the queued play and pause calls (71e1ee6a).
 - After a media swap, VLCKit can report the old Playing state before the new input exists.
@@ -401,8 +402,10 @@ The Syncplay protocol sends one JSON message per line. This section names these 
 the playlist) and `List` (the user list).
 
 - **Malformed inbound input must throw `SerializationException` and nothing else.** The hosted
-  server's `ClientConnection.handlePacket` catches only that type, and then it drops the client.
-  `checkProtocolThrows` enforces the rule.
+  server's `ClientConnection.handlePacket` drops the client on any exception. Only a
+  `SerializationException` gets the error "Failed to parse message". Any other exception gets
+  "Internal server error" and is logged as a broken handler, so a malformed line must not look
+  like a bug. `checkProtocolThrows` enforces the rule.
 - The client's `NetworkManager.processPacket` skips a line that it cannot parse, whatever the
   exception, and keeps the session. The reference client drops the connection instead. The skip is
   on purpose, because the official server sends shapes that strict models reject (#152).
@@ -629,6 +632,8 @@ string through them.
 - Lyricist copies each string into a Kotlin string literal, so a backslash in `strings.xml` is a
   Kotlin escape. Use a valid Kotlin escape such as `\n`, `\t`, `\uXXXX`, `\"` or `\\`. An escape
   that Kotlin does not know stops the build.
+- When you add or remove a language folder, add or remove the same language in
+  `androidApp/res/xml/locales_config.xml`. `checkLocaleParity` fails until the two match.
 - Do not add an SVG to the Compose resources. An SVG does not load on Android.
 - Resource fonts do not load in the render harness, so the golden tests judge layout and spacing,
   not letterforms.
