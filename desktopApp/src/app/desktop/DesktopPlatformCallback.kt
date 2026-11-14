@@ -45,6 +45,9 @@ object DesktopPlatformCallback : PlatformCallback {
 
     override fun onPictureInPicture(enable: Boolean) {}
 
+    /** The desktop app has no small window yet, so the room offers no picture-in-picture key. */
+    override val supportsPictureInPicture: Boolean get() = false
+
     override fun performHapticFeedback() {}
 
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
