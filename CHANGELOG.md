@@ -5,6 +5,8 @@ Written for people who use the app. The full engineering history is in the commi
 ## Unreleased
 
 - On a phone held upright, the room now shows the video on top and chat below. A full-screen key turns it to landscape. (#236)
+- When a server refuses you, for example because the server password is wrong, the room now shows the server's message once and stops trying. Before, it tried to join again and again without end. (#211)
+- The track selection and seek panels were only partly translated in languages other than English. They are now fully translated. (#232)
 - iOS VLC: updated to VLCKit 4.0.0a25.
 - Android: ExoPlayer is updated to Media3 1.12.0-beta01.
 - iOS: the connection library is updated to SwiftNIO 2.105.0, and the YouTube link reader to YouTubeKit 0.4.10.
