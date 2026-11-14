@@ -183,6 +183,8 @@
     <string name="setting_unpause_action_if_min_users_ready">استئناف إذا كان الآخرون جاهزين + حد أدنى للمستخدمين</string>
     <string name="setting_unpause_action_always">استئناف دائماً</string>
     <string name="room_set_as_ready">أنت الآن جاهز - استأنف مرة أخرى لبدء التشغيل</string>
+    <string name="room_you_are_ready">أنت الآن جاهز</string>
+    <string name="room_you_are_not_ready">أنت الآن غير جاهز</string>
     <string name="setting_tls_title">استخدام اتصال آمن (TLS)</string>
     <string name="setting_tls_summary">يُشفَّر الاتصال إذا كان الخادم يدعم ذلك.</string>
     <string name="setting_resetdefault_title">إعادة تعيين الإعدادات الافتراضية</string>

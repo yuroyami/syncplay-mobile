@@ -25,4 +25,5 @@ fun RoomViewmodel.switchRoom(name: String) {
     // Until the List answer arrives, the local user is the only user known to be in the new room.
     session.userList.value = session.userList.value.filter { it.name == session.currentUsername }
     readiness.evaluate()
+    callback.onYouSwitchedRoom(target)
 }

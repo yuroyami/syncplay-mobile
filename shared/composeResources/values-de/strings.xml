@@ -183,6 +183,8 @@
     <string name="setting_unpause_action_if_min_users_ready">Fortsetzen wenn andere bereit + Min. Benutzer</string>
     <string name="setting_unpause_action_always">Immer fortsetzen</string>
     <string name="room_set_as_ready">Du bist jetzt bereit - setze erneut fort, um abzuspielen</string>
+    <string name="room_you_are_ready">Du bist bereit</string>
+    <string name="room_you_are_not_ready">Du bist nicht bereit</string>
     <string name="setting_tls_title">Sichere Verbindung verwenden (TLS)</string>
     <string name="setting_tls_summary">Verschlüsselt, wenn der Server das unterstützt.</string>
     <string name="setting_resetdefault_title">Standardeinstellungen zurücksetzen</string>

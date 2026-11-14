@@ -183,6 +183,8 @@
     <string name="setting_unpause_action_if_min_users_ready">Reprendre si autres prêts + min. utilisateurs</string>
     <string name="setting_unpause_action_always">Toujours reprendre</string>
     <string name="room_set_as_ready">Vous êtes maintenant défini comme prêt - relancez la lecture pour reprendre</string>
+    <string name="room_you_are_ready">Vous êtes maintenant défini comme prêt</string>
+    <string name="room_you_are_not_ready">Vous êtes maintenant défini comme non prêt</string>
     <string name="setting_tls_title">Connexion sécurisée (TLS)</string>
     <string name="setting_tls_summary">Chiffré si le serveur le prend en charge.</string>
     <string name="setting_resetdefault_title">Réinitialiser les paramètres</string>

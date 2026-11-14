@@ -424,10 +424,15 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 // The user left the current room, so remove the user from the list at once.
                 updated.removeAt(idx)
                 changed = true
+                callback.onSomeoneSwitchedAway(userName, eventRoom)
             } else if (inOurRoom && idx < 0 && updated.addNewUser(userName)) {
                 // The user moved into the current room.
                 changed = true
                 callback.onSomeoneJoined(userName)
+            } else if (!inOurRoom && idx < 0 && userData.file == null) {
+                // A move between two rooms that are not ours. A file change in another room also
+                // names the room, but it carries the file, so it does not count as a move.
+                callback.onSomeoneJoinedOtherRoom(userName, eventRoom)
             }
         }
 

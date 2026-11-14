@@ -349,6 +349,8 @@
     <string name="setting_unpause_action_if_min_users_ready">Unpause if others ready + min users</string>
     <string name="setting_unpause_action_always">Always unpause</string>
     <string name="room_set_as_ready">You are now set as ready - unpause again to unpause</string>
+    <string name="room_you_are_ready">You are now set as ready</string>
+    <string name="room_you_are_not_ready">You are now set as not ready</string>
     <string name="setting_tls_title">Secure connection (TLS)</string>
     <string name="setting_tls_summary">Encrypted when the server supports it.</string>
     <string name="setting_tls_required_title">Require encryption</string>

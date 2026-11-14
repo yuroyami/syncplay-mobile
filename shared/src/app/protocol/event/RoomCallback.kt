@@ -116,6 +116,21 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = joiner, getter = osdMessage)
     }
 
+    /** We moved to [room] with `/room`. Syncplay writes the same join line as on connect. */
+    fun onYouSwitchedRoom(room: String) {
+        dispatcher.broadcastMessage(
+            message = { Localization.strings.roomYouJoinedRoom(session.currentUsername.isolated(), room.isolated()) },
+            isChat = false,
+        )
+    }
+
+    /** [user] moved from our room to [room]. As in Syncplay, the line names the new room. */
+    fun onSomeoneSwitchedAway(user: String, room: String) {
+        val osdMessage: suspend () -> String = { Localization.strings.roomGuyJoined(user.isolated(), room.isolated()) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(user))
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
+    }
+
     /** Presence in another room on a server without isolated rooms: a quiet notice, nothing more. */
     fun onSomeoneJoinedOtherRoom(joiner: String, room: String) {
         viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyJoinedOtherRoom(joiner.isolated(), room.isolated()) }
@@ -476,6 +491,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         // As in Syncplay, only the person who tried hears that the password was refused.
         if (!data.success && user.isNotSelf()) return
+        // A server without isolated rooms sends every success to every room. As in Syncplay, the
+        // line shows only for our own room.
+        if (data.success && data.room != null && data.room != session.currentRoom) return
 
         val osdMessage: suspend () -> String = {
             (when (data.success) {

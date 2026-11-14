@@ -174,6 +174,8 @@
     <string name="setting_unpause_action_if_min_users_ready">其他人就绪且达到最少人数时恢复播放</string>
     <string name="setting_unpause_action_always">始终恢复播放</string>
     <string name="room_set_as_ready">您已准备，按下播放键可继续播放</string>
+    <string name="room_you_are_ready">您已准备</string>
+    <string name="room_you_are_not_ready">您已取消准备</string>
     <string name="setting_tls_title">使用安全连接（TLS）</string>
     <string name="setting_tls_summary">服务器支持时使用加密连接。</string>
     <string name="setting_resetdefault_title">重置默认设置</string>

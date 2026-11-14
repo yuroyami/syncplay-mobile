@@ -183,6 +183,8 @@
     <string name="setting_unpause_action_if_min_users_ready">Wznów jeśli inni gotowi + min. użytkowników</string>
     <string name="setting_unpause_action_always">Zawsze wznawiaj</string>
     <string name="room_set_as_ready">Jesteś teraz gotowy - wznów ponownie, aby odtworzyć</string>
+    <string name="room_you_are_ready">Jesteś teraz gotowy</string>
+    <string name="room_you_are_not_ready">Jesteś teraz niegotowy</string>
     <string name="setting_tls_title">Użyj bezpiecznego połączenia (TLS)</string>
     <string name="setting_tls_summary">Szyfrowane, jeśli serwer to obsługuje.</string>
     <string name="setting_resetdefault_title">Przywróć ustawienia domyślne</string>

@@ -85,6 +85,21 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         if (playback == Playback.PLAY && tellServer && !viewmodel.isSoloMode
             && viewmodel.session.roomFeatures.supportsReadiness
         ) {
+            // A follower in a managed room can never unpause it, so Play toggles readiness and
+            // names the new state. "Unpause again" would never come true for a follower.
+            if (session.isInControlledRoomWithoutController()) {
+                val nowReady = !viewmodel.session.ready.value
+                loggy("SYNCPLAY Readiness: follower pressed Play, ready=$nowReady")
+                viewmodel.session.ready.value = nowReady
+                viewmodel.readiness.evaluate()
+                network.sendAsync(WireMessage.readiness(isReady = nowReady, manuallyInitiated = true))
+                val line: suspend () -> String = {
+                    if (nowReady) Localization.strings.roomYouAreReady else Localization.strings.roomYouAreNotReady
+                }
+                broadcastMessage(isChat = false, message = line)
+                viewmodel.dispatchOSD(getter = line)
+                return
+            }
             if (!instaplayConditionsMet()) {
                 /* Block the unpause. Set as ready instead, and say so where the user is looking. */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
@@ -146,11 +161,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
      * Mirrors the PC client's `instaplayConditionsMet()`.
      */
     private fun instaplayConditionsMet(): Boolean {
-        // Python's canControl gate: a follower in a controlled room can never unpause it. Without
-        // this check the user could try, and the server's forcePositionUpdate would echo the
-        // state back as paused: a brief unpause-then-repause flicker on the local player.
-        if (session.isInControlledRoomWithoutController()) return false
-
+        // A follower never gets here: controlPlayback handles that case first (Python's canControl gate).
         val unpauseAction = UNPAUSE_ACTION.value()
         val session = viewmodel.session
 

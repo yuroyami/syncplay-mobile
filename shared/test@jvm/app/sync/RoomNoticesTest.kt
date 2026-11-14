@@ -8,6 +8,7 @@ import app.protocol.wire.ControllerAuthData
 import app.room.RoomViewmodel
 import app.room.parseSlashCommand
 import app.room.runSlashCommand
+import app.room.switchRoom
 import app.server.SyncplayServer
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -115,6 +116,34 @@ class RoomNoticesTest {
         alice.callback.onHandleControllerAuth(ControllerAuthData(user = "alice", room = "harness", success = false))
         room.waitUntil("alice hears her own refusal") { "alice failed to identify as a room operator" in alice.lines() }
         assertEquals(emptyList(), alice.lines().filter { it.startsWith("bob failed") })
+    }
+
+    /** As in Syncplay, every room switch writes a join line that names the new room. */
+    @Test
+    fun aRoomSwitchIsAnnouncedOnBothSides() = TwoClientRoom().use { room ->
+        room.waitUntil("both connect") { room.alice.connected && room.bob.connected }
+        val alice = room.alice.viewmodel
+        val bob = room.bob.viewmodel
+        room.waitUntil("bob sees alice") { bob.session.userList.value.any { it.name == "alice" } }
+
+        alice.switchRoom("other")
+        room.waitUntil("alice hears her own switch") { "alice has joined the room: 'other'" in alice.lines() }
+        room.waitUntil("bob hears where alice went") { "alice has joined the room: 'other'" in bob.lines() }
+        room.waitUntil("alice leaves bob's list") { bob.session.userList.value.none { it.name == "alice" } }
+
+        bob.switchRoom("other")
+        room.waitUntil("alice hears bob join her room") { "bob has joined the room: 'other'" in alice.lines() }
+    }
+
+    /** As in Syncplay, an operator success in another room stays quiet, even when the server sends it to every room. */
+    @Test
+    fun anOperatorInAnotherRoomStaysQuiet() = TwoClientRoom().use { room ->
+        room.waitUntil("alice connects") { room.alice.connected }
+        val alice = room.alice.viewmodel
+        alice.callback.onHandleControllerAuth(ControllerAuthData(user = "carol", room = "+other:ABC", success = true))
+        alice.callback.onHandleControllerAuth(ControllerAuthData(user = "bob", room = "harness", success = true))
+        room.waitUntil("alice hears the operator of her room") { "bob authenticated as a room operator" in alice.lines() }
+        assertEquals(emptyList(), alice.lines().filter { it.startsWith("carol") })
     }
 
     private fun RoomViewmodel.lines(): List<String> =
