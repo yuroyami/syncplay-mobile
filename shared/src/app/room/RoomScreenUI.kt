@@ -24,7 +24,6 @@ import app.room.ui.chat.RoomGifPage
 import app.room.ui.rightcards.LocalRoomPage
 import app.theme.BrandSpan
 import app.theme.brandBrush
-import app.utils.RoomRotation
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -75,7 +74,7 @@ import app.LocalRoomUiState
 import app.i18n.strings
 import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.HUD_AUTO_HIDE_SECONDS
-import app.preferences.Preferences.ROOM_ALLOW_PORTRAIT
+import app.preferences.Preferences.ROOM_ORIENTATION
 import app.preferences.flow
 import app.preferences.watchPref
 import app.room.ui.bottombar.AddVideoButton
@@ -169,11 +168,11 @@ val LocalRoomRailFocus = compositionLocalOf<FocusRequester?> { null }
  */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    // The room follows the device unless the setting is off or the full-screen key holds it in
-    // landscape. The layout follows the window shape, so a portrait window gets the tall layout.
-    val followDevice by ROOM_ALLOW_PORTRAIT.watchPref()
-    val held by viewmodel.uiState.landscapeHold.collectAsState()
-    EnterRoomMode(if (followDevice && !held) RoomRotation.FollowDevice else RoomRotation.Landscape)
+    // The setting picks the view, and the full-screen key can switch to the other one (#249).
+    // The layout follows the window shape, so a portrait window gets the tall layout.
+    val orientation = RoomOrientation.of(ROOM_ORIENTATION.watchPref().value)
+    val switchedUnder by viewmodel.uiState.orientationSwitch.collectAsState()
+    EnterRoomMode(orientation.rotation(switched = switchedUnder == orientation))
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
@@ -713,7 +712,7 @@ private fun RoomHud(
  * The HUD over the stage of the portrait room: the status line at the top start, the Controls key
  * at the top end, the play and jump keys in one row in the middle, and the seek bar at the bottom,
  * with the full-screen key at its end. Before a file loads, the add key takes the place of the seek
- * bar, under the logo.
+ * bar, under the logo, and the full-screen key keeps its corner.
  */
 @Composable
 private fun BoxScope.PortraitStageControls(
@@ -745,17 +744,25 @@ private fun BoxScope.PortraitStageControls(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RoomSeekbar(modifier = Modifier.weight(1f))
-                if (platformCallback.canHoldLandscape) RoomFullScreenKey()
+                if (platformCallback.canHoldLandscape) RoomFullScreenKey(tall = true)
             }
         }
         // Before a file loads, the add key is the main control. It sits low in the stage, under the
         // logo, and opens the add media page.
-        else -> Box(Modifier.align(Alignment.BottomCenter).padding(bottom = Space.gap).focusGroup().then(controls)) {
-            AddVideoButton(
-                modifier = Modifier.focusRequester(ui.mediaKeyFocus).focusRequester(initialFocusRequester),
-                expanded = true,
-                onClick = { ui.toggleAddMedia(true) },
-            )
+        else -> {
+            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = Space.gap).focusGroup().then(controls)) {
+                AddVideoButton(
+                    modifier = Modifier.focusRequester(ui.mediaKeyFocus).focusRequester(initialFocusRequester),
+                    expanded = true,
+                    onClick = { ui.toggleAddMedia(true) },
+                )
+            }
+            // The full-screen key keeps its corner, or a room with no file has no way back to landscape (#249).
+            if (platformCallback.canHoldLandscape) {
+                Box(Modifier.align(Alignment.BottomEnd).padding(end = Space.gapTight).focusGroup().then(controls)) {
+                    RoomFullScreenKey(tall = true)
+                }
+            }
         }
     }
 }

@@ -176,6 +176,7 @@ actual fun EnterRoomMode(rotation: RoomRotation) {
         activity?.requestedOrientation = when (rotation) {
             RoomRotation.FollowDevice -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
             RoomRotation.Landscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            RoomRotation.Portrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 }

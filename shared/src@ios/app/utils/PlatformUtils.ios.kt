@@ -69,6 +69,7 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
+import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIInterfaceOrientationMaskAllButUpsideDown
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
@@ -264,6 +265,7 @@ actual fun EnterRoomMode(rotation: RoomRotation) {
                 // Upside-down portrait is left out, as in most iPhone apps.
                 RoomRotation.FollowDevice -> UIInterfaceOrientationMaskAllButUpsideDown
                 RoomRotation.Landscape -> UIInterfaceOrientationMaskLandscape
+                RoomRotation.Portrait -> UIInterfaceOrientationMaskPortrait
             }
         )
     }

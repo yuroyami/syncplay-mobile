@@ -75,6 +75,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import app.theme.defaultTheme
+import app.room.RoomOrientation
 import app.room.models.MessagePalette
 import app.preferences.settings.SettingRow
 import app.preferences.settings.TrustedDomainsPopup
@@ -145,13 +146,23 @@ object Preferences {
     val GESTURES = Pref("misc_gestures", true)
 
     /**
-     * Whether the room follows the device's rotation, so a phone held upright shows the portrait
-     * room. Off holds the room in landscape. The system rotation lock still applies.
+     * How the room is held: the name of a [RoomOrientation]. Landscape and Portrait do not turn
+     * with the device. Auto follows the device, and the system rotation lock applies.
      */
-    val ROOM_ALLOW_PORTRAIT = Pref("pref_room_allow_portrait", true) {
-        title = { it.settingRoomPortraitTitle }
-        summary = { it.settingRoomPortraitSummary }
+    val ROOM_ORIENTATION = Pref("pref_room_orientation", RoomOrientation.Landscape.name) {
+        title = { it.settingRoomOrientationTitle }
+        summary = { it.settingRoomOrientationSummary }
         icon = Icons.Filled.ScreenRotation
+
+        extraConfig = PrefExtraConfig.MultiChoice(
+            entries = {
+                mapOf(
+                    strings.settingRoomOrientationLandscape to RoomOrientation.Landscape.name,
+                    strings.settingRoomOrientationPortrait to RoomOrientation.Portrait.name,
+                    strings.settingRoomOrientationAuto to RoomOrientation.Auto.name
+                )
+            }
+        )
     }
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())

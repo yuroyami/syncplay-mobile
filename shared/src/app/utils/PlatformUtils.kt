@@ -91,6 +91,9 @@ enum class RoomRotation {
 
     /** The room stays in landscape, either way round. */
     Landscape,
+
+    /** The room stays in portrait, the right way up. */
+    Portrait,
 }
 
 /**

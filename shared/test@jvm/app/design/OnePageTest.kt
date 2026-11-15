@@ -1,5 +1,6 @@
 package app.design
 
+import app.room.RoomOrientation
 import app.room.RoomUiStateManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
@@ -44,7 +45,7 @@ class OnePageTest {
     private fun RoomUiStateManager.reset() {
         pages.forEach { it.flag(this).value = false }
         askLeave.value = false
-        landscapeHold.value = false
+        orientationSwitch.value = null
     }
 
     private fun model(onePage: Boolean, block: (RoomUiStateManager) -> Unit) = RoomRig.model { room ->
@@ -175,36 +176,46 @@ class OnePageTest {
     }
 
     @Test
-    fun theFullScreenKeySetsAndEndsTheHold() = model(onePage = true) { ui ->
+    fun theFullScreenKeySwitchesTheViewAndBack() = model(onePage = true) { ui ->
         ui.reset()
-        ui.toggleLandscapeHold()
-        assertTrue(ui.landscapeHold.value, "The full-screen key holds the room in landscape")
-        ui.toggleLandscapeHold()
-        assertFalse(ui.landscapeHold.value, "The exit key ends the hold")
+        ui.toggleOrientationSwitch()
+        assertTrue(ui.orientationSwitched, "The full-screen key switches the view")
+        ui.toggleOrientationSwitch()
+        assertFalse(ui.orientationSwitched, "The same key switches it back")
     }
 
     @Test
-    fun backClosesAPanelThenEndsTheHoldThenAsksToLeave() {
+    fun backClosesAPanelThenEndsTheSwitchThenAsksToLeave() {
         for (onePage in listOf(false, true)) model(onePage) { ui ->
             ui.reset()
-            ui.toggleLandscapeHold(true)
+            ui.toggleOrientationSwitch()
             ui.toggleRoomPreferences(true)
             ui.back()
             assertEquals(emptySet(), ui.openPages(), "Back closes the panel first (one-page mode: $onePage)")
-            assertTrue(ui.landscapeHold.value, "The hold stays while a panel was open (one-page mode: $onePage)")
+            assertTrue(ui.orientationSwitched, "The switch stays while a panel was open (one-page mode: $onePage)")
             ui.back()
-            assertFalse(ui.landscapeHold.value, "Back then ends the hold (one-page mode: $onePage)")
-            assertFalse(ui.askLeave.value, "Back that ends the hold does not ask to leave (one-page mode: $onePage)")
+            assertFalse(ui.orientationSwitched, "Back then ends the switch (one-page mode: $onePage)")
+            assertFalse(ui.askLeave.value, "Back that ends the switch does not ask to leave (one-page mode: $onePage)")
             ui.back()
             assertTrue(ui.askLeave.value, "Back then asks to leave (one-page mode: $onePage)")
         }
     }
 
     @Test
-    fun theHoldLastsForOneRoom() = model(onePage = false) { ui ->
+    fun theSwitchLastsForOneRoom() = model(onePage = false) { ui ->
         ui.reset()
-        ui.toggleLandscapeHold(true)
+        ui.toggleOrientationSwitch()
         ui.invalidate()
-        assertFalse(ui.landscapeHold.value, "A room that ends drops the hold")
+        assertFalse(ui.orientationSwitched, "A room that ends drops the switch")
+    }
+
+    @Test
+    fun aSwitchMadeUnderAnotherChoiceOfTheSettingDoesNotCount() = model(onePage = false) { ui ->
+        ui.reset()
+        // The rig keeps the default choice, Landscape.
+        ui.toggleOrientationSwitch(RoomOrientation.Auto)
+        assertFalse(ui.orientationSwitched, "A change of the setting ends the switch")
+        ui.back()
+        assertTrue(ui.askLeave.value, "Back has no switch to end, so it asks to leave")
     }
 }

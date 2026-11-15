@@ -519,11 +519,14 @@ The portrait room:
 - When the one-page mode starts, one open page stays. The GIF drawer wins, then a side panel, then
   the Controls page, then the More page. Outside the mode, the landscape rules stay: a panel and the
   GIF drawer can be open together.
-- In the one-page mode, `back()` shows chat when a page is open. Then Back ends the landscape hold,
-  and only after that does it ask to leave (#244).
-- The landscape hold (`landscapeHold`) is set by the full-screen key, and it lasts for one room.
-  `invalidate()` drops it. While it is on, the room calls `EnterRoomMode(RoomRotation.Landscape)`,
-  whatever the rotation setting says.
+- In the one-page mode, `back()` shows chat when a page is open. Then Back ends the orientation
+  switch, and only after that does it ask to leave (#244, #249).
+- The "Room orientation" setting (`ROOM_ORIENTATION`) picks the view of the room: Landscape,
+  Portrait or Auto. The full-screen key switches the room to the other view, and the switch lasts
+  for one room. `invalidate()` drops it. `RoomOrientation.rotation` gives the `RoomRotation` for
+  `EnterRoomMode`, and `RoomOrientation.key` names what the key does (#249).
+- `orientationSwitch` holds the choice of the setting under which the key was pressed. The switch
+  counts only while the setting keeps that choice, so a change of the setting ends the switch.
 - Show the full-screen key only where `platformCallback.canHoldLandscape` is true. Android 16 and
   later ignore an orientation request on a screen whose smallest width is 600dp or more, when the
   app targets API 36 or later, and Synkplay does. iOS 15 applies a new orientation mask only at the
@@ -586,6 +589,7 @@ Media, playlist and settings:
 - `EnterRoomMode` takes a `RoomRotation`. `FollowDevice` maps to `SCREEN_ORIENTATION_FULL_USER` on
   Android and to all orientations but upside down on iOS, so the system rotation lock still applies.
   `Landscape` maps to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` and to the landscape mask (#243).
+  `Portrait` maps to `SCREEN_ORIENTATION_PORTRAIT` and to the portrait mask (#249).
 - Compose's `TextAutoSize` never shrinks a label that an ellipsis has already cut, because the cut
   text counts as fitting. Give a shrinking label a `FontSizeRange` through the app's `Text` in
   `app.uicomponents.controls`.

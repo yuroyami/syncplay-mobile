@@ -17,8 +17,10 @@ import app.preferences.Pref
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
 import app.preferences.Preferences.GIF_PANEL_SOURCE
 import app.preferences.Preferences.GIF_PANEL_TYPE
+import app.preferences.Preferences.ROOM_ORIENTATION
 import app.preferences.flow
 import app.preferences.set
+import app.room.RoomOrientation
 import app.room.RoomScreenUI
 import app.room.RoomViewmodel
 import app.room.models.Message
@@ -470,16 +472,18 @@ class PortraitRoomTest {
         assertTrue(line.isEmpty(), "No semantics node sits on the line: ${line.map { nameOf(it) }}")
     }
 
-    /* The full-screen key (#244). */
+    /* The full-screen key (#244, #249). */
 
     @Test
     fun theFullScreenKeyShowsOnlyWhereTheAppCanTurnTheScreen() {
-        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = true) {
-            driver.frames(20)
-            val key = assertNotNull(described(EnAppStrings.roomFullScreen), "A phone shows the full-screen key")
-            assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp + 0.5f, "The key sits in the stage")
-            press(EnAppStrings.roomFullScreen)
-            assertTrue(ui.landscapeHold.value, "The key holds the room in landscape")
+        withPref(ROOM_ORIENTATION, RoomOrientation.Portrait.name) {
+            RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = true) {
+                driver.frames(20)
+                val key = assertNotNull(described(EnAppStrings.roomFullScreen), "A phone shows the full-screen key")
+                assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp + 0.5f, "The key sits in the stage")
+                press(EnAppStrings.roomFullScreen)
+                assertTrue(ui.orientationSwitched, "The key switches the portrait room to landscape")
+            }
         }
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = false) {
             driver.frames(20)
@@ -488,15 +492,37 @@ class PortraitRoomTest {
     }
 
     @Test
-    fun theHeldLandscapeRoomShowsTheExitKey() =
+    fun thePortraitRoomShowsTheKeyBeforeAFileLoads() =
+        RoomRig.drive(solo = false, television = false, withVideo = false, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = true) {
+            driver.frames(20)
+            val key = assertNotNull(described(EnAppStrings.roomFullScreen), "A room with no file still shows the key")
+            assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp + 0.5f, "The key sits in the stage")
+        }
+
+    @Test
+    fun theLandscapeRoomShowsTheKeyWithoutASwitch() {
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
             driver.frames(20)
-            assertNull(described(EnAppStrings.roomFullScreenExit), "No exit key without the hold")
-            ui.toggleLandscapeHold(true)
-            driver.frames(20)
             press(EnAppStrings.roomFullScreenExit)
-            assertFalse(ui.landscapeHold.value, "The exit key ends the hold")
+            assertTrue(ui.orientationSwitched, "With the Landscape choice, the key switches to the portrait room")
         }
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = false) {
+            driver.frames(20)
+            assertNull(described(EnAppStrings.roomFullScreenExit), "The desktop shows no key in the landscape room")
+        }
+    }
+
+    @Test
+    fun aRoomThatFollowsTheDeviceShowsTheLockKey() = withPref(ROOM_ORIENTATION, RoomOrientation.Auto.name) {
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
+            driver.frames(20)
+            assertNull(described(EnAppStrings.roomFullScreenExit), "A room that follows the device has no full screen to exit")
+            press(EnAppStrings.roomRotationLock)
+            assertTrue(ui.orientationSwitched, "The lock key holds the room in landscape")
+            press(EnAppStrings.roomRotationUnlock)
+            assertFalse(ui.orientationSwitched, "The same key gives the room back to the device")
+        }
+    }
 
     /* Renders, for a look by eye. A render fails on an unnamed control. */
 
@@ -605,16 +631,15 @@ class PortraitRoomTest {
         }
     }
 
-    /** The stage with the full-screen key, as on a phone, and the held landscape room with its exit key. */
+    /** The stage with the full-screen key, as on a phone, and the landscape room with its exit key. */
     @Test
     fun rendersTheFullScreenKey() {
         RoomRig.render("portrait-room-full-screen-key", widthDp, heightDp, solo = false, withVideo = true, canHoldLandscape = true, setup = ::fill) {
             RoomScreenUI(LocalRoomViewmodel.current)
         }
-        RoomRig.render("landscape-room-held", 844, 390, solo = false, withVideo = true, canHoldLandscape = true, setup = { room ->
-            fill(room)
-            room.uiState.toggleLandscapeHold(true)
-        }) { RoomScreenUI(LocalRoomViewmodel.current) }
+        RoomRig.render("landscape-room-full-screen-key", 844, 390, solo = false, withVideo = true, canHoldLandscape = true, setup = ::fill) {
+            RoomScreenUI(LocalRoomViewmodel.current)
+        }
     }
 
     /* Notices under the video area. */
