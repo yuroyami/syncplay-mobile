@@ -25,8 +25,8 @@ settings:
     # Pinned for reproducible builds (issue #105).
     buildToolsVersion: 37.0.0
     # Written by `./kotlin do syncAppVersion` from the app version in shared/module.yaml.
-    versionName: "0.26.0"
-    versionCode: 1000026001
+    versionName: "0.27.0"
+    versionCode: 1000027001
     # The release build reads storeFile, storePassword, keyAlias and keyPassword from
     # keystore.properties at the project root. storeFile is relative to this folder, for example
     # ../keystore/syncplaykey.jks. Never commit either file.

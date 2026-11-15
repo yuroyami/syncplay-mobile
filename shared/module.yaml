@@ -177,7 +177,7 @@ plugins:
     enabled: true
     appName: Synkplay
     # The app version for every platform. After a change, run `./kotlin do syncAppVersion`.
-    version: 0.26.0
+    version: 0.27.0
     rebuild: 1
     buildConfigPackage: SyncplayMobile.shared
     # Public on purpose. The key ships inside every APK and travels in the URL path of every

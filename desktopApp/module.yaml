@@ -24,7 +24,7 @@ plugins:
     enabled: true
     packageName: Synkplay
     # Written by `./kotlin do syncAppVersion` from the app version in shared/module.yaml.
-    packageVersion: "0.26.0"
+    packageVersion: "0.27.0"
     description: Synchronized media playback with Syncplay
     vendor: yuroyami
     macBundleId: com.yuroyami.syncplay.desktop
