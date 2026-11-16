@@ -50,14 +50,14 @@ fun RoomBottomBarSection(modifier: Modifier) {
                 RoomReadyButton()
 
                 RoomSeekbar(modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
-
-                RoomControlPanelButton(modifier = Modifier)
             }
 
-            RoomMediaAddButton()
-
-            // The key that leaves the landscape view, or that stops the room from turning (#249).
+            // The view key ends the seek bar, as in the portrait stage, before the room keys (#249).
             if (platformCallback.canHoldLandscape) RoomFullScreenKey(tall = false)
+
+            if (hasVideo) RoomControlPanelButton(modifier = Modifier)
+
+            RoomMediaAddButton()
         }
     }
 }

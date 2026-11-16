@@ -503,6 +503,11 @@ class PortraitRoomTest {
     fun theLandscapeRoomShowsTheKeyWithoutASwitch() {
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
             driver.frames(20)
+            val key = boundsOf(assertNotNull(described(EnAppStrings.roomFullScreenExit), "The landscape room shows the key"))
+            val controls = boundsOf(assertNotNull(described(EnAppStrings.roomControlPanel)))
+            val add = boundsOf(assertNotNull(described(EnAppStrings.roomButtonDescAdd)))
+            assertTrue(key.right <= controls.left + 1f, "The key sits before the Controls key")
+            assertTrue(controls.right <= add.left + 1f, "The Controls key sits before Add Media")
             press(EnAppStrings.roomFullScreenExit)
             assertTrue(ui.orientationSwitched, "With the Landscape choice, the key switches to the portrait room")
         }
