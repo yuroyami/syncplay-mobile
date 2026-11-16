@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -39,6 +41,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -140,6 +143,8 @@ fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
     var initialBrightness by remember { mutableFloatStateOf(0f) }
     var initialVolume by remember { mutableIntStateOf(0) }
     var dragDistance by remember { mutableFloatStateOf(0f) }
+    // Where the finger first touched. The drag detector reports a later point (#137).
+    var touchDown by remember { mutableStateOf(Offset.Zero) }
     var lastAppliedBrightness by remember { mutableFloatStateOf(0f) }
     var lastAppliedVolume by remember { mutableIntStateOf(0) }
 
@@ -239,14 +244,24 @@ fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
                                 },
                             )
                         }
+                        .pointerInput(Unit) {
+                            // The Initial pass runs before the drag detector, so the point is
+                            // stored before onDragStart reads it.
+                            awaitEachGesture {
+                                touchDown = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial).position
+                            }
+                        }
                         .pointerInput(gesturesEnabled, swipeEnabled, hasVideo) {
                             if (!(gesturesEnabled && swipeEnabled && hasVideo)) return@pointerInput
                             detectVerticalDragGestures(
-                                onDragStart = { startOffset ->
-                                    /* A drag that starts in a system gesture zone or on a waterfall
-                                     * edge (a curved screen side) is ignored until it ends. The size
-                                     * values come from the pointer scope, so they stay correct
+                                onDragStart = { _ ->
+                                    /* A drag whose finger first touched a system gesture zone or a
+                                     * waterfall edge (a curved screen side) is ignored until it ends.
+                                     * The guard reads the touch point, not the point after the touch
+                                     * slop, which a fast pull has already moved out of the zone. The
+                                     * size values come from the pointer scope, so they stay correct
                                      * after a rotation. */
+                                    val startOffset = touchDown
                                     val guardTop = maxOf(size.height * edgeGuardFraction, topGestureGuardPx.toFloat())
                                     val guardBottom = maxOf(size.height * edgeGuardFraction, bottomGestureGuardPx.toFloat())
                                     if (startOffset.y < guardTop || startOffset.y > size.height - guardBottom ||
@@ -275,6 +290,12 @@ fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
                                     }
                                 },
                                 onDragEnd = {
+                                    dragDistance = 0f
+                                    readout = null
+                                    wash = null
+                                },
+                                // A cancelled drag, for example when the controls show, clears the readout too.
+                                onDragCancel = {
                                     dragDistance = 0f
                                     readout = null
                                     wash = null
