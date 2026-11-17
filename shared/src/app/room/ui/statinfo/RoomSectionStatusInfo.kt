@@ -19,7 +19,17 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.uicomponents.controls.FontSizeRange
+import kotlin.math.max
+import kotlin.math.min
 import app.LocalRoomViewmodel
 import app.protocol.models.ConnectionState
 import app.protocol.network.ConnectionFailure
@@ -50,7 +60,6 @@ import app.subtitles.episodeOf
 @Composable
 fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     val viewmodel = LocalRoomViewmodel.current
-    val p = palette
     val connectionState by viewmodel.networkManager.state.collectAsState()
     val userList by viewmodel.session.userList.collectAsState()
     val encrypted by viewmodel.networkManager.encrypted.collectAsState()
@@ -62,11 +71,6 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         userList.isNotEmpty() -> userList.size
         connectionState == ConnectionState.CONNECTED -> 1
         else -> 0
-    }
-    val square = when (connectionState) {
-        ConnectionState.CONNECTED -> p.ok
-        ConnectionState.CONNECTING, ConnectionState.SCHEDULING_RECONNECT -> p.accent
-        ConnectionState.DISCONNECTED -> p.bad
     }
     /* When connected, the line shows the autoplay countdown or who the room is waiting for. That
      * is more useful than a user count, which the roster (the list of users in the room) already
@@ -104,6 +108,38 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
         }
     }
 
+    RoomStatusLine(
+        connectionState = connectionState,
+        encrypted = encrypted,
+        room = viewmodel.session.currentRoom,
+        state = state,
+        episode = episode,
+        onReconnect = { viewmodel.networkManager.reconnectNow() },
+        modifier = modifier,
+    )
+}
+
+/**
+ * The status line drawn from plain values. [RoomStatusInfoSection] reads these values from the
+ * room. A golden passes them itself, so it can show a state that the room reaches only over time,
+ * such as the autoplay countdown.
+ */
+@Composable
+internal fun RoomStatusLine(
+    connectionState: ConnectionState,
+    encrypted: Boolean,
+    room: String,
+    state: String,
+    episode: String?,
+    onReconnect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val p = palette
+    val square = when (connectionState) {
+        ConnectionState.CONNECTED -> p.ok
+        ConnectionState.CONNECTING, ConnectionState.SCHEDULING_RECONNECT -> p.accent
+        ConnectionState.DISCONNECTED -> p.bad
+    }
     Row(
         modifier = modifier
             // A screen reader announces changes to this line, such as a lost connection.
@@ -127,16 +163,8 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
             )
         }
         RowGap(Space.gapTight + 2.dp)
-        Text(
-            text = viewmodel.session.currentRoom,
-            style = Type.label,
-            color = p.ink,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        RowGap(Space.gapTight + 2.dp)
-        Text(state, style = Type.value, color = p.inkDim, maxLines = 1)
+        // Weighted, so the row measures its fixed parts first and the episode tag keeps its width.
+        RoomAndState(room, state, gap = Space.gapTight + 2.dp, modifier = Modifier.weight(1f, fill = false))
         // The app retries on its own after a delay. A user who knows that the server is back can
         // retry now, without leaving the room.
         if (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.SCHEDULING_RECONNECT) {
@@ -146,11 +174,64 @@ fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
                 name = strings.roomReconnectNow,
                 tint = p.accent,
                 size = Space.glyph,
-            ) { viewmodel.networkManager.reconnectNow() }
+                onClick = onReconnect,
+            )
         }
         if (episode != null) {
             RowGap(Space.gapTight + 2.dp)
             Tag(episode)
         }
+    }
+}
+
+/** The smallest size of the state text: the smallest standard text size on Android and iOS. */
+internal val STATE_TEXT_FLOOR = 11.sp
+
+/** The share of the free space that the room name keeps when the state text needs more. */
+private const val ROOM_NAME_SHARE = 0.6f
+
+/**
+ * The room name and the state text side by side, in the space that the row leaves them. The room
+ * name keeps its whole width, up to 60% of that space ([ROOM_NAME_SHARE]). The state text takes
+ * the rest. It shrinks to fit first, and it ends in "…" only at [STATE_TEXT_FLOOR].
+ */
+@Composable
+private fun RoomAndState(room: String, state: String, gap: Dp, modifier: Modifier = Modifier) {
+    val p = palette
+    Layout(
+        content = {
+            Text(room, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = state,
+                style = Type.value,
+                color = p.inkDim,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = FontSizeRange(Type.value.fontSize, min = STATE_TEXT_FLOOR),
+            )
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        val (roomText, stateText) = measurables
+        val gapPx = gap.roundToPx()
+        val loose = Constraints(maxHeight = constraints.maxHeight)
+        if (!constraints.hasBoundedWidth) {
+            // An intrinsic measurement asks without a width limit: both texts take their full width.
+            return@Layout sideBySide(roomText.measure(loose), stateText.measure(loose), gapPx)
+        }
+        val space = constraints.maxWidth
+        val roomKeeps = min(roomText.maxIntrinsicWidth(constraints.maxHeight), (space * ROOM_NAME_SHARE).toInt())
+        val statePlaced = stateText.measure(loose.copy(maxWidth = (space - roomKeeps - gapPx).coerceAtLeast(0)))
+        val roomPlaced = roomText.measure(loose.copy(maxWidth = (space - statePlaced.width - gapPx).coerceAtLeast(0)))
+        sideBySide(roomPlaced, statePlaced, gapPx)
+    }
+}
+
+/** Places [first] and then [second] in one row, [gapPx] apart, both centered on the same line. */
+private fun MeasureScope.sideBySide(first: Placeable, second: Placeable, gapPx: Int): MeasureResult {
+    val height = max(first.height, second.height)
+    return layout(first.width + gapPx + second.width, height) {
+        first.placeRelative(0, (height - first.height) / 2)
+        second.placeRelative(first.width + gapPx, (height - second.height) / 2)
     }
 }

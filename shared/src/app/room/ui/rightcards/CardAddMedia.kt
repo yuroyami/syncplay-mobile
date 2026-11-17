@@ -186,12 +186,11 @@ object CardAddMedia {
      */
     @Composable
     private fun LinkForm(onCancel: () -> Unit, onPlayed: () -> Unit) {
-        val p = palette
         val viewmodel = LocalRoomViewmodel.current
         val clipboard = LocalClipboard.current
         val scope = rememberCoroutineScope()
         val resolverOn by MEDIA_RESOLVER_ENABLED.watchPref()
-        var url by remember { mutableStateOf("") }
+        val form = remember { LinkFormState() }
         /* With a remote or a keyboard, the one field takes focus, because the user came here to
          * type in it. The panel swaps the routes for this form, so the element that had focus has
          * just left the tree. */
@@ -204,22 +203,20 @@ object CardAddMedia {
                 if (runCatching { urlFocus.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
             }
         }
-        var preview by remember { mutableStateOf<ResolvedMedia?>(null) }
-        var resolving by remember { mutableStateOf(false) }
-        var failed by remember { mutableStateOf(false) }
-        val trimmed = url.trim()
+        val trimmed = form.url.trim()
         val kind = remember(trimmed, resolverOn) { recognise(trimmed, resolverOn) }
 
         LaunchedEffect(trimmed, kind) {
-            preview = null
-            failed = false
-            resolving = false
+            form.preview = null
+            form.failed = false
+            form.resolving = false
             if (kind != LinkKind.Resolvable) return@LaunchedEffect
             delay(500)
-            resolving = true
-            preview = runCatching { mediaResolver.resolve(trimmed) }.getOrNull()
-            failed = preview == null
-            resolving = false
+            form.resolving = true
+            val found = runCatching { mediaResolver.resolve(trimmed) }.getOrNull()
+            form.preview = found
+            form.failed = found == null
+            form.resolving = false
         }
 
         fun play() {
@@ -227,30 +224,73 @@ object CardAddMedia {
             if (trimmed.isNotBlank()) viewmodel.viewModelScope.launch { viewmodel.player.injectVideoURL(trimmed) }
         }
 
+        LinkFormBody(
+            form = form,
+            kind = kind,
+            urlFocus = urlFocus,
+            onPaste = { scope.launch { clipboard.getClipEntry()?.getText()?.let { form.url = it } } },
+            onCancel = onCancel,
+            onPlay = ::play,
+        )
+    }
+
+    /** What the link form holds: the typed link and how its lookup went. */
+    internal class LinkFormState(
+        url: String = "",
+        resolving: Boolean = false,
+        failed: Boolean = false,
+        preview: ResolvedMedia? = null,
+    ) {
+        var url by mutableStateOf(url)
+
+        /** The media resolver is looking the link up. */
+        var resolving by mutableStateOf(resolving)
+
+        /** The lookup found nothing, so the form offers to play the link as it is. */
+        var failed by mutableStateOf(failed)
+
+        /** The title and the duration that the lookup found. */
+        var preview by mutableStateOf(preview)
+    }
+
+    /**
+     * The link form drawn from [form] and [kind]: the link field with a paste button, the note,
+     * and the actions. [LinkForm] does the lookup and the focus. A golden passes each state here.
+     */
+    @Composable
+    internal fun LinkFormBody(
+        form: LinkFormState,
+        kind: LinkKind,
+        urlFocus: FocusRequester,
+        onPaste: () -> Unit,
+        onCancel: () -> Unit,
+        onPlay: () -> Unit,
+    ) {
+        val p = palette
+        val trimmed = form.url.trim()
         Column(Modifier.fillMaxWidth().padding(Space.gutter)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Field(
-                    value = url,
-                    onValueChange = { url = it },
+                    value = form.url,
+                    onValueChange = { form.url = it },
                     focusRequester = urlFocus,
                     modifier = Modifier.weight(1f),
                     placeholder = strings.roomAddmediaOnlineUrl,
                     leading = Icons.Filled.Link,
                     keyboardType = KeyboardType.Uri,
-                    onImeAction = { if (trimmed.isNotBlank() && !resolving) play() },
+                    onImeAction = { if (trimmed.isNotBlank() && !form.resolving) onPlay() },
                     name = strings.roomAddmediaOnlineUrl,
                 )
-                GlyphButton(Icons.Filled.ContentPaste, name = strings.roomLinkPaste) {
-                    scope.launch { clipboard.getClipEntry()?.getText()?.let { url = it } }
-                }
+                GlyphButton(Icons.Filled.ContentPaste, name = strings.roomLinkPaste, onClick = onPaste)
             }
+            val preview = form.preview
             val note = when {
-                resolving -> strings.roomLinkResolving
+                form.resolving -> strings.roomLinkResolving
                 preview != null -> listOfNotNull(
-                    preview?.title,
-                    preview?.durationSec?.let { timestampFromMillis((it * 1000).toLong()) },
+                    preview.title,
+                    preview.durationSec?.let { timestampFromMillis((it * 1000).toLong()) },
                 ).joinToString("  ")
-                failed -> strings.roomLinkFailed
+                form.failed -> strings.roomLinkFailed
                 kind == LinkKind.Empty -> supportedSites(strings)
                 kind == LinkKind.Direct -> strings.roomLinkDirect
                 kind == LinkKind.ResolverOff -> strings.roomLinkResolverOff
@@ -260,19 +300,19 @@ object CardAddMedia {
             Text(
                 text = note,
                 style = Type.note,
-                color = if (failed || kind == LinkKind.ResolverOff) p.warn else p.inkDim,
+                color = if (form.failed || kind == LinkKind.ResolverOff) p.warn else p.inkDim,
                 modifier = Modifier.padding(top = Space.gapTight),
             )
-            if (resolving) ProgressBar(null, Modifier.fillMaxWidth().padding(top = Space.gapTight))
+            if (form.resolving) ProgressBar(null, Modifier.fillMaxWidth().padding(top = Space.gapTight))
             Spacer(Modifier.height(Space.gutter))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SecondaryAction(strings.cancel, modifier = Modifier.weight(1f), onClick = onCancel)
                 Spacer(Modifier.padding(horizontal = Space.gapTight))
                 AccentAction(
-                    text = if (failed) strings.roomLinkPlayAnyway else strings.done,
+                    text = if (form.failed) strings.roomLinkPlayAnyway else strings.done,
                     modifier = Modifier.weight(1f),
-                    enabled = trimmed.isNotBlank() && !resolving,
-                    onClick = { play() },
+                    enabled = trimmed.isNotBlank() && !form.resolving,
+                    onClick = onPlay,
                 )
             }
         }
@@ -282,7 +322,7 @@ object CardAddMedia {
     private fun supportedSites(s: AppStrings) = s.roomLinkSitesFull
 
     /** The kind of a pasted link, as far as the app can tell before the user confirms it. */
-    private enum class LinkKind { Empty, Direct, Resolvable, ResolverOff, Unknown }
+    internal enum class LinkKind { Empty, Direct, Resolvable, ResolverOff, Unknown }
 
     private fun recognise(url: String, resolverOn: Boolean): LinkKind {
         if (url.isBlank()) return LinkKind.Empty
