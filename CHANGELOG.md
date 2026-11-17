@@ -6,11 +6,20 @@ Written for people who use the app. The full engineering history is in the commi
 
 - The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
+- New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
+- Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
+- On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does.
+- Your own join no longer writes a line in chat, because Syncplay PC does not write one either.
+- In German, Spanish, French, Russian and Chinese, more room messages now use the words of Syncplay PC. (#215)
 - When a server refuses you, for example because the server password is wrong, the room now shows the server's message once and stops trying. Before, it tried to join again and again without end. (#211)
 - The track selection and seek panels were only partly translated in languages other than English. They are now fully translated. (#232)
 - In a managed room, a person who is not an operator could press Play and be told to unpause again, which could never work for them. Play now marks them as ready or not ready, and says which. (#212)
 - On a server where rooms can see each other, the room operator line showed in every room. It now shows only in the operator's own room. (#213)
 - Moving to another room with /room now writes a line that names the new room, for you and for the people you left. (#214)
+- A fast swipe from the top or bottom edge, to open the status bar or go home, no longer changes the volume or the brightness. (#137)
+- iOS: a failed join now says at once whether the server name was not found or the server refused. Before, it waited 10 seconds and gave a general reason. (#227)
+- iOS VLC: a file that cannot load now says so, instead of showing its own name as the error. (#234)
+- Android TV: video now always takes the display path that can carry HDR, also with frosted glass on. (#224)
 - Desktop: the picture-in-picture key is gone, because it did nothing. (#223)
 - KitePlayer is updated to 0.3.0.
 - iOS VLC: updated to VLCKit 4.0.0a26.

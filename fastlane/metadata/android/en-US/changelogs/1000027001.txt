@@ -2,8 +2,8 @@ The room has a new portrait view: the video on top and chat below. A key next to
 
 The new Room orientation setting picks how the room opens: Landscape, Portrait or Auto.
 
-When a server refuses you, for example on a wrong password, the room shows the reason once and stops trying.
+New colours across the app.
 
-Managed rooms and room switches now work as in Syncplay PC.
+Chat, managed rooms and room switches now work as in Syncplay PC. A refused join shows the reason once and stops trying.
 
 KitePlayer, ExoPlayer and VLCKit are updated.
