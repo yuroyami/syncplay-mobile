@@ -308,6 +308,12 @@ internal class ClockPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Clo
         seeks += toPositionMs
     }
 
+    /** What [prepareSeekTarget] answers, as the VLC engine's preflight does. A test can clamp, refuse or wait here. */
+    @Volatile
+    var prepare: suspend (Long) -> Long? = { it }
+
+    override suspend fun prepareSeekTarget(targetMs: Long): Long? = prepare(targetMs)
+
     override suspend fun play() {
         moveTo(currentPositionMs())
         playing = true
