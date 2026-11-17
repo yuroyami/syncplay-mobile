@@ -996,10 +996,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     primingFirstFrame = false
                     viewmodel.protocol.noteExpectedPlaybackState(paused = true)
                     playerManager.isNowPlaying.value = false
-                    val reason = vlcPlayer?.media?.url?.lastPathComponent ?: ""
-                    viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomPlaybackError(reason) }
+                    /* VLCKit's error state carries no text. VLCLibrary.currentErrorMessage is per
+                     * thread, and this event arrives on the main thread, not on the thread that
+                     * failed, so it could show an older, unrelated error. The plain load notice
+                     * stands in for the engine message (#234). */
+                    viewmodel.dispatchOSD(OSDCategory.WARNING) { Localization.strings.roomMsgProblemLoadingFile }
                     viewmodel.dispatcher.broadcastMessage(isChat = false, isError = true) {
-                        Localization.strings.roomPlaybackError(reason)
+                        Localization.strings.roomMsgProblemLoadingFile
                     }
                     onEngineLoadFailed()
                 }
