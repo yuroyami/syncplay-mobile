@@ -46,6 +46,8 @@ import app.server.ServerStatus
 import app.server.ui.ServerHostPanel
 import app.subtitles.SubtitleResult
 import app.theme.AutoSize
+import app.theme.TypeRoles
+import androidx.compose.ui.text.font.FontFamily
 import app.theme.ThemeCreatorScreenUI
 import app.theme.ThemeMenu
 import app.uicomponents.PopupMediaDirs
@@ -279,7 +281,7 @@ class SurfaceGoldens {
 
             // Who the room waits for, from the real readiness summary. A series file adds its episode
             // tag, which takes room too. At text scale 1 each line fits whole, except the long name.
-            // At 1.3 the waiting text may reach its floor and end in "…", and nothing else is cut.
+            // The state text comes first: the room name gives way before the state text shrinks.
             val waiting = listOf(
                 WaitCase("waiting-one", "Waiting for Christopher_Lee", listOf(person("Christopher_Lee", ready = false)), series = false),
                 WaitCase("waiting-long", "Waiting for $LONG_NAME", listOf(person(LONG_NAME, ready = false)), series = true),
@@ -287,14 +289,16 @@ class SurfaceGoldens {
                 WaitCase("ready", "Everyone is ready (3)", listOf("Mia", "Sam").map { person(it, ready = true) }, series = true),
             )
             for (case in waiting) {
+                var roomName = ""
                 val line = RoomRig.render("room-status-${case.name}", 360, heightDp = 200, fontScale = scale, solo = false, setup = { room ->
+                    roomName = room.session.currentRoom
                     val file = if (case.series) "A.Series.S02E11.1080p.mkv" else "clip.mp4"
                     room.playerManager.media.value = MediaFile(location = MediaFileLocation.Remote("https://example.com/$file"), fileName = file)
                     room.networkManager.state.value = ConnectionState.CONNECTED
                     room.session.userList.value = case.peers + person(room.session.currentUsername, ready = false)
                     room.readiness.evaluate()
                 }) { RoomStatusInfoSection() }
-                line.assertGivesWayAtTheEnd(case.line)
+                line.assertStateFirst(case.line, roomName)
                 if (scale == 1f && case.name != "waiting-long") line.assertOneRow()
             }
 
@@ -302,7 +306,7 @@ class SurfaceGoldens {
             val countdown = DesignHarness.render("room-status-countdown", 360, heightDp = 200, fontScale = scale) {
                 RoomStatusLine(ConnectionState.CONNECTED, encrypted = true, room = "movie-night", state = strings.roomStartingIn(5), episode = "S02E11", onReconnect = {})
             }
-            countdown.assertGivesWayAtTheEnd("Starting in 5")
+            countdown.assertStateFirst("Starting in 5", room = "movie-night")
             if (scale == 1f) countdown.assertOneRow()
         }
     }
@@ -314,22 +318,31 @@ class SurfaceGoldens {
     }
 
     /**
-     * A name too long for the line: the room name and the episode tag stay whole, and the state
-     * text shrinks to its floor before it ends in "…". Every text keeps to one line.
+     * The state text comes first on the status line. It shrinks or ends in "…" only when the room
+     * name is left out, and it ends in "…" only at its floor. The room name may end in "…". No
+     * other text is cut, and every text keeps to one line.
      */
-    private fun DesignHarness.Result.assertGivesWayAtTheEnd(state: String) {
+    private fun DesignHarness.Result.assertStateFirst(state: String, room: String) {
         assertTrue(texts().contains(state), "${file.name}: no \"$state\" in ${texts()}")
+        val roomShows = texts().contains(room)
         for (layout in textLayouts) {
             val text = layout.layoutInput.text.text
             assertEquals(1, layout.lineCount, "${file.name}: \"$text\" wraps")
             val cut = layout.multiParagraph.didExceedMaxLines || layout.isLineEllipsized(0)
-            if (text != state) {
-                assertFalse(cut, "${file.name}: \"$text\" is cut")
-            } else if (cut) {
-                assertEquals(AutoSize.readableFloor, layout.layoutInput.style.fontSize, "${file.name}: the state text is cut before it reaches its smallest size")
+            when (text) {
+                room -> Unit
+                state -> {
+                    val size = layout.layoutInput.style.fontSize
+                    if (cut || size != stateFullSize) assertFalse(roomShows, "${file.name}: the state text gives way while the room name shows")
+                    if (cut) assertEquals(AutoSize.readableFloor, size, "${file.name}: the state text is cut before it reaches its smallest size")
+                }
+                else -> assertFalse(cut, "${file.name}: \"$text\" is cut")
             }
         }
     }
+
+    /** The size of the state text before it shrinks. */
+    private val stateFullSize = TypeRoles.from(FontFamily.Default).value.fontSize
 
     /** One readiness state of the status line: the people with a file, and the line they give. */
     private class WaitCase(val name: String, val line: String, val peers: List<User>, val series: Boolean)

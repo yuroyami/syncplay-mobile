@@ -184,20 +184,26 @@ internal fun RoomStatusLine(
     }
 }
 
-/** The share of the free space that the room name keeps when the state text needs more. */
-private const val ROOM_NAME_SHARE = 0.6f
+/**
+ * A cut room name shows only when at least this many ems of its own text size are left for it:
+ * about three letters and "…". A shorter stub tells the user nothing. A short name that fits whole
+ * always shows.
+ */
+private const val ROOM_NAME_MIN_EMS = 3f
 
 /**
- * The room name and the state text side by side, in the space that the row leaves them. The room
- * name keeps its whole width, up to 60% of that space ([ROOM_NAME_SHARE]). The state text takes
- * the rest. It shrinks to fit first, and it ends in "…" only at [AutoSize.readableFloor].
+ * The room name and the state text side by side, in the space that the row leaves them. The state
+ * text comes first and keeps its size. The room name takes what is left and ends in "…". When less
+ * than [ROOM_NAME_MIN_EMS] ems of its text size are left, the room name is left out. Only then does
+ * the state text shrink to fit, and it ends in "…" only at [AutoSize.readableFloor].
  */
 @Composable
 private fun RoomAndState(room: String, state: String, gap: Dp, modifier: Modifier = Modifier) {
     val p = palette
+    val roomStyle = Type.label
     Layout(
         content = {
-            Text(room, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(room, style = roomStyle, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 text = state,
                 style = Type.value,
@@ -216,11 +222,16 @@ private fun RoomAndState(room: String, state: String, gap: Dp, modifier: Modifie
             // An intrinsic measurement asks without a width limit: both texts take their full width.
             return@Layout sideBySide(roomText.measure(loose), stateText.measure(loose), gapPx)
         }
-        val space = constraints.maxWidth
-        val roomKeeps = min(roomText.maxIntrinsicWidth(constraints.maxHeight), (space * ROOM_NAME_SHARE).toInt())
-        val statePlaced = stateText.measure(loose.copy(maxWidth = (space - roomKeeps - gapPx).coerceAtLeast(0)))
-        val roomPlaced = roomText.measure(loose.copy(maxWidth = (space - statePlaced.width - gapPx).coerceAtLeast(0)))
-        sideBySide(roomPlaced, statePlaced, gapPx)
+        val statePlaced = stateText.measure(loose.copy(maxWidth = constraints.maxWidth))
+        val roomSpace = constraints.maxWidth - statePlaced.width - gapPx
+        val roomMin = min(roomText.maxIntrinsicWidth(constraints.maxHeight), (roomStyle.fontSize * ROOM_NAME_MIN_EMS).roundToPx())
+        if (roomSpace < roomMin) {
+            // The room name would show too few letters, so the state text stands alone. The line
+            // keeps the height of the room name, so it does not jump when the name comes back.
+            val height = max(statePlaced.height, roomStyle.lineHeight.roundToPx())
+            return@Layout layout(statePlaced.width, height) { statePlaced.placeRelative(0, (height - statePlaced.height) / 2) }
+        }
+        sideBySide(roomText.measure(loose.copy(maxWidth = roomSpace)), statePlaced, gapPx)
     }
 }
 
