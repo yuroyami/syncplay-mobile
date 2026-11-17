@@ -129,6 +129,13 @@ class TypeRoles(
  */
 object AutoSize {
     val floor = 5.sp
+
+    /**
+     * The floor for text that people read, such as the state on the room's status line: the
+     * smallest standard text size on Android and iOS.
+     */
+    val readableFloor = 11.sp
+
     /** Auto-sizing moves in 0.5sp steps, so fitted sizes stay on a regular scale. */
     val step = 0.5.sp
 }

@@ -26,13 +26,13 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.uicomponents.controls.FontSizeRange
 import kotlin.math.max
 import kotlin.math.min
 import app.LocalRoomViewmodel
 import app.protocol.models.ConnectionState
 import app.protocol.network.ConnectionFailure
+import app.theme.AutoSize
 import app.theme.Radius
 import app.theme.Space
 import app.theme.Type
@@ -184,16 +184,13 @@ internal fun RoomStatusLine(
     }
 }
 
-/** The smallest size of the state text: the smallest standard text size on Android and iOS. */
-internal val STATE_TEXT_FLOOR = 11.sp
-
 /** The share of the free space that the room name keeps when the state text needs more. */
 private const val ROOM_NAME_SHARE = 0.6f
 
 /**
  * The room name and the state text side by side, in the space that the row leaves them. The room
  * name keeps its whole width, up to 60% of that space ([ROOM_NAME_SHARE]). The state text takes
- * the rest. It shrinks to fit first, and it ends in "…" only at [STATE_TEXT_FLOOR].
+ * the rest. It shrinks to fit first, and it ends in "…" only at [AutoSize.readableFloor].
  */
 @Composable
 private fun RoomAndState(room: String, state: String, gap: Dp, modifier: Modifier = Modifier) {
@@ -207,7 +204,7 @@ private fun RoomAndState(room: String, state: String, gap: Dp, modifier: Modifie
                 color = p.inkDim,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                autoSize = FontSizeRange(Type.value.fontSize, min = STATE_TEXT_FLOOR),
+                autoSize = FontSizeRange(Type.value.fontSize, min = AutoSize.readableFloor),
             )
         },
         modifier = modifier,

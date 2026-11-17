@@ -40,12 +40,12 @@ import app.room.ui.rightcards.CardAddMedia
 import app.room.ui.rightcards.CardSharedPlaylist
 import app.room.ui.statinfo.RoomStatusInfoSection
 import app.room.ui.statinfo.RoomStatusLine
-import app.room.ui.statinfo.STATE_TEXT_FLOOR
 import app.room.ui.tabs.RoomRail
 import app.server.ServerHostSession
 import app.server.ServerStatus
 import app.server.ui.ServerHostPanel
 import app.subtitles.SubtitleResult
+import app.theme.AutoSize
 import app.theme.ThemeCreatorScreenUI
 import app.theme.ThemeMenu
 import app.uicomponents.PopupMediaDirs
@@ -326,7 +326,7 @@ class SurfaceGoldens {
             if (text != state) {
                 assertFalse(cut, "${file.name}: \"$text\" is cut")
             } else if (cut) {
-                assertEquals(STATE_TEXT_FLOOR, layout.layoutInput.style.fontSize, "${file.name}: the state text is cut before it reaches its smallest size")
+                assertEquals(AutoSize.readableFloor, layout.layoutInput.style.fontSize, "${file.name}: the state text is cut before it reaches its smallest size")
             }
         }
     }
