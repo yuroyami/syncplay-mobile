@@ -51,15 +51,15 @@
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
     <string name="room_selected_vid">Ausgewählte Videodatei: %1$s</string>
     <string name="room_selected_sub">Geladene Untertiteldatei: %1$s</string>
-    <string name="room_attempting_connect">Verbindungsaufbau zu %1$s:%2$s</string>
-    <string name="room_guy_played">%1$s hat fortgesetzt</string>
-    <string name="room_guy_paused">%1$s pausiert bei %2$s</string>
-    <string name="room_seeked">%1$s ist von %2$s zu %3$s gesprungen</string>
+    <string name="room_attempting_connect">Verbinde mit %1$s:%2$s</string>
+    <string name="room_guy_played">%1$s startete</string>
+    <string name="room_guy_paused">%1$s pausierte bei %2$s</string>
+    <string name="room_seeked">%1$s sprang von %2$s nach %3$s</string>
     <string name="room_rewinded">Zurückgespult wegen Zeitdifferenz mit %1$s</string>
     <string name="room_fastforwarded">Vorgespult wegen Zeitdifferenz mit %1$s</string>
     <string name="room_guy_left">%1$s ist gegangen</string>
     <string name="room_guy_joined">%1$s hat den Raum „%2$s“ betreten</string>
-    <string name="room_isplayingfile">%1$s spielt '%2$s' ab (%3$s)</string>
+    <string name="room_isplayingfile">%1$s spielt „%2$s“ (%3$s)</string>
     <string name="room_you_joined_room">%1$s hat den Raum „%2$s“ betreten</string>
     <string name="room_file_mismatch_warning_core">Deine Datei unterscheidet sich auf folgende Art: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s hat die Playlist aktualisiert</string>
@@ -88,7 +88,7 @@
     <string name="room_status_failure_tls">Sichere Verbindung fehlgeschlagen</string>
     <string name="room_attempting_reconnection">Verbindung zum Server verloren, versuche erneut</string>
     <string name="room_disconnected">Verbindung zum Server getrennt</string>
-    <string name="room_attempting_tls">Versuch gesicherte Verbindung</string>
+    <string name="room_attempting_tls">Sichere Verbindung wird versucht</string>
     <string name="room_tls_supported">Sichere Verbindung hergestellt (%1$s)</string>
     <string name="room_tls_not_supported">Dieser Server unterstützt kein TLS</string>
     <string name="room_scaling_fit_screen">Größenanpassung: an Bildschirm anpassen</string>

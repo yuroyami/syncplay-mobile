@@ -43,15 +43,15 @@
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
     <string name="room_selected_vid">Выбран видео файл: %1$s</string>
     <string name="room_selected_sub">Загружен файл субтитров: %1$s</string>
-    <string name="room_attempting_connect">Попытка подключения к %1$s:%2$s</string>
+    <string name="room_attempting_connect">Подключение к %1$s:%2$s</string>
     <string name="room_guy_played">%1$s возобновил воспроизведение</string>
     <string name="room_guy_paused">%1$s поставил на паузу на %2$s</string>
-    <string name="room_seeked">%1$s перешел с %2$s на %3$s</string>
+    <string name="room_seeked">%1$s перемотал с %2$s на %3$s</string>
     <string name="room_rewinded">Перемотано из-за разницы во времени с %1$s</string>
-    <string name="room_fastforwarded">Перемотано вперёд из-за разницы во времени с %1$s</string>
+    <string name="room_fastforwarded">Ускорено из-за разницы во времени с %1$s</string>
     <string name="room_guy_left">%1$s покинул комнату</string>
     <string name="room_guy_joined">%1$s зашел в комнату: '%2$s'</string>
-    <string name="room_isplayingfile">%1$s воспроизводит '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s включил '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">%1$s зашел в комнату: '%2$s'</string>
     <string name="room_file_mismatch_warning_core">Ваш файл отличается: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s обновил список воспроизведения</string>
@@ -79,7 +79,7 @@
     <string name="room_status_failure_tls">Сбой защищённого соединения</string>
     <string name="room_attempting_reconnection">Соединение с сервером потеряно, переподключение</string>
     <string name="room_disconnected">Отключено от сервера</string>
-    <string name="room_attempting_tls">Попытка установить защищенное соединение</string>
+    <string name="room_attempting_tls">Попытка установить безопасное соединение</string>
     <string name="room_tls_supported">Безопасное соединение установлено (%1$s)</string>
     <string name="room_tls_not_supported">Сервер не поддерживает TLS</string>
     <string name="room_scaling_fit_screen">Режим изменения размера: подгон к экрану</string>

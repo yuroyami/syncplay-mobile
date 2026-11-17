@@ -43,18 +43,18 @@
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
     <string name="room_selected_vid">选择的视频文件：%1$s</string>
     <string name="room_selected_sub">加载的字幕文件：%1$s</string>
-    <string name="room_attempting_connect">正在尝试连接到 %1$s:%2$s</string>
-    <string name="room_guy_played">%1$s 取消暂停</string>
+    <string name="room_attempting_connect">正在尝试连接%1$s:%2$s</string>
+    <string name="room_guy_played">%1$s重新开始播放</string>
     <string name="room_guy_paused">%1$s 暂停在 %2$s</string>
-    <string name="room_seeked">%1$s 从 %2$s 跳转到 %3$s</string>
+    <string name="room_seeked">%1$s从%2$s跳转到%3$s</string>
     <string name="room_rewinded">与%1$s不同步，已回放</string>
-    <string name="room_fastforwarded">由于与 %1$s 的时间差异而快进</string>
+    <string name="room_fastforwarded">与%1$s不同步，已快进</string>
     <string name="room_guy_left">%1$s离开了房间</string>
     <string name="room_guy_joined">%1$s加入了'%2$s'房间</string>
-    <string name="room_isplayingfile">%1$s 正在播放 '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s正在播放'%2$s' (时长%3$s)</string>
     <string name="room_you_joined_room">%1$s加入了'%2$s'房间</string>
     <string name="room_file_mismatch_warning_core">你们播放的视频文件%1$s不一致</string>
-    <string name="room_shared_playlist_updated">%1$s 更新了播放列表</string>
+    <string name="room_shared_playlist_updated">%1$s更新了播放列表</string>
     <string name="room_shared_playlist_changed">%1$s 更改了播放列表的选择</string>
     <string name="room_custom_skip_button">跳过 %1$s</string>
     <string name="media_directories_setting_summary">搜索播放列表文件的文件夹。</string>
@@ -79,7 +79,7 @@
     <string name="room_status_failure_tls">安全连接失败</string>
     <string name="room_attempting_reconnection">服务器连接中断，正在尝试重连</string>
     <string name="room_disconnected">已与服务器断开连接</string>
-    <string name="room_attempting_tls">正在尝试安全连接</string>
+    <string name="room_attempting_tls">尝试安全连接</string>
     <string name="room_tls_supported">安全连接已建立（%1$s）</string>
     <string name="room_tls_not_supported">服务器不支持TLS加密安全连接</string>
     <string name="room_scaling_fit_screen">调整模式：适应屏幕</string>

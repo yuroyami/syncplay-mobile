@@ -43,12 +43,12 @@
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
     <string name="room_selected_vid">Archivo de video seleccionado: %1$s</string>
     <string name="room_selected_sub">Archivo de subtítulos cargado: %1$s</string>
-    <string name="room_attempting_connect">Intentando conectar a %1$s:%2$s</string>
-    <string name="room_guy_played">%1$s reanudó la reproducción</string>
+    <string name="room_attempting_connect">Intentando conectarse a %1$s:%2$s</string>
+    <string name="room_guy_played">%1$s ha reanudado</string>
     <string name="room_guy_paused">%1$s pausó en %2$s</string>
-    <string name="room_seeked">%1$s saltó desde %2$s a %3$s</string>
+    <string name="room_seeked">%1$s saltó desde %2$s hasta %3$s</string>
     <string name="room_rewinded">Rebobinado debido a diferencia de tiempo con %1$s</string>
-    <string name="room_fastforwarded">Avance rápido debido a diferencia de tiempo con %1$s</string>
+    <string name="room_fastforwarded">Adelantado debido a diferencia de tiempo con %1$s</string>
     <string name="room_guy_left">%1$s se fue</string>
     <string name="room_guy_joined">%1$s se unió a la sala: '%2$s'</string>
     <string name="room_isplayingfile">%1$s está reproduciendo '%2$s' (%3$s)</string>
@@ -521,7 +521,7 @@
     <string name="room_msg_resolved_url">Vídeo encontrado: %1$s</string>
     <string name="room_msg_resolving_url">Buscando el vídeo en este enlace…</string>
     <string name="room_no_player_engine">No hay ningún motor de vídeo disponible en este dispositivo.</string>
-    <string name="room_not_ready_set_by">%1$s ha sido marcado como no listo por %2$s</string>
+    <string name="room_not_ready_set_by">%1$s ha sido marcado como no-listo por %2$s</string>
     <string name="room_pause">Pausar</string>
     <string name="room_play">Reproducir</string>
     <string name="room_buffering">Almacenando en búfer</string>
