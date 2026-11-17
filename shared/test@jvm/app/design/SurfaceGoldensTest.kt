@@ -81,7 +81,7 @@ import kotlin.test.assertTrue
  * 1.3, with the empty, loading and error states that it has. Every render fails on clipped text
  * and on a control with no spoken name.
  */
-class SurfaceGoldens {
+class SurfaceGoldensTest {
 
     private val scales = listOf(1f, 1.3f)
 

@@ -14,7 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** While an item is over the window, the overlay says what a drop will do, and the sentence fits. */
-class MediaDropGolden {
+class MediaDropGoldenTest {
 
     private val longName = "A long film name, the director's cut, remastered (2019).mkv"
 

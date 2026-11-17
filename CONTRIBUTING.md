@@ -191,7 +191,7 @@ Other checks:
   `libkitecodec` or `libkiteplayer`. It also fails when the full APK has an ABI without the
   KitePlayer decoder, `libkitecodec_jni.so`. The ExoPlayer-only build is the Android build with
   ExoPlayer as its only engine.
-- The design lint is a test in `shared/test@jvm` (`DesignLint.kt`). It fails on:
+- The design lint is a test in `shared/test@jvm` (`DesignLintTest.kt`). It fails on:
   - a Material 3 component import (`ColorScheme` is allowed)
   - an `sp` literal outside `Tokens.kt`
   - `MaterialTheme` or a ripple outside `Tokens.kt` and `SaveableTheme.kt`
@@ -243,6 +243,8 @@ test ─── test@nonWeb ─┬─ test@jvm (desktop)
   belongs in `src`.
 - The test folders follow the same split. A test that blocks a thread goes in `test@nonWeb`.
   `./kotlin test -m shared -p jvm` also runs the common and non-web tests.
+- `./kotlin test` runs only the classes whose names end in `Test` or `Tests`. A test class with
+  another name never runs, so end the name of each test class with `Test`.
 - **Never write `Dispatchers.IO`, `runBlocking` or a direct file system write in `src`.** Each one
   breaks the web build. Use these instead:
   - `app.utils.ioDispatcher`. On the web it is `Dispatchers.Default`.

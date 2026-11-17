@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 
 /*
  * The design tokens: the sizes, radii, durations, text styles and colors that surfaces read. App
- * code should take these values from here. A lint test in test@jvm (DesignLint) enforces this
+ * code should take these values from here. A lint test in test@jvm (DesignLintTest) enforces this
  * for text sizes only.
  */
 

@@ -16,7 +16,7 @@ import kotlin.test.Test
  * window show it. The test renders the frame, not the bare body column, because the frame is what
  * people see.
  */
-class AboutGolden {
+class AboutGoldenTest {
 
     @Composable
     private fun About(result: UpdateCheck.Result? = null) {

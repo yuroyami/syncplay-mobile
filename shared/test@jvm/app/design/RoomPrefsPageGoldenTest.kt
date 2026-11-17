@@ -49,7 +49,7 @@ import kotlin.test.assertTrue
  * The in-room settings panel, driven through its real rows, so that each page change also
  * exercises the lifetimes of those rows.
  */
-class RoomPrefsPageGolden {
+class RoomPrefsPageGoldenTest {
     @Test
     fun chatColoursPageRendersInsideThePanel() {
         ColorPanel(320, 220, 1f).use { panel ->

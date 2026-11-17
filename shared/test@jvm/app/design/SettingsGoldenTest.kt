@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
  * The settings screens on the real categories, with a height budget for each category. A change
  * that brings back a seven-line row fails here.
  */
-class SettingsGolden {
+class SettingsGoldenTest {
 
     @Test
     fun roomExplanationsRemainReadableOnNarrowScreens() {

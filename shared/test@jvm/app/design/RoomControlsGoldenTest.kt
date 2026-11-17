@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class RoomControlsGolden {
+class RoomControlsGoldenTest {
     private fun sample(type: TrackType, language: String, label: String, chosen: Boolean = false, purpose: TrackTrait? = null) = object : Track() {
         override val index = 0
         override val name = label

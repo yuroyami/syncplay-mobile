@@ -665,7 +665,7 @@ class HomeFocusTest {
         val PHONE_WINDOW = DpSize(360.dp, 640.dp)
         val KEYBOARD = 300.dp
 
-        /** Windows with their system bars already taken off, as in HomeGolden. */
+        /** Windows with their system bars already taken off, as in HomeGoldenTest. */
         val PHONE = DpSize(360.dp, 568.dp)
         val PHONE_SHORT = DpSize(360.dp, 330.dp)
         val NARROW_PHONE = DpSize(300.dp, 568.dp)

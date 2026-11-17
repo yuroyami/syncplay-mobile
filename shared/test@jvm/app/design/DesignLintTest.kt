@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
  * clickable must say what it is. A source scan cannot tell whether a role comes with a name, so
  * [DesignHarness.render] also fails on a rendered control that has no spoken name.
  */
-class DesignLint {
+class DesignLintTest {
 
     private val root = File("src/app")
 

@@ -21,6 +21,7 @@ import app.home.HomeViewmodel
 import app.home.components.PopupAPropos
 import app.preferences.Preferences
 import app.preferences.set
+import app.preferences.value
 import app.theme.DAYLIGHT
 import app.theme.SaveableTheme
 import app.theme.TRINITY
@@ -46,7 +47,7 @@ import kotlin.test.assertTrue
  * popup's window does over the app's window. One image per theme puts the frosted panel and the
  * liquid one side by side.
  */
-class AboutGlassGolden {
+class AboutGlassGoldenTest {
 
     @Composable
     private fun AboutOverHome(glass: GlassKind, widthDp: Int, heightDp: Int, widthClass: WidthClass) {
@@ -76,6 +77,7 @@ class AboutGlassGolden {
     private fun render(name: String, theme: SaveableTheme, widthDp: Int, heightDp: Int, content: @Composable () -> Unit): Pair<File, List<TextLayoutResult>> {
         DesignHarness.initDatastore()
         // The home screen opens its tips popup at start, and the harness draws a dialog over everything.
+        val tipsBefore = Preferences.NEVER_SHOW_TIPS.value()
         runBlocking { Preferences.NEVER_SHOW_TIPS.set(true) }
         val density = Density(2f, 1f)
         val scene = DesignHarness.onUiThread {
@@ -95,6 +97,8 @@ class AboutGlassGolden {
             file to texts
         } finally {
             DesignHarness.onUiThread { scene.close() }
+            // The store is shared by the whole run, so a later class must not find the tips off.
+            runBlocking { Preferences.NEVER_SHOW_TIPS.set(tipsBefore) }
         }
     }
 

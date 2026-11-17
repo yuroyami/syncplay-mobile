@@ -10,7 +10,7 @@ import kotlin.test.Test
  * percent of the room: about 313dp inside the drawer on a 914dp phone, 272dp on an 800dp one,
  * and 420dp or more on a tablet or desktop. The three source labels must keep every word at each.
  */
-class GifSourcesGolden {
+class GifSourcesGoldenTest {
 
     @Test
     fun sourceLabelsKeepTheirWordsAtEveryChatWidth() {

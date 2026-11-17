@@ -16,7 +16,7 @@ import app.uicomponents.controls.Text
 import kotlin.test.Test
 
 /** The room's top shade over a white frame, and the chat's new messages marker in every language. */
-class RoomOverlaysGolden {
+class RoomOverlaysGoldenTest {
 
     @Test
     fun `the top row stays readable over a white frame`() {

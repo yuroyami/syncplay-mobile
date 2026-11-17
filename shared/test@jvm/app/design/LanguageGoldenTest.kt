@@ -25,7 +25,7 @@ import kotlin.test.Test
  * layout that passes in English can still fail in another language. These renders fail when a
  * translated label is clipped or ellipsised.
  */
-class LanguageGolden {
+class LanguageGoldenTest {
 
     private val languages = listOf(
         Locales.En, Locales.Ar, Locales.De, Locales.Es,

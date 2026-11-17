@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
  * The room's rewritten notices, from the real English strings, as they show over the video. Every
  * one fits in two lines at the default text size, and shows in full at double text size.
  */
-class NoticeCopyGolden {
+class NoticeCopyGoldenTest {
 
     private val notices: List<String>
         get() {

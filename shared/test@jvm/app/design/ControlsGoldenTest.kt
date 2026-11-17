@@ -38,7 +38,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /** Every shared control from `app.uicomponents.controls` on one sheet, so any change shows. */
-class ControlsGolden {
+class ControlsGoldenTest {
 
     @Composable
     private fun Sheet() {

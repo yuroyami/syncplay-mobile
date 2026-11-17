@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
  * The lint sets no length cap: the render tests check that text fits, and a cap could hide what a
  * setting means.
  */
-class CopyLint {
+class CopyLintTest {
 
     private val banned = listOf("seamless", "robust", "powerful", "leverage", "empower", "enhance", "optimize", "elevate", "streamline", "intuitive", "effortless", "delve")
 

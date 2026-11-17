@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /** Room events over video: grey lines, people in their chat name colours, errors all red, outlines black. */
-class ChatEventsGolden {
+class ChatEventsGoldenTest {
     private val paused = Message(content = PEER.isolated() + " paused at 12:34", people = mapOf(PEER to false))
     private val seeked = Message(content = SELF.isolated() + " jumped from 01:00 to 02:00", people = mapOf(SELF to true))
     private val readySetBy = Message(

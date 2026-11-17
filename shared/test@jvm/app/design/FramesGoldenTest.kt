@@ -30,7 +30,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /** The screen frame, the panel frame, the notices and the modal frame, drawn once each. */
-class FramesGolden {
+class FramesGoldenTest {
 
     @Composable
     private fun Rows() {

@@ -9,7 +9,7 @@ import kotlin.test.Test
  * The whole room in a window wider than tall, for a look by eye and for a comparison before and
  * after a change to the portrait room. The portrait room must leave these renders as they are.
  */
-class LandscapeRoomGolden {
+class LandscapeRoomGoldenTest {
 
     private fun chat() = listOf(
         Message(sender = null, content = "Mia joined the room", timestamp = DesignHarness.CHAT_TIME),

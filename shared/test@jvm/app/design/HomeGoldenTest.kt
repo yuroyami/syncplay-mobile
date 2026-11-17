@@ -46,6 +46,8 @@ import syncplaymobile.shared.generated.resources.kiteplayer
 import syncplaymobile.shared.generated.resources.mpv
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -59,7 +61,7 @@ import kotlin.test.assertTrue
  * screen at rest wherever the form is meant to fit without scrolling. On most phones the join key
  * stays on screen only because the form tightens at short heights.
  */
-class HomeGolden {
+class HomeGoldenTest {
 
     private class Home(val file: File, val textLayouts: List<TextLayoutResult>, val join: Rect?, val heightPx: Int) {
         fun assertAllTextFits() {
@@ -111,6 +113,21 @@ class HomeGolden {
         } finally {
             DesignHarness.onUiThread { scene.close() }
         }
+    }
+
+    /** The tips setting before the test. [saveJoin] turns the tips off for the renders. */
+    private var tipsBefore = false
+
+    @BeforeTest
+    fun rememberTips() {
+        DesignHarness.initDatastore()
+        tipsBefore = Preferences.NEVER_SHOW_TIPS.value()
+    }
+
+    // The store is shared by the whole run, so a later class must not find the tips off.
+    @AfterTest
+    fun restoreTips() {
+        runBlocking { Preferences.NEVER_SHOW_TIPS.set(tipsBefore) }
     }
 
     private fun saveJoin(config: JoinConfig?) = runBlocking {

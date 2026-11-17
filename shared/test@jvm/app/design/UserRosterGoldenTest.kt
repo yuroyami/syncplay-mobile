@@ -27,7 +27,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Real roster rows, including the actions that must stay out of the information at rest. */
-class UserRosterGolden {
+class UserRosterGoldenTest {
     @Test
     fun expandedRowsShowWholeFilenamesAndMetadataAtNarrowWidthsAndLargeText() {
         for (width in listOf(280, 320, 420)) {

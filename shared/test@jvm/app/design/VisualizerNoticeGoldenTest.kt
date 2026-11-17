@@ -10,7 +10,7 @@ import kotlin.test.Test
  * The flashing light notice of the audio visualizer, open, on phones in every shipped language. It
  * is the longest text in any ask modal, so every language has to fit a small phone.
  */
-class VisualizerNoticeGolden {
+class VisualizerNoticeGoldenTest {
 
     @Composable
     private fun Notice() = VisualizerNotice(remember { mutableStateOf(true) })

@@ -19,7 +19,7 @@ import syncplaymobile.shared.generated.resources.connect_watch_alone
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class AboutActionsGolden {
+class AboutActionsGoldenTest {
     @Composable
     private fun Actions() {
         Column(Modifier.fillMaxWidth().padding(Space.gutter), verticalArrangement = Arrangement.spacedBy(Space.gap)) {
