@@ -348,7 +348,7 @@ protocol) mark a play state change that the other side has not confirmed yet.
 
 ### VLCKit on iOS
 
-VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a25 (`vlcKitVersion` of the
+VLCKit is the iOS engine built on libVLC. The app pins VLCKit 4.0.0a26 (`vlcKitVersion` of the
 `vlckit` plugin in `shared/module.yaml`).
 
 - Keep these VLCKit protections. Each one defends against the asynchronous behaviour of VLCKit 4:
