@@ -34,7 +34,8 @@ private const val MAX_CAUSE_DEPTH = 8
 /**
  * What the platforms call a name that would not resolve. The first two are class names (the JVM's
  * `UnknownHostException`, NIO's `UnresolvedAddressException`); the rest are the message texts that
- * macOS, Linux, Android and Netty's own resolver produce.
+ * macOS, Linux, Android and Netty's own resolver produce. "NoSuchRecord" is the DNS error of
+ * Network.framework, which SwiftNIO uses on iOS.
  */
 private val RESOLUTION_MARKERS = listOf(
     "UnknownHost",
@@ -43,4 +44,5 @@ private val RESOLUTION_MARKERS = listOf(
     "Name or service not known",
     "Unable to resolve host",
     "failed to resolve",
+    "NoSuchRecord",
 )

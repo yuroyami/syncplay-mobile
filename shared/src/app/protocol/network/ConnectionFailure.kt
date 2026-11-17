@@ -37,8 +37,11 @@ internal fun classifyDialFailure(failure: Throwable): ConnectionFailure? {
     return null
 }
 
-/** The JVM's ConnectException says "Connection refused", and so does POSIX (ECONNREFUSED). */
-private val REFUSED_MARKERS = listOf("refused", "ECONNREFUSED")
+/**
+ * The JVM's ConnectException says "Connection refused", and so does POSIX (ECONNREFUSED). On iOS,
+ * Network.framework reports a closed port on the same machine as "Connection reset by peer".
+ */
+private val REFUSED_MARKERS = listOf("refused", "ECONNREFUSED", "reset by peer")
 
 /** The JVM, POSIX, Netty and SwiftNIO words for a connect that ran out of time. */
 private val TIMEOUT_MARKERS = listOf("timed out", "timeout", "ETIMEDOUT")

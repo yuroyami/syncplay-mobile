@@ -40,13 +40,25 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
 
         let result: EventLoopFuture<Channel> = NIOTSConnectionBootstrap(group: group)
         .connectTimeout(TimeAmount.seconds(10))
+        // Fail at once, with the reason, when Network.framework cannot connect. By default the
+        // channel waits for the network instead, so a refused port or an unknown name would end
+        // only at the timeout, and the room could not say which one it was.
+        .channelOption(NIOTSChannelOptions.waitForActivity, value: false)
         .channelInitializer { channel in
             channel.pipeline.addHandler(ByteToMessageHandler(BoundedLineFrameDecoder(maxLength: 65536))).flatMap {
                 channel.pipeline.addHandler(self)
             }
         }.connect(host: host, port: port)
 
-        let connected = try await result.get()
+        let connected: Channel
+        do {
+            connected = try await result.get()
+        } catch {
+            // The shared code reads the reason from the error text, for example "Connection
+            // refused" or "NoSuchRecord". A Swift error reaches Kotlin as an NSError, so its Swift
+            // description goes into the NSError's own text.
+            throw NSError(domain: "SwiftNioNetworkManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "\(error)"])
+        }
         self.channel = connected
         print("Connected!")
     }
