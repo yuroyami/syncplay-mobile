@@ -123,4 +123,4 @@ Translations help the most, and you can add one on [Weblate](https://hosted.webl
 
 ## License
 
-Synkplay is free software under the [AGPL-3.0 license](LICENSE). The [release notes](CHANGELOG.md) list what changed in each version, and the [privacy policy](PRIVACY_POLICY.md) covers what happens to your data.
+Synkplay is free software under the [AGPL-3.0 license](LICENSE), with an [app store exception](APP_STORE_EXCEPTION.md) that allows distribution through the App Store and Google Play. The [release notes](CHANGELOG.md) list what changed in each version, and the [privacy policy](PRIVACY_POLICY.md) covers what happens to your data.

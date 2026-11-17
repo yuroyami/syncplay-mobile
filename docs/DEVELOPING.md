@@ -383,7 +383,7 @@ Android, KitePlayer runs on arm64-v8a, armeabi-v7a and x86_64 devices. It has no
 What plays depends on the file and on the device. When you change an engine adapter, check its
 lifecycle, its subtitle selection and its playback on a real device.
 
-The app is under the [AGPL-3.0 licence](../LICENSE). Its components keep their own licences.
+The app is under the [AGPL-3.0 licence](../LICENSE), with an [app store exception](../APP_STORE_EXCEPTION.md) under section 7. Its components keep their own licences.
 The licences screen in About lists them for the running build, each with its version and its full
 licence text:
 

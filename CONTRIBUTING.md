@@ -34,6 +34,8 @@ Words that this guide uses:
   file with none.
 - Write for a reader whose first language is not English and who has five minutes. Use short
   sentences, plain verbs and one idea per sentence.
+- A contribution is licensed under the AGPL-3.0 with the
+  [app store exception](APP_STORE_EXCEPTION.md), like the rest of the code.
 - Do not commit secrets. The release build reads the signing keystore and its passwords from
   `keystore.properties` at the repository root, which git ignores.
 - Two API keys are in the repository:
