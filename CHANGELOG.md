@@ -17,9 +17,10 @@ Written for people who use the app. The full engineering history is in the commi
 - On a server where rooms can see each other, the room operator line showed in every room. It now shows only in the operator's own room. (#213)
 - Moving to another room with /room now writes a line that names the new room, for you and for the people you left. (#214)
 - A fast swipe from the top or bottom edge, to open the status bar or go home, no longer changes the volume or the brightness. (#137)
-- With a long user name, the episode tag on the status line of the room was empty. The tag now keeps its place, and the "Waiting for" text shrinks to fit.
+- With a long user name, the episode tag on the status line of the room was empty. The tag now keeps its place, and the "Waiting for" text keeps its size. When space is short, the room name gives way first.
 - iOS: a failed join now says at once whether the server name was not found or the server refused. Before, it waited 10 seconds and gave a general reason. (#227)
 - iOS VLC: a file that cannot load now says so, instead of showing its own name as the error. (#234)
+- iOS VLC: after a seek, the position could stop moving while the video played on. The app now sees a stopped position and seeks once more. (#233)
 - Android TV: video now always takes the display path that can carry HDR, also with frosted glass on. (#224)
 - Desktop: the picture-in-picture key is gone, because it did nothing. (#223)
 - KitePlayer is updated to 0.3.0.

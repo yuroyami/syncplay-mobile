@@ -109,6 +109,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val announcesFileLoadViaEvent: Boolean = true
 
     private val seekGuard = VlcSeekGuard()
+    private val clockWatch = VlcClockWatch()
     private val deferredPlay = VlcDeferredPlay()
     private val seekRequests = VlcSeekRequests(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
     private val seekStartup = VlcSeekStartup(ProtocolManager.AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS * 1_000L)
@@ -124,6 +125,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         lastSeekRequestTargetMs = null
         seekRequests.reset()
         seekGuard.reset()
+        clockWatch.reset()
     }
 
     internal fun resetSeekState(startingNewMedia: Boolean = false) {
@@ -543,6 +545,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             super.jumpToChapter(chapter.copy(timeOffsetMillis = target))
             lastSeekRequestTargetMs = target
             seekGuard.seek(target, clockNowMs(), player.isPlaying() && !primingFirstFrame)
+            clockWatch.seek(target)
             playerManager.samplePosition(target)
             player.setCurrentChapterIndex(chapter.index)
         }
@@ -761,6 +764,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 // after the submission, for a limited time.
                 super.seekTo(target)
                 seekGuard.seek(target, clockNowMs(), player.isPlaying() && !primingFirstFrame)
+                clockWatch.seek(target)
                 player.setTime(target.toVLCTime())
             }
             VlcSeekDecision.Rejected -> {
@@ -814,6 +818,22 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         if (submitPendingSeek(player)) return
         // Sample non-seekable media too. Seeking and a working clock are separate things.
         readPositionSample()?.let { playerManager.samplePosition(it) }
+        repairFrozenClock(player)
+    }
+
+    /**
+     * Seeks once more when the native clock stopped after a seek while playback went on (#233).
+     * The repair is local: the room already has the position, so nothing is announced.
+     */
+    private fun repairFrozenClock(player: VLCMediaPlayer) {
+        if (hasPendingSeek) return
+        val nativeMs = player.nativeTimeMs()
+        val playing = player.isPlaying() && !primingFirstFrame && !playerManager.isBuffering.value
+        val expectedMs = clockWatch.sample(nativeMs, clockNowMs(), playing, player.rate) ?: return
+        val target = normalizeVlcSeekTarget(expectedMs, player.nativeLengthMs())
+        loggy("VLC clock stopped at $nativeMs ms after a seek. Seeking again to $target ms.")
+        seekGuard.seek(target, clockNowMs(), playing = true)
+        player.setTime(target.toVLCTime())
     }
 
     /**
