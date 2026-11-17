@@ -102,7 +102,7 @@
     <string name="room_guy_joined">%1$s has joined the room: '%2$s'</string>
     <!-- %1$s is a user name, %2$s is a file name, %3$s is its length, such as 1:23:45. -->
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
-    <!-- %1$s is your user name, %2$s is a file name, %3$s is its length, such as 1:23:45, %4$s is a room name. -->
+    <!-- %1$s is a user name, %2$s is a file name, %3$s is its length, such as 1:23:45, %4$s is a room name. -->
     <string name="room_isplayingfile_in_room">%1$s is playing '%2$s' (%3$s) in room: '%4$s'</string>
     <!-- %1$s is your user name, %2$s is a room name. -->
     <string name="room_you_joined_room">%1$s has joined the room: '%2$s'</string>

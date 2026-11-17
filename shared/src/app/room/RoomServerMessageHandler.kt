@@ -460,8 +460,13 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 updated[idx] = updated[idx].copy(file = mediaFile)
                 changed = true
             }
-            // Announce file loads only for users in the current room.
-            if (idx >= 0) callback.onSomeoneLoadedFile(userName, name ?: "", file.duration ?: 0.0)
+            // Announce file loads in the current room, and, as in Syncplay PC, in another room
+            // on a server without isolated rooms.
+            if (idx >= 0) {
+                callback.onSomeoneLoadedFile(userName, name ?: "", file.duration ?: 0.0)
+            } else if (eventRoom != null && !inOurRoom && userName != session.currentUsername) {
+                callback.onSomeoneLoadedFileOtherRoom(userName, name ?: "", file.duration ?: 0.0, eventRoom)
+            }
         }
 
         if (changed) session.userList.emit(updated)

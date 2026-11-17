@@ -272,6 +272,28 @@ class RoomNoticesTest {
         room.waitUntil("alice hears bob join her room") { "bob has joined the room: 'other'" in alice.lines() }
     }
 
+    /** As in Syncplay, on a server where rooms can see each other, people in other rooms show in chat. */
+    @Test
+    fun otherRoomsShowInChat() = TwoClientRoom().use { room ->
+        room.waitUntil("both connect") { room.alice.connected && room.bob.connected }
+        val alice = room.alice.viewmodel
+        val bob = room.bob.viewmodel
+        room.waitUntil("bob sees alice") { bob.session.userList.value.any { it.name == "alice" } }
+
+        alice.switchRoom("other")
+        room.waitUntil("alice leaves bob's list") { bob.session.userList.value.none { it.name == "alice" } }
+        runBlocking { room.alice.player.injectVideoURL("https://example.com/other.mp4") }
+        room.waitUntil("bob hears alice's file with her room") {
+            bob.lines().any { it.startsWith("alice is playing 'other.mp4'") && it.endsWith(" in room: 'other'") }
+        }
+
+        bob.callback.onSomeoneJoinedOtherRoom("carol", "lobby")
+        bob.callback.onSomeoneLeftOtherRoom("carol")
+        room.waitUntil("bob hears carol come and go") {
+            "carol has joined the room: 'lobby'" in bob.lines() && "carol has left" in bob.lines()
+        }
+    }
+
     /** As in Syncplay, an operator success in another room stays quiet, even when the server sends it to every room. */
     @Test
     fun anOperatorInAnotherRoomStaysQuiet() = TwoClientRoom().use { room ->

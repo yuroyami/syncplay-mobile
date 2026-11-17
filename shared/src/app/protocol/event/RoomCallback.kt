@@ -148,15 +148,34 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
 
-    /** Presence in another room on a server without isolated rooms: a quiet notice, nothing more. */
+    /*
+     * Presence in another room, on a server without isolated rooms. As in Syncplay PC, chat gets
+     * the line, and the notice over the video follows its own setting, which is off by default.
+     */
+
     fun onSomeoneJoinedOtherRoom(joiner: String, room: String) {
-        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyJoinedOtherRoom(joiner.isolated(), room.isolated()) }
+        val line: suspend () -> String = { Localization.strings.roomGuyJoinedOtherRoom(joiner.isolated(), room.isolated()) }
+        dispatcher.broadcastMessage(message = line, isChat = false, people = listOf(joiner))
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM, getter = line)
     }
 
     // Syncplay's line names no room: a person who leaves the server has left every room.
     fun onSomeoneLeftOtherRoom(leaver: String) {
         lastLeft = leaver to SyncClock.now()
-        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyLeftOtherRoom(leaver.isolated()) }
+        val line: suspend () -> String = { Localization.strings.roomGuyLeftOtherRoom(leaver.isolated()) }
+        dispatcher.broadcastMessage(message = line, isChat = false, people = listOf(leaver))
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM, getter = line)
+    }
+
+    /** A file in another room. As in Syncplay PC, the line names that room. */
+    fun onSomeoneLoadedFileOtherRoom(person: String, file: String, fileduration: Double, room: String) {
+        val line: suspend () -> String = {
+            Localization.strings.roomIsplayingfileInRoom(
+                person.isolated(), file.isolated(), timestampFromMillis(fileduration.toLong() * 1000L), room.isolated(),
+            )
+        }
+        dispatcher.broadcastMessage(message = line, isChat = false, people = listOf(person))
+        viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM, getter = line)
     }
 
     fun onSomeoneLeft(leaver: String) {
