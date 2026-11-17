@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import app.utils.contextObtainer
+import app.utils.isTelevision
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,9 +24,11 @@ private const val BLUR_BEHIND_RADIUS = 48
  * TextureView makes glass over video possible, but it costs a GPU copy of every frame. Below
  * Android 12 there is no RenderEffect to blur with, and a low-RAM device should not pay for the
  * copy either. Both get SurfaceView and its overlay plane, whatever the glass setting says.
+ * A TV gets it too, so an HDR file reaches the display as HDR (#224).
  */
 actual fun videoSurfaceSupportsGlass(): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return false
+    if (isTelevision()) return false
     val activityManager = contextObtainer().getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
     if (activityManager?.isLowRamDevice == true) return false
     return true
