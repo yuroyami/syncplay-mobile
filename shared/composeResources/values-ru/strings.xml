@@ -44,23 +44,29 @@
     <string name="room_selected_vid">Выбран видео файл: %1$s</string>
     <string name="room_selected_sub">Загружен файл субтитров: %1$s</string>
     <string name="room_attempting_connect">Подключение к %1$s:%2$s</string>
+    <string name="room_server_reached">Подключение к %1$s (%2$s) успешно</string>
     <string name="room_guy_played">%1$s возобновил воспроизведение</string>
     <string name="room_guy_paused">%1$s поставил на паузу на %2$s</string>
+    <string name="room_left_paused">%1$s покинул комнату, %2$s приостановил воспроизведение</string>
     <string name="room_seeked">%1$s перемотал с %2$s на %3$s</string>
     <string name="room_rewinded">Перемотано из-за разницы во времени с %1$s</string>
     <string name="room_fastforwarded">Ускорено из-за разницы во времени с %1$s</string>
     <string name="room_guy_left">%1$s покинул комнату</string>
     <string name="room_guy_joined">%1$s зашел в комнату: '%2$s'</string>
     <string name="room_isplayingfile">%1$s включил '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s включил '%2$s' (%3$s) в комнате: '%4$s'</string>
     <string name="room_you_joined_room">%1$s зашел в комнату: '%2$s'</string>
     <string name="room_file_mismatch_warning_core">Ваш файл отличается: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s обновил список воспроизведения</string>
     <string name="room_shared_playlist_changed">%1$s изменил выбор в списке воспроизведения</string>
+    <string name="room_shared_playlists_not_supported">Общие списки воспроизведения могут не поддерживаться сервером. Для корректной работы требуется сервер Syncplay %1$s+, вы подключены к серверу Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">Общий список воспроизведения отключён сервером. Чтобы использовать эту возможность, подключитесь к другому серверу.</string>
     <string name="room_custom_skip_button">Пропустить %1$s</string>
     <string name="media_directories_setting_summary">Папки, в которых ищутся файлы плейлиста.</string>
     <string name="room_on_newcontrolledroom">Создана управляемая комната '%1$s' с паролем '%2$s'. Сохраните эти данные!\n\nВ управляемых комнатах всех синхронизируют с оператором (-ами) комнаты, только у которых есть права ставить и снимать с паузы, перематывать и изменять список воспроизведения.\n\nПопросите обычных зрителей подключиться к комнате '%3$s', а операторы могут подключиться к комнате '%4$s', чтобы автоматически авторизироваться. Название для операторов скопировано в буфер обмена.</string>
     <string name="room_on_controller_auth_success">%1$s аутентифицирован как оператор комнаты</string>
     <string name="room_on_controller_auth_failed">%1$s не удалось идентифицировать как оператора комнаты</string>
+    <string name="room_identifying_as_operator">Идентификация как оператора комнаты с паролем '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">Не удалось загрузить этот файл субтитров. Попробуйте другой файл, например SRT, ASS или VTT.</string>
@@ -69,6 +75,7 @@
     <string name="room_not_ready">Не готов</string>
     <string name="room_ping_disconnected">Отключено</string>
     <string name="room_connected_to_server">Соединение с сервером установлено</string>
+    <string name="room_persistent_rooms_notice">ВНИМАНИЕ: Этот сервер использует постоянные комнаты, это означает что информация списка воспроизведения сохраняется между сеансами воспроизведения. Если вы хотите создать комнату, в которой информация не сохраняется, поставьте -temp в конце названия комнаты.</string>
     <string name="room_connection_failed">Не удалось подключиться к серверу</string>
     <string name="room_connection_failed_name">Не удалось подключиться к серверу. Имя сервера не найдено.</string>
     <string name="room_connection_failed_refused">Не удалось подключиться к серверу. Сервер отклонил подключение.</string>
@@ -77,6 +84,7 @@
     <string name="room_status_failure_refused">Отклонено</string>
     <string name="room_status_failure_timeout">Нет ответа</string>
     <string name="room_status_failure_tls">Сбой защищённого соединения</string>
+    <string name="room_server_timeout">Подключение к серверу превысило лимит времени</string>
     <string name="room_attempting_reconnection">Соединение с сервером потеряно, переподключение</string>
     <string name="room_disconnected">Отключено от сервера</string>
     <string name="room_attempting_tls">Попытка установить безопасное соединение</string>

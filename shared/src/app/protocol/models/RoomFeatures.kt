@@ -17,6 +17,10 @@ import kotlinx.serialization.json.JsonObject
  * Client and server each send a different, overlapping subset of these fields, so every
  * property has a default: a field that the peer leaves out decodes to its default.
  *
+ * [persistentRooms] is the one default that is not a client claim. Syncplay PC reads a server
+ * that leaves it out as a server without persistent rooms, so it defaults to false. The client
+ * claims it in [app.protocol.event.RoomEventDispatcher.clientFeatures].
+ *
  * On the wire `features` is *supposed* to be a JSON object, but it is not always one. The
  * inbound `features` fields are decoded through [LenientRoomFeaturesSerializer], which
  * explains when a non-object shape arrives.
@@ -26,7 +30,7 @@ data class RoomFeatures(
     val isolateRooms: Boolean = true,
     @SerialName("readiness") val supportsReadiness: Boolean = true,
     @SerialName("managedRooms") val supportsManagedRooms: Boolean = true,
-    val persistentRooms: Boolean = true,
+    val persistentRooms: Boolean = false,
     @SerialName("chat") val supportsChat: Boolean = true,
     @SerialName("sharedPlaylists") val supportsSharedPlaylists: Boolean = true,
     val featureList: Boolean = true,

@@ -128,6 +128,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         try {
             connectSocketOrFallback()
             loggy("Handshake: socket open after ${sinceHandshakeStart()}")
+            if (!serverReached) {
+                serverReached = true
+                serverIpAddress()?.let { viewmodel.callback.onServerReached(it) }
+            }
 
             if (tls == TlsState.TLS_ASK) {
                 send(WireMessage.tlsRequest())
@@ -273,6 +277,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     abstract suspend fun connectSocket()
     abstract fun supportsTLS(): Boolean
     abstract fun terminateExistingConnection()
+
+    /** The IP address of the open socket, or null when the transport cannot tell (a browser WebSocket hides it). */
+    open fun serverIpAddress(): String? = null
+
+    /** Set after the first socket of this room opened. Syncplay PC says "reached" once, not on each reconnect. */
+    private var serverReached = false
 
     /**
      * Writes [s] and returns once the transport has accepted it, throwing when it has not, so the

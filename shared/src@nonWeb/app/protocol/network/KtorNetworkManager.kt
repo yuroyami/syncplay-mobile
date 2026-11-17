@@ -5,6 +5,7 @@ import app.room.RoomViewmodel
 import app.utils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
@@ -36,6 +37,10 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     private var socket: Socket? = null
 
     private var connection: Connection? = null
+
+    override fun serverIpAddress(): String? = runCatching {
+        (socket?.remoteAddress as? InetSocketAddress)?.resolveAddress()?.let(::formatIpAddress)
+    }.getOrNull()
 
     /** The reader coroutine for the current socket, kept so that teardown can stop it. */
     private var readerJob: Job? = null

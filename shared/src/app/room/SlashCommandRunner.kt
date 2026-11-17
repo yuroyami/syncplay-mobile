@@ -65,13 +65,7 @@ suspend fun RoomViewmodel.runSlashCommand(command: SlashCommand): Boolean {
             switchRoom(command.name)
         }
 
-        is SlashCommand.Identify -> {
-            // Kept so that a success can save the password for the re-identification on reconnect.
-            session.lastControlPasswordAttempt = command.password
-            networkManager.sendAsync(
-                WireMessage.controllerAuth(room = session.currentRoom, password = command.password)
-            )
-        }
+        is SlashCommand.Identify -> dispatcher.identifyAsOperator(command.password)
 
         is SlashCommand.Seek -> {
             if (media == null) {

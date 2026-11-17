@@ -74,6 +74,17 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         network.sendAsync(WireMessage.chatRequest(msg))
     }
 
+    /**
+     * Sends an operator password for the current room. As in Syncplay PC (`identifyAsController`),
+     * chat shows the password that was sent. The attempt is kept, so a success can save it.
+     */
+    fun identifyAsOperator(password: String) {
+        if (viewmodel.isSoloMode) return
+        session.lastControlPasswordAttempt = password
+        broadcastMessage(isChat = false) { Localization.strings.roomIdentifyingAsOperator(password) }
+        network.sendAsync(WireMessage.controllerAuth(room = session.currentRoom, password = password))
+    }
+
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
         // In the background the player is paused on purpose and stays that way: nothing here
         // reaches the engine, and nothing is told to the room (broadcasting a background pause
@@ -290,7 +301,10 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     }
 
     companion object {
-        /** Static feature manifest the client advertises in its `Hello`. */
-        val clientFeatures = RoomFeatures()
+        /**
+         * Static feature manifest the client advertises in its `Hello`. The persistentRooms claim
+         * tells a Syncplay server that this client shows the persistent rooms notice itself.
+         */
+        val clientFeatures = RoomFeatures(persistentRooms = true)
     }
 }

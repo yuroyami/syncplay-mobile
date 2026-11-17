@@ -44,23 +44,29 @@
     <string name="room_selected_vid">Archivo de video seleccionado: %1$s</string>
     <string name="room_selected_sub">Archivo de subtítulos cargado: %1$s</string>
     <string name="room_attempting_connect">Intentando conectarse a %1$s:%2$s</string>
+    <string name="room_server_reached">Se alcanzó %1$s (%2$s) satisfactoriamente</string>
     <string name="room_guy_played">%1$s ha reanudado</string>
     <string name="room_guy_paused">%1$s pausó en %2$s</string>
+    <string name="room_left_paused">%1$s se fue, %2$s pausó</string>
     <string name="room_seeked">%1$s saltó desde %2$s hasta %3$s</string>
     <string name="room_rewinded">Rebobinado debido a diferencia de tiempo con %1$s</string>
     <string name="room_fastforwarded">Adelantado debido a diferencia de tiempo con %1$s</string>
     <string name="room_guy_left">%1$s se fue</string>
     <string name="room_guy_joined">%1$s se unió a la sala: '%2$s'</string>
     <string name="room_isplayingfile">%1$s está reproduciendo '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s está reproduciendo '%2$s' (%3$s) en la sala: '%4$s'</string>
     <string name="room_you_joined_room">%1$s se unió a la sala: '%2$s'</string>
     <string name="room_file_mismatch_warning_core">Tu archivo difiere de la(s) siguiente(s) forma(s): %1$s</string>
     <string name="room_shared_playlist_updated">%1$s actualizó la lista de reproducción</string>
     <string name="room_shared_playlist_changed">%1$s cambió la selección de la lista de reproducción</string>
+    <string name="room_shared_playlists_not_supported">El servidor no admite la función de listas de reproducción compartidas. Para asegurarse de que funciona correctamente, se requiere un servidor que ejecute Syncplay %1$s+, pero el servidor está ejecutando Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">La función de lista de reproducción compartida no está habilitada en la configuración del servidor. Para utilizar esta función, debes conectarte a un servidor distinto.</string>
     <string name="room_custom_skip_button">Saltar %1$s</string>
     <string name="media_directories_setting_summary">Carpetas donde se buscan los archivos de la lista.</string>
     <string name="room_on_newcontrolledroom">Sala gestionada '%1$s' creada con contraseña '%2$s'. Por favor, ¡guarda esta información para poder revisarla luego!\n\nEn salas gestionadas, todos se sincronizan con el operador/operadores de la sala, y solo ellos pueden pausar, reanudar, mover el cursor y cambiar la lista de reproducción.\n\nDeberías pedir a los espectadores normales que se unan a la sala '%3$s', pero los operadores pueden unirse a la sala '%4$s' para autentificarse automáticamente. El nombre para los operadores está en tu portapapeles.</string>
     <string name="room_on_controller_auth_success">%1$s autenticado como operador de sala</string>
     <string name="room_on_controller_auth_failed">%1$s no pudo identificarse como operador de sala</string>
+    <string name="room_identifying_as_operator">Autentificando como el operador de la sala, con contraseña '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">No se pudo cargar este archivo de subtítulos. Prueba con otro archivo, como SRT, ASS o VTT.</string>
@@ -69,6 +75,7 @@
     <string name="room_not_ready">No listo</string>
     <string name="room_ping_disconnected">Desconectado</string>
     <string name="room_connected_to_server">Conectado al servidor exitosamente</string>
+    <string name="room_persistent_rooms_notice">AVISO: Este servidor usa salas persistentes, lo cual hace que la información de listas de reproducción se guarde entre sesiones. Si deseas crear una sala en la que esta información no se guarde, introduce -temp al final del nombre de esa sala.</string>
     <string name="room_connection_failed">La conexión con el servidor falló</string>
     <string name="room_connection_failed_name">Falló la conexión con el servidor. No se encontró el nombre del servidor.</string>
     <string name="room_connection_failed_refused">Falló la conexión con el servidor. El servidor rechazó la conexión.</string>
@@ -77,6 +84,7 @@
     <string name="room_status_failure_refused">Rechazada</string>
     <string name="room_status_failure_timeout">Sin respuesta</string>
     <string name="room_status_failure_tls">Falló la conexión segura</string>
+    <string name="room_server_timeout">La conexión con el servidor ha caducado</string>
     <string name="room_attempting_reconnection">Se perdió la conexión con el servidor, intentando reconectar</string>
     <string name="room_disconnected">Desconectado del servidor</string>
     <string name="room_attempting_tls">Intentando conexión segura</string>

@@ -44,23 +44,29 @@
     <string name="room_selected_vid">选择的视频文件：%1$s</string>
     <string name="room_selected_sub">加载的字幕文件：%1$s</string>
     <string name="room_attempting_connect">正在尝试连接%1$s:%2$s</string>
+    <string name="room_server_reached">成功连入%1$s（%2$s）</string>
     <string name="room_guy_played">%1$s重新开始播放</string>
     <string name="room_guy_paused">%1$s 暂停在 %2$s</string>
+    <string name="room_left_paused">%1$s离开了房间，%2$s暂停了</string>
     <string name="room_seeked">%1$s从%2$s跳转到%3$s</string>
     <string name="room_rewinded">与%1$s不同步，已回放</string>
     <string name="room_fastforwarded">与%1$s不同步，已快进</string>
     <string name="room_guy_left">%1$s离开了房间</string>
     <string name="room_guy_joined">%1$s加入了'%2$s'房间</string>
     <string name="room_isplayingfile">%1$s正在播放'%2$s' (时长%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s正在播放'%2$s' (时长%3$s)正在'%4$s'房间</string>
     <string name="room_you_joined_room">%1$s加入了'%2$s'房间</string>
     <string name="room_file_mismatch_warning_core">你们播放的视频文件%1$s不一致</string>
     <string name="room_shared_playlist_updated">%1$s更新了播放列表</string>
     <string name="room_shared_playlist_changed">%1$s 更改了播放列表的选择</string>
+    <string name="room_shared_playlists_not_supported">服务器可能不支持共享播放列表的功能。为确保其正常运行，需要一个运行Syncplay %1$s以上版本的服务器，但服务器是运行Syncplay %2$s的。</string>
+    <string name="room_shared_playlists_disabled">在服务器配置中，共享播放列表功能已被禁用。要使用这一功能，你需要连接到其他服务器。</string>
     <string name="room_custom_skip_button">跳过 %1$s</string>
     <string name="media_directories_setting_summary">搜索播放列表文件的文件夹。</string>
     <string name="room_on_newcontrolledroom">已创建管理房间'%1$s'，密码是'%2$s'。请保存好以上信息以备用！\n\n在管理房间里，每个人都与房间操作员的播放进度同步，只有操作员可以暂停、继续播放、跳转和修改播放列表。\n\n请让普通观众加入'%3$s'房间，而操作员可以加入'%4$s'房间来自动认证。操作员用的名称已复制到剪贴板。</string>
     <string name="room_on_controller_auth_success">%1$s 已验证为房间操作员</string>
     <string name="room_on_controller_auth_failed">%1$s 未能验证为房间操作员</string>
+    <string name="room_identifying_as_operator">用密码'%1$s'认证为房间操作员...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">无法加载此字幕文件。请换一个文件试试，例如 SRT、ASS 或 VTT。</string>
@@ -69,6 +75,7 @@
     <string name="room_not_ready">未准备就绪</string>
     <string name="room_ping_disconnected">已断开连接</string>
     <string name="room_connected_to_server">服务器连接成功</string>
+    <string name="room_persistent_rooms_notice">注意：此服务器使用持久房间，播放列表信息会在多次播放之间保存。如果你想创建一个不保存信息的房间，请在房间名末尾加上 -temp。</string>
     <string name="room_connection_failed">服务器连接失败</string>
     <string name="room_connection_failed_name">连接服务器失败。找不到服务器名称。</string>
     <string name="room_connection_failed_refused">连接服务器失败。服务器拒绝了连接。</string>
@@ -77,6 +84,7 @@
     <string name="room_status_failure_refused">被拒绝</string>
     <string name="room_status_failure_timeout">无响应</string>
     <string name="room_status_failure_tls">安全连接失败</string>
+    <string name="room_server_timeout">与服务器的连接超时</string>
     <string name="room_attempting_reconnection">服务器连接中断，正在尝试重连</string>
     <string name="room_disconnected">已与服务器断开连接</string>
     <string name="room_attempting_tls">尝试安全连接</string>

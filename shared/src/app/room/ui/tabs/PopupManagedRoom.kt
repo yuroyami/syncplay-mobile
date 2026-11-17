@@ -50,24 +50,23 @@ fun ManagedRoomModal() {
     fun close() { ui.managedRoom.value = false }
     fun send() {
         close()
-        val auth = if (create) {
+        if (create) {
             // Creating moves the local user to the new managed room. The room change mutes its own
             // events, and gives up by itself if no answer comes.
             viewmodel.protocol.beginRoomChange()
             // The base name, so managing a room that is already managed does not build a managed
             // name from a managed name.
-            WireMessage.controllerAuth(
-                room = RoomPasswordProvider.baseName(roomName),
-                password = generateRoomPassword(),
+            viewmodel.networkManager.sendAsync(
+                WireMessage.controllerAuth(
+                    room = RoomPasswordProvider.baseName(roomName),
+                    password = generateRoomPassword(),
+                )
             )
         } else {
-            // Identifying stays in this room. The attempt is kept, so that a success can store the
-            // password. Each reconnect then identifies again with it.
-            val attempt = password.trim().uppercase()
-            viewmodel.session.lastControlPasswordAttempt = attempt
-            WireMessage.controllerAuth(room = viewmodel.session.currentRoom, password = attempt)
+            // Identifying stays in this room. A success stores the password, and each reconnect
+            // then identifies again with it.
+            viewmodel.dispatcher.identifyAsOperator(password.trim().uppercase())
         }
-        viewmodel.networkManager.sendAsync(auth)
     }
 
     Modal(

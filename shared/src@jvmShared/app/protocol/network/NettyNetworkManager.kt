@@ -20,6 +20,7 @@ import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
 import java.io.IOException
+import java.net.InetSocketAddress
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -41,6 +42,9 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     @Volatile
     private var channel: Channel? = null
+
+    override fun serverIpAddress(): String? =
+        (channel?.remoteAddress() as? InetSocketAddress)?.address?.address?.let(::formatIpAddress)
 
     /**
      * The event loop group behind [channel]. Shut it down together with the channel: each group

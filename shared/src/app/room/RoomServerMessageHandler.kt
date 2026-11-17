@@ -68,18 +68,24 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         data.username?.let { session.currentUsername = it.take(MAX_USERNAME_CHARS) }
         session.roomFeatures = data.features
 
+        /* Before the connect line, in Syncplay PC's order (`handleHello`). This client claims
+         * persistentRooms, so a Syncplay server leaves the persistent rooms notice to it. The
+         * notice gets its own line, so the cut below never shortens it. */
+        if (data.features.persistentRooms) {
+            dispatcher.broadcastMessage(message = { Localization.strings.roomPersistentRoomsNotice }, isChat = false)
+        }
+        // The server's message of the day. It can hold an update notice or house rules.
+        data.motd?.takeIf { it.isNotBlank() }?.let { motd ->
+            val text = motd.take(MAX_CHAT_CHARS)
+            dispatcher.broadcastMessage(message = { text }, isChat = false)
+        }
+
         // Ask for the user list now, and the server answers with a `List` message. Do not wait
         // for the write: this runs on the serial inbound consumer, which must not block on a
         // write while State packets queue behind it.
         network.sendAsync(WireMessage.listRequest())
         callback.onConnected()
-
-        // The server's message of the day goes into chat, as on PC. It can hold an update
-        // notice or house rules.
-        data.motd?.takeIf { it.isNotBlank() }?.let { motd ->
-            val text = motd.take(MAX_CHAT_CHARS)
-            dispatcher.broadcastMessage(message = { text }, isChat = false)
-        }
+        callback.onServerFeatures(data.realversion ?: data.version, data.features)
     }
 
     override suspend fun onState(message: WireMessage.State) {
@@ -247,12 +253,17 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 is SyncAction.SomeonePaused -> callback.onSomeonePaused(action.by)
                 is SyncAction.SlowDown -> {
                     viewmodel.player.setSpeed(SLOWDOWN_RATE)
-                    // The slowdown notice of the PC client. The user must see why playback slowed.
-                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownNotification(action.by) }
+                    // The slowdown line of the PC client, in chat. The notice over the video is
+                    // Synkplay's own and follows its setting: the user must see why playback slowed.
+                    val line: suspend () -> String = { Localization.strings.roomSlowdownNotification(action.by.isolated()) }
+                    dispatcher.broadcastMessage(message = line, isChat = false, people = listOf(action.by))
+                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = line)
                 }
                 SyncAction.RestoreSpeed -> {
                     viewmodel.player.setSpeed(1.0)
-                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN) { Localization.strings.roomSlowdownReverted }
+                    val line: suspend () -> String = { Localization.strings.roomSlowdownReverted }
+                    dispatcher.broadcastMessage(message = line, isChat = false)
+                    viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = line)
                 }
                 // No notice: the nudge is too small for anyone to notice. The log line is for testers.
                 is SyncAction.Nudge -> {

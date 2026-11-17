@@ -372,8 +372,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      *    starts a reconnect.
      *  - **State watchdog**: runs every [WATCHDOG_INTERVAL_SECONDS]. If no `State` has arrived
      *    for [STATE_TIMEOUT_SECONDS] seconds while we still count as connected, it calls
-     *    `onDisconnected()`, which starts a reconnect. This detects a silent disconnect, where
-     *    the socket looks healthy here but the server has stopped sending `State`. The
+     *    `onServerTimedOut()`, which says so in chat and starts a reconnect. This detects a
+     *    silent disconnect, where the socket looks healthy here but the server has stopped
+     *    sending `State`. The
      *    reference client gives up on a silent server after 12.5 seconds (`PROTOCOL_TIMEOUT`),
      *    and the reference server drops a silent watcher after the same time.
      *  - **Playback divergence**: collects [PlayerManager.isNowPlaying] and broadcasts
@@ -430,7 +431,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                     // Drop the now-stale socket before firing the callback so the reconnect
                     // logic in onDisconnected() doesn't try to reuse a dead connection.
                     network.terminateExistingConnection()
-                    viewmodel.callback.onDisconnected()
+                    viewmodel.callback.onServerTimedOut()
                     break
                 }
             }

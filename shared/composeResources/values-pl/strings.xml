@@ -52,24 +52,30 @@
     <string name="room_selected_vid">Wybrany plik wideo: %1$s</string>
     <string name="room_selected_sub">Wczytany plik napisów: %1$s</string>
     <string name="room_attempting_connect">Próba połączenia z %1$s:%2$s</string>
+    <string name="room_server_reached">Pomyślnie osiągnięto %1$s (%2$s)</string>
     <string name="room_guy_played">%1$s wznowił odtwarzanie</string>
     <string name="room_guy_paused">%1$s zapauzował o %2$s</string>
+    <string name="room_left_paused">%1$s wyszedł, %2$s zapauzował</string>
     <string name="room_seeked">%1$s przeskoczył z %2$s na %3$s</string>
     <string name="room_rewinded">Przewinięto z powodu różnicy czasu z %1$s</string>
     <string name="room_fastforwarded">Przewinięto do przodu z powodu różnicy czasu z %1$s</string>
     <string name="room_guy_left">%1$s wyszedł</string>
     <string name="room_guy_joined">%1$s dołączył do pokoju: '%2$s'</string>
     <string name="room_isplayingfile">%1$s odtwarza '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s odtwarza '%2$s' (%3$s) w pokoju: '%4$s'</string>
     <string name="room_you_joined_room">%1$s dołączył do pokoju: '%2$s'</string>
     <string name="room_file_mismatch_warning_core">Twój plik różni się pod następującymi względami: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s zaktualizował listę odtwarzania</string>
     <string name="room_shared_playlist_changed">%1$s zmienił wybór na liście odtwarzania</string>
+    <string name="room_shared_playlists_not_supported">Serwer może nie obsługiwać wspólnych list odtwarzania. Do poprawnego działania potrzebny jest serwer z Syncplay %1$s lub nowszym, a ten serwer ma Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">Funkcja wspólnej listy odtwarzania jest wyłączona w konfiguracji serwera. Aby jej użyć, połącz się z innym serwerem.</string>
     <string name="room_custom_skip_button">Pomiń %1$s</string>
     <string name="media_directories_setting_summary">Foldery przeszukiwane w poszukiwaniu plików z listy.</string>
 
     <string name="room_on_newcontrolledroom">Utworzono zarządzany pokój '%1$s' z hasłem '%2$s'. Zapisz te informacje na przyszłość!\n\nW zarządzanych pokojach wszyscy są zsynchronizowani z operatorem lub operatorami pokoju, którzy jako jedyni mogą pauzować, wznawiać, przewijać i zmieniać listę odtwarzania.\n\nPoproś zwykłych widzów, aby dołączyli do pokoju '%3$s', a operatorzy mogą dołączyć do pokoju '%4$s', aby automatycznie się uwierzytelnić. Nazwa dla operatorów jest w schowku.</string>
     <string name="room_on_controller_auth_success">%1$s uwierzytelniony jako operator pokoju</string>
     <string name="room_on_controller_auth_failed">%1$s nie udało się potwierdzić jako operator pokoju</string>
+    <string name="room_identifying_as_operator">Potwierdzanie jako operator pokoju z hasłem '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">Nie udało się wczytać tego pliku napisów. Spróbuj innego pliku, na przykład SRT, ASS lub VTT.</string>
@@ -78,6 +84,7 @@
     <string name="room_not_ready">Nie gotowy</string>
     <string name="room_ping_disconnected">Rozłączono</string>
     <string name="room_connected_to_server">Pomyślnie połączono z serwerem</string>
+    <string name="room_persistent_rooms_notice">UWAGA: Ten serwer używa stałych pokojów, co oznacza, że informacje o liście odtwarzania są zapisywane między sesjami odtwarzania. Jeśli chcesz utworzyć pokój, w którym nic nie jest zapisywane, dodaj -temp na końcu nazwy pokoju.</string>
     <string name="room_connection_failed">Połączenie z serwerem nie powiodło się</string>
     <string name="room_connection_failed_name">Połączenie z serwerem nie powiodło się. Nie znaleziono nazwy serwera.</string>
     <string name="room_connection_failed_refused">Połączenie z serwerem nie powiodło się. Serwer odrzucił połączenie.</string>
@@ -86,6 +93,7 @@
     <string name="room_status_failure_refused">Odrzucono</string>
     <string name="room_status_failure_timeout">Brak odpowiedzi</string>
     <string name="room_status_failure_tls">Błąd bezpiecznego połączenia</string>
+    <string name="room_server_timeout">Upłynął limit czasu połączenia z serwerem</string>
     <string name="room_attempting_reconnection">Utracono połączenie z serwerem, próba ponownego połączenia</string>
     <string name="room_disconnected">Rozłączono z serwerem</string>
     <string name="room_attempting_tls">Próba bezpiecznego połączenia</string>

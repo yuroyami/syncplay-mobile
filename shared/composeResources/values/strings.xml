@@ -82,10 +82,14 @@
     <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
     <!-- %1$s is a server address, %2$s is its port. -->
     <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
+    <!-- %1$s is a server address, %2$s is the IP address that the app reached. -->
+    <string name="room_server_reached">Successfully reached %1$s (%2$s)</string>
     <!-- %1$s is a user name. -->
     <string name="room_guy_played">%1$s unpaused</string>
     <!-- %1$s is a user name, %2$s is a time, such as 1:23:45. -->
     <string name="room_guy_paused">%1$s paused at %2$s</string>
+    <!-- %1$s is the user who left, %2$s is the user who paused right after. -->
+    <string name="room_left_paused">%1$s left, %2$s paused</string>
     <!-- %1$s is a user name, %2$s and %3$s are times, such as 1:23:45. -->
     <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
     <!-- %1$s is a user name. -->
@@ -98,6 +102,8 @@
     <string name="room_guy_joined">%1$s has joined the room: '%2$s'</string>
     <!-- %1$s is a user name, %2$s is a file name, %3$s is its length, such as 1:23:45. -->
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
+    <!-- %1$s is your user name, %2$s is a file name, %3$s is its length, such as 1:23:45, %4$s is a room name. -->
+    <string name="room_isplayingfile_in_room">%1$s is playing '%2$s' (%3$s) in room: '%4$s'</string>
     <!-- %1$s is your user name, %2$s is a room name. -->
     <string name="room_you_joined_room">%1$s has joined the room: '%2$s'</string>
     <string name="room_share_invite">Share the room</string>
@@ -123,6 +129,9 @@
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
     <!-- %1$s is a user name. -->
     <string name="room_shared_playlist_changed">%1$s changed the playlist selection</string>
+    <!-- %1$s is the lowest Syncplay version with shared playlists, such as 1.4.0, %2$s is the Syncplay version of the server. -->
+    <string name="room_shared_playlists_not_supported">The shared playlists feature may not be supported by the server. To ensure that it works correctly requires a server running Syncplay %1$s+, but the server is running Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">The shared playlist feature has been disabled in the server configuration. To use this feature you will need to connect to a different server.</string>
     <!-- %1$s is a length of time, such as 1:30. -->
     <string name="room_custom_skip_button">Skip %1$s</string>
     <string name="media_directories_setting_summary">Folders searched for a playlist's files.</string>
@@ -133,6 +142,8 @@
     <string name="room_on_controller_auth_success">%1$s authenticated as a room operator</string>
     <!-- %1$s is a user name. -->
     <string name="room_on_controller_auth_failed">%1$s failed to identify as a room operator</string>
+    <!-- %1$s is the operator password that the app sends. -->
+    <string name="room_identifying_as_operator">Identifying as room operator with password '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">This subtitle file could not be loaded. Try another file, such as SRT, ASS or VTT.</string>
@@ -141,6 +152,8 @@
     <string name="room_not_ready">Not Ready</string>
     <string name="room_ping_disconnected">Disconnected</string>
     <string name="room_connected_to_server">Successfully connected to server</string>
+    <!-- Shown before the message of the day of the server. Keep -temp as it is: a person types it at the end of a room name. -->
+    <string name="room_persistent_rooms_notice">NOTICE: This server uses persistent rooms, which means that the playlist information is stored between playback sessions. If you want to create a room where information is not saved then put -temp at the end of the room name.</string>
     <string name="room_connection_failed">Connection with server failed</string>
     <string name="room_connection_failed_name">Connection with server failed. The server name was not found.</string>
     <string name="room_connection_failed_refused">Connection with server failed. The server refused the connection.</string>
@@ -149,6 +162,7 @@
     <string name="room_status_failure_refused">Refused</string>
     <string name="room_status_failure_timeout">No answer</string>
     <string name="room_status_failure_tls">Secure connection failed</string>
+    <string name="room_server_timeout">Connection with server timed out</string>
     <string name="room_attempting_reconnection">Connection with server lost, attempting to reconnect</string>
     <!-- Shown once after the server refused the connection, for example on a wrong password. The app does not try again. -->
     <string name="room_disconnected">Disconnected from server</string>

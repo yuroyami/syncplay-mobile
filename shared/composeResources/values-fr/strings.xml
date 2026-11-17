@@ -52,24 +52,30 @@
     <string name="room_selected_vid">Fichier vidéo sélectionné : %1$s</string>
     <string name="room_selected_sub">Fichier de sous-titres chargé : %1$s</string>
     <string name="room_attempting_connect">Tentative de connexion à %1$s:%2$s</string>
+    <string name="room_server_reached">Vous avez atteint %1$s (%2$s)</string>
     <string name="room_guy_played">%1$s a relancé la lecture</string>
     <string name="room_guy_paused">%1$s a mis en pause à %2$s</string>
+    <string name="room_left_paused">%1$s est parti, %2$s a mis en pause</string>
     <string name="room_seeked">%1$s est passé de %2$s à %3$s</string>
     <string name="room_rewinded">Retour en arrière en raison du décalage de temps avec %1$s</string>
     <string name="room_fastforwarded">Avance rapide en raison du décalage de temps avec %1$s</string>
     <string name="room_guy_left">%1$s est parti</string>
     <string name="room_guy_joined">%1$s a rejoint la salle : '%2$s'</string>
     <string name="room_isplayingfile">%1$s est en train de jouer '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s est en train de jouer '%2$s' (%3$s) dans la salle : '%4$s'</string>
     <string name="room_you_joined_room">%1$s a rejoint la salle : '%2$s'</string>
     <string name="room_file_mismatch_warning_core">Votre fichier diffère de la (des) manière(s) suivante(s) : %1$s</string>
     <string name="room_shared_playlist_updated">%1$s a mis à jour la liste de lecture</string>
     <string name="room_shared_playlist_changed">%1$s a modifié la sélection de la liste de lecture</string>
+    <string name="room_shared_playlists_not_supported">La fonctionnalité de listes de lecture partagées peut ne pas être prise en charge par le serveur. Pour s'assurer qu'il fonctionne correctement, il faut un serveur exécutant Syncplay %1$s+, mais le serveur exécute Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">La fonctionnalité de liste de lecture partagée a été désactivée dans la configuration du serveur. Pour utiliser cette fonctionnalité, vous devrez vous connecter à un autre serveur.</string>
     <string name="room_custom_skip_button">Passer %1$s</string>
     <string name="media_directories_setting_summary">Dossiers où chercher les fichiers de la playlist.</string>
 
     <string name="room_on_newcontrolledroom">Salle gérée « %1$s » créée avec le mot de passe « %2$s ». Veuillez conserver ces informations pour référence future !\n\nDans les salles gérées, tout le monde est synchronisé avec le ou les opérateurs de la salle, qui sont les seuls à pouvoir mettre en pause, reprendre, se déplacer dans la lecture et modifier la liste de lecture.\n\nDemandez aux spectateurs habituels de rejoindre la salle '%3$s', mais les opérateurs peuvent rejoindre la salle '%4$s' pour s'authentifier automatiquement. Le nom pour les opérateurs est dans votre presse-papiers.</string>
     <string name="room_on_controller_auth_success">%1$s a été authentifié en tant qu'opérateur</string>
     <string name="room_on_controller_auth_failed">%1$s n'a pas pu être authentifié en tant qu'opérateur</string>
+    <string name="room_identifying_as_operator">Identification en tant qu'opérateur de salle avec le mot de passe '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">Ce fichier de sous-titres n'a pas pu être chargé. Essayez un autre fichier, par exemple SRT, ASS ou VTT.</string>
@@ -78,6 +84,7 @@
     <string name="room_not_ready">Pas prêt</string>
     <string name="room_ping_disconnected">Déconnecté</string>
     <string name="room_connected_to_server">Connexion réussie au serveur</string>
+    <string name="room_persistent_rooms_notice">AVIS : Ce serveur utilise des salles persistantes. Les informations de la liste de lecture sont donc conservées entre les sessions de lecture. Si vous voulez créer une salle où rien n'est enregistré, ajoutez -temp à la fin du nom de la salle.</string>
     <string name="room_connection_failed">Échec de la connexion avec le serveur</string>
     <string name="room_connection_failed_name">La connexion au serveur a échoué. Le nom du serveur est introuvable.</string>
     <string name="room_connection_failed_refused">La connexion au serveur a échoué. Le serveur a refusé la connexion.</string>
@@ -86,6 +93,7 @@
     <string name="room_status_failure_refused">Refusée</string>
     <string name="room_status_failure_timeout">Pas de réponse</string>
     <string name="room_status_failure_tls">Connexion sécurisée échouée</string>
+    <string name="room_server_timeout">La connexion avec le serveur a expiré</string>
     <string name="room_attempting_reconnection">Connexion avec le serveur perdue, tentative de reconnexion</string>
     <string name="room_disconnected">Déconnecté du serveur</string>
     <string name="room_attempting_tls">Tentative de connexion sécurisée</string>

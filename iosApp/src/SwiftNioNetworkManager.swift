@@ -56,6 +56,11 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         return true
     }
 
+    /// The IP address of the open socket, for the "Successfully reached" line in chat.
+    override func serverIpAddress() -> String? {
+        return channel?.remoteAddress?.ipAddress
+    }
+
     /// Closes the channel and shuts down the event loop group without blocking the caller.
     override func terminateExistingConnection() {
         let closing = channel

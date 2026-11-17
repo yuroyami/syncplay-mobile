@@ -52,24 +52,30 @@
     <string name="room_selected_vid">ملف الفيديو المحدد: %1$s</string>
     <string name="room_selected_sub">ملف الترجمة المحمل: %1$s</string>
     <string name="room_attempting_connect">محاولة الاتصال بـ %1$s:%2$s</string>
+    <string name="room_server_reached">تم الوصول إلى %1$s (%2$s) بنجاح</string>
     <string name="room_guy_played">%1$s استأنف التشغيل</string>
     <string name="room_guy_paused">%1$s أوقف التشغيل عند %2$s</string>
+    <string name="room_left_paused">غادر %1$s، وأوقف %2$s التشغيل</string>
     <string name="room_seeked">%1$s انتقل من %2$s إلى %3$s</string>
     <string name="room_rewinded">تم الترجيع بسبب فرق التوقيت مع %1$s</string>
     <string name="room_fastforwarded">تم التقديم السريع بسبب فرق التوقيت مع %1$s</string>
     <string name="room_guy_left">غادر %1$s</string>
     <string name="room_guy_joined">انضم %1$s إلى الغرفة: '%2$s'</string>
     <string name="room_isplayingfile">%1$s يشغل '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile_in_room">%1$s يشغل '%2$s' (%3$s) في الغرفة: '%4$s'</string>
     <string name="room_you_joined_room">انضم %1$s إلى الغرفة: '%2$s'</string>
     <string name="room_file_mismatch_warning_core">يختلف ملفك في ما يلي: %1$s</string>
     <string name="room_shared_playlist_updated">%1$s حدّث قائمة التشغيل</string>
     <string name="room_shared_playlist_changed">غيّر %1$s الاختيار في قائمة التشغيل</string>
+    <string name="room_shared_playlists_not_supported">قد لا يدعم الخادم ميزة قوائم التشغيل المشتركة. لتعمل بشكل صحيح يجب أن يشغّل الخادم Syncplay %1$s أو أحدث، لكن الخادم يشغّل Syncplay %2$s.</string>
+    <string name="room_shared_playlists_disabled">عُطّلت ميزة قائمة التشغيل المشتركة في إعدادات الخادم. لاستخدامها، اتصل بخادم آخر.</string>
     <string name="room_custom_skip_button">تخطي %1$s</string>
     <string name="media_directories_setting_summary">المجلدات التي يُبحث فيها عن ملفات قائمة التشغيل.</string>
 
     <string name="room_on_newcontrolledroom">أُنشئت الغرفة المُدارة '%1$s' بكلمة المرور '%2$s'. يُرجى حفظ هذه المعلومات للرجوع إليها لاحقًا!\n\nفي الغرف المُدارة يبقى الجميع متزامنين مع مشغّل الغرفة أو مشغّليها، وهم وحدهم من يستطيع الإيقاف المؤقت والاستئناف والتنقل وتغيير قائمة التشغيل.\n\nاطلب من المشاهدين العاديين الانضمام إلى الغرفة '%3$s'، أما مشغّلو الغرفة فيمكنهم الانضمام إلى الغرفة '%4$s' للمصادقة تلقائيًا. الاسم الخاص بالمشغّلين موجود في الحافظة.</string>
     <string name="room_on_controller_auth_success">%1$s تمت المصادقة عليه كمشغل للغرفة</string>
     <string name="room_on_controller_auth_failed">%1$s فشل في التحقق من هويته كمشغل للغرفة</string>
+    <string name="room_identifying_as_operator">جارٍ التحقق من الهوية كمشغل للغرفة بكلمة المرور '%1$s'...</string>
 
     <!-- Room Screen -->
     <string name="room_selected_sub_error">تعذّر تحميل ملف الترجمة هذا. جرّب ملفًا آخر، مثل SRT أو ASS أو VTT.</string>
@@ -78,6 +84,7 @@
     <string name="room_not_ready">غير جاهز</string>
     <string name="room_ping_disconnected">غير متصل</string>
     <string name="room_connected_to_server">تم الاتصال بالخادم بنجاح</string>
+    <string name="room_persistent_rooms_notice">تنبيه: يستخدم هذا الخادم غرفًا دائمة، أي أن معلومات قائمة التشغيل تُحفظ بين جلسات التشغيل. إذا أردت إنشاء غرفة لا تُحفظ معلوماتها، فأضف -temp إلى نهاية اسم الغرفة.</string>
     <string name="room_connection_failed">فشل الاتصال بالخادم</string>
     <string name="room_connection_failed_name">فشل الاتصال بالخادم. لم يُعثر على اسم الخادم.</string>
     <string name="room_connection_failed_refused">فشل الاتصال بالخادم. رفض الخادم الاتصال.</string>
@@ -86,6 +93,7 @@
     <string name="room_status_failure_refused">مرفوض</string>
     <string name="room_status_failure_timeout">لا استجابة</string>
     <string name="room_status_failure_tls">فشل الاتصال الآمن</string>
+    <string name="room_server_timeout">انتهت مهلة الاتصال بالخادم</string>
     <string name="room_attempting_reconnection">انقطع الاتصال بالخادم، جارٍ محاولة إعادة الاتصال</string>
     <string name="room_disconnected">تم قطع الاتصال بالخادم</string>
     <string name="room_attempting_tls">محاولة الاتصال الآمن</string>

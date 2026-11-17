@@ -17,8 +17,11 @@ import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.Preferences.TLS_REQUIRED
 import app.preferences.value
+import app.protocol.SHARED_PLAYLISTS_MIN_VERSION
 import app.protocol.WireMessage
 import app.protocol.models.ConnectionState
+import app.protocol.models.RoomFeatures
+import app.protocol.versionAtLeast
 import app.protocol.models.TlsState
 import app.protocol.network.ConnectionFailure
 import app.protocol.wire.ControllerAuthData
@@ -27,10 +30,14 @@ import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.room.models.isolated
 import app.room.toFileData
+import app.utils.SyncClock
 import app.utils.loggy
 import app.utils.platformCallback
 import app.utils.timestampFromMillis
+import kotlin.concurrent.Volatile
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import app.protocol.OFFICIAL_SERVER_ADDRESS
@@ -47,6 +54,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val dispatcher = viewmodel.dispatcher
     val protocol = viewmodel.protocol
     val session = viewmodel.protocol.session
+
+    /** Who left last and when, for the line that joins a leave and a pause. Any room counts, as in Syncplay PC. */
+    @Volatile
+    private var lastLeft: Pair<String, Instant>? = null
 
     fun String.isSelf(): Boolean = (this == session.currentUsername)
     fun String.isNotSelf(): Boolean = (this != session.currentUsername)
@@ -77,10 +88,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             dispatcher.controlPlayback(Playback.PAUSE, false)
         }
 
+        // A pause soon after a leave gets one line that names both, as in Syncplay PC (`_serverPaused`).
+        val leaver = lastLeft?.takeIf { (_, at) -> SyncClock.now() - at <= LEFT_PAUSED_WINDOW }?.first
         val osdMessage: suspend () -> String = {
-            Localization.strings.roomGuyPaused(pauser.isolated(), timestampFromMillis(protocol.globalPositionMs))
+            if (leaver != null) {
+                Localization.strings.roomLeftPaused(leaver.isolated(), pauser.isolated())
+            } else {
+                Localization.strings.roomGuyPaused(pauser.isolated(), timestampFromMillis(protocol.globalPositionMs))
+            }
         }
-        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(pauser))
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOfNotNull(leaver, pauser))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = pauser, getter = osdMessage)
     }
 
@@ -138,6 +155,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     // Syncplay's line names no room: a person who leaves the server has left every room.
     fun onSomeoneLeftOtherRoom(leaver: String) {
+        lastLeft = leaver to SyncClock.now()
         viewmodel.dispatchOSD(OSDCategory.OTHER_ROOM) { Localization.strings.roomGuyLeftOtherRoom(leaver.isolated()) }
     }
 
@@ -148,6 +166,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (leaver.isSelf()) return
 
         loggy("SYNCPLAY Protocol: $leaver left the room.")
+        lastLeft = leaver to SyncClock.now()
 
         hapticIf(HAPTIC_ON_LEFT)
         val osdMessage: suspend () -> String = { Localization.strings.roomGuyLeft(leaver.isolated()) }
@@ -227,7 +246,14 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
         val osdMessage: suspend () -> String = {
-            Localization.strings.roomIsplayingfile(person.isolated(), (file ?: "").isolated(), timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0))
+            val name = (file ?: "").isolated()
+            val duration = timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0)
+            // Syncplay PC names the room on the line about our own file.
+            if (person.isSelf()) {
+                Localization.strings.roomIsplayingfileInRoom(person.isolated(), name, duration, session.currentRoom.isolated())
+            } else {
+                Localization.strings.roomIsplayingfile(person.isolated(), name, duration)
+            }
         }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, people = listOf(person))
         viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = person, getter = osdMessage)
@@ -283,11 +309,8 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         val initialReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
         network.sendAsync(WireMessage.readiness(isReady = initialReady, manuallyInitiated = false))
 
+        // No join line for our own join, as in Syncplay PC: the server does not send us our own join.
         dispatcher.broadcastMessage(message = { Localization.strings.roomConnectedToServer }, isChat = false)
-        dispatcher.broadcastMessage(
-            message = { Localization.strings.roomYouJoinedRoom(session.currentUsername.isolated(), session.currentRoom.isolated()) },
-            isChat = false,
-        )
 
         viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
@@ -303,12 +326,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // restores our control. Without this, a short network drop silently demotes the
         // operator, and forcePositionUpdate reverts their pause and seek attempts.
         if (session.currentRoom.startsWith("+") && session.currentOperatorPassword.isNotEmpty()) {
-            network.sendAsync(
-                WireMessage.controllerAuth(
-                    room = session.currentRoom,
-                    password = session.currentOperatorPassword
-                )
-            )
+            dispatcher.identifyAsOperator(session.currentOperatorPassword)
         }
     }
 
@@ -316,11 +334,37 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Attempting connection...")
 
         dispatcher.broadcastMessage(
-            message = {
-                Localization.strings.roomAttemptingConnect(if (session.serverHost == OFFICIAL_SERVER_ADDRESS) OFFICIAL_SERVER_NAME else session.serverHost, session.serverPort.toString())
-            },
+            message = { Localization.strings.roomAttemptingConnect(serverName(), session.serverPort.toString()) },
             isChat = false
         )
+    }
+
+    /** The first socket of this room opened. Syncplay PC names the server and the address it reached. */
+    fun onServerReached(ip: String) {
+        dispatcher.broadcastMessage(message = { Localization.strings.roomServerReached(serverName(), ip) }, isChat = false)
+    }
+
+    /** The server's address as the connection lines show it: the official server by its name. */
+    private fun serverName(): String =
+        if (session.serverHost == OFFICIAL_SERVER_ADDRESS) OFFICIAL_SERVER_NAME else session.serverHost
+
+    /**
+     * Says why the playlist actions are missing, as Syncplay PC does after each Hello
+     * (`setServerVersion`): the server is too old for shared playlists, or it turned them off.
+     */
+    fun onServerFeatures(serverVersion: String?, features: RoomFeatures) {
+        val tooOld = serverVersion != null && versionAtLeast(serverVersion, SHARED_PLAYLISTS_MIN_VERSION) == false
+        if (!tooOld && features.supportsSharedPlaylists) return
+        dispatcher.broadcastMessage(isChat = false, isError = true) {
+            if (tooOld) Localization.strings.roomSharedPlaylistsNotSupported(SHARED_PLAYLISTS_MIN_VERSION, serverVersion.orEmpty())
+            else Localization.strings.roomSharedPlaylistsDisabled
+        }
+    }
+
+    /** No State from the server for too long. Syncplay PC says so before the reconnect line. */
+    fun onServerTimedOut() {
+        dispatcher.broadcastMessage(message = { Localization.strings.roomServerTimeout }, isChat = false, isError = true)
+        onDisconnected()
     }
 
     /**
@@ -508,6 +552,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     }
 
     companion object {
+        /** A pause this soon after a leave gets the joined line. Syncplay PC uses its `OSD_DURATION`. */
+        val LEFT_PAUSED_WINDOW = 3.seconds
+
         /**
          * Below this from-to distance in milliseconds, a seek counts as a visual no-op: the room
          * message, the OSD notice (the on-screen message over the video) and the undo entry are
