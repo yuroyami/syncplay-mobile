@@ -292,8 +292,7 @@ class HomeFocusTest {
     @Test
     fun aRemoteWalksTheJoinFormOnATelevision() {
         withHome(TELEVISION, television = true) { form ->
-            // Under keyboard input the form focuses Username after a delay in real time.
-            Thread.sleep(400)
+            // Under keyboard input the form focuses Username after 150 ms of frame time.
             form.settle()
             val walk = mutableListOf(form.focusedName())
             repeat(4) {

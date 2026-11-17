@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.room.CertificateAsk
 import app.protocol.network.UntrustedCertificate
-import app.server.tls.HostCertificate
+import app.protocol.network.CertificatePins
 import app.protocol.models.ConnectionState
 import app.protocol.network.ConnectionFailure
 import app.i18n.strings
@@ -109,9 +109,9 @@ class SurfaceGoldens {
 
     @Test
     fun aPersonsMessagesAndTheFadingChatFit() {
-        val first = Message(sender = "Christopher_Lee", content = "Did everyone get the new episode? Mine stopped at the part where the train leaves the station.", epochMs = 1_000)
-        val grouped = Message(sender = "Christopher_Lee", content = "Never mind, it works now.", epochMs = 20_000)
-        val mine = Message(sender = "Alexandra_Morgan", content = "Ready when you are", isMainUser = true, epochMs = 200_000)
+        val first = Message(sender = "Christopher_Lee", content = "Did everyone get the new episode? Mine stopped at the part where the train leaves the station.", epochMs = 1_000, timestamp = DesignHarness.CHAT_TIME)
+        val grouped = Message(sender = "Christopher_Lee", content = "Never mind, it works now.", epochMs = 20_000, timestamp = DesignHarness.CHAT_TIME)
+        val mine = Message(sender = "Alexandra_Morgan", content = "Ready when you are", isMainUser = true, epochMs = 200_000, timestamp = DesignHarness.CHAT_TIME)
         for (scale in scales) {
             RoomRig.render("chat-person", 360, heightDp = 400, fontScale = scale, solo = false) {
                 val style = MessageStyle(12, outline = null, shadow = false, showTime = true)
@@ -260,7 +260,8 @@ class SurfaceGoldens {
 
     @Test
     fun certificatePromptAndHostFingerprintFit() {
-        val fingerprint = HostCertificate.create().fingerprint
+        // A fixed fingerprint. A new certificate would give a new one in every run.
+        val fingerprint = CertificatePins.fingerprintOf("synkplay golden certificate".encodeToByteArray())
         for (scale in scales) {
             for ((name, pinned) in listOf("new" to null, "changed" to "AA:BB")) {
                 val ask = RoomRig.render("tls-ask-$name", 360, heightDp = 700, fontScale = scale, solo = false, setup = { room ->

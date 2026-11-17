@@ -108,6 +108,7 @@ import app.uicomponents.LocalGlassDemand
 import app.uicomponents.LocalGlassSuspended
 import app.uicomponents.LocalHazeState
 import app.uicomponents.LocalIsTelevision
+import app.uicomponents.awaitFrameTime
 import app.uicomponents.LocalScreenReaderActive
 import app.uicomponents.frames.NoticeHost
 import app.uicomponents.glassBackdropLayer
@@ -602,7 +603,7 @@ private fun RoomHud(
     LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode, playerIsReady) {
         if (isHUDVisible) {
             if (isKeyboardMode && playerIsReady && !lowerFocused) {
-                delay(150)
+                awaitFrameTime(150)
                 runCatching { initialFocusRequester.requestFocus() }
             }
         } else if (!portrait || stageFocused) {

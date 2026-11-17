@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -157,6 +158,17 @@ internal fun printableText(event: KeyEvent): String? {
     val code = event.utf16CodePoint
     if (code < 0x20 || code == 0x7F) return null
     return code.toChar().toString()
+}
+
+/**
+ * Waits [millis] of frame time: the time of the frames that the screen draws. A focus request
+ * waits this way until its target is placed. A screenshot test draws its own frames, so the focus
+ * then lands at the same frame in every run. A wait on the wall clock cannot promise that.
+ */
+internal suspend fun awaitFrameTime(millis: Long) {
+    val start = withFrameMillis { it }
+    var now = start
+    while (now - start < millis) now = withFrameMillis { it }
 }
 
 /** The keys a remote or a keyboard uses to press the focused control. */

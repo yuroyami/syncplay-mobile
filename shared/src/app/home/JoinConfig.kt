@@ -24,14 +24,20 @@ import app.protocol.OFFICIAL_SERVER_NAME
  */
 @Serializable
 data class JoinConfig(
-    val user: String = "user" + (0..9999).random().toString(),
-    val room: String = "room" + (0..9999).random().toString(),
+    val user: String = "user" + defaultNameNumber(),
+    val room: String = "room" + defaultNameNumber(),
     val ip: String = OFFICIAL_SERVER_NAME,
     val port: Int = 8997,
     val pw: String = "",
     val operatorPassword: String = "",
 ) {
     companion object {
+        /**
+         * Gives the number at the end of a default user name or room name. The screenshot tests
+         * replace it, so a screen that shows the default names looks the same in every run.
+         */
+        internal var defaultNameNumber: () -> Int = { (0..9999).random() }
+
         /**
          * Reads the last saved join details, with a 250 ms timeout.
          *

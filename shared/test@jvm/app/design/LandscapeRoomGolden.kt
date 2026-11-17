@@ -11,11 +11,10 @@ import kotlin.test.Test
  */
 class LandscapeRoomGolden {
 
-    /** Fixed clock times, so two runs render the same pixels. */
     private fun chat() = listOf(
-        Message(sender = null, content = "Mia joined the room", timestamp = "9:41 PM"),
-        Message(sender = "Sam", content = "ok, starting from the cold open", timestamp = "9:41 PM"),
-        Message(sender = "Ari", content = "same file? mine look fine", isMainUser = true, timestamp = "9:41 PM"),
+        Message(sender = null, content = "Mia joined the room", timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Sam", content = "ok, starting from the cold open", timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Ari", content = "same file? mine look fine", isMainUser = true, timestamp = DesignHarness.CHAT_TIME),
     )
 
     @Test

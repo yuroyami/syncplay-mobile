@@ -89,11 +89,11 @@ class PortraitRoomTest {
         withPref(GIF_PANEL_SOURCE, "FAVORITES") { withPref(GIF_PANEL_TYPE, type, block) }
 
     private val chat = { listOf(
-        Message(content = "Mia joined the room"),
-        Message(sender = "Sam", content = "ok, starting from the cold open"),
-        Message(sender = "Leo", content = "the subtitles are a second late for me"),
-        Message(sender = "Ari", content = "same file? mine look fine", isMainUser = true),
-        Message(sender = "Mia", content = "this soundtrack though"),
+        Message(content = "Mia joined the room", timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Sam", content = "ok, starting from the cold open", timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Leo", content = "the subtitles are a second late for me", timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Ari", content = "same file? mine look fine", isMainUser = true, timestamp = DesignHarness.CHAT_TIME),
+        Message(sender = "Mia", content = "this soundtrack though", timestamp = DesignHarness.CHAT_TIME),
     ) }
 
     /** A room with chat and a file 25 minutes long, played to 8:20. */

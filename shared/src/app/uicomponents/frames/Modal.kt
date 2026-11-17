@@ -61,7 +61,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.theme.Motion
@@ -78,6 +77,7 @@ import app.uicomponents.DialogBackdropBlur
 import app.uicomponents.GlassKind
 import app.uicomponents.LocalInDialogWindow
 import app.uicomponents.LocalIsTelevision
+import app.uicomponents.awaitFrameTime
 import app.uicomponents.isTvActivationKey
 import app.uicomponents.controls.CloseGlyph
 import app.uicomponents.controls.GlyphButton
@@ -187,7 +187,7 @@ internal fun ModalFrame(
             if (contentFocused) return@LaunchedEffect
             val landed = listOfNotNull(initialFocus, fieldEntry, actionEntry).any { runCatching { it.requestFocus() }.getOrDefault(false) }
             if (!landed) focusManager.moveFocus(FocusDirection.Enter)
-            delay(50)
+            awaitFrameTime(50)
         }
     }
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.platform.LocalCursorBlinkEnabled
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusDirection
@@ -29,6 +30,7 @@ import androidx.compose.runtime.SideEffect
 import app.uicomponents.LocalIsTelevision
 import app.LocalGlobalViewmodel
 import app.SyncplayViewmodel
+import app.home.JoinConfig
 import app.preferences.LocalPrefsState
 import app.preferences.createDataStore
 import app.preferences.datastore
@@ -66,8 +68,20 @@ import kotlin.test.assertTrue
  * provides the composition locals that a surface needs outside `AdamScreen`, the app's root
  * screen. Resource fonts do not resolve here, so the golden images judge layout and spacing, not
  * letterforms.
+ *
+ * Two runs on the same code must write the same bytes, so a comparison of two runs shows what a
+ * change did. So nothing in a render may come from chance or from the wall clock: the harness
+ * fixes the default names, and a test gives its messages [CHAT_TIME].
  */
 object DesignHarness {
+
+    /** The clock time on every test message. A message made in a test would show the time of the run. */
+    const val CHAT_TIME = "9:41 PM"
+
+    init {
+        // A screen with no saved join details shows default names, which end in a random number.
+        JoinConfig.defaultNameNumber = { 4821 }
+    }
 
     val outDir: File = File(System.getenv("DESIGN_GOLDEN_OUT") ?: "build/design-goldens").also { it.mkdirs() }
 
@@ -169,6 +183,8 @@ object DesignHarness {
             // The app pins this in AdamScreen; the harness has to match or Arabic renders mirrored.
             LocalLayoutDirection provides LayoutDirection.Ltr,
             LocalIsTelevision provides television,
+            // A blinking cursor follows the wall clock, so a focused field would differ between runs.
+            LocalCursorBlinkEnabled provides false,
         ) {
             run {
                 Box(Modifier.fillMaxSize().background(pal.ground)) { content() }

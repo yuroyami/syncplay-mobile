@@ -136,6 +136,7 @@ import app.utils.consumePendingShortcut
 import app.utils.ioDispatcher
 import app.utils.platform
 import app.uicomponents.LocalIsTelevision
+import app.uicomponents.awaitFrameTime
 import app.utils.platformCallback
 import app.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
@@ -332,7 +333,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 val inputModeManager = LocalInputModeManager.current
                 LaunchedEffect(Unit) {
                     if (inputModeManager.inputMode == InputMode.Keyboard) {
-                        delay(150)
+                        awaitFrameTime(150)
                         runCatching { usernameFocus.requestFocus() }
                     }
                 }
