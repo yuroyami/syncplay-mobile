@@ -47,6 +47,9 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         .channelInitializer { channel in
             channel.pipeline.addHandler(ByteToMessageHandler(BoundedLineFrameDecoder(maxLength: 65536))).flatMap {
                 channel.pipeline.addHandler(self)
+            }.flatMap {
+                // Closes the channel on an error, after the TLS handshake tracker has seen it.
+                channel.pipeline.addHandler(ErrorThenCloseHandler())
             }
         }.connect(host: host, port: port)
 
@@ -213,11 +216,10 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         context.fireChannelInactive()
     }
 
+    /// Logs the error and passes it on. `ErrorThenCloseHandler`, later in the pipeline, hands it to
+    /// the TLS handshake tracker and then closes the channel.
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("Reader exception: \(error)")
-        // The TLS handshake tracker sits after this handler. Pass the error on before the close,
-        // so the tracker fails the handshake with the real error and not with a plain end-of-file.
         context.fireErrorCaught(error)
-        context.close(promise: nil)
     }
 }

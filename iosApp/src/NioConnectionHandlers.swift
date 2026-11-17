@@ -68,6 +68,20 @@ final class BoundedLineFrameDecoder: ByteToMessageDecoder {
 }
 
 /**
+ Passes an error on to the handlers after it, and then closes the channel. The TLS handshake
+ tracker sits after this handler, so it fails the handshake with the real error. A close first
+ would make the tracker fail with a plain end of file, and the room would lose the TLS reason.
+ */
+final class ErrorThenCloseHandler: ChannelInboundHandler {
+    typealias InboundIn = NIOAny
+
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
+        context.fireErrorCaught(error)
+        context.close(promise: nil)
+    }
+}
+
+/**
  One-shot handler that settles `promise` when the TLS handshake ends, so
  `SwiftNioNetworkManager.upgradeTls` can wait for it. `TLSUserEvent.handshakeCompleted` succeeds
  the promise and removes this handler from the pipeline. An error, a channel close, the handler's
