@@ -51,6 +51,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -284,7 +286,8 @@ fun GifPanel(
         if (media.slug.isNotBlank()) scope.launch { KlipyUtils.trackShare(media.slug, media.type) }
     }
 
-    Column(modifier.surface(Tier.Panel, shape)) {
+    // A tap that lands between the keys stops here instead of reaching the HUD and hiding it.
+    Column(modifier.surface(Tier.Panel, shape).pointerInput(Unit) { detectTapGestures { } }) {
         GifDrawerHeader(
             type = selectedType,
             onType = {

@@ -142,7 +142,11 @@ fun RoomChatSection(modifier: Modifier) {
                 GifPanel(
                     query = msg,
                     onGifSelected = viewmodel::sendChatMedia,
-                    modifier = Modifier.weight(1f).fillMaxWidth().windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp)
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                        // Tap shield first, as on the composer, so a missed tap on the margin
+                        // around the drawer does not hide the HUD.
+                        .pointerInput(Unit) { detectTapGestures { } }
+                        .windowInsetsPadding(cutoutInsets).padding(horizontal = 8.dp)
                         .onSizeChanged { size ->
                             viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
                         },
