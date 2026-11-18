@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /*
  * The drawn glyph set: a 20dp box, a 1.5dp stroke and flat line ends. Every glyph is a path on a
@@ -92,14 +95,33 @@ val ListGlyph: ImageVector by lazy {
     stroked("list") { line(4f, 6f, 16f, 6f); line(4f, 10f, 16f, 10f); line(4f, 14f, 16f, 14f) }
 }
 
-/** A gear drawn as an octagon with a hole. */
+/** A cog: eight square teeth around a round hole. */
 val SettingsGlyph: ImageVector by lazy {
     stroked("settings") {
-        line(7.5f, 3f, 12.5f, 3f, 16f, 6.5f, 16f, 13.5f, 12.5f, 17f, 7.5f, 17f, 4f, 13.5f, 4f, 6.5f, 7.5f, 3f)
+        path(stroke = SolidColor(androidx.compose.ui.graphics.Color.Black), strokeLineWidth = 1.5f, strokeLineCap = StrokeCap.Butt, strokeLineJoin = StrokeJoin.Miter) {
+            val teeth = 8
+            val rootR = 6.3f
+            val tipR = 8.6f
+            val step = 2 * PI / teeth
+            // Each tooth spans 42% of its slot at the tip and 54% at the root, so its sides lean in a little.
+            val tipHalf = step * 0.21
+            val rootHalf = step * 0.27
+            fun x(a: Double, r: Float) = 10f + r * cos(a).toFloat()
+            fun y(a: Double, r: Float) = 10f + r * sin(a).toFloat()
+            for (i in 0 until teeth) {
+                val a = PI / 8 + i * step
+                if (i == 0) moveTo(x(a - rootHalf, rootR), y(a - rootHalf, rootR)) else lineTo(x(a - rootHalf, rootR), y(a - rootHalf, rootR))
+                lineTo(x(a - tipHalf, tipR), y(a - tipHalf, tipR))
+                lineTo(x(a + tipHalf, tipR), y(a + tipHalf, tipR))
+                lineTo(x(a + rootHalf, rootR), y(a + rootHalf, rootR))
+                arcTo(rootR, rootR, 0f, false, true, x(a + step - rootHalf, rootR), y(a + step - rootHalf, rootR))
+            }
+            close()
+        }
         path(stroke = SolidColor(androidx.compose.ui.graphics.Color.Black), strokeLineWidth = 1.5f) {
-            moveTo(13f, 10f)
-            arcTo(3f, 3f, 0f, true, true, 7f, 10f)
-            arcTo(3f, 3f, 0f, true, true, 13f, 10f)
+            moveTo(12.6f, 10f)
+            arcTo(2.6f, 2.6f, 0f, true, true, 7.4f, 10f)
+            arcTo(2.6f, 2.6f, 0f, true, true, 12.6f, 10f)
         }
     }
 }
