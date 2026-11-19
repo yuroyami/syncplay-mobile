@@ -5,6 +5,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import app.utils.loggy
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * Puts the room on the lock screen and tells Android that something is playing (issue #125).
@@ -17,6 +18,26 @@ import app.utils.loggy
  */
 @UnstableApi
 class SyncplayMediaSessionService : MediaSessionService() {
+
+    override fun onCreate() {
+        super.onCreate()
+        RoomMediaSessionHolder.service = this
+        // Android refused to start the service in the foreground, so the room cannot play away.
+        setListener(object : Listener {
+            override fun onForegroundServiceStartNotAllowedException() {
+                loggy("Media session service: foreground start refused")
+                RoomMediaSessionHolder.onForegroundRefused?.invoke()
+            }
+        })
+    }
+
+    /**
+     * Media3 runs the service in the foreground only around playback. A room that can keep its
+     * sound stays in the foreground before the first play too, so a phone locked before the host
+     * presses play still plays. Android 17 lets only a service that started on screen play away.
+     */
+    override fun onUpdateNotificationAsync(session: MediaSession, startInForegroundRequired: Boolean): ListenableFuture<Void?> =
+        super.onUpdateNotificationAsync(session, startInForegroundRequired || RoomMediaSessionHolder.keepForeground)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Joining starts this service directly, without a MediaController binding. That path
@@ -48,6 +69,8 @@ class SyncplayMediaSessionService : MediaSessionService() {
 
     override fun onDestroy() {
         // Detach this service's controllers; the room still owns the session and the engine.
+        clearListener()
+        if (RoomMediaSessionHolder.service === this) RoomMediaSessionHolder.service = null
         sessions.forEach(::removeSession)
         loggy("Media session service destroyed")
         super.onDestroy()
@@ -67,12 +90,51 @@ object RoomMediaSessionHolder {
     var session: MediaSession? = null
         private set
 
+    /** The running service, so the room can ask it to show the notification again. */
+    @Volatile
+    var service: SyncplayMediaSessionService? = null
+
+    /** True while the room could play away (on screen and ready) or plays away. */
+    @Volatile
+    var keepForeground: Boolean = false
+        private set
+
+    @Volatile private var readyOnScreen = false
+    @Volatile private var listeningAway = false
+
+    /** Called when Android refuses to start the service in the foreground. */
+    @Volatile
+    var onForegroundRefused: (() -> Unit)? = null
+
+    /** The room on screen could keep its sound ([ready]), or no longer can. */
+    fun setReadyOnScreen(ready: Boolean) {
+        readyOnScreen = ready
+        updateForeground()
+    }
+
+    /** The room plays its sound away from the screen ([active]), or that ended. */
+    fun setListeningAway(active: Boolean) {
+        listeningAway = active
+        updateForeground()
+    }
+
+    private fun updateForeground() {
+        val keep = readyOnScreen || listeningAway
+        if (keep == keepForeground) return
+        keepForeground = keep
+        service?.triggerNotificationUpdate()
+    }
+
     fun install(session: MediaSession) {
         clear()
         this.session = session
     }
 
     fun clear() {
+        readyOnScreen = false
+        listeningAway = false
+        keepForeground = false
+        onForegroundRefused = null
         val current = session ?: return
         (current.player as? RoomMediaSessionPlayer)?.stopWatching()
         current.release()

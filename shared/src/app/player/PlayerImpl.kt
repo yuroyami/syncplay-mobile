@@ -92,6 +92,29 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
     open val supportsSpeedAdjustment: Boolean = true
 
+    /**
+     * True while the room is away from the screen and keeps only its sound, so the engine decodes
+     * no video. It is not a track choice: the user's own choice comes back on return, and the
+     * engine applies it again to every file it opens.
+     */
+    @Volatile
+    var videoSuspended: Boolean = false
+        private set
+
+    /** Stops or restarts video decoding for a room away from the screen. See [videoSuspended]. */
+    suspend fun suspendVideo(suspended: Boolean) {
+        if (videoSuspended == suspended) return
+        videoSuspended = suspended
+        if (isInitialized) runCatching { applyVideoSuspended(suspended) }
+            .onFailure { if (it is CancellationException) throw it else loggy("Video suspend failed: ${it.message}") }
+    }
+
+    /**
+     * Each engine stops ([suspended]) or restarts its video decoding here, without touching the
+     * saved track choices. The base calls it again for each file that opens while suspended.
+     */
+    protected open suspend fun applyVideoSuspended(suspended: Boolean) {}
+
     /** True when the engine reports a new file itself, from its own "file loaded" event, through
      *  [onEngineFileReady]. [parseMedia] then skips its iOS call. An engine with no load event
      *  leaves this false and relies on the [parseMedia] call. */
@@ -582,6 +605,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             runCatching {
                 analyzeTracks(media)
                 if (viewmodel.media === media) applyTrackRules(media)
+                // A file that opens while the room is away keeps decoding no video.
+                if (videoSuspended && viewmodel.media === media) applyVideoSuspended(true)
             }.onFailure { if (it is CancellationException) throw it else loggy("Track rules failed: ${it.message}") }
         }
     }

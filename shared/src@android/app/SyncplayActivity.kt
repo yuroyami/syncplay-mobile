@@ -313,6 +313,11 @@ class SyncplayActivity : ComponentActivity() {
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = isInPictureInPictureMode
+        /* Closing the small window stops the activity while it is still in PiP, so the stop hook
+         * skipped it. The room has left the screen now, so the stop runs here. */
+        if (!isInPictureInPictureMode && !lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+            roomViewmodel?.uiState?.onLifecycleStop()
+        }
     }
 
     /**
@@ -381,8 +386,9 @@ class SyncplayActivity : ComponentActivity() {
                 builder.setSourceRectHint(Rect(VideoBounds.left, VideoBounds.top, VideoBounds.right, VideoBounds.bottom))
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Pressing Home while playing enters PiP, like other video apps.
-                builder.setAutoEnterEnabled(isPlaying)
+                // Pressing Home while playing enters PiP, like other video apps. Only a picture
+                // goes there: an audio file or switched-off video would open a black window.
+                builder.setAutoEnterEnabled(isPlaying && roomViewmodel?.playerManager?.showsPicture() == true)
             }
         }
         return builder.build()

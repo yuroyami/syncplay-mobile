@@ -86,11 +86,12 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     }
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
-        // In the background the player is paused on purpose and stays that way: nothing here
-        // reaches the engine, and nothing is told to the room (broadcasting a background pause
-        // would pause everyone). Inbound pause and play are skipped too; the return to the
-        // foreground re-anchors to the room's real state in one step.
-        if (viewmodel.uiState.isInBackground) return
+        // A held player is paused on purpose and stays that way: nothing here reaches the
+        // engine, and nothing is told to the room (broadcasting that pause would pause everyone).
+        // Inbound pause and play are skipped too; the end of the hold re-anchors in one step.
+        if (viewmodel.uiState.isHeld) return
+        // A room away from the screen follows the room and never moves it.
+        if (viewmodel.uiState.isAway && tellServer) return
 
         /* If this is a user-initiated play request, check readiness gating */
         if (playback == Playback.PLAY && tellServer && !viewmodel.isSoloMode
@@ -253,6 +254,8 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     private suspend fun seekNow(targetMs: Long, fromMs: Long?, recordUndo: Boolean): Long? {
         // Prepare only for the currently loaded file; an unavailable seek must not move peers.
         if (!viewmodel.playerManager.isPlayerReady.value) return null
+        // A room away from the screen follows the room and never moves it.
+        if (viewmodel.uiState.isAway) return null
         val media = viewmodel.media ?: return null
         val player = viewmodel.player
         val origin = fromMs ?: player.currentPositionMs()

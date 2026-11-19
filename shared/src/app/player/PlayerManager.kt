@@ -3,6 +3,7 @@ package app.player
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.player.models.MediaFile
+import app.player.models.TrackChoice
 import app.player.models.TrackChoices
 import app.room.RoomViewmodel
 import app.utils.generateTimestampMillis
@@ -36,6 +37,17 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         )
 
     val isNowPlaying = MutableStateFlow(false)
+
+    /**
+     * Whether the room shows a picture now: a file is loaded, its video is not switched off, and
+     * an engine that lists video tracks found one. [hasVideo] only says that a file is loaded.
+     */
+    fun showsPicture(): Boolean {
+        val file = media.value ?: return false
+        if (currentTrackChoices.video == TrackChoice.Off) return false
+        val listsVideo = ::player.isInitialized && player.supportsVideoTrackSelection
+        return !(listsVideo && file.tracks.isNotEmpty() && file.tracks.none { it.type == PlayerImpl.TrackType.VIDEO })
+    }
 
     /**
      * True while the engine fills its buffer or opens media, instead of showing frames.

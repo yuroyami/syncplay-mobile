@@ -121,6 +121,8 @@
     <string name="setting_room_orientation_landscape">Landscape</string>
     <string name="setting_room_orientation_portrait">Portrait</string>
     <string name="setting_room_orientation_auto">Auto</string>
+    <string name="setting_keep_sound_away_title">Keep the sound in the background</string>
+    <string name="setting_keep_sound_away_summary">When you lock the phone or leave the app, the room keeps playing its sound here. This phone then follows the room and never pauses or moves it. Video stops while you are away.</string>
     <!-- %1$s is a room name. The invite link follows on the next line. -->
     <string name="room_share_invite_message">Join me in %1$s on Synkplay:</string>
     <!-- %1$s lists the words for name, size and duration, joined with commas. -->

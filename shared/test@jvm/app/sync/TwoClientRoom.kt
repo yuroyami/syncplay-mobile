@@ -67,6 +67,8 @@ internal class TwoClientRoom(
     serverConfig: ServerConfig = ServerConfig(isolateRooms = false),
     /** The server password that both clients send. */
     private val serverPassword: String = "",
+    /** Whether the platform can keep the room's sound when the room leaves the screen. */
+    backgroundSound: Boolean = false,
 ) : AutoCloseable {
 
     private val serverScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -75,6 +77,9 @@ internal class TwoClientRoom(
     private val callbackField = Class.forName("app.utils.PlatformUtilsKt")
         .getDeclaredField("platformCallback").apply { isAccessible = true }
     private val previousCallback = callbackField.get(null)
+
+    /** Every platform call either client made, by name, with its Boolean arguments. */
+    val platformCalls: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     val alice: Client
     val bob: Client
@@ -86,7 +91,7 @@ internal class TwoClientRoom(
             UNPAUSE_ACTION.set("Always")
             withTimeout(2_000) { UNPAUSE_ACTION.flow().first { it == "Always" } }
         }
-        platformCallback = RoomRig.inertPlatform(pictureInPicture = false)
+        platformCallback = RoomRig.inertPlatform(pictureInPicture = false, backgroundSound = backgroundSound, calls = platformCalls)
         alice = join(names.first)
         if (joinSpacingMs > 0) {
             waitUntil("${names.first} connects", timeoutMs = 30_000) { alice.connected }
@@ -383,6 +388,13 @@ internal class ClockPlayer(viewmodel: RoomViewmodel) : PlayerImpl(viewmodel, Clo
     }
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
     override suspend fun reapplyTrackChoices() = Unit
+
+    /** Every video suspension this engine was asked for, in order. */
+    val videoSuspensions: MutableList<Boolean> = Collections.synchronizedList(mutableListOf())
+
+    override suspend fun applyVideoSuspended(suspended: Boolean) {
+        videoSuspensions += suspended
+    }
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) = Unit
     override suspend fun switchAspectRatio() = ""
     override suspend fun changeSubtitleSize(newSize: Int) = Unit

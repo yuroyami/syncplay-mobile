@@ -64,7 +64,8 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     /** Triggers a platform haptic feedback event if the given preference is enabled. */
     private fun hapticIf(pref: app.preferences.Pref<Boolean>) {
-        if (pref.value()) viewmodel.uiState.triggerHaptic()
+        // A phone in a pocket does not buzz for the room.
+        if (pref.value() && viewmodel.uiState.visible) viewmodel.uiState.triggerHaptic()
     }
 
     fun onSomeonePaused(pauser: String) {

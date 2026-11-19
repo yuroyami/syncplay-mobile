@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import app.i18n.Localization
 import app.player.PlayerImpl
+import app.player.models.TrackChoice
 import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
@@ -499,6 +500,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                         vlcPlayer?.deselectAllAudioTracks()
                     }
                 }
+            }
+        }
+    }
+
+    /** Turns the video track off while the room is away, and back to the user's choice on return. */
+    override suspend fun applyVideoSuspended(suspended: Boolean) {
+        withContext(Dispatchers.Main.immediate) {
+            val chosen = playerManager.currentTrackChoices.video
+            when {
+                suspended || chosen == TrackChoice.Off -> vlcPlayer?.deselectAllVideoTracks()
+                chosen is TrackChoice.ByIndex -> vlcPlayer?.selectTrackAtIndex(chosen.index.toLong(), VLCMediaTrackTypeVideo)
+                else -> vlcPlayer?.selectTrackAtIndex(0L, VLCMediaTrackTypeVideo)
             }
         }
     }

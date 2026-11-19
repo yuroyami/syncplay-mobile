@@ -36,6 +36,10 @@ expect fun deviceUses24HourClock(): Boolean
  */
 lateinit var platformCallback: PlatformCallback
 
+/** Whether this device can keep the room's sound when the room leaves the screen. False before startup. */
+val supportsBackgroundSound: Boolean
+    get() = ::platformCallback.isInitialized && platformCallback.supportsBackgroundSound
+
 
 expect class WeakRef<T: Any>
 expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>

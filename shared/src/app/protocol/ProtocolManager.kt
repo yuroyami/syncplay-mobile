@@ -3,6 +3,7 @@ package app.protocol
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.player.models.MediaFile
+import app.room.HoldReason
 import app.protocol.models.ConnectionState
 import app.protocol.models.ClockOffsetEstimator
 import app.preferences.Preferences
@@ -274,7 +275,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     fun queueSeekPosition(action: SyncAction): PendingSeekPosition? = synchronized(syncLock) {
         refreshLocalIntentContext()
-        if (viewmodel.media == null || viewmodel.uiState.isInBackground) return@synchronized null
+        if (viewmodel.media == null || viewmodel.uiState.isHeld) return@synchronized null
         pendingSeekPositions.begin(action, session.currentUsername)
     }
 
@@ -450,9 +451,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 if (network.state.value != ConnectionState.CONNECTED) return@collect
                 if (lastGlobalUpdate == null) return@collect
                 if (isRoomChanging) return@collect
-                // A backgrounded client is paused locally and catches up on return. Nothing the
-                // engine does in the background is news for the room.
-                if (viewmodel.uiState.isInBackground) return@collect
+                // A held client is paused locally and catches up on return. Nothing the engine
+                // does then is news for the room.
+                if (viewmodel.uiState.isHeld) return@collect
+                // A room away from the screen never moves the room. An engine that stops by
+                // itself there, before the end of the file, holds this device instead.
+                if (viewmodel.uiState.isAway) {
+                    if (!isPlaying && !expectedPaused && !nearTheEnd()) {
+                        viewmodel.uiState.onMainThread { viewmodel.uiState.hold(HoldReason.ListeningEnded) }
+                    }
+                    return@collect
+                }
 
                 val expectedPlaying = !expectedPaused
                 broadcastPlaybackDivergence(isPlaying)
@@ -469,11 +478,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     private fun broadcastPlaybackDivergence(isPlaying: Boolean) {
         if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return
         if (lastGlobalUpdate == null || isRoomChanging) return
-        if (viewmodel.uiState.isInBackground) return
+        if (viewmodel.uiState.isHeld || viewmodel.uiState.isAway) return
         if (isPlaying == expectedPlaying) return
 
         expectedPaused = !isPlaying
         sendLocalState(position = reportableStatePositionSec(), play = isPlaying)
+    }
+
+    /** True when the playhead sits in the last second of the file, where an engine stops by itself. */
+    private fun nearTheEnd(): Boolean {
+        val duration = viewmodel.playerManager.timeFullMillis.value
+        return duration > 0 && viewmodel.playerManager.estimatedPositionMs() >= duration - 1_000
     }
 
     /** Cancels the channel-health coroutines. Safe to call multiple times. */
@@ -591,7 +606,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         globalPositionSetAt = lastGlobalPositionSetAt,
         globalPaused = globalPaused,
         hasMedia = viewmodel.media != null,
-        isInBackground = viewmodel.uiState.isInBackground,
+        isInBackground = viewmodel.uiState.isHeld,
+        isAway = viewmodel.uiState.isAway,
         localPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
         durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble(),
         awaitingRoomResyncDeadline = awaitingRoomResyncDeadline,

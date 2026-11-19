@@ -95,8 +95,9 @@
                 />
         </service>
 
-        <!-- A real MediaSessionService: the system draws the transport and routes media buttons,
-             so the intent filter below is what makes a headset button reach the room. -->
+        <!-- The room's media service. It keeps the sound playing when the room leaves the screen,
+             if the user turned that on. Its session is read-only: the intent filter lets a headset
+             button reach this app, where it does nothing, instead of starting another app. -->
         <service
             android:name="app.player.SyncplayMediaSessionService"
             android:foregroundServiceType="mediaPlayback"

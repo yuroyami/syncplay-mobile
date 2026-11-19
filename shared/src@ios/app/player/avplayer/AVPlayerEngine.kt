@@ -7,6 +7,7 @@ import androidx.compose.ui.interop.UIKitView
 import app.i18n.Localization
 import app.player.PlayerEngine
 import app.player.PlayerImpl
+import app.player.models.TrackChoice
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import platform.AVFoundation.tracks
@@ -21,12 +22,14 @@ import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import app.utils.loggy
 import kotlinx.coroutines.launch
 import platform.AVKit.AVPictureInPictureControllerDelegateProtocol
 import platform.AVKit.AVPictureInPictureController
 import app.player.configurePlaybackAudioSession
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.DrawableResource
 import platform.AVFoundation.AVAsset
@@ -46,6 +49,8 @@ import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
+import platform.AVFoundation.AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible
+import platform.AVFoundation.audiovisualBackgroundPlaybackPolicy
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.asset
@@ -331,7 +336,10 @@ object AVPlayerEngine: PlayerEngine {
                         // screen, a headset button. The room never follows it. The player goes back
                         // to what the room asked for, and the room hears nothing.
                         val failed = avPlayer?.error != null || avMedia?.error != null
-                        if (!waiting && !failed && !interrupted && isPlaying != roomWantsPlaying && !atEndOfItem()) {
+                        // Away from the screen, a system pause is a lost route or a call, and the
+                        // room's hold handles it. Playing again would use the phone's speaker.
+                        val away = viewmodel.uiState.isAway
+                        if (!waiting && !failed && !interrupted && !away && isPlaying != roomWantsPlaying && !atEndOfItem()) {
                             if (roomWantsPlaying) avPlayer?.rate = desiredRate else avPlayer?.pause()
                             return
                         }
@@ -571,7 +579,7 @@ object AVPlayerEngine: PlayerEngine {
             val nsUrl = location.file.nsUrl
             val asset = AVAsset.assetWithURL(nsUrl)
             avMedia = AVPlayerItem(asset).also(::allowAnyRate)
-            avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+            avPlayer = AVPlayer.playerWithPlayerItem(avMedia).also(::keepSoundInBackground)
             attachTimeControlObserver()
             attachEndOfItemObserver()
         }
@@ -581,9 +589,33 @@ object AVPlayerEngine: PlayerEngine {
             val nsUrl = NSURL.URLWithString(location.url)
                 ?: throw IllegalArgumentException("Not a URL AVPlayer can open: ${location.url}")
             avMedia = AVPlayerItem(uRL = nsUrl).also(::allowAnyRate)
-            avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+            avPlayer = AVPlayer.playerWithPlayerItem(avMedia).also(::keepSoundInBackground)
             attachTimeControlObserver()
             attachEndOfItemObserver()
+        }
+
+        /**
+         * Keeps playing the sound when the app leaves the screen, where iOS would pause a player
+         * with a video layer. Only a room with background sound plays there; any other room holds.
+         */
+        private fun keepSoundInBackground(player: AVPlayer) {
+            player.audiovisualBackgroundPlaybackPolicy = AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible
+        }
+
+        /** Disables the video tracks of the item while the room is away. The user's choice comes back on return. */
+        override suspend fun applyVideoSuspended(suspended: Boolean) {
+            withContext(Dispatchers.Main.immediate) {
+                val chosen = playerManager.currentTrackChoices.video
+                avPlayer?.currentItem?.tracks?.filterIsInstance<AVPlayerItemTrack>()
+                    ?.filter { it.assetTrack?.mediaType == AVMediaTypeVideo }
+                    ?.forEachIndexed { i, itemTrack ->
+                        itemTrack.enabled = !suspended && when (chosen) {
+                            TrackChoice.Off -> false
+                            is TrackChoice.ByIndex -> i == chosen.index
+                            else -> i == 0
+                        }
+                    }
+            }
         }
 
         /**

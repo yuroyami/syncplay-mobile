@@ -15,6 +15,7 @@ import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.PlayerOptions
 import app.player.models.Track
+import app.player.models.TrackChoice
 import app.player.mpv.MpvFileUtils.copyAssets
 import app.player.mpv.MpvFileUtils.resolveUri
 import app.preferences.PrefExtraConfig
@@ -285,6 +286,24 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
         withContext(coreCalls) {
             withCore { it[MpvProperties.Chapter] = chapter.index.toLong() }
+        }
+    }
+
+    /**
+     * Turns the video track off while the room is away, and back to the user's own choice. A new
+     * core for the next file gets the same call from the base, so the choice holds across files.
+     */
+    override suspend fun applyVideoSuspended(suspended: Boolean) {
+        withContext(coreCalls) {
+            val selection = when {
+                suspended -> TrackSelection.No
+                else -> when (val choice = playerManager.currentTrackChoices.video) {
+                    TrackChoice.Off -> TrackSelection.No
+                    is TrackChoice.ByIndex -> TrackSelection.Id(choice.index)
+                    else -> TrackSelection.Auto
+                }
+            }
+            withCore { it[MpvProperties.Vid] = selection }
         }
     }
 

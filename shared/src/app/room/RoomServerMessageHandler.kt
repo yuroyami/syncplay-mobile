@@ -141,7 +141,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 now = SyncClock.now(),
                 playerPositionMs = viewmodel.playerManager.estimatedPositionMs().toDouble(),
                 hasMedia = decisionMedia != null,
-                isInBackground = viewmodel.uiState.isInBackground,
+                isInBackground = viewmodel.uiState.isHeld,
                 supportsSpeedAdjustment = viewmodel.player.supportsSpeedAdjustment,
                 selfName = session.currentUsername,
                 followerInControlledRoom = session.isInControlledRoomWithoutController(),
@@ -150,7 +150,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     fastForward = Preferences.SYNC_FASTFORWARD.value(),
                     slowdown = Preferences.SYNC_SLOWDOWN.value(),
                     dontSlowWithMe = Preferences.SYNC_DONT_SLOW_WITH_ME.value(),
-                ),
+                ).let { if (viewmodel.uiState.isAway) it.whenAway() else it },
                 messageAge = messageAge,
                 // Stored in tenths of a second so the sliders are whole numbers.
                 rewindThreshold = Preferences.SYNC_REWIND_THRESHOLD.value() / 10.0,
@@ -187,7 +187,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
          * playstate", not "it carried a position". The reference client reads a missing position
          * as zero, so a State whose playstate has no position still gets an ACK with a position. */
         if (protocol.lastGlobalUpdate != null && state.playstate != null) {
-            val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
+            val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value() || viewmodel.uiState.isAway) {
                 // Use the room's current expected position, not the last 1 Hz snapshot. This
                 // matches the extrapolation in Python's getGlobalPosition().
                 protocol.extrapolatedGlobalPositionMs() / 1000.0

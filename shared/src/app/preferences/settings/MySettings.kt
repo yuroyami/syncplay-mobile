@@ -83,6 +83,8 @@ import app.preferences.Preferences.TLS_ENABLE
 import app.preferences.Preferences.TLS_REQUIRED
 import app.preferences.Preferences.TRUSTED_DOMAINS
 import app.preferences.Preferences.UNPAUSE_ACTION
+import app.preferences.Preferences.KEEP_SOUND_AWAY
+import app.utils.supportsBackgroundSound
 import app.room.ui.misc.VisualizerNoticeControl
 
 val GLOBAL_GENERAL = SettingCategory(
@@ -98,6 +100,8 @@ val GLOBAL_GENERAL = SettingCategory(
     +ERASE_SHORTCUTS
     +MEDIA_DIRECTORIES
     +RESUME_PLAYBACK
+    // Only a phone or a tablet leaves the screen with the room still wanted. See KEEP_SOUND_AWAY.
+    if (supportsBackgroundSound) +KEEP_SOUND_AWAY
 }
 
 val GLOBAL_LANGUAGE = SettingCategory(
@@ -218,6 +222,7 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +SUBTITLE_SIZE
     +HUD_AUTO_HIDE_SECONDS
     +ROOM_ORIENTATION
+    if (supportsBackgroundSound) +KEEP_SOUND_AWAY
     group({ it.settingsGroupSeeking }) {
         +SEEK_FORWARD_JUMP
         +SEEK_BACKWARD_JUMP

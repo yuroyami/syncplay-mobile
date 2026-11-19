@@ -89,6 +89,14 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
 
+    /* An iPhone or an iPad keeps the room's sound when the app leaves the screen. The audio
+     * background mode is declared in Info.plist. */
+    override val supportsBackgroundSound: Boolean get() = true
+
+    override fun onListeningAway(viewmodel: app.room.RoomViewmodel, active: Boolean) {
+        app.player.AwayAudioEvents.update(viewmodel, active)
+    }
+
     override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
 
     }

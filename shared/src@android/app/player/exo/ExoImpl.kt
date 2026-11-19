@@ -369,6 +369,17 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         withContext(Dispatchers.Main.immediate) { seekTo(chapter.timeOffsetMillis) }
     }
 
+    /** Disables the video renderer while the room is away. The user's own Off holds on return. */
+    override suspend fun applyVideoSuspended(suspended: Boolean) {
+        withContext(Dispatchers.Main.immediate) {
+            val player = exoplayer ?: return@withContext
+            val off = suspended || playerManager.currentTrackChoices.video == TrackChoice.Off
+            player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, off)
+                .build()
+        }
+    }
+
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
 

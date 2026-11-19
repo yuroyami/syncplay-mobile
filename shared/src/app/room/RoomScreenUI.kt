@@ -258,7 +258,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                             }
                             .alpha(if (hasVideo) 1f else 0f)
                             .background(Color(videoBackground)),
-                        onPlayerReady = { platformCallback.mediaSessionInitialize(viewmodel) },
+                        onPlayerReady = {
+                            platformCallback.mediaSessionInitialize(viewmodel)
+                            viewmodel.uiState.watchBackgroundSoundReadiness()
+                        },
                     )
                 }
             }

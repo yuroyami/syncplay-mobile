@@ -69,11 +69,36 @@ internal class AndroidPlatformCallback(
         // Build the session here and leave it in RoomMediaSessionHolder for the service, because
         // the player behind it is whichever engine the room built.
         val player = RoomMediaSessionPlayer(viewmodel, android.os.Looper.getMainLooper())
-        RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).build())
+        // A tap on the notification brings the room back. The session offers no other control.
+        val openRoom = android.app.PendingIntent.getActivity(
+            appContext, 0,
+            Intent(appContext, SyncplayActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).setSessionActivity(openRoom).build())
+        // Android refused the foreground: a room away from the screen cannot play, so it holds.
+        RoomMediaSessionHolder.onForegroundRefused = {
+            if (viewmodel.uiState.isAway) viewmodel.uiState.hold(app.room.HoldReason.ListeningEnded)
+        }
         // The room starts with an idle player, and Media3 makes the service a foreground service
         // when playback starts. startForegroundService here would start Android's startForeground
         // deadline before there is anything to play.
         a.startService(Intent(a, SyncplayMediaSessionService::class.java))
+    }
+
+    /* A television is the shared screen, so it never plays away from it. */
+    override val supportsBackgroundSound: Boolean
+        get() = !isTelevision()
+
+    @OptIn(androidx.media3.common.util.UnstableApi::class)
+    override fun backgroundSoundReady(ready: Boolean) {
+        RoomMediaSessionHolder.setReadyOnScreen(ready)
+    }
+
+    @OptIn(androidx.media3.common.util.UnstableApi::class)
+    override fun onListeningAway(viewmodel: app.room.RoomViewmodel, active: Boolean) {
+        RoomMediaSessionHolder.setListeningAway(active)
+        app.player.AwayListening.update(appContext, viewmodel, active)
     }
 
     @OptIn(androidx.media3.common.util.UnstableApi::class)

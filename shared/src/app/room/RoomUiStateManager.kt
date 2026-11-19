@@ -4,6 +4,23 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.ui.focus.FocusRequester
 import app.AbstractManager
 import app.player.PlayerImpl.TrackType
+import androidx.lifecycle.viewModelScope
+import app.preferences.Preferences
+import app.preferences.flow
+import app.preferences.value
+import app.protocol.models.ConnectionState
+import app.utils.loggy
+import app.utils.platformCallback
+import app.utils.supportsBackgroundSound
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.milliseconds
@@ -262,45 +279,170 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     * - [onLifecycleStop] → `viewDidDisappear` / `onStop`
     */
 
-    /** True after [onLifecycleStop] outside picture-in-picture, until the room is in front again. */
+    /** Why this device holds its playback. While any reason is set, it stays paused here. */
+    val holds = PlaybackHolds()
+
+    private val visibleState = MutableStateFlow(true)
+
+    /** False while the room is not on screen. Picture-in-picture counts as on screen. */
+    val visible: Boolean get() = visibleState.value
+
+    /** True while this device holds its playback: it stays paused, reports the room's position and takes no corrections. */
+    val isHeld: Boolean get() = holds.held
+
+    /** True while the room is not on screen. Such a device follows the room and never moves it. */
+    val isAway: Boolean get() = !visibleState.value
+
+    /** True while the room is not on screen and still plays its sound on this device. */
+    val isListeningAway: Boolean get() = isAway && !isHeld
+
+    /** How long the room may stay paused while it listens away. Tests make it short. */
+    internal var pauseGrace: Duration = LISTEN_AWAY_PAUSE_GRACE
+
+    /** How long a lost connection may last while the room listens away. Tests make it short. */
+    internal var connectionGrace: Duration = LISTEN_AWAY_CONNECTION_GRACE
+
     @Volatile
-    var background = false
+    private var listeningActive = false
+    private var listenJob: Job? = null
+    private var connectionJob: Job? = null
+    private var readinessJob: Job? = null
 
     fun onLifecycleCreate() {
         // Nothing to do
     }
 
-    fun onLifecycleStart() = leaveBackground()
+    fun onLifecycleStart() = comeBack()
 
-    fun onLifecycleResume() = leaveBackground()
+    fun onLifecycleResume() = comeBack()
 
     fun onLifecyclePause() {
         // Nothing to do
     }
 
     /**
-     * Pauses playback, unless the room is in picture-in-picture. The pause is local. The expected
-     * state changes first, so the divergence collector sees nothing new. The outbound State keeps
-     * reporting the room's position, so a phone in a pocket never pulls the room back to where it
-     * stopped.
+     * The room left the screen, outside picture-in-picture. With background sound, the sound
+     * keeps playing here and only the video stops. Otherwise this device holds: it pauses locally,
+     * and the room is not told. iOS reports both the view and the app leaving, so only the first
+     * call counts.
      */
     fun onLifecycleStop() {
         if (hasEnteredPipMode.value) return
-        background = true
+        if (!visibleState.value) return
+        visibleState.value = false
+        if (keepsSound()) startListeningAway() else hold(HoldReason.LeftScreen)
+    }
+
+    private fun keepsSound(): Boolean = keepsSoundAway(
+        settingOn = Preferences.KEEP_SOUND_AWAY.value(),
+        platformSupports = supportsBackgroundSound,
+        hasMedia = viewmodel.media != null,
+        playerReady = viewmodel.playerManager.isPlayerReady.value,
+        connectedOrSolo = viewmodel.isSoloMode || viewmodel.networkManager.state.value == ConnectionState.CONNECTED,
+    )
+
+    /**
+     * Holds this device for [reason]. The first reason pauses it here, and the room is not told.
+     * The expected state changes first, so the divergence collector sees nothing new.
+     */
+    fun hold(reason: HoldReason) {
+        if (!holds.add(reason)) return
+        loggy("Holding playback: $reason")
+        stopListeningAway()
         if (!viewmodel.playerManager.isPlayerReady.value) return
         viewmodel.protocol.noteExpectedPlaybackState(paused = true)
         onMainThread { viewmodel.player.pause() }
     }
 
-    /** Back in front: the next server State seeks to the room position and applies play or pause. */
-    private fun leaveBackground() {
-        if (!background) return
-        background = false
+    /**
+     * Drops [reason]. When it was the last one, the next server State brings this device back to
+     * the room's position and play state. A room still away listens again, if it still can.
+     */
+    fun release(reason: HoldReason) {
+        if (!holds.remove(reason)) return
+        loggy("Released playback: $reason")
+        if (isAway && !keepsSound()) {
+            holds.add(HoldReason.LeftScreen)
+            return
+        }
         viewmodel.protocol.resumeFromBackground()
+        if (isAway) startListeningAway()
     }
 
-    val isInBackground: Boolean
-        get() = background
+    /** Back on screen: every hold ends, video comes back, and a held device re-anchors to the room. */
+    private fun comeBack() {
+        if (visibleState.value && !holds.held) return
+        visibleState.value = true
+        stopListeningAway()
+        // Even a held room tells the platform, which may still wait for the audio focus to return.
+        platformCallback.onListeningAway(viewmodel, false)
+        connectionJob?.cancel()
+        connectionJob = null
+        if (viewmodel.playerManager.isPlayerReady.value) onMainThread { viewmodel.player.suspendVideo(false) }
+        if (holds.clear()) viewmodel.protocol.resumeFromBackground()
+    }
+
+    /**
+     * The sound keeps playing while the room is away. The platform keeps the device awake and
+     * watches the audio focus and the headphones. A room that stays paused too long, or a
+     * connection that stays lost, ends it with a hold.
+     */
+    private fun startListeningAway() {
+        if (!listeningActive) {
+            listeningActive = true
+            platformCallback.onListeningAway(viewmodel, true)
+        }
+        onMainThread { if (isAway) viewmodel.player.suspendVideo(true) }
+        listenJob?.cancel()
+        listenJob = viewmodel.viewModelScope.launch {
+            viewmodel.playerManager.isNowPlaying.collectLatest { playing ->
+                if (playing) return@collectLatest
+                delay(pauseGrace)
+                hold(HoldReason.ListeningEnded)
+            }
+        }
+        if (connectionJob == null && !viewmodel.isSoloMode) {
+            connectionJob = viewmodel.viewModelScope.launch {
+                viewmodel.networkManager.state.collectLatest { state ->
+                    if (state == ConnectionState.CONNECTED) {
+                        release(HoldReason.ConnectionLost)
+                        return@collectLatest
+                    }
+                    delay(connectionGrace)
+                    if (isListeningAway) hold(HoldReason.ConnectionLost)
+                }
+            }
+        }
+    }
+
+    private fun stopListeningAway() {
+        listenJob?.cancel()
+        listenJob = null
+        if (!listeningActive) return
+        listeningActive = false
+        platformCallback.onListeningAway(viewmodel, false)
+    }
+
+    /**
+     * Tells the platform, while the room is on screen, whether it could keep its sound if it left
+     * now. Android starts its media service in the foreground then. Called once the player is ready.
+     */
+    fun watchBackgroundSoundReadiness() {
+        if (readinessJob != null || !supportsBackgroundSound) return
+        val connected = if (viewmodel.isSoloMode) flowOf(true)
+        else viewmodel.networkManager.state.map { it == ConnectionState.CONNECTED }
+        readinessJob = viewmodel.viewModelScope.launch {
+            combine(
+                Preferences.KEEP_SOUND_AWAY.flow(),
+                viewmodel.playerManager.media,
+                viewmodel.playerManager.isPlayerReady,
+                connected,
+                visibleState,
+            ) { on, media, ready, online, shown ->
+                shown && keepsSoundAway(on, true, media != null, ready, online)
+            }.distinctUntilChanged().collect { platformCallback.backgroundSoundReady(it) }
+        }
+    }
 
 
     /** Resets all UI state to defaults. */
@@ -318,5 +460,12 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         revealedImages.clear()
         mutedUsers.clear()
         VideoBounds.forget()
+        stopListeningAway()
+        connectionJob?.cancel()
+        connectionJob = null
+        readinessJob?.cancel()
+        readinessJob = null
+        holds.clear()
+        visibleState.value = true
     }
 }

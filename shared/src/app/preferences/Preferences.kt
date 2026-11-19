@@ -3,6 +3,7 @@ package app.preferences
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Gif
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.BookmarkRemove
@@ -149,6 +150,16 @@ object Preferences {
      * How the room is held: the name of a [RoomOrientation]. Landscape and Portrait do not turn
      * with the device. Auto follows the device, and the system rotation lock applies.
      */
+    /**
+     * Whether the room keeps playing its sound on this device when the room leaves the screen.
+     * Off, the device pauses on its own until it comes back. Only phones and tablets show it.
+     */
+    val KEEP_SOUND_AWAY = Pref("pref_keep_sound_away", false) {
+        title = { it.settingKeepSoundAwayTitle }
+        summary = { it.settingKeepSoundAwaySummary }
+        icon = Icons.Filled.Headphones
+    }
+
     val ROOM_ORIENTATION = Pref("pref_room_orientation", RoomOrientation.Landscape.name) {
         title = { it.settingRoomOrientationTitle }
         summary = { it.settingRoomOrientationSummary }

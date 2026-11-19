@@ -92,6 +92,27 @@ interface PlatformCallback {
     val canHoldLandscape: Boolean get() = false
 
     /**
+     * Whether this device can keep the room's sound when the room leaves the screen: Android
+     * phones and tablets, and iPhone and iPad. A television is the shared screen, and a desktop
+     * window already keeps playing when it is minimized.
+     */
+    val supportsBackgroundSound: Boolean get() = false
+
+    /**
+     * The room is on screen, and it can keep its sound if it leaves now ([ready]), or it no longer
+     * can. Android starts its media service in the foreground here, because Android 17 lets an app
+     * play in the background only through a service that started while the app was visible.
+     */
+    fun backgroundSoundReady(ready: Boolean) {}
+
+    /**
+     * The room left the screen and keeps playing its sound ([active]), or that ended. The platform
+     * keeps the device awake, watches the audio focus and the headphones, and calls
+     * [app.room.RoomUiStateManager.hold] on [viewmodel] when the sound must stop on this device.
+     */
+    fun onListeningAway(viewmodel: app.room.RoomViewmodel, active: Boolean) {}
+
+    /**
      * Enters or leaves Picture-in-Picture mode.
      *
      * @param enable True to enter Picture-in-Picture mode, false to leave it

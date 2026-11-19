@@ -306,8 +306,9 @@ protocol) mark a play state change that the other side has not confirmed yet.
   undo record.
 - Online, the server's echo of a seek fills the undo history. Only solo mode records a seek for
   undo when it sends it.
-- `controlPlayback` does nothing while the app is in the background: nothing reaches the engine
-  and nothing goes to the room.
+- `controlPlayback` does nothing while the device is held: nothing reaches the engine and nothing
+  goes to the room. A device that listens away (see below) moves its own engine, but sends nothing
+  to the room.
 - Readiness is the Syncplay feature where each person marks themselves ready before play starts.
   When the room supports it, a play that the readiness conditions refuse marks the user as ready
   instead.
@@ -332,8 +333,21 @@ protocol) mark a play state change that the other side has not confirmed yet.
 - On Android, set the picture-in-picture flag before you ask the system to enter
   picture-in-picture. Then hide the room controls.
 - When the app stops, the player pauses on this device only, unless the app is in
-  picture-in-picture. The room is not told. The `background` flag stays `@Volatile`, because code
-  off the main thread reads it.
+  picture-in-picture or the "Keep the sound in the background" setting applies. The room is not told.
+- "Held" and "away" are two different states. A device is held while any `HoldReason` is set: it
+  stays paused, reports the room's position and takes no correction. A device is away while the
+  room is off screen. An away device that is not held listens away: it plays the sound, follows
+  the room and never sends a pause, a seek or a correction to the room.
+- The first-sync step skips a held device. Without that check, a reconnect or a new file while
+  held seeks the whole room to the held device's stale position.
+- The sync field `isInBackground` (in `SyncContext` and `PositionInputs`) now means "held". Keep the
+  name, because the replay JSON files use it as a key.
+- Hold only through `hold(reason)` and release only through `release(reason)`. They pause once on
+  the first reason and re-anchor once on the last. A direct `pause()` from platform code leaves
+  the room thinking this device still plays.
+- Android starts the media service in the foreground while the room is on screen with background
+  sound possible (`backgroundSoundReady`). Android 17 refuses a foreground start from the
+  background without an error, so a later start leaves a locked phone silent.
 
 ### Engine lifecycle
 
@@ -347,8 +361,7 @@ protocol) mark a play state change that the other side has not confirmed yet.
 - The base `seekTo` writes the target into the position sample at once, so the next state
   acknowledgement reports the target. Every other engine calls it before it seeks. VLCKit calls it
   only when it submits a held seek to the native player.
-- The base `seekTo` has no background check. `controlPlayback` and the sync decision handle the
-  background.
+- The base `seekTo` has no hold check. `controlPlayback` and the sync decision handle holds.
 
 ### VLCKit on iOS
 

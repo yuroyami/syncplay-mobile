@@ -26,6 +26,7 @@ data class PositionInputs(
     val globalPositionSetAt: Instant?,
     val globalPaused: Boolean,
     val hasMedia: Boolean,
+    /** True while this device holds its playback (paused on purpose). The name stays for the recorded sessions. */
     val isInBackground: Boolean,
     /** The engine's estimated position, in milliseconds. */
     val localPositionMs: Double,
@@ -40,6 +41,8 @@ data class PositionInputs(
     val userOffsetSeconds: Double = 0.0,
     /** Accepted seek whose player command is still queued on Main. */
     val pendingSeekPositionMs: Long? = null,
+    /** True while the room is not on screen. Such a device follows the room and never moves it. */
+    val isAway: Boolean = false,
 )
 
 /** The position to send, and whether masking should stay armed. */
@@ -65,6 +68,9 @@ fun reportablePosition(inputs: PositionInputs): PositionReport {
 
     // Paused in the background: the room must not adopt a frozen watcher as its slowest.
     if (inputs.isInBackground) return PositionReport(globalMs / 1000.0, keepMasking = true)
+
+    // Away from the screen: a stall in a pocket must never pull the room back, so report the room.
+    if (inputs.isAway) return PositionReport(globalMs / 1000.0, keepMasking = true)
 
     // The seek ACK can run before Main updates the position cache. Never acknowledge the old
     // timeline.

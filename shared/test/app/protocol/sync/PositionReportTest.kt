@@ -26,6 +26,7 @@ class PositionReportTest {
         localMs: Double = 100_000.0,
         durationMs: Double = 7_200_000.0,
         deadline: Instant? = null,
+        away: Boolean = false,
     ) = PositionInputs(
         now = now,
         globalPositionMs = globalMs,
@@ -36,7 +37,22 @@ class PositionReportTest {
         localPositionMs = localMs,
         durationMs = durationMs,
         awaitingRoomResyncDeadline = deadline,
+        isAway = away,
     )
+
+    // ---- away from the screen ----
+
+    @Test
+    fun a_device_away_from_the_screen_reports_the_room_and_never_its_own_stall() {
+        val report = reportablePosition(inputs(now = t0 + 2.seconds, localMs = 90_000.0, away = true))
+        assertEquals(102.0, report.positionSeconds, "the room's position, not the stalled 90 s")
+    }
+
+    @Test
+    fun a_device_on_screen_reports_its_own_position() {
+        val report = reportablePosition(inputs(localMs = 90_000.0))
+        assertEquals(90.0, report.positionSeconds)
+    }
 
     // ---- extrapolation ----
 

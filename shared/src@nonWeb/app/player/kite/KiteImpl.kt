@@ -556,6 +556,27 @@ internal class KiteImpl(
         }
     }
 
+    /**
+     * Parks video decoding while the room is away, at once and without the parking delay, because
+     * nothing draws the picture then. On return the picture comes back only if it was showing.
+     */
+    override suspend fun applyVideoSuspended(suspended: Boolean) {
+        withContext(Dispatchers.Main.immediate) {
+            val player = kite ?: return@withContext
+            if (!suspended) {
+                if (pictureShown.value) showPicture(player)
+                return@withContext
+            }
+            if (videoParked) return@withContext
+            try {
+                player.setVideoEnabled(false)
+                videoParked = true
+            } catch (_: IllegalStateException) {
+                // A closed player refuses every command, and it decodes nothing anyway.
+            }
+        }
+    }
+
     /** Shows the picture, and wakes video decoding first when it was parked. Main thread only. */
     private fun showPicture(player: KitePlayer) {
         pictureShown.value = true

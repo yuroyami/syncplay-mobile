@@ -117,7 +117,7 @@ class ReadinessManager(private val viewmodel: RoomViewmodel) : AbstractManager(v
     private fun stillEligible(): Boolean {
         // Without a connection, the play at the end of the countdown would reach no one.
         if (viewmodel.networkManager.state.value != ConnectionState.CONNECTED) return false
-        if (viewmodel.uiState.isInBackground || viewmodel.media == null) return false
+        if (viewmodel.uiState.isHeld || viewmodel.uiState.isAway || viewmodel.media == null) return false
         val session = viewmodel.session
         val room = summariseReadiness(session.userList.value, session.currentUsername)
         summary.value = room

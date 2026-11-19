@@ -263,12 +263,20 @@ internal object RoomRig {
     }
 
     /** A platform that does nothing and reports no brightness control. */
-    internal fun inertPlatform(pictureInPicture: Boolean, canHoldLandscape: Boolean = false): PlatformCallback = Proxy.newProxyInstance(
+    internal fun inertPlatform(
+        pictureInPicture: Boolean,
+        canHoldLandscape: Boolean = false,
+        backgroundSound: Boolean = false,
+        /** Sees each call of the platform, by name, so a test can check what the room asked for. */
+        calls: MutableList<String>? = null,
+    ): PlatformCallback = Proxy.newProxyInstance(
         PlatformCallback::class.java.classLoader,
         arrayOf(PlatformCallback::class.java),
     ) { proxy, method, args ->
+        calls?.add(method.name + (args?.filter { it is Boolean }?.joinToString(prefix = "(", postfix = ")") ?: ""))
         when (method.name) {
             "getSupportsPictureInPicture" -> pictureInPicture
+            "getSupportsBackgroundSound" -> backgroundSound
             "getCanHoldLandscape" -> canHoldLandscape
             "equals" -> proxy === args?.firstOrNull()
             "hashCode" -> System.identityHashCode(proxy)
