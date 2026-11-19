@@ -1,5 +1,6 @@
 package app.home.components
 
+import app.uicomponents.LocalWindowControls
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -63,7 +64,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
 
     Column(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)))) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(Space.bar).padding(start = Space.gutter, end = Space.gapTight),
+            modifier = Modifier.fillMaxWidth().windowInsetsPadding(LocalWindowControls.current).height(Space.bar).padding(start = Space.gutter, end = Space.gapTight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // The logo is a button: it opens About, which holds the way into solo mode. So a

@@ -1,5 +1,7 @@
 package app.design
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -516,6 +518,23 @@ class PortraitRoomTest {
             driver.frames(20)
             assertNull(described(EnAppStrings.roomFullScreenExit), "A browser shows no key in the landscape room")
         }
+    }
+
+    @Test
+    fun theMessageBoxStartsAfterTheMacWindowButtons() {
+        fun gifKeyLeft(): Float {
+            var left = 0f
+            RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 1280, heightDp = 720) {
+                driver.frames(20)
+                left = boundsOf(assertNotNull(described(EnAppStrings.roomGifOpen), "The message box shows its GIF key")).left.dp()
+            }
+            return left
+        }
+        val plain = gifKeyLeft()
+        RoomRig.windowControls = WindowInsets(left = 72.dp)
+        val mac = try { gifKeyLeft() } finally { RoomRig.windowControls = WindowInsets(0) }
+        assertTrue(plain < 72f, "Without window buttons, the message box starts at the edge ($plain dp)")
+        assertEquals(plain + 72f, mac, 1f, "The message box moves right by the width of the window buttons")
     }
 
     @Test

@@ -1,5 +1,6 @@
 package app.uicomponents.frames
 
+import app.uicomponents.LocalWindowControls
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -67,6 +68,7 @@ fun ScreenFrame(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .windowInsetsPadding(LocalWindowControls.current)
                     .height(Space.bar)
                     .padding(start = if (onBack != null) Space.gapTight else Space.gutter, end = Space.gapTight),
                 verticalAlignment = Alignment.CenterVertically,

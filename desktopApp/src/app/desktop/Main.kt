@@ -1,5 +1,8 @@
 package app.desktop
 
+import app.uicomponents.LocalWindowControls
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +46,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.Dimension
 import java.awt.Toolkit
 import kotlin.math.roundToInt
+
+private val isMac = System.getProperty("os.name").orEmpty().lowercase().contains("mac")
+
+/** The width of the close, minimize and full-screen buttons of a macOS window, with their margins. */
+private val MAC_WINDOW_BUTTONS = WindowInsets(left = 72.dp)
 
 /** Global viewmodel handle, as in the Android Activity and the iOS controller. */
 var globalViewmodel: SyncplayViewmodel? by mutableStateOf(null)
@@ -115,7 +123,20 @@ fun main(args: Array<String>) {
                 }
             }
 
-            AdamScreen(onGlobalViewmodel = { globalViewmodel = it })
+            // On macOS the app draws under the title bar, so the bar takes the app's colors. The
+            // window buttons stay at the top-left corner, and the top rows start after them.
+            if (isMac) {
+                LaunchedEffect(Unit) {
+                    window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+                    window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+                    window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+                    MacTitleBar.apply(window.title)
+                }
+            }
+            val controls = if (isMac && windowState.placement != WindowPlacement.Fullscreen) MAC_WINDOW_BUTTONS else WindowInsets(0)
+            CompositionLocalProvider(LocalWindowControls provides controls) {
+                AdamScreen(onGlobalViewmodel = { globalViewmodel = it })
+            }
         }
     }
 }

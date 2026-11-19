@@ -105,6 +105,8 @@ lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
 kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "koroutines" }
+# The desktop app calls AppKit with it for the macOS title bar. KiteFFmpeg already brings this version.
+jna = { module = "net.java.dev.jna:jna", version = "5.19.1" }
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "koroutines" }
 jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }

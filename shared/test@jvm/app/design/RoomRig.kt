@@ -1,5 +1,7 @@
 package app.design
 
+import androidx.compose.foundation.layout.WindowInsets
+import app.uicomponents.LocalWindowControls
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -133,6 +135,7 @@ internal object RoomRig {
                     LocalScreen provides destination,
                     LocalChatPalette provides MessagePalette(),
                     LocalScreenReaderActive provides screenReader,
+                    LocalWindowControls provides windowControls,
                 ) {
                     RoomScreenUI(viewmodel)
                 }
@@ -264,6 +267,9 @@ internal object RoomRig {
     }
 
     /** A platform that does nothing and reports no brightness control. */
+    /** The corner of the window buttons, as the macOS desktop app sets it. Set it before [drive]. */
+    internal var windowControls: WindowInsets = WindowInsets(0)
+
     /** The window state of a desktop platform. Set it before [drive] to test the desktop room. Null is a phone or a browser. */
     internal var desktopWindow: MutableStateFlow<Boolean>? = null
 

@@ -1,5 +1,6 @@
 package app.room.ui.chat
 
+import app.uicomponents.LocalWindowControls
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -136,6 +137,7 @@ fun RoomChatSection(modifier: Modifier) {
                     // nothing.
                     .pointerInput(Unit) { detectTapGestures { } }
                     .windowInsetsPadding(cutoutInsets)
+                    .windowInsetsPadding(LocalWindowControls.current)
                     .padding(horizontal = 8.dp),
                 gifPanelVisible = gifPanelVisible,
                 isHUDVisible = isHUDVisible,

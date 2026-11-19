@@ -11,6 +11,8 @@ dependencies:
   - $compose.desktop.currentOs
   # Registers Dispatchers.Main on the AWT event thread.
   - $libs.kotlin.coroutines.swing
+  # Calls AppKit for the macOS title bar (MacTitleBar.kt).
+  - $libs.jna
 
 settings:
   jvm:

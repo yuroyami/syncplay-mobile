@@ -750,6 +750,12 @@ string through them.
   request flagged.
 - The layout stays left to right in every language, Arabic included. That is a decision, not an
   oversight.
+- On macOS, the desktop app draws under the title bar, and `MacTitleBar` adds an empty unified
+  toolbar through JNA, so the window buttons center in a 52 point bar. It finds the window by its
+  title, so keep the window title "Synkplay". Call `objc_msgSend` only through fixed-arity
+  overloads: on Apple silicon, a variadic JNA call passes the arguments in the wrong place.
+- A top row that starts at the left edge of a screen reads `LocalWindowControls`, so it starts
+  after the macOS window buttons. A new screen with its own top row needs the same padding.
 
 ## 6. Standing decisions
 
