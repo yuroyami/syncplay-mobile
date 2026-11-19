@@ -100,6 +100,13 @@ class SyncDecisionTest {
     // ---- first sync ----
 
     @Test
+    fun a_held_client_gets_no_first_sync_and_still_takes_the_anchor() {
+        val out = decideSync(playstate(position = 42.0, paused = false), SyncState(), ctx(background = true))
+        assertTrue(out.actions.none { it is SyncAction.FirstSync }, "a held phone must not start playing")
+        assertEquals(42_000.0, out.state.globalPositionMs)
+    }
+
+    @Test
     fun the_first_state_with_media_hard_seeks_and_applies_the_room_pause() {
         val out = decideSync(playstate(position = 42.0, paused = true), SyncState(), ctx(hasMedia = true))
         val first = out.actions.filterIsInstance<SyncAction.FirstSync>().single()

@@ -167,7 +167,9 @@ fun decideSync(playstate: PlaystateData?, state: SyncState, ctx: SyncContext): S
         lastGlobalPositionSetAt = ctx.now,
     )
 
-    if (state.lastGlobalUpdate == null && ctx.hasMedia) {
+    /* A held client stays paused on purpose, and its return to the room re-anchors anyway. A
+     * first sync here would start playback on a locked phone after a reconnect or a file load. */
+    if (state.lastGlobalUpdate == null && ctx.hasMedia && !ctx.isInBackground) {
         actions += SyncAction.FirstSync((agedPosition * 1000.0).toLong(), paused)
     }
     next = next.copy(lastGlobalUpdate = ctx.now)
