@@ -4,13 +4,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -51,6 +54,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -59,13 +63,16 @@ import kotlin.test.assertTrue
  * screen with its system bars already taken off, because the harness has no insets of its own:
  * 360x640 with three-button navigation leaves 360x568, an iPhone 14 leaves 390x763, a Pixel 412x867.
  *
- * Two things are pinned. No label is ever cut at the default text size, and the join key is on
- * screen at rest wherever the form is meant to fit without scrolling. On most phones the join key
- * stays on screen only because the form tightens at short heights.
+ * Two things are pinned. No label is ever cut at the default text size, and the whole join key is
+ * on screen at rest wherever the form is meant to fit without scrolling. At rest means a touch
+ * screen. In keyboard input mode the first field takes focus when the screen opens, and its help
+ * line can push the join key under the edge of a short phone: the compact spacing keeps the key on
+ * screen only while no help line shows. On most phones the join key stays on screen only because
+ * the form tightens at short heights.
  */
 class HomeGoldenTest {
 
-    private class Home(val file: File, val textLayouts: List<TextLayoutResult>, val join: Rect?, val wholeJoin: Rect?, val heightPx: Int) {
+    private class Home(val file: File, val textLayouts: List<TextLayoutResult>, val joinKey: Rect?, val heightPx: Int) {
         fun assertAllTextFits() {
             assertTrue(textLayouts.isNotEmpty(), "No text layouts in ${file.name}")
             for (layout in textLayouts) {
@@ -77,25 +84,22 @@ class HomeGoldenTest {
             }
         }
 
-        /**
-         * The join key is on screen. By default the check reads the part of the key that a scroll
-         * leaves in view, so a key cut by the window edge still passes. With [whole], the whole key
-         * must be on screen.
-         */
-        fun assertJoinOnScreen(whole: Boolean = false) {
-            val bounds = assertNotNull(if (whole) wholeJoin else join, "${file.name}: no join key in the semantics tree")
+        /** The whole join key is on screen. The check reads the key as laid out, so a key cut by the window edge fails. */
+        fun assertJoinOnScreen() {
+            val bounds = assertNotNull(joinKey, "${file.name}: no join key in the semantics tree")
             assertTrue(bounds.bottom <= heightPx + 1f && bounds.top >= 0f, "${file.name}: join key at ${bounds.top}..${bounds.bottom} px, window is $heightPx px tall")
         }
     }
 
-    private fun collect(node: SemanticsNode, texts: MutableList<TextLayoutResult>, joins: MutableList<Rect>, wholeJoins: MutableList<Rect> = mutableListOf()) {
+    private fun collect(node: SemanticsNode, texts: MutableList<TextLayoutResult>, joinKeys: MutableList<Rect>) {
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(texts)
-        if (node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == JOIN_LABEL } == true) {
-            joins += node.boundsInRoot
-            wholeJoins += Rect(node.positionInRoot, node.size.toSize())
-        }
-        node.children.forEach { collect(it, texts, joins, wholeJoins) }
+        // The whole key: the clickable node around the label, as laid out, before any clip.
+        if (SemanticsActions.OnClick in node.config && readsJoin(node)) joinKeys += Rect(node.positionInRoot, node.size.toSize())
+        node.children.forEach { collect(it, texts, joinKeys) }
     }
+
+    private fun readsJoin(node: SemanticsNode): Boolean =
+        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == JOIN_LABEL } == true || node.children.any(::readsJoin)
 
     private fun described(node: SemanticsNode, description: String): SemanticsNode? =
         node.takeIf { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(description) == true }
@@ -104,15 +108,22 @@ class HomeGoldenTest {
     /**
      * One home screen in a window of exactly [w] x [h] dp, no insets, the bar included. With
      * [openRecents], a tap on the recent rooms key opens their row before the render is saved.
+     *
+     * The harness runs in keyboard input mode, as a television or a desktop does: the first field
+     * takes focus when the screen opens and shows its help line. With [touch], the render is a touch
+     * screen, where no field has focus at rest.
      */
-    private fun renderHome(name: String, w: Int, h: Int, fontScale: Float = 1f, openRecents: Boolean = false): Home {
+    private fun renderHome(name: String, w: Int, h: Int, fontScale: Float = 1f, openRecents: Boolean = false, touch: Boolean = false): Home {
         DesignHarness.initDatastore()
         val densityValue = if (w > 1400 || h > 1400) 1f else 2f
         val density = Density(densityValue, fontScale)
         val scene = DesignHarness.onUiThread { ImageComposeScene(width = (w * densityValue).toInt(), height = (h * densityValue).toInt(), density = density, coroutineContext = Dispatchers.Main.immediate) {
             DesignHarness.Frame(TRINITY) {
-                Box(Modifier.size(w.dp, h.dp)) {
-                    HomeScreenUI(remember { HomeViewmodel(mutableStateListOf(Screen.Home)) })
+                val input = if (touch) DesignHarness.FixedInputMode(InputMode.Touch) else LocalInputModeManager.current
+                CompositionLocalProvider(LocalInputModeManager provides input) {
+                    Box(Modifier.size(w.dp, h.dp)) {
+                        HomeScreenUI(remember { HomeViewmodel(mutableStateListOf(Screen.Home)) })
+                    }
                 }
             }
         } }
@@ -129,15 +140,14 @@ class HomeGoldenTest {
                 }
                 repeat(30) { i -> image = DesignHarness.onUiThread { scene.render((i + 31) * 16_000_000L) } }
             }
-            val suffix = (if (openRecents) "-open" else "") + (if (fontScale != 1f) "-fs$fontScale" else "")
+            val suffix = (if (touch) "-touch" else "") + (if (openRecents) "-open" else "") + (if (fontScale != 1f) "-fs$fontScale" else "")
             val file = File(DesignHarness.outDir, "home-$name-${w}x${h}$suffix.png")
             image.encodeToData(EncodedImageFormat.PNG)?.bytes?.let(file::writeBytes)
             val texts = mutableListOf<TextLayoutResult>()
-            val joins = mutableListOf<Rect>()
-            val wholeJoins = mutableListOf<Rect>()
-            DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joins, wholeJoins) } }
-            println("GOLDEN ${file.name} join=${joins.firstOrNull()}")
-            Home(file, texts, joins.firstOrNull(), wholeJoins.firstOrNull(), (h * densityValue).toInt())
+            val joinKeys = mutableListOf<Rect>()
+            DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joinKeys) } }
+            println("GOLDEN ${file.name} join=${joinKeys.firstOrNull()} window=${(h * densityValue).toInt()}px")
+            Home(file, texts, joinKeys.firstOrNull(), (h * densityValue).toInt())
         } finally {
             DesignHarness.onUiThread { scene.close() }
         }
@@ -201,9 +211,10 @@ class HomeGoldenTest {
     fun officialFitsAtRestAndNothingIsCut() {
         saveJoin(official)
         for ((w, h) in fitsAtRest) {
-            val home = renderHome("official", w, h)
-            home.assertAllTextFits()
-            home.assertJoinOnScreen()
+            // Keyboard input mode: the first field has focus and shows its help line, which must fit too.
+            renderHome("official", w, h).assertAllTextFits()
+            // A touch screen at rest: no field has focus, and the whole join key is on screen.
+            renderHome("official", w, h, touch = true).assertJoinOnScreen()
         }
         // The smallest iPhone scrolls a few points; its labels still have to be whole.
         renderHome("official", 320, 548).assertAllTextFits()
@@ -251,7 +262,7 @@ class HomeGoldenTest {
                 val home = renderHome("recent", w, h, openRecents = open)
                 home.assertAllTextFits()
                 // The open row grows above the join key, and the form scrolls so the whole key stays in view.
-                home.assertJoinOnScreen(whole = open)
+                home.assertJoinOnScreen()
             }
         }
         renderHome("recent", 390, 763, fontScale = 1.3f, openRecents = true).assertAllTextFits()
@@ -320,6 +331,53 @@ class HomeGoldenTest {
             }
         }
     }
+
+    /**
+     * The join row with both side keys. The shortcut key and the recent rooms key are 48dp squares
+     * at the end, one gap apart, and the join key takes the rest of the row. Both outer edges sit on
+     * the gutter.
+     */
+    @Test
+    fun joinRowKeepsItsSideKeysFixedAndTheJoinKeyTakesTheRest() {
+        DesignHarness.initDatastore()
+        val recents = listOf(RecentJoin("yuroyami", "movie-night", "syncplay.pl", 8997))
+        for (w in listOf(284, 324, 393)) {
+            val px = 2f
+            val scene = DesignHarness.onUiThread { ImageComposeScene(width = w * 2, height = 200, density = Density(px, 1f), coroutineContext = Dispatchers.Main.immediate) {
+                DesignHarness.Frame(TRINITY) {
+                    Box(Modifier.size(w.dp, 100.dp).padding(Space.gutter)) { JoinRow(onJoin = {}, onSaveShortcut = {}, recents = recents) }
+                }
+            } }
+            try {
+                var image = DesignHarness.onUiThread { scene.render(0L) }
+                repeat(10) { i -> image = DesignHarness.onUiThread { scene.render((i + 1) * 16_000_000L) } }
+                File(DesignHarness.outDir, "join-row-recents-${w}dp.png").writeBytes(image.encodeToData(EncodedImageFormat.PNG)!!.bytes)
+                fun bounds(match: (SemanticsNode) -> Boolean): Rect = DesignHarness.onUiThread {
+                    val node = scene.semanticsOwners.firstNotNullOf { find(it.unmergedRootSemanticsNode, match) }
+                    Rect(node.positionInRoot, node.size.toSize())
+                }
+                val join = bounds { SemanticsActions.OnClick in it.config && readsJoin(it) }
+                val shortcut = bounds { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(EnAppStrings.connectButtonSaveshortcut) == true }
+                val recentKey = bounds { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(EnAppStrings.homeRecentTitle) == true }
+                val label = "join-row-recents-${w}dp"
+                val edge = Space.gutter.value * px
+                val gap = Space.gap.value * px
+                val side = Space.touchMin.value * px
+                assertEquals(edge, join.left, 0.5f, "$label: the join key starts on the gutter")
+                assertEquals(w * px - edge, recentKey.right, 0.5f, "$label: the recent rooms key ends on the gutter")
+                assertEquals(side, shortcut.width, 0.5f, "$label: the shortcut key is a square")
+                assertEquals(side, recentKey.width, 0.5f, "$label: the recent rooms key is a square")
+                assertEquals(gap, shortcut.left - join.right, 0.5f, "$label: one gap between the join key and the shortcut key")
+                assertEquals(gap, recentKey.left - shortcut.right, 0.5f, "$label: one gap between the side keys")
+                println("JOINROW $label join=${join.left}..${join.right} shortcut=${shortcut.left}..${shortcut.right} recents=${recentKey.left}..${recentKey.right} width=${w * px}")
+            } finally {
+                DesignHarness.onUiThread { scene.close() }
+            }
+        }
+    }
+
+    private fun find(node: SemanticsNode, match: (SemanticsNode) -> Boolean): SemanticsNode? =
+        node.takeIf(match) ?: node.children.firstNotNullOfOrNull { find(it, match) }
 
     private companion object {
         const val JOIN_LABEL = "Join room"

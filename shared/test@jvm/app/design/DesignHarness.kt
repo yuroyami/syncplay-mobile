@@ -346,7 +346,8 @@ object DesignHarness {
         else -> null
     }
 
-    private class FixedInputMode(override val inputMode: InputMode) : InputModeManager {
+    /** An input mode that never changes, so a render shows what a touch or a keyboard device starts with. */
+    internal class FixedInputMode(override val inputMode: InputMode) : InputModeManager {
         override fun requestInputMode(inputMode: InputMode): Boolean = false
     }
 
