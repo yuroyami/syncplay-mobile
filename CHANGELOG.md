@@ -6,6 +6,7 @@ Written for people who use the app. The full engineering history is in the commi
 
 - The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
+- On phones and tablets, the key that switches between the portrait and landscape room now shows a phone turned the way the room will turn. Before, it showed the full-screen glyphs.
 - A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125)
 - After a reconnect or a new file, a phone that had left the app could pull the whole room back to its old position. It now takes the room's position. (#125)
 - New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
@@ -32,6 +33,8 @@ Written for people who use the app. The full engineering history is in the commi
 - iOS VLC: after a seek, the position could stop moving while the video played on. The app now sees a stopped position and seeks once more. (#233)
 - Android TV: video now always takes the display path that can carry HDR, also with frosted glass on. (#224)
 - Desktop: the picture-in-picture key is gone, because it did nothing. (#223)
+- Desktop: each release now has installers for macOS (Apple silicon), Windows and Linux. (#222)
+- Desktop: the room has a full-screen key next to the seek bar. It switches the window between full screen and windowed, as the F key does.
 - KitePlayer is updated to 0.3.0.
 - iOS VLC: updated to VLCKit 4.0.0a26.
 - Android: ExoPlayer is updated to Media3 1.12.0-beta01.

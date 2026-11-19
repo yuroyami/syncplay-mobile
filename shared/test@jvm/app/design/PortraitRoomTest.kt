@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.math.abs
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -513,7 +514,26 @@ class PortraitRoomTest {
         }
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = false) {
             driver.frames(20)
-            assertNull(described(EnAppStrings.roomFullScreenExit), "The desktop shows no key in the landscape room")
+            assertNull(described(EnAppStrings.roomFullScreenExit), "A browser shows no key in the landscape room")
+        }
+    }
+
+    @Test
+    fun theDesktopKeySwitchesTheWindowBetweenFullScreenAndWindowed() {
+        val window = MutableStateFlow(false)
+        RoomRig.desktopWindow = window
+        try {
+            RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 1280, heightDp = 720) {
+                driver.frames(20)
+                press(EnAppStrings.roomFullScreen)
+                assertTrue(window.value, "A windowed room goes full screen")
+                driver.frames(5)
+                press(EnAppStrings.roomFullScreenExit)
+                assertFalse(window.value, "A full-screen room goes back to a window")
+                assertFalse(ui.orientationSwitched, "The desktop key never touches the room orientation")
+            }
+        } finally {
+            RoomRig.desktopWindow = null
         }
     }
 

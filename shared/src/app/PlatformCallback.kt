@@ -1,5 +1,6 @@
 package app
 
+import kotlinx.coroutines.flow.StateFlow
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 
@@ -90,6 +91,18 @@ interface PlatformCallback {
      * phones and tablets, and iPhone and iPad. A television, a desktop window and a browser cannot.
      */
     val canHoldLandscape: Boolean get() = false
+
+    /**
+     * Whether the app window is in full screen, on a platform where the room's full-screen key
+     * switches the window between full screen and windowed: the desktop app. Null elsewhere.
+     */
+    val windowFullScreen: StateFlow<Boolean>? get() = null
+
+    /** Switches the app window between full screen and windowed. Only where [windowFullScreen] is set. */
+    fun toggleWindowFullScreen() {}
+
+    /** Whether the room shows its full-screen key. A browser shows none. */
+    val showsRoomViewKey: Boolean get() = canHoldLandscape || windowFullScreen != null
 
     /**
      * Whether this device can keep the room's sound when the room leaves the screen: Android

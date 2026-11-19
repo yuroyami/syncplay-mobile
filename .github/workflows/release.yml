@@ -19,7 +19,7 @@ on:
       build_desktop:
         description: 'Build the desktop installers and attach them to the release'
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: write
@@ -302,8 +302,8 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   # Desktop → one installer per host OS. jpackage can only build for the OS it
-  # runs on, so this is a matrix, not one job. The build_desktop input turns it
-  # on, and it is off by default. When it is off, the release does not wait on it.
+  # runs on, so this is a matrix, not one job. The build_desktop input is on by
+  # default. When it is off, the release does not wait on it.
   # ───────────────────────────────────────────────────────────────────────────
   build-desktop:
     if: inputs.build_desktop
@@ -322,6 +322,9 @@ jobs:
             artifact: desktop-linux
             path: build/desktop/desktopApp/*.deb
     runs-on: ${{ matrix.os }}
+    env:
+      # A step's condition cannot read a secret, so the job says whether the certificate exists.
+      HAS_DEVELOPER_ID: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -348,6 +351,29 @@ jobs:
             "$($wix.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           }
 
+      # The macOS app is signed with a Developer ID certificate when the repository has one.
+      # Without it, the app has an ad-hoc signature and macOS asks the user to allow it once.
+      - name: Import the Developer ID certificate (macOS)
+        if: runner.os == 'macOS' && env.HAS_DEVELOPER_ID == 'true'
+        env:
+          MACOS_DEVELOPER_ID_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
+          MACOS_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -hex 16)"
+          echo -n "$MACOS_DEVELOPER_ID_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/developer-id.p12" -k "$keychain" -P "$MACOS_DEVELOPER_ID_P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
+          read -ra others <<< "$(security list-keychains -d user | tr -d '"')"
+          security list-keychains -d user -s "$keychain" "${others[@]}"
+          rm "$RUNNER_TEMP/developer-id.p12"
+          identity="$(security find-identity -v -p codesigning "$keychain" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
+          test -n "$identity" || { echo "The certificate holds no Developer ID Application identity"; exit 1; }
+          echo "SYNKPLAY_MAC_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
       # Nothing native is downloaded for desktop: the only engine is KitePlayer, and its
       # decoder ships inside the KiteFFmpeg jar.
       - name: Build installer
@@ -355,6 +381,22 @@ jobs:
         run: |
           # shellcheck disable=SC1010 # `do` is a ./kotlin command here, not the shell keyword.
           ./kotlin do packageDesktop -m desktopApp
+
+      # Notarization uses the App Store Connect key of the iOS upload. Stapling puts the ticket
+      # in the image, so the first open also works offline.
+      - name: Notarize the disk image (macOS)
+        if: runner.os == 'macOS' && env.SYNKPLAY_MAC_SIGN_IDENTITY != ''
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey.p8"
+          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > "$key"
+          dmg="$(ls build/desktop/desktopApp/*.dmg)"
+          xcrun notarytool submit "$dmg" --key "$key" --key-id "$APP_STORE_CONNECT_API_KEY_ID" --issuer "$APP_STORE_CONNECT_ISSUER_ID" --wait
+          xcrun stapler staple "$dmg"
+          rm "$key"
 
       - name: Upload installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

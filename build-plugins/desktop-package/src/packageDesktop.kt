@@ -81,6 +81,8 @@ fun packageDesktop(
         while (!names.add(name)) name = "${index++}-${file.name}"
         if (file.name.startsWith("skiko-") && "-awt-runtime" in file.name) {
             skikoLibraries += splitSkikoRuntime(file, input.resolve(name), input)
+        } else if (carriesForeignNatives(file)) {
+            copyWithHostNatives(file, input.resolve(name))
         } else {
             file.copyTo(input.resolve(name))
         }
@@ -153,12 +155,111 @@ fun packageDesktop(
     run(listOf("/usr/bin/plutil", "-replace", "NSSupportsAutomaticGraphicsSwitching", "-string", "true", plist))
     // jpackage writes macOS 10.11 and a microphone text. The Compose Gradle plugin wrote 10.13 and no
     // microphone text, and the app does not use the microphone.
-    run(listOf("/usr/bin/plutil", "-replace", "LSMinimumSystemVersion", "-string", "10.13", plist))
+    // FFmpeg in KiteFFmpeg is built for macOS 12.0, so an older macOS cannot load the decoder.
+    run(listOf("/usr/bin/plutil", "-replace", "LSMinimumSystemVersion", "-string", "12.0", plist))
+    // jpackage refuses a version that starts with 0, so the build passes 1.x. The version that the
+    // user sees in Finder and in the About window is the real one.
+    run(listOf("/usr/bin/plutil", "-replace", "CFBundleShortVersionString", "-string", settings.packageVersion, plist))
     run(listOf("/usr/bin/plutil", "-remove", "NSMicrophoneUsageDescription", plist))
-    run(listOf("/usr/bin/codesign", "--force", "--deep", "--sign", "-", app.absolutePathString()))
-    run(listOf(jpackage.absolutePathString()) + common + installer + listOf("--app-image", app.absolutePathString()))
+    val identity = System.getenv("SYNKPLAY_MAC_SIGN_IDENTITY")?.takeIf { it.isNotBlank() }
+    if (identity == null) {
+        // An ad-hoc signature. macOS runs it, but Gatekeeper asks the user to allow it once.
+        run(listOf("/usr/bin/codesign", "--force", "--deep", "--sign", "-", app.absolutePathString()))
+    } else {
+        signForNotarization(app, identity, workDir.resolve("entitlements.plist"))
+    }
+    // hdiutil builds the disk image, not jpackage: jpackage signs the app again ad hoc while it copies
+    // it, which drops the signature above. The image holds the app and a link to Applications.
+    val stage = workDir.resolve("dmg").createDirectories()
+    run(listOf("/bin/cp", "-R", app.absolutePathString(), stage.absolutePathString()))
+    java.nio.file.Files.createSymbolicLink(stage.resolve("Applications"), Path("/Applications"))
+    val dmg = outputDir.resolve("${settings.packageName}-${settings.packageVersion}.dmg")
+    run(
+        listOf(
+            "/usr/bin/hdiutil", "create", "-volname", settings.packageName, "-srcfolder", stage.absolutePathString(),
+            "-ov", "-format", "UDZO", dmg.absolutePathString(),
+        ),
+    )
+    if (identity != null) run(listOf("/usr/bin/codesign", "--force", "--timestamp", "--sign", identity, dmg.absolutePathString()))
     println("App image: $app")
     println("Installer: ${outputDir.listDirectoryEntries().joinToString()}")
+}
+
+/**
+ * What the bundled JVM needs under the hardened runtime that notarization asks for: the JIT, and
+ * native libraries that KiteFFmpeg and libass unpack at run time, which carry no Apple signature.
+ */
+private val ENTITLEMENTS = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>com.apple.security.cs.allow-jit</key><true/>
+        <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+        <key>com.apple.security.cs.disable-library-validation</key><true/>
+    </dict>
+    </plist>
+""".trimIndent()
+
+/**
+ * Signs [app] with [identity] for notarization: every Mach-O file inside first, then the app, all
+ * with the hardened runtime and a secure timestamp. Set SYNKPLAY_MAC_SIGN_IDENTITY to a
+ * "Developer ID Application" identity of the login or CI keychain to use it.
+ */
+private fun signForNotarization(app: Path, identity: String, entitlements: Path) {
+    entitlements.toFile().writeText(ENTITLEMENTS)
+    fun sign(target: Path) = run(
+        listOf(
+            "/usr/bin/codesign", "--force", "--timestamp", "--options", "runtime",
+            "--entitlements", entitlements.absolutePathString(), "--sign", identity, target.absolutePathString(),
+        ),
+    )
+    val contents = app.resolve("Contents")
+    java.nio.file.Files.walk(contents).use { files ->
+        files.filter { java.nio.file.Files.isRegularFile(it) && isMachO(it) }.toList()
+    }.sortedByDescending { it.nameCount }.forEach(::sign)
+    // The bundled runtime is a bundle of its own. Sign it after its files, and the app last.
+    contents.resolve("runtime").takeIf { it.exists() }?.let(::sign)
+    sign(app)
+}
+
+/** Whether [file] starts with a Mach-O magic number, thin or universal. */
+private fun isMachO(file: Path): Boolean {
+    val head = ByteArray(4)
+    val read = java.nio.file.Files.newInputStream(file).use { it.read(head) }
+    if (read < 4) return false
+    val magic = ((head[0].toInt() and 0xFF) shl 24) or ((head[1].toInt() and 0xFF) shl 16) or
+        ((head[2].toInt() and 0xFF) shl 8) or (head[3].toInt() and 0xFF)
+    return magic == 0xFEEDFACF.toInt() || magic == 0xCFFAEDFE.toInt() || magic == 0xCAFEBABE.toInt() || magic == 0xBEBAFECA.toInt()
+}
+
+/** A folder of native libraries for one system, as KiteFFmpeg and KitePlayer name them: `kiteffmpeg-native/macos-arm64/`. */
+private val nativeFolder = Regex("^[^/]+-native/(linux|macos|windows)-(x64|arm64)/")
+
+/** Whether [jar] carries native libraries for other systems than this host. */
+private fun carriesForeignNatives(jar: Path): Boolean = ZipFile(jar.toFile()).use { zip ->
+    zip.entries().asSequence().any { entry ->
+        nativeFolder.find(entry.name)?.let { it.groupValues[1] != host.id || it.groupValues[2] != arch } == true
+    }
+}
+
+/**
+ * Copies [jar] to [target] without the native libraries of other systems. Each library loads only
+ * the folder of the system it runs on, so the other folders are dead weight: about 70 MB per
+ * installer for KiteFFmpeg and libass.
+ */
+private fun copyWithHostNatives(jar: Path, target: Path) {
+    ZipFile(jar.toFile()).use { zip ->
+        ZipOutputStream(target.outputStream()).use { out ->
+            for (entry in zip.entries()) {
+                val folder = nativeFolder.find(entry.name)
+                if (folder != null && (folder.groupValues[1] != host.id || folder.groupValues[2] != arch)) continue
+                out.putNextEntry(ZipEntry(entry.name))
+                if (!entry.isDirectory) zip.getInputStream(entry).use { it.copyTo(out) }
+                out.closeEntry()
+            }
+        }
+    }
 }
 
 /**

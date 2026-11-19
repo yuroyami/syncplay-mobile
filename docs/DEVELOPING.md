@@ -488,7 +488,15 @@ host tests. It builds Android and iOS only after both jobs pass, so a failing te
 release before any upload.
 
 - The store uploads are optional. You select the Play track when you start the workflow.
-- The desktop packages are optional and off by default.
+- The desktop packages are on by default: a dmg for macOS on Apple silicon, an msi for Windows and
+  a deb for Linux. Each one is built on its own system.
+- The macOS app is signed and notarized only when the repository has the secrets
+  `MACOS_DEVELOPER_ID_P12_BASE64` and `MACOS_DEVELOPER_ID_P12_PASSWORD`: a "Developer ID
+  Application" certificate and its password. Notarization uses the App Store Connect key of the iOS
+  upload. Without the certificate, the app has an ad-hoc signature, and the README tells users how
+  to open it.
+- To test the signed path locally, set `SYNKPLAY_MAC_SIGN_IDENTITY` to a signing identity of your
+  keychain before `./kotlin do packageDesktop -m desktopApp`.
 - The GitHub release waits for the builds, including enabled desktop builds. It does not wait for
   the store uploads.
 - The GitHub release gets the APKs, the IPA and any desktop installers. The AAB goes only to the

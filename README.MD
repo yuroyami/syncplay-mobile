@@ -57,7 +57,22 @@ Everyone plays their own copy of the video (from a file or a link) because Synkp
 
 Synkplay needs Android 8.0 or newer, or iOS 15.0 or newer. The stores review every build before they publish it, which is why a store update can arrive later than the GitHub release.
 
-Synkplay has no computer version yet, since its browser version is still early and cannot join a room. On a computer, use the [official Syncplay client](https://syncplay.pl/download/) instead.
+### On a computer
+
+Starting with version 0.27.0, each [GitHub release](https://github.com/yuroyami/syncplay-mobile/releases/latest) has a desktop installer:
+
+| System | File | Needs |
+|---|---|---|
+| macOS | `Synkplay-<version>.dmg` | A Mac with Apple silicon (M1 or newer), macOS 12 or newer |
+| Windows | `Synkplay-<version>.msi` | Windows 10 or 11, 64-bit |
+| Linux | `synkplay_<version>-1_amd64.deb` | Debian, Ubuntu or a related system, 64-bit |
+
+The installers are not signed by Apple or Microsoft yet, so the system asks you once before the first start:
+
+- **macOS:** open the app once and close the warning. Then open **System Settings > Privacy & Security** and click **Open Anyway** next to Synkplay.
+- **Windows:** when SmartScreen shows "Windows protected your PC", click **More info**, then **Run anyway**.
+
+The browser version is still early and cannot join a room.
 
 <details>
 <summary><b>Which download should I pick?</b></summary>

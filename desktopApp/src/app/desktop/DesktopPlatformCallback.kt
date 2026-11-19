@@ -1,5 +1,6 @@
 package app.desktop
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import app.PlatformCallback
 import app.home.HomeViewmodel
 import app.home.JoinConfig
@@ -53,6 +54,13 @@ object DesktopPlatformCallback : PlatformCallback {
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
         // Desktop uses FileKit's own picker; the unfiltered fallback picker is Android-only.
         onResult(null)
+    }
+
+    /** The window's full-screen state. Main.kt keeps it equal to the window placement, both ways. */
+    override val windowFullScreen = MutableStateFlow(false)
+
+    override fun toggleWindowFullScreen() {
+        windowFullScreen.value = !windowFullScreen.value
     }
 
     override fun copyText(text: String) {

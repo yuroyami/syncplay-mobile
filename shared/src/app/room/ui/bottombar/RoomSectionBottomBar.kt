@@ -1,5 +1,7 @@
 package app.room.ui.bottombar
 
+import androidx.compose.material.icons.filled.StayCurrentPortrait
+import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Spacer
@@ -65,7 +67,7 @@ fun RoomBottomBarSection(modifier: Modifier) {
             }
 
             // The view key ends the seek bar, as in the portrait stage, before the room keys (#249).
-            if (platformCallback.canHoldLandscape) CoveredByAddCard(covered = !hasVideo && addCardOpen) { RoomFullScreenKey(tall = false) }
+            if (platformCallback.showsRoomViewKey) CoveredByAddCard(covered = !hasVideo && addCardOpen) { RoomFullScreenKey(tall = false) }
 
             if (hasVideo) RoomControlPanelButton(modifier = Modifier)
 
@@ -91,21 +93,26 @@ private fun CoveredByAddCard(covered: Boolean, key: @Composable () -> Unit) {
 }
 
 /**
- * The full-screen key. A tap switches the room between a held landscape and the other view of the
- * "Room orientation" setting, and [RoomOrientation.key] names what the tap does. [tall] is true
- * in the portrait room. The key shows only where the app can turn the screen
- * ([app.PlatformCallback.canHoldLandscape]).
+ * The full-screen key. On a phone or a tablet, a tap switches the room between a held landscape and
+ * the other view of the "Room orientation" setting, and [RoomOrientation.key] names what the tap
+ * does. Its glyph shows the view that the tap turns to. [tall] is true in the portrait room. On the
+ * desktop, a tap switches the window between full screen and windowed. A browser shows no key
+ * ([app.PlatformCallback.showsRoomViewKey]).
  */
 @Composable
 fun RoomFullScreenKey(tall: Boolean, modifier: Modifier = Modifier) {
+    platformCallback.windowFullScreen?.let { fullScreen ->
+        WindowFullScreenKey(fullScreen.collectAsState().value, modifier)
+        return
+    }
     val ui = LocalRoomUiState.current
     val orientation = RoomOrientation.of(ROOM_ORIENTATION.watchPref().value)
     val switchedUnder by ui.orientationSwitch.collectAsState()
     val key = orientation.key(switched = switchedUnder == orientation, tall = tall)
     GlyphButton(
         icon = when (key) {
-            RoomViewKey.FullScreen -> Icons.Filled.Fullscreen
-            RoomViewKey.ExitFullScreen -> Icons.Filled.FullscreenExit
+            RoomViewKey.FullScreen -> Icons.Filled.StayCurrentLandscape
+            RoomViewKey.ExitFullScreen -> Icons.Filled.StayCurrentPortrait
             RoomViewKey.LockRotation -> Icons.Filled.ScreenLockRotation
             RoomViewKey.UnlockRotation -> Icons.Filled.ScreenRotation
         },
@@ -118,5 +125,17 @@ fun RoomFullScreenKey(tall: Boolean, modifier: Modifier = Modifier) {
         size = Space.glyphLarge,
         modifier = modifier.videoKeyTile(),
         onClick = { ui.toggleOrientationSwitch(orientation) },
+    )
+}
+
+/** The desktop form of the full-screen key: it switches the window between full screen and windowed. */
+@Composable
+private fun WindowFullScreenKey(fullScreen: Boolean, modifier: Modifier) {
+    GlyphButton(
+        icon = if (fullScreen) Icons.Filled.FullscreenExit else Icons.Filled.Fullscreen,
+        name = if (fullScreen) strings.roomFullScreenExit else strings.roomFullScreen,
+        size = Space.glyphLarge,
+        modifier = modifier.videoKeyTile(),
+        onClick = { platformCallback.toggleWindowFullScreen() },
     )
 }

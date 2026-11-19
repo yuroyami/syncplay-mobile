@@ -42,6 +42,7 @@ import app.uicomponents.LocalScreenReaderActive
 import app.utils.platformCallback
 import io.github.vinceglb.filekit.PlatformFile
 import java.lang.reflect.Proxy
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -263,6 +264,9 @@ internal object RoomRig {
     }
 
     /** A platform that does nothing and reports no brightness control. */
+    /** The window state of a desktop platform. Set it before [drive] to test the desktop room. Null is a phone or a browser. */
+    internal var desktopWindow: MutableStateFlow<Boolean>? = null
+
     internal fun inertPlatform(
         pictureInPicture: Boolean,
         canHoldLandscape: Boolean = false,
@@ -278,6 +282,10 @@ internal object RoomRig {
             "getSupportsPictureInPicture" -> pictureInPicture
             "getSupportsBackgroundSound" -> backgroundSound
             "getCanHoldLandscape" -> canHoldLandscape
+            // A proxy never runs an interface default, so the derived flag needs its own answer.
+            "getShowsRoomViewKey" -> canHoldLandscape || desktopWindow != null
+            "getWindowFullScreen" -> desktopWindow
+            "toggleWindowFullScreen" -> desktopWindow?.let { it.value = !it.value }
             "equals" -> proxy === args?.firstOrNull()
             "hashCode" -> System.identityHashCode(proxy)
             "toString" -> "RoomRig platform"

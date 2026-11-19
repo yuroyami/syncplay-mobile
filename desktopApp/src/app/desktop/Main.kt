@@ -93,6 +93,18 @@ fun main(args: Array<String>) {
                 saveWindow(windowState)
             }
 
+            // The room's full-screen key asks through the callback, and F, Escape and the title bar
+            // change the placement directly. Each side follows the other.
+            LaunchedEffect(windowState.placement) {
+                DesktopPlatformCallback.windowFullScreen.value = windowState.placement == WindowPlacement.Fullscreen
+            }
+            LaunchedEffect(Unit) {
+                DesktopPlatformCallback.windowFullScreen.collect { want ->
+                    val now = windowState.placement == WindowPlacement.Fullscreen
+                    if (want != now) windowState.placement = if (want) WindowPlacement.Fullscreen else WindowPlacement.Floating
+                }
+            }
+
             // Leaving the room returns the window to the floating placement, so the home screen
             // does not open in fullscreen.
             val vm = globalViewmodel

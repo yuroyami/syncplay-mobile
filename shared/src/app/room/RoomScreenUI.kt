@@ -758,7 +758,7 @@ private fun BoxScope.PortraitStageControls(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RoomSeekbar(modifier = Modifier.weight(1f))
-                if (platformCallback.canHoldLandscape) RoomFullScreenKey(tall = true)
+                if (platformCallback.showsRoomViewKey) RoomFullScreenKey(tall = true)
             }
         }
         // Before a file loads, the add key is the main control. It sits low in the stage, under the
@@ -772,7 +772,7 @@ private fun BoxScope.PortraitStageControls(
                 )
             }
             // The full-screen key keeps its corner, or a room with no file has no way back to landscape (#249).
-            if (platformCallback.canHoldLandscape) {
+            if (platformCallback.showsRoomViewKey) {
                 Box(Modifier.align(Alignment.BottomEnd).padding(end = Space.gapTight).focusGroup().then(controls)) {
                     RoomFullScreenKey(tall = true)
                 }
