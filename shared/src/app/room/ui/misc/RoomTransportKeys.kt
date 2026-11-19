@@ -107,6 +107,9 @@ fun RoomTransportKeys(modifier: Modifier = Modifier, row: Boolean = false) {
     }
 }
 
+/** The see-through dark fill of a jump key. The other keys over video use it too. */
+internal val JumpKeyFill = Color(0xFF15151A).copy(alpha = 0.55f)
+
 /**
  * A jump key, 42dp tall, with the glyph and the jump amount. The amount shows on the key, so the
  * user does not need to open the settings to see it.
@@ -119,7 +122,7 @@ private fun JumpKey(icon: ImageVector, name: String, amount: String, onClick: ()
         modifier = Modifier
             .height(Space.row)
             .clip(Radius.controlShape)
-            .background(Color(0xFF15151A).copy(alpha = 0.55f))
+            .background(JumpKeyFill)
             .border(Space.hair, p.rule, Radius.controlShape)
             .clickable(interactionSource = source, indication = null, role = Role.Button) { Feedback.tick(); onClick() }
             .touchTarget()

@@ -138,6 +138,10 @@ object DesignHarness {
         node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == text } == true ||
             node.children.any { readsText(it, text) }
 
+    private fun hasDescription(node: SemanticsNode, description: String): Boolean =
+        node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it == description } == true ||
+            node.children.any { hasDescription(it, description) }
+
     private fun textLayouts(node: SemanticsNode): List<TextLayoutResult> {
         val layouts = mutableListOf<TextLayoutResult>()
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
@@ -253,6 +257,16 @@ object DesignHarness {
             onUiThread { scene.render(nanos) }
         }
 
+        /** Renders one more frame and saves it in the golden folder as [name].png. */
+        fun save(name: String): File {
+            nanos += 16_000_000L
+            val image = onUiThread { scene.render(nanos) }
+            val file = File(outDir, "$name.png")
+            image.encodeToData(EncodedImageFormat.PNG)?.bytes?.let(file::writeBytes)
+            println("GOLDEN $name -> ${file.absolutePath}")
+            return file
+        }
+
         /**
          * One press: key down, a few frames, key up, a few more frames. A focus move runs in an
          * effect, so it needs those frames.
@@ -271,6 +285,11 @@ object DesignHarness {
         /** Whether anything in the scene reads [text], a dialog included. */
         fun shows(text: String): Boolean = onUiThread {
             scene.semanticsOwners.any { readsText(it.unmergedRootSemanticsNode, text) }
+        }
+
+        /** Whether anything in the scene has [description] as its spoken description, a dialog included. */
+        fun describes(description: String): Boolean = onUiThread {
+            scene.semanticsOwners.any { hasDescription(it.unmergedRootSemanticsNode, description) }
         }
 
         /**

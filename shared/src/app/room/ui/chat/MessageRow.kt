@@ -1,6 +1,9 @@
 package app.room.ui.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -21,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -69,6 +73,11 @@ data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val sh
 
 private const val GROUP_WINDOW_MS = 60_000L
 
+/** Whether [message] continues the group of [previous]: the same person, within a minute. Such a line drops the repeated name. */
+internal fun grouped(message: Message, previous: Message?): Boolean =
+    previous != null && message.sender != null && previous.sender == message.sender &&
+        message.epochMs - previous.epochMs < GROUP_WINDOW_MS
+
 /**
  * The flat tint of the GIF panel over video, so a GIF that is still loading in chat looks like a
  * loading GIF in the panel.
@@ -78,7 +87,8 @@ private const val LOADING_TILE_TINT = 0.65f
 /**
  * One chat line, in one of two shapes:
  * - A person's message: the name in the tag color, the message under it, and no bubble. A second
- *   message from the same person within a minute drops the repeated name.
+ *   message from the same person within a minute drops the repeated name. A GIF or sticker sits
+ *   in a dark card, with the name inside the card (see [MediaBubble]).
  * - An event: see [EventLine].
  *
  * The time sits in a column at the end only when the time switch is on and more than a minute
@@ -93,11 +103,13 @@ fun MessageRow(
     modifier: Modifier = Modifier,
     imageAlpha: Float = 1f,
     announce: Boolean = false,
+    /** Draws the sender's name only. The rest keeps its place, so the name sits where the full line puts it. */
+    onlyName: Boolean = false,
 ) {
     val viewmodel = LocalRoomViewmodel.current
     val copied = strings.roomChatCopied
     val sinceMs = if (previous == null) Long.MAX_VALUE else message.epochMs - previous.epochMs
-    val grouped = message.sender != null && previous?.sender == message.sender && sinceMs < GROUP_WINDOW_MS
+    val grouped = grouped(message, previous)
     val showTime = style.showTime && sinceMs > GROUP_WINDOW_MS
     val body = chatBody(style)
     val name = Type.value.copy(fontSize = (style.fontSize - 1).coerceAtLeast(5).sp)
@@ -142,7 +154,8 @@ fun MessageRow(
             EventLine(message, chatPalette, style, Modifier.weight(1f))
         } else {
             Column(Modifier.weight(1f)) {
-                if (!grouped) {
+                // A shown GIF or sticker carries the name inside its card.
+                if (!grouped && !showsImage) {
                     OutlinedText(
                         text = AnnotatedString(BIDI_ISOLATE_START + message.sender + BIDI_ISOLATE_END),
                         style = name,
@@ -154,27 +167,41 @@ fun MessageRow(
                 if (message.isImageUrl) {
                     if (showsImage) {
                         var loading by remember(message.content) { mutableStateOf(true) }
-                        Box(Modifier.padding(top = 2.dp).size(LocalChatMediaSize.current).clip(Radius.controlShape)) {
-                            /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
-                            AnimatedImage(
-                                url = message.content,
-                                // A screen reader says who sent the image, which is what a sighted
-                                // user sees too.
-                                contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
-                                contentScale = ContentScale.Crop,
-                                alpha = imageAlpha,
-                                onLoaded = { loading = false },
-                                onFailed = { loading = false },
-                                modifier = Modifier.matchParentSize(),
-                            )
-                            /* Over the image, not under it: on iOS the image is a native view that
-                             * clears its own area of the Compose canvas. Chat has no panel behind
-                             * it, so the tile brings its own tint, or the shimmer would vanish over
-                             * video. */
-                            if (loading && imageAlpha > 0f) {
-                                Box(Modifier.matchParentSize().background(palette.panel.copy(alpha = LOADING_TILE_TINT)).shimmer())
+                        val tag = if (message.isMainUser) chatPalette.selftagColor else chatPalette.friendtagColor
+                        MediaBubble(
+                            name = if (grouped) null else message.sender,
+                            nameStyle = name,
+                            tag = tag,
+                            mediaSize = LocalChatMediaSize.current,
+                            onlyName = onlyName,
+                            outline = style.outline,
+                            shadow = style.shadow,
+                        ) { imageModifier ->
+                            Box(imageModifier) {
+                                // The name alone keeps the place of the image, but loads no image.
+                                if (!onlyName) {
+                                    /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
+                                    AnimatedImage(
+                                        url = message.content,
+                                        // A screen reader says who sent the image, which is what a sighted
+                                        // user sees too.
+                                        contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
+                                        contentScale = ContentScale.Crop,
+                                        alpha = imageAlpha,
+                                        onLoaded = { loading = false },
+                                        onFailed = { loading = false },
+                                        modifier = Modifier.matchParentSize(),
+                                    )
+                                    /* Over the image, not under it: on iOS the image is a native view that
+                                     * clears its own area of the Compose canvas. Chat has no panel behind
+                                     * it, so the tile brings its own tint, or the shimmer would vanish over
+                                     * video. */
+                                    if (loading && imageAlpha > 0f) {
+                                        Box(Modifier.matchParentSize().background(palette.panel.copy(alpha = LOADING_TILE_TINT)).shimmer())
+                                    }
+                                }
+                                if (menuOpen) ChatMediaMenu(link = message.content, onDismiss = { menuOpen = false })
                             }
-                            if (menuOpen) ChatMediaMenu(link = message.content, onDismiss = { menuOpen = false })
                         }
                     } else {
                         /* A peer's image link does not load on its own. Loading it would send the IP
@@ -185,6 +212,7 @@ fun MessageRow(
                             style = body,
                             color = chatPalette.systemmsgColor,
                             modifier = Modifier
+                                .then(if (onlyName) Modifier.alpha(0f) else Modifier)
                                 .padding(top = 2.dp)
                                 .clip(Radius.controlShape)
                                 .clickable(
@@ -195,6 +223,7 @@ fun MessageRow(
                     }
                 } else {
                     OutlinedText(
+                        modifier = if (onlyName) Modifier.alpha(0f) else Modifier,
                         text = AnnotatedString(BIDI_ISOLATE_START + message.content + BIDI_ISOLATE_END),
                         style = body,
                         color = chatPalette.usermsgColor,
@@ -206,13 +235,13 @@ fun MessageRow(
         }
         if (showTime) {
             Text(
+                modifier = Modifier.padding(start = Space.gap, top = 2.dp).then(if (onlyName) Modifier.alpha(0f) else Modifier),
                 // The whole string, not the first five characters: a 12-hour clock reads "9:05 PM",
                 // and a cut at five would show "9:05" for every afternoon message.
                 text = message.timestamp,
                 style = Type.value,
                 color = chatPalette.timestampColor,
                 maxLines = 1,
-                modifier = Modifier.padding(start = Space.gap, top = 2.dp),
             )
         }
     }
@@ -264,6 +293,49 @@ internal fun eventText(content: String, people: Map<String, Boolean>, self: Colo
     }
 }
 
+/**
+ * A shown GIF or sticker in a dark card, with its sender's [name] on top (null for a grouped line).
+ * The card gives the name a ground of its own, so it reads over any picture, and it keeps a
+ * see-through sticker together with its name. [image] draws the picture in the modifier it gets.
+ * With [onlyName], the card and the picture keep their place but do not draw. The name then sits on
+ * the video, so it gets the [outline] and [shadow] of the other chat names.
+ */
+@Composable
+private fun MediaBubble(
+    name: String?,
+    nameStyle: TextStyle,
+    tag: Color,
+    mediaSize: Dp,
+    onlyName: Boolean,
+    outline: Float?,
+    shadow: Boolean,
+    image: @Composable (Modifier) -> Unit,
+) {
+    Column(
+        Modifier
+            .padding(top = 2.dp)
+            .clip(Radius.panelShape)
+            .then(if (onlyName) Modifier else Modifier.background(MediaCardFill).border(Space.hair, palette.rule, Radius.panelShape))
+            .padding(4.dp),
+    ) {
+        if (name != null) {
+            OutlinedText(
+                text = AnnotatedString(BIDI_ISOLATE_START + name + BIDI_ISOLATE_END),
+                style = nameStyle,
+                color = tag,
+                outline = if (onlyName) outline else null,
+                shadow = onlyName && shadow,
+                maxLines = 1,
+                modifier = Modifier.width(mediaSize).padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
+            )
+        }
+        image(Modifier.size(mediaSize).clip(Radius.controlShape))
+    }
+}
+
+/** The fill of the GIF card: the dark of the keys over video, a little denser, so the name reads. */
+private val MediaCardFill = Color(0xFF15151A).copy(alpha = 0.72f)
+
 /** Chat text at the size the chat preference asks for. */
 @Composable
 @ReadOnlyComposable
@@ -279,13 +351,21 @@ private fun OutlinedText(
     outline: Float?,
     shadow: Boolean,
     modifier: Modifier = Modifier,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     val base = if (shadow) style.copy(shadow = Shadow(Color.Black, Offset(0f, 1f), blurRadius = 4f)) else style
+    // One line ends in an ellipsis. Both layers cut the text at the same place.
+    val overflow = if (maxLines == 1) TextOverflow.Ellipsis else TextOverflow.Clip
     Box(modifier) {
         if (outline != null && outline > 0f) {
             // Without the spans: a colored name would otherwise get a colored outline.
-            Text(AnnotatedString(text.text), style = base.copy(color = Color.Black, drawStyle = Stroke(width = outline, join = StrokeJoin.Round)))
+            Text(
+                AnnotatedString(text.text),
+                style = base.copy(color = Color.Black, drawStyle = Stroke(width = outline, join = StrokeJoin.Round)),
+                maxLines = maxLines,
+                overflow = overflow,
+            )
         }
-        Text(text, style = base.copy(color = color))
+        Text(text, style = base.copy(color = color), maxLines = maxLines, overflow = overflow)
     }
 }

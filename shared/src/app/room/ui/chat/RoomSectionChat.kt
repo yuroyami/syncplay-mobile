@@ -1,5 +1,7 @@
 package app.room.ui.chat
 
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -50,6 +52,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.GifBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -469,7 +472,9 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
             if (messages.isEmpty()) return
             ownScrolls++
             try {
-                listState.animateScrollToItem(messages.lastIndex)
+                // While the HUD is hidden, a new line shows at its place in the list, so the list
+                // jumps there at once. An animation would slide the shown line into place.
+                if (isHUDVisible) listState.animateScrollToItem(messages.lastIndex) else listState.scrollToItem(messages.lastIndex)
             } finally {
                 ownScrolls--
             }
@@ -483,6 +488,9 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
         }
         LaunchedEffect(messages.lastOrNull()?.id) {
             if (messages.isEmpty()) return@LaunchedEffect
+            // While the HUD is hidden, nobody reads back through the list, and a new line must have
+            // a place in view to show at. So the list follows the newest line again.
+            if (!isHUDVisible) following = true
             if (following) toNewest() else unseen++
         }
         // A request from outside the list, such as the marker over a page of the portrait room.
@@ -493,8 +501,25 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
             toNewest()
         }
 
+        // Over video, the list tells the room where each line is, for the lines shown while the HUD is hidden.
+        val places = if (onGround) null else LocalChatLinePlaces.current
+        if (places != null) {
+            DisposableEffect(places) {
+                places.lists++
+                onDispose {
+                    places.lists--
+                    if (places.lists == 0) places.viewport = null
+                }
+            }
+        }
         Selectable {
-        LazyColumn(state = listState, contentPadding = PaddingValues(Space.gapTight), modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(Space.gapTight),
+            modifier = Modifier.fillMaxSize().then(
+                if (places != null) Modifier.onGloballyPositioned { places.viewport = it.boundsInRoot() } else Modifier,
+            ),
+        ) {
             itemsIndexed(
                 items = messages,
                 key = { _, message -> message.id },
@@ -510,11 +535,15 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
                 /* Marked seen only while the HUD shows. The list stays composed at alpha 0 while
                  * hidden, and marking lines then would defeat the fading layout. */
                 if (isHUDVisible) SideEffect { message.seen = true }
+                if (places != null) {
+                    DisposableEffect(places, message.id) { onDispose { places.lines.remove(message.id) } }
+                }
                 MessageRow(
                     message = message,
                     previous = messages.getOrNull(index - 1),
                     chatPalette = chatPalette,
                     style = style,
+                    modifier = if (places != null) Modifier.reportsChatLine(places, message.id) else Modifier,
                     imageAlpha = if (isHUDVisible) 1f else 0f,
                     announce = index == messages.lastIndex,
                 )

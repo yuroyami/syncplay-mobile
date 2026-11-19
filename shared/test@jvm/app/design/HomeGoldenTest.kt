@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.datastore.preferences.core.edit
 import app.Screen
 import app.home.HomeScreenUI
@@ -26,6 +27,7 @@ import app.home.JoinConfig
 import app.home.JoinRow
 import app.home.RecentJoin
 import app.home.components.HomeEnginePicker
+import app.i18n.EnAppStrings
 import app.player.PlayerEngine
 import app.player.PlayerImpl
 import app.preferences.Preferences
@@ -63,7 +65,7 @@ import kotlin.test.assertTrue
  */
 class HomeGoldenTest {
 
-    private class Home(val file: File, val textLayouts: List<TextLayoutResult>, val join: Rect?, val heightPx: Int) {
+    private class Home(val file: File, val textLayouts: List<TextLayoutResult>, val join: Rect?, val wholeJoin: Rect?, val heightPx: Int) {
         fun assertAllTextFits() {
             assertTrue(textLayouts.isNotEmpty(), "No text layouts in ${file.name}")
             for (layout in textLayouts) {
@@ -75,20 +77,35 @@ class HomeGoldenTest {
             }
         }
 
-        fun assertJoinOnScreen() {
-            val bounds = assertNotNull(join, "${file.name}: no join key in the semantics tree")
+        /**
+         * The join key is on screen. By default the check reads the part of the key that a scroll
+         * leaves in view, so a key cut by the window edge still passes. With [whole], the whole key
+         * must be on screen.
+         */
+        fun assertJoinOnScreen(whole: Boolean = false) {
+            val bounds = assertNotNull(if (whole) wholeJoin else join, "${file.name}: no join key in the semantics tree")
             assertTrue(bounds.bottom <= heightPx + 1f && bounds.top >= 0f, "${file.name}: join key at ${bounds.top}..${bounds.bottom} px, window is $heightPx px tall")
         }
     }
 
-    private fun collect(node: SemanticsNode, texts: MutableList<TextLayoutResult>, joins: MutableList<Rect>) {
+    private fun collect(node: SemanticsNode, texts: MutableList<TextLayoutResult>, joins: MutableList<Rect>, wholeJoins: MutableList<Rect> = mutableListOf()) {
         node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(texts)
-        if (node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == JOIN_LABEL } == true) joins += node.boundsInRoot
-        node.children.forEach { collect(it, texts, joins) }
+        if (node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == JOIN_LABEL } == true) {
+            joins += node.boundsInRoot
+            wholeJoins += Rect(node.positionInRoot, node.size.toSize())
+        }
+        node.children.forEach { collect(it, texts, joins, wholeJoins) }
     }
 
-    /** One home screen in a window of exactly [w] x [h] dp, no insets, the bar included. */
-    private fun renderHome(name: String, w: Int, h: Int, fontScale: Float = 1f): Home {
+    private fun described(node: SemanticsNode, description: String): SemanticsNode? =
+        node.takeIf { it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(description) == true }
+            ?: node.children.firstNotNullOfOrNull { described(it, description) }
+
+    /**
+     * One home screen in a window of exactly [w] x [h] dp, no insets, the bar included. With
+     * [openRecents], a tap on the recent rooms key opens their row before the render is saved.
+     */
+    private fun renderHome(name: String, w: Int, h: Int, fontScale: Float = 1f, openRecents: Boolean = false): Home {
         DesignHarness.initDatastore()
         val densityValue = if (w > 1400 || h > 1400) 1f else 2f
         val density = Density(densityValue, fontScale)
@@ -102,14 +119,25 @@ class HomeGoldenTest {
         return try {
             var image = DesignHarness.onUiThread { scene.render(0L) }
             repeat(30) { i -> image = DesignHarness.onUiThread { scene.render((i + 1) * 16_000_000L) } }
-            val suffix = if (fontScale != 1f) "-fs$fontScale" else ""
+            if (openRecents) {
+                val key = DesignHarness.onUiThread { scene.semanticsOwners.firstNotNullOfOrNull { described(it.unmergedRootSemanticsNode, EnAppStrings.homeRecentTitle) } }
+                assertNotNull(key, "home-$name-${w}x$h: no recent rooms key")
+                val center = key.boundsInRoot.center
+                DesignHarness.onUiThread {
+                    scene.sendPointerEvent(PointerEventType.Press, center)
+                    scene.sendPointerEvent(PointerEventType.Release, center)
+                }
+                repeat(30) { i -> image = DesignHarness.onUiThread { scene.render((i + 31) * 16_000_000L) } }
+            }
+            val suffix = (if (openRecents) "-open" else "") + (if (fontScale != 1f) "-fs$fontScale" else "")
             val file = File(DesignHarness.outDir, "home-$name-${w}x${h}$suffix.png")
             image.encodeToData(EncodedImageFormat.PNG)?.bytes?.let(file::writeBytes)
             val texts = mutableListOf<TextLayoutResult>()
             val joins = mutableListOf<Rect>()
-            DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joins) } }
+            val wholeJoins = mutableListOf<Rect>()
+            DesignHarness.onUiThread { scene.semanticsOwners.forEach { collect(it.unmergedRootSemanticsNode, texts, joins, wholeJoins) } }
             println("GOLDEN ${file.name} join=${joins.firstOrNull()}")
-            Home(file, texts, joins.firstOrNull(), (h * densityValue).toInt())
+            Home(file, texts, joins.firstOrNull(), wholeJoins.firstOrNull(), (h * densityValue).toInt())
         } finally {
             DesignHarness.onUiThread { scene.close() }
         }
@@ -209,7 +237,7 @@ class HomeGoldenTest {
     }
 
     @Test
-    fun recentRoomsSitUnderTheJoinKeyAndKeepTheirWords() {
+    fun recentRoomsOpenAboveTheJoinKeyAndKeepTheirWords() {
         saveJoin(official)
         saveRecents(
             listOf(
@@ -219,11 +247,14 @@ class HomeGoldenTest {
             ),
         )
         for ((w, h) in listOf(360 to 708, 390 to 763, 412 to 867, 800 to 312, 1024 to 744, 1280 to 720)) {
-            val home = renderHome("recent", w, h)
-            home.assertAllTextFits()
-            home.assertJoinOnScreen()
+            for (open in listOf(false, true)) {
+                val home = renderHome("recent", w, h, openRecents = open)
+                home.assertAllTextFits()
+                // The open row grows above the join key, and the form scrolls so the whole key stays in view.
+                home.assertJoinOnScreen(whole = open)
+            }
         }
-        renderHome("recent", 390, 763, fontScale = 1.3f).assertAllTextFits()
+        renderHome("recent", 390, 763, fontScale = 1.3f, openRecents = true).assertAllTextFits()
         saveJoin(official)
     }
 

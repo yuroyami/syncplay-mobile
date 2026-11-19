@@ -1,6 +1,17 @@
 package app.room.ui.bottombar
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
+import app.theme.Motion
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -36,6 +47,7 @@ import app.utils.platformCallback
 fun RoomBottomBarSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
+    val addCardOpen by LocalRoomUiState.current.mediaAddExpanded.collectAsState()
 
     Box(modifier.windowInsetsPadding(WindowInsets.safeGestures)) {
         Row(
@@ -53,12 +65,28 @@ fun RoomBottomBarSection(modifier: Modifier) {
             }
 
             // The view key ends the seek bar, as in the portrait stage, before the room keys (#249).
-            if (platformCallback.canHoldLandscape) RoomFullScreenKey(tall = false)
+            if (platformCallback.canHoldLandscape) CoveredByAddCard(covered = !hasVideo && addCardOpen) { RoomFullScreenKey(tall = false) }
 
             if (hasVideo) RoomControlPanelButton(modifier = Modifier)
 
             RoomMediaAddButton()
         }
+    }
+}
+
+/**
+ * A key that the add card grows over. While [covered], the key fades out. Once it is gone, an
+ * empty box of its size keeps its place, so the key leaves focus and the screen reader.
+ */
+@Composable
+private fun CoveredByAddCard(covered: Boolean, key: @Composable () -> Unit) {
+    val alpha by animateFloatAsState(if (covered) 0f else 1f, Motion.quick(), label = "covered")
+    var size by remember { mutableStateOf(DpSize.Zero) }
+    val density = LocalDensity.current
+    if (covered && alpha == 0f) {
+        Spacer(Modifier.size(size))
+    } else {
+        Box(Modifier.alpha(alpha).onSizeChanged { size = with(density) { DpSize(it.width.toDp(), it.height.toDp()) } }) { key() }
     }
 }
 
@@ -88,7 +116,7 @@ fun RoomFullScreenKey(tall: Boolean, modifier: Modifier = Modifier) {
             RoomViewKey.UnlockRotation -> strings.roomRotationUnlock
         },
         size = Space.glyphLarge,
-        modifier = modifier,
+        modifier = modifier.videoKeyTile(),
         onClick = { ui.toggleOrientationSwitch(orientation) },
     )
 }

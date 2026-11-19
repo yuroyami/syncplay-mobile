@@ -83,7 +83,10 @@ import app.room.ui.bottombar.TopContrastUnderlay
 import app.room.ui.bottombar.RoomBottomBarSection
 import app.room.ui.bottombar.RoomControlPanelButton
 import app.room.ui.bottombar.RoomSeekbar
+import app.room.ui.chat.ChatLinePlaces
 import app.room.ui.chat.FadingMessageLayout
+import app.room.ui.chat.HiddenHudChatLines
+import app.room.ui.chat.LocalChatLinePlaces
 import app.room.ui.chat.RoomChatInput
 import app.room.ui.chat.RoomChatPane
 import app.room.ui.chat.RoomChatSection
@@ -260,13 +263,17 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 }
             }
 
-            when {
-                isInPipMode -> Unit // PiP shows the video and nothing else.
-                lockedMode -> RoomUnlockableLayout()
-                else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester, mainBoxTop)
-            }
+            // Where the chat lines sit, shared by the chat list and the lines shown while the HUD is hidden.
+            val chatLinePlaces = remember(viewmodel) { ChatLinePlaces() }
+            CompositionLocalProvider(LocalChatLinePlaces provides chatLinePlaces) {
+                when {
+                    isInPipMode -> Unit // PiP shows the video and nothing else.
+                    lockedMode -> RoomUnlockableLayout()
+                    else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester, mainBoxTop)
+                }
 
-            if (!isInPipMode) RoomNotices(viewmodel, soloMode, portrait, noticeInset)
+                if (!isInPipMode) RoomNotices(viewmodel, soloMode, portrait, noticeInset)
+            }
 
             MediaDropOverlay(drop) { media ->
                 when (media) {
@@ -548,7 +555,8 @@ private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, po
         verticalArrangement = Arrangement.spacedBy(Space.gapTight),
     ) {
         NoticeHost(queue = viewmodel.notices)
-        if (!soloMode && !portrait) FadingMessageLayout()
+        // Only while the chat list is not there to give the lines a place, such as under the GIF drawer.
+        if (!soloMode && !portrait && LocalChatLinePlaces.current?.listShown != true) FadingMessageLayout()
     }
 }
 
@@ -701,6 +709,8 @@ private fun RoomHud(
     }
     }
 
+    // Outside the faded layer: a new chat line shows at its place in the list while the HUD is hidden.
+    if (!portrait && !soloMode) HiddenHudChatLines { hudAlpha.value }
     /* The gesture layer sits above the HUD. While the HUD is hidden, the gesture layer takes the
      * touches that would otherwise reach the hidden controls. While the HUD is visible, the
      * gesture layer attaches no pointer input. */

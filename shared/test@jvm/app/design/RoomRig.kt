@@ -109,6 +109,7 @@ internal object RoomRig {
      * and close the keyboard.
      * @param canHoldLandscape what the platform says about the landscape hold of the full-screen key.
      * @param chapters the chapters of the loaded file. A list that is not empty turns on chapter support.
+     * @param picture what the player shows, in place of a video frame.
      */
     fun drive(
         solo: Boolean = true,
@@ -121,8 +122,9 @@ internal object RoomRig {
         keyboardPx: State<Int>? = null,
         canHoldLandscape: Boolean = false,
         chapters: List<Chapter> = emptyList(),
+        picture: (@Composable (Modifier) -> Unit)? = null,
         drive: Room.() -> Unit,
-    ) = inRoom(solo, withVideo, pictureInPicture, canHoldLandscape, chapters) { viewmodel, destination ->
+    ) = inRoom(solo, withVideo, pictureInPicture, canHoldLandscape, chapters, picture) { viewmodel, destination ->
         DesignHarness.drive(widthDp = widthDp, heightDp = heightDp, television = television, content = {
             WithKeyboard(keyboardPx) {
                 CompositionLocalProvider(
@@ -154,9 +156,10 @@ internal object RoomRig {
         keyboardPx: Int = 0,
         canHoldLandscape: Boolean = false,
         chapters: List<Chapter> = emptyList(),
+        picture: (@Composable (Modifier) -> Unit)? = null,
         setup: (RoomViewmodel) -> Unit = {},
         content: @Composable () -> Unit,
-    ): DesignHarness.Result = inRoom(solo, withVideo, pictureInPicture = true, canHoldLandscape, chapters) { viewmodel, destination ->
+    ): DesignHarness.Result = inRoom(solo, withVideo, pictureInPicture = true, canHoldLandscape, chapters, picture) { viewmodel, destination ->
         setup(viewmodel)
         val keyboard = if (keyboardPx > 0) mutableStateOf(keyboardPx) else null
         DesignHarness.render(name, widthDp, heightDp, fontScale, overVideo = overVideo) {
@@ -196,6 +199,7 @@ internal object RoomRig {
         pictureInPicture: Boolean,
         canHoldLandscape: Boolean,
         chapters: List<Chapter>,
+        picture: (@Composable (Modifier) -> Unit)? = null,
         block: (RoomViewmodel, Screen.Room) -> T,
     ): T {
         DesignHarness.initDatastore()
@@ -219,7 +223,7 @@ internal object RoomRig {
             store.put("rig-room", viewmodel)
             // The start is the only child so far. Nothing else launches until the screen composes.
             viewmodel.viewModelScope.coroutineContext[Job]?.children?.forEach { it.cancel() }
-            viewmodel.playerManager.player = InertPlayer(viewmodel, chapters = chapters.isNotEmpty())
+            viewmodel.playerManager.player = InertPlayer(viewmodel, chapters = chapters.isNotEmpty(), picture = picture)
             viewmodel.playerManager.isPlayerReady.value = true
             if (withVideo) {
                 viewmodel.playerManager.media.value = MediaFile(
@@ -280,7 +284,12 @@ internal object RoomRig {
 }
 
 /** An engine that plays nothing and answers every question with a neutral value. */
-internal class InertPlayer(viewmodel: RoomViewmodel, chapters: Boolean = false) : PlayerImpl(viewmodel, FakeEngine("Inert", Res.drawable.exoplayer)) {
+internal class InertPlayer(
+    viewmodel: RoomViewmodel,
+    chapters: Boolean = false,
+    /** What the video surface draws, such as a still picture for a contrast check. Null draws nothing. */
+    private val picture: (@Composable (Modifier) -> Unit)? = null,
+) : PlayerImpl(viewmodel, FakeEngine("Inert", Res.drawable.exoplayer)) {
     override val supportsChapters = chapters
     override val trackerJobInterval: Duration = 1.seconds
     override fun initialize() { isInitialized = true }
@@ -307,7 +316,9 @@ internal class InertPlayer(viewmodel: RoomViewmodel, chapters: Boolean = false) 
         return ""
     }
     override suspend fun changeSubtitleSize(newSize: Int) = Unit
-    @Composable override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) = Box(modifier)
+    @Composable override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
+        picture?.invoke(modifier) ?: Box(modifier)
+    }
     override fun getEngineVolume() = 50
     override fun setEngineVolume(percent: Int) = Unit
 }

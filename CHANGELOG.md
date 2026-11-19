@@ -7,6 +7,11 @@ Written for people who use the app. The full engineering history is in the commi
 - The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
 - New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
+- On the home screen, a clock key next to the join key now opens the recent rooms in a row above it. Before, the recent rooms were a list under the join key.
+- The settings key now shows a cog.
+- Over video, the full-screen key and the control panel key now sit on a dark see-through tile, so they stay readable on a bright picture.
+- A GIF or sticker in chat now shows in a dark card, with the sender's name inside the card.
+- When the room controls are hidden, a new chat message now shows at its own place in the chat list, not in the middle of the screen. When the controls come back, the message stays where it is.
 - Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
 - On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does.
 - Your own join no longer writes a line in chat, because Syncplay PC does not write one either.
@@ -17,6 +22,8 @@ Written for people who use the app. The full engineering history is in the commi
 - On a server where rooms can see each other, the room operator line showed in every room. It now shows only in the operator's own room. (#213)
 - Moving to another room with /room now writes a line that names the new room, for you and for the people you left. (#214)
 - A fast swipe from the top or bottom edge, to open the status bar or go home, no longer changes the volume or the brightness. (#137)
+- With no video loaded, the full-screen key no longer moves when you open or close the add key.
+- A tap next to the tabs of the GIF panel no longer hides the room controls.
 - With a long user name, the episode tag on the status line of the room was empty. The tag now keeps its place, and the "Waiting for" text keeps its size. When space is short, the room name gives way first.
 - iOS: a failed join now says at once whether the server name was not found or the server refused. Before, it waited 10 seconds and gave a general reason. (#227)
 - iOS VLC: a file that cannot load now says so, instead of showing its own name as the error. (#234)

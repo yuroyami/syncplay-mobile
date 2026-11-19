@@ -18,6 +18,9 @@ import app.i18n.strings
 import kotlin.math.roundToInt
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.alpha
 import androidx.compose.animation.core.animateFloatAsState
 import app.theme.LocalPalette
@@ -120,8 +123,18 @@ fun RoomMediaAddButton() {
     }
     // The rows on the block take the ramp's ink, and so do their focus rings.
     val onBrand = p.onBrandBlock()
+    val keySize = remember { KeySize() }
     Layout(
         modifier = Modifier
+            /* The block tells its row the size of the key only. The card grows up and toward the
+             * start, over the keys beside it, so those keys keep their place. */
+            .layout { measurable, constraints ->
+                val block = measurable.measure(constraints)
+                val pad = Space.gapTight.roundToPx() * 2
+                val width = if (keySize.width > 0) keySize.width + pad else block.width
+                val height = if (keySize.height > 0) keySize.height + pad else block.height
+                layout(width, height) { block.placeRelative(width - block.width, height - block.height) }
+            }
             .padding(Space.gapTight)
             .clip(Radius.panelShape)
             // The key draws the same slice of the ramp over the block, so the two never show a seam.
@@ -147,7 +160,12 @@ fun RoomMediaAddButton() {
                 }
             }
             if (t > 0f || expanded) {
-                Box(Modifier.layoutId("card").alpha(t).width(MorphWidth).focusRequester(cardFocus).focusGroup()) {
+                Box(
+                    Modifier.layoutId("card").alpha(t).width(MorphWidth).focusRequester(cardFocus).focusGroup()
+                        // A tap between the rows stops here. It must not reach the key under the
+                        // card, or the HUD behind it.
+                        .pointerInput(Unit) { detectTapGestures { } },
+                ) {
                     CompositionLocalProvider(LocalPalette provides onBrand) {
                         Column {
                             Row(
@@ -177,6 +195,8 @@ fun RoomMediaAddButton() {
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val key = measurables.firstOrNull { it.layoutId == "key" }?.measure(loose)
         val card = measurables.firstOrNull { it.layoutId == "card" }?.measure(loose)
+        // Kept while the card is open, when the key is not composed.
+        if (key != null) { keySize.width = key.width; keySize.height = key.height }
         val fromW = key?.width ?: card!!.width
         val fromH = key?.height ?: card!!.height
         val toW = card?.width ?: fromW
@@ -206,6 +226,12 @@ internal fun Palette.onBrandBlock(): Palette = copy(
 )
 
 private val MorphWidth = 340.dp
+
+/** The last measured size of the key, in pixels. Layout writes it and reads it in the same pass, so it is not state. */
+private class KeySize {
+    var width = 0
+    var height = 0
+}
 
 /** An icon button once a file plays, and the main action button of the room before that. */
 @Composable

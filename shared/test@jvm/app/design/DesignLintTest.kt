@@ -30,9 +30,10 @@ class DesignLintTest {
         "MaterialTheme or ripple" to 0,
         "text sizes under 11sp" to 0,
         "clickable without semantics" to 0,
-        // Both hide a switch inside a row that already speaks as that switch. Raise this only
-        // after checking that the new use hides no control from a screen reader.
-        "clearAndSetSemantics" to 2,
+        // Two hide a switch inside a row that already speaks as that switch. The third hides the
+        // copies of new chat lines over a hidden HUD, which the chat list holds as well. Raise this
+        // only after checking that the new use hides no control from a screen reader.
+        "clearAndSetSemantics" to 3,
     )
 
     private fun sources(): List<File> = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()

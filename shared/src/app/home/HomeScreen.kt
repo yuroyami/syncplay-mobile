@@ -44,6 +44,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
@@ -55,6 +57,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -68,6 +72,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -85,7 +90,8 @@ import app.LocalGlobalViewmodel
 import app.Screen
 import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
-import app.home.components.RecentRooms
+import app.home.components.RecentRoomsKey
+import app.home.components.RecentRoomsStrip
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.i18n.AppStrings
 import app.i18n.strings
@@ -576,29 +582,25 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     }
                                 }
                             },
+                            recents = if (rememberInfo) recents else emptyList(),
+                            onPickRecent = { entry ->
+                                if (!entry.hasPassword) {
+                                    globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(entry.toJoinConfig().sanitised()) }
+                                } else {
+                                    // No password is kept, so the form takes the entry and asks for it.
+                                    username = entry.user
+                                    room = entry.room
+                                    mode = ServerMode.Custom
+                                    address = entry.ip
+                                    port = entry.port.toString()
+                                    password = ""
+                                    error = null
+                                    viewmodel.notices.post(passwordNeeded, NoticeSeverity.Info, holdMs = 4000L)
+                                    askPassword++
+                                }
+                            },
+                            onForgetRecent = { entry -> globalViewmodel.viewModelScope.launch { RecentJoins.remove(entry) } },
                         )
-                        if (rememberInfo) {
-                            RecentRooms(
-                                entries = recents,
-                                onPick = { entry ->
-                                    if (!entry.hasPassword) {
-                                        globalViewmodel.viewModelScope.launch(Dispatchers.Default) { viewmodel.joinRoom(entry.toJoinConfig().sanitised()) }
-                                    } else {
-                                        // No password is kept, so the form takes the entry and asks for it.
-                                        username = entry.user
-                                        room = entry.room
-                                        mode = ServerMode.Custom
-                                        address = entry.ip
-                                        port = entry.port.toString()
-                                        password = ""
-                                        error = null
-                                        viewmodel.notices.post(passwordNeeded, NoticeSeverity.Info, holdMs = 4000L)
-                                        askPassword++
-                                    }
-                                },
-                                onForget = { entry -> globalViewmodel.viewModelScope.launch { RecentJoins.remove(entry) } },
-                            )
-                        }
                     }
                 }
 
@@ -704,18 +706,59 @@ private fun JoinConfig.sanitised(): JoinConfig {
 }
 
 /**
- * The join key, with the shortcut key beside it when [onSaveShortcut] is not null. The shortcut
- * key unfolds over the join key to explain itself before it acts, so both keys share one row.
+ * The join key, with the shortcut key beside it when [onSaveShortcut] is not null, and the recent
+ * rooms key at the end when [recents] is not empty. The shortcut key unfolds over the join key to
+ * explain itself before it acts, so the keys share one row. The recent rooms key opens a row of
+ * the recent rooms above the join row.
  */
 @Composable
-internal fun JoinRow(onJoin: () -> Unit, onSaveShortcut: (() -> Unit)?) {
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-        PrimaryAction(
-            text = strings.connectButtonJoin,
-            modifier = Modifier.fillMaxWidth().padding(end = if (onSaveShortcut != null) Space.touchMin + Space.gap else 0.dp),
-            onClick = onJoin,
-        )
-        if (onSaveShortcut != null) ShortcutKey(onSave = onSaveShortcut)
+internal fun JoinRow(
+    onJoin: () -> Unit,
+    onSaveShortcut: (() -> Unit)?,
+    recents: List<RecentJoin> = emptyList(),
+    onPickRecent: (RecentJoin) -> Unit = {},
+    onForgetRecent: (RecentJoin) -> Unit = {},
+) {
+    var recentsOpen by rememberSaveable { mutableStateOf(false) }
+    val showRecents = recents.isNotEmpty()
+    // With no recent room left, the row closes, so a later recent room does not open it by itself.
+    LaunchedEffect(showRecents) { if (!showRecents) recentsOpen = false }
+    val keyStep = Space.touchMin + Space.gap
+    val keys = (if (onSaveShortcut != null) 1 else 0) + (if (showRecents) 1 else 0)
+    val inView = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+    val lastHeight = remember { intArrayOf(0) }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(inView)
+            // The recent rooms grow above the join key. On a short window the form scrolls along, so
+            // the join key and the key that opened the rooms stay in view. Only growth counts: a
+            // window that changes width must not pull the form away from a focused field.
+            .onSizeChanged { size ->
+                val grew = size.height > lastHeight[0]
+                lastHeight[0] = size.height
+                if (recentsOpen && grew) scope.launch { inView.bringIntoView() }
+            },
+    ) {
+        AnimatedVisibility(
+            visible = recentsOpen && showRecents,
+            enter = expandVertically(Motion.move(), expandFrom = Alignment.Bottom) + fadeIn(Motion.move()),
+            exit = shrinkVertically(Motion.move(), shrinkTowards = Alignment.Bottom) + fadeOut(Motion.quick()),
+        ) {
+            RecentRoomsStrip(recents, onPickRecent, onForgetRecent, Modifier.padding(bottom = Space.gap))
+        }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+            PrimaryAction(
+                text = strings.connectButtonJoin,
+                modifier = Modifier.fillMaxWidth().padding(end = keyStep * keys),
+                onClick = onJoin,
+            )
+            if (onSaveShortcut != null) {
+                Box(Modifier.padding(end = if (showRecents) keyStep else 0.dp)) { ShortcutKey(onSave = onSaveShortcut) }
+            }
+            if (showRecents) RecentRoomsKey(open = recentsOpen) { recentsOpen = !recentsOpen }
+        }
     }
 }
 

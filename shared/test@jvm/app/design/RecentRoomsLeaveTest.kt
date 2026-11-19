@@ -19,11 +19,12 @@ import kotlin.test.assertTrue
 
 /**
  * A join saves the room to the recent rooms while the home screen is still fading out under the
- * room. The list must not pop up in that fade: it shows the joined room only after coming back.
+ * room. The recent rooms key must not pop up in that fade: it shows only after coming back.
  */
 class RecentRoomsLeaveTest {
 
-    private val title = EnAppStrings.homeRecentTitle.uppercase()
+    /** The spoken name of the key that opens the recent rooms. */
+    private val key = EnAppStrings.homeRecentTitle
 
     @Test
     fun theJoinedRoomJoinsTheListOnlyAfterComingBack() {
@@ -44,15 +45,15 @@ class RecentRoomsLeaveTest {
             val viewmodel = HomeViewmodel(backStack)
             DesignHarness.drive(widthDp = 400, heightDp = 900, television = false, content = { HomeScreenUI(viewmodel) }) {
                 frames(10)
-                assertFalse(shows(title), "no recent rooms yet, so no list")
+                assertFalse(describes(key), "no recent rooms yet, so no key")
                 runBlocking { viewmodel.joinRoom(JoinConfig(user = "tester", room = "leaving")) }
                 await { Preferences.RECENT_JOINS.value() != null }
                 frames(10)
                 assertTrue(backStack.last() is Screen.Room, "the join opened the room")
-                assertFalse(shows(title), "the list must not appear while the room opens over the home screen")
+                assertFalse(describes(key), "the key must not appear while the room opens over the home screen")
                 DesignHarness.onUiThread { backStack.removeAt(backStack.lastIndex) }
                 frames(10)
-                assertTrue(shows(title), "back home, the joined room is in the list")
+                assertTrue(describes(key), "back home, the key opens the recent rooms")
             }
         } finally {
             runBlocking {
