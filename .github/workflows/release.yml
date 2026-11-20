@@ -245,17 +245,9 @@ jobs:
         with:
           packages: platform-tools
 
-      # The same NDK as the full build. See build-android-full.
-      - name: Cache Android NDK
-        id: ndk-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
-          key: android-ndk-28.2.13676358-${{ runner.os }}
-
-      - name: Install NDK
-        if: steps.ndk-cache.outputs.cache-hit != 'true'
-        run: sdkmanager "ndk;28.2.13676358"
+      # No NDK step. The exoOnly APK takes its native libraries from the build before the strip
+      # step, so the APK is the same with or without an NDK (docs/DEVELOPING.md, "Reproducing a
+      # published APK").
 
       # The Kotlin Toolchain (./kotlin) downloads its own JDKs, Kotlin/Native and Maven artifacts.
       - name: Cache the Kotlin Toolchain downloads
@@ -288,8 +280,8 @@ jobs:
           } > keystore.properties
 
       # The script builds the release APK with the exoOnly application ID and
-      # KiteBuildConfig.EXOPLAYER_ONLY set to true. Then it removes the native player libraries,
-      # aligns the APK and signs it again.
+      # KiteBuildConfig.EXOPLAYER_ONLY set to true. Then it writes the APK without the native
+      # player libraries, aligned, and signs it again.
       - name: Build APK
         run: python3 scripts/android_release.py --exo-only
 

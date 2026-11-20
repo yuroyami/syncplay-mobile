@@ -58,8 +58,10 @@ each module has a `module.yaml`. The script downloads the pinned toolchain on th
 - Dependency versions are in the version catalog, [`libs.versions.toml`](../libs.versions.toml).
 - Android uses compile SDK **37.2**, target SDK **37**, Build Tools **37.0.0** and **min SDK 26**
   (Android 8.0). The values are in [`androidApp/module.yaml`](../androidApp/module.yaml). The
-  toolchain builds Android with its bundled Android Gradle plugin, so the release build also needs
-  the default NDK of that plugin, **NDK 28.2.13676358**, to strip the native libraries.
+  toolchain builds Android with its bundled Android Gradle plugin. The release build of the full
+  app also needs the default NDK of that plugin, **NDK 28.2.13676358**. The plugin strips the
+  native libraries with it, and `scripts/android_release.py` extracts the native debug symbols
+  with it. The exoOnly APK needs no NDK.
 - iOS needs macOS and Xcode. The deployment target is **iOS 15.0**. The build has an arm64 device
   target and an arm64 simulator target.
 
@@ -582,26 +584,55 @@ build step writes it.
 
 The exoOnly APK is built so that anyone can rebuild it from source and compare it with the
 published file. IzzyOnDroid checks each release this way. The build needs no keystore, no
-`local.properties` and no repository secret.
+`local.properties`, no repository secret and no NDK.
+
+Since 0.27.0, the Kotlin Toolchain builds the app. Release 0.26.0 and older were built with
+Gradle. For those releases, follow this section in the docs of their tag.
+
+The build needs:
+
+- git, Python 3 and network access. The `./kotlin` script downloads the toolchain, its JDK and the
+  dependencies, so you do not install a JDK.
+- An Android SDK with the packages `platforms;android-37.2` and `build-tools;37.0.0`. Set
+  `ANDROID_HOME` to it. The script checks the APK with `aapt2`, `apksigner`, `dexdump` and
+  `zipalign` from the Build Tools.
 
 A `yuroyami.keyOpenSubsApi` entry in `local.properties`, or the `SYNKPLAY_OPENSUBTITLES_KEY`
 environment variable, replaces the committed OpenSubtitles key. Your APK then differs from the
 published file. Remove both before you build.
 
-1. Check out the tag of the release. A tag is `v` followed by the version, so release 0.25.0 has
-   the tag `v0.25.0`.
-2. Install NDK 28.2.13676358 in the Android SDK, and set `ANDROID_HOME`. The toolchain brings its
-   own JDK, the same one on every machine.
-3. Build the unsigned exoOnly APK:
+1. Check out the tag of the release. A tag is `v` followed by the version, so release 0.27.0 has
+   the tag `v0.27.0`.
+2. Build the unsigned exoOnly APK:
 
    ```bash
    SYNKPLAY_UNSIGNED_RELEASE=true python3 scripts/android_release.py --exo-only
    ```
 
-4. Find the APK in `AndroidAppOutput/`. Its name ends in `-unsigned.apk`, so nobody can take it for
+3. Find the APK in `AndroidAppOutput/`. Its name ends in `-unsigned.apk`, so nobody can take it for
    a release. `SYNKPLAY_UNSIGNED_RELEASE=true` skips signing on purpose, even on a machine that
    holds the keystore.
-5. Copy the signature from the published APK onto your APK with
+4. Copy the signature from the published APK onto your APK with
    [apksigcopier](https://github.com/obfusk/apksigcopier). The published APK has only an APK
-   Signature Scheme v2 signature. Apart from that signature block, it is the unsigned APK.
-6. Compare the two files byte for byte.
+   Signature Scheme v2 signature. Apart from that signature block and the zero bytes that
+   apksigner puts before it, it is the unsigned APK.
+5. Compare the two files byte for byte.
+
+These parts of the build keep the APK the same on every machine. Keep them when you change the
+build:
+
+- The toolchain pins the JDK, Kotlin, the Android Gradle plugin and R8.
+- The `common-ksp` plugin sorts the code that Lyricist generates for the strings. Lyricist writes
+  it in the order that the file system lists the string files, and that order differs between
+  machines.
+- `scripts/android_release.py` writes the APK itself. Each entry keeps the compressed bytes of the
+  toolchain build, and the script aligns the entries as `zipalign -P 16 4` does. So the APK does
+  not depend on the zlib or the zipalign of the machine.
+- The native libraries go into the APK as the dependencies ship them. The Android Gradle plugin
+  strips them only when its default NDK is installed. So the script takes them from the build
+  before that step.
+- R8 keeps the original names (`-dontobfuscate` in `androidApp/proguard-rules.pro`). Then a
+  difference between two builds shows the name of the class that changed.
+
+To test a change to the build, build the APK in two clean clones in two different folders, and
+compare the two files.

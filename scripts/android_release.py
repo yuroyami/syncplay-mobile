@@ -14,6 +14,12 @@ asset by that name.
 The full universal APK gets compressed native libraries (see compress_libraries). The exoOnly APK
 and the AAB keep the uncompressed libraries of the toolchain build.
 
+Anyone can rebuild the exoOnly APK and get the published bytes (docs/DEVELOPING.md, "Reproducing a
+published APK"). So the script writes the APKs itself (write_apk): each entry keeps its compressed
+bytes, and the script aligns the entries as zipalign does. The exoOnly APK takes its native
+libraries as the dependencies ship them (strip_libraries). The APK then does not depend on the
+zlib, the zipalign or the NDK of the machine.
+
 Usage:
   python3 scripts/android_release.py              build all three files
   python3 scripts/android_release.py --exo-only   build only the exoOnly APK
@@ -43,6 +49,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -89,6 +96,23 @@ TYPE_INT_BOOLEAN = 0x12
 
 # The file in which the Android Gradle plugin records the git revision of the build.
 VCS_INFO = "META-INF/version-control-info.textproto"
+
+# The zip records that write_apk reads and writes: the local file header, the central directory
+# record and the end of central directory record.
+LOCAL_HEADER = struct.Struct("<IHHHHHIIIHH")
+CENTRAL_HEADER = struct.Struct("<IHHHHHHIIIHHHHHII")
+END_RECORD = struct.Struct("<IHHHHIIH")
+# The flag of an entry whose sizes follow its data in a data descriptor.
+DATA_DESCRIPTOR_FLAG = 0x0008
+# The extra field that pads an entry to its alignment, as apksigner and the Android Gradle plugin
+# write it: the ID, the size, the alignment, then zero bytes.
+ALIGNMENT_EXTRA_ID = 0xD935
+# Uncompressed native libraries start on a 16 KB page, and every other uncompressed entry on a
+# multiple of 4 bytes. This is the layout of `zipalign -P 16 4`.
+LIBRARY_ALIGNMENT = 16384
+ENTRY_ALIGNMENT = 4
+# A change function returns this to leave an entry out.
+DROP = object()
 
 
 def kotlin(*args: str, env: dict | None = None) -> str:
@@ -189,26 +213,131 @@ def revision_record() -> bytes | None:
     return f'repositories {{\n  system: GIT\n  local_root_path: "$PROJECT_DIR"\n  revision: "{revision}"\n}}\n'.encode()
 
 
-def copied_entry(zin: zipfile.ZipFile, item: zipfile.ZipInfo, revision: bytes | None) -> tuple[bytes, int]:
-    """The data and the compression of [item] in a copy. A new revision record is stored, so its bytes do not depend on zlib."""
-    if item.filename == VCS_INFO and revision is not None:
-        return revision, zipfile.ZIP_STORED
-    return zin.read(item.filename), item.compress_type
+def is_v1_signature(name: str) -> bool:
+    """True for a v1 signature file of the toolchain build. The new signature has no v1 part."""
+    return name.startswith("META-INF/") and re.search(r"\.(SF|RSA|DSA|EC|MF)$", name) is not None
+
+
+def central_directory(apk: bytes) -> list[tuple[bytes, str]]:
+    """The central directory records of [apk] in their order, each with the name of its entry."""
+    end = apk.rfind(b"PK\x05\x06", max(0, len(apk) - 65557))
+    if end < 0:
+        sys.exit("android_release: the APK has no end of central directory record")
+    _, _, _, _, count, _, position, _ = END_RECORD.unpack_from(apk, end)
+    if count == 0xFFFF or position == 0xFFFFFFFF:
+        sys.exit("android_release: the APK is a zip64 archive, which this script cannot copy")
+    records = []
+    for _ in range(count):
+        fields = CENTRAL_HEADER.unpack_from(apk, position)
+        if fields[0] != 0x02014B50:
+            sys.exit("android_release: the central directory of the APK is damaged")
+        size = CENTRAL_HEADER.size + fields[10] + fields[11] + fields[12]
+        name = apk[position + CENTRAL_HEADER.size: position + CENTRAL_HEADER.size + fields[10]]
+        records.append((apk[position: position + size], name.decode("utf-8" if fields[3] & 0x800 else "cp437")))
+        position += size
+    return records
+
+
+def without_alignment(extra: bytes) -> bytes:
+    """[extra] without the padding of an earlier alignment: alignment fields and zipalign's zero bytes."""
+    kept, position = b"", 0
+    while position + 4 <= len(extra):
+        header_id, size = struct.unpack_from("<HH", extra, position)
+        if position + 4 + size > len(extra):
+            break
+        if header_id not in (ALIGNMENT_EXTRA_ID, 0):
+            kept += extra[position: position + 4 + size]
+        position += 4 + size
+    return kept
+
+
+def deflate(content: bytes) -> bytes:
+    compressor = zlib.compressobj(zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -15)
+    return compressor.compress(content) + compressor.flush()
+
+
+def write_apk(source: Path, target: Path, change) -> None:
+    """Writes the entries of [source] to [target], aligned as `zipalign -P 16 4` aligns them.
+
+    [change] gets the name, the compression method and a function that reads the content of each
+    entry. It returns None to copy the entry, DROP to leave it out, or (content, method) for new
+    content. A copied entry keeps its compressed bytes, so the result depends on no zlib and no
+    zipalign of the machine. The APK Signing Block of [source] is not copied.
+    """
+    apk = source.read_bytes()
+    out, central, count = bytearray(), bytearray(), 0
+    with zipfile.ZipFile(source) as zf:
+        for record, name in central_directory(apk):
+            fields = list(CENTRAL_HEADER.unpack_from(record))
+            result = change(name, fields[4], lambda: zf.read(name))
+            if result is DROP:
+                continue
+            local = list(LOCAL_HEADER.unpack_from(apk, fields[16]))
+            if local[0] != 0x04034B50:
+                sys.exit(f"android_release: the local header of {name} is damaged")
+            name_start = fields[16] + LOCAL_HEADER.size
+            extra_start = name_start + local[9]
+            extra = without_alignment(apk[extra_start: extra_start + local[10]])
+            if result is None:
+                data_start = extra_start + local[10]
+                data = apk[data_start: data_start + fields[8]]
+            else:
+                content, method = result
+                data = content if method == zipfile.ZIP_STORED else deflate(content)
+                fields[4], fields[7], fields[8], fields[9] = method, zlib.crc32(content), len(data), len(content)
+                if method != zipfile.ZIP_STORED:
+                    fields[2] = local[1] = max(local[1], 20)
+            # The local header gets the sizes, so no entry needs a data descriptor.
+            fields[3] &= ~DATA_DESCRIPTOR_FLAG
+            local[2] &= ~DATA_DESCRIPTOR_FLAG
+            if fields[4] == zipfile.ZIP_STORED:
+                alignment = LIBRARY_ALIGNMENT if name.endswith(".so") else ENTRY_ALIGNMENT
+                padding = -(len(out) + LOCAL_HEADER.size + local[9] + len(extra) + 6) % alignment
+                extra += struct.pack("<HHH", ALIGNMENT_EXTRA_ID, 2 + padding, alignment) + bytes(padding)
+            local[3], local[6], local[7], local[8], local[10] = fields[4], fields[7], fields[8], fields[9], len(extra)
+            fields[16] = len(out)
+            out += LOCAL_HEADER.pack(*local) + apk[name_start: extra_start] + extra + data
+            central += CENTRAL_HEADER.pack(*fields) + record[CENTRAL_HEADER.size:]
+            count += 1
+    central_start = len(out)
+    out += central + END_RECORD.pack(0x06054B50, 0, 0, count, count, len(central), central_start, 0)
+    target.write_bytes(out)
+
+
+def merged_libraries() -> dict[str, bytes]:
+    """The native libraries of the release build before the Android Gradle plugin strips them, by entry name."""
+    found = {}
+    for library in sorted(ROOT.glob(f"{RELEASE_BUILD}/**/intermediates/merged_native_libs/release/**/lib/*/*.so")):
+        name, content = f"lib/{library.parent.name}/{library.name}", library.read_bytes()
+        if found.setdefault(name, content) != content:
+            sys.exit(f"android_release: the release build has two different merged copies of {name}")
+    return found
 
 
 def strip_libraries(source: Path, target: Path) -> None:
-    """Copies [source] to [target] without the exoOnly libraries and without the old signature."""
+    """Writes [target] from [source] without the exoOnly libraries and without the old signature.
+
+    The other native libraries go in as their dependencies ship them. The Android Gradle plugin
+    strips them only when its default NDK is installed, so a stripped copy would make the APK
+    depend on the NDK of the machine.
+    """
     revision = revision_record()
-    with zipfile.ZipFile(source) as zin, zipfile.ZipFile(target, "w") as zout:
-        for item in zin.infolist():
-            name = item.filename
-            if name.startswith("lib/") and name.rsplit("/", 1)[-1] in EXO_ONLY_DROPPED:
-                continue
-            # The v1 signature files of the toolchain build, if any. The new signature has no v1 part.
-            if name.startswith("META-INF/") and re.search(r"\.(SF|RSA|DSA|EC|MF)$", name):
-                continue
-            data, method = copied_entry(zin, item, revision)
-            zout.writestr(item, data, compress_type=method)
+    originals = merged_libraries()
+
+    def change(name: str, method: int, read):
+        if is_v1_signature(name):
+            return DROP
+        if name == VCS_INFO and revision is not None:
+            return revision, zipfile.ZIP_STORED
+        if name.startswith("lib/") and name.endswith(".so"):
+            if name.rsplit("/", 1)[-1] in EXO_ONLY_DROPPED:
+                return DROP
+            if name not in originals:
+                sys.exit(f"android_release: the release build has no merged copy of {name}")
+            return originals[name], zipfile.ZIP_STORED
+        return None
+
+    write_apk(source, target, change)
 
 
 def set_extract_native_libs(manifest: bytes) -> bytes:
@@ -247,29 +376,32 @@ def compress_libraries(source: Path, target: Path) -> None:
     install time. This makes the universal APK much smaller to download.
     """
     revision = revision_record()
-    with zipfile.ZipFile(source) as zin, zipfile.ZipFile(target, "w") as zout:
-        for item in zin.infolist():
-            name = item.filename
-            if name.startswith("META-INF/") and re.search(r"\.(SF|RSA|DSA|EC|MF)$", name):
-                continue
-            data, method = copied_entry(zin, item, revision)
-            if name == "AndroidManifest.xml":
-                data = set_extract_native_libs(data)
-            elif name.startswith("lib/") and name.endswith(".so"):
-                method = zipfile.ZIP_DEFLATED
-            zout.writestr(item, data, compress_type=method)
+
+    def change(name: str, method: int, read):
+        if is_v1_signature(name):
+            return DROP
+        if name == VCS_INFO and revision is not None:
+            return revision, zipfile.ZIP_STORED
+        if name == "AndroidManifest.xml":
+            return set_extract_native_libs(read()), method
+        if name.startswith("lib/") and name.endswith(".so"):
+            return read(), zipfile.ZIP_DEFLATED
+        return None
+
+    write_apk(source, target, change)
 
 
 def rewrite_apk(source: Path, target: Path, copy) -> None:
-    """Writes [target] from [source] with [copy], aligns it, and signs it unless the release is unsigned."""
+    """Writes [target] from [source] with [copy], checks its alignment, and signs it unless the release is unsigned."""
     zipalign = build_tool("zipalign")
     if zipalign is None:
         sys.exit("android_release: zipalign was not found. Set ANDROID_HOME.")
-    with tempfile.TemporaryDirectory() as tmp:
-        copied = Path(tmp) / "copied.apk"
-        copy(source, copied)
-        # -P 16 aligns uncompressed native libraries to 16 KB pages, as AGP does.
-        subprocess.run([str(zipalign), "-f", "-P", "16", "4", str(copied), str(target)], check=True)
+    copy(source, target)
+    # zipalign only checks the layout. write_apk aligned the entries itself.
+    result = subprocess.run([str(zipalign), "-c", "-P", "16", "4", str(target)],
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if result.returncode != 0:
+        sys.exit(f"android_release: {target.name} is not aligned:\n{result.stdout[-2000:]}")
     if not UNSIGNED:
         sign(target)
 
@@ -309,9 +441,9 @@ def sign(apk: Path) -> None:
     props = read_signing_properties()
     keystore = (ROOT / "androidApp" / props["storeFile"]).resolve()
     env = {**os.environ, "SYNKPLAY_KS_PASS": props["storePassword"], "SYNKPLAY_KEY_PASS": props["keyPassword"]}
-    # The same signature as the old Gradle build: scheme v2 only, and the zipalign layout kept. The
-    # signed APK is then the unsigned APK plus the APK Signing Block, and apksigcopier can copy the
-    # signature onto a rebuilt unsigned APK. Without these flags, apksigner adds v1 signature files,
+    # The same signature as the old Gradle build: scheme v2 only, and the entry layout kept. The
+    # signed APK is then the unsigned APK plus zero padding and the APK Signing Block, and
+    # apksigcopier can copy the signature onto a rebuilt unsigned APK. Without these flags, apksigner adds v1 signature files,
     # realigns every stored entry and writes an .idsig file next to the APK.
     result = subprocess.run(
         [str(apksigner), "sign", "--alignment-preserved", "true", "--v1-signing-enabled", "false",

@@ -88,6 +88,7 @@ fun generateCommonCode(
     check(exit == 0) { "KSP failed with exit code $exit." }
 
     sortLocales(outputDir)
+    sortStrings(outputDir)
     val generated = outputDir.walk().filter { it.name.endsWith(".kt") }.count()
     check(generated > 0) { "KSP generated no Kotlin file in $outputDir." }
     println("KSP generated $generated Kotlin files.")
@@ -128,4 +129,30 @@ private fun sortLocales(outputDir: Path) {
     val text = file.readText()
     val sorted = LocaleOrder.sort(text, file.name)
     if (sorted != text) file.writeText(sorted)
+}
+
+/**
+ * Puts the members of the generated string interface and of each language object in the same
+ * order on every machine. Lyricist writes them in the order that it reads the string files.
+ */
+@OptIn(ExperimentalPathApi::class)
+private fun sortStrings(outputDir: Path) {
+    var interfaces = 0
+    var objects = 0
+    for (file in outputDir.walk().filter { it.name.endsWith(".kt") }.sortedBy { it.toString() }) {
+        val text = file.readText()
+        var sorted = text
+        if (StringOrder.hasInterface(sorted)) {
+            sorted = StringOrder.sortInterface(sorted, file.name)
+            interfaces++
+        }
+        if (StringOrder.hasObject(sorted)) {
+            sorted = StringOrder.sortObject(sorted, file.name)
+            objects++
+        }
+        if (sorted != text) file.writeText(sorted)
+    }
+    check(interfaces == 1 && objects > 0) {
+        "Expected one string interface and at least one language object in $outputDir, found $interfaces and $objects."
+    }
 }

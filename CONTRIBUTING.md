@@ -683,8 +683,10 @@ string through them.
   the generated icons by hand.
 - The macOS package turns a `0.x.y` app version into `1.x.y`, because jpackage rejects a version
   that starts with zero. Do not sync the two versions.
-- Keep the locale sort in the `common-ksp` plugin (`LocaleOrder.kt`). Lyricist writes its language
-  table in the order that it reads the folders, and that order differs between machines.
+- Keep the two sorts in the `common-ksp` plugin. `LocaleOrder.kt` sorts the language table, and
+  `StringOrder.kt` sorts the members of the string interface and of each language object. Lyricist
+  writes both in the order that it reads the folders and the string files, and that order differs
+  between machines (#166).
 - The `common-ksp` plugin runs the Lyricist and Ktorfit processors on the common code. The
   processor versions in its `plugin.yaml` must equal the `lyricist` and `ktorfit` versions in
   `libs.versions.toml`, or the build fails.
@@ -699,6 +701,15 @@ string through them.
   `android:extractNativeLibs` to true in the compiled manifest of that APK. The ExoPlayer-only APK
   and the AAB keep them uncompressed. The ExoPlayer-only APK must rebuild byte for byte, and the
   compressed bytes would depend on the zlib of the machine.
+- `scripts/android_release.py` writes the release APKs with its own zip writer (`write_apk`). Each
+  entry keeps the compressed bytes of the toolchain build, and the writer aligns the entries as
+  `zipalign -P 16 4` does. Do not go back to `zipfile.writestr` or a `zipalign` run. Both make
+  the ExoPlayer-only APK depend on the zlib or the zipalign of the machine (#166).
+- The ExoPlayer-only APK takes its native libraries from the merged libraries of the release
+  build, before the Android Gradle plugin strips them. The plugin strips only when its default NDK
+  is installed, so a stripped copy makes the APK depend on the NDK of the machine (#166).
+- Keep `-dontobfuscate` in `androidApp/proguard-rules.pro`. R8 still shrinks the code, and a
+  difference in a rebuilt APK then names the class that changed.
 - Do not set `android:extractNativeLibs` in `AndroidManifest.xml`. The Android Gradle plugin of the
   toolchain fails the build on it.
 - The ExoPlayer DASH, HLS and RTSP modules have no imports and are not dead code. ExoPlayer loads

@@ -41,6 +41,7 @@ Written for people who use the app. The full engineering history is in the commi
 - Android: ExoPlayer is updated to Media3 1.12.0-beta01.
 - iOS: the connection library is updated to SwiftNIO 2.105.0, and the YouTube link reader to YouTubeKit 0.4.10.
 - The app is now built with the Kotlin Toolchain instead of Gradle. Nothing changes in how the app works.
+- The ExoPlayer-only APK is reproducible again, so IzzyOnDroid can verify it. The 0.26.0 APK failed that check. (#166)
 
 ## 0.26.0
 

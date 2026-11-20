@@ -1,4 +1,12 @@
 # =============================================================================
+# R8 shrinks and optimizes the code, but keeps the original names. IzzyOnDroid
+# rebuilds the ExoPlayer-only APK and compares it with the published file, and
+# a difference in readable names is easy to trace (issue #166). The app is open
+# source, so short names hide nothing.
+# =============================================================================
+-dontobfuscate
+
+# =============================================================================
 # NewPipe Extractor pulls in Mozilla Rhino to run the YouTube cipher script.
 # Rhino's JavaToJSONConverters references java.beans.* APIs, which Android does
 # not have. Rhino uses them only on a JVM that has the beans package, so the
