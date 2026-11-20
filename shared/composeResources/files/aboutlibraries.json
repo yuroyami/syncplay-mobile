@@ -2527,7 +2527,7 @@
         },
         {
             "uniqueId": "io.netty:netty-buffer",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Buffer",
             "website": "https://netty.io/netty-buffer/",
             "licenses": [
@@ -2540,7 +2540,7 @@
         },
         {
             "uniqueId": "io.netty:netty-codec-base",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Codec/Base",
             "website": "https://netty.io/netty-codec-base/",
             "licenses": [
@@ -2553,7 +2553,7 @@
         },
         {
             "uniqueId": "io.netty:netty-common",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Common",
             "website": "https://netty.io/netty-common/",
             "licenses": [
@@ -2566,7 +2566,7 @@
         },
         {
             "uniqueId": "io.netty:netty-handler",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Handler",
             "website": "https://netty.io/netty-handler/",
             "licenses": [
@@ -2579,7 +2579,7 @@
         },
         {
             "uniqueId": "io.netty:netty-resolver",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Resolver",
             "website": "https://netty.io/netty-resolver/",
             "licenses": [
@@ -2592,7 +2592,7 @@
         },
         {
             "uniqueId": "io.netty:netty-transport",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Transport",
             "website": "https://netty.io/netty-transport/",
             "licenses": [
@@ -2605,7 +2605,7 @@
         },
         {
             "uniqueId": "io.netty:netty-transport-native-unix-common",
-            "artifactVersion": "4.2.20.Final",
+            "artifactVersion": "4.2.21.Final",
             "name": "Netty/Transport/Native/Unix/Common",
             "website": "https://netty.io/netty-transport-native-unix-common/",
             "licenses": [
