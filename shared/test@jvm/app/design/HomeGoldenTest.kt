@@ -261,7 +261,7 @@ class HomeGoldenTest {
             for (open in listOf(false, true)) {
                 val home = renderHome("recent", w, h, openRecents = open)
                 home.assertAllTextFits()
-                // The open row grows above the join key, and the form scrolls so the whole key stays in view.
+                // The layer opens over the form, so the join key stays where it was, on screen.
                 home.assertJoinOnScreen()
             }
         }

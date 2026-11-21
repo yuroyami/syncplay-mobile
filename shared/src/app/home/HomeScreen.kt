@@ -44,8 +44,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
@@ -63,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,7 +90,7 @@ import app.Screen
 import app.home.components.HomeEnginePicker
 import app.home.components.HomeTopBar
 import app.home.components.RecentRoomsKey
-import app.home.components.RecentRoomsStrip
+import app.home.components.RecentRoomsLayer
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.i18n.AppStrings
 import app.i18n.strings
@@ -561,8 +560,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
                 }
 
-                /* Join, with the shortcut key beside it, and the recent rooms under both. Desktop and
-                 * the web have no home screen to pin a shortcut to, so they show the join key alone. */
+                /* Join, with the shortcut key and the recent rooms key beside it. Desktop and the web
+                 * have no home screen to pin a shortcut to, so they show no shortcut key. */
                 val joinBlock: @Composable () -> Unit = {
                     val shortcutSaved = strings.homeShortcutSaved(room)
                     val passwordNeeded = strings.homeRecentPassword
@@ -708,8 +707,9 @@ private fun JoinConfig.sanitised(): JoinConfig {
 /**
  * The join key, with the shortcut key beside it when [onSaveShortcut] is not null, and the recent
  * rooms key at the end when [recents] is not empty. The shortcut key unfolds over the join key to
- * explain itself before it acts, so the keys share one row. The recent rooms key opens a row of
- * the recent rooms above the join row.
+ * explain itself before it acts, so the keys share one row. The recent rooms key opens the recent
+ * rooms in a layer over the form, right above this row ([RecentRoomsLayer]). The layer takes no
+ * room in the form, so the row and everything around it keep their place.
  */
 @Composable
 internal fun JoinRow(
@@ -721,44 +721,52 @@ internal fun JoinRow(
 ) {
     var recentsOpen by rememberSaveable { mutableStateOf(false) }
     val showRecents = recents.isNotEmpty()
-    // With no recent room left, the row closes, so a later recent room does not open it by itself.
+    // With no recent room left, the layer closes, so a later recent room does not open it by itself.
     LaunchedEffect(showRecents) { if (!showRecents) recentsOpen = false }
     val keyStep = Space.touchMin + Space.gap
     val keys = (if (onSaveShortcut != null) 1 else 0) + (if (showRecents) 1 else 0)
-    val inView = remember { BringIntoViewRequester() }
+    val density = LocalDensity.current
+    var rowWidth by remember { mutableStateOf(0.dp) }
+    val recentsKeyFocus = remember { FocusRequester() }
+    val remoteOrKeyboard = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
     val scope = rememberCoroutineScope()
-    val lastHeight = remember { intArrayOf(0) }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .bringIntoViewRequester(inView)
-            // The recent rooms grow above the join key. On a short window the form scrolls along, so
-            // the join key and the key that opened the rooms stay in view. Only growth counts: a
-            // window that changes width must not pull the form away from a focused field.
-            .onSizeChanged { size ->
-                val grew = size.height > lastHeight[0]
-                lastHeight[0] = size.height
-                if (recentsOpen && grew) scope.launch { inView.bringIntoView() }
-            },
+    // The layer anchors on this box, so the box is the join row as laid out.
+    Box(
+        Modifier.fillMaxWidth().onSizeChanged { rowWidth = with(density) { it.width.toDp() } },
+        contentAlignment = Alignment.CenterEnd,
     ) {
-        AnimatedVisibility(
-            visible = recentsOpen && showRecents,
-            enter = expandVertically(Motion.move(), expandFrom = Alignment.Bottom) + fadeIn(Motion.move()),
-            exit = shrinkVertically(Motion.move(), shrinkTowards = Alignment.Bottom) + fadeOut(Motion.quick()),
-        ) {
-            RecentRoomsStrip(recents, onPickRecent, onForgetRecent, Modifier.padding(bottom = Space.gap))
+        PrimaryAction(
+            text = strings.connectButtonJoin,
+            modifier = Modifier.fillMaxWidth().padding(end = keyStep * keys),
+            onClick = onJoin,
+        )
+        if (onSaveShortcut != null) {
+            Box(Modifier.padding(end = if (showRecents) keyStep else 0.dp)) { ShortcutKey(onSave = onSaveShortcut) }
         }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            PrimaryAction(
-                text = strings.connectButtonJoin,
-                modifier = Modifier.fillMaxWidth().padding(end = keyStep * keys),
-                onClick = onJoin,
-            )
-            if (onSaveShortcut != null) {
-                Box(Modifier.padding(end = if (showRecents) keyStep else 0.dp)) { ShortcutKey(onSave = onSaveShortcut) }
-            }
-            if (showRecents) RecentRoomsKey(open = recentsOpen) { recentsOpen = !recentsOpen }
-        }
+        if (showRecents) RecentRoomsKey(open = recentsOpen, focusRequester = recentsKeyFocus) { recentsOpen = !recentsOpen }
+        RecentRoomsLayer(
+            open = recentsOpen && showRecents,
+            entries = recents,
+            width = rowWidth,
+            onPick = { entry ->
+                // A room with a password fills the form, and its password field then takes focus.
+                recentsOpen = false
+                onPickRecent(entry)
+            },
+            onForget = onForgetRecent,
+            onDismiss = {
+                recentsOpen = false
+                // Under a remote or a keyboard, focus goes back to the key that opened the layer.
+                if (remoteOrKeyboard) {
+                    scope.launch {
+                        repeat(8) {
+                            delay(60)
+                            if (runCatching { recentsKeyFocus.requestFocus(FocusDirection.Enter) }.getOrDefault(false)) return@launch
+                        }
+                    }
+                }
+            },
+        )
     }
 }
 

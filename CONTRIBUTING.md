@@ -502,9 +502,14 @@ Frames and the room controls:
 
 - Every dialog and panel goes through the one `Modal` frame (`Modal.kt`). `Modal` owns the dialog
   window, the scrim, the entry focus, scrolling, the keyboard inset, Escape and Back.
-- Three small overlays are plain `Popup`s instead: the long-press menu of a GIF in chat
-  (`ChatMediaMenu.kt`), the desktop hover tooltip (`GlyphButton.kt`) and the help tip
-  (`HelpTip.kt`).
+- Four small overlays are plain `Popup`s instead: the long-press menu of a GIF in chat
+  (`ChatMediaMenu.kt`), the desktop hover tooltip (`GlyphButton.kt`), the help tip (`HelpTip.kt`)
+  and the recent rooms layer on the home screen (`RecentRooms.kt`).
+- In the desktop test scene, a plain `Popup` that takes focus does not close on Escape. So the
+  recent rooms layer closes on Escape in its own key handler.
+- The recent rooms layer is a popup so that it takes no room in the home form. Opening it moves
+  nothing on the home screen: `RecentRoomsLayerTest` checks the join row and every labelled node
+  on each frame.
 - `fillMaxWidth(fraction).widthIn(max)` never caps anything. A width cap has to be one layout step,
   as in the `widthFraction` modifier of `Modal`.
 - Give a modal one accent or primary action. Each one claims the modal's entry focus, and with two,
