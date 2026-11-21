@@ -14,4 +14,4 @@ dependencies:
 settings:
   compose:
     enabled: true
-    version: 1.13.0-beta02
+    version: 1.13.0-rc01

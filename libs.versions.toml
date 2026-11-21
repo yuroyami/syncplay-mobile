@@ -2,7 +2,7 @@
 # The Kotlin compiler version is settings.kotlin.version in common.module-template.yaml. This key
 # keeps kotlin-reflect of the tool modules on the same version.
 kotlin = "2.4.21"
-compose-multiplatform = "1.13.0-beta02"
+compose-multiplatform = "1.13.0-rc01"
 kSerialization = "1.13.0"
 ktorfit = "2.7.5"
 # Runtime language switching. The XML processor reads values-*/strings.xml, so the resource
@@ -13,7 +13,7 @@ lyricist = "1.9.0"
 
 #KMM-Libs
 compose-multiplatform-icons = "1.7.3"
-compose-material3 = "1.13.0-beta02"
+compose-material3 = "1.13.0-rc01"
 lifecycleViewmodelCompose = "2.11.0"
 navigation3Runtime = "1.2.0"
 navigation3Ui = "1.2.0"

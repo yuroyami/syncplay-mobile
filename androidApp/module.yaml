@@ -11,7 +11,7 @@ dependencies:
 settings:
   compose:
     enabled: true
-    version: 1.13.0-beta02
+    version: 1.13.0-rc01
   android:
     namespace: androidApp
     # Google Play cannot change the application ID after the first upload. The exoOnly build
