@@ -515,10 +515,10 @@ Frames and the room controls:
 - A tap on the room background with the keyboard open only clears focus. Without the keyboard, and
   once the player is ready, the tap hides the room controls. In the portrait room, only a tap on
   the stage counts, and the gestures act only there too (#238).
-- A key on the direction pad shows hidden room controls again when a video is loaded and the screen
-  is not locked. Centre and Enter also play or pause, Left and Right also seek, and Up and Down only
-  show the controls (`SyncplayActivity.onKeyDown`). This works on any Android device. On a
-  television, it is the only way back to the controls.
+- Hidden room controls must not own remote focus. The video layer takes it and handles wake keys
+  (`HiddenControlsAccessTest`), because Compose can consume keys before `Activity.onKeyDown`.
+- A direction-pad key shows hidden room controls when a video is loaded and the screen is not
+  locked. Centre and Enter also play or pause, Left and Right seek, and Up and Down only show them.
 - Room gestures ignore drags that start inside the system gesture, cutout and waterfall insets. The
   top and bottom guards are at least 8 percent of the height. The portrait stage is clear of the top
   and bottom screen edges, so it keeps only the 8 percent guards (`screenEdges = false`, #238).

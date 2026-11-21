@@ -600,15 +600,16 @@ private fun RoomHud(
     val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
     val isHUDVisible by ui.visibleHUD.collectAsState()
     val focusManager = LocalFocusManager.current
+    val hiddenHudFocus = remember { FocusRequester() }
     /* A television counts as keyboard input from the first frame. Compose only switches the input
      * mode to keyboard after the first key press, and the HUD can appear before that. */
     val isKeyboardMode = LocalIsTelevision.current || LocalInputModeManager.current.inputMode == InputMode.Keyboard
 
     /* Under keyboard or D-pad input, focus moves to the main control when the HUD shows. On touch
-     * that would be jarring and could raise the soft keyboard. Focus is cleared on hide, so the
-     * hidden controls (still composed) keep no focus. In portrait, focus can rest under the stage,
-     * in the composer for example. A show then leaves it there, and a hide clears focus only when
-     * it sits inside the HUD. */
+     * that would be jarring and could raise the soft keyboard. On hide, keyboard focus leaves the
+     * hidden controls (still composed) for the video layer, which handles the wake keys, and touch
+     * only clears it. In portrait, focus can rest under the stage, in the composer for example. A
+     * show then leaves it there, and a hide moves focus only when it sits inside the HUD. */
     var stageFocused by remember { mutableStateOf(false) }
     var lowerFocused by remember { mutableStateOf(false) }
     LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode, playerIsReady) {
@@ -619,6 +620,9 @@ private fun RoomHud(
             }
         } else if (!portrait || stageFocused) {
             focusManager.clearFocus(force = true)
+            if (isKeyboardMode && hasVideo && playerIsReady) {
+                runCatching { hiddenHudFocus.requestFocus() }
+            }
         }
     }
 
@@ -682,7 +686,7 @@ private fun RoomHud(
                 // While the controls are hidden, a thin line along the bottom edge shows the position.
                 if (hasVideo) StageProgressLine(Modifier.align(Alignment.BottomCenter)) { 1f - hudAlpha.value }
                 // The gesture layer covers the stage only, so the chat under it keeps its touches.
-                if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.matchParentSize(), screenEdges = false)
+                if (playerIsReady) RoomGestureInterceptor(modifier = Modifier.matchParentSize(), hiddenHudFocus = hiddenHudFocus, screenEdges = false)
             },
             tabs = { RoomTabRow() },
             main = { PortraitMainBox(viewmodel, soloMode, playerIsReady) },
@@ -717,7 +721,7 @@ private fun RoomHud(
     /* The gesture layer sits above the HUD. While the HUD is hidden, the gesture layer takes the
      * touches that would otherwise reach the hidden controls. While the HUD is visible, the
      * gesture layer attaches no pointer input. */
-    if (!portrait && playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+    if (!portrait && playerIsReady) RoomGestureInterceptor(modifier = Modifier.fillMaxSize(), hiddenHudFocus = hiddenHudFocus)
     // Above both: the notch strip beside an open keyboard. A stray thumb there closes the keyboard.
     KeyboardNotchShield(keyboardOpen = isKeyboardOpen)
 }

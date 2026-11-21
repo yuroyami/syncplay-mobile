@@ -3,6 +3,7 @@ package app.room.ui.misc
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -38,10 +39,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -53,6 +61,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.i18n.strings
+import app.player.Playback
 import app.player.VolumeLadder
 import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.GESTURES
@@ -92,7 +101,7 @@ private class SeekMark(val at: Offset, val forward: Boolean, val id: Int)
  * fractional guards apply there.
  */
 @Composable
-fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
+fun RoomGestureInterceptor(modifier: Modifier, hiddenHudFocus: FocusRequester, screenEdges: Boolean = true) {
     val viewmodel = LocalRoomViewmodel.current
     val p = palette
     val gesturesEnabled by GESTURES.watchPref()
@@ -183,6 +192,23 @@ fun RoomGestureInterceptor(modifier: Modifier, screenEdges: Boolean = true) {
             modifier = Modifier.fillMaxSize().then(
                 if (!isHUDVisible) {
                     Modifier
+                        // The video layer takes wake keys before a hidden control can take focus.
+                        .focusRequester(hiddenHudFocus)
+                        .onKeyEvent { event ->
+                            if (!hasVideo || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                            when (event.key) {
+                                Key.DirectionCenter, Key.Enter -> viewmodel.dispatcher.controlPlayback(
+                                    if (viewmodel.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true,
+                                )
+                                Key.DirectionLeft -> viewmodel.dispatcher.seekBckwd()
+                                Key.DirectionRight -> viewmodel.dispatcher.seekFrwrd()
+                                Key.DirectionUp, Key.DirectionDown -> Unit
+                                else -> return@onKeyEvent false
+                            }
+                            viewmodel.uiState.showHud()
+                            true
+                        }
+                        .focusable(enabled = hasVideo)
                         .pointerInput(seekGestures, media?.location) {
                             detectTapGestures(
                                 onPress = { offset ->
