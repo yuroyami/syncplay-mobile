@@ -519,6 +519,8 @@ Frames and the room controls:
   (`HiddenControlsAccessTest`), because Compose can consume keys before `Activity.onKeyDown`.
 - A direction-pad key shows hidden room controls when a video is loaded and the screen is not
   locked. Centre and Enter also play or pause, Left and Right seek, and Up and Down only show them.
+  Centre and Enter act on release, because focus moves to Play 150 ms after the controls show and
+  the repeats of a long press would press Play too (#177).
 - Room gestures ignore drags that start inside the system gesture, cutout and waterfall insets. The
   top and bottom guards are at least 8 percent of the height. The portrait stage is clear of the top
   and bottom screen edges, so it keeps only the 8 percent guards (`screenEdges = false`, #238).

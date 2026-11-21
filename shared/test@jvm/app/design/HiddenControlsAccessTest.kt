@@ -50,6 +50,51 @@ class HiddenControlsAccessTest {
         }
     }
 
+    /** Focus moves to Play 150 ms after the controls show. The repeats of a long press must not press it. */
+    @Test
+    fun aLongPressOfCenterOnHiddenControlsPausesOnce() = RoomRig.drive(withVideo = true) {
+        viewmodel.protocol.noteExpectedPlaybackState(paused = false)
+        ui.visibleHUD.value = false
+        driver.frames(30)
+
+        driver.longPress(Key.DirectionCenter)
+        driver.frames(20)
+
+        assertTrue(ui.visibleHUD.value, "The release restores the controls")
+        assertFalse(viewmodel.protocol.expectedPlaying, "A long press pauses once, and its repeats do not press Play")
+        assertFalse(ui.tabCardRoomPreferences.value, "A long press opens nothing hidden")
+    }
+
+    /** In portrait, only the stage hides, and its hidden video layer takes the wake keys the same way. */
+    @Test
+    fun centerOnTheHiddenPortraitStagePausesAndShowsIt() = RoomRig.drive(withVideo = true, widthDp = 390, heightDp = 844) {
+        viewmodel.protocol.noteExpectedPlaybackState(paused = false)
+        driver.frames(30)
+        ui.visibleHUD.value = false
+        driver.frames(30)
+
+        driver.press(Key.DirectionCenter)
+
+        assertTrue(ui.visibleHUD.value, "Center restores the stage controls")
+        assertFalse(viewmodel.protocol.expectedPlaying, "Center pauses")
+        assertFalse(ui.tabCardRoomPreferences.value, "Center opens nothing hidden")
+    }
+
+    /** In portrait, a remote can rest in the composer under the stage. Hiding the stage leaves it there. */
+    @Test
+    fun hidingThePortraitStageLeavesARemoteInTheComposer() =
+        RoomRig.drive(solo = false, withVideo = true, widthDp = 390, heightDp = 844) {
+            driver.frames(30)
+            DesignHarness.onUiThread { ui.chatFocus.requestFocus() }
+            driver.frames(10)
+            assertEquals(EnAppStrings.roomChatInput, focusedName(), "The chat field has focus")
+
+            ui.visibleHUD.value = false
+            driver.frames(30)
+
+            assertEquals(EnAppStrings.roomChatInput, focusedName(), "The chat field keeps focus after the stage hides")
+        }
+
     @Test
     fun hiddenControlsOfferANamedActionThatShowsThem() = RoomRig.drive(television = false, withVideo = true) {
         val label = EnAppStrings.roomControlsHidden

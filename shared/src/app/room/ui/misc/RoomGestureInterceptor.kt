@@ -130,6 +130,12 @@ fun RoomGestureInterceptor(modifier: Modifier, hiddenHudFocus: FocusRequester, s
     val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
     val edgeGuardFraction = 0.08f
 
+    /* The wake key that went down on the hidden video layer. Center and Enter act on its release,
+     * and only a release that this layer saw go down counts. The key resets whenever the HUD
+     * shows or hides. */
+    var heldWakeKey by remember { mutableStateOf<Key?>(null) }
+    LaunchedEffect(isHUDVisible) { heldWakeKey = null }
+
     var readout by remember(media?.location) { mutableStateOf<GestureReadout?>(null) }
 
     // The double-tap chain: the first tap saves the origin, and the chain seeks once when it ends.
@@ -195,18 +201,41 @@ fun RoomGestureInterceptor(modifier: Modifier, hiddenHudFocus: FocusRequester, s
                         // The video layer takes wake keys before a hidden control can take focus.
                         .focusRequester(hiddenHudFocus)
                         .onKeyEvent { event ->
-                            if (!hasVideo || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                            if (!hasVideo) return@onKeyEvent false
                             when (event.key) {
-                                Key.DirectionCenter, Key.Enter -> viewmodel.dispatcher.controlPlayback(
-                                    if (viewmodel.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true,
-                                )
-                                Key.DirectionLeft -> viewmodel.dispatcher.seekBckwd()
-                                Key.DirectionRight -> viewmodel.dispatcher.seekFrwrd()
-                                Key.DirectionUp, Key.DirectionDown -> Unit
-                                else -> return@onKeyEvent false
+                                /* Center and Enter act on release, as a click does. Focus moves to
+                                 * the Play key 150 ms after the controls show, so on key down the
+                                 * repeats and the release of a long press would press Play too. */
+                                Key.DirectionCenter, Key.Enter -> when (event.type) {
+                                    KeyEventType.KeyDown -> {
+                                        heldWakeKey = event.key
+                                        true
+                                    }
+                                    KeyEventType.KeyUp -> {
+                                        val wasHeld = heldWakeKey == event.key
+                                        heldWakeKey = null
+                                        if (wasHeld) {
+                                            viewmodel.dispatcher.controlPlayback(
+                                                if (viewmodel.protocol.expectedPlaying) Playback.PAUSE else Playback.PLAY, true,
+                                            )
+                                            viewmodel.uiState.showHud()
+                                        }
+                                        wasHeld
+                                    }
+                                    else -> false
+                                }
+                                Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown -> {
+                                    if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                                    when (event.key) {
+                                        Key.DirectionLeft -> viewmodel.dispatcher.seekBckwd()
+                                        Key.DirectionRight -> viewmodel.dispatcher.seekFrwrd()
+                                        else -> Unit
+                                    }
+                                    viewmodel.uiState.showHud()
+                                    true
+                                }
+                                else -> false
                             }
-                            viewmodel.uiState.showHud()
-                            true
                         }
                         .focusable(enabled = hasVideo)
                         .pointerInput(seekGestures, media?.location) {

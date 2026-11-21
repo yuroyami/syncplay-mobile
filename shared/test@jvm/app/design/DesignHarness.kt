@@ -282,6 +282,22 @@ object DesignHarness {
             frames(5)
         }
 
+        /**
+         * A long press: key down, [repeats] repeats of it [framesApart] frames apart, then key up. A
+         * remote repeats a held key, and focus can move between the repeats.
+         */
+        @OptIn(InternalComposeUiApi::class)
+        fun longPress(key: Key, repeats: Int = 3, framesApart: Int = 30) {
+            onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }
+            repeat(repeats) {
+                frames(framesApart)
+                onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyDown)) }
+            }
+            frames(3)
+            onUiThread { scene.sendKeyEvent(KeyEvent(key, KeyEventType.KeyUp)) }
+            frames(5)
+        }
+
         /** Whether anything in the scene reads [text], a dialog included. */
         fun shows(text: String): Boolean = onUiThread {
             scene.semanticsOwners.any { readsText(it.unmergedRootSemanticsNode, text) }
