@@ -110,6 +110,7 @@ internal object RoomRig {
      * @param screenReader whether a screen reader runs.
      * @param keyboardPx the height of a fake soft keyboard in scene pixels. A test changes it to open
      * and close the keyboard.
+     * @param gesturesPx the height of a fake system gesture area at the bottom edge, in scene pixels.
      * @param canHoldLandscape what the platform says about the landscape hold of the full-screen key.
      * @param chapters the chapters of the loaded file. A list that is not empty turns on chapter support.
      * @param picture what the player shows, in place of a video frame.
@@ -123,13 +124,14 @@ internal object RoomRig {
         widthDp: Int = 960,
         heightDp: Int = 540,
         keyboardPx: State<Int>? = null,
+        gesturesPx: Int = 0,
         canHoldLandscape: Boolean = false,
         chapters: List<Chapter> = emptyList(),
         picture: (@Composable (Modifier) -> Unit)? = null,
         drive: Room.() -> Unit,
     ) = inRoom(solo, withVideo, pictureInPicture, canHoldLandscape, chapters, picture) { viewmodel, destination ->
         DesignHarness.drive(widthDp = widthDp, heightDp = heightDp, television = television, content = {
-            WithKeyboard(keyboardPx) {
+            WithInsets(keyboardPx, gesturesPx) {
                 CompositionLocalProvider(
                     LocalRoomViewmodel provides viewmodel,
                     LocalScreen provides destination,
@@ -158,6 +160,7 @@ internal object RoomRig {
         withVideo: Boolean = false,
         overVideo: Boolean = false,
         keyboardPx: Int = 0,
+        gesturesPx: Int = 0,
         canHoldLandscape: Boolean = false,
         chapters: List<Chapter> = emptyList(),
         picture: (@Composable (Modifier) -> Unit)? = null,
@@ -167,7 +170,7 @@ internal object RoomRig {
         setup(viewmodel)
         val keyboard = if (keyboardPx > 0) mutableStateOf(keyboardPx) else null
         DesignHarness.render(name, widthDp, heightDp, fontScale, overVideo = overVideo) {
-            WithKeyboard(keyboard) {
+            WithInsets(keyboard, gesturesPx) {
                 CompositionLocalProvider(
                     LocalRoomViewmodel provides viewmodel,
                     LocalRoomUiState provides viewmodel.uiState,
@@ -181,13 +184,17 @@ internal object RoomRig {
         }
     }
 
-    /** Gives [content] a soft keyboard [keyboardPx] tall at the bottom edge, or the real insets for null. */
+    /**
+     * Gives [content] a soft keyboard [keyboardPx] tall and a system gesture area [gesturesPx] tall
+     * at the bottom edge. With neither, [content] gets the real insets.
+     */
     @OptIn(InternalComposeUiApi::class)
     @Composable
-    private fun WithKeyboard(keyboardPx: State<Int>?, content: @Composable () -> Unit) {
-        if (keyboardPx == null) return content()
+    private fun WithInsets(keyboardPx: State<Int>?, gesturesPx: Int, content: @Composable () -> Unit) {
+        if (keyboardPx == null && gesturesPx == 0) return content()
         val insets = object : PlatformWindowInsets {
-            override val ime: PlatformInsets = PlatformInsets(getBottom = { keyboardPx.value })
+            override val ime: PlatformInsets = PlatformInsets(getBottom = { keyboardPx?.value ?: 0 })
+            override val systemGestures: PlatformInsets = PlatformInsets(getBottom = { gesturesPx })
         }
         CompositionLocalProvider(LocalPlatformWindowInsets provides insets, content = content)
     }

@@ -18,6 +18,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalView
@@ -169,6 +170,22 @@ actual fun EnterRoomMode(rotation: RoomRotation) {
     }
 
     val activity = LocalActivity.current as? ComponentActivity
+
+    /* The portrait room paints its own bar under the navigation bar, which shows on a swipe. So the
+     * navigation bar takes no contrast scrim, also with three buttons, and light buttons that read
+     * on the dark bar. Leaving the room puts both back. */
+    DisposableEffect(activity) {
+        val window = activity?.window ?: return@DisposableEffect onDispose { }
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        val lightButtons = controller.isAppearanceLightNavigationBars
+        val scrim = Build.VERSION.SDK_INT >= 29 && window.isNavigationBarContrastEnforced
+        if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+        controller.isAppearanceLightNavigationBars = false
+        onDispose {
+            if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = scrim
+            controller.isAppearanceLightNavigationBars = lightButtons
+        }
+    }
 
     LaunchedEffect(rotation) {
         activity?.hideSystemUI()

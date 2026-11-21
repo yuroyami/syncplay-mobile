@@ -31,9 +31,11 @@ class DesignLintTest {
         "text sizes under 11sp" to 0,
         "clickable without semantics" to 0,
         // Two hide a switch inside a row that already speaks as that switch. The third hides the
-        // copies of new chat lines over a hidden HUD, which the chat list holds as well. Raise this
-        // only after checking that the new use hides no control from a screen reader.
-        "clearAndSetSemantics" to 3,
+        // copies of new chat lines over a hidden HUD, which the chat list holds as well. The fourth
+        // hides the clock of the portrait status strip: in the strip's live region, a screen reader
+        // would speak it each minute. Raise this only after checking that the new use hides no
+        // control from a screen reader.
+        "clearAndSetSemantics" to 4,
     )
 
     private fun sources(): List<File> = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()

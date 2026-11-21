@@ -65,6 +65,17 @@ import app.uicomponents.controls.RowGap
 import app.uicomponents.controls.Tag
 import app.protocol.sync.AutoplayState
 import app.subtitles.episodeOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Density
+import app.uicomponents.controls.TagPadding
+import app.utils.generateClockstamp
+import kotlinx.coroutines.delay
+import kotlin.time.Clock
 
 
 
@@ -232,22 +243,23 @@ private fun ConnectionLock(encrypted: Boolean) {
         imageVector = if (encrypted) LockGlyph else UnlockGlyph,
         contentDescription = if (encrypted) strings.roomConnectionEncrypted else strings.roomConnectionPlaintext,
         tint = if (encrypted) p.ok else p.inkDim,
-        modifier = Modifier.size(14.dp),
+        modifier = Modifier.size(LockSide),
     )
 }
 
 /**
- * The status strip of the portrait room: the black band above the stage, under the notch. The
- * connection square, the lock, the room name and the episode tag sit at the start. The state text
- * sits at the end, after the people glyph of the people tab while connected. While the connection
- * is down, a tap on the state text reconnects. Both ends keep out of the camera cutouts that the
- * platform reports ([TopCutouts]). Where none are reported, a notch is taken to sit in the middle
- * of the edge ([middleNotchShare]).
+ * The status strip of the portrait room: the band above the stage, under the notch, in the bar
+ * colour of the room ([app.theme.Palette.roomBar]). The clock sits at the start edge. The connection
+ * square, the lock, the room name and the episode tag follow it. The state text sits at the end,
+ * after the people glyph of the people tab while connected. While the connection is down, a tap on
+ * the state text reconnects. A [solo] room has no status, so its strip shows the clock alone. Both
+ * ends keep out of the camera cutouts that the platform reports ([TopCutouts]). Where none are
+ * reported, a notch is taken to sit in the middle of the edge ([middleNotchShare]).
  */
 @Composable
-fun RoomStatusStrip(modifier: Modifier = Modifier) {
+fun RoomStatusStrip(modifier: Modifier = Modifier, solo: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
-    val status = roomStatus()
+    val status = if (solo) null else roomStatus()
     val reported by TopCutouts.spans.collectAsState()
     val density = LocalDensity.current
     val inset = with(density) { roomTopInsets().getTop(density).toDp() }
@@ -256,12 +268,36 @@ fun RoomStatusStrip(modifier: Modifier = Modifier) {
     val cutouts = remember(reported, left) { reported.map { (it.first - left)..(it.last - left) } }
     RoomStatusStripContent(
         status = status,
+        clock = rememberStripClock(),
         cutouts = cutouts,
         middleNotch = middleNotchShare(inset),
         onReconnect = { viewmodel.networkManager.reconnectNow() },
         modifier = modifier.onGloballyPositioned { left = it.positionInWindow().x },
     )
 }
+
+/**
+ * The time of day for the strip: hours and minutes in the 12-hour or 24-hour format of the device,
+ * as in the chat timestamps, with no AM or PM. The text changes on each minute boundary, so the
+ * strip recomposes once a minute and not in between.
+ */
+@Composable
+private fun rememberStripClock(): String {
+    var time by remember { mutableStateOf(generateClockstamp(period = false)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            // A wake a moment early finds the same text, which recomposes nothing, and waits again.
+            delay(MINUTE_MS - Clock.System.now().toEpochMilliseconds() % MINUTE_MS)
+            time = generateClockstamp(period = false)
+        }
+    }
+    return time
+}
+
+private const val MINUTE_MS = 60_000L
+
+/** The test tag of the clock in the strip. */
+internal const val STRIP_CLOCK = "strip-clock"
 
 /**
  * The share of the strip's width that a notch in the middle of the top edge takes, guessed from the
@@ -279,19 +315,31 @@ private fun middleNotchShare(inset: Dp): Float = when {
 /**
  * When the start or the end of the strip gets a free stretch narrower than this, as beside the
  * notch of an iPhone, the strip is compact. It then keeps smaller margins, and it drops the lock,
- * the episode tag and the people glyph, so the room name keeps a few letters.
+ * the episode tag and the people glyph, so the room name keeps a few letters. The strip is compact
+ * too where the start part does not fit its stretch whole ([startFloor]).
  */
 private val CompactStretch = 80.dp
 
+/** The gap after the clock, and around the room name. */
+private val PartGap = Space.gapTight + 2.dp
+
+/** The side of the connection square. */
+private val SquareSide = 6.dp
+
+/** The side of the lock glyph ([ConnectionLock]), and the gap before it. */
+private val LockSide = 14.dp
+private val LockGap = Space.gapTight
+
 /**
- * The status strip drawn from plain values. [cutouts] are spans of the strip in pixels. With none,
- * [middleNotch] is the share of the width that a notch in the middle takes, and 0 means no notch.
- * The start part goes in the first free stretch and the end part in the last one (see
- * [freeStretches] and [CompactStretch]).
+ * The status strip drawn from plain values. [status] is null in a solo room, whose strip shows the
+ * [clock] alone. [cutouts] are spans of the strip in pixels. With none, [middleNotch] is the share
+ * of the width that a notch in the middle takes, and 0 means no notch. The start part goes in the
+ * first free stretch and the end part in the last one (see [freeStretches] and [CompactStretch]).
  */
 @Composable
 internal fun RoomStatusStripContent(
-    status: RoomStatus,
+    status: RoomStatus?,
+    clock: String,
     cutouts: List<ClosedFloatingPointRange<Float>>,
     middleNotch: Float,
     onReconnect: () -> Unit,
@@ -304,53 +352,89 @@ internal fun RoomStatusStripContent(
             if (middleNotch > 0f) listOf(width * (1f - middleNotch) / 2f..width * (1f + middleNotch) / 2f) else emptyList()
         }
         val density = LocalDensity.current
-        val (stretches, compact) = remember(width, holes, density) {
+        val ltr = LocalLayoutDirection.current == LayoutDirection.Ltr
+        // The parts that the start never gives up are the clock and the episode tag, so their widths count.
+        val measurer = rememberTextMeasurer()
+        val style = Type.value
+        val clockPx = remember(clock, style, density) { measurer.measure(clock, style, maxLines = 1).size.width }
+        val tagPx = remember(status?.episode, style, density) {
+            status?.episode?.let { measurer.measure(it, style, maxLines = 1).size.width } ?: 0
+        }
+        val layout = remember(width, holes, density, ltr, status?.connectionState, clockPx, tagPx) {
             with(density) {
                 fun around(margin: Dp, clearance: Dp) =
                     freeStretches(margin.toPx(), width - margin.toPx(), holes, clearance.toPx(), minimum = Space.touchMin.toPx())
                 val roomy = around(Space.gutter, Space.gap)
                 val narrowest = min(roomy.first().length(), roomy.last().length())
-                if (narrowest >= CompactStretch.toPx()) roomy to false else around(Space.gap, Space.gapTight) to true
+                val whole = startFloor(status, compact = false, clockPx, tagPx)
+                val startStretch = if (ltr) roomy.first() else roomy.last()
+                if (narrowest >= CompactStretch.toPx() && whole <= startStretch.length()) StripLayout(roomy, compact = false, whole)
+                else StripLayout(around(Space.gap, Space.gapTight), compact = true, startFloor(status, compact = true, clockPx, tagPx))
             }
         }
-        StripParts(status, stretches, compact, onReconnect)
+        StripParts(status, clock, layout, onReconnect)
     }
 }
 
+/** Where the parts of the strip go: the free [stretches], whether the strip is [compact], and the least width of its start part. */
+private class StripLayout(val stretches: List<ClosedFloatingPointRange<Float>>, val compact: Boolean, val startFloor: Int)
+
 /**
- * Places the start part of the strip in the first of [stretches] and the end part in the last one.
- * When both share one stretch, the start part keeps the width that it needs, up to
- * [STRIP_START_SHARE] of the stretch, and the state text takes the rest.
+ * The least width of the start part of the strip, in pixels: everything but the room name, which
+ * gives way. [clockPx] and [tagPx] are the widths of the clock text and of the episode text.
+ */
+private fun Density.startFloor(status: RoomStatus?, compact: Boolean, clockPx: Int, tagPx: Int): Int {
+    if (status == null) return clockPx
+    var px = clockPx + PartGap.roundToPx() + SquareSide.roundToPx() + PartGap.roundToPx()
+    if (!compact && status.connectionState == ConnectionState.CONNECTED) px += LockGap.roundToPx() + LockSide.roundToPx()
+    if (!compact && status.episode != null) px += PartGap.roundToPx() + tagPx + TagPadding.roundToPx() * 2
+    return px
+}
+
+/**
+ * Places the start part of the strip in the first of the stretches and the end part in the last
+ * one. When both share one stretch, the start part keeps the width that it needs, up to
+ * [STRIP_START_SHARE] of the stretch, and the state text takes the rest. The start part never gets
+ * less than its least width, so the clock and the episode tag always show whole.
  */
 @Composable
-private fun StripParts(status: RoomStatus, stretches: List<ClosedFloatingPointRange<Float>>, compact: Boolean, onReconnect: () -> Unit) {
+private fun StripParts(status: RoomStatus?, clock: String, strip: StripLayout, onReconnect: () -> Unit) {
     Layout(
         content = {
-            StripStart(status, compact)
-            StripEnd(status, compact, onReconnect)
+            StripStart(status, clock, strip.compact)
+            if (status != null) StripEnd(status, strip.compact, onReconnect)
         },
         modifier = Modifier.fillMaxSize(),
     ) { measurables, constraints ->
         val width = constraints.maxWidth
         val clearance = Space.gap.roundToPx()
         val ltr = layoutDirection == LayoutDirection.Ltr
+        val stretches = strip.stretches
         val startStretch = if (ltr) stretches.first() else stretches.last()
         val endStretch = if (ltr) stretches.last() else stretches.first()
         val loose = Constraints(maxHeight = constraints.maxHeight)
         val shared = startStretch == endStretch
-        val endRoom = if (!shared) endStretch.length() else {
-            val wanted = measurables[0].maxIntrinsicWidth(constraints.maxHeight) + clearance
-            max(endStretch.length() - wanted, (endStretch.length() * (1f - STRIP_START_SHARE)).toInt())
+        val endPart = measurables.getOrNull(1)
+        val endRoom = when {
+            endPart == null -> 0
+            !shared -> endStretch.length()
+            else -> {
+                val wanted = measurables[0].maxIntrinsicWidth(constraints.maxHeight) + clearance
+                val share = (endStretch.length() * (1f - STRIP_START_SHARE)).toInt()
+                max(endStretch.length() - wanted, min(share, endStretch.length() - strip.startFloor - clearance))
+            }
         }
-        val end = measurables[1].measure(loose.copy(maxWidth = endRoom.coerceIn(0, endStretch.length())))
-        val startRoom = if (shared) startStretch.length() - end.width - clearance else startStretch.length()
+        val end = endPart?.measure(loose.copy(maxWidth = endRoom.coerceIn(0, endStretch.length())))
+        val startRoom = if (shared && end != null) startStretch.length() - end.width - clearance else startStretch.length()
         val start = measurables[0].measure(loose.copy(maxWidth = startRoom.coerceAtLeast(0)))
-        val height = if (constraints.hasBoundedHeight) constraints.maxHeight else max(start.height, end.height)
+        val height = if (constraints.hasBoundedHeight) constraints.maxHeight else max(start.height, end?.height ?: 0)
         layout(width, height) {
             val startX = if (ltr) startStretch.start else startStretch.endInclusive - start.width
-            val endX = if (ltr) endStretch.endInclusive - end.width else endStretch.start
             start.place(startX.roundToInt(), (height - start.height) / 2)
-            end.place(endX.roundToInt(), (height - end.height) / 2)
+            if (end != null) {
+                val endX = if (ltr) endStretch.endInclusive - end.width else endStretch.start
+                end.place(endX.roundToInt(), (height - end.height) / 2)
+            }
         }
     }
 }
@@ -383,17 +467,34 @@ internal fun freeStretches(
     return stretches.ifEmpty { listOf(from..to) }
 }
 
-/** The start of the strip: the connection square, the lock, the room name and the episode tag. A [compact] strip drops the lock and the tag. */
+/**
+ * The start of the strip: the clock, then the connection square, the lock, the room name and the
+ * episode tag. A [compact] strip drops the lock and the tag. With no [status] (a solo room), the
+ * clock stands alone. The clock comes first and has no weight, so it keeps its width, and the room
+ * name gives way. A screen reader skips the clock, or the live region would speak each minute.
+ */
 @Composable
-private fun StripStart(status: RoomStatus, compact: Boolean) {
+private fun StripStart(status: RoomStatus?, clock: String, compact: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(6.dp).background(connectionColor(status.connectionState), Radius.tightShape))
+        Text(
+            text = clock,
+            style = Type.value,
+            color = palette.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            autoSize = FontSizeRange(Type.value.fontSize, min = AutoSize.readableFloor),
+            // The tag only lets a test find the clock. A screen reader does not speak it.
+            modifier = Modifier.clearAndSetSemantics { testTag = STRIP_CLOCK },
+        )
+        if (status == null) return@Row
+        RowGap(PartGap)
+        Box(Modifier.size(SquareSide).background(connectionColor(status.connectionState), Radius.tightShape))
         if (!compact && status.connectionState == ConnectionState.CONNECTED) {
-            RowGap(Space.gapTight)
+            RowGap(LockGap)
             ConnectionLock(status.encrypted)
         }
-        RowGap(Space.gapTight + 2.dp)
-        // Weighted, so the row measures the episode tag first and the room name gives way.
+        RowGap(PartGap)
+        // Weighted, so the row measures the clock and the episode tag first and the room name gives way.
         Text(
             text = status.room,
             style = Type.label,
@@ -403,7 +504,7 @@ private fun StripStart(status: RoomStatus, compact: Boolean) {
             modifier = Modifier.weight(1f, fill = false),
         )
         if (!compact && status.episode != null) {
-            RowGap(Space.gapTight + 2.dp)
+            RowGap(PartGap)
             Tag(status.episode)
         }
     }

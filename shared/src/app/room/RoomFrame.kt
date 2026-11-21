@@ -32,11 +32,12 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.theme.Space
 import app.theme.Type
+import app.theme.palette
 import app.uicomponents.LocalIsTelevision
 
 /**
@@ -52,14 +53,12 @@ fun roomTopInsets(): WindowInsets =
 private val PortraitStripMin = 28.dp
 
 /**
- * The top insets of the portrait room. With a [strip] (the status strip above the stage, which
- * holds the room's status line), they are as tall as the notch, and at least as tall as the room
- * name with a margin, so the strip also has a place on a screen without a notch. Without a strip
- * (solo mode), they are the notch alone.
+ * The top insets of the portrait room: the place of the status strip above the stage. They are as
+ * tall as the notch, and at least as tall as the room name with a margin, so the strip also has a
+ * place on a screen without a notch. A solo room has the strip too, for its clock.
  */
 @Composable
-fun portraitTopInsets(strip: Boolean): WindowInsets {
-    if (!strip) return roomTopInsets()
+fun portraitTopInsets(): WindowInsets {
     val line = with(LocalDensity.current) { Type.label.lineHeight.toDp() }
     return roomTopInsets().union(WindowInsets(top = maxOf(PortraitStripMin, line + Space.gapTight + 2.dp)))
 }
@@ -178,10 +177,15 @@ fun Modifier.portraitStage(topInsets: WindowInsets): Modifier =
 /**
  * The room in a window taller than wide, top to bottom: the [strip] (the status strip, see
  * [portraitTopInsets]), the [stage] (see [portraitStage]), the [tabs], the main box ([main]: chat,
- * or one page in place of chat) and the [composer] (the chat input row). With the keyboard open, the
- * tab row folds away, and the composer rides on the keyboard. [lower] goes on everything under the
- * stage. [mainTop] moves the main box down by that many pixels, for the notices that sit over its
- * top edge.
+ * or one page in place of chat) and the [composer] (the chat input row). The strip and the composer
+ * share one colour ([app.theme.Palette.roomBar]).
+ *
+ * The composer bar runs to the bottom edge of the screen: its colour fills the bottom inset, and
+ * only its content keeps above the inset. With the keyboard open, the tab row folds away, and the
+ * composer rides on the keyboard. The main box clips what it holds, so a page that slides in never
+ * shows over the composer. Without a composer, the content above keeps clear of the bottom inset.
+ * [lower] goes on everything under the stage. [mainTop] moves the main box down by that many
+ * pixels, for the notices that sit over its top edge.
  */
 @Composable
 fun RoomPortraitFrame(
@@ -189,7 +193,7 @@ fun RoomPortraitFrame(
     modifier: Modifier = Modifier,
     lower: Modifier = Modifier,
     mainTop: () -> Int = { 0 },
-    strip: (@Composable BoxScope.() -> Unit)? = null,
+    strip: @Composable BoxScope.() -> Unit,
     stage: @Composable BoxScope.() -> Unit,
     tabs: @Composable () -> Unit,
     main: @Composable BoxScope.() -> Unit,
@@ -197,16 +201,21 @@ fun RoomPortraitFrame(
 ) {
     // Above the keyboard while it is open, and above the bottom gesture area otherwise.
     val bottomInsets = WindowInsets.ime.union(WindowInsets.safeGestures).only(WindowInsetsSides.Bottom)
-    val top = portraitTopInsets(strip = strip != null)
+    val top = portraitTopInsets()
+    val bar = palette.roomBar
     Column(modifier.fillMaxSize()) {
-        // Black, like the frame of the screen around the notch.
-        Box(Modifier.fillMaxWidth().windowInsetsTopHeight(top).background(Color.Black)) { strip?.invoke(this) }
+        Box(Modifier.fillMaxWidth().windowInsetsTopHeight(top).background(bar)) { strip() }
         // The strip takes the top insets, so nothing in the stage pads for the notch again.
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).consumeWindowInsets(top)) { stage() }
-        Column(lower.weight(1f).fillMaxWidth().windowInsetsPadding(bottomInsets)) {
-            if (!keyboardOpen) tabs()
-            Box(Modifier.weight(1f).fillMaxWidth().pushedDown(mainTop)) { main() }
-            composer?.invoke()
+        Column(lower.weight(1f).fillMaxWidth().then(if (composer == null) Modifier.windowInsetsPadding(bottomInsets) else Modifier)) {
+            // The composer pads for the bottom insets, so the tab row and the pages above it must not.
+            Column(Modifier.weight(1f).fillMaxWidth().then(if (composer != null) Modifier.consumeWindowInsets(bottomInsets) else Modifier)) {
+                if (!keyboardOpen) tabs()
+                Box(Modifier.weight(1f).fillMaxWidth().clipToBounds().pushedDown(mainTop)) { main() }
+            }
+            if (composer != null) {
+                Box(Modifier.fillMaxWidth().background(bar).windowInsetsPadding(bottomInsets)) { composer() }
+            }
         }
     }
 }

@@ -26,6 +26,9 @@ import app.theme.palette
 
 enum class Tone { Neutral, Accent, Ok, Warn, Bad }
 
+/** The space on each side of the text of a tag, inside its border. */
+internal val TagPadding = Space.gapTight + 2.dp
+
 /**
  * A tag: a rectangle with a thin border that holds a state word or a badge, at least 22dp tall,
  * in `value` type. It is [filled] when the state is on (ready, connected). With [onToggle] it
@@ -76,7 +79,7 @@ fun Tag(
                 .clip(Radius.controlShape)
                 .background(if (filled) color else Color.Transparent)
                 .border(Space.hair, edge, Radius.controlShape)
-                .padding(horizontal = Space.gapTight + 2.dp),
+                .padding(horizontal = TagPadding),
             contentAlignment = Alignment.Center,
         ) {
             Text(

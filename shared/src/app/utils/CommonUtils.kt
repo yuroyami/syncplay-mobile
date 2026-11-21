@@ -19,9 +19,9 @@ annotation class ProtocolApi
 /**
  * The current local time for a chat line, in the device's own clock format: "14:23" on a 24-hour
  * clock, "2:23 PM" otherwise. Seconds are left out, because other chat apps also stamp a line to
- * the minute.
+ * the minute. Without [period], a 12-hour time leaves out AM and PM ("2:23"), as a status bar does.
  */
-fun generateClockstamp(): String {
+fun generateClockstamp(period: Boolean = true): String {
     val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
     if (deviceUses24HourClock()) return "${c.hour.fixDigits()}:${c.minute.fixDigits()}"
     val suffix = if (c.hour < 12) "AM" else "PM"
@@ -30,7 +30,7 @@ fun generateClockstamp(): String {
         c.hour > 12 -> c.hour - 12
         else -> c.hour
     }
-    return "$hour:${c.minute.fixDigits()} $suffix"
+    return if (period) "$hour:${c.minute.fixDigits()} $suffix" else "$hour:${c.minute.fixDigits()}"
 }
 
 /** Pads an int to 2 digits with a leading zero (5 -> "05"). Used by [generateClockstamp]. */

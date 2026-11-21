@@ -14,6 +14,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -209,6 +210,12 @@ data class Palette(
         val light = brandField.minOf { contrastRatio(it, Color.White) }
         if (dark >= light) VideoGround else Color.White
     }
+
+    /**
+     * The ground of the two bars of the portrait room: the status strip above the video and the
+     * composer at the bottom. It is the panel colour laid on the ground, so it is always opaque.
+     */
+    val roomBar: Color get() = panel.compositeOver(ground)
 
     fun overVideo(): Palette = copy(
         ground = VideoGround,

@@ -564,10 +564,16 @@ The portrait room:
   show, the stage has no free row between the Controls key and the play key, so the notices sit
   under the stage. There they push the main box down (`NoticeInset`), so a notice covers no chat
   line and no page header.
-- The status strip (`RoomStatusStrip`) is the black band above the stage. It shows the room name,
-  the connection and the state text, so nothing of the status sits on the video. The strip is as
-  tall as the notch, and at least as tall as the room name with a margin (`portraitTopInsets`). A
-  solo room has no strip, and its stage starts under the notch.
+- The status strip (`RoomStatusStrip`) is the band above the stage. It shows the time of day, the
+  connection, the room name and the state text, so nothing of the status sits on the video. The
+  strip is as tall as the notch, and at least as tall as the room name with a margin
+  (`portraitTopInsets`). A solo room has the strip too, with the clock alone.
+- The strip and the composer have one ground colour, `Palette.roomBar`: the panel colour laid on
+  the room ground, so it is opaque.
+- The clock of the strip shows hours and minutes in the 12-hour or 24-hour format of the device,
+  without AM or PM (`generateClockstamp(period = false)`). It wakes on each minute boundary, so the
+  strip does not recompose between minutes. A screen reader skips the clock, because the strip is
+  a live region and would speak each new minute.
 - Everything that lines up with the stage pads for `portraitTopInsets`, never for `roomTopInsets`:
   the stage, the video layer and the notices. With `roomTopInsets`, the video layer and the stage
   do not line up on a phone without a notch.
@@ -577,7 +583,9 @@ The portrait room:
   (`middleNotchShare`).
 - Beside a wide notch, as on an iPhone with a notch, a side of the strip gets less than 80dp. The
   strip is then compact (`CompactStretch`): it keeps smaller margins, and it drops the lock, the
-  episode tag and the people glyph, so the room name keeps a few letters.
+  episode tag and the people glyph. The strip is compact too when the clock, the connection
+  square, the lock and the episode tag do not fit whole at the start (`startFloor`), as beside the
+  Dynamic Island. The clock always stays, and the room name gives way first.
 - `reportTopCutouts` listens on the content view, because `maskHiddenSystemBars` owns the insets
   listener of the decor view. A second listener on the decor view replaces the first one.
 
@@ -616,6 +624,10 @@ Chat:
   (#242).
 - The portrait composer is `ChatComposer` with `bar`. While the GIF drawer is open, its field is the
   drawer's search, so a tap on the field closes any other page and keeps the drawer.
+- The portrait composer bar runs to the bottom edge of the screen. It pads its content for the
+  keyboard and the gesture area, and its ground fills that inset. So the tab row and the main box
+  above it never pad for those insets. The main box clips its content, so a page that slides in
+  never shows under the composer.
 - The "New messages" marker over a portrait page counts only the lines from other people that came
   after the page opened and are not seen yet. A tap on it closes the page and scrolls chat to the
   newest line (#239).
@@ -646,6 +658,9 @@ Media, playlist and settings:
   same room.
 - On Android, `EnterRoomMode` hides the system bars again after every composition, because popups
   bring them back. `ExitRoomMode` is the first call on the home screen.
+- In the room, `EnterRoomMode` also turns off the contrast scrim of the navigation bar (API 29 and
+  up) and gives the bar light buttons. So the bar stays clear over the composer, also with 3-button
+  navigation. Leaving the room puts both values back.
 - `EnterRoomMode` takes a `RoomRotation`. `FollowDevice` maps to `SCREEN_ORIENTATION_FULL_USER` on
   Android and to all orientations but upside down on iOS, so the system rotation lock still applies.
   `Landscape` maps to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` and to the landscape mask (#243).

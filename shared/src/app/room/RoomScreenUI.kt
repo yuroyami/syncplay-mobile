@@ -241,7 +241,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         Box(Modifier.fillMaxSize().then(ground).roomPointer(viewmodel.uiState, pointerHidden).mediaDropTarget(drop)) {
             /* In portrait, the video layer takes the bounds of the stage. It keeps this place in the
              * composition in both layouts, so a rotation keeps the engine and its surface. */
-            val videoBounds = if (portrait) Modifier.portraitStage(portraitTopInsets(strip = !soloMode)) else Modifier.matchParentSize()
+            val videoBounds = if (portrait) Modifier.portraitStage(portraitTopInsets()) else Modifier.matchParentSize()
             Box(videoBounds.glassBackdropLayer(roomHazeState)) {
                 if (!hasVideo) RoomBackgroundArtwork(stage = portrait)
 
@@ -559,7 +559,7 @@ private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, po
     Column(
         modifier = Modifier.align(Alignment.TopCenter)
             .fillMaxWidth()
-            .windowInsetsPadding(if (portrait) portraitTopInsets(strip = !soloMode) else roomTopInsets())
+            .windowInsetsPadding(if (portrait) portraitTopInsets() else roomTopInsets())
             .padding(top = top)
             .padding(horizontal = Space.gutter)
             .onSizeChanged { inset.height = it.height },
@@ -684,8 +684,9 @@ private fun RoomHud(
             keyboardOpen = isKeyboardOpen,
             lower = Modifier.onFocusChanged { lowerFocused = it.hasFocus },
             mainTop = mainBoxTop,
-            // The status line sits in the strip above the stage, so it never fades (#236).
-            strip = if (soloMode) null else ({ RoomStatusStrip(Modifier.matchParentSize()) }),
+            // The status line sits in the strip above the stage, so it never fades (#236). A solo
+            // room has no status, so its strip shows the clock alone.
+            strip = { RoomStatusStrip(Modifier.matchParentSize(), solo = soloMode) },
             stage = {
                 Box(Modifier.matchParentSize().onFocusChanged { stageFocused = it.hasFocus }.then(layer)) {
                     if (hasVideo) {

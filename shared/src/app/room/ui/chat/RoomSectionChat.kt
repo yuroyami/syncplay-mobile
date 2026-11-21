@@ -340,9 +340,10 @@ fun ChatComposer(
 }
 
 /**
- * The composer of the portrait room: a 54dp bar on the panel colour with a hairline on its top
- * edge. It holds the GIF key, the field drawn as a well, and a send key that fills with the brand
- * ramp once there is text. While the GIF drawer is open, the field is its search.
+ * The composer of the portrait room: a 54dp bar on the bar colour of the portrait room
+ * ([app.theme.Palette.roomBar]), with a hairline on its top edge. It holds the GIF key, the field
+ * drawn as a well, and a send key that fills with the brand ramp once there is text. While the GIF
+ * drawer is open, the field is its search.
  */
 @Composable
 private fun ComposerBar(
@@ -363,7 +364,7 @@ private fun ComposerBar(
         modifier
             .fillMaxWidth()
             .height(Space.bar)
-            .background(p.panel)
+            .background(p.roomBar)
             .drawBehind { drawRect(p.rule, Offset.Zero, Size(size.width, Space.hair.toPx())) }
             .padding(horizontal = Space.gapTight),
         verticalAlignment = Alignment.CenterVertically,

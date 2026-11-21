@@ -34,6 +34,11 @@ import kotlinx.coroutines.withTimeout
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
+import app.room.ui.statinfo.STRIP_CLOCK
+import app.theme.Palette
+import app.theme.TRINITY
+import androidx.compose.ui.graphics.toArgb
+import javax.imageio.ImageIO
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -136,14 +141,91 @@ class PortraitRoomTest {
         }
     }
 
-    /** A solo room has no status to show, so it has no strip, and the stage starts at the top edge. */
+    /** A solo room has no status to show, so its strip shows the clock alone, and the stage starts under it. */
     @Test
-    fun aSoloRoomHasNoStrip() =
+    fun aSoloRoomShowsTheStripWithTheClockAlone() =
         RoomRig.drive(solo = true, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp) {
             driver.frames(20)
             val key = assertNotNull(described(EnAppStrings.roomControlPanel), "The Controls key exists")
-            assertTrue(boundsOf(key).top.dp() < stageTopDp, "The Controls key sits at the top edge, at ${boundsOf(key).top.dp()} dp")
+            assertTrue(boundsOf(key).top.dp() >= stageTopDp, "The Controls key sits under the strip, at ${boundsOf(key).top.dp()} dp")
+            val clock = assertNotNull(allNodes().firstOrNull { it.config.getOrNull(SemanticsProperties.TestTag) == STRIP_CLOCK }, "The strip shows the clock")
+            assertTrue(boundsOf(clock).bottom.dp() <= stageTopDp, "The clock sits in the strip")
+            val room = viewmodel.session.currentRoom
+            assertTrue(allNodes().none { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == room } == true }, "The solo strip has no room name")
         }
+
+    /** The clock sits in the strip at the start edge, before the room name. */
+    @Test
+    fun theClockSitsInTheStripBeforeTheRoomName() = portrait {
+        driver.frames(20)
+        val clock = boundsOf(assertNotNull(allNodes().firstOrNull { it.config.getOrNull(SemanticsProperties.TestTag) == STRIP_CLOCK }, "The strip shows the clock"))
+        val room = viewmodel.session.currentRoom
+        val name = boundsOf(assertNotNull(allNodes().firstOrNull { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == room } == true }))
+        assertEquals(18f, clock.left.dp(), 0.5f, "The clock starts at the start margin")
+        assertTrue(clock.right <= name.left, "The room name follows the clock")
+        assertTrue(clock.bottom.dp() <= stageTopDp, "The clock sits in the strip")
+    }
+
+    /* The bars of the portrait room: the strip and the composer. */
+
+    /** The colour of the bars, which the room draws on its palette over video. */
+    private val barArgb = Palette.from(TRINITY.dynamicScheme, TRINITY).overVideo().roomBar.toArgb()
+
+    private fun RoomRig.Room.pixels(name: String) = ImageIO.read(driver.save(name))
+
+    private fun assertBar(argb: Int, where: String) {
+        val same = (0..24 step 8).all { shift -> abs(((argb shr shift) and 0xFF) - ((barArgb shr shift) and 0xFF)) <= 1 }
+        assertTrue(same, "$where is #${argb.toUInt().toString(16)}, not the bar colour #${barArgb.toUInt().toString(16)}")
+    }
+
+    /** With a gesture area at the bottom edge, the composer's colour runs to the edge, and its keys stay above the area. */
+    @Test
+    fun theComposerBarRunsToTheBottomEdge() =
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, gesturesPx = 48) {
+            driver.frames(20)
+            val send = boundsOf(assertNotNull(described(EnAppStrings.roomSend), "The send key exists"))
+            assertTrue(send.bottom.dp() <= heightDp - 24f, "The send key stays above the gesture area, at ${send.bottom.dp()} dp")
+            val image = pixels("portrait-room-gesture-area-check")
+            for (y in listOf(heightDp * 2 - 1, heightDp * 2 - 24, heightDp * 2 - 47)) {
+                assertBar(image.getRGB(widthDp, y), "The gesture area at ${y / 2f} dp")
+            }
+        }
+
+    /** The strip above the stage and the composer at the bottom share one colour. */
+    @Test
+    fun theStripAndTheComposerShareOneColour() = portrait {
+        driver.frames(20)
+        val image = pixels("portrait-room-bars-check")
+        // The middle of the strip holds no text, and the start of the composer is its padding.
+        assertBar(image.getRGB(widthDp, 4), "The strip")
+        assertBar(image.getRGB(4, heightDp * 2 - 54), "The composer")
+    }
+
+    /**
+     * A page slides up from the composer, never over it: the composer and the gesture area under it
+     * keep their own colour on each frame of the slide, for the GIF drawer and for a panel.
+     */
+    @Test
+    fun nothingShowsThroughTheComposerWhileAPageSlidesIn() = withGifs {
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, gesturesPx = 48) {
+            driver.frames(20)
+            val send = boundsOf(assertNotNull(described(EnAppStrings.roomSend)))
+            val pages = listOf<Pair<String, (Boolean) -> Unit>>(
+                "the GIF drawer" to { open -> ui.toggleGifPanel(open) },
+                "the seek panel" to { open -> ui.toggleSeekTo(open) },
+            )
+            for ((page, toggle) in pages) {
+                DesignHarness.onUiThread { toggle(true) }
+                repeat(8) { frame ->
+                    val image = pixels("portrait-room-slide-check")
+                    assertBar(image.getRGB(4, send.center.y.toInt()), "The composer on frame ${frame + 1} of $page")
+                    assertBar(image.getRGB(widthDp, heightDp * 2 - 2), "The gesture area on frame ${frame + 1} of $page")
+                }
+                DesignHarness.onUiThread { toggle(false) }
+                driver.frames(30)
+            }
+        }
+    }
 
     @Test
     fun theTabsSitInARowUnderTheVideoArea() = portrait {
@@ -164,7 +246,7 @@ class PortraitRoomTest {
     @Test
     fun theKeyboardFoldsTheTabRowAndCarriesTheComposer() {
         val keyboardPx = mutableStateOf(0)
-        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, keyboardPx = keyboardPx) {
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, keyboardPx = keyboardPx, gesturesPx = 48) {
             driver.frames(20)
             assertNotNull(described(EnAppStrings.roomRailMore), "The tab row shows while the keyboard is closed")
             keyboardPx.value = 600
@@ -173,7 +255,8 @@ class PortraitRoomTest {
             val composer = assertNotNull(described(EnAppStrings.roomSend), "The send key exists")
             val keyboardTop = heightDp - 300f
             val bottom = boundsOf(composer).bottom.dp()
-            assertTrue(bottom <= keyboardTop && bottom > keyboardTop - 54f, "The composer sits on the keyboard, at $bottom dp")
+            // The send key sits in the middle of the 54dp bar. A second inset would lift it 24dp more.
+            assertTrue(bottom <= keyboardTop + 0.5f && bottom >= keyboardTop - 8f, "The composer sits right on the keyboard, at $bottom dp")
             keyboardPx.value = 0
             driver.frames(30)
             assertNotNull(described(EnAppStrings.roomRailMore), "The tab row comes back when the keyboard closes")
@@ -678,8 +761,12 @@ class PortraitRoomTest {
         RoomRig.render("portrait-room-solo", widthDp, heightDp, solo = true, withVideo = true) {
             RoomScreenUI(LocalRoomViewmodel.current)
         }
+        // A 24dp gesture area at the bottom edge: the composer's colour runs under it.
+        RoomRig.render("portrait-room-gesture-area", widthDp, heightDp, solo = false, withVideo = true, gesturesPx = 48, setup = ::fill) {
+            RoomScreenUI(LocalRoomViewmodel.current)
+        }
         // A 300dp soft keyboard: the tab row folds away, and the composer sits on the keyboard.
-        RoomRig.render("portrait-room-keyboard", widthDp, heightDp, solo = false, withVideo = true, keyboardPx = 600, setup = { room ->
+        RoomRig.render("portrait-room-keyboard", widthDp, heightDp, solo = false, withVideo = true, keyboardPx = 600, gesturesPx = 48, setup = { room ->
             fill(room)
             room.uiState.msg.value = "starting in five"
         }) { RoomScreenUI(LocalRoomViewmodel.current) }

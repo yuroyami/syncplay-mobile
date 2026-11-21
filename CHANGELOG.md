@@ -8,7 +8,9 @@ Written for people who use the app. The full engineering history is in the commi
 - In the portrait view, the seek row runs from the full-screen key at its start to an add key at its end. The add key opens the add media page, and a second tap closes it.
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
 - On phones and tablets, the key that switches between the portrait and landscape room shows both views: the view you are in as a faint outline, and an arrow to a phone in the view that the key turns to.
-- In the portrait view, a black band above the video shows the room name, the connection and the number of people. The text keeps clear of the camera notch.
+- In the portrait view, a band above the video shows the time, the connection, the room name and the number of people. The text keeps clear of the camera notch. In offline mode, the band shows the time alone.
+- In the portrait view, the band above the video and the chat bar have the same colour, and the chat bar reaches the bottom edge of the screen.
+- On Android, the navigation bar in the room is clear, with no shade behind the buttons.
 - In the portrait view, chat gives each run of messages from one person a band of its own. The bands take turns between two shades of dark, so each run stands apart.
 - A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125)
 - After a reconnect or a new file, a phone that had left the app could pull the whole room back to its old position. It now takes the room's position. (#125)
