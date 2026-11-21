@@ -62,6 +62,11 @@ import app.room.LocalRoomInitialFocus
 import app.theme.Space
 import app.uicomponents.controls.GlyphButton
 import app.uicomponents.controls.PrimaryAction
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 
 /**
  * The add key in the bottom bar. With a file playing, it opens the add-media side panel. Before a
@@ -232,6 +237,43 @@ private class KeySize {
     var width = 0
     var height = 0
 }
+
+/**
+ * The add key at the end of the seek row of the portrait room. It has the brand ramp of the add key
+ * in the landscape bottom bar ([RoomMediaAddButton]), in the tile of the full-screen key. A tap opens
+ * the add media page, and a second tap closes it. While the page is open, a line in the ink of the
+ * glyph runs along the bottom of the key, as under an open tab, and a screen reader hears it as
+ * selected.
+ */
+@Composable
+fun PortraitAddKey() {
+    val ui = LocalRoomUiState.current
+    val p = palette
+    val open by ui.tabCardAddMedia.collectAsState()
+    Box(
+        Modifier
+            .padding(Space.gapTight)
+            .clip(Radius.panelShape)
+            .drawWithContent {
+                drawRect(brandBrush(p.brandField, size.width, BrandSpan.toPx()))
+                drawContent()
+                if (open) {
+                    val line = OpenLine.toPx()
+                    drawRect(p.ink, Offset(0f, size.height - line), Size(size.width, line))
+                }
+            },
+    ) {
+        AddVideoButton(
+            // The panel gives focus back to this key when it closes under a remote or a keyboard.
+            modifier = Modifier.focusRequester(ui.mediaKeyFocus).semantics { selected = open },
+            expanded = false,
+            onClick = { ui.toggleAddMedia() },
+        )
+    }
+}
+
+/** The line under the portrait add key while its page is open: as thick as the line under an open tab. */
+private val OpenLine = 2.dp
 
 /** An icon button once a file plays, and the main action button of the room before that. */
 @Composable

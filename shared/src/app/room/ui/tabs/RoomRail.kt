@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
-import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
@@ -62,6 +61,7 @@ import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.i18n.strings
 import app.room.PortraitTabRowHeight
+import app.room.ui.bottombar.PortraitAddKey
 import app.room.ui.bottombar.RoomReadyButton
 import app.theme.Motion
 import app.theme.Radius
@@ -120,16 +120,15 @@ private class RailClicks(ui: RoomUiStateManager, viewmodel: RoomViewmodel) {
     val leave = { ui.askLeave.value = true }
     val more = { ui.railActionsExpanded.value = true }
 
-    // The tab row of the portrait room: the add media tab, and the More tab that opens and closes its page.
-    val addMedia = { ui.toggleAddMedia() }
+    // The More tab of the portrait room opens and closes its page.
     val morePage = { ui.toggleMorePage() }
 }
 
 /**
  * The tab row of the portrait room, under the video: the Ready toggle, then one tab for each page.
- * The tabs open the people list, the shared playlist, the add media panel, the in-room preferences
- * and the More page. They show under the same conditions as the rail cells, and they take the
- * look of a rail cell.
+ * The tabs open the people list, the shared playlist, the in-room preferences and the More page.
+ * They show under the same conditions as the rail cells, and they take the look of a rail cell.
+ * The add media page opens from the add key at the end of the seek row ([PortraitAddKey]).
  */
 @Composable
 fun RoomTabRow(modifier: Modifier = Modifier) {
@@ -142,7 +141,6 @@ fun RoomTabRow(modifier: Modifier = Modifier) {
     val sharedPlaylists by viewmodel.protocol.supportsSharedPlaylists.collectAsState()
     val stateUserInfo by ui.tabCardUserInfo.collectAsState()
     val statePlaylist by ui.tabCardSharedPlaylist.collectAsState()
-    val stateAddMedia by ui.tabCardAddMedia.collectAsState()
     val statePrefs by ui.tabCardRoomPreferences.collectAsState()
     val more by ui.railActionsExpanded.collectAsState()
 
@@ -152,10 +150,7 @@ fun RoomTabRow(modifier: Modifier = Modifier) {
         if (!solo && playerIsReady && sharedPlaylists) {
             add(RailCell(Icons.AutoMirrored.Filled.PlaylistPlay, strings.roomSharedPlaylist, statePlaylist, clicks.playlist))
         }
-        if (playerIsReady) {
-            add(RailCell(Icons.Filled.AddToQueue, strings.roomButtonDescAdd, stateAddMedia, clicks.addMedia))
-            add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs, clicks.prefs))
-        }
+        if (playerIsReady) add(RailCell(Icons.Filled.Tune, strings.roomCardTitleInRoomPrefs, statePrefs, clicks.prefs))
         add(RailCell(MoreGlyph, strings.roomRailMore, more, clicks.morePage))
     }
     // A closing panel gives focus back to the tab whose page was open last, as on the rail.

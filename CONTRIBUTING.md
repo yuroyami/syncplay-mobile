@@ -556,6 +556,10 @@ The portrait room:
   later ignore an orientation request on a screen whose smallest width is 600dp or more, when the
   app targets API 36 or later, and Synkplay does. iOS 15 applies a new orientation mask only at the
   next rotation.
+- The seek row of the portrait stage holds, from start to end, the full-screen key, the seek bar
+  and the add key (`PortraitAddKey`). The add key opens and closes the add media page, so the tab
+  row has no add tab. Before a file loads, the large add key sits under the logo, and the
+  full-screen key keeps its corner at the start.
 - Notices sit at the top centre of the stage while its controls are hidden. While the controls
   show, the stage has no free row between the Controls key and the play key, so the notices sit
   under the stage. There they push the main box down (`NoticeInset`), so a notice covers no chat

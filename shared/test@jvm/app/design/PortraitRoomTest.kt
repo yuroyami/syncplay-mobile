@@ -185,7 +185,7 @@ class PortraitRoomTest {
     fun theAddKeySitsInTheLowerHalfOfTheVideoArea() =
         RoomRig.drive(solo = false, television = false, withVideo = false, widthDp = widthDp, heightDp = heightDp) {
             driver.frames(20)
-            // The add tab has the same name, so take the highest one: the key in the video area.
+            // Before a file loads, the seek row and its small add key are not there, so this is the large add key.
             val key = assertNotNull(
                 allNodes().filter { SemanticsActions.OnClick in it.config && nameOf(it) == EnAppStrings.roomButtonDescAdd }
                     .minByOrNull { boundsOf(it).top },
@@ -501,6 +501,55 @@ class PortraitRoomTest {
         assertTrue(line.isEmpty(), "No semantics node sits on the line: ${line.map { nameOf(it) }}")
     }
 
+    /* The seek row of the stage: the full-screen key, the seek bar and the add key. */
+
+    @Test
+    fun theSeekRowRunsFromTheFullScreenKeyToTheAddKey() =
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = true) {
+            driver.frames(20)
+            val view = boundsOf(assertNotNull(described(EnAppStrings.roomFullScreen), "The full-screen key shows"))
+            val bar = boundsOf(assertNotNull(described(EnAppStrings.roomSeekbarName), "The seek bar shows"))
+            val adds = allNodes().filter { SemanticsActions.OnClick in it.config && nameOf(it) == EnAppStrings.roomButtonDescAdd }
+            assertEquals(1, adds.size, "One add key, in the seek row, and no add tab under the stage")
+            val add = boundsOf(adds.single())
+            assertTrue(view.right <= bar.left && bar.right <= add.left, "From start to end: the full-screen key, the seek bar, the add key")
+            // Mirror places: each key is 12dp from its own edge, and both have one size and one center line.
+            assertEquals(12f, view.left.dp(), 0.6f, "The full-screen key sits at the start")
+            assertEquals(widthDp - 12f, add.right.dp(), 0.6f, "The add key sits at the end, where the full-screen key was")
+            assertEquals(view.size, add.size, "The two keys have one size")
+            assertEquals(view.center.y, add.center.y, 1f, "The two keys share one center line")
+            assertTrue(add.bottom.dp() <= stageBottomDp + 0.5f, "The add key sits in the stage")
+        }
+
+    @Test
+    fun theAddKeyOpensItsPageAndASecondTapClosesIt() = portrait {
+        driver.frames(20)
+        fun selected() = described(EnAppStrings.roomButtonDescAdd)?.config?.getOrNull(SemanticsProperties.Selected) == true
+        assertFalse(selected(), "The add key starts unselected")
+        press(EnAppStrings.roomButtonDescAdd)
+        driver.frames(20)
+        assertTrue(ui.tabCardAddMedia.value, "The add key opens the add media page")
+        assertTrue(selected(), "While the page is open, the add key reads as selected")
+        press(EnAppStrings.roomButtonDescAdd)
+        driver.frames(20)
+        assertFalse(ui.tabCardAddMedia.value, "A second tap closes the page")
+        assertFalse(selected(), "The add key is unselected again")
+    }
+
+    /** The add media page gives focus back to the add key of the seek row, as the landscape panel does. */
+    @Test
+    fun backFromTheAddMediaPageReturnsFocusToTheAddKey() =
+        RoomRig.drive(solo = false, television = true, withVideo = true, widthDp = widthDp, heightDp = heightDp) {
+            settle()
+            ui.toggleAddMedia(true)
+            driver.frames(10)
+            settle()
+            ui.back()
+            driver.frames(10)
+            settle()
+            assertEquals(EnAppStrings.roomButtonDescAdd, focusedName())
+        }
+
     /* The full-screen key (#244, #249). */
 
     @Test
@@ -526,6 +575,7 @@ class PortraitRoomTest {
             driver.frames(20)
             val key = assertNotNull(described(EnAppStrings.roomFullScreen), "A room with no file still shows the key")
             assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp + 0.5f, "The key sits in the stage")
+            assertEquals(12f, boundsOf(key).left.dp(), 0.6f, "The key keeps its corner at the start, as in the seek row")
         }
 
     @Test
@@ -701,10 +751,20 @@ class PortraitRoomTest {
         }
     }
 
-    /** The stage with the full-screen key, as on a phone, and the landscape room with its exit key. */
+    /**
+     * The seek row with the full-screen key and the add key, as on a phone: at rest, with the add
+     * media page open, and before a file loads. Then the landscape room with its exit key.
+     */
     @Test
     fun rendersTheFullScreenKey() {
         RoomRig.render("portrait-room-full-screen-key", widthDp, heightDp, solo = false, withVideo = true, canHoldLandscape = true, setup = ::fill) {
+            RoomScreenUI(LocalRoomViewmodel.current)
+        }
+        RoomRig.render("portrait-room-add-key-open", widthDp, heightDp, solo = false, withVideo = true, canHoldLandscape = true, setup = { room ->
+            fill(room)
+            room.uiState.toggleAddMedia(true)
+        }) { RoomScreenUI(LocalRoomViewmodel.current) }
+        RoomRig.render("portrait-room-full-screen-key-no-video", widthDp, heightDp, solo = false, withVideo = false, canHoldLandscape = true) {
             RoomScreenUI(LocalRoomViewmodel.current)
         }
         RoomRig.render("landscape-room-full-screen-key", 844, 390, solo = false, withVideo = true, canHoldLandscape = true, setup = ::fill) {

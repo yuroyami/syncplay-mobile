@@ -78,6 +78,7 @@ import app.preferences.Preferences.ROOM_ORIENTATION
 import app.preferences.flow
 import app.preferences.watchPref
 import app.room.ui.bottombar.AddVideoButton
+import app.room.ui.bottombar.PortraitAddKey
 import app.room.ui.bottombar.BlackContrastUnderlay
 import app.room.ui.bottombar.TopContrastUnderlay
 import app.room.ui.bottombar.RoomBottomBarSection
@@ -738,10 +739,10 @@ private fun RoomHud(
 
 /**
  * The HUD over the stage of the portrait room: the Controls key at the top end, the play and jump
- * keys in one row in the middle, and the seek bar at the bottom, with the full-screen key at its
- * end. Before a file loads, the add key takes the place of the seek bar, under the logo, and the
- * full-screen key keeps its corner. The status line sits in the strip above the stage
- * ([RoomStatusStrip]).
+ * keys in one row in the middle, and the seek row at the bottom. The seek row holds, from start to
+ * end, the full-screen key, the seek bar and the add key ([PortraitAddKey]). Before a file loads,
+ * the large add key takes the place of the seek bar, under the logo, and the full-screen key keeps
+ * its corner at the start. The status line sits in the strip above the stage ([RoomStatusStrip]).
  */
 @Composable
 private fun BoxScope.PortraitStageControls(
@@ -763,8 +764,9 @@ private fun BoxScope.PortraitStageControls(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().focusGroup().then(controls).padding(horizontal = Space.gapTight),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RoomSeekbar(modifier = Modifier.weight(1f))
                 if (platformCallback.showsRoomViewKey) RoomFullScreenKey(tall = true)
+                RoomSeekbar(modifier = Modifier.weight(1f))
+                PortraitAddKey()
             }
         }
         // Before a file loads, the add key is the main control. It sits low in the stage, under the
@@ -779,7 +781,7 @@ private fun BoxScope.PortraitStageControls(
             }
             // The full-screen key keeps its corner, or a room with no file has no way back to landscape (#249).
             if (platformCallback.showsRoomViewKey) {
-                Box(Modifier.align(Alignment.BottomEnd).padding(end = Space.gapTight).focusGroup().then(controls)) {
+                Box(Modifier.align(Alignment.BottomStart).padding(start = Space.gapTight).focusGroup().then(controls)) {
                     RoomFullScreenKey(tall = true)
                 }
             }

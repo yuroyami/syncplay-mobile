@@ -5,6 +5,7 @@ Written for people who use the app. The full engineering history is in the commi
 ## 0.27.0
 
 - The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
+- In the portrait view, the seek row runs from the full-screen key at its start to an add key at its end. The add key opens the add media page, and a second tap closes it.
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
 - On phones and tablets, the key that switches between the portrait and landscape room shows both views: the view you are in as a faint outline, and an arrow to a phone in the view that the key turns to.
 - In the portrait view, a black band above the video shows the room name, the connection and the number of people. The text keeps clear of the camera notch.
