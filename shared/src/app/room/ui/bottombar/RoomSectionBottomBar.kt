@@ -1,7 +1,5 @@
 package app.room.ui.bottombar
 
-import androidx.compose.material.icons.filled.StayCurrentPortrait
-import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Spacer
@@ -95,7 +93,8 @@ private fun CoveredByAddCard(covered: Boolean, key: @Composable () -> Unit) {
 /**
  * The full-screen key. On a phone or a tablet, a tap switches the room between a held landscape and
  * the other view of the "Room orientation" setting, and [RoomOrientation.key] names what the tap
- * does. Its glyph shows the view that the tap turns to. [tall] is true in the portrait room. On the
+ * does. Its glyph shows both views: the view that the room is in, faint, and the view that the tap
+ * turns to ([TurnToLandscapeGlyph], [TurnToPortraitGlyph]). [tall] is true in the portrait room. On the
  * desktop, a tap switches the window between full screen and windowed. A browser shows no key
  * ([app.PlatformCallback.showsRoomViewKey]).
  */
@@ -111,8 +110,8 @@ fun RoomFullScreenKey(tall: Boolean, modifier: Modifier = Modifier) {
     val key = orientation.key(switched = switchedUnder == orientation, tall = tall)
     GlyphButton(
         icon = when (key) {
-            RoomViewKey.FullScreen -> Icons.Filled.StayCurrentLandscape
-            RoomViewKey.ExitFullScreen -> Icons.Filled.StayCurrentPortrait
+            RoomViewKey.FullScreen -> TurnToLandscapeGlyph
+            RoomViewKey.ExitFullScreen -> TurnToPortraitGlyph
             RoomViewKey.LockRotation -> Icons.Filled.ScreenLockRotation
             RoomViewKey.UnlockRotation -> Icons.Filled.ScreenRotation
         },

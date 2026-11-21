@@ -11,15 +11,16 @@ import kotlin.test.assertTrue
 class EventTextTest {
     private val self = Color(0xFF8E5CF7)
     private val friend = Color(0xFF3DDC84)
+    private val colors = { _: String, isSelf: Boolean -> if (isSelf) self else friend }
 
     /** Each coloured run as the text it covers and its colour. */
     private fun AnnotatedString.colouredRuns() = spanStyles.map { text.substring(it.start, it.end) to it.item.color }
 
     @Test
     fun aPeerTakesTheFriendColourAndTheAppUserTheSelfColour() {
-        val paused = eventText("Christopher".isolated() + " paused at 12:34", mapOf("Christopher" to false), self, friend)
+        val paused = eventText("Christopher".isolated() + " paused at 12:34", mapOf("Christopher" to false), colors)
         assertEquals(listOf("Christopher" to friend), paused.colouredRuns())
-        val seeked = eventText("Alexandra".isolated() + " jumped from 01:00 to 02:00", mapOf("Alexandra" to true), self, friend)
+        val seeked = eventText("Alexandra".isolated() + " jumped from 01:00 to 02:00", mapOf("Alexandra" to true), colors)
         assertEquals(listOf("Alexandra" to self), seeked.colouredRuns())
     }
 
@@ -27,27 +28,27 @@ class EventTextTest {
     fun bothPeopleInAReadinessLineTakeTheirOwnColour() {
         val line = eventText(
             "Bob".isolated() + " was set as ready by " + "Alice".isolated(),
-            mapOf("Bob" to true, "Alice" to false), self, friend,
+            mapOf("Bob" to true, "Alice" to false), colors,
         )
         assertEquals(listOf("Bob" to self, "Alice" to friend), line.colouredRuns())
     }
 
     @Test
     fun aNameIsFoundWhereverTheTranslationPutsIt() {
-        val line = eventText("Rewound due to time difference with " + "Dana".isolated(), mapOf("Dana" to false), self, friend)
+        val line = eventText("Rewound due to time difference with " + "Dana".isolated(), mapOf("Dana" to false), colors)
         assertEquals(listOf("Dana" to friend), line.colouredRuns())
     }
 
     @Test
     fun onlyWholeIsolatedNamesAreColoured() {
-        val playing = eventText("Ann".isolated() + " is playing '" + "Anna.mkv".isolated() + "'", mapOf("Ann" to false), self, friend)
+        val playing = eventText("Ann".isolated() + " is playing '" + "Anna.mkv".isolated() + "'", mapOf("Ann" to false), colors)
         assertEquals(listOf("Ann" to friend), playing.colouredRuns())
         // A name that was never isolated is left alone rather than guessed at.
-        assertTrue(eventText("Ann paused", mapOf("Ann" to false), self, friend).spanStyles.isEmpty())
+        assertTrue(eventText("Ann paused", mapOf("Ann" to false), colors).spanStyles.isEmpty())
     }
 
     @Test
     fun aLineThatNamesNobodyHasNoColour() {
-        assertTrue(eventText("Connected to the server", emptyMap(), self, friend).spanStyles.isEmpty())
+        assertTrue(eventText("Connected to the server", emptyMap(), colors).spanStyles.isEmpty())
     }
 }

@@ -194,6 +194,20 @@ fun ComponentActivity.maskHiddenSystemBars() {
     })
 }
 
+/**
+ * Reports the camera cutouts on the top edge of the window to [TopCutouts]. The listener sits on the
+ * content view, so the decor keeps the listener of [maskHiddenSystemBars]. The cutout insets reach
+ * the content view whether the bars are masked or not.
+ */
+fun ComponentActivity.reportTopCutouts() {
+    if (Build.VERSION.SDK_INT < 28) return
+    ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, insets ->
+        val rects = insets.displayCutout?.boundingRects.orEmpty()
+        TopCutouts.report(rects.filter { it.top <= 0 && !it.isEmpty }.map { it.left..it.right })
+        ViewCompat.onApplyWindowInsets(view, insets)
+    }
+}
+
 val PlatformFile.uri: Uri
     get() = toAndroidUri(contextObtainer().packageName+".provider")
 

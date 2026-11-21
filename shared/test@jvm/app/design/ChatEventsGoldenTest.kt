@@ -7,13 +7,14 @@ import androidx.compose.ui.text.TextLayoutResult
 import app.room.models.Message
 import app.room.models.MessagePalette
 import app.room.models.isolated
+import app.room.models.nameColor
 import app.room.ui.chat.EventLine
 import app.room.ui.chat.MessageStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Room events over video: grey lines, people in their chat name colours, errors all red, outlines black. */
+/** Room events over video: grey lines, people in their chat name colours (a peer in its shade of the friend colour), errors all red, outlines black. */
 class ChatEventsGoldenTest {
     private val paused = Message(content = PEER.isolated() + " paused at 12:34", people = mapOf(PEER to false))
     private val seeked = Message(content = SELF.isolated() + " jumped from 01:00 to 02:00", people = mapOf(SELF to true))
@@ -45,9 +46,10 @@ class ChatEventsGoldenTest {
             fun runsOf(message: Message): List<Pair<String, Color>> = fills.single { it.text() == message.content }.let { layout ->
                 layout.layoutInput.text.spanStyles.map { layout.text().substring(it.start, it.end) to it.item.color }
             }
-            assertEquals(listOf(PEER to chat.friendtagColor), runsOf(paused))
+            val peer = chat.nameColor(PEER, self = false)
+            assertEquals(listOf(PEER to peer), runsOf(paused))
             assertEquals(listOf(SELF to chat.selftagColor), runsOf(seeked))
-            assertEquals(listOf(SELF to chat.selftagColor, PEER to chat.friendtagColor), runsOf(readySetBy))
+            assertEquals(listOf(SELF to chat.selftagColor, PEER to peer), runsOf(readySetBy))
             assertEquals(emptyList(), runsOf(connected))
             assertEquals(emptyList(), runsOf(refused), "An error stays one colour")
         }

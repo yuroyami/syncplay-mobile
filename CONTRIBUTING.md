@@ -472,8 +472,9 @@ Glass is the frosted, see-through panel style, built with the Haze library. The 
 keys.
 
 The portrait room is the room screen in a window taller than wide, outside picture-in-picture
-(`RoomPortraitFrame`). From top to bottom it has the stage (the 16:9 video area), the tab row, the
-main box (chat, or one page in place of chat) and the composer (the chat input row).
+(`RoomPortraitFrame`). From top to bottom it has the status strip, the stage (the 16:9 video area),
+the tab row, the main box (chat, or one page in place of chat) and the composer (the chat input
+row).
 
 Glass:
 
@@ -551,9 +552,25 @@ The portrait room:
   app targets API 36 or later, and Synkplay does. iOS 15 applies a new orientation mask only at the
   next rotation.
 - Notices sit at the top centre of the stage while its controls are hidden. While the controls
-  show, the stage has no free row between the status line and the play key, so the notices sit
+  show, the stage has no free row between the Controls key and the play key, so the notices sit
   under the stage. There they push the main box down (`NoticeInset`), so a notice covers no chat
   line and no page header.
+- The status strip (`RoomStatusStrip`) is the black band above the stage. It shows the room name,
+  the connection and the state text, so nothing of the status sits on the video. The strip is as
+  tall as the notch, and at least as tall as the room name with a margin (`portraitTopInsets`). A
+  solo room has no strip, and its stage starts under the notch.
+- Everything that lines up with the stage pads for `portraitTopInsets`, never for `roomTopInsets`:
+  the stage, the video layer and the notices. With `roomTopInsets`, the video layer and the stage
+  do not line up on a phone without a notch.
+- The strip keeps its text out of the camera cutouts. On Android, `reportTopCutouts` puts the
+  cutouts of the window insets into `TopCutouts`. The other platforms report none, and the strip
+  then takes a notch in the middle, with a width guessed from the height of the inset
+  (`middleNotchShare`).
+- Beside a wide notch, as on an iPhone with a notch, a side of the strip gets less than 80dp. The
+  strip is then compact (`CompactStretch`): it keeps smaller margins, and it drops the lock, the
+  episode tag and the people glyph, so the room name keeps a few letters.
+- `reportTopCutouts` listens on the content view, because `maskHiddenSystemBars` owns the insets
+  listener of the decor view. A second listener on the decor view replaces the first one.
 
 Chat:
 
@@ -569,6 +586,21 @@ Chat:
 - Force-clear the chat focus when the room controls hide, or the keyboard stays up behind a field
   that nobody can see. In the portrait room, the composer stays on screen. A hide there clears focus
   only inside the stage, and a show takes focus only when nothing under the stage holds it (#238).
+- The lines of one person form a group (`grouped`: the same sender within a minute). A 2dp dash in
+  the person's colour runs down the start edge of the whole group, like the dash of an event line.
+  A GIF or a sticker sits under the name, with no card around it.
+- `nameColor` gives each person a colour. The local user keeps the self colour. Every other person
+  gets one of 15 shades of the friend colour (`shadeOf`): five hue turns of up to 48 degrees, each
+  at three lightness steps. The name picks a shade through an FNV-1a hash (`preferredShade`).
+- In a room, `personShades` moves a person whose shade is the same as, or next to, the shade of
+  someone who came earlier. So up to four people always stay two steps apart, and a later message
+  never moves a shade. The room screen provides the result as `LocalPersonShades`, so every chat
+  view gives a person the same colour.
+- Do not change the hash or the shades, because every person in every room then gets a new
+  colour.
+- In the portrait main box, each group has a band of its own (`chatBands`), and the bands take
+  turns between the room ground and `ChatBand`. The bands fill the full width, so the chat pane
+  there has no side margin.
 - Chat in the portrait main box sits on the room ground, not over video (`ChatBox` with
   `onGround`). Its text is never smaller than `Type.note`, and it has no outline, shadow or
   background. The chat settings for outline, shadow and background apply to the landscape room only
@@ -808,7 +840,8 @@ should change, open an issue and say why. Do not just do it.
     is not planned.
 15. **There is no button to report a user, on purpose.** The "Report a bug" link in About stays.
 16. **The six chat colours have their own defaults** (`MessagePalette.kt`) and do not follow the
-    theme.
+    theme. Other people get shades of the friend colour, not colours of their own, so the friend
+    colour setting still sets the colour of everybody else.
 17. **The KLIPY API key is committed in plain text on purpose**, so that outside builds match the
     published ones.
 

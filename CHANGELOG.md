@@ -6,14 +6,16 @@ Written for people who use the app. The full engineering history is in the commi
 
 - The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
 - A new setting, Room orientation, picks how the room opens: Landscape as before, Portrait, or Auto, which turns the room with your device. It replaces Follow device rotation. With Auto, the same key locks the rotation, so a tilt cannot turn the room in the middle of a video. (#249)
-- On phones and tablets, the key that switches between the portrait and landscape room now shows a phone turned the way the room will turn. Before, it showed the full-screen glyphs.
+- On phones and tablets, the key that switches between the portrait and landscape room shows both views: the view you are in as a faint outline, and an arrow to a phone in the view that the key turns to.
+- In the portrait view, a black band above the video shows the room name, the connection and the number of people. The text keeps clear of the camera notch.
+- In the portrait view, chat gives each run of messages from one person a band of its own. The bands take turns between two shades of dark, so each run stands apart.
 - A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125)
 - After a reconnect or a new file, a phone that had left the app could pull the whole room back to its old position. It now takes the room's position. (#125)
 - New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
 - On the home screen, a clock key next to the join key now opens the recent rooms in a row above it. Before, the recent rooms were a list under the join key.
 - The settings key now shows a cog.
 - Over video, the full-screen key and the control panel key now sit on a dark see-through tile, so they stay readable on a bright picture.
-- A GIF or sticker in chat now shows in a dark card, with the sender's name inside the card.
+- In chat, the messages of one person now share one coloured line along their left edge, like the room events. Your own messages use your name colour. Each other person gets a shade of the friend colour, picked from the name. People in the same room get shades that are easy to tell apart.
 - When the room controls are hidden, a new chat message now shows at its own place in the chat list, not in the middle of the screen. When the controls come back, the message stays where it is.
 - Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
 - On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does.

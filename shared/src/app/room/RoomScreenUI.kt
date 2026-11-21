@@ -96,6 +96,9 @@ import app.room.ui.misc.RoomGestureInterceptor
 import app.room.ui.misc.RoomTransportKeys
 import app.room.ui.rightcards.RoomSidePanels
 import app.room.ui.statinfo.RoomStatusInfoSection
+import app.room.ui.statinfo.RoomStatusStrip
+import app.room.models.LocalPersonShades
+import app.room.models.personShades
 import app.room.ui.tabs.ManagedRoomModal
 import app.room.ui.tabs.RoomMorePage
 import app.room.ui.tabs.RoomRail
@@ -213,7 +216,12 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     // GlassDemand. Demand on the app-wide one would keep the whole-screen capture running for
     // nothing.
     val roomGlassDemand = remember { GlassDemand() }
+    // Each person keeps one shade in every chat view. The map changes only when someone new speaks
+    // or is named, so a new line from a known person recomposes nothing here.
+    val chatLog = viewmodel.session.messageSequence.collectAsState()
+    val shades by remember(chatLog) { derivedStateOf { personShades(chatLog.value) } }
     CompositionLocalProvider(
+        LocalPersonShades provides shades,
         LocalChatMediaSize provides if (measuredChatMediaSize > 0f) measuredChatMediaSize.dp else chatMediaCellSize(with(LocalDensity.current) {
             window.width.toDp() * if (tall) 1f else 0.36f
         }),
@@ -232,7 +240,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         Box(Modifier.fillMaxSize().then(ground).roomPointer(viewmodel.uiState, pointerHidden).mediaDropTarget(drop)) {
             /* In portrait, the video layer takes the bounds of the stage. It keeps this place in the
              * composition in both layouts, so a rotation keeps the engine and its surface. */
-            val videoBounds = if (portrait) Modifier.portraitStage(roomTopInsets()) else Modifier.matchParentSize()
+            val videoBounds = if (portrait) Modifier.portraitStage(portraitTopInsets(strip = !soloMode)) else Modifier.matchParentSize()
             Box(videoBounds.glassBackdropLayer(roomHazeState)) {
                 if (!hasVideo) RoomBackgroundArtwork(stage = portrait)
 
@@ -524,7 +532,7 @@ private fun LeaveRoomAsk(viewmodel: RoomViewmodel) {
  * line.
  *
  * In portrait, the notices sit at the top center of the stage (the video area) while its controls
- * are hidden. While the controls show, the stage has no free row between the status line and the
+ * are hidden. While the controls show, the stage has no free row between the Controls key and the
  * play key, so the notices glide under the stage. There they push the main box down through
  * [inset], so they cover no chat line. No chat lines fade in, because chat is on screen.
  */
@@ -550,7 +558,7 @@ private fun BoxScope.RoomNotices(viewmodel: RoomViewmodel, soloMode: Boolean, po
     Column(
         modifier = Modifier.align(Alignment.TopCenter)
             .fillMaxWidth()
-            .windowInsetsPadding(roomTopInsets())
+            .windowInsetsPadding(if (portrait) portraitTopInsets(strip = !soloMode) else roomTopInsets())
             .padding(top = top)
             .padding(horizontal = Space.gutter)
             .onSizeChanged { inset.height = it.height },
@@ -675,13 +683,15 @@ private fun RoomHud(
             keyboardOpen = isKeyboardOpen,
             lower = Modifier.onFocusChanged { lowerFocused = it.hasFocus },
             mainTop = mainBoxTop,
+            // The status line sits in the strip above the stage, so it never fades (#236).
+            strip = if (soloMode) null else ({ RoomStatusStrip(Modifier.matchParentSize()) }),
             stage = {
                 Box(Modifier.matchParentSize().onFocusChanged { stageFocused = it.hasFocus }.then(layer)) {
                     if (hasVideo) {
                         BlackContrastUnderlay()
                         TopContrastUnderlay()
                     }
-                    PortraitStageControls(soloMode, playerIsReady, hasVideo, initialFocusRequester, controls)
+                    PortraitStageControls(playerIsReady, hasVideo, initialFocusRequester, controls)
                 }
                 // While the controls are hidden, a thin line along the bottom edge shows the position.
                 if (hasVideo) StageProgressLine(Modifier.align(Alignment.BottomCenter)) { 1f - hudAlpha.value }
@@ -727,14 +737,14 @@ private fun RoomHud(
 }
 
 /**
- * The HUD over the stage of the portrait room: the status line at the top start, the Controls key
- * at the top end, the play and jump keys in one row in the middle, and the seek bar at the bottom,
- * with the full-screen key at its end. Before a file loads, the add key takes the place of the seek
- * bar, under the logo, and the full-screen key keeps its corner.
+ * The HUD over the stage of the portrait room: the Controls key at the top end, the play and jump
+ * keys in one row in the middle, and the seek bar at the bottom, with the full-screen key at its
+ * end. Before a file loads, the add key takes the place of the seek bar, under the logo, and the
+ * full-screen key keeps its corner. The status line sits in the strip above the stage
+ * ([RoomStatusStrip]).
  */
 @Composable
 private fun BoxScope.PortraitStageControls(
-    soloMode: Boolean,
     playerIsReady: Boolean,
     hasVideo: Boolean,
     initialFocusRequester: FocusRequester,
@@ -742,14 +752,6 @@ private fun BoxScope.PortraitStageControls(
 ) {
     val ui = LocalRoomUiState.current
     val controlsPage by ui.controlPanel.collectAsState()
-    if (!soloMode && playerIsReady) {
-        Box(
-            Modifier.align(Alignment.TopStart).focusGroup()
-                // The end padding keeps the status line clear of the Controls key.
-                .padding(start = Space.gapTight, top = Space.gapTight, end = Space.touchMin + Space.gap)
-                .then(controls),
-        ) { RoomStatusInfoSection() }
-    }
     if (playerIsReady) {
         Box(Modifier.align(Alignment.TopEnd).focusGroup().then(controls)) { RoomControlPanelButton(Modifier, active = controlsPage) }
     }

@@ -48,6 +48,7 @@ import app.utils.isTelevision
 import app.utils.changeLanguage
 import app.utils.loggy
 import app.utils.maskHiddenSystemBars
+import app.utils.reportTopCutouts
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
@@ -95,6 +96,7 @@ class SyncplayActivity : ComponentActivity() {
         /** Transparent system bars and an edge-to-edge layout. */
         applyActivityUiProperties()
         maskHiddenSystemBars()
+        reportTopCutouts()
 
         /* On a TV, the keyboard opens only when the D-pad center key asks for it. Otherwise
          * Android opens it whenever the window regains focus on a text field, such as when a

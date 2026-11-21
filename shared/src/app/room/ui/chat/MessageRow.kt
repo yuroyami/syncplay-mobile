@@ -1,7 +1,6 @@
 package app.room.ui.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
@@ -26,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
@@ -40,12 +41,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.room.models.BIDI_ISOLATE_END
 import app.room.models.BIDI_ISOLATE_START
 import app.room.models.Message
 import app.room.models.MessagePalette
+import app.room.models.LocalPersonShades
+import app.room.models.nameColor
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import app.theme.Radius
 import app.theme.Space
@@ -84,12 +88,51 @@ internal fun grouped(message: Message, previous: Message?): Boolean =
  */
 private const val LOADING_TILE_TINT = 0.65f
 
+/** The width of the dash down the start edge of a group. An event line draws the same dash. */
+private val DashWidth = 2.dp
+
+/** From the dash to the text, so the text of a group starts where the text of an event line starts. */
+private val DashGap = Space.gapTight + 2.dp
+
+/** The space over a line that starts a group, so two groups never share one dash. */
+private val GroupGap = 4.dp
+
+/** The inner margin of a band in the portrait chat, at the top and the bottom of its group. */
+private val BandInset = Space.gapTight
+
+/** The inner margin of a band at both sides: the margin that the portrait chat had before its bands. */
+private val BandSide = 14.dp
+
+/** The lighter band of the portrait chat. The groups take turns between it and the room ground. */
+internal val ChatBand = Color.White.copy(alpha = 0.04f)
+
+/**
+ * The band of each line in the portrait chat. A group of lines (see [grouped]) shares one band, and
+ * the groups take turns between the room ground and [ChatBand], so each group stands apart.
+ */
+internal fun chatBands(messages: List<Message>): List<Color> {
+    var lighter = true
+    return messages.mapIndexed { index, message ->
+        if (!grouped(message, messages.getOrNull(index - 1))) lighter = !lighter
+        if (lighter) ChatBand else Color.Transparent
+    }
+}
+
 /**
  * One chat line, in one of two shapes:
- * - A person's message: the name in the tag color, the message under it, and no bubble. A second
- *   message from the same person within a minute drops the repeated name. A GIF or sticker sits
- *   in a dark card, with the name inside the card (see [MediaBubble]).
+ * - A person's message: the name in the person's color ([nameColor]) and the message under it. A
+ *   second message from the same person within a minute drops the repeated name. A GIF or a sticker
+ *   shows in place of the text, with no card around it (see [ChatMedia]).
  * - An event: see [EventLine].
+ *
+ * The lines of one person form a group. A 2dp dash in the person's color runs down the start edge
+ * of the whole group, as on an event line, so the group reads as one block. A line that starts a
+ * group keeps [GroupGap] above it, so two groups never share one dash.
+ *
+ * With [band], the line is part of the portrait chat on the room ground. The band fills the full
+ * width behind the line, and the whole group shares it (see [chatBands]). The band keeps an inner
+ * margin at the top and the bottom of its group, and at both sides. [next] tells the line whether
+ * it ends its group.
  *
  * The time sits in a column at the end only when the time switch is on and more than a minute
  * passed since the line above. The spoken description always has the name and the time.
@@ -105,6 +148,10 @@ fun MessageRow(
     announce: Boolean = false,
     /** Draws the sender's name only. The rest keeps its place, so the name sits where the full line puts it. */
     onlyName: Boolean = false,
+    /** The band behind the line in the portrait chat, or null over video. */
+    band: Color? = null,
+    /** The line under this one. Only a line with a [band] reads it. */
+    next: Message? = null,
 ) {
     val viewmodel = LocalRoomViewmodel.current
     val copied = strings.roomChatCopied
@@ -115,6 +162,17 @@ fun MessageRow(
     val name = Type.value.copy(fontSize = (style.fontSize - 1).coerceAtLeast(5).sp)
     val spoken = listOfNotNull(message.sender, message.timestamp, message.content).joinToString(", ")
     val showsImage = message.isImageUrl && (message.isFromTrustedImageHost || message.content in viewmodel.uiState.revealedImages)
+    val sender = message.sender
+    val shades = LocalPersonShades.current
+    val tag = remember(sender, message.isMainUser, chatPalette, shades) { sender?.let { chatPalette.nameColor(it, message.isMainUser, shades) } }
+    // A band keeps its margin inside the group. Over video, only a new group gets a gap above it.
+    val top = when {
+        band != null -> if (grouped) 0.dp else BandInset
+        grouped || previous == null -> 0.dp
+        else -> GroupGap
+    }
+    val bottom = if (band != null && (next == null || !grouped(next, message))) BandInset else 0.dp
+    val side = if (band != null) BandSide else 0.dp
     var menuOpen by remember { mutableStateOf(false) }
     /* The line takes focus, so a remote or keyboard user must see which line has focus. The
      * source carries that state to the ring. Nothing draws the press state, so a touch shows no
@@ -124,7 +182,10 @@ fun MessageRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp)
+            .then(if (band != null) Modifier.background(band) else Modifier)
+            // An event line draws its own dash. A line that shows only its name draws none.
+            .then(if (tag != null && !onlyName) Modifier.groupDash(tag, side, top, bottom) else Modifier)
+            .padding(start = side, end = side, top = top + 2.dp, bottom = bottom + 2.dp)
             .controlStates(source, Radius.controlShape)
             /* A long press copies the line on touch platforms, where no selection container runs.
              * On a GIF or sticker the link is of no use as text, so the long press opens the
@@ -150,59 +211,29 @@ fun MessageRow(
             },
         verticalAlignment = Alignment.Top,
     ) {
-        if (message.sender == null) {
+        if (sender == null) {
             EventLine(message, chatPalette, style, Modifier.weight(1f))
         } else {
-            Column(Modifier.weight(1f)) {
-                // A shown GIF or sticker carries the name inside its card.
-                if (!grouped && !showsImage) {
+            Column(Modifier.weight(1f).padding(start = DashWidth + DashGap)) {
+                if (!grouped) {
                     OutlinedText(
-                        text = AnnotatedString(BIDI_ISOLATE_START + message.sender + BIDI_ISOLATE_END),
+                        text = AnnotatedString(BIDI_ISOLATE_START + sender + BIDI_ISOLATE_END),
                         style = name,
-                        color = if (message.isMainUser) chatPalette.selftagColor else chatPalette.friendtagColor,
+                        color = tag ?: chatPalette.friendtagColor,
                         outline = style.outline,
                         shadow = style.shadow,
                     )
                 }
                 if (message.isImageUrl) {
                     if (showsImage) {
-                        var loading by remember(message.content) { mutableStateOf(true) }
-                        val tag = if (message.isMainUser) chatPalette.selftagColor else chatPalette.friendtagColor
-                        MediaBubble(
-                            name = if (grouped) null else message.sender,
-                            nameStyle = name,
-                            tag = tag,
-                            mediaSize = LocalChatMediaSize.current,
+                        ChatMedia(
+                            message = message,
+                            size = LocalChatMediaSize.current,
+                            alpha = imageAlpha,
                             onlyName = onlyName,
-                            outline = style.outline,
-                            shadow = style.shadow,
-                        ) { imageModifier ->
-                            Box(imageModifier) {
-                                // The name alone keeps the place of the image, but loads no image.
-                                if (!onlyName) {
-                                    /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
-                                    AnimatedImage(
-                                        url = message.content,
-                                        // A screen reader says who sent the image, which is what a sighted
-                                        // user sees too.
-                                        contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
-                                        contentScale = ContentScale.Crop,
-                                        alpha = imageAlpha,
-                                        onLoaded = { loading = false },
-                                        onFailed = { loading = false },
-                                        modifier = Modifier.matchParentSize(),
-                                    )
-                                    /* Over the image, not under it: on iOS the image is a native view that
-                                     * clears its own area of the Compose canvas. Chat has no panel behind
-                                     * it, so the tile brings its own tint, or the shimmer would vanish over
-                                     * video. */
-                                    if (loading && imageAlpha > 0f) {
-                                        Box(Modifier.matchParentSize().background(palette.panel.copy(alpha = LOADING_TILE_TINT)).shimmer())
-                                    }
-                                }
-                                if (menuOpen) ChatMediaMenu(link = message.content, onDismiss = { menuOpen = false })
-                            }
-                        }
+                            menuOpen = menuOpen,
+                            onMenuDismiss = { menuOpen = false },
+                        )
                     } else {
                         /* A peer's image link does not load on its own. Loading it would send the IP
                          * address of every device in the room to a host that the peer chose. One
@@ -248,34 +279,80 @@ fun MessageRow(
 }
 
 /**
+ * The dash of a group, [side] in from the start edge of the line. It runs the full height of the
+ * line but [top] and [bottom], so the lines of one group join into one dash.
+ */
+private fun Modifier.groupDash(color: Color, side: Dp, top: Dp, bottom: Dp): Modifier = drawBehind {
+    val width = DashWidth.toPx()
+    val x = if (layoutDirection == LayoutDirection.Ltr) side.toPx() else size.width - side.toPx() - width
+    val y = top.toPx()
+    drawRect(color, topLeft = Offset(x, y), size = Size(width, size.height - y - bottom.toPx()))
+}
+
+/**
+ * A shown GIF or sticker, [size] square, with no card around it. The name above it and the dash
+ * beside it keep it in its group. A shimmering tile holds its place while it loads. With
+ * [onlyName], it keeps its place but loads nothing.
+ */
+@Composable
+private fun ChatMedia(message: Message, size: Dp, alpha: Float, onlyName: Boolean, menuOpen: Boolean, onMenuDismiss: () -> Unit) {
+    var loading by remember(message.content) { mutableStateOf(true) }
+    Box(Modifier.padding(top = 2.dp).size(size).clip(Radius.controlShape)) {
+        if (!onlyName) {
+            /* Alpha is a parameter: the iOS UIImageView ignores Compose alpha modifiers. */
+            AnimatedImage(
+                url = message.content,
+                // A screen reader says who sent the image, which is what a sighted user sees too.
+                contentDescription = strings.roomChatImageFrom(message.sender ?: ""),
+                contentScale = ContentScale.Crop,
+                alpha = alpha,
+                onLoaded = { loading = false },
+                onFailed = { loading = false },
+                modifier = Modifier.matchParentSize(),
+            )
+            /* Over the image, not under it: on iOS the image is a native view that clears its own
+             * area of the Compose canvas. Chat has no panel behind it, so the tile brings its own
+             * tint, or the shimmer would vanish over video. */
+            if (loading && alpha > 0f) {
+                Box(Modifier.matchParentSize().background(palette.panel.copy(alpha = LOADING_TILE_TINT)).shimmer())
+            }
+        }
+        if (menuOpen) ChatMediaMenu(link = message.content, onDismiss = onMenuDismiss)
+    }
+}
+
+/**
  * An event line: one line with a 2dp stub in the gutter, both in the event color (red for errors).
- * A neutral event draws each person it names in that person's name color. An error stays all red.
+ * A neutral event draws each person it names in that person's name color ([nameColor]). An error
+ * stays all red.
  */
 @Composable
 internal fun EventLine(message: Message, chatPalette: MessagePalette, style: MessageStyle, modifier: Modifier = Modifier) {
     val tone = if (message.isError) chatPalette.errormsgColor else chatPalette.systemmsgColor
-    val text = remember(message.content, message.people, message.isError, chatPalette) {
+    val shades = LocalPersonShades.current
+    val text = remember(message.content, message.people, message.isError, chatPalette, shades) {
         if (message.isError) AnnotatedString(message.content)
-        else eventText(message.content, message.people, chatPalette.selftagColor, chatPalette.friendtagColor)
+        else eventText(message.content, message.people) { person, self -> chatPalette.nameColor(person, self, shades) }
     }
     Row(modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(2.dp).fillMaxHeight().background(tone))
+        Box(Modifier.width(DashWidth).fillMaxHeight().background(tone))
         OutlinedText(
             text = text,
             style = chatBody(style),
             color = tone,
             outline = style.outline,
             shadow = style.shadow,
-            modifier = Modifier.padding(start = Space.gapTight + 2.dp),
+            modifier = Modifier.padding(start = DashGap),
         )
     }
 }
 
 /**
- * Colors each of [people] in [content] with [self] or [friend]. A name counts only as a whole
- * isolated run, so a name that is also part of a file name or another word stays uncolored there.
+ * Colors each of [people] in [content] with the [color] of that person. The value of each entry in
+ * [people] says whether the person is the local user. A name counts only as a whole isolated run,
+ * so a name that is also part of a file name or another word stays uncolored there.
  */
-internal fun eventText(content: String, people: Map<String, Boolean>, self: Color, friend: Color): AnnotatedString {
+internal fun eventText(content: String, people: Map<String, Boolean>, color: (name: String, self: Boolean) -> Color): AnnotatedString {
     if (people.isEmpty()) return AnnotatedString(content)
     return buildAnnotatedString {
         append(content)
@@ -285,56 +362,12 @@ internal fun eventText(content: String, people: Map<String, Boolean>, self: Colo
             if (start < 0) break
             val end = content.indexOf(BIDI_ISOLATE_END, start + 1)
             if (end < 0) break
-            people[content.substring(start + 1, end)]?.let { isSelf ->
-                addStyle(SpanStyle(color = if (isSelf) self else friend), start + 1, end)
-            }
+            val person = content.substring(start + 1, end)
+            people[person]?.let { isSelf -> addStyle(SpanStyle(color = color(person, isSelf)), start + 1, end) }
             from = end + 1
         }
     }
 }
-
-/**
- * A shown GIF or sticker in a dark card, with its sender's [name] on top (null for a grouped line).
- * The card gives the name a ground of its own, so it reads over any picture, and it keeps a
- * see-through sticker together with its name. [image] draws the picture in the modifier it gets.
- * With [onlyName], the card and the picture keep their place but do not draw. The name then sits on
- * the video, so it gets the [outline] and [shadow] of the other chat names.
- */
-@Composable
-private fun MediaBubble(
-    name: String?,
-    nameStyle: TextStyle,
-    tag: Color,
-    mediaSize: Dp,
-    onlyName: Boolean,
-    outline: Float?,
-    shadow: Boolean,
-    image: @Composable (Modifier) -> Unit,
-) {
-    Column(
-        Modifier
-            .padding(top = 2.dp)
-            .clip(Radius.panelShape)
-            .then(if (onlyName) Modifier else Modifier.background(MediaCardFill).border(Space.hair, palette.rule, Radius.panelShape))
-            .padding(4.dp),
-    ) {
-        if (name != null) {
-            OutlinedText(
-                text = AnnotatedString(BIDI_ISOLATE_START + name + BIDI_ISOLATE_END),
-                style = nameStyle,
-                color = tag,
-                outline = if (onlyName) outline else null,
-                shadow = onlyName && shadow,
-                maxLines = 1,
-                modifier = Modifier.width(mediaSize).padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
-            )
-        }
-        image(Modifier.size(mediaSize).clip(Radius.controlShape))
-    }
-}
-
-/** The fill of the GIF card: the dark of the keys over video, a little denser, so the name reads. */
-private val MediaCardFill = Color(0xFF15151A).copy(alpha = 0.72f)
 
 /** Chat text at the size the chat preference asks for. */
 @Composable

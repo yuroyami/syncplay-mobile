@@ -1,11 +1,13 @@
 package app.room
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,9 +32,11 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.theme.Space
+import app.theme.Type
 import app.uicomponents.LocalIsTelevision
 
 /**
@@ -42,6 +47,22 @@ import app.uicomponents.LocalIsTelevision
 @Composable
 fun roomTopInsets(): WindowInsets =
     WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
+
+/** The least height of the status strip of the portrait room, for a screen without a notch. */
+private val PortraitStripMin = 28.dp
+
+/**
+ * The top insets of the portrait room. With a [strip] (the status strip above the stage, which
+ * holds the room's status line), they are as tall as the notch, and at least as tall as the room
+ * name with a margin, so the strip also has a place on a screen without a notch. Without a strip
+ * (solo mode), they are the notch alone.
+ */
+@Composable
+fun portraitTopInsets(strip: Boolean): WindowInsets {
+    if (!strip) return roomTopInsets()
+    val line = with(LocalDensity.current) { Type.label.lineHeight.toDp() }
+    return roomTopInsets().union(WindowInsets(top = maxOf(PortraitStripMin, line + Space.gapTight + 2.dp)))
+}
 
 /**
  * Places the docks of the room screen (the areas that hold the controls) and pads each dock for
@@ -148,17 +169,19 @@ val PortraitTabRowHeight = Space.touchMin
 
 /**
  * The bounds of the stage, the video area of the room in a window taller than wide: the full width
- * in 16:9, under [topInsets]. The video layer and the controls over it both take these bounds.
+ * in 16:9, under [topInsets] ([portraitTopInsets]). The video layer and the controls over it both
+ * take these bounds.
  */
 fun Modifier.portraitStage(topInsets: WindowInsets): Modifier =
     fillMaxWidth().windowInsetsPadding(topInsets).aspectRatio(16f / 9f)
 
 /**
- * The room in a window taller than wide, top to bottom: the [stage] (see [portraitStage]), the
- * [tabs], the main box ([main]: chat, or one page in place of chat) and the [composer] (the chat
- * input row). With the keyboard open, the tab row folds away, and the composer rides on the
- * keyboard. [lower] goes on everything under the stage. [mainTop] moves the main box down by that
- * many pixels, for the notices that sit over its top edge.
+ * The room in a window taller than wide, top to bottom: the [strip] (the status strip, see
+ * [portraitTopInsets]), the [stage] (see [portraitStage]), the [tabs], the main box ([main]: chat,
+ * or one page in place of chat) and the [composer] (the chat input row). With the keyboard open, the
+ * tab row folds away, and the composer rides on the keyboard. [lower] goes on everything under the
+ * stage. [mainTop] moves the main box down by that many pixels, for the notices that sit over its
+ * top edge.
  */
 @Composable
 fun RoomPortraitFrame(
@@ -166,6 +189,7 @@ fun RoomPortraitFrame(
     modifier: Modifier = Modifier,
     lower: Modifier = Modifier,
     mainTop: () -> Int = { 0 },
+    strip: (@Composable BoxScope.() -> Unit)? = null,
     stage: @Composable BoxScope.() -> Unit,
     tabs: @Composable () -> Unit,
     main: @Composable BoxScope.() -> Unit,
@@ -173,8 +197,12 @@ fun RoomPortraitFrame(
 ) {
     // Above the keyboard while it is open, and above the bottom gesture area otherwise.
     val bottomInsets = WindowInsets.ime.union(WindowInsets.safeGestures).only(WindowInsetsSides.Bottom)
+    val top = portraitTopInsets(strip = strip != null)
     Column(modifier.fillMaxSize()) {
-        Box(Modifier.portraitStage(roomTopInsets())) { stage() }
+        // Black, like the frame of the screen around the notch.
+        Box(Modifier.fillMaxWidth().windowInsetsTopHeight(top).background(Color.Black)) { strip?.invoke(this) }
+        // The strip takes the top insets, so nothing in the stage pads for the notch again.
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).consumeWindowInsets(top)) { stage() }
         Column(lower.weight(1f).fillMaxWidth().windowInsetsPadding(bottomInsets)) {
             if (!keyboardOpen) tabs()
             Box(Modifier.weight(1f).fillMaxWidth().pushedDown(mainTop)) { main() }

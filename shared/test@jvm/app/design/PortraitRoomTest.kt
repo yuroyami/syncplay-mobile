@@ -44,14 +44,18 @@ import kotlin.test.assertTrue
  * The room in a window taller than wide, such as a phone held upright: the stage (the video area)
  * on top, then the tab row, the main box with chat, and the composer (the chat input row) at the
  * bottom. A page is what the main box shows in place of chat: a panel, the GIF drawer, the
- * Controls page or the More page. The harness has no insets, so the stage starts at the top edge.
+ * Controls page or the More page. The harness has no insets, so the status strip above the stage
+ * has its least height.
  */
 class PortraitRoomTest {
     private val widthDp = 390
     private val heightDp = 844
 
+    /** The top edge of the stage: under the status strip, which is 28 dp tall without a notch. */
+    private val stageTopDp = 28f
+
     /** The bottom edge of the stage: full width in 16:9. */
-    private val stageBottomDp = widthDp * 9f / 16f
+    private val stageBottomDp = stageTopDp + widthDp * 9f / 16f
 
     private fun portrait(drive: RoomRig.Room.() -> Unit) =
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, drive = drive)
@@ -119,6 +123,28 @@ class PortraitRoomTest {
         assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp, "The Controls key sits in the video area")
     }
 
+    /** The room name sits in the status strip above the stage, so it never covers the video. */
+    @Test
+    fun theRoomNameSitsInTheStripAboveTheVideoArea() = portrait {
+        driver.frames(20)
+        val room = viewmodel.session.currentRoom
+        val names = allNodes().filter { node -> node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == room } == true }
+        assertTrue(names.isNotEmpty(), "The room name shows")
+        for (name in names) {
+            val bounds = boundsOf(name)
+            assertTrue(bounds.top >= 0f && bounds.bottom.dp() <= stageTopDp, "The room name sits in the strip, at ${bounds.top.dp()} to ${bounds.bottom.dp()} dp")
+        }
+    }
+
+    /** A solo room has no status to show, so it has no strip, and the stage starts at the top edge. */
+    @Test
+    fun aSoloRoomHasNoStrip() =
+        RoomRig.drive(solo = true, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp) {
+            driver.frames(20)
+            val key = assertNotNull(described(EnAppStrings.roomControlPanel), "The Controls key exists")
+            assertTrue(boundsOf(key).top.dp() < stageTopDp, "The Controls key sits at the top edge, at ${boundsOf(key).top.dp()} dp")
+        }
+
     @Test
     fun theTabsSitInARowUnderTheVideoArea() = portrait {
         driver.frames(20)
@@ -167,7 +193,7 @@ class PortraitRoomTest {
             )
             val bounds = boundsOf(key)
             assertTrue(bounds.bottom.dp() <= stageBottomDp, "The add key sits in the video area")
-            assertTrue(bounds.top.dp() >= stageBottomDp / 2f, "The add key sits in the lower half, at ${bounds.top.dp()} dp")
+            assertTrue(bounds.top.dp() >= (stageTopDp + stageBottomDp) / 2f, "The add key sits in the lower half, at ${bounds.top.dp()} dp")
         }
 
     @Test
@@ -176,7 +202,7 @@ class PortraitRoomTest {
         driver.tap(at(widthDp / 2f, 600f))
         driver.frames(10)
         assertTrue(ui.visibleHUD.value, "A tap on the chat leaves the controls up")
-        // Between the status line and the play key, where no control sits.
+        // Between the top edge of the video area and the play key, where no control sits.
         driver.tap(at(widthDp / 2f, 60f))
         driver.frames(10)
         assertFalse(ui.visibleHUD.value, "A tap on the video area hides the controls")

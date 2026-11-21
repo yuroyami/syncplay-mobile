@@ -181,8 +181,10 @@ fun RoomChatSection(modifier: Modifier) {
 fun RoomChatPane(showing: Boolean, newestRequests: Int, modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val density = LocalDensity.current
-    val measured = modifier.padding(horizontal = 8.dp).onSizeChanged { size ->
-        viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() }).value
+    // The bands of the lines fill the full width. A GIF keeps the size that it had inside the 8dp
+    // margins of the main box.
+    val measured = modifier.onSizeChanged { size ->
+        viewmodel.uiState.chatMediaSizeDp.value = chatMediaCellSize(with(density) { size.width.toDp() } - 16.dp).value
     }
     ChatBox(viewmodel = viewmodel, modifier = measured, isHUDVisible = showing, onGround = true, newestRequests = newestRequests)
 }
@@ -437,8 +439,8 @@ private fun SendKey(filled: Boolean, onClick: () -> Unit) {
 /**
  * The message list. It opens at its last line and animates only when it grows. [onGround] is chat
  * on the dark ground of the portrait room, not over video: its text keeps at least the size of a
- * notice, with no outline, shadow or background. Each step of [newestRequests] scrolls to the newest
- * line.
+ * notice, with no outline, shadow or background, and each group of lines takes a band
+ * ([chatBands]) that fills the full width. Each step of [newestRequests] scrolls to the newest line.
  */
 @Composable
 fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean, onGround: Boolean = false, newestRequests: Int = 0) {
@@ -448,6 +450,7 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     // A muted peer's lines are dropped from the list rather than blanked, so grouping and the
     // time gutter read as if they were never sent.
     val messages = remember(allMessages, muted.size) { allMessages.filter { it.sender == null || it.sender !in muted } }
+    val bands = remember(messages, onGround) { if (onGround) chatBands(messages) else null }
     val chatPalette = LocalChatPalette.current
 
     val bgOpacity by MSG_BG_OPACITY.watchPref()
@@ -517,7 +520,8 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
         Selectable {
         LazyColumn(
             state = listState,
-            contentPadding = PaddingValues(Space.gapTight),
+            // On the ground, the bands bring their own side margins.
+            contentPadding = if (onGround) PaddingValues(vertical = Space.gapTight) else PaddingValues(Space.gapTight),
             modifier = Modifier.fillMaxSize().then(
                 if (places != null) Modifier.onGloballyPositioned { places.viewport = it.boundsInRoot() } else Modifier,
             ),
@@ -545,6 +549,8 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
                     previous = messages.getOrNull(index - 1),
                     chatPalette = chatPalette,
                     style = style,
+                    band = bands?.getOrNull(index),
+                    next = if (onGround) messages.getOrNull(index + 1) else null,
                     modifier = if (places != null) Modifier.reportsChatLine(places, message.id) else Modifier,
                     imageAlpha = if (isHUDVisible) 1f else 0f,
                     announce = index == messages.lastIndex,
