@@ -4,15 +4,15 @@ Written for people who use the app. The full engineering history is in the commi
 
 ## 0.27.0
 
-- The room has a new portrait view, with the video on top and chat below. A key next to the seek bar switches between this view and landscape. (#236)
-- In the portrait view, the seek row runs from the full-screen key at its start to an add key at its end. The add key opens the add media page, and a second tap closes it.
-- The room opens in the view you used last: landscape, the default, or portrait. The full-screen key turns the room to the other view and keeps that view for the next rooms. The device no longer turns the room, and the Follow device rotation setting is gone. (#249)
-- On phones and tablets, the key that switches between the portrait and landscape room shows both views: the view you are in as a faint outline, and an arrow to a phone in the view that the key turns to.
-- In the portrait view, a band above the video shows the time, the connection, the room name and the number of people. The text keeps clear of the camera notch. In offline mode, the band shows the time alone.
-- In the portrait view, the band above the video and the chat bar have the same colour, and the chat bar reaches the bottom edge of the screen.
+- The room has a new portrait view, with the video on top and chat below, so chat and panels no longer cover the video. Under the video, one page shows at a time, and closing it brings chat back. A Controls page of rows takes the place of the control strip. The play and jump keys sit in one row on the video, above the seek bar. A key next to the seek bar switches between this view and landscape. (#235, #236, #237, #238, #239, #240, #241, #244)
+- In the portrait view, the seek row runs from the full-screen key at its start to an add key at its end. The add key opens the add media page, and a second tap closes it. (#237, #244)
+- The room opens in the view you used last: landscape, the default, or portrait. The full-screen key turns the room to the other view and keeps that view for the next rooms. The device no longer turns the room, and the Follow device rotation setting is gone. (#243, #249)
+- On phones and tablets, the key that switches between the portrait and landscape room shows both views: the view you are in as a faint outline, and an arrow to a phone in the view that the key turns to. (#249)
+- In the portrait view, a band above the video shows the time, the connection, the room name and the number of people. The text keeps clear of the camera notch. In offline mode, the band shows the time alone. (#237)
+- In the portrait view, the band above the video and the chat bar have the same colour, and the chat bar reaches the bottom edge of the screen. (#237)
 - On Android, the navigation bar in the room is clear, with no shade behind the buttons.
-- In the portrait view, chat gives each run of messages from one person a band of its own. The bands take turns between two shades of dark, so each run stands apart.
-- In the portrait view, a notice no longer covers the first chat line. Notices now push the chat down by their own height.
+- In the portrait view, chat sits on its own dark ground, in text at least as large as a notice, with no outline. Each run of messages from one person gets a band of its own. The bands take turns between two shades of dark, so each run stands apart. (#237, #242)
+- In the portrait view, a notice no longer covers the first chat line. Notices now push the chat down by their own height. (#237)
 - A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125, reported by @etank0)
 - After a reconnect or a new file, a phone that had left the app could pull the whole room back to its old position. It now takes the room's position. (#125)
 - New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
@@ -27,8 +27,8 @@ Written for people who use the app. The full engineering history is in the commi
 - Android: in picture-in-picture, new messages from other people show at the bottom of the small window, on a dark shape, two at most. The play and pause key of the window now follows the player, also when someone else pauses or plays.
 - When the room controls are hidden, a new chat message now shows at its own place in the chat list, not in the middle of the screen. When the controls come back, the message stays where it is.
 - Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
-- On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does.
-- Your own join no longer writes a line in chat, because Syncplay PC does not write one either.
+- On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does. (#216)
+- Your own join no longer writes a line in chat, because Syncplay PC does not write one either. (#216)
 - In German, Spanish, French, Russian and Chinese, more room messages now use the words of Syncplay PC. (#215)
 - When a server refuses you, for example because the server password is wrong, the room now shows the server's message once and stops trying. Before, it tried to join again and again without end. (#211)
 - The track selection and seek panels were only partly translated in languages other than English. They are now fully translated. (#232)
@@ -51,7 +51,7 @@ Written for people who use the app. The full engineering history is in the commi
 - Android TV: while the room controls are hidden, the remote's focus now stays on the video. A D-pad press shows the controls and lands on the play key. (#177, fixed by @mukulhase)
 - Desktop: the picture-in-picture key is gone, because it did nothing. (#223)
 - Desktop: each release now has installers for macOS (Apple silicon), Windows and Linux. Apple and Microsoft have not signed them yet, so the system asks you once before the first start. The [README](https://github.com/yuroyami/syncplay-mobile#on-a-computer) says what to click. (#222)
-- Desktop: the room has a full-screen key next to the seek bar. It switches the window between full screen and windowed, as the F key does.
+- Desktop: the room has a full-screen key next to the seek bar. It switches the window between full screen and windowed, as the F key does. (#222)
 - macOS: the app now fills the whole window, title bar included. The close, minimize and full-screen buttons sit in the app's top corner, next to the top bar and the message box.
 - KitePlayer is updated to 0.4.0. It no longer pauses for a moment now and then, as it did in 0.26.0. (#178)
 - iOS VLC: updated to VLCKit 4.0.0a26.
@@ -59,6 +59,8 @@ Written for people who use the app. The full engineering history is in the commi
 - iOS: the connection library is updated to SwiftNIO 2.105.0, and the YouTube link reader to YouTubeKit 0.4.10.
 - The app is now built with the Kotlin Toolchain instead of Gradle. Nothing changes in how the app works.
 - The ExoPlayer-only APK is reproducible again, so IzzyOnDroid can verify it. The 0.26.0 APK failed that check. (#166)
+- The licence now has an App Store exception to the AGPL, because the app ships on the App Store. (#225)
+- For contributors: the contributing guide and the security docs match the code again. More tests now cover iOS TLS errors, the room's seek rules and the screenshot states, and two screenshot runs give the same images. (#219, #220, #228, #229, #230, #248)
 
 ## 0.26.0
 
