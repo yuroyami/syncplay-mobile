@@ -18,6 +18,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.contextmenu.data.TextContextMenuKeys
+import androidx.compose.foundation.text.contextmenu.modifier.filterTextContextMenuComponents
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.getValue
@@ -154,6 +156,9 @@ fun Field(
                 }),
             )
             .semantics { if (name != null) contentDescription = name }
+            // Compose crashes when Autofill is tapped after the field has left the screen while
+            // its menu stayed open. The fields set no autofill hints, so the item fills little.
+            .filterTextContextMenuComponents { it.key != TextContextMenuKeys.AutofillKey }
             .drawBehind {
                 // A well draws no line at rest, only its accent edge while it has focus.
                 if (well && !focused) return@drawBehind
