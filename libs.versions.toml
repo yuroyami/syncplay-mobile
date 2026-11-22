@@ -23,7 +23,7 @@ haze = "2.1.0"
 kermit = "2.2.0"
 krypto = "0.8.0"
 datastore = "1.3.0"
-filekit = "0.17.0"
+filekit = "0.17.1"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
 materialkolor = "5.0.1"
@@ -40,7 +40,7 @@ coreSplashscreen = "1.2.0"
 activityCompose = "1.14.0-alpha03"
 documentfile = "1.1.0"
 appcompat = "1.8.0"
-coreKtx = "1.19.1"
+coreKtx = "1.20.0-alpha01"
 media3 = "1.12.0-beta01"
 # The Media3 FFmpeg extension, as the Jellyfin project builds it (docs/ffmpeg-extension.md). The
 # version is the Media3 release that Jellyfin built it against, plus a Jellyfin build number.
@@ -56,8 +56,8 @@ aboutlibraries = "15.3.0"
 # from Central. shared/module.yaml adds that repository.
 libmpvkt = "0.3.0"
 
-# Android Lint (tools/android-lint) follows the newest stable Android Gradle Plugin (9.4.1).
-androidLint = "32.5.1"
+# Android Lint (tools/android-lint) follows the newest stable Android Gradle Plugin (9.5.2).
+androidLint = "32.5.2"
 
 [libraries] #######################################################################################
 #KMM
