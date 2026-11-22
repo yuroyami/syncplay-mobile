@@ -209,12 +209,17 @@ class RoomViewmodel(
     }
 
     /**
-     * Exits the current room and returns to the home screen.
+     * Exits the current room and returns to the home screen. A second call does nothing.
      */
     fun goHome() {
+        /* Remove the room's page, not the last page. A leave can run twice (two quick taps on Yes,
+         * or two leave questions answered at once). Removing the last page again removed Home,
+         * and the next call failed on the empty list. On desktop, settings can sit over the room. */
+        val page = backStack.indexOfLast { it is Screen.Room }
+        if (page < 0) return
         // Leaving is the last chance to save the position in this file.
         resume.record()
-        backStack.removeAt(backStack.lastIndex)
+        backStack.removeAt(page)
     }
 
     /** What the room does with a drop: it opens the media, or says why it refused the drop. */

@@ -73,14 +73,15 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
     var saving by remember { mutableStateOf(false) }
 
-    fun close() = globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
-
     /* A save is asynchronous, so the user can leave the editor before the save finishes. Removing
-     * the last screen at that point would close the screen that the user opened next. */
+     * the last screen at that point would close the screen that the user opened next. A second
+     * tap on close would remove Home, so a close also removes only the editor. */
     fun closeIfStillTheEditor() {
         val stack = globalViewmodel.backstack
         if (stack.lastOrNull() is Screen.ThemeCreator) stack.removeAt(stack.lastIndex)
     }
+
+    fun close() = closeIfStillTheEditor()
 
     fun save(asNew: Boolean) {
         if (saving) return

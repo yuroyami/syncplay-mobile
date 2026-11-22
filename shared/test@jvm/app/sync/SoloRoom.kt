@@ -1,6 +1,7 @@
 package app.sync
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModelStore
 import app.Screen
 import app.design.DesignHarness
@@ -8,8 +9,11 @@ import app.design.RoomRig
 import app.room.RoomViewmodel
 import app.utils.platformCallback
 
-/** Runs [test] in a room with no server, watching alone on a [ClockPlayer]. */
-internal fun withSoloRoom(test: (RoomViewmodel, ClockPlayer) -> Unit) {
+/** Runs [test] in a room with no server, watching alone on a [ClockPlayer], over [backStack]. */
+internal fun withSoloRoom(
+    backStack: SnapshotStateList<Screen> = mutableStateListOf(Screen.Home, Screen.Room(null)),
+    test: (RoomViewmodel, ClockPlayer) -> Unit,
+) {
     DesignHarness.initDatastore()
     val field = Class.forName("app.utils.PlatformUtilsKt").getDeclaredField("platformCallback").apply { isAccessible = true }
     val previous = field.get(null)
@@ -18,7 +22,7 @@ internal fun withSoloRoom(test: (RoomViewmodel, ClockPlayer) -> Unit) {
     try {
         val viewmodel = RoomViewmodel(
             joinConfig = null,
-            backStack = mutableStateListOf(Screen.Home, Screen.Room(null)),
+            backStack = backStack,
             engineOverride = ClockEngine,
         )
         store.put("solo", viewmodel)
