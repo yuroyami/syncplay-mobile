@@ -1,9 +1,9 @@
-The room has a new portrait view: the video on top and chat below. A key next to the seek bar switches between it and landscape.
+The room has a new portrait view: the video on top and chat below. The full-screen key turns the room, and the room opens in the view you used last.
 
-The room opens in the view you used last. The full-screen key turns it, and the device no longer does.
+A new setting keeps the room's sound playing when you lock the phone or leave the app.
 
-New colours across the app.
+Chat over video is easier to read, and picture-in-picture shows new messages again.
 
 Chat, managed rooms and room switches now work as in Syncplay PC. A refused join shows the reason once and stops trying.
 
-KitePlayer, ExoPlayer and VLCKit are updated.
+New colours. KitePlayer and ExoPlayer are updated.

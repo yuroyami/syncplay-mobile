@@ -639,16 +639,23 @@ jobs:
           bash .github/scripts/release-body.sh release-files artifacts/release-dependencies/dependencies.md
           cat release-body.md
 
-      # A re-run of the same version replaces the files and the notes instead of failing on
-      # the tag that already exists.
+      # A draft release is a page that the owner wrote before the run. The run adds the files to
+      # it and points it at the built commit, but keeps its title and notes. The owner publishes
+      # it. A re-run of a published version replaces the files and the notes instead of failing
+      # on the tag that already exists.
       - name: Create or update the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "v${VERSION}" --json id >/dev/null 2>&1; then
-            echo "Release v${VERSION} exists: replacing its files and notes."
+          if draft=$(gh release view "v${VERSION}" --json isDraft --jq .isDraft 2>/dev/null); then
             gh release upload "v${VERSION}" release-files/* --clobber
-            gh release edit "v${VERSION}" --title "v${VERSION}" --notes-file release-body.md
+            if [ "$draft" = "true" ]; then
+              echo "Release v${VERSION} is a draft: adding its files and keeping its notes."
+              gh release edit "v${VERSION}" --target "$GITHUB_SHA"
+            else
+              echo "Release v${VERSION} exists: replacing its files and notes."
+              gh release edit "v${VERSION}" --title "v${VERSION}" --notes-file release-body.md
+            fi
           else
             gh release create "v${VERSION}" \
               --title "v${VERSION}" \
