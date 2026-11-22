@@ -70,7 +70,6 @@ import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
-import platform.UIKit.UIInterfaceOrientationMaskAllButUpsideDown
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
@@ -262,8 +261,6 @@ actual fun EnterRoomMode(rotation: RoomRotation) {
         UIApplication.sharedApplication.idleTimerDisabled = true
         applyOrientationMask(
             when (rotation) {
-                // Upside-down portrait is left out, as in most iPhone apps.
-                RoomRotation.FollowDevice -> UIInterfaceOrientationMaskAllButUpsideDown
                 RoomRotation.Landscape -> UIInterfaceOrientationMaskLandscape
                 RoomRotation.Portrait -> UIInterfaceOrientationMaskPortrait
             }

@@ -176,11 +176,9 @@ val LocalRoomRailFocus = compositionLocalOf<FocusRequester?> { null }
  */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    // The setting picks the view, and the full-screen key can switch to the other one (#249).
+    // The room opens in the stored view, and the full-screen key turns it (#249).
     // The layout follows the window shape, so a portrait window gets the tall layout.
-    val orientation = RoomOrientation.of(ROOM_ORIENTATION.watchPref().value)
-    val switchedUnder by viewmodel.uiState.orientationSwitch.collectAsState()
-    EnterRoomMode(orientation.rotation(switched = switchedUnder == orientation))
+    EnterRoomMode(RoomOrientation.of(ROOM_ORIENTATION.watchPref().value).rotation)
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)

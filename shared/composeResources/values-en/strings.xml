@@ -116,11 +116,6 @@
     <string name="room_user_unmute">Unmute</string>
     <string name="room_user_set_ready">Mark ready</string>
     <string name="room_user_set_not_ready">Mark not ready</string>
-    <string name="setting_room_orientation_title">Room orientation</string>
-    <string name="setting_room_orientation_summary">Landscape and Portrait keep the room one way. Auto turns the room with your device. The full-screen key in the room switches the view.</string>
-    <string name="setting_room_orientation_landscape">Landscape</string>
-    <string name="setting_room_orientation_portrait">Portrait</string>
-    <string name="setting_room_orientation_auto">Auto</string>
     <string name="setting_keep_sound_away_title">Keep the sound in the background</string>
     <string name="setting_keep_sound_away_summary">When you lock the phone or leave the app, the room keeps playing its sound here. This phone then follows the room and never pauses or moves it. Video stops while you are away.</string>
     <!-- %1$s is a room name. The invite link follows on the next line. -->
@@ -712,11 +707,9 @@
     <string name="room_chat_new_messages">New messages</string>
     <string name="room_gif_search_gifs">Search GIFs</string>
     <string name="room_gif_search_stickers">Search stickers</string>
-    <!-- The full-screen key of the room. With the Auto orientation, it locks and unlocks the rotation. -->
+    <!-- The full-screen key of the room. On a phone, Full screen turns the room to landscape, and Exit full screen turns it to portrait. -->
     <string name="room_full_screen">Full screen</string>
     <string name="room_full_screen_exit">Exit full screen</string>
-    <string name="room_rotation_lock">Lock rotation</string>
-    <string name="room_rotation_unlock">Unlock rotation</string>
     <!-- Media intake (design overhaul) -->
     <string name="room_route_device">From this device</string>
     <string name="room_route_device_note">Pick a video or audio file</string>

@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Language
@@ -147,10 +146,6 @@ object Preferences {
     val GESTURES = Pref("misc_gestures", true)
 
     /**
-     * How the room is held: the name of a [RoomOrientation]. Landscape and Portrait do not turn
-     * with the device. Auto follows the device, and the system rotation lock applies.
-     */
-    /**
      * Whether the room keeps playing its sound on this device when the room leaves the screen.
      * Off, the device pauses on its own until it comes back. Only phones and tablets show it.
      */
@@ -160,21 +155,12 @@ object Preferences {
         icon = Icons.Filled.Headphones
     }
 
-    val ROOM_ORIENTATION = Pref("pref_room_orientation", RoomOrientation.Landscape.name) {
-        title = { it.settingRoomOrientationTitle }
-        summary = { it.settingRoomOrientationSummary }
-        icon = Icons.Filled.ScreenRotation
+    /**
+     * The view that the room opens in: the name of a [RoomOrientation]. The full-screen key of the
+     * room writes it, and no settings row shows it. The key name stays, so a stored view stays.
+     */
+    val ROOM_ORIENTATION = Pref("pref_room_orientation", RoomOrientation.Landscape.name)
 
-        extraConfig = PrefExtraConfig.MultiChoice(
-            entries = {
-                mapOf(
-                    strings.settingRoomOrientationLandscape to RoomOrientation.Landscape.name,
-                    strings.settingRoomOrientationPortrait to RoomOrientation.Portrait.name,
-                    strings.settingRoomOrientationAuto to RoomOrientation.Auto.name
-                )
-            }
-        )
-    }
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())

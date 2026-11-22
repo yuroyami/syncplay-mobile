@@ -544,14 +544,18 @@ The portrait room:
 - When the one-page mode starts, one open page stays. The GIF drawer wins, then a side panel, then
   the Controls page, then the More page. Outside the mode, the landscape rules stay: a panel and the
   GIF drawer can be open together.
-- In the one-page mode, `back()` shows chat when a page is open. Then Back ends the orientation
-  switch, and only after that does it ask to leave (#244, #249).
-- The "Room orientation" setting (`ROOM_ORIENTATION`) picks the view of the room: Landscape,
-  Portrait or Auto. The full-screen key switches the room to the other view, and the switch lasts
-  for one room. `invalidate()` drops it. `RoomOrientation.rotation` gives the `RoomRotation` for
-  `EnterRoomMode`, and `RoomOrientation.key` names what the key does (#249).
-- `orientationSwitch` holds the choice of the setting under which the key was pressed. The switch
-  counts only while the setting keeps that choice, so a change of the setting ends the switch.
+- In the one-page mode, `back()` shows chat when a page is open. With no page open, Back asks to
+  leave. Back never changes the view of the room (#244, #249).
+- The room has two views, landscape and portrait (`RoomOrientation`). The room opens in the view
+  that `ROOM_ORIENTATION` stores, and landscape is the default. The device never picks the view,
+  and no settings row shows it (#249).
+- The full-screen key is the only control of the view. A tap turns the room to the other view and
+  stores that view, so the view lasts across rooms and restarts. The key follows the window shape:
+  a tall window offers landscape, and a wide one offers portrait. So the key stays true where the
+  system ignores the request.
+- A stored value that is not a view, such as the old `Auto`, reads as landscape
+  (`RoomOrientation.of`). `RoomOrientationMigration` only removes the key of the old "Follow
+  device rotation" switch.
 - Show the full-screen key only where `platformCallback.canHoldLandscape` is true. Android 16 and
   later ignore an orientation request on a screen whose smallest width is 600dp or more, when the
   app targets API 36 or later, and Synkplay does. iOS 15 applies a new orientation mask only at the
@@ -661,10 +665,10 @@ Media, playlist and settings:
 - In the room, `EnterRoomMode` also turns off the contrast scrim of the navigation bar (API 29 and
   up) and gives the bar light buttons. So the bar stays clear over the composer, also with 3-button
   navigation. Leaving the room puts both values back.
-- `EnterRoomMode` takes a `RoomRotation`. `FollowDevice` maps to `SCREEN_ORIENTATION_FULL_USER` on
-  Android and to all orientations but upside down on iOS, so the system rotation lock still applies.
-  `Landscape` maps to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` and to the landscape mask (#243).
-  `Portrait` maps to `SCREEN_ORIENTATION_PORTRAIT` and to the portrait mask (#249).
+- `EnterRoomMode` takes a `RoomRotation`. `Landscape` maps to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE`
+  on Android and to the landscape mask on iOS (#243). `Portrait` maps to
+  `SCREEN_ORIENTATION_PORTRAIT` and to the portrait mask (#249). The room never turns with the
+  device.
 - Compose's `TextAutoSize` never shrinks a label that an ellipsis has already cut, because the cut
   text counts as fitting. Give a shrinking label a `FontSizeRange` through the app's `Text` in
   `app.uicomponents.controls`.

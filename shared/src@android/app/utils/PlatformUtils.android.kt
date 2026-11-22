@@ -189,9 +189,7 @@ actual fun EnterRoomMode(rotation: RoomRotation) {
 
     LaunchedEffect(rotation) {
         activity?.hideSystemUI()
-        // FULL_USER follows the sensor and respects the rotation lock, as outside the room.
         activity?.requestedOrientation = when (rotation) {
-            RoomRotation.FollowDevice -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
             RoomRotation.Landscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             RoomRotation.Portrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }

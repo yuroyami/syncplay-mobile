@@ -11,35 +11,32 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** The old "Follow device rotation" switch becomes a choice of the "Room orientation" setting (#249). */
+/** The migration removes the old "Follow device rotation" switch and writes nothing else (#249). */
 class RoomOrientationMigrationTest {
     private val oldSwitch = booleanPreferencesKey(RoomOrientationMigration.OLD_KEY)
     private val orientation = stringPreferencesKey(Preferences.ROOM_ORIENTATION.key)
     private val unrelated = stringPreferencesKey("pref_unpause_action")
 
     @Test
-    fun aSwitchThatWasOnBecomesAuto() = runTest {
-        val stored = preferencesOf(oldSwitch to true, unrelated to "Always")
-        assertTrue(RoomOrientationMigration.shouldMigrate(stored))
+    fun theOldSwitchIsRemovedAndNoViewIsWritten() = runTest {
+        for (on in listOf(true, false)) {
+            val stored = preferencesOf(oldSwitch to on, unrelated to "Always")
+            assertTrue(RoomOrientationMigration.shouldMigrate(stored))
 
-        val migrated = RoomOrientationMigration.migrate(stored)
-        assertEquals(RoomOrientation.Auto.name, migrated[orientation])
-        assertNull(migrated[oldSwitch], "the old key is removed")
-        assertEquals("Always", migrated[unrelated])
-        assertFalse(RoomOrientationMigration.shouldMigrate(migrated))
+            val migrated = RoomOrientationMigration.migrate(stored)
+            assertNull(migrated[oldSwitch], "The old key is removed (switch on: $on)")
+            assertNull(migrated[orientation], "Landscape is the default, so nothing is stored (switch on: $on)")
+            assertEquals("Always", migrated[unrelated])
+            assertFalse(RoomOrientationMigration.shouldMigrate(migrated))
+        }
     }
 
     @Test
-    fun aSwitchThatWasOffLeavesTheDefault() = runTest {
-        val migrated = RoomOrientationMigration.migrate(preferencesOf(oldSwitch to false))
-        assertNull(migrated[orientation], "landscape is the default, so nothing is stored")
-        assertNull(migrated[oldSwitch])
-    }
-
-    @Test
-    fun aChoiceThatIsAlreadyStoredWins() = runTest {
-        val stored = preferencesOf(oldSwitch to true, orientation to RoomOrientation.Portrait.name)
-        assertEquals(RoomOrientation.Portrait.name, RoomOrientationMigration.migrate(stored)[orientation])
+    fun aStoredViewStays() = runTest {
+        for (view in listOf(RoomOrientation.Portrait.name, "Auto")) {
+            val stored = preferencesOf(oldSwitch to true, orientation to view)
+            assertEquals(view, RoomOrientationMigration.migrate(stored)[orientation], "The stored value $view stays as it is")
+        }
     }
 
     @Test

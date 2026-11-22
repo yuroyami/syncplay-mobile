@@ -22,6 +22,7 @@ import app.preferences.Preferences.GIF_PANEL_TYPE
 import app.preferences.Preferences.ROOM_ORIENTATION
 import app.preferences.flow
 import app.preferences.set
+import app.preferences.value
 import app.room.RoomOrientation
 import app.room.RoomScreenUI
 import app.room.RoomViewmodel
@@ -29,6 +30,7 @@ import app.room.models.Message
 import app.room.ui.chat.RoomChatInput
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.math.abs
@@ -643,7 +645,7 @@ class PortraitRoomTest {
                 val key = assertNotNull(described(EnAppStrings.roomFullScreen), "A phone shows the full-screen key")
                 assertTrue(boundsOf(key).bottom.dp() <= stageBottomDp + 0.5f, "The key sits in the stage")
                 press(EnAppStrings.roomFullScreen)
-                assertTrue(ui.orientationSwitched, "The key switches the portrait room to landscape")
+                awaitView(RoomOrientation.Landscape, "The key turns the portrait room to landscape and stores that view")
             }
         }
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = false) {
@@ -662,16 +664,18 @@ class PortraitRoomTest {
         }
 
     @Test
-    fun theLandscapeRoomShowsTheKeyWithoutASwitch() {
-        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
-            driver.frames(20)
-            val key = boundsOf(assertNotNull(described(EnAppStrings.roomFullScreenExit), "The landscape room shows the key"))
-            val controls = boundsOf(assertNotNull(described(EnAppStrings.roomControlPanel)))
-            val add = boundsOf(assertNotNull(described(EnAppStrings.roomButtonDescAdd)))
-            assertTrue(key.right <= controls.left + 1f, "The key sits before the Controls key")
-            assertTrue(controls.right <= add.left + 1f, "The Controls key sits before Add Media")
-            press(EnAppStrings.roomFullScreenExit)
-            assertTrue(ui.orientationSwitched, "With the Landscape choice, the key switches to the portrait room")
+    fun theLandscapeRoomKeyTurnsTheRoomToPortrait() {
+        withPref(ROOM_ORIENTATION, RoomOrientation.Landscape.name) {
+            RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
+                driver.frames(20)
+                val key = boundsOf(assertNotNull(described(EnAppStrings.roomFullScreenExit), "The landscape room shows the key"))
+                val controls = boundsOf(assertNotNull(described(EnAppStrings.roomControlPanel)))
+                val add = boundsOf(assertNotNull(described(EnAppStrings.roomButtonDescAdd)))
+                assertTrue(key.right <= controls.left + 1f, "The key sits before the Controls key")
+                assertTrue(controls.right <= add.left + 1f, "The Controls key sits before Add Media")
+                press(EnAppStrings.roomFullScreenExit)
+                awaitView(RoomOrientation.Portrait, "The key turns the landscape room to portrait and stores that view")
+            }
         }
         RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = false) {
             driver.frames(20)
@@ -708,7 +712,7 @@ class PortraitRoomTest {
                 driver.frames(5)
                 press(EnAppStrings.roomFullScreenExit)
                 assertFalse(window.value, "A full-screen room goes back to a window")
-                assertFalse(ui.orientationSwitched, "The desktop key never touches the room orientation")
+                assertEquals(RoomOrientation.Landscape.name, ROOM_ORIENTATION.value(), "The desktop key never touches the stored view")
             }
         } finally {
             RoomRig.desktopWindow = null
@@ -716,15 +720,24 @@ class PortraitRoomTest {
     }
 
     @Test
-    fun aRoomThatFollowsTheDeviceShowsTheLockKey() = withPref(ROOM_ORIENTATION, RoomOrientation.Auto.name) {
-        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = 844, heightDp = 390, canHoldLandscape = true) {
+    fun backLeavesTheStoredViewAlone() = withPref(ROOM_ORIENTATION, RoomOrientation.Portrait.name) {
+        RoomRig.drive(solo = false, television = false, withVideo = true, widthDp = widthDp, heightDp = heightDp, canHoldLandscape = true) {
             driver.frames(20)
-            assertNull(described(EnAppStrings.roomFullScreenExit), "A room that follows the device has no full screen to exit")
-            press(EnAppStrings.roomRotationLock)
-            assertTrue(ui.orientationSwitched, "The lock key holds the room in landscape")
-            press(EnAppStrings.roomRotationUnlock)
-            assertFalse(ui.orientationSwitched, "The same key gives the room back to the device")
+            ui.back()
+            driver.frames(10)
+            assertTrue(ui.askLeave.value, "With nothing open, Back asks to leave")
+            assertEquals(RoomOrientation.Portrait.name, ROOM_ORIENTATION.value(), "Back never changes the stored view")
         }
+    }
+
+    /** Waits for the stored view to become [view]. The key writes it on a coroutine of its own. */
+    private fun RoomRig.Room.awaitView(view: RoomOrientation, message: String) {
+        repeat(50) {
+            if (ROOM_ORIENTATION.value() == view.name) return
+            driver.frames(1)
+            runBlocking { delay(20) }
+        }
+        assertEquals(view.name, ROOM_ORIENTATION.value(), message)
     }
 
     /* Renders, for a look by eye. A render fails on an unnamed control. */

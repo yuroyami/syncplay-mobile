@@ -67,7 +67,6 @@ import app.preferences.Preferences.REMEMBER_INFO
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SHOW_SETTING_DESCRIPTIONS
-import app.preferences.Preferences.ROOM_ORIENTATION
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
@@ -221,7 +220,6 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
 ) {
     +SUBTITLE_SIZE
     +HUD_AUTO_HIDE_SECONDS
-    +ROOM_ORIENTATION
     if (supportsBackgroundSound) +KEEP_SOUND_AWAY
     group({ it.settingsGroupSeeking }) {
         +SEEK_FORWARD_JUMP

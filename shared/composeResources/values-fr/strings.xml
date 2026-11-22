@@ -508,8 +508,6 @@
     <string name="room_file_same">Même fichier</string>
     <string name="room_full_screen">Plein écran</string>
     <string name="room_full_screen_exit">Quitter le plein écran</string>
-    <string name="room_rotation_lock">Verrouiller la rotation</string>
-    <string name="room_rotation_unlock">Déverrouiller la rotation</string>
     <string name="room_gestures_panel_title">Gestes</string>
     <string name="room_gif_action_favorite">Favori</string>
     <string name="room_gif_action_send">Envoyer</string>
@@ -693,11 +691,6 @@
     <string name="setting_reduce_motion_title">Réduire les animations</string>
     <string name="setting_resume_summary">Reprend un fichier là où vous l'avez laissé.</string>
     <string name="setting_resume_title">Reprendre la lecture</string>
-    <string name="setting_room_orientation_auto">Automatique</string>
-    <string name="setting_room_orientation_landscape">Paysage</string>
-    <string name="setting_room_orientation_portrait">Portrait</string>
-    <string name="setting_room_orientation_summary">Paysage et Portrait gardent la salle dans un seul sens. Automatique fait pivoter la salle avec l'appareil. La touche plein écran de la salle change la vue.</string>
-    <string name="setting_room_orientation_title">Orientation de la salle</string>
     <string name="setting_tls_detail">Surtout TLS 1.3, versions plus anciennes en secours. Ignoré si le moteur réseau ne gère pas TLS.</string>
     <string name="setting_tls_required_detail">Désactivé : un serveur sans TLS est rejoint en clair, avec un avis. Activé : la connexion est coupée à la place.</string>
     <string name="setting_tls_required_summary">Refuser les serveurs incapables de chiffrer.</string>

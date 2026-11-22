@@ -88,11 +88,8 @@ expect fun getFileSize(uri: PlatformFile): Long?
 /** Text content of a clipboard entry, or null if it holds no text. */
 expect fun ClipEntry.getText(): String?
 
-/** How the room screen turns. A hold is the room's own request to keep the screen sideways. */
+/** How the room holds the screen. The room never turns with the device. */
 enum class RoomRotation {
-    /** The room turns with the device, and the system rotation lock applies. */
-    FollowDevice,
-
     /** The room stays in landscape, either way round. */
     Landscape,
 

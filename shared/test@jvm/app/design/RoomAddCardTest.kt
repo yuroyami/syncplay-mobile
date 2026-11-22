@@ -17,8 +17,6 @@ class RoomAddCardTest {
     private val viewKeys = setOf(
         EnAppStrings.roomFullScreen,
         EnAppStrings.roomFullScreenExit,
-        EnAppStrings.roomRotationLock,
-        EnAppStrings.roomRotationUnlock,
     )
 
     private fun RoomRig.Room.viewKey(): SemanticsNode? = allNodes().firstOrNull { nameOf(it) in viewKeys }

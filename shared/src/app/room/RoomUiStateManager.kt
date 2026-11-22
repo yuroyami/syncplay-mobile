@@ -116,17 +116,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val chatMediaSizeDp = MutableStateFlow(0f)
 
     /**
-     * The choice of the "Room orientation" setting under which the full-screen key switched the
-     * view, or null. The switch counts only while the setting keeps that choice. It ends with the
-     * key, with Back or with the room.
-     */
-    val orientationSwitch = MutableStateFlow<RoomOrientation?>(null)
-
-    /** Whether the full-screen key has switched the room away from the view of the setting. */
-    val orientationSwitched: Boolean
-        get() = orientationSwitch.value == RoomOrientation.current()
-
-    /**
      * True in the portrait room, where the main box (the area under the video) shows one page at a
      * time in place of chat. A page is a side panel, the GIF drawer, the Controls page or the More
      * page. The portrait layout sets it. On entry, only one open page stays open.
@@ -219,11 +208,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         if (railActionsExpanded.value && onePage) closePagesExcept(railActionsExpanded)
     }
 
-    /** Switches the room to the other view of [setting], or ends the switch. */
-    fun toggleOrientationSwitch(setting: RoomOrientation = RoomOrientation.current()) {
-        orientationSwitch.value = if (orientationSwitch.value == setting) null else setting
-    }
-
     private val panelCoordinator by lazy { SidePanelCoordinator(sidePanels) }
     val mediaAddExpanded get() = panelCoordinator.mediaExpanded
     fun expandMediaAdd() = panelCoordinator.expandMedia()
@@ -237,9 +221,9 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     fun closeSidePanels() = sidePanels.forEach { it.value = false }
 
     /**
-     * What Back does in the room. It closes the top open layer, then ends the orientation switch, and
-     * asks to leave only when nothing is left. In [onePage] mode, the open page is the top layer,
-     * so Back shows chat again. On a TV remote, Back is the only way out of a panel.
+     * What Back does in the room. It closes the top open layer, and asks to leave only when nothing
+     * is left. In [onePage] mode, the open page is the top layer, so Back shows chat again. On a TV
+     * remote, Back is the only way out of a panel. Back never changes the view of the room.
      */
     fun back() {
         when {
@@ -248,7 +232,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             anySidePanelOpen -> closeSidePanels()
             controlPanel.value -> toggleControlPanel(false)
             railActionsExpanded.value -> railActionsExpanded.value = false
-            orientationSwitched -> orientationSwitch.value = null
             else -> askLeave.value = true
         }
     }
@@ -455,7 +438,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         scrubbing.value = false
         sidePanels.forEach { it.value = false }
         railActionsExpanded.value = false
-        orientationSwitch.value = null
         collapseMediaAdd(restore = false)
         revealedImages.clear()
         mutedUsers.clear()

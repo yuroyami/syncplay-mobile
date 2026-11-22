@@ -1,6 +1,6 @@
 The room has a new portrait view: the video on top and chat below. A key next to the seek bar switches between it and landscape.
 
-The new Room orientation setting picks how the room opens: Landscape, Portrait or Auto.
+The room opens in the view you used last. The full-screen key turns it, and the device no longer does.
 
 New colours across the app.
 

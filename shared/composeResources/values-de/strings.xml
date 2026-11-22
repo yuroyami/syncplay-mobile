@@ -489,8 +489,6 @@
     <string name="room_file_same">Gleiche Datei</string>
     <string name="room_full_screen">Vollbild</string>
     <string name="room_full_screen_exit">Vollbild beenden</string>
-    <string name="room_rotation_lock">Drehung sperren</string>
-    <string name="room_rotation_unlock">Drehung entsperren</string>
     <string name="room_gestures_panel_title">Gesten</string>
     <string name="room_gif_action_favorite">Favorit</string>
     <string name="room_gif_action_send">Senden</string>
@@ -674,11 +672,6 @@
     <string name="setting_reduce_motion_title">Bewegung reduzieren</string>
     <string name="setting_resume_summary">Eine Datei da fortsetzen, wo du aufgehört hast.</string>
     <string name="setting_resume_title">Weiterschauen</string>
-    <string name="setting_room_orientation_auto">Automatisch</string>
-    <string name="setting_room_orientation_landscape">Querformat</string>
-    <string name="setting_room_orientation_portrait">Hochformat</string>
-    <string name="setting_room_orientation_summary">Querformat und Hochformat halten den Raum in einer Lage. Automatisch dreht den Raum mit dem Gerät. Die Vollbildtaste im Raum wechselt die Ansicht.</string>
-    <string name="setting_room_orientation_title">Ausrichtung des Raums</string>
     <string name="setting_tls_detail">Vor allem TLS 1.3, ältere Versionen als Rückfall. Wird ignoriert, wenn die Netzwerk-Engine kein TLS kann.</string>
     <string name="setting_tls_required_detail">Aus: ein Server ohne TLS wird im Klartext betreten, mit Hinweis. An: die Verbindung wird stattdessen getrennt.</string>
     <string name="setting_tls_required_summary">Server ohne Verschlüsselung ablehnen.</string>

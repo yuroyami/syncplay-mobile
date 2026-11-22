@@ -1,6 +1,5 @@
 package app.design
 
-import app.room.RoomOrientation
 import app.room.RoomUiStateManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.test.Test
@@ -45,7 +44,6 @@ class OnePageTest {
     private fun RoomUiStateManager.reset() {
         pages.forEach { it.flag(this).value = false }
         askLeave.value = false
-        orientationSwitch.value = null
     }
 
     private fun model(onePage: Boolean, block: (RoomUiStateManager) -> Unit) = RoomRig.model { room ->
@@ -173,49 +171,5 @@ class OnePageTest {
         ui.onePage = true
         assertEquals(setOf("add media"), ui.openPages(), "The add card becomes the add media page")
         assertFalse(ui.mediaAddExpanded.value)
-    }
-
-    @Test
-    fun theFullScreenKeySwitchesTheViewAndBack() = model(onePage = true) { ui ->
-        ui.reset()
-        ui.toggleOrientationSwitch()
-        assertTrue(ui.orientationSwitched, "The full-screen key switches the view")
-        ui.toggleOrientationSwitch()
-        assertFalse(ui.orientationSwitched, "The same key switches it back")
-    }
-
-    @Test
-    fun backClosesAPanelThenEndsTheSwitchThenAsksToLeave() {
-        for (onePage in listOf(false, true)) model(onePage) { ui ->
-            ui.reset()
-            ui.toggleOrientationSwitch()
-            ui.toggleRoomPreferences(true)
-            ui.back()
-            assertEquals(emptySet(), ui.openPages(), "Back closes the panel first (one-page mode: $onePage)")
-            assertTrue(ui.orientationSwitched, "The switch stays while a panel was open (one-page mode: $onePage)")
-            ui.back()
-            assertFalse(ui.orientationSwitched, "Back then ends the switch (one-page mode: $onePage)")
-            assertFalse(ui.askLeave.value, "Back that ends the switch does not ask to leave (one-page mode: $onePage)")
-            ui.back()
-            assertTrue(ui.askLeave.value, "Back then asks to leave (one-page mode: $onePage)")
-        }
-    }
-
-    @Test
-    fun theSwitchLastsForOneRoom() = model(onePage = false) { ui ->
-        ui.reset()
-        ui.toggleOrientationSwitch()
-        ui.invalidate()
-        assertFalse(ui.orientationSwitched, "A room that ends drops the switch")
-    }
-
-    @Test
-    fun aSwitchMadeUnderAnotherChoiceOfTheSettingDoesNotCount() = model(onePage = false) { ui ->
-        ui.reset()
-        // The rig keeps the default choice, Landscape.
-        ui.toggleOrientationSwitch(RoomOrientation.Auto)
-        assertFalse(ui.orientationSwitched, "A change of the setting ends the switch")
-        ui.back()
-        assertTrue(ui.askLeave.value, "Back has no switch to end, so it asks to leave")
     }
 }

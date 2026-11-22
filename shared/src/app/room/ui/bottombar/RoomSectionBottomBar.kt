@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.onSizeChanged
@@ -29,18 +30,16 @@ import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
-import androidx.compose.material.icons.filled.ScreenLockRotation
-import androidx.compose.material.icons.filled.ScreenRotation
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.i18n.strings
 import app.preferences.Preferences.ROOM_ORIENTATION
-import app.preferences.watchPref
+import app.preferences.set
 import app.room.RoomOrientation
-import app.room.RoomViewKey
 import app.theme.Space
 import app.uicomponents.controls.GlyphButton
 import app.utils.platformCallback
+import kotlinx.coroutines.launch
 
 /** The bottom bar of the landscape room: the Ready toggle, the seek bar and its keys. */
 @Composable
@@ -91,11 +90,11 @@ private fun CoveredByAddCard(covered: Boolean, key: @Composable () -> Unit) {
 }
 
 /**
- * The full-screen key. On a phone or a tablet, a tap switches the room between a held landscape and
- * the other view of the "Room orientation" setting, and [RoomOrientation.key] names what the tap
- * does. Its glyph shows both views: the view that the room is in, faint, and the view that the tap
- * turns to ([TurnToLandscapeGlyph], [TurnToPortraitGlyph]). [tall] is true in the portrait room. On the
- * desktop, a tap switches the window between full screen and windowed. A browser shows no key
+ * The full-screen key. On a phone or a tablet, a tap turns the room to the other view and stores it
+ * ([ROOM_ORIENTATION]), so the next join opens in that view too. Its glyph shows both views: the
+ * view that the room is in, faint, and the view that the tap turns to ([TurnToLandscapeGlyph],
+ * [TurnToPortraitGlyph]). [tall] is true in the portrait room. On the desktop, a tap switches the
+ * window between full screen and windowed. A browser shows no key
  * ([app.PlatformCallback.showsRoomViewKey]).
  */
 @Composable
@@ -104,26 +103,15 @@ fun RoomFullScreenKey(tall: Boolean, modifier: Modifier = Modifier) {
         WindowFullScreenKey(fullScreen.collectAsState().value, modifier)
         return
     }
-    val ui = LocalRoomUiState.current
-    val orientation = RoomOrientation.of(ROOM_ORIENTATION.watchPref().value)
-    val switchedUnder by ui.orientationSwitch.collectAsState()
-    val key = orientation.key(switched = switchedUnder == orientation, tall = tall)
+    val scope = rememberCoroutineScope()
+    // The key follows the window shape, so it stays true where the system ignores the request.
+    val next = if (tall) RoomOrientation.Landscape else RoomOrientation.Portrait
     GlyphButton(
-        icon = when (key) {
-            RoomViewKey.FullScreen -> TurnToLandscapeGlyph
-            RoomViewKey.ExitFullScreen -> TurnToPortraitGlyph
-            RoomViewKey.LockRotation -> Icons.Filled.ScreenLockRotation
-            RoomViewKey.UnlockRotation -> Icons.Filled.ScreenRotation
-        },
-        name = when (key) {
-            RoomViewKey.FullScreen -> strings.roomFullScreen
-            RoomViewKey.ExitFullScreen -> strings.roomFullScreenExit
-            RoomViewKey.LockRotation -> strings.roomRotationLock
-            RoomViewKey.UnlockRotation -> strings.roomRotationUnlock
-        },
+        icon = if (tall) TurnToLandscapeGlyph else TurnToPortraitGlyph,
+        name = if (tall) strings.roomFullScreen else strings.roomFullScreenExit,
         size = Space.glyphLarge,
         modifier = modifier.videoKeyTile(),
-        onClick = { ui.toggleOrientationSwitch(orientation) },
+        onClick = { scope.launch { ROOM_ORIENTATION.set(next.name) } },
     )
 }
 

@@ -481,8 +481,6 @@
     <string name="room_file_same">相同文件</string>
     <string name="room_full_screen">全屏</string>
     <string name="room_full_screen_exit">退出全屏</string>
-    <string name="room_rotation_lock">锁定旋转</string>
-    <string name="room_rotation_unlock">解除旋转锁定</string>
     <string name="room_gestures_panel_title">手势</string>
     <string name="room_gif_action_favorite">收藏</string>
     <string name="room_gif_action_send">发送</string>
@@ -666,11 +664,6 @@
     <string name="setting_reduce_motion_title">减弱动效</string>
     <string name="setting_resume_summary">从上次停下的地方接着看。</string>
     <string name="setting_resume_title">继续观看</string>
-    <string name="setting_room_orientation_auto">自动</string>
-    <string name="setting_room_orientation_landscape">横屏</string>
-    <string name="setting_room_orientation_portrait">竖屏</string>
-    <string name="setting_room_orientation_summary">横屏和竖屏让房间保持一个方向。自动让房间随设备旋转。房间里的全屏键可切换视图。</string>
-    <string name="setting_room_orientation_title">房间方向</string>
     <string name="setting_tls_detail">主要用 TLS 1.3，必要时回退到旧版本。网络引擎不支持 TLS 时忽略。</string>
     <string name="setting_tls_required_detail">关闭时：不支持 TLS 的服务器会以明文连接，并给出提示。开启时：直接断开连接。</string>
     <string name="setting_tls_required_summary">拒绝不能加密的服务器。</string>
