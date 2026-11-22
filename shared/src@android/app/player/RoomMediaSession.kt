@@ -27,6 +27,9 @@ class RoomMediaSessionPlayer(
     looper: android.os.Looper,
 ) : SimpleBasePlayer(looper) {
 
+    /** True when this player shows [room]. */
+    fun isFor(room: RoomViewmodel): Boolean = room === viewmodel
+
     /**
      * SimpleBasePlayer reads [getState] again only when told to, so the room's flows call
      * invalidateState. Without this, the lock screen shows the state from when the session was

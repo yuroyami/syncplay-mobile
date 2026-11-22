@@ -125,6 +125,10 @@ object RoomMediaSessionHolder {
         service?.triggerNotificationUpdate()
     }
 
+    /** True when the held session belongs to [room]. */
+    fun isFor(room: app.room.RoomViewmodel): Boolean =
+        (session?.player as? RoomMediaSessionPlayer)?.isFor(room) == true
+
     fun install(session: MediaSession) {
         clear()
         this.session = session

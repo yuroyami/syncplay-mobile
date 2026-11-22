@@ -66,19 +66,25 @@ internal class AndroidPlatformCallback(
     @OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun mediaSessionInitialize(viewmodel: app.room.RoomViewmodel) {
         val a = activity ?: return
-        // Build the session here and leave it in RoomMediaSessionHolder for the service, because
-        // the player behind it is whichever engine the room built.
-        val player = RoomMediaSessionPlayer(viewmodel, android.os.Looper.getMainLooper())
-        // A tap on the notification brings the room back. The session offers no other control.
-        val openRoom = android.app.PendingIntent.getActivity(
-            appContext, 0,
-            Intent(appContext, SyncplayActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).setSessionActivity(openRoom).build())
-        // Android refused the foreground: a room away from the screen cannot play, so it holds.
-        RoomMediaSessionHolder.onForegroundRefused = {
-            if (viewmodel.uiState.isAway) viewmodel.uiState.hold(app.room.HoldReason.ListeningEnded)
+        // The engine calls this each time it creates its video view, also after Android recreates
+        // the Activity. The room keeps its session then, because the session reads the room.
+        if (!RoomMediaSessionHolder.isFor(viewmodel)) {
+            // Media3 allows one live session per ID, so release the old session before the build.
+            RoomMediaSessionHolder.clear()
+            // Build the session here and leave it in RoomMediaSessionHolder for the service,
+            // because the player behind it is whichever engine the room built.
+            val player = RoomMediaSessionPlayer(viewmodel, android.os.Looper.getMainLooper())
+            // A tap on the notification brings the room back. The session offers no other control.
+            val openRoom = android.app.PendingIntent.getActivity(
+                appContext, 0,
+                Intent(appContext, SyncplayActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            RoomMediaSessionHolder.install(MediaSession.Builder(appContext, player).setSessionActivity(openRoom).build())
+            // Android refused the foreground: a room away from the screen cannot play, so it holds.
+            RoomMediaSessionHolder.onForegroundRefused = {
+                if (viewmodel.uiState.isAway) viewmodel.uiState.hold(app.room.HoldReason.ListeningEnded)
+            }
         }
         // The room starts with an idle player, and Media3 makes the service a foreground service
         // when playback starts. startForegroundService here would start Android's startForeground
