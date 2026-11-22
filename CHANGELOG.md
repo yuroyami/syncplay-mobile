@@ -12,7 +12,8 @@ Written for people who use the app. The full engineering history is in the commi
 - In the portrait view, the band above the video and the chat bar have the same colour, and the chat bar reaches the bottom edge of the screen.
 - On Android, the navigation bar in the room is clear, with no shade behind the buttons.
 - In the portrait view, chat gives each run of messages from one person a band of its own. The bands take turns between two shades of dark, so each run stands apart.
-- A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125)
+- In the portrait view, a notice no longer covers the first chat line. Notices now push the chat down by their own height.
+- A new setting, Keep the sound in the background, keeps the room's sound playing when you leave the app or lock the phone. The video stops on this phone only. Your phone follows the room but never pauses or seeks it, so you can listen with headphones while others watch a shared screen. A call, lost headphones or a room paused for 10 minutes stop the sound on your phone until you come back. The setting is off by default, on phones and tablets only. (#125, reported by @etank0)
 - After a reconnect or a new file, a phone that had left the app could pull the whole room back to its old position. It now takes the room's position. (#125)
 - New colours across the app. Each theme now builds its accent colours from one scale that stays readable on its background. While a video buffers, the play key turns round and its colour moves along that scale.
 - On the home screen, a clock key next to the join key now opens the recent rooms in a layer right above it. The layer covers the form, so the join key and the rest of the screen stay where they are. Before, the recent rooms were a list under the join key.
@@ -22,6 +23,7 @@ Written for people who use the app. The full engineering history is in the commi
 - Chat text over video is easier to read. Its black outline is thicker, and its shadow is on by default. The outline and the shadow now have the same size on every screen. Before, they were thinner on a sharper screen. If you set the Chat message outline setting before, check it once, because one step is now wider.
 - The Chat background opacity setting now draws a black shape behind each message over video, only as wide as its text. Before, it drew one grey panel behind the whole chat, which did not help on a bright picture.
 - Over video, room events are now as bright as chat messages.
+- Over video, a fading message from another person no longer disappears when your own message, or a message you have already seen, arrives. Each new message starts the fade again. (#162, fixed by @mukulhase)
 - Android: in picture-in-picture, new messages from other people show at the bottom of the small window, on a dark shape, two at most. The play and pause key of the window now follows the player, also when someone else pauses or plays.
 - When the room controls are hidden, a new chat message now shows at its own place in the chat list, not in the middle of the screen. When the controls come back, the message stays where it is.
 - Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
@@ -33,19 +35,25 @@ Written for people who use the app. The full engineering history is in the commi
 - In a managed room, a person who is not an operator could press Play and be told to unpause again, which could never work for them. Play now marks them as ready or not ready, and says which. (#212)
 - On a server where rooms can see each other, the room operator line showed in every room. It now shows only in the operator's own room. (#213)
 - Moving to another room with /room now writes a line that names the new room, for you and for the people you left. (#214)
-- A fast swipe from the top or bottom edge, to open the status bar or go home, no longer changes the volume or the brightness. (#137)
+- A fast swipe from the top or bottom edge, to open the status bar or go home, no longer changes the volume or the brightness. (#137, reported by @shipwr3ckd)
 - With no video loaded, the full-screen key no longer moves when you open or close the add key.
 - A tap next to the tabs of the GIF panel no longer hides the room controls.
 - With a long user name, the episode tag on the status line of the room was empty. The tag now keeps its place, and the "Waiting for" text keeps its size. When space is short, the room name gives way first.
+- Leaving a room with several quick taps on Yes no longer crashes the app.
+- The home screen no longer crashes the app in a very narrow window, such as a split-screen window at its smallest size.
+- Android: switching dark mode, or changing the font size or the display size, while you are in a room with mpv or ExoPlayer no longer crashes the app.
+- Android: the text menu of a field no longer offers Autofill, because a tap on it could crash the app after the field had closed. Paste still works.
 - iOS: a failed join now says at once whether the server name was not found or the server refused. Before, it waited 10 seconds and gave a general reason. (#227)
 - iOS VLC: a file that cannot load now says so, instead of showing its own name as the error. (#234)
 - iOS VLC: after a seek, the position could stop moving while the video played on. The app now sees a stopped position and seeks once more. (#233)
+- iOS: the engine picker now describes the engines that iOS has. (#221)
 - Android TV: video now always takes the display path that can carry HDR, also with frosted glass on. (#224)
+- Android TV: while the room controls are hidden, the remote's focus now stays on the video. A D-pad press shows the controls and lands on the play key. (#177, fixed by @mukulhase)
 - Desktop: the picture-in-picture key is gone, because it did nothing. (#223)
-- Desktop: each release now has installers for macOS (Apple silicon), Windows and Linux. (#222)
+- Desktop: each release now has installers for macOS (Apple silicon), Windows and Linux. Apple and Microsoft have not signed them yet, so the system asks you once before the first start. The [README](https://github.com/yuroyami/syncplay-mobile#on-a-computer) says what to click. (#222)
 - Desktop: the room has a full-screen key next to the seek bar. It switches the window between full screen and windowed, as the F key does.
 - macOS: the app now fills the whole window, title bar included. The close, minimize and full-screen buttons sit in the app's top corner, next to the top bar and the message box.
-- KitePlayer is updated to 0.4.0.
+- KitePlayer is updated to 0.4.0. It no longer pauses for a moment now and then, as it did in 0.26.0. (#178)
 - iOS VLC: updated to VLCKit 4.0.0a26.
 - Android: ExoPlayer is updated to Media3 1.12.0-beta01.
 - iOS: the connection library is updated to SwiftNIO 2.105.0, and the YouTube link reader to YouTubeKit 0.4.10.
