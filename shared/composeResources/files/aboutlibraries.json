@@ -153,9 +153,9 @@
         },
         {
             "uniqueId": "androidx.compose.animation:animation",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Animation",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-animation#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-animation#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -165,9 +165,9 @@
         },
         {
             "uniqueId": "androidx.compose.animation:animation-core",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Animation Core",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-animation#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-animation#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -177,9 +177,9 @@
         },
         {
             "uniqueId": "androidx.compose.foundation:foundation",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Foundation",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-foundation#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-foundation#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -189,9 +189,9 @@
         },
         {
             "uniqueId": "androidx.compose.foundation:foundation-layout",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Layouts",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-foundation#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-foundation#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -201,9 +201,9 @@
         },
         {
             "uniqueId": "androidx.compose.material3:material3",
-            "artifactVersion": "1.5.0-beta02",
+            "artifactVersion": "1.5.0-rc01",
             "name": "Compose Material3 Components",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material3#1.5.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material3#1.5.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -213,9 +213,9 @@
         },
         {
             "uniqueId": "androidx.compose.material3:material3-ripple",
-            "artifactVersion": "1.5.0-beta02",
+            "artifactVersion": "1.5.0-rc01",
             "name": "Compose Material3 Ripple",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material3#1.5.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material3#1.5.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -249,9 +249,9 @@
         },
         {
             "uniqueId": "androidx.compose.material:material-ripple",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Material Ripple",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-material#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -261,9 +261,9 @@
         },
         {
             "uniqueId": "androidx.compose.runtime:runtime",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Runtime",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -276,9 +276,9 @@
         },
         {
             "uniqueId": "androidx.compose.runtime:runtime-annotation",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Runtime Annotation",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -291,9 +291,9 @@
         },
         {
             "uniqueId": "androidx.compose.runtime:runtime-retain",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Runtime Retain",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -306,9 +306,9 @@
         },
         {
             "uniqueId": "androidx.compose.runtime:runtime-saveable",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Saveable",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-runtime#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -321,9 +321,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -333,9 +333,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-geometry",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Geometry",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -345,9 +345,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-graphics",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Graphics",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -357,9 +357,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-text",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI Text",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -369,9 +369,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-tooling-preview",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI Preview Tooling",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -381,9 +381,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-unit",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Unit",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -393,9 +393,9 @@
         },
         {
             "uniqueId": "androidx.compose.ui:ui-util",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Util",
-            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-beta02",
+            "website": "https://developer.android.com/jetpack/androidx/releases/compose-ui#1.13.0-rc01",
             "licenses": [
                 "Apache-2.0"
             ],
@@ -1914,7 +1914,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteffmpeg",
-            "artifactVersion": "0.5.1",
+            "artifactVersion": "0.6.0",
             "name": "KiteFFmpeg",
             "website": "https://github.com/yuroyami/KiteFFmpeg",
             "licenses": [
@@ -1929,8 +1929,22 @@
             ]
         },
         {
+            "uniqueId": "io.github.yuroyami:kiteffmpeg-android-natives",
+            "artifactVersion": "0.6.0",
+            "name": "KiteFFmpeg Android natives",
+            "website": "https://github.com/yuroyami/KiteFFmpeg",
+            "licenses": [
+                "Apache-2.0",
+                "e9ace3c94d7e6ce103b81dcb294a6aed",
+                "BSD-2-Clause"
+            ],
+            "targets": [
+                "android"
+            ]
+        },
+        {
             "uniqueId": "io.github.yuroyami:kiteplayer",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -1944,7 +1958,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-adaptive",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-adaptive",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -1958,7 +1972,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-audioviz",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-audioviz",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -1974,7 +1988,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-compose",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-compose",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -1988,7 +2002,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-compose-interop",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-compose-interop",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2002,7 +2016,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-compose-ui",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-compose-ui",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2016,7 +2030,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-compose-video",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-compose-video",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2030,7 +2044,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-core",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-core",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2044,7 +2058,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-ffmpeg",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-ffmpeg",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2058,7 +2072,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-io",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-io",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2072,7 +2086,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-libass",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-libass",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2090,8 +2104,24 @@
             ]
         },
         {
+            "uniqueId": "io.github.yuroyami:kiteplayer-libass-android-natives",
+            "artifactVersion": "0.4.0",
+            "name": "kiteplayer-libass-android-natives",
+            "website": "https://github.com/yuroyami/KitePlayer",
+            "licenses": [
+                "Apache-2.0",
+                "09e1ad4e0bb226022b73c1611e0406cf",
+                "MIT",
+                "f6ba4814c838883a9c39751b23e6d13a",
+                "c2f88d3d43260e58450ab8390f62b0ec"
+            ],
+            "targets": [
+                "android"
+            ]
+        },
+        {
             "uniqueId": "io.github.yuroyami:kiteplayer-network",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-network",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2105,11 +2135,12 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-output",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-output",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
-                "Apache-2.0"
+                "Apache-2.0",
+                "MIT"
             ],
             "targets": [
                 "android",
@@ -2119,7 +2150,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-rt",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-rt",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2131,7 +2162,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-subtitles",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-subtitles",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2146,7 +2177,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-view",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-view",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2160,7 +2191,7 @@
         },
         {
             "uniqueId": "io.github.yuroyami:kiteplayer-view-bindings",
-            "artifactVersion": "0.3.0",
+            "artifactVersion": "0.4.0",
             "name": "kiteplayer-view-bindings",
             "website": "https://github.com/yuroyami/KitePlayer",
             "licenses": [
@@ -2871,7 +2902,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.animation:animation",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Animation",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2886,7 +2917,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.animation:animation-core",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Animation Core",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2927,7 +2958,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.components:components-resources",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Resources for Compose JB",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2942,7 +2973,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.components:components-ui-tooling-preview",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Experimental Compose Multiplatform tooling library API. This library provides the API required to declare @Preview composables in user apps.",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2957,7 +2988,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.desktop:desktop",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Desktop",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2969,7 +3000,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.desktop:desktop-jvm-macos-arm64",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Desktop",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2981,7 +3012,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.foundation:foundation",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Foundation",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -2996,7 +3027,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.foundation:foundation-layout",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Layouts",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3011,7 +3042,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.material3:material3",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Material3 Components",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3026,7 +3057,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.material3:material3-ripple",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Material3 Ripple",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3041,7 +3072,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.material:material",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Material Components",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3083,7 +3114,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.material:material-ripple",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Material Ripple",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3098,7 +3129,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.runtime:runtime",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Runtime",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3113,7 +3144,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.runtime:runtime-saveable",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Saveable",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3128,7 +3159,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3143,7 +3174,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-backhandler",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose BackHandler",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3157,7 +3188,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-geometry",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Geometry",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3172,7 +3203,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-graphics",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Graphics",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3187,7 +3218,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-skiko",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI Skiko",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3201,7 +3232,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-text",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI Text",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3216,7 +3247,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-tooling-preview",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UI Preview Tooling",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3228,7 +3259,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-uikit",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose UIKit",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3240,7 +3271,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-unit",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Unit",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [
@@ -3255,7 +3286,7 @@
         },
         {
             "uniqueId": "org.jetbrains.compose.ui:ui-util",
-            "artifactVersion": "1.13.0-beta02",
+            "artifactVersion": "1.13.0-rc01",
             "name": "Compose Util",
             "website": "https://github.com/JetBrains/compose-multiplatform",
             "licenses": [

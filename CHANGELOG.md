@@ -41,7 +41,7 @@ Written for people who use the app. The full engineering history is in the commi
 - Desktop: each release now has installers for macOS (Apple silicon), Windows and Linux. (#222)
 - Desktop: the room has a full-screen key next to the seek bar. It switches the window between full screen and windowed, as the F key does.
 - macOS: the app now fills the whole window, title bar included. The close, minimize and full-screen buttons sit in the app's top corner, next to the top bar and the message box.
-- KitePlayer is updated to 0.3.0.
+- KitePlayer is updated to 0.4.0.
 - iOS VLC: updated to VLCKit 4.0.0a26.
 - Android: ExoPlayer is updated to Media3 1.12.0-beta01.
 - iOS: the connection library is updated to SwiftNIO 2.105.0, and the YouTube link reader to YouTubeKit 0.4.10.

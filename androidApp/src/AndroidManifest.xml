@@ -85,6 +85,18 @@
                 />
         </provider>
 
+        <!-- From KitePlayer 0.4.0, its Android archives carry no manifest entries, so the app
+             declares its two context providers. The io provider lets a resource address play, and
+             the network provider gives the network status that a player waits on. -->
+        <provider
+            android:name="io.github.yuroyami.kiteplayer.io.KiteIoContextProvider"
+            android:authorities="${applicationId}.kiteplayer-io"
+            android:exported="false" />
+        <provider
+            android:name="io.github.yuroyami.kiteplayer.network.KiteNetworkContextProvider"
+            android:authorities="${applicationId}.kiteplayer-network"
+            android:exported="false" />
+
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"

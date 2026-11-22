@@ -50,7 +50,7 @@ conscrypt = "2.9.0"
 newpipeExtractor = "v0.27.1"
 
 # Resolved from Maven Central.
-kiteplayer = "0.3.0"
+kiteplayer = "0.4.0"
 aboutlibraries = "15.3.0"
 # libmpv for Android. Its artifacts come from a static Maven repository on GitHub Pages, not
 # from Central. shared/module.yaml adds that repository.
