@@ -61,6 +61,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.constrainWidth
 import app.uicomponents.controls.CheckGlyph
 import app.uicomponents.controls.CloseGlyph
@@ -154,7 +155,8 @@ private fun EngineInfoMorph(selectedIndex: Int, count: Int, story: EngineStory?)
 
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = Space.gapTight)) {
         val cellWidth = maxWidth / count.coerceAtLeast(1)
-        val underCell = cellWidth * selectedIndex + (cellWidth - TipSize) / 2
+        // A cell narrower than the tip (a very narrow window) would give a negative padding, which throws.
+        val underCell = (cellWidth * selectedIndex + (cellWidth - TipSize) / 2).coerceAtLeast(0.dp)
         val cardWidth = maxWidth
         val density = LocalDensity.current
         /* The card reports its own height, measured at its final width, so the height and the
