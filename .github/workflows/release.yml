@@ -470,10 +470,15 @@ jobs:
           mkdir -p ~/private_keys
           echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
 
+      # The Kotlin Toolchain starts the Kotlin/Native compiler with a fixed heap of 3 GB. The
+      # Release link of the framework needs about 5.5 GB. The JVM reads _JAVA_OPTIONS after its
+      # command line, so this value replaces the fixed one. The toolchain logs the JVM notice about
+      # the variable as an ERROR line, and the build still passes.
       - name: Archive
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          _JAVA_OPTIONS: -Xmx7g
         run: |
           xcodebuild \
             -project iosApp/module.xcodeproj \
@@ -560,8 +565,17 @@ jobs:
     needs: build-android-full
     runs-on: ubuntu-latest
     steps:
-      # The checkout is for the What's New directory Play reads.
+      # The checkout is for the What's New text of this version.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The upload action reads only files named whatsnew-<language>. The changelogs folder names
+      # each file after its version code, so this step copies the file of this version.
+      - name: Write the What's New file
+        env:
+          VERSION_CODE: ${{ needs.build-android-full.outputs.version_code }}
+        run: |
+          mkdir -p whatsnew
+          cp "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt" whatsnew/whatsnew-en-US
 
       - name: Download AAB
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -586,7 +600,7 @@ jobs:
           # An input, not a fixed track: the README says Play carries the same build as GitHub.
           track: ${{ inputs.play_track }}
           status: completed
-          whatsNewDirectory: fastlane/metadata/android/en-US/changelogs
+          whatsNewDirectory: whatsnew
 
   # ───────────────────────────────────────────────────────────────────────────
   # The GitHub release: the files, the notes and the AltStore feed. It waits on

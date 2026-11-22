@@ -765,6 +765,12 @@ string through them.
   the generated icons by hand.
 - The macOS package turns a `0.x.y` app version into `1.x.y`, because jpackage rejects a version
   that starts with zero. Do not sync the two versions.
+- The Kotlin Toolchain starts the Kotlin/Native compiler with a fixed heap of 3 GB. The Release
+  link of the iOS framework needs about 5.5 GB, so it fails with `Java heap space`. Set
+  `_JAVA_OPTIONS=-Xmx7g` for a Release build with `xcodebuild`. The JVM reads this variable after
+  its command line, so this value replaces the fixed one. The toolchain logs the JVM notice about
+  the variable as an `ERROR` line, and the build still passes. The archive step of the Release
+  workflow sets the variable. Xcode sees it only when you start Xcode from that shell.
 - Keep the two sorts in the `common-ksp` plugin. `LocaleOrder.kt` sorts the language table, and
   `StringOrder.kt` sorts the members of the string interface and of each language object. Lyricist
   writes both in the order that it reads the folders and the string files, and that order differs
