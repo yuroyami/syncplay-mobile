@@ -123,6 +123,7 @@ import app.utils.EnterRoomMode
 import app.utils.platformCallback
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
@@ -183,6 +184,15 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
+    /* The platform hears each real change of the play state: one from this device, from another
+     * person or from the engine itself. On Android, this sets the play or pause key of the
+     * picture-in-picture window. A loaded file counts too, because the window has no key before
+     * one. The engine can report a pause a moment after the room asked for it, so the request
+     * alone would leave the old key in the window. */
+    LaunchedEffect(viewmodel) {
+        combine(viewmodel.playerManager.isNowPlaying, viewmodel.playerManager.hasVideo) { playing, _ -> playing }
+            .collect { playing -> platformCallback.onPlayback(paused = !playing) }
+    }
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
     val pointerHidden by viewmodel.uiState.pointerHidden.collectAsState()
     val initialFocusRequester = remember { FocusRequester() }
@@ -277,7 +287,11 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             val chatLinePlaces = remember(viewmodel) { ChatLinePlaces() }
             CompositionLocalProvider(LocalChatLinePlaces provides chatLinePlaces) {
                 when {
-                    isInPipMode -> Unit // PiP shows the video and nothing else.
+                    // Picture-in-picture shows the video, and over it the newest lines from other
+                    // people. Its play and pause key is the system's (see the play state effect).
+                    isInPipMode -> if (!soloMode) {
+                        Box(Modifier.align(Alignment.BottomStart).padding(Space.gapTight)) { FadingMessageLayout() }
+                    }
                     lockedMode -> RoomUnlockableLayout()
                     else -> RoomHud(viewmodel, soloMode, hasVideo, tall, railHorizontal, portrait, initialFocusRequester, mainBoxTop)
                 }

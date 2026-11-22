@@ -188,7 +188,8 @@ fun SettingEntry.Render(highlighted: Boolean = false) {
             }
 
             extra is PrefExtraConfig.Slider -> {
-                val current = (value as? Int) ?: (pref.default as? Int ?: 0)
+                // A stored value from an older, wider range shows at the nearest end of the range.
+                val current = ((value as? Int) ?: (pref.default as? Int ?: 0)).coerceIn(extra.minValue, extra.maxValue)
                 val vm = LocalGlobalViewmodel.current
                 ScrubRow(
                     title = title,

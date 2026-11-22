@@ -26,6 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.DisableSelection
+import app.preferences.Preferences.MSG_OUTLINE_MAX
+import app.room.models.eventColor
+import app.room.models.timeColor
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -64,15 +73,49 @@ import app.uicomponents.AnimatedImage
 import app.uicomponents.controls.shimmer
 
 /**
- * How chat text is drawn: the size preference (at least 5), and the outline, shadow and time
- * switches.
+ * How chat text is drawn: the size preference (at least 5), the width of the black outline, and
+ * the shadow and time switches. Over video ([overVideoStyle]), a line can also have a [plate], and
+ * an event line takes the brightness of chat text ([overVideo]).
  *
  * A data class, so two instances compare by value. The chat box builds one in its own body and
  * hands it to every visible row. With identity equality, a new instance would arrive on every
  * recomposition, and no row in the list could skip, however little had changed.
  */
-data class MessageStyle(val fontSizePreference: Int, val outline: Float?, val shadow: Boolean, val showTime: Boolean) {
+data class MessageStyle(
+    val fontSizePreference: Int,
+    val outline: Dp?,
+    val shadow: Boolean,
+    val showTime: Boolean,
+    /** The dark shape behind each line, only as wide as its text, or null for none. */
+    val plate: Color? = null,
+    /** True for chat that sits over the video or the room artwork, not on a ground of its own. */
+    val overVideo: Boolean = false,
+) {
     val fontSize = fontSizePreference.coerceAtLeast(5)
+}
+
+/**
+ * One step of the outline setting. The stroke lies half under the text, so the edge that shows is
+ * half as wide. The step is in dp, so the outline looks the same on every screen.
+ */
+internal val OutlineStep = 0.75.dp
+
+/**
+ * The style of chat lines over video, from the chat settings: [outlineSteps] of [OutlineStep] (a
+ * stored value from the old pixel scale counts as the highest step), the [shadow] switch, and
+ * [plateOpacity] (0 to 255) for the black plate behind each line.
+ */
+internal fun overVideoStyle(fontSize: Int, outlineSteps: Int, shadow: Boolean, plateOpacity: Int, showTime: Boolean): MessageStyle {
+    val steps = outlineSteps.coerceIn(0, MSG_OUTLINE_MAX)
+    val opacity = plateOpacity.coerceIn(0, 255)
+    return MessageStyle(
+        fontSizePreference = fontSize,
+        outline = if (steps > 0) OutlineStep * steps else null,
+        shadow = shadow,
+        showTime = showTime,
+        plate = if (opacity > 0) Color.Black.copy(alpha = opacity / 255f) else null,
+        overVideo = true,
+    )
 }
 
 private const val GROUP_WINDOW_MS = 60_000L
@@ -102,6 +145,28 @@ private val BandInset = Space.gapTight
 
 /** The inner margin of a band at both sides: the margin that the portrait chat had before its bands. */
 private val BandSide = 14.dp
+
+/** The plate behind a line over video: square at the dash, round at the other end. */
+private val PlateShape = RoundedCornerShape(topStart = 0.dp, topEnd = 6.dp, bottomEnd = 6.dp, bottomStart = 0.dp)
+
+/** From the text to the end of its plate. */
+private val PlateEnd = Space.gap
+
+/** How far a plate reaches over and under its line. Two plates in a row keep a thin gap. */
+private val PlateRise = 1.dp
+
+/**
+ * The plate of a line: [color] behind the content, as wide as the content and [PlateEnd]. It draws
+ * [PlateRise] outside the line at the top and the bottom, so the line keeps its height with and
+ * without a plate.
+ */
+private fun Modifier.plate(color: Color?): Modifier = if (color == null) this else this
+    .drawBehind {
+        val rise = PlateRise.toPx()
+        val outline = PlateShape.createOutline(Size(size.width, size.height + rise * 2), layoutDirection, this)
+        translate(top = -rise) { drawOutline(outline, color) }
+    }
+    .padding(end = PlateEnd)
 
 /** The lighter band of the portrait chat. The groups take turns between it and the room ground. */
 internal val ChatBand = Color.White.copy(alpha = 0.04f)
@@ -214,64 +279,71 @@ fun MessageRow(
         if (sender == null) {
             EventLine(message, chatPalette, style, Modifier.weight(1f))
         } else {
-            Column(Modifier.weight(1f).padding(start = DashWidth + DashGap)) {
-                if (!grouped) {
-                    OutlinedText(
-                        text = AnnotatedString(BIDI_ISOLATE_START + sender + BIDI_ISOLATE_END),
-                        style = name,
-                        color = tag ?: chatPalette.friendtagColor,
-                        outline = style.outline,
-                        shadow = style.shadow,
-                    )
-                }
-                if (message.isImageUrl) {
-                    if (showsImage) {
-                        ChatMedia(
-                            message = message,
-                            size = LocalChatMediaSize.current,
-                            alpha = imageAlpha,
-                            onlyName = onlyName,
-                            menuOpen = menuOpen,
-                            onMenuDismiss = { menuOpen = false },
-                        )
-                    } else {
-                        /* A peer's image link does not load on its own. Loading it would send the IP
-                         * address of every device in the room to a host that the peer chose. One
-                         * tap loads it. */
-                        Text(
-                            text = strings.roomChatImageHidden(message.imageHost),
-                            style = body,
-                            color = chatPalette.systemmsgColor,
-                            modifier = Modifier
-                                .then(if (onlyName) Modifier.alpha(0f) else Modifier)
-                                .padding(top = 2.dp)
-                                .clip(Radius.controlShape)
-                                .clickable(
-                                    onClickLabel = strings.roomChatShowImage(message.imageHost),
-                                ) { viewmodel.uiState.revealedImages.add(message.content) }
-                                .padding(vertical = 2.dp),
+            // The inner column is as wide as its text, so a plate ends where the text ends.
+            Box(Modifier.weight(1f)) {
+                Column(Modifier.plate(style.plate.takeUnless { onlyName }).padding(start = DashWidth + DashGap)) {
+                    if (!grouped) {
+                        OutlinedText(
+                            text = AnnotatedString(BIDI_ISOLATE_START + sender + BIDI_ISOLATE_END),
+                            style = name,
+                            color = tag ?: chatPalette.friendtagColor,
+                            outline = style.outline,
+                            shadow = style.shadow,
                         )
                     }
-                } else {
-                    OutlinedText(
-                        modifier = if (onlyName) Modifier.alpha(0f) else Modifier,
-                        text = AnnotatedString(BIDI_ISOLATE_START + message.content + BIDI_ISOLATE_END),
-                        style = body,
-                        color = chatPalette.usermsgColor,
-                        outline = style.outline,
-                        shadow = style.shadow,
-                    )
+                    if (message.isImageUrl) {
+                        if (showsImage) {
+                            ChatMedia(
+                                message = message,
+                                size = LocalChatMediaSize.current,
+                                alpha = imageAlpha,
+                                onlyName = onlyName,
+                                menuOpen = menuOpen,
+                                onMenuDismiss = { menuOpen = false },
+                            )
+                        } else {
+                            /* A peer's image link does not load on its own. Loading it would send the IP
+                             * address of every device in the room to a host that the peer chose. One
+                             * tap loads it. */
+                            OutlinedText(
+                                text = AnnotatedString(strings.roomChatImageHidden(message.imageHost)),
+                                style = body,
+                                color = chatPalette.eventColor(style.overVideo),
+                                outline = style.outline,
+                                shadow = style.shadow,
+                                modifier = Modifier
+                                    .then(if (onlyName) Modifier.alpha(0f) else Modifier)
+                                    .padding(top = 2.dp)
+                                    // No clip here: it would cut the outline and the shadow of the text.
+                                    .clickable(
+                                        onClickLabel = strings.roomChatShowImage(message.imageHost),
+                                    ) { viewmodel.uiState.revealedImages.add(message.content) }
+                                    .padding(vertical = 2.dp),
+                            )
+                        }
+                    } else {
+                        OutlinedText(
+                            modifier = if (onlyName) Modifier.alpha(0f) else Modifier,
+                            text = AnnotatedString(BIDI_ISOLATE_START + message.content + BIDI_ISOLATE_END),
+                            style = body,
+                            color = chatPalette.usermsgColor,
+                            outline = style.outline,
+                            shadow = style.shadow,
+                        )
+                    }
                 }
             }
         }
         if (showTime) {
-            Text(
+            OutlinedText(
                 modifier = Modifier.padding(start = Space.gap, top = 2.dp).then(if (onlyName) Modifier.alpha(0f) else Modifier),
                 // The whole string, not the first five characters: a 12-hour clock reads "9:05 PM",
                 // and a cut at five would show "9:05" for every afternoon message.
-                text = message.timestamp,
+                text = AnnotatedString(message.timestamp),
                 style = Type.value,
-                color = chatPalette.timestampColor,
+                color = chatPalette.timeColor(style.overVideo),
+                outline = style.outline,
+                shadow = style.shadow,
                 maxLines = 1,
             )
         }
@@ -282,7 +354,9 @@ fun MessageRow(
  * The dash of a group, [side] in from the start edge of the line. It runs the full height of the
  * line but [top] and [bottom], so the lines of one group join into one dash.
  */
-private fun Modifier.groupDash(color: Color, side: Dp, top: Dp, bottom: Dp): Modifier = drawBehind {
+private fun Modifier.groupDash(color: Color, side: Dp, top: Dp, bottom: Dp): Modifier = drawWithContent {
+    // Over the content, so a plate never dims the dash.
+    drawContent()
     val width = DashWidth.toPx()
     val x = if (layoutDirection == LayoutDirection.Ltr) side.toPx() else size.width - side.toPx() - width
     val y = top.toPx()
@@ -324,26 +398,29 @@ private fun ChatMedia(message: Message, size: Dp, alpha: Float, onlyName: Boolea
 /**
  * An event line: one line with a 2dp stub in the gutter, both in the event color (red for errors).
  * A neutral event draws each person it names in that person's name color ([nameColor]). An error
- * stays all red.
+ * stays all red. Over video, a neutral event is as light as chat text ([eventColor]).
  */
 @Composable
 internal fun EventLine(message: Message, chatPalette: MessagePalette, style: MessageStyle, modifier: Modifier = Modifier) {
-    val tone = if (message.isError) chatPalette.errormsgColor else chatPalette.systemmsgColor
+    val tone = if (message.isError) chatPalette.errormsgColor else chatPalette.eventColor(style.overVideo)
     val shades = LocalPersonShades.current
     val text = remember(message.content, message.people, message.isError, chatPalette, shades) {
         if (message.isError) AnnotatedString(message.content)
         else eventText(message.content, message.people) { person, self -> chatPalette.nameColor(person, self, shades) }
     }
-    Row(modifier.height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(DashWidth).fillMaxHeight().background(tone))
-        OutlinedText(
-            text = text,
-            style = chatBody(style),
-            color = tone,
-            outline = style.outline,
-            shadow = style.shadow,
-            modifier = Modifier.padding(start = DashGap),
-        )
+    // The inner row is as wide as its text, so a plate ends where the text ends.
+    Box(modifier) {
+        Row(Modifier.height(IntrinsicSize.Min).plate(style.plate), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.width(DashWidth).fillMaxHeight().background(tone))
+            OutlinedText(
+                text = text,
+                style = chatBody(style),
+                color = tone,
+                outline = style.outline,
+                shadow = style.shadow,
+                modifier = Modifier.padding(start = DashGap),
+            )
+        }
     }
 }
 
@@ -375,29 +452,52 @@ internal fun eventText(content: String, people: Map<String, Boolean>, color: (na
 private fun chatBody(style: MessageStyle): TextStyle =
     Type.note.copy(fontSize = style.fontSize.sp, lineHeight = (style.fontSize + 6).sp)
 
-/** Text with the optional black outline and shadow the chat preferences ask for, over video. */
+/** The shadow of chat text. Its size is in dp, so it looks the same on every screen. */
+private val ShadowBlur = 1.5.dp
+private val ShadowDrop = 0.4.dp
+
+/** The alpha of the second shadow pass. It makes the shadow a little denser at the same size. */
+private const val SHADOW_SECOND_PASS = 0.4f
+
+/**
+ * Text with the black outline and the shadow that the chat preferences ask for, over video. The
+ * layers under the text are copies of it in black: a faint one that only thickens the shadow, and
+ * the outline. Only the top layer takes part in a selection, so a copy holds the text once.
+ */
 @Composable
 private fun OutlinedText(
     text: AnnotatedString,
     style: TextStyle,
     color: Color,
-    outline: Float?,
+    outline: Dp?,
     shadow: Boolean,
     modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
 ) {
-    val base = if (shadow) style.copy(shadow = Shadow(Color.Black, Offset(0f, 1f), blurRadius = 4f)) else style
-    // One line ends in an ellipsis. Both layers cut the text at the same place.
+    val density = LocalDensity.current
+    val cast = if (shadow) with(density) { Shadow(Color.Black, Offset(0f, ShadowDrop.toPx()), ShadowBlur.toPx()) } else null
+    val base = if (cast != null) style.copy(shadow = cast) else style
+    val stroke = if (outline != null && outline > 0.dp) with(density) { outline.toPx() } else 0f
+    // One line ends in an ellipsis. Every layer cuts the text at the same place.
     val overflow = if (maxLines == 1) TextOverflow.Ellipsis else TextOverflow.Clip
     Box(modifier) {
-        if (outline != null && outline > 0f) {
+        if (cast != null || stroke > 0f) {
             // Without the spans: a colored name would otherwise get a colored outline.
-            Text(
-                AnnotatedString(text.text),
-                style = base.copy(color = Color.Black, drawStyle = Stroke(width = outline, join = StrokeJoin.Round)),
-                maxLines = maxLines,
-                overflow = overflow,
-            )
+            val plain = AnnotatedString(text.text)
+            DisableSelection {
+                if (cast != null) {
+                    val faint = Color.Black.copy(alpha = SHADOW_SECOND_PASS)
+                    Text(plain, style = style.copy(color = faint, shadow = cast.copy(color = faint)), maxLines = maxLines, overflow = overflow)
+                }
+                if (stroke > 0f) {
+                    Text(
+                        plain,
+                        style = base.copy(color = Color.Black, drawStyle = Stroke(width = stroke, join = StrokeJoin.Round)),
+                        maxLines = maxLines,
+                        overflow = overflow,
+                    )
+                }
+            }
         }
         Text(text, style = base.copy(color = color), maxLines = maxLines, overflow = overflow)
     }

@@ -19,6 +19,10 @@ Written for people who use the app. The full engineering history is in the commi
 - The settings key now shows a cog.
 - Over video, the full-screen key and the control panel key now sit on a dark see-through tile, so they stay readable on a bright picture.
 - In chat, the messages of one person now share one coloured line along their left edge, like the room events. Your own messages use your name colour. Each other person gets a shade of the friend colour, picked from the name. People in the same room get shades that are easy to tell apart.
+- Chat text over video is easier to read. Its black outline is thicker, and its shadow is on by default. The outline and the shadow now have the same size on every screen. Before, they were thinner on a sharper screen. If you set the Chat message outline setting before, check it once, because one step is now wider.
+- The Chat background opacity setting now draws a black shape behind each message over video, only as wide as its text. Before, it drew one grey panel behind the whole chat, which did not help on a bright picture.
+- Over video, room events are now as bright as chat messages.
+- Android: in picture-in-picture, new messages from other people show at the bottom of the small window, on a dark shape, two at most. The play and pause key of the window now follows the player, also when someone else pauses or plays.
 - When the room controls are hidden, a new chat message now shows at its own place in the chat list, not in the middle of the screen. When the controls come back, the message stays where it is.
 - Chat now shows the messages that Syncplay PC shows: the address the app reached, a server that stopped answering, the reason the shared playlist is missing, the notice of a server that keeps its rooms, and when someone leaves just before a pause. (#216)
 - On a server where rooms can see each other, chat now also shows who joins, leaves or opens a file in another room, as Syncplay PC does.

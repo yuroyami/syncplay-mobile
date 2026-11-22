@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import app.room.models.Message
 import app.room.models.MessagePalette
 import app.room.models.isolated
@@ -35,7 +36,7 @@ class ChatEventsGoldenTest {
         val chat = MessagePalette()
         for (scale in listOf(1f, 1.3f)) {
             val result = DesignHarness.render("chat-events", widthDp = 272, heightDp = 300, fontScale = scale, overVideo = true) {
-                Column { events.forEach { EventLine(it, chat, MessageStyle(10, outline = 2f, shadow = false, showTime = false)) } }
+                Column { events.forEach { EventLine(it, chat, MessageStyle(10, outline = 1.5.dp, shadow = false, showTime = false)) } }
             }
             result.assertAllTextFits()
             val (outlines, fills) = result.textLayouts.partition { it.layoutInput.style.drawStyle is Stroke }

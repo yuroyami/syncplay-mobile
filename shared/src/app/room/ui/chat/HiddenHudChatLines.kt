@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -30,7 +29,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
@@ -48,7 +46,6 @@ import app.preferences.watchPref
 import app.room.models.Message
 import app.room.models.fadingMessages
 import app.theme.Motion
-import app.theme.Radius
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
@@ -133,7 +130,9 @@ fun HiddenHudChatLines(hudAlpha: () -> Float) {
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
     val bgOpacity by MSG_BG_OPACITY.watchPref()
-    val style = MessageStyle(fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, chatPalette.includeTimestamp)
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+    // The same style as the chat list, so a line here looks as it does in the list.
+    val style = overVideoStyle(fontSize, outlineThickness, shadowOn, if (hasVideo) bgOpacity else 0, chatPalette.includeTimestamp)
     val density = LocalDensity.current
     var origin by remember { mutableStateOf(Offset.Zero) }
 
@@ -168,8 +167,6 @@ fun HiddenHudChatLines(hudAlpha: () -> Float) {
                             previous = messages.getOrNull(index - 1),
                             chatPalette = chatPalette,
                             style = style,
-                            // The list draws one panel behind all lines. Here each line brings its own.
-                            modifier = if (bgOpacity > 0) Modifier.background(Color(50, 50, 50, bgOpacity), Radius.controlShape) else Modifier,
                         )
                     }
                 }

@@ -433,7 +433,7 @@
     <string name="uisetting_msgboxaction_title">Enter sends the message</string>
     <string name="uisetting_msgboxaction_summary">Off makes Enter add a new line instead.</string>
     <string name="uisetting_messagery_alpha_title">Chat background opacity</string>
-    <string name="uisetting_messagery_alpha_summary">How opaque the panel behind chat messages is over video. 0 is fully transparent; 255 is fully opaque.</string>
+    <string name="uisetting_messagery_alpha_summary">How dark the black shape behind each chat message is over video. 0 draws no shape; 255 is solid black.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
     <string name="uisetting_msgsize_summary">Size of chat message text, from 5 to 24. Default: 10.</string>
     <string name="uisetting_msgcount_title">Messages shown over video</string>

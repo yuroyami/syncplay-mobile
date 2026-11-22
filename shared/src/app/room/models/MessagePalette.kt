@@ -34,6 +34,35 @@ val LocalPersonShades = compositionLocalOf<Map<String, Int>> { emptyMap() }
 fun MessagePalette.nameColor(name: String, self: Boolean, shades: Map<String, Int> = emptyMap()): Color =
     if (self) selftagColor else shadeOf(friendtagColor, shades[name] ?: preferredShade(name))
 
+/**
+ * The lightness that an event line gets at most when it is lifted over video. Under 1, so an
+ * event color with a hue keeps that hue.
+ */
+private const val EVENT_LIGHTNESS_CAP = 0.92f
+
+/** The lightness that the time of a line gets at most over video. The time stays dimmer than the text. */
+private const val TIME_LIGHTNESS_CAP = 0.8f
+
+/**
+ * The color of a neutral event line. [overVideo], the line is at least as light as chat text, up
+ * to [EVENT_LIGHTNESS_CAP], because the dimmer event color is hard to read on a busy picture. The
+ * hue and the saturation of the event color stay. On a ground of its own, the line keeps the event
+ * color as it is.
+ */
+fun MessagePalette.eventColor(overVideo: Boolean): Color =
+    if (overVideo) lifted(systemmsgColor, EVENT_LIGHTNESS_CAP) else systemmsgColor
+
+/** The color of the time of a line. [overVideo], it is lifted as an event line is, up to [TIME_LIGHTNESS_CAP]. */
+fun MessagePalette.timeColor(overVideo: Boolean): Color =
+    if (overVideo) lifted(timestampColor, TIME_LIGHTNESS_CAP) else timestampColor
+
+/** [color] at least as light as chat text, up to [cap]. A color that is light enough stays as it is. */
+private fun MessagePalette.lifted(color: Color, cap: Float): Color {
+    val (hue, saturation, lightness) = hsl(color)
+    val target = minOf(hsl(usermsgColor).third, cap)
+    return if (lightness >= target) color else Color.hsl(hue, saturation, target, color.alpha)
+}
+
 /** The hue turns of the shades, in degrees. */
 private val HUE_TURNS = floatArrayOf(-48f, -24f, 0f, 24f, 48f)
 

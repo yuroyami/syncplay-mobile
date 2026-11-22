@@ -62,7 +62,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -440,8 +439,10 @@ private fun SendKey(filled: Boolean, onClick: () -> Unit) {
 /**
  * The message list. It opens at its last line and animates only when it grows. [onGround] is chat
  * on the dark ground of the portrait room, not over video: its text keeps at least the size of a
- * notice, with no outline, shadow or background, and each group of lines takes a band
- * ([chatBands]) that fills the full width. Each step of [newestRequests] scrolls to the newest line.
+ * notice, with no outline, shadow or plate, and each group of lines takes a band ([chatBands])
+ * that fills the full width. Over video, the list has no panel behind it. Each line brings its own
+ * plate when the background setting asks for one ([overVideoStyle]). Each step of [newestRequests]
+ * scrolls to the newest line.
  */
 @Composable
 fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisible: Boolean, onGround: Boolean = false, newestRequests: Int = 0) {
@@ -462,11 +463,11 @@ fun ChatBox(viewmodel: RoomViewmodel, modifier: Modifier = Modifier, isHUDVisibl
     val style = if (onGround) {
         MessageStyle(maxOf(fontSize, noticeSize), outline = null, shadow = false, showTime = chatPalette.includeTimestamp)
     } else {
-        MessageStyle(fontSize, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, chatPalette.includeTimestamp)
+        // A plate shows only over a picture. The room artwork is dark enough without one.
+        overVideoStyle(fontSize, outlineThickness, shadowOn, if (hasVideo) bgOpacity else 0, chatPalette.includeTimestamp)
     }
-    val backdrop = if (hasVideo && !onGround) Color(50, 50, 50, bgOpacity) else Color.Transparent
 
-    Box(modifier.background(backdrop, Radius.panelShape)) {
+    Box(modifier) {
         val listState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, messages.size - 1))
         val scope = rememberCoroutineScope()
         /* The list follows the newest line until the reader scrolls it out of view. Only a scroll

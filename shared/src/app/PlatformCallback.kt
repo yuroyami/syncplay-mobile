@@ -73,8 +73,9 @@ interface PlatformCallback {
     val supportsBrightness: Boolean get() = true
 
     /**
-     * Called when playback pauses or resumes. Android uses it to update the Picture-in-Picture
-     * controls.
+     * Called when the room asks for a pause or a play, and again each time the engine reports a
+     * new play state or a file loads. Android uses it to update the Picture-in-Picture controls
+     * from the state that the engine reports.
      *
      * @param paused True if playback is paused, false if playing
      */

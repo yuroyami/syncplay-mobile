@@ -610,19 +610,27 @@ object Preferences {
     }
 
     /** ------------ Chat Properties -------------*/
-    /** Zero switches the outline off. There is no separate switch. */
+    /** The highest step of [MSG_OUTLINE_THICKNESS]. */
+    const val MSG_OUTLINE_MAX = 8
+
+    /**
+     * The outline of chat text over video, in steps of `OutlineStep` (0.75dp each). Zero switches
+     * the outline off, and there is no separate switch. Before 0.27.0 the value was in pixels, up
+     * to 30. A stored value above [MSG_OUTLINE_MAX] counts as [MSG_OUTLINE_MAX].
+     */
     val MSG_OUTLINE_THICKNESS = Pref("pref_inroom_msg_outline_thickness", 2) {
         title = { it.uisettingMsgoutlineTitle }
         summary = { it.uisettingMsgoutlineSummary }
         icon = Icons.Filled.BorderColor
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0, zeroMeansOff = true)
+        extraConfig = PrefExtraConfig.Slider(maxValue = MSG_OUTLINE_MAX, minValue = 0, zeroMeansOff = true)
     }
-    val MSG_SHADOW_ACTIVATE = Pref("pref_inroom_msg_shadow_activate", false) {
+    val MSG_SHADOW_ACTIVATE = Pref("pref_inroom_msg_shadow_activate", true) {
         title = { it.uisettingMsgshadowTitle }
         summary = { it.uisettingMsgshadowSummary }
         icon = Icons.Filled.BorderColor
     }
+    /** How dark the black plate behind each chat line over video is: 0 for none, 255 for solid black. */
     val MSG_BG_OPACITY = Pref("pref_inroom_msg_bg_opacity", 0) {
         title = { it.uisettingMessageryAlphaTitle }
         summary = { it.uisettingMessageryAlphaSummary }

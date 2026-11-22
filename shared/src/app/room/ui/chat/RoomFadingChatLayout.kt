@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import app.LocalChatPalette
 import app.LocalRoomViewmodel
+import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.Preferences.MSG_FONTSIZE
 import app.preferences.Preferences.MSG_MAXCOUNT
@@ -30,35 +31,52 @@ import app.theme.Space
 import app.theme.Type
 import kotlinx.coroutines.delay
 
+/** How many lines the picture-in-picture window shows at most. The window is small. */
+internal const val PIP_LINES = 2
+
+/** The least opacity of the plate behind a line in picture-in-picture, of 255. */
+private const val PIP_PLATE = 150
+
 /**
  * Shows the last few unseen chat lines from other users over the video while the HUD (the
- * controls over the video) is hidden. The lines keep the two shapes of the chat list, with no
- * panel behind them, which is where the outline preference matters most. The fading count
- * preference sets how many lines show, and the fading duration sets how long each one stays.
+ * controls over the video) is hidden. The lines keep the two shapes of the chat list, in the style
+ * of chat over video ([overVideoStyle]). The fading count preference sets how many lines show, and
+ * the fading duration sets how long each one stays.
  *
- * [app.room.RoomScreenUI] places this layout under the notices on the center line. The layout only
- * caps its own width to the width of a notice, so a line wraps at the same edge as a notice.
+ * In picture-in-picture, the window has no HUD, so the lines show whatever the HUD state says. The
+ * window is small, so it shows [PIP_LINES] lines at most, in small text, and each line always has
+ * a plate behind it.
+ *
+ * [app.room.RoomScreenUI] places this layout under the notices on the center line, or at the
+ * bottom of the picture-in-picture window. The layout only caps its own width to the width of a
+ * notice, so a line wraps at the same edge as a notice.
  */
 @Composable
 fun FadingMessageLayout() {
     val viewmodel = LocalRoomViewmodel.current
     val isInPiPMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
-    if (isHUDVisible) return
+    if (isHUDVisible && !isInPiPMode) return
 
     val chatPalette = LocalChatPalette.current
     val holdSeconds by MSG_FADING_DURATION.watchPref()
-    val maxCount by MSG_MAXCOUNT.watchPref()
+    val maxCountPreference by MSG_MAXCOUNT.watchPref()
     val outlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val shadowOn by MSG_SHADOW_ACTIVATE.watchPref()
     val fontSize by MSG_FONTSIZE.watchPref()
+    val bgOpacity by MSG_BG_OPACITY.watchPref()
+    val hasVideo by viewmodel.hasVideo.collectAsState()
     // In picture-in-picture, large text is capped at the default size, and a smaller size that the
     // user chose is kept. Elsewhere these lines are read from the middle of the picture, so they
     // never go below the size of a notice: the chat list size is for a dense list, not for a
     // glance over video.
     val noticeSize = Type.note.fontSize.value.toInt()
-    val size = if (isInPiPMode) minOf(fontSize, MSG_FONTSIZE.default) else maxOf(fontSize, noticeSize)
-    val style = MessageStyle(size, outlineThickness.toFloat().takeIf { it > 0f }, shadowOn, showTime = false)
+    val style = if (isInPiPMode) {
+        overVideoStyle(minOf(fontSize, MSG_FONTSIZE.default), outlineThickness, shadowOn, maxOf(bgOpacity, PIP_PLATE), showTime = false)
+    } else {
+        overVideoStyle(maxOf(fontSize, noticeSize), outlineThickness, shadowOn, if (hasVideo) bgOpacity else 0, showTime = false)
+    }
+    val maxCount = if (isInPiPMode) minOf(maxCountPreference, PIP_LINES) else maxCountPreference
 
     val messages by viewmodel.session.messageSequence.collectAsState()
     var shown by remember { mutableStateOf<List<Message>>(emptyList()) }

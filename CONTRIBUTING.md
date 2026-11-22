@@ -332,6 +332,14 @@ protocol) mark a play state change that the other side has not confirmed yet.
   change in portrait. A rotation then keeps the engine and its surface (#238).
 - On Android, set the picture-in-picture flag before you ask the system to enter
   picture-in-picture. Then hide the room controls.
+- In picture-in-picture, the room composes the video and `FadingMessageLayout`, and nothing else.
+  The layout ignores the state of the room controls there, because the Home key enters
+  picture-in-picture without hiding them. It shows `PIP_LINES` lines at most, and each line always
+  has a plate. `PipChatTest` checks this.
+- The room screen tells `platformCallback.onPlayback` each play state that the engine reports. On
+  Android, the play or pause key of the picture-in-picture window reads `isNowPlaying`. Some engines
+  set it a moment after `pause()` returns, and a pause from another person never goes through
+  `controlPlayback`. So the call in `controlPlayback` alone leaves the old key in the window.
 - When the app stops, the player pauses on this device only, unless the app is in
   picture-in-picture or the "Keep the sound in the background" setting applies. The room is not told.
 - "Held" and "away" are two different states. A device is held while any `HoldReason` is set: it
@@ -626,6 +634,18 @@ Chat:
   `onGround`). Its text is never smaller than `Type.note`, and it has no outline, shadow or
   background. The chat settings for outline, shadow and background apply to the landscape room only
   (#242).
+- Build the style of chat over video with `overVideoStyle`, never by hand. The chat list, the lines
+  shown while the room controls are hidden and the fading lines all use it, so a line looks the
+  same in each.
+- The outline and the shadow of chat text are in dp (`OutlinedText`). The outline setting counts
+  steps of `OutlineStep`. Before 0.27.0 it counted pixels up to 30, so `overVideoStyle` takes a
+  stored value above `MSG_OUTLINE_MAX` as `MSG_OUTLINE_MAX`.
+- The background setting draws a black plate behind each line over video, only as wide as its
+  text (`Modifier.plate`). The plate draws 1dp outside the line at the top and the bottom, so a line
+  has the same height with and without a plate. The lines shown while the room controls are hidden
+  rely on that, because they take their places from the chat list.
+- Over video, a neutral event line is as light as chat text (`eventColor`). On the room ground it
+  keeps the event colour.
 - The portrait composer is `ChatComposer` with `bar`. While the GIF drawer is open, its field is the
   drawer's search, so a tap on the field closes any other page and keeps the drawer.
 - The portrait composer bar runs to the bottom edge of the screen. It pads its content for the
